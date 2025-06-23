@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,7 @@ const Index = () => {
     <div 
       className="min-h-screen relative"
       style={{
-        backgroundImage: 'url(/images/bg-plant-2.jpg)',
+        backgroundImage: 'url(/lovable-uploads/30a2a118-1d3d-4475-a504-cba628119b02.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -297,3 +298,4 @@ const Index = () => {
 };
 
 export default Index;
+
