@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, UserPlus, User } from 'lucide-react';
+import { UserPlus, User } from 'lucide-react';
+import P2ALogo from '@/components/P2ALogo';
 
 interface AuthenticationModalProps {
   isOpen: boolean;
@@ -54,9 +56,8 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-2">
-          <DialogTitle className="flex items-center">
-            <Building2 className="h-6 w-6 mr-2 text-blue-600" />
-            P2A System Access
+          <DialogTitle className="flex items-center justify-center">
+            <P2ALogo size={32} />
           </DialogTitle>
         </DialogHeader>
 

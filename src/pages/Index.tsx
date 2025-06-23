@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import PSSRModule from '@/components/PSSRModule';
 import AuthenticationModal from '@/components/AuthenticationModal';
+import P2ALogo from '@/components/P2ALogo';
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState<string | null>(null);
@@ -64,13 +65,7 @@ const Index = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Building2 className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">P2A</h1>
-                <p className="text-xs text-gray-500">Project-to-Asset Management</p>
-              </div>
-            </div>
+            <P2ALogo />
             <div className="flex items-center space-x-4">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 Basrah Gas Company
