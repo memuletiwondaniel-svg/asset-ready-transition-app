@@ -62,7 +62,6 @@ const Index = () => {
         backgroundAttachment: 'fixed'
       }}
     >
-      <div className="absolute inset-0 bg-white/90"></div>
       <div className="relative z-10">
         {/* Header */}
         <header className="bg-white/95 backdrop-blur-sm shadow-sm border-b">
