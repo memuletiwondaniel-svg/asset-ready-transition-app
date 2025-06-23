@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,13 +30,12 @@ const Index = () => {
       <div 
         className="min-h-screen flex items-center justify-center relative"
         style={{
-          backgroundImage: 'url(/images/bg-facility-1.jpg)',
+          backgroundImage: 'url(/images/login-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
       >
-        <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10">
           <AuthenticationModal 
             isOpen={true} 
@@ -298,4 +295,3 @@ const Index = () => {
 };
 
 export default Index;
-
