@@ -53,7 +53,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-2">
           <DialogTitle className="flex items-center">
             <Building2 className="h-6 w-6 mr-2 text-blue-600" />
             P2A System Access
@@ -67,7 +67,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
           </TabsList>
 
           <TabsContent value="sso" className="space-y-4">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Single Sign-On</CardTitle>
                 <CardDescription>
@@ -94,7 +94,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Standard Login</CardTitle>
                 <CardDescription>
@@ -130,7 +130,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
           </TabsContent>
 
           <TabsContent value="register" className="space-y-4">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
                   <UserPlus className="h-5 w-5 mr-2" />
