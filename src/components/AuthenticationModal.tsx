@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -125,12 +124,12 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     />
                   </div>
                   <div className="flex justify-center mb-4">
-                    <div className="bg-gray-100 p-1 rounded-lg">
+                    <div className="flex gap-2">
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => setLoginMode('login')}
-                        className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md transform"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Login
@@ -139,7 +138,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('register')}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border"
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Register
@@ -199,12 +198,12 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     />
                   </div>
                   <div className="flex justify-center mb-4">
-                    <div className="bg-gray-100 p-1 rounded-lg">
+                    <div className="flex gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('login')}
-                        className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Login
@@ -213,7 +212,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="secondary"
                         size="sm"
                         onClick={() => setLoginMode('register')}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border"
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Register
