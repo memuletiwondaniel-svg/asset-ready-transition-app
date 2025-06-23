@@ -96,28 +96,6 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-center mb-4">
-                <div className="bg-gray-100 p-1 rounded-lg">
-                  <Button
-                    variant={loginMode === 'login' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setLoginMode('login')}
-                    className="mr-1"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Login
-                  </Button>
-                  <Button
-                    variant={loginMode === 'register' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setLoginMode('register')}
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Register
-                  </Button>
-                </div>
-              </div>
-
               {loginMode === 'login' ? (
                 <>
                   <div>
@@ -138,6 +116,27 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
                     />
+                  </div>
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-gray-100 p-1 rounded-lg">
+                      <Button
+                        variant={loginMode === 'login' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setLoginMode('login')}
+                        className="mr-1"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Login
+                      </Button>
+                      <Button
+                        variant={loginMode === 'register' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setLoginMode('register')}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Register
+                      </Button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -187,6 +186,27 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       onChange={(e) => setFormData({...formData, justification: e.target.value})}
                       placeholder="Reason for needing P2A access"
                     />
+                  </div>
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-gray-100 p-1 rounded-lg">
+                      <Button
+                        variant={loginMode === 'login' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setLoginMode('login')}
+                        className="mr-1"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Login
+                      </Button>
+                      <Button
+                        variant={loginMode === 'register' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setLoginMode('register')}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Register
+                      </Button>
+                    </div>
                   </div>
                   <Button className="w-full" onClick={handleRegistration}>
                     Submit Registration
