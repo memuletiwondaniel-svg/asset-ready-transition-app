@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -130,7 +129,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="default"
                         size="sm"
                         onClick={() => setLoginMode('login')}
-                        className="mr-1"
+                        className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md transform"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Login
@@ -139,6 +138,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('register')}
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-gray-200 transform"
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Register
@@ -200,7 +200,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('login')}
-                        className="mr-1"
+                        className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-gray-200 transform"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Login
@@ -209,6 +209,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="default"
                         size="sm"
                         onClick={() => setLoginMode('register')}
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform"
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Register
