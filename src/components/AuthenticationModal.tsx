@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button 
-                  className="w-full" 
+                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
                   variant="secondary"
                   onClick={() => handleSSOLogin('BGC')}
                 >
@@ -85,7 +84,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   Login with BGC
                 </Button>
                 <Button 
-                  className="w-full" 
+                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
                   variant="secondary"
                   onClick={() => handleSSOLogin('Kent')}
                 >
