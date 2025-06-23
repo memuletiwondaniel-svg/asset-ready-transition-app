@@ -145,9 +145,6 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       </Button>
                     </div>
                   </div>
-                  <Button className="w-full" variant="secondary" onClick={handleRegularLogin}>
-                    Login
-                  </Button>
                 </>
               ) : (
                 <>
