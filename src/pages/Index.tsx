@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,15 +19,23 @@ import AuthenticationModal from '@/components/AuthenticationModal';
 const Index = () => {
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleModuleClick = (module: string) => {
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
     setActiveModule(module);
   };
+
+  // Show authentication modal first if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <AuthenticationModal 
+          isOpen={true} 
+          onClose={() => {}} // Prevent closing since login is required
+          onAuthenticated={() => setIsAuthenticated(true)}
+        />
+      </div>
+    );
+  }
 
   if (activeModule === 'pssr') {
     return <PSSRModule onBack={() => setActiveModule(null)} />;
@@ -53,15 +60,9 @@ const Index = () => {
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 Basrah Gas Company
               </Badge>
-              {isAuthenticated ? (
-                <Button variant="outline" onClick={() => setIsAuthenticated(false)}>
-                  Logout
-                </Button>
-              ) : (
-                <Button onClick={() => setShowAuthModal(true)}>
-                  Login
-                </Button>
-              )}
+              <Button variant="outline" onClick={() => setIsAuthenticated(false)}>
+                Logout
+              </Button>
             </div>
           </div>
         </div>
@@ -260,15 +261,6 @@ const Index = () => {
           </CardContent>
         </Card>
       </main>
-
-      <AuthenticationModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)}
-        onAuthenticated={() => {
-          setIsAuthenticated(true);
-          setShowAuthModal(false);
-        }}
-      />
     </div>
   );
 };
