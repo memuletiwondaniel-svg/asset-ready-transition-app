@@ -18,6 +18,9 @@ const P2ALogo: React.FC<P2ALogoProps> = ({ className = "", size = 48 }) => {
           alt="Key handover" 
           className="w-full h-full object-cover"
           style={{ filter: 'brightness(0) invert(1)' }}
+          onError={(e) => {
+            console.log('Image failed to load:', e);
+          }}
         />
       </div>
       
