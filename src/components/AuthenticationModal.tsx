@@ -139,7 +139,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('register')}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-gray-200 transform"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform"
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Register
@@ -204,7 +204,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('login')}
-                        className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-gray-200 transform"
+                        className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Login
