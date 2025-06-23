@@ -121,7 +121,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
                 </div>
-                <Button className="w-full" onClick={handleRegularLogin}>
+                <Button className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" variant="secondary" onClick={handleRegularLogin}>
                   Login
                 </Button>
               </CardContent>
