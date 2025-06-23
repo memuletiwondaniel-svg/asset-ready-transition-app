@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -126,7 +127,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   <div className="flex justify-center mb-4">
                     <div className="bg-gray-100 p-1 rounded-lg">
                       <Button
-                        variant="default"
+                        variant="secondary"
                         size="sm"
                         onClick={() => setLoginMode('login')}
                         className="mr-1 transition-all duration-300 hover:scale-105 hover:shadow-md transform"
@@ -145,6 +146,9 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       </Button>
                     </div>
                   </div>
+                  <Button className="w-full" onClick={handleRegularLogin}>
+                    Login
+                  </Button>
                 </>
               ) : (
                 <>
@@ -206,7 +210,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         Login
                       </Button>
                       <Button
-                        variant="default"
+                        variant="secondary"
                         size="sm"
                         onClick={() => setLoginMode('register')}
                         className="transition-all duration-300 hover:scale-105 hover:shadow-md transform"
