@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import PSSRChecklist from './PSSRChecklist';
 
 interface CreatePSSRFlowProps {
   onBack: () => void;
@@ -216,10 +217,13 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                     <CheckCircle className="mx-auto h-16 w-16 text-green-600 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">PSSR Created</h3>
                     <p className="text-gray-600 mb-4">
-                      You can now proceed to set up the review team and checklist.
+                      You can now proceed to complete the PSSR checklist.
                     </p>
                     <div className="space-y-2">
-                      <Button>Continue to Team Setup</Button>
+                      <Button onClick={() => setCurrentStep(3)}>
+                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        Continue to Checklist
+                      </Button>
                       <Button variant="outline" onClick={onBack}>
                         Return to PSSR List
                       </Button>
@@ -255,8 +259,20 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
           </div>
         );
 
+      case 3:
+        return <PSSRChecklist />;
+
       default:
         return null;
+    }
+  };
+
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1: return "PSSR Information";
+      case 2: return "Confirmation";
+      case 3: return "PSSR Checklist";
+      default: return "";
     }
   };
 
@@ -270,7 +286,9 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to PSSR List
               </Button>
-              <h1 className="text-xl font-bold text-gray-900">Create New PSSR</h1>
+              <h1 className="text-xl font-bold text-gray-900">
+                {currentStep === 1 ? "Create New PSSR" : currentStep === 2 ? "PSSR Created" : "PSSR Checklist"}
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline">
@@ -282,45 +300,47 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center">
+        {currentStep <= 2 && (
+          <div className="mb-8">
             <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
-                1
+              <div className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  1
+                </div>
+                <span className="ml-2 text-sm font-medium">PSSR Information</span>
               </div>
-              <span className="ml-2 text-sm font-medium">PSSR Information</span>
-            </div>
-            <div className={`flex-1 h-1 mx-4 ${currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
-            <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
-                2
+              <div className={`flex-1 h-1 mx-4 ${currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  2
+                </div>
+                <span className="ml-2 text-sm font-medium">Confirmation</span>
               </div>
-              <span className="ml-2 text-sm font-medium">Confirmation</span>
             </div>
           </div>
-        </div>
+        )}
 
         {renderStepContent()}
 
         {/* Navigation */}
-        <div className="flex justify-between mt-8">
-          <Button variant="outline" onClick={onBack}>
-            Cancel
-          </Button>
-          
-          {currentStep === 1 && (
+        {currentStep === 1 && (
+          <div className="flex justify-between mt-8">
+            <Button variant="outline" onClick={onBack}>
+              Cancel
+            </Button>
+            
             <Button onClick={handleContinue} disabled={!formData.asset || !formData.reason || !formData.scope}>
               Continue
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
       {/* Confirmation Dialog */}
@@ -329,7 +349,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
           <DialogHeader>
             <DialogTitle>Create PSSR</DialogTitle>
             <DialogDescription>
-              Are you ready to create this PSSR? Once created, a unique ID will be generated and you can proceed to set up the review team.
+              Are you ready to create this PSSR? Once created, a unique ID will be generated and you can proceed to complete the checklist.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end space-x-2 mt-4">
