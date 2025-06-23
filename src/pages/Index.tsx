@@ -64,7 +64,7 @@ const Index = () => {
     >
       <div className="relative z-10">
         {/* Header */}
-        <header className="bg-white/95 backdrop-blur-sm shadow-sm border-b">
+        <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-4">
@@ -88,7 +88,7 @@ const Index = () => {
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Section */}
-          <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+          <div className="mb-8 bg-white rounded-lg p-6 shadow-sm">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Welcome to P2A Management System
             </h2>
@@ -99,7 +99,7 @@ const Index = () => {
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-white/90 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -113,7 +113,7 @@ const Index = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-white/90 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-green-100 rounded-lg">
@@ -127,7 +127,7 @@ const Index = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-white/90 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-purple-100 rounded-lg">
@@ -141,7 +141,7 @@ const Index = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-white/90 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-orange-100 rounded-lg">
@@ -159,7 +159,7 @@ const Index = () => {
           {/* Main Modules */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* PSSR Module */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white/90 backdrop-blur-sm" onClick={() => handleModuleClick('pssr')}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white" onClick={() => handleModuleClick('pssr')}>
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto p-4 bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
                   <ClipboardCheck className="h-8 w-8 text-blue-600" />
@@ -191,7 +191,7 @@ const Index = () => {
             </Card>
 
             {/* PAC Module */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-75 bg-white/90 backdrop-blur-sm" onClick={() => handleModuleClick('pac')}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-75 bg-white" onClick={() => handleModuleClick('pac')}>
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto p-4 bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
                   <Award className="h-8 w-8 text-green-600" />
@@ -220,7 +220,7 @@ const Index = () => {
             </Card>
 
             {/* FAC Module */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-75 bg-white/90 backdrop-blur-sm" onClick={() => handleModuleClick('fac')}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-75 bg-white" onClick={() => handleModuleClick('fac')}>
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto p-4 bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
                   <CheckCircle className="h-8 w-8 text-purple-600" />
@@ -250,7 +250,7 @@ const Index = () => {
           </div>
 
           {/* Recent Activity */}
-          <Card className="mt-8 bg-white/90 backdrop-blur-sm">
+          <Card className="mt-8 bg-white">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Clock className="h-5 w-5 mr-2" />
