@@ -14,7 +14,7 @@ const P2ALogo: React.FC<P2ALogoProps> = ({ className = "", size = 48 }) => {
         style={{ width: size, height: size }}
       >
         <img 
-          src="/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png" 
+          src="/lovable-uploads/5b18a1c1-2b59-4e34-917a-910364fedaf6.png" 
           alt="Key handover" 
           className="w-full h-full object-cover"
           style={{ filter: 'brightness(0) invert(1)' }}
