@@ -28,7 +28,7 @@ const Index = () => {
   if (!isAuthenticated) {
     return (
       <div 
-        className="min-h-screen flex items-center justify-center relative"
+        className="min-h-screen flex items-center justify-center relative bg-gray-900"
         style={{
           backgroundImage: 'url(/images/login-bg.png)',
           backgroundSize: 'cover',
