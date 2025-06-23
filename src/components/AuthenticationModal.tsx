@@ -89,7 +89,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   variant="outline"
                   onClick={() => handleSSOLogin('Kent')}
                 >
-                  <Users className="h-4 w-4 mr-2" />
+                  <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-6 w-6 mr-2" />
                   Login with Kent
                 </Button>
               </CardContent>
