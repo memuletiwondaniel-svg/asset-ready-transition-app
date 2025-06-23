@@ -139,10 +139,6 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
                     />
                   </div>
-                  <Button className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" variant="secondary" onClick={handleRegularLogin}>
-                    <User className="h-4 w-4 mr-2" />
-                    Login
-                  </Button>
                 </>
               ) : (
                 <>
