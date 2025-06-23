@@ -81,7 +81,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   variant="outline"
                   onClick={() => handleSSOLogin('BGC')}
                 >
-                  <Building2 className="h-4 w-4 mr-2" />
+                  <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-4 w-4 mr-2" />
                   Login with BGC
                 </Button>
                 <Button 
