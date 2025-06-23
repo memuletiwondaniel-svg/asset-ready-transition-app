@@ -78,7 +78,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
               <CardContent className="space-y-3">
                 <Button 
                   className="w-full" 
-                  variant="default"
+                  variant="secondary"
                   onClick={() => handleSSOLogin('BGC')}
                 >
                   <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-6 w-6 mr-2" />
