@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, User } from 'lucide-react';
-import P2ALogo from '@/components/P2ALogo';
 
 interface AuthenticationModalProps {
   isOpen: boolean;
@@ -53,12 +53,6 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md bg-white/90 backdrop-blur-sm">
-        <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-2">
-          <DialogTitle className="flex items-center justify-center">
-            <P2ALogo size={32} />
-          </DialogTitle>
-        </DialogHeader>
-
         <div className="space-y-4">
           {loginMode === 'login' && (
             <Card className="bg-white/95 backdrop-blur-sm">
@@ -124,26 +118,15 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     />
                   </div>
                   <div className="flex justify-center mb-4">
-                    <div className="flex gap-2 group">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setLoginMode('login')}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border group-hover:group-hover:[&:not(:hover)]:opacity-60"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Login
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setLoginMode('register')}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border hover:group-hover:[&~button]:opacity-60"
-                      >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Register
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLoginMode('register')}
+                      className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Register
+                    </Button>
                   </div>
                 </>
               ) : (
