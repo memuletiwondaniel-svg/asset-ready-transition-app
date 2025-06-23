@@ -166,7 +166,10 @@ const Index = () => {
                 <div className="mx-auto p-4 bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
                   <ClipboardCheck className="h-8 w-8 text-blue-600" />
                 </div>
-                <CardTitle className="text-xl">Pre-Start-Up Safety Review</CardTitle>
+                <CardTitle className="text-2xl">PSSR</CardTitle>
+                <CardDescription className="text-base font-medium">
+                  Pre-Start-Up Safety Review
+                </CardDescription>
                 <CardDescription>
                   Manage the safe introduction of hydrocarbons into newly constructed facilities
                 </CardDescription>
