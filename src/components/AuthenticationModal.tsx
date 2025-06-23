@@ -61,38 +61,45 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          <Card className="bg-white/95 backdrop-blur-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Single Sign-On</CardTitle>
-              <CardDescription>
-                For BGC and Kent employees
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
-                variant="secondary"
-                onClick={() => handleSSOLogin('BGC')}
-              >
-                <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-6 w-6 mr-2" />
-                Login with BGC
-              </Button>
-              <Button 
-                className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
-                variant="secondary"
-                onClick={() => handleSSOLogin('Kent')}
-              >
-                <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-6 w-6 mr-2" />
-                Login with Kent
-              </Button>
-            </CardContent>
-          </Card>
+          {loginMode === 'login' && (
+            <Card className="bg-white/95 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Single Sign-On</CardTitle>
+                <CardDescription>
+                  For BGC and Kent employees
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
+                  variant="secondary"
+                  onClick={() => handleSSOLogin('BGC')}
+                >
+                  <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-6 w-6 mr-2" />
+                  Login with BGC
+                </Button>
+                <Button 
+                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
+                  variant="secondary"
+                  onClick={() => handleSSOLogin('Kent')}
+                >
+                  <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-6 w-6 mr-2" />
+                  Login with Kent
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-white/95 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Standard Login</CardTitle>
+              <CardTitle className="text-lg">
+                {loginMode === 'login' ? 'Standard Login' : 'User Registration'}
+              </CardTitle>
               <CardDescription>
-                For registered external users or new user registration
+                {loginMode === 'login' 
+                  ? 'For registered external users or new user registration'
+                  : 'Register for P2A access'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -120,7 +127,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   <div className="flex justify-center mb-4">
                     <div className="bg-gray-100 p-1 rounded-lg">
                       <Button
-                        variant={loginMode === 'login' ? 'default' : 'ghost'}
+                        variant="default"
                         size="sm"
                         onClick={() => setLoginMode('login')}
                         className="mr-1"
@@ -129,7 +136,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         Login
                       </Button>
                       <Button
-                        variant={loginMode === 'register' ? 'default' : 'ghost'}
+                        variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('register')}
                       >
@@ -190,7 +197,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   <div className="flex justify-center mb-4">
                     <div className="bg-gray-100 p-1 rounded-lg">
                       <Button
-                        variant={loginMode === 'login' ? 'default' : 'ghost'}
+                        variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('login')}
                         className="mr-1"
@@ -199,7 +206,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         Login
                       </Button>
                       <Button
-                        variant={loginMode === 'register' ? 'default' : 'ghost'}
+                        variant="default"
                         size="sm"
                         onClick={() => setLoginMode('register')}
                       >
