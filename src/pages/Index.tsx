@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,14 +29,15 @@ const Index = () => {
   if (!isAuthenticated) {
     return (
       <div 
-        className="min-h-screen flex items-center justify-center relative bg-gray-900"
+        className="min-h-screen flex items-center justify-center relative"
         style={{
-          backgroundImage: 'url(/images/login-bg.png)',
+          backgroundImage: 'url(https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
       >
+        <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10">
           <AuthenticationModal 
             isOpen={true} 
