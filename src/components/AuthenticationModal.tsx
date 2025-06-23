@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, UserPlus, ExternalLink } from 'lucide-react';
+import { Building2, Users, UserPlus, User } from 'lucide-react';
 
 interface AuthenticationModalProps {
   isOpen: boolean;
@@ -122,7 +122,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                   />
                 </div>
                 <Button className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" variant="secondary" onClick={handleRegularLogin}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <User className="h-4 w-4 mr-2" />
                   Login
                 </Button>
               </CardContent>
