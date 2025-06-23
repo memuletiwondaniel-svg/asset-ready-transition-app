@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -198,7 +199,10 @@ const Index = () => {
                 <div className="mx-auto p-4 bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
                   <Award className="h-8 w-8 text-green-600" />
                 </div>
-                <CardTitle className="text-xl">Provisional Acceptance Certificate</CardTitle>
+                <CardTitle className="text-2xl">PAC</CardTitle>
+                <CardDescription className="text-base font-medium">
+                  Provisional Acceptance Certificate
+                </CardDescription>
                 <CardDescription>
                   Issue and manage provisional acceptance certificates for project deliverables
                 </CardDescription>
@@ -224,7 +228,10 @@ const Index = () => {
                 <div className="mx-auto p-4 bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
                   <CheckCircle className="h-8 w-8 text-purple-600" />
                 </div>
-                <CardTitle className="text-xl">Final Acceptance Certificate</CardTitle>
+                <CardTitle className="text-2xl">FAC</CardTitle>
+                <CardDescription className="text-base font-medium">
+                  Final Acceptance Certificate
+                </CardDescription>
                 <CardDescription>
                   Complete the project handover with final acceptance certification
                 </CardDescription>
