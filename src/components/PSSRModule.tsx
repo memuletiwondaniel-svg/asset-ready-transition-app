@@ -132,7 +132,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -148,26 +148,31 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
           </Button>
         </div>
 
+        {/* Description under search */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-600">Showing PSSRs requiring action from You</p>
+        </div>
+
         {/* PSSR List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {pssrList.map((pssr) => (
             <Card key={pssr.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <CardContent className="p-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div className="flex-1">
                     {/* Most prominent: Project ID and Name */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
                       {pssr.projectId} - {pssr.projectName}
                     </h3>
                     
                     {/* Asset info and small PSSR ID */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <p className="text-gray-600">Asset: <span className="font-medium">{pssr.asset}</span></p>
+                    <div className="flex items-center gap-3 mb-2">
+                      <p className="text-sm text-gray-600">Asset: <span className="font-medium">{pssr.asset}</span></p>
                       <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">{pssr.id}</span>
                     </div>
 
                     {/* Second important: Status with pending approvals */}
-                    <div className="mb-3 flex items-center gap-2">
+                    <div className="mb-2 flex items-center gap-2">
                       <Badge 
                         variant="outline" 
                         className={`flex items-center gap-1 w-fit ${getStatusColor(pssr.status)}`}
@@ -182,19 +187,19 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       )}
                     </div>
                     
-                    {/* Third important: PSSR Lead with Avatar */}
+                    {/* Third important: PSSR Lead with Avatar first */}
                     <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
+                      <Avatar className="h-8 w-8">
                         <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
                         <AvatarFallback className="text-xs">
                           {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <span>PSSR Lead: {pssr.pssrLead}</span>
+                      <span>{pssr.pssrLead} (PSSR Lead)</span>
                     </div>
                     
                     {/* Additional info */}
-                    <div className="flex flex-wrap gap-4 text-xs text-gray-500 mt-2">
+                    <div className="flex flex-wrap gap-4 text-xs text-gray-500">
                       <span>Created: {pssr.created}</span>
                       {pssr.completedDate && (
                         <span>Completed: {pssr.completedDate}</span>
@@ -202,17 +207,17 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col items-end gap-3">
+                  <div className="flex flex-col items-end gap-2">
                     <div className="text-right">
-                      <p className="text-sm text-gray-600 mb-1">Overall Progress</p>
+                      <p className="text-xs text-gray-600 mb-1">Overall Progress</p>
                       <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 h-2 rounded-full transition-all" 
                             style={{ width: `${pssr.progress}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium">{pssr.progress}%</span>
+                        <span className="text-xs font-medium">{pssr.progress}%</span>
                       </div>
                     </div>
                     
