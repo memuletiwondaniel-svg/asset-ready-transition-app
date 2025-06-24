@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -54,7 +52,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm fixed left-8 top-1/2 translate-x-0 translate-y-[-50%]">
         <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-3 mb-2">
           <DialogTitle className="flex items-center justify-center">
             <P2ALogo size={24} />
@@ -231,4 +229,3 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 };
 
 export default AuthenticationModal;
-
