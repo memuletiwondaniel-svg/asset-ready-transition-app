@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-const BackgroundSlideshow: React.FC = () => {
+interface BackgroundSlideshowProps {
+  showFunFacts?: boolean;
+}
+
+const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts = false }) => {
   const images = [
     '/lovable-uploads/760b8313-c785-4c51-b0d5-afe7bf6eaeca.png',
     '/lovable-uploads/16bc5478-aecb-4b44-82d1-0ff41eb10dbb.png',
@@ -144,18 +148,20 @@ const BackgroundSlideshow: React.FC = () => {
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* BGC Fun Facts Overlay - Positioned to the right of login modal */}
-      <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
-        <div className="bg-black/20 backdrop-blur-sm rounded-lg p-12 text-white max-w-5xl ml-80">
-          <div className="text-left space-y-2">
-            {currentFacts.map((fact, index) => (
-              <p key={index} className="text-5xl font-bold leading-tight tracking-wide text-white uppercase">
-                {fact}
-              </p>
-            ))}
+      {/* BGC Fun Facts Overlay - Only show when showFunFacts is true */}
+      {showFunFacts && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
+          <div className="bg-black/20 backdrop-blur-sm rounded-lg p-12 text-white max-w-5xl ml-80">
+            <div className="text-left space-y-2">
+              {currentFacts.map((fact, index) => (
+                <p key={index} className="text-4xl font-bold leading-tight tracking-wide text-white uppercase">
+                  {fact}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -24,7 +24,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center">
-      <BackgroundSlideshow />
+      <BackgroundSlideshow showFunFacts={showAuth} />
       
       {!showAuth && (
         <div className="relative z-10 text-center text-white">
