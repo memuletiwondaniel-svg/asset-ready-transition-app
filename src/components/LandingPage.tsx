@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -85,7 +86,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                     {section.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center mt-auto pt-4">
+                <CardContent className="text-center mt-auto pb-6">
                   <Button 
                     className={`w-full ${section.color} ${section.hoverColor} text-white transition-all duration-300 shadow-md hover:shadow-lg group-hover:scale-105`}
                     onClick={(e) => {
