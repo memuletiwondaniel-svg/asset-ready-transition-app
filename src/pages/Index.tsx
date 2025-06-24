@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Languages } from "lucide-react";
+import { Languages, Phone } from "lucide-react";
 import AuthenticationModal from "@/components/AuthenticationModal";
 import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";
@@ -81,45 +82,64 @@ const Index = () => {
 
   // Show welcome screen before authentication
   return (
-    <div className="min-h-screen relative flex items-center justify-center">
+    <div className="min-h-screen relative flex items-center">
       <BackgroundSlideshow showFunFacts={showAuth} />
       
-      {/* Language Selector - Top Right */}
-      <div className="absolute top-6 right-6 z-20">
+      {/* Top Left - Language Selector and Contact */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
+            <Button variant="ghost" className="bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all duration-300 rounded-full px-6 py-2 shadow-lg">
               <Languages className="h-4 w-4 mr-2" />
               {selectedLanguage}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white">
+          <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-white/30 shadow-xl rounded-lg">
             {languages.map((language) => (
               <DropdownMenuItem
                 key={language.code}
                 onClick={() => setSelectedLanguage(language.name)}
-                className="cursor-pointer"
+                className="cursor-pointer hover:bg-gray-100/80 transition-colors"
               >
                 {language.name}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        
+        <Button variant="ghost" className="bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all duration-300 rounded-full px-6 py-2 shadow-lg">
+          <Phone className="h-4 w-4 mr-2" />
+          Contact
+        </Button>
+      </div>
+
+      {/* Top Right - BGC Logo and Text */}
+      <div className="absolute top-6 right-6 z-20">
+        <div className="flex items-center bg-white/10 backdrop-blur-md rounded-lg p-4 shadow-lg">
+          <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-12 w-auto mr-3" />
+          <div className="flex flex-col text-right">
+            <h1 className="font-bold text-white text-lg">Basrah Gas Company</h1>
+            <p dir="rtl" className="text-sm text-white/90">شركة البصرة للغاز</p>
+          </div>
+        </div>
       </div>
       
       {!showAuth && (
-        <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
-          {/* BGC Logo with Text */}
-          <div className="flex items-center justify-center mb-6">
-            <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-16 w-auto mr-4" />
-            <div className="flex flex-col">
-              <h1 className="font-bold text-white mb-1 text-2xl">Basrah Gas Company</h1>
-              <p dir="rtl" className="text-xl text-white text-left">شركة البصرة للغاز</p>
-            </div>
+        <div className="relative z-10 ml-16 max-w-2xl">
+          {/* Main Heading - Split into two lines with large text */}
+          <div className="mb-12">
+            <h1 className="text-7xl font-bold text-white leading-tight mb-4 drop-shadow-2xl">
+              Seamless Transition
+            </h1>
+            <h2 className="text-6xl font-bold text-white leading-tight drop-shadow-2xl">
+              from Project to Asset Operation
+            </h2>
           </div>
           
-          <h1 className="text-4xl font-bold mb-8 drop-shadow-lg">Welcome to the Project-to-Asset Management System</h1>
-          <Button onClick={() => setShowAuth(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg shadow-lg">
+          <Button 
+            onClick={() => setShowAuth(true)} 
+            className="bg-red-600 hover:bg-red-700 text-white px-12 py-4 text-xl font-semibold shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 rounded-lg"
+          >
             GET STARTED &gt;
           </Button>
         </div>
