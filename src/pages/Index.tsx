@@ -1,6 +1,12 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Languages } from "lucide-react";
 import AuthenticationModal from "@/components/AuthenticationModal";
 import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";
@@ -10,6 +16,7 @@ const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
 
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
@@ -28,6 +35,12 @@ const Index = () => {
   const handleBackToLanding = () => {
     setCurrentSection(null);
   };
+
+  const languages = [
+    { code: "en", name: "English" },
+    { code: "ar", name: "العربية" },
+    { code: "fr", name: "Français" }
+  ];
 
   // Show specific section based on navigation
   if (isAuthenticated && currentSection) {
@@ -70,6 +83,29 @@ const Index = () => {
   return (
     <div className="min-h-screen relative flex items-center justify-center">
       <BackgroundSlideshow showFunFacts={showAuth} />
+      
+      {/* Language Selector - Top Right */}
+      <div className="absolute top-6 right-6 z-20">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
+              <Languages className="h-4 w-4 mr-2" />
+              {selectedLanguage}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-white">
+            {languages.map((language) => (
+              <DropdownMenuItem
+                key={language.code}
+                onClick={() => setSelectedLanguage(language.name)}
+                className="cursor-pointer"
+              >
+                {language.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       
       {!showAuth && (
         <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
