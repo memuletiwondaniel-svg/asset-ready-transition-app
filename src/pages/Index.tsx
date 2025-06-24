@@ -35,7 +35,7 @@ const Index = () => {
             onClick={() => setShowAuth(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg shadow-lg"
           >
-            Access System
+            Access the P2A Application
           </Button>
         </div>
       )}
