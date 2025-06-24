@@ -29,7 +29,7 @@ const Index = () => {
       {!showAuth && (
         <div className="relative z-10 text-center text-white">
           <h1 className="text-4xl font-bold mb-8 drop-shadow-lg">
-            Welcome to P2A System
+            Welcome to BGC's Project-to-Asset Management System
           </h1>
           <Button 
             onClick={() => setShowAuth(true)}
