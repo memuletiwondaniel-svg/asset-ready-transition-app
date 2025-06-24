@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const canvasSections = [
     {
       id: 'pssr',
-      title: 'PSSR Management',
+      title: 'PSSR',
       description: 'Pre-Start Safety Review processes and checklists',
       icon: FileText,
       color: 'bg-blue-500',
