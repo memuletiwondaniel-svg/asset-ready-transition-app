@@ -13,7 +13,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     {
       id: 'pssr',
       title: 'PAC',
-      description: 'Pre-Start Up Safety Review',
+      description: 'Track and Manage Provisional Acceptance Handover and Certificates (PAC)',
       icon: FileText,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
