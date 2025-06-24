@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck, FileText, Building2, Briefcase, Plus, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck, FileText, Building2, Briefcase, Plus, User, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import PSSRChecklist from './PSSRChecklist';
 import AddNewProjectWidget from './AddNewProjectWidget';
 
@@ -19,6 +21,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
+  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     asset: '',
     reason: '',
@@ -90,6 +93,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const handleProjectSelect = (value: string) => {
     if (value === 'add-new') {
       setShowAddProjectWidget(true);
+      setProjectSearchOpen(false);
     } else {
       const selectedProject = projects.find(p => p.id === value);
       setFormData(prev => ({
@@ -97,6 +101,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         projectId: value,
         projectName: selectedProject?.name || ''
       }));
+      setProjectSearchOpen(false);
     }
   };
 
@@ -181,24 +186,72 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <Label htmlFor="projectId" className="text-sm font-semibold text-gray-700">Project ID</Label>
-                        <Select value={formData.projectId} onValueChange={handleProjectSelect}>
-                          <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
-                            <SelectValue placeholder="Select project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {projects.map((project) => (
-                              <SelectItem key={project.id} value={project.id} className="py-3">
-                                {project.id} - {project.name}
-                              </SelectItem>
-                            ))}
-                            <SelectItem value="add-new" className="py-3 border-t border-gray-200 bg-blue-50">
-                              <div className="flex items-center gap-2 text-blue-600 font-medium">
-                                <Plus className="h-4 w-4" />
-                                Add New Project
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Popover open={projectSearchOpen} onOpenChange={setProjectSearchOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={projectSearchOpen}
+                              className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors"
+                            >
+                              {formData.projectId
+                                ? `${formData.projectId} - ${projects.find((project) => project.id === formData.projectId)?.name}`
+                                : "Search projects..."}
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search projects..." className="h-9" />
+                              <CommandList>
+                                <CommandEmpty>
+                                  <div className="p-6 text-center">
+                                    <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
+                                      <Search className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                      No projects found matching your search.
+                                    </p>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => handleProjectSelect('add-new')}
+                                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Add New Project
+                                    </Button>
+                                  </div>
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {projects.map((project) => (
+                                    <CommandItem
+                                      key={project.id}
+                                      value={`${project.id} ${project.name}`}
+                                      onSelect={() => handleProjectSelect(project.id)}
+                                      className="py-3"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span className="font-medium">{project.id}</span>
+                                        <span className="text-gray-600">- {project.name}</span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                  <CommandItem
+                                    value="add-new-project"
+                                    onSelect={() => handleProjectSelect('add-new')}
+                                    className="py-3 border-t border-gray-200 bg-blue-50"
+                                  >
+                                    <div className="flex items-center gap-2 text-blue-600 font-medium">
+                                      <Plus className="h-4 w-4" />
+                                      Add New Project
+                                    </div>
+                                  </CommandItem>
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="space-y-3">
                         <Label htmlFor="projectName" className="text-sm font-semibold text-gray-700">Project Name</Label>
