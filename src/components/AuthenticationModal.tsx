@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -97,7 +98,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
               <CardDescription>
                 {loginMode === 'login' 
                   ? 'For registered external users or new user registration'
-                  : 'Register for P2A access'
+                  : ''
                 }
               </CardDescription>
             </CardHeader>
