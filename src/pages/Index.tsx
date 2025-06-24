@@ -27,7 +27,7 @@ const Index = () => {
       <BackgroundSlideshow showFunFacts={showAuth} />
       
       {!showAuth && (
-        <div className="relative z-10 text-center text-white">
+        <div className="relative z-10 text-center text-white bg-black/20 backdrop-blur-sm rounded-lg p-8 shadow-lg">
           <h1 className="text-4xl font-bold mb-8 drop-shadow-lg">
             Welcome to BGC's Project-to-Asset Management System
           </h1>
