@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 'analytics',
-      title: 'Analytics & Reporting',
+      title: 'FAC',
       description: 'View project metrics and generate reports',
       icon: BarChart3,
       color: 'bg-purple-500',
