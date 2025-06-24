@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -173,9 +172,8 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       </Badge>
                     </div>
                     
-                    {/* Third important: Progress, PSSR Lead, and pending approvals */}
+                    {/* Third important: PSSR Lead and pending approvals */}
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                      <span className="font-medium">Progress: {pssr.progress}%</span>
                       <span>PSSR Lead: {pssr.pssrLead}</span>
                       {pssr.pendingApprovals > 0 && (
                         <span className="text-orange-600 font-medium">
