@@ -27,7 +27,7 @@ const Index = () => {
       <BackgroundSlideshow showFunFacts={showAuth} />
       
       {!showAuth && (
-        <div className="relative z-10 text-center text-white bg-black/10 backdrop-blur-sm rounded-lg p-8 shadow-lg">
+        <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
           {/* BGC Logo */}
           <div className="flex justify-center mb-6">
             <img 
