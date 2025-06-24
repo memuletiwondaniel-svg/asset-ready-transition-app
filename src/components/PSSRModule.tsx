@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +37,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       id: 'PSSR-2024-002',
       projectId: 'DP 163',
       projectName: 'LPG Unit 12.1 Rehabilitation',
-      asset: 'KAZ Plant',
+      asset: 'KAZ',
       status: 'Draft',
       progress: 30,
       created: '2024-01-20',
@@ -49,7 +50,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       id: 'PSSR-2024-003',
       projectId: 'DP 083C',
       projectName: 'UQ Jetty 2 Export Terminal',
-      asset: 'UQ Asset',
+      asset: 'UQ',
       status: 'Approved',
       progress: 100,
       created: '2024-01-10',
@@ -62,7 +63,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       id: 'PSSR-2024-004',
       projectId: 'DP 317',
       projectName: 'Majnoon New Gas Tie-in',
-      asset: 'NRNGL Asset',
+      asset: 'NRNGL',
       status: 'Under Review',
       progress: 45,
       created: '2024-01-25',
@@ -160,15 +161,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div className="flex-1">
-                    {/* Most prominent: Project ID and Name */}
+                    {/* Most prominent: PSSR ID first, then Project ID and Name */}
                     <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {pssr.projectId} - {pssr.projectName}
+                      {pssr.id} - {pssr.projectId} - {pssr.projectName}
                     </h3>
                     
-                    {/* Asset info and small PSSR ID */}
+                    {/* Plant info */}
                     <div className="flex items-center gap-3 mb-2">
-                      <p className="text-sm text-gray-600">Asset: <span className="font-medium">{pssr.asset}</span></p>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">{pssr.id}</span>
+                      <p className="text-sm text-gray-600">Plant: <span className="font-medium">{pssr.asset}</span></p>
                     </div>
 
                     {/* Second important: Status with pending approvals */}
