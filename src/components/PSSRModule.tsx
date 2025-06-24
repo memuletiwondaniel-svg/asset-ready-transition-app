@@ -99,72 +99,17 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                 Pre-Start-Up Safety Review (PSSR)
               </h1>
             </div>
-            <Button onClick={() => setActiveView('create')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create New PSSR
-            </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total PSSRs</p>
-                  <p className="text-2xl font-bold text-gray-900">24</p>
-                </div>
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <CheckCircle2 className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Under Review</p>
-                  <p className="text-2xl font-bold text-yellow-600">7</p>
-                </div>
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-green-600">15</p>
-                </div>
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle2 className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Draft</p>
-                  <p className="text-2xl font-bold text-gray-600">2</p>
-                </div>
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <AlertCircle className="h-6 w-6 text-gray-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Create New PSSR Button */}
+        <div className="mb-6">
+          <Button onClick={() => setActiveView('create')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New PSSR
+          </Button>
         </div>
 
         {/* Search and Filter */}
