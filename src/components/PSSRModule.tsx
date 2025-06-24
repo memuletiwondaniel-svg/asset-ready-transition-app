@@ -1,10 +1,18 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem 
+} from '@/components/ui/dropdown-menu';
 import { ArrowLeft, Plus, Search, Filter, Eye, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
@@ -17,6 +25,11 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details'>('list');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    plant: [] as string[],
+    status: [] as string[],
+    lead: [] as string[]
+  });
 
   // Mock PSSR data
   const pssrList = [
@@ -73,6 +86,53 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       completedDate: null
     }
   ];
+
+  // Get unique values for filter options
+  const uniquePlants = [...new Set(pssrList.map(pssr => pssr.asset))];
+  const uniqueStatuses = [...new Set(pssrList.map(pssr => pssr.status))];
+  const uniqueLeads = [...new Set(pssrList.map(pssr => pssr.pssrLead))];
+
+  // Filter logic
+  const filteredPSSRs = pssrList.filter(pssr => {
+    // Search term filter
+    const matchesSearch = searchTerm === '' || 
+      pssr.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pssr.projectId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pssr.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pssr.asset.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pssr.pssrLead.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pssr.status.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Plant filter
+    const matchesPlant = filters.plant.length === 0 || filters.plant.includes(pssr.asset);
+    
+    // Status filter
+    const matchesStatus = filters.status.length === 0 || filters.status.includes(pssr.status);
+    
+    // Lead filter
+    const matchesLead = filters.lead.length === 0 || filters.lead.includes(pssr.pssrLead);
+
+    return matchesSearch && matchesPlant && matchesStatus && matchesLead;
+  });
+
+  const toggleFilter = (category: 'plant' | 'status' | 'lead', value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [category]: prev[category].includes(value) 
+        ? prev[category].filter(item => item !== value)
+        : [...prev[category], value]
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      plant: [],
+      status: [],
+      lead: []
+    });
+  };
+
+  const hasActiveFilters = filters.plant.length > 0 || filters.status.length > 0 || filters.lead.length > 0;
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -143,20 +203,76 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               className="pl-10"
             />
           </div>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+                {hasActiveFilters && (
+                  <span className="ml-1 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                    {filters.plant.length + filters.status.length + filters.lead.length}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Filter by Plant</DropdownMenuLabel>
+              {uniquePlants.map(plant => (
+                <DropdownMenuCheckboxItem
+                  key={plant}
+                  checked={filters.plant.includes(plant)}
+                  onCheckedChange={() => toggleFilter('plant', plant)}
+                >
+                  {plant}
+                </DropdownMenuCheckboxItem>
+              ))}
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              {uniqueStatuses.map(status => (
+                <DropdownMenuCheckboxItem
+                  key={status}
+                  checked={filters.status.includes(status)}
+                  onCheckedChange={() => toggleFilter('status', status)}
+                >
+                  {status}
+                </DropdownMenuCheckboxItem>
+              ))}
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Filter by PSSR Lead</DropdownMenuLabel>
+              {uniqueLeads.map(lead => (
+                <DropdownMenuCheckboxItem
+                  key={lead}
+                  checked={filters.lead.includes(lead)}
+                  onCheckedChange={() => toggleFilter('lead', lead)}
+                >
+                  {lead}
+                </DropdownMenuCheckboxItem>
+              ))}
+              
+              {hasActiveFilters && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={clearAllFilters}>
+                    Clear All Filters
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Description under search */}
         <div className="mb-6">
-          <p className="text-sm text-gray-600">Showing PSSRs requiring action from You</p>
+          <p className="text-sm text-gray-600">
+            Showing PSSRs requiring action from You ({filteredPSSRs.length} of {pssrList.length})
+          </p>
         </div>
 
         {/* PSSR List */}
         <div className="space-y-3">
-          {pssrList.map((pssr) => (
+          {filteredPSSRs.map((pssr) => (
             <Card key={pssr.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -237,6 +353,12 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             </Card>
           ))}
         </div>
+
+        {filteredPSSRs.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No PSSRs match your current filters.</p>
+          </div>
+        )}
       </main>
     </div>
   );
