@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +13,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     {
       id: 'pssr',
       title: 'PSSR',
-      description: 'Manage safe Start-up and introduction of hydrocarbons using the Pre-Start Up Safety Review (PSSR) process',
+      description: 'Manage the risks of introduction of hydrocarbons and ensue safe start-up using the Pre-Start Up Safety Review (PSSR) Process and Checklist',
       icon: FileText,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
@@ -130,4 +128,3 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default LandingPage;
-
