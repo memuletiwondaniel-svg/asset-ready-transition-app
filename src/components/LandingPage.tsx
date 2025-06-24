@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,7 +81,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                   <div className={`mx-auto w-16 h-16 rounded-full ${section.color} ${section.hoverColor} flex items-center justify-center mb-4 transition-colors group-hover:shadow-lg`}>
                     <IconComponent className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-gray-700">
+                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-gray-700">
                     {section.title}
                   </CardTitle>
                   <CardDescription className="text-gray-600 text-sm leading-relaxed min-h-[4rem]">
@@ -108,4 +109,5 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default LandingPage;
+
 
