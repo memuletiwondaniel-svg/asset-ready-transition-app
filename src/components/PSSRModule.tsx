@@ -163,11 +163,6 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
 
                     {/* Second important: Status with pending approvals */}
                     <div className="mb-3 flex items-center gap-2">
-                      {pssr.pendingApprovals > 0 && (
-                        <span className="text-sm text-orange-600 font-medium">
-                          {pssr.pendingApprovals} pending approvals -
-                        </span>
-                      )}
                       <Badge 
                         variant="outline" 
                         className={`flex items-center gap-1 w-fit ${getStatusColor(pssr.status)}`}
@@ -175,6 +170,11 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                         {getStatusIcon(pssr.status)}
                         {pssr.status}
                       </Badge>
+                      {pssr.pendingApprovals > 0 && (
+                        <span className="text-sm text-orange-600 font-medium">
+                          - {pssr.pendingApprovals} pending approvals
+                        </span>
+                      )}
                     </div>
                     
                     {/* Third important: PSSR Lead */}
