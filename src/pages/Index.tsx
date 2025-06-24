@@ -84,7 +84,7 @@ const Index = () => {
           
           <h1 className="text-4xl font-bold mb-8 drop-shadow-lg">Welcome to the Project-to-Asset Management System</h1>
           <Button onClick={() => setShowAuth(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg shadow-lg">
-            Access the P2A Application
+            GET STARTED &gt;
           </Button>
         </div>
       )}
