@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,9 +32,9 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({ open, onClose
     projectScope: '',
     plant: '',
     csLocation: '',
-    projectHubLead: { name: '', email: '' },
-    commissioningLead: { name: '', email: '' },
-    constructionLead: { name: '', email: '' },
+    projectHubLead: { name: '', email: '' } as TeamMember,
+    commissioningLead: { name: '', email: '' } as TeamMember,
+    constructionLead: { name: '', email: '' } as TeamMember,
     additionalPersons: [] as AdditionalPerson[],
     supportingDocs: [] as File[]
   });
@@ -111,10 +110,10 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({ open, onClose
     }));
   };
 
-  const updateTeamMember = (role: string, field: string, value: string) => {
+  const updateTeamMember = (role: keyof typeof formData, field: keyof TeamMember, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [role]: { ...prev[role as keyof typeof prev], [field]: value }
+      [role]: { ...(prev[role] as TeamMember), [field]: value }
     }));
   };
 

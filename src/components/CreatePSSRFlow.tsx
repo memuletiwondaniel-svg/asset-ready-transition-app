@@ -132,28 +132,6 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
               <CardContent className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <Label htmlFor="asset" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-blue-600" />
-                      Select Asset *
-                    </Label>
-                    <Select value={formData.asset} onValueChange={(value) => setFormData(prev => ({...prev, asset: value}))}>
-                      <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
-                        <SelectValue placeholder="Choose an asset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assets.map((asset) => (
-                          <SelectItem key={asset} value={asset} className="py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              {asset}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-3">
                     <Label htmlFor="reason" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-blue-600" />
                       Reason for PSSR *
@@ -171,6 +149,30 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.reason && formData.reason !== 'Start-up or Commissioning of a new Asset' && (
+                    <div className="space-y-3">
+                      <Label htmlFor="asset" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-blue-600" />
+                        Select Asset *
+                      </Label>
+                      <Select value={formData.asset} onValueChange={(value) => setFormData(prev => ({...prev, asset: value}))}>
+                        <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
+                          <SelectValue placeholder="Choose an asset" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assets.map((asset) => (
+                            <SelectItem key={asset} value={asset} className="py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                {asset}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 {formData.reason === 'Start-up or Commissioning of a new Asset' && (
@@ -324,10 +326,12 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                 <div className="border-t border-gray-200 pt-8">
                   <h4 className="font-bold text-xl text-gray-900 mb-6">PSSR Summary</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-4 bg-white rounded-lg border border-gray-200">
-                      <span className="text-sm text-gray-500 block mb-1">Asset</span>
-                      <span className="text-lg font-semibold text-gray-900">{formData.asset}</span>
-                    </div>
+                    {formData.asset && (
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <span className="text-sm text-gray-500 block mb-1">Asset</span>
+                        <span className="text-lg font-semibold text-gray-900">{formData.asset}</span>
+                      </div>
+                    )}
                     <div className="p-4 bg-white rounded-lg border border-gray-200">
                       <span className="text-sm text-gray-500 block mb-1">Reason</span>
                       <span className="text-lg font-semibold text-gray-900">{formData.reason}</span>
@@ -437,7 +441,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
             
             <Button 
               onClick={handleContinue} 
-              disabled={!formData.asset || !formData.reason || !formData.scope}
+              disabled={!formData.reason || !formData.scope || (formData.reason !== 'Start-up or Commissioning of a new Asset' && !formData.asset)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               Continue
