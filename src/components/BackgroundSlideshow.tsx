@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 const BackgroundSlideshow: React.FC = () => {
@@ -71,10 +72,10 @@ const BackgroundSlideshow: React.FC = () => {
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* BGC Fun Facts Overlay - Centered */}
+      {/* BGC Fun Facts Overlay - Positioned to the right of login modal */}
       <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
         <div 
-          className={`bg-black/70 backdrop-blur-sm rounded-lg p-6 text-white transition-opacity duration-[3000ms] ease-in-out max-w-4xl ${
+          className={`bg-black/70 backdrop-blur-sm rounded-lg p-6 text-white transition-opacity duration-[3000ms] ease-in-out max-w-4xl ml-80 ${
             bgcFacts[currentImageIndex] ? 'opacity-100' : 'opacity-0'
           }`}
         >
