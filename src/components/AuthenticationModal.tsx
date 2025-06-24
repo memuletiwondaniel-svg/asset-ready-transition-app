@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -93,7 +92,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
           <Card className="bg-white/95 backdrop-blur-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">
-                {loginMode === 'login' ? 'Standard Login' : 'User Registration'}
+                {loginMode === 'login' ? 'Standard Login' : 'New User Registration'}
               </CardTitle>
               <CardDescription>
                 {loginMode === 'login' 
