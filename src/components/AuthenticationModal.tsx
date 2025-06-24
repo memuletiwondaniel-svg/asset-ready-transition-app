@@ -52,7 +52,15 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white/90 backdrop-blur-sm">
+      <DialogContent 
+        className="max-w-md bg-white/90 backdrop-blur-sm"
+        style={{
+          backgroundImage: `url('/lovable-uploads/1b8b3c79-ed2b-40c1-89fc-280a469266a8.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         <div className="space-y-4">
           {loginMode === 'login' && (
             <Card className="bg-white/95 backdrop-blur-sm">
