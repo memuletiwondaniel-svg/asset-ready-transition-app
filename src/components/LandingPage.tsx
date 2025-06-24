@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     {
       id: 'analytics',
       title: 'FAC',
-      description: 'View project metrics and generate reports',
+      description: 'Seamlessly Manage all prerequisites to enable final transfer of an operational facility from Project to Asset team using the Final Acceptance Certificate (FAC) and Handover workflow',
       icon: BarChart3,
       color: 'bg-purple-500',
       hoverColor: 'hover:bg-purple-600'
