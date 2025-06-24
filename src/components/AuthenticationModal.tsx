@@ -92,7 +92,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 
           <Card className="bg-white/95 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
+              <CardTitle className={`text-lg ${loginMode === 'register' ? 'text-center font-bold text-blue-600' : ''}`}>
                 {loginMode === 'login' ? 'Standard Login' : 'New User Registration'}
               </CardTitle>
               <CardDescription>
