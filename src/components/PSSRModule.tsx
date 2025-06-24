@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ArrowLeft, Plus, Search, Filter, Eye, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
@@ -27,6 +28,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       progress: 75,
       created: '2024-01-15',
       pssrLead: 'Ahmed Al-Rashid',
+      pssrLeadAvatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face',
       pendingApprovals: 3,
       completedDate: null
     },
@@ -39,6 +41,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       progress: 30,
       created: '2024-01-20',
       pssrLead: 'Sarah Johnson',
+      pssrLeadAvatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face',
       pendingApprovals: 0,
       completedDate: null
     },
@@ -51,6 +54,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       progress: 100,
       created: '2024-01-10',
       pssrLead: 'Mohammed Hassan',
+      pssrLeadAvatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face',
       pendingApprovals: 0,
       completedDate: '2024-02-08'
     },
@@ -63,6 +67,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       progress: 45,
       created: '2024-01-25',
       pssrLead: 'Omar Al-Basri',
+      pssrLeadAvatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face',
       pendingApprovals: 5,
       completedDate: null
     }
@@ -177,8 +182,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       )}
                     </div>
                     
-                    {/* Third important: PSSR Lead */}
-                    <div className="text-sm text-gray-600 mb-2">
+                    {/* Third important: PSSR Lead with Avatar */}
+                    <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
+                        <AvatarFallback className="text-xs">
+                          {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
                       <span>PSSR Lead: {pssr.pssrLead}</span>
                     </div>
                     
