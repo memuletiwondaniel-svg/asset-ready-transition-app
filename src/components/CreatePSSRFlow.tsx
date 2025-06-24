@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,7 +44,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     'Start-up or Commissioning of a new Asset',
     'Restart following significant modification to an existing Asset\'s Hardware, Safeguarding or Operating Philosophy',
     'Restart following a process safety incident',
-    'Others (Specify)'
+    'Others (specify in the Scope Description)'
   ];
 
   const projects = [
