@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck, FileText, Building2, Briefcase, Plus, User, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck, FileText, Building2, Briefcase, Plus, User, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PSSRChecklist from './PSSRChecklist';
 import AddNewProjectWidget from './AddNewProjectWidget';
 
@@ -22,6 +23,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
   const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+  const [showOthers, setShowOthers] = useState(false);
   const [formData, setFormData] = useState({
     asset: '',
     reason: '',
@@ -52,18 +54,155 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     'Others (specify in the Scope Description)'
   ];
 
-  // Extended projects list from PSSR data
+  // Extended projects list with team information
   const projects = [
-    { id: 'DP 300', name: 'HM Additional Compressors' },
-    { id: 'DP 163', name: 'LPG Unit 12.1 Rehabilitation' },
-    { id: 'DP 083C', name: 'UQ Jetty 2 Export Terminal' },
-    { id: 'DP 317', name: 'Majnoon New Gas Tie-in' },
-    { id: 'DP 33A', name: 'Hammar New TEG' },
-    { id: 'DP 368', name: 'CS7 to CS6 Cross-over Line' },
-    { id: 'DP 245', name: 'KAZ Flare System Upgrade' },
-    { id: 'DP 156', name: 'NRNGL Gas Processing Enhancement' },
-    { id: 'DP 421', name: 'BNGL Storage Tank Expansion' },
-    { id: 'DP 289', name: 'UQ Pipeline Integrity Project' }
+    { 
+      id: 'DP 300', 
+      name: 'HM Additional Compressors',
+      hubLead: {
+        name: 'Ahmed Al-Rashid',
+        avatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'Sarah Johnson',
+          role: 'Commissioning Lead',
+          avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
+        },
+        {
+          name: 'Mohammed Hassan',
+          role: 'Construction Lead',
+          avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    },
+    { 
+      id: 'DP 163', 
+      name: 'LPG Unit 12.1 Rehabilitation',
+      hubLead: {
+        name: 'Omar Al-Basri',
+        avatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'Lisa Chen',
+          role: 'Commissioning Lead',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    },
+    { 
+      id: 'DP 083C', 
+      name: 'UQ Jetty 2 Export Terminal',
+      hubLead: {
+        name: 'David Rodriguez',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'Elena Petrov',
+          role: 'Construction Lead',
+          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b77c?w=150&h=150&fit=crop&crop=face'
+        },
+        {
+          name: 'Marcus Thompson',
+          role: 'Commissioning Lead',
+          avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    },
+    { 
+      id: 'DP 317', 
+      name: 'Majnoon New Gas Tie-in',
+      hubLead: {
+        name: 'Fatima Al-Zahra',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'John Mitchell',
+          role: 'Construction Lead',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    },
+    { 
+      id: 'DP 33A', 
+      name: 'Hammar New TEG',
+      hubLead: {
+        name: 'Yasmin Ibrahim',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'
+      },
+      others: []
+    },
+    { 
+      id: 'DP 368', 
+      name: 'CS7 to CS6 Cross-over Line',
+      hubLead: {
+        name: 'Ali Hassan',
+        avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'Nina Volkov',
+          role: 'Commissioning Lead',
+          avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    },
+    { 
+      id: 'DP 245', 
+      name: 'KAZ Flare System Upgrade',
+      hubLead: {
+        name: 'Karim Al-Sudani',
+        avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=150&h=150&fit=crop&crop=face'
+      },
+      others: []
+    },
+    { 
+      id: 'DP 156', 
+      name: 'NRNGL Gas Processing Enhancement',
+      hubLead: {
+        name: 'Layla Mahmoud',
+        avatar: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'Robert Kim',
+          role: 'Construction Lead',
+          avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    },
+    { 
+      id: 'DP 421', 
+      name: 'BNGL Storage Tank Expansion',
+      hubLead: {
+        name: 'Noor Al-Tamimi',
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face'
+      },
+      others: []
+    },
+    { 
+      id: 'DP 289', 
+      name: 'UQ Pipeline Integrity Project',
+      hubLead: {
+        name: 'Hassan Al-Baghdadi',
+        avatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=face'
+      },
+      others: [
+        {
+          name: 'Maria Santos',
+          role: 'Commissioning Lead',
+          avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face'
+        },
+        {
+          name: 'James Wilson',
+          role: 'Construction Lead',
+          avatar: 'https://images.unsplash.com/photo-1520975954732-35dd22299614?w=150&h=150&fit=crop&crop=face'
+        }
+      ]
+    }
   ];
 
   const handleContinue = () => {
@@ -102,6 +241,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         projectName: selectedProject?.name || ''
       }));
       setProjectSearchOpen(false);
+      setShowOthers(false); // Reset others view when selecting new project
     }
   };
 
@@ -113,6 +253,8 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     }));
     setShowAddProjectWidget(false);
   };
+
+  const selectedProject = projects.find(p => p.id === formData.projectId);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -264,6 +406,70 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                         />
                       </div>
                     </div>
+
+                    {/* Project Details Section */}
+                    {selectedProject && (
+                      <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                        <h5 className="font-medium text-gray-900 mb-4">Project Team</h5>
+                        
+                        {/* Project Hub Lead */}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={selectedProject.hubLead.avatar} alt={selectedProject.hubLead.name} />
+                                <AvatarFallback className="bg-blue-100 text-blue-700">
+                                  {selectedProject.hubLead.name.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-gray-900">{selectedProject.hubLead.name}</p>
+                                <p className="text-sm text-gray-600">Project Hub Lead</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Others Section */}
+                          {selectedProject.others.length > 0 && (
+                            <div className="border-t border-gray-200 pt-4">
+                              <Button
+                                variant="ghost"
+                                onClick={() => setShowOthers(!showOthers)}
+                                className="w-full justify-between p-3 hover:bg-gray-50"
+                              >
+                                <span className="font-medium text-gray-700">
+                                  Others ({selectedProject.others.length})
+                                </span>
+                                {showOthers ? (
+                                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                                )}
+                              </Button>
+                              
+                              {showOthers && (
+                                <div className="space-y-2 mt-2">
+                                  {selectedProject.others.map((member, index) => (
+                                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage src={member.avatar} alt={member.name} />
+                                        <AvatarFallback className="bg-green-100 text-green-700 text-xs">
+                                          {member.name.split(' ').map(n => n[0]).join('')}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                                        <p className="text-xs text-gray-600">{member.role}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
