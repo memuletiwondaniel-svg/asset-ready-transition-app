@@ -71,14 +71,14 @@ const BackgroundSlideshow: React.FC = () => {
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* BGC Fun Facts Overlay */}
-      <div className="absolute bottom-8 left-8 right-8 z-10">
+      {/* BGC Fun Facts Overlay - Centered */}
+      <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
         <div 
-          className={`bg-black/70 backdrop-blur-sm rounded-lg p-6 text-white transition-opacity duration-[3000ms] ease-in-out ${
+          className={`bg-black/70 backdrop-blur-sm rounded-lg p-6 text-white transition-opacity duration-[3000ms] ease-in-out max-w-4xl ${
             bgcFacts[currentImageIndex] ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <p className="text-lg font-medium leading-relaxed">
+          <p className="text-xl font-medium leading-relaxed text-center">
             {bgcFacts[currentImageIndex]}
           </p>
         </div>
