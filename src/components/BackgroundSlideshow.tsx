@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 
 const BackgroundSlideshow: React.FC = () => {
@@ -25,7 +23,7 @@ const BackgroundSlideshow: React.FC = () => {
   ];
 
   const bgcFacts = [
-    "Transforming Wasted Gas into Energy for Iraq"
+    "One of the World's Largest Gas Flaring Reduction project"
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -72,4 +70,3 @@ const BackgroundSlideshow: React.FC = () => {
 };
 
 export default BackgroundSlideshow;
-
