@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const BackgroundSlideshow: React.FC = () => {
@@ -41,7 +40,8 @@ const BackgroundSlideshow: React.FC = () => {
     "+ 30% cost reduction: BGC's operations have reduced gas processing costs by 30% through innovative technology and efficient processes",
     "+ 10 billion cubic meters: BGC has captured and processed over 10 billion cubic meters of associated gas that would otherwise be flared",
     "+ 25 international awards: BGC has received 25 international awards for excellence in gas processing, environmental protection, and operational safety",
-    "+ 100% environmental compliance: BGC maintains 100% compliance with international environmental standards, leading Iraq's commitment to sustainable energy"
+    "+ 100% environmental compliance: BGC maintains 100% compliance with international environmental standards, leading Iraq's commitment to sustainable energy",
+    "+ 950mmscf/d: Ramped up gas processing capacity from 250mmscf/d to 950mmscf/d"
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
