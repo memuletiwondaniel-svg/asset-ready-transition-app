@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const canvasSections = [
     {
       id: 'pssr',
-      title: 'PAC',
+      title: 'PSSR',
       description: 'Track and Manage Provisional Acceptance Handover and Certificates (PAC)',
       icon: FileText,
       color: 'bg-blue-500',
@@ -20,7 +21,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 'assets',
-      title: 'Asset Management', 
+      title: 'PAC', 
       description: 'Track and manage project assets and equipment',
       icon: Settings,
       color: 'bg-green-500',
