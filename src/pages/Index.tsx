@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import AuthenticationModal from "@/components/AuthenticationModal";
@@ -36,7 +37,7 @@ const Index = () => {
             />
             <div className="flex flex-col">
               <h1 className="font-bold text-white mb-1 text-2xl">Basrah Gas Company</h1>
-              <p className="text-2xl text-white" dir="rtl">شركة البصرة للغاز</p>
+              <p className="text-xl text-white" dir="rtl">شركة البصرة للغاز</p>
             </div>
           </div>
           
