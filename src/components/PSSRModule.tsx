@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,9 +27,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       status: 'Under Review',
       progress: 75,
       created: '2024-01-15',
-      dueDate: '2024-02-15',
       pssrLead: 'Ahmed Al-Rashid',
-      pendingApprovals: 3
+      pendingApprovals: 3,
+      completedDate: null
     },
     {
       id: 'PSSR-2024-002',
@@ -38,9 +39,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       status: 'Draft',
       progress: 30,
       created: '2024-01-20',
-      dueDate: '2024-02-20',
       pssrLead: 'Sarah Johnson',
-      pendingApprovals: 0
+      pendingApprovals: 0,
+      completedDate: null
     },
     {
       id: 'PSSR-2024-003',
@@ -50,9 +51,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       status: 'Approved',
       progress: 100,
       created: '2024-01-10',
-      dueDate: '2024-02-10',
       pssrLead: 'Mohammed Hassan',
-      pendingApprovals: 0
+      pendingApprovals: 0,
+      completedDate: '2024-02-08'
     },
     {
       id: 'PSSR-2024-004',
@@ -62,9 +63,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       status: 'Under Review',
       progress: 45,
       created: '2024-01-25',
-      dueDate: '2024-02-25',
       pssrLead: 'Omar Al-Basri',
-      pendingApprovals: 5
+      pendingApprovals: 5,
+      completedDate: null
     }
   ];
 
@@ -185,7 +186,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     {/* Additional info */}
                     <div className="flex flex-wrap gap-4 text-xs text-gray-500 mt-2">
                       <span>Created: {pssr.created}</span>
-                      <span>Due: {pssr.dueDate}</span>
+                      {pssr.completedDate && (
+                        <span>Completed: {pssr.completedDate}</span>
+                      )}
                     </div>
                   </div>
                   
