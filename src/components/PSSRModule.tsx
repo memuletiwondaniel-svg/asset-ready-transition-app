@@ -1,21 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem 
-} from '@/components/ui/dropdown-menu';
-import { ArrowLeft, Plus, Search, Filter, Eye, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
+import PSSRFilters from './PSSRFilters';
+import PSSRList from './PSSRList';
 
 interface PSSRModuleProps {
   onBack: () => void;
@@ -132,33 +122,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     });
   };
 
-  const hasActiveFilters = filters.plant.length > 0 || filters.status.length > 0 || filters.lead.length > 0;
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'under review': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'draft': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getProgressBarColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved': return 'bg-green-600';
-      case 'under review': return 'bg-yellow-600';
-      case 'draft': return 'bg-gray-600';
-      default: return 'bg-gray-600';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved': return <CheckCircle2 className="h-4 w-4" />;
-      case 'under review': return <Clock className="h-4 w-4" />;
-      case 'draft': return <AlertCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
-    }
+  const handleViewDetails = (pssrId: string) => {
+    setSelectedPSSR(pssrId);
+    setActiveView('details');
   };
 
   if (activeView === 'create') {
@@ -202,177 +168,23 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search PSSRs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-                {hasActiveFilters && (
-                  <span className="ml-1 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5">
-                    {filters.plant.length + filters.status.length + filters.lead.length}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Filter by Plant</DropdownMenuLabel>
-              {uniquePlants.map(plant => (
-                <DropdownMenuCheckboxItem
-                  key={plant}
-                  checked={filters.plant.includes(plant)}
-                  onCheckedChange={() => toggleFilter('plant', plant)}
-                >
-                  {plant}
-                </DropdownMenuCheckboxItem>
-              ))}
-              
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-              {uniqueStatuses.map(status => (
-                <DropdownMenuCheckboxItem
-                  key={status}
-                  checked={filters.status.includes(status)}
-                  onCheckedChange={() => toggleFilter('status', status)}
-                >
-                  {status}
-                </DropdownMenuCheckboxItem>
-              ))}
-              
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filter by PSSR Lead</DropdownMenuLabel>
-              {uniqueLeads.map(lead => (
-                <DropdownMenuCheckboxItem
-                  key={lead}
-                  checked={filters.lead.includes(lead)}
-                  onCheckedChange={() => toggleFilter('lead', lead)}
-                >
-                  {lead}
-                </DropdownMenuCheckboxItem>
-              ))}
-              
-              {hasActiveFilters && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={clearAllFilters}>
-                    Clear All Filters
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Description under search */}
-        <div className="mb-6">
-          <p className="text-sm text-gray-600">
-            Showing PSSRs requiring action from You ({filteredPSSRs.length} of {pssrList.length})
-          </p>
-        </div>
+        <PSSRFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filters={filters}
+          onToggleFilter={toggleFilter}
+          onClearFilters={clearAllFilters}
+          uniquePlants={uniquePlants}
+          uniqueStatuses={uniqueStatuses}
+          uniqueLeads={uniqueLeads}
+        />
 
         {/* PSSR List */}
-        <div className="space-y-3">
-          {filteredPSSRs.map((pssr) => (
-            <Card key={pssr.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-6">
-                  <div className="flex-1 min-w-0">
-                    {/* Project ID and Name with PSSR ID badge on the same row */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-lg font-bold text-gray-900 truncate">
-                        {pssr.projectId} - {pssr.projectName}
-                      </h3>
-                      <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 flex-shrink-0">
-                        {pssr.id}
-                      </Badge>
-                    </div>
-                    
-                    {/* Plant info */}
-                    <div className="mb-2">
-                      <p className="text-sm text-gray-600">Plant: <span className="font-medium">{pssr.asset}</span></p>
-                    </div>
-
-                    {/* Status with pending approvals */}
-                    <div className="mb-2 flex items-center gap-2">
-                      <Badge 
-                        variant="outline" 
-                        className={`flex items-center gap-1 w-fit ${getStatusColor(pssr.status)}`}
-                      >
-                        {getStatusIcon(pssr.status)}
-                        {pssr.status}
-                      </Badge>
-                      {pssr.pendingApprovals > 0 && (
-                        <span className="text-sm text-orange-600 font-medium">
-                          - {pssr.pendingApprovals} pending approvals
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* PSSR Lead with Avatar */}
-                    <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                      <Avatar className="h-7 w-7 flex-shrink-0">
-                        <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
-                        <AvatarFallback className="text-xs">
-                          {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="truncate">{pssr.pssrLead} (PSSR Lead)</span>
-                    </div>
-                    
-                    {/* Additional info */}
-                    <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-                      <span>Created: {pssr.created}</span>
-                      {pssr.completedDate && (
-                        <span>Completed: {pssr.completedDate}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-end gap-3 flex-shrink-0">
-                    <div className="text-right">
-                      <p className="text-xs text-gray-600 mb-1">Overall Progress</p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all ${getProgressBarColor(pssr.status)}`}
-                            style={{ width: `${pssr.progress}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-xs font-medium">{pssr.progress}%</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      size="sm" 
-                      onClick={() => {
-                        setSelectedPSSR(pssr.id);
-                        setActiveView('details');
-                      }}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredPSSRs.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No PSSRs match your current filters.</p>
-          </div>
-        )}
+        <PSSRList
+          pssrs={filteredPSSRs}
+          onViewDetails={handleViewDetails}
+          totalCount={pssrList.length}
+        />
       </main>
     </div>
   );
