@@ -1,25 +1,78 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import AuthenticationModal from "@/components/AuthenticationModal";
 import PSSRModule from "@/components/PSSRModule";
+import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
+
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
+
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
     setShowAuth(false);
   };
+
   const handleBack = () => {
     setIsAuthenticated(false);
+    setCurrentSection(null);
   };
-  if (isAuthenticated) {
-    return <PSSRModule onBack={handleBack} />;
+
+  const handleNavigate = (section: string) => {
+    setCurrentSection(section);
+  };
+
+  const handleBackToLanding = () => {
+    setCurrentSection(null);
+  };
+
+  // Show specific section based on navigation
+  if (isAuthenticated && currentSection) {
+    switch (currentSection) {
+      case 'pssr':
+        return <PSSRModule onBack={handleBackToLanding} />;
+      case 'assets':
+        // Placeholder for Asset Management - can be implemented later
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Asset Management</h1>
+              <p className="text-gray-600 mb-6">Coming Soon...</p>
+              <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
+            </div>
+          </div>
+        );
+      case 'analytics':
+        // Placeholder for Analytics - can be implemented later
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Analytics & Reporting</h1>
+              <p className="text-gray-600 mb-6">Coming Soon...</p>
+              <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
+            </div>
+          </div>
+        );
+      default:
+        return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+    }
   }
-  return <div className="min-h-screen relative flex items-center justify-center">
+
+  // Show landing page after authentication
+  if (isAuthenticated) {
+    return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+  }
+
+  // Show welcome screen before authentication
+  return (
+    <div className="min-h-screen relative flex items-center justify-center">
       <BackgroundSlideshow showFunFacts={showAuth} />
       
-      {!showAuth && <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
+      {!showAuth && (
+        <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
           {/* BGC Logo with Text */}
           <div className="flex items-center justify-center mb-6">
             <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-16 w-auto mr-4" />
@@ -33,9 +86,12 @@ const Index = () => {
           <Button onClick={() => setShowAuth(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg shadow-lg">
             Access the P2A Application
           </Button>
-        </div>}
+        </div>
+      )}
 
       <AuthenticationModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
