@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck, FileText, Building2, Briefcase } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Upload, X, CheckCircle, ClipboardCheck, FileText, Building2, Briefcase, Plus, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import PSSRChecklist from './PSSRChecklist';
+import AddNewProjectWidget from './AddNewProjectWidget';
 
 interface CreatePSSRFlowProps {
   onBack: () => void;
@@ -17,6 +18,7 @@ interface CreatePSSRFlowProps {
 const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
   const [formData, setFormData] = useState({
     asset: '',
     reason: '',
@@ -47,10 +49,18 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     'Others (specify in the Scope Description)'
   ];
 
+  // Extended projects list from PSSR data
   const projects = [
-    { id: 'BGC-2024-001', name: 'Phase 3 Expansion Project' },
-    { id: 'BGC-2024-002', name: 'Safety Systems Upgrade' },
-    { id: 'BGC-2024-003', name: 'Compression Station Enhancement' }
+    { id: 'DP 300', name: 'HM Additional Compressors' },
+    { id: 'DP 163', name: 'LPG Unit 12.1 Rehabilitation' },
+    { id: 'DP 083C', name: 'UQ Jetty 2 Export Terminal' },
+    { id: 'DP 317', name: 'Majnoon New Gas Tie-in' },
+    { id: 'DP 33A', name: 'Hammar New TEG' },
+    { id: 'DP 368', name: 'CS7 to CS6 Cross-over Line' },
+    { id: 'DP 245', name: 'KAZ Flare System Upgrade' },
+    { id: 'DP 156', name: 'NRNGL Gas Processing Enhancement' },
+    { id: 'DP 421', name: 'BNGL Storage Tank Expansion' },
+    { id: 'DP 289', name: 'UQ Pipeline Integrity Project' }
   ];
 
   const handleContinue = () => {
@@ -75,6 +85,28 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
       ...prev,
       files: prev.files.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleProjectSelect = (value: string) => {
+    if (value === 'add-new') {
+      setShowAddProjectWidget(true);
+    } else {
+      const selectedProject = projects.find(p => p.id === value);
+      setFormData(prev => ({
+        ...prev,
+        projectId: value,
+        projectName: selectedProject?.name || ''
+      }));
+    }
+  };
+
+  const handleNewProjectAdded = (projectData: any) => {
+    setFormData(prev => ({
+      ...prev,
+      projectId: projectData.projectId,
+      projectName: projectData.projectTitle
+    }));
+    setShowAddProjectWidget(false);
   };
 
   const renderStepContent = () => {
@@ -147,14 +179,22 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <Label htmlFor="projectId" className="text-sm font-semibold text-gray-700">Project ID</Label>
-                        <Select value={formData.projectId} onValueChange={(value) => setFormData(prev => ({...prev, projectId: value}))}>
+                        <Select value={formData.projectId} onValueChange={handleProjectSelect}>
                           <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                             <SelectValue placeholder="Select project" />
                           </SelectTrigger>
                           <SelectContent>
                             {projects.map((project) => (
-                              <SelectItem key={project.id} value={project.id} className="py-3">{project.id}</SelectItem>
+                              <SelectItem key={project.id} value={project.id} className="py-3">
+                                {project.id} - {project.name}
+                              </SelectItem>
                             ))}
+                            <SelectItem value="add-new" className="py-3 border-t border-gray-200 bg-blue-50">
+                              <div className="flex items-center gap-2 text-blue-600 font-medium">
+                                <Plus className="h-4 w-4" />
+                                Add New Project
+                              </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -165,6 +205,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                           onChange={(e) => setFormData(prev => ({...prev, projectName: e.target.value}))}
                           placeholder="Project name"
                           className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors"
+                          disabled={formData.projectId && formData.projectId !== 'add-new'}
                         />
                       </div>
                     </div>
@@ -435,6 +476,13 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Add New Project Widget */}
+      <AddNewProjectWidget
+        open={showAddProjectWidget}
+        onClose={() => setShowAddProjectWidget(false)}
+        onSubmit={handleNewProjectAdded}
+      />
     </div>
   );
 };
