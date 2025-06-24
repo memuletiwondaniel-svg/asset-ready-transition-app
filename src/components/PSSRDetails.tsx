@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,32 +66,32 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved': return <CheckCircle2 className="h-4 w-4" />;
-      case 'under review': return <Clock className="h-4 w-4" />;
-      case 'pending': return <AlertCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
+      case 'approved': return <CheckCircle2 className="h-3 w-3" />;
+      case 'under review': return <Clock className="h-3 w-3" />;
+      case 'pending': return <AlertCircle className="h-3 w-3" />;
+      default: return <AlertCircle className="h-3 w-3" />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={onBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6">
+          <div className="flex justify-between items-center h-12">
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" onClick={onBack} size="sm">
+                <ArrowLeft className="h-3 w-3 mr-1" />
                 Back to PSSR List
               </Button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{pssrData.id}</h1>
-                <p className="text-sm text-gray-600">{pssrData.title}</p>
+                <h1 className="text-lg font-bold text-gray-900">{pssrData.id}</h1>
+                <p className="text-xs text-gray-600">{pssrData.title}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               <Badge 
                 variant="outline" 
-                className={`flex items-center gap-1 ${getStatusColor(pssrData.status)}`}
+                className={`flex items-center gap-1 text-xs ${getStatusColor(pssrData.status)}`}
               >
                 {getStatusIcon(pssrData.status)}
                 {pssrData.status}
@@ -102,41 +101,41 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="team">Review Team</TabsTrigger>
-            <TabsTrigger value="checklist">Checklist</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4 h-8">
+            <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+            <TabsTrigger value="team" className="text-xs">Review Team</TabsTrigger>
+            <TabsTrigger value="checklist" className="text-xs">Checklist</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs">Activity</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4">
             {/* Progress Overview */}
             <Card>
-              <CardHeader>
-                <CardTitle>PSSR Progress</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">PSSR Progress</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="pt-0">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Overall Progress</span>
-                    <span className="text-sm text-gray-600">{pssrData.progress}%</span>
+                    <span className="text-xs font-medium">Overall Progress</span>
+                    <span className="text-xs text-gray-600">{pssrData.progress}%</span>
                   </div>
-                  <Progress value={pssrData.progress} className="w-full" />
+                  <Progress value={pssrData.progress} className="w-full h-2" />
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">{pssrData.pendingApprovals}</p>
-                      <p className="text-sm text-gray-600">Pending Approvals</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xl font-bold text-blue-600">{pssrData.pendingApprovals}</p>
+                      <p className="text-xs text-gray-600">Pending Approvals</p>
                     </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">12</p>
-                      <p className="text-sm text-gray-600">Days Remaining</p>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xl font-bold text-green-600">12</p>
+                      <p className="text-xs text-gray-600">Days Remaining</p>
                     </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">8</p>
-                      <p className="text-sm text-gray-600">Team Members</p>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xl font-bold text-orange-600">8</p>
+                      <p className="text-xs text-gray-600">Team Members</p>
                     </div>
                   </div>
                 </div>
@@ -145,68 +144,68 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
 
             {/* Basic Information */}
             <Card>
-              <CardHeader>
-                <CardTitle>PSSR Information</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">PSSR Information</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Asset</label>
-                      <p className="text-gray-900">{pssrData.asset}</p>
+                      <label className="text-xs font-medium text-gray-600">Asset</label>
+                      <p className="text-sm text-gray-900">{pssrData.asset}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Reason</label>
-                      <p className="text-gray-900">{pssrData.reason}</p>
+                      <label className="text-xs font-medium text-gray-600">Reason</label>
+                      <p className="text-sm text-gray-900">{pssrData.reason}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Project ID</label>
-                      <p className="text-gray-900">{pssrData.projectId}</p>
+                      <label className="text-xs font-medium text-gray-600">Project ID</label>
+                      <p className="text-sm text-gray-900">{pssrData.projectId}</p>
                     </div>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Initiator</label>
-                      <p className="text-gray-900">{pssrData.initiator}</p>
+                      <label className="text-xs font-medium text-gray-600">Initiator</label>
+                      <p className="text-sm text-gray-900">{pssrData.initiator}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Created Date</label>
-                      <p className="text-gray-900">{pssrData.created}</p>
+                      <label className="text-xs font-medium text-gray-600">Created Date</label>
+                      <p className="text-sm text-gray-900">{pssrData.created}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Due Date</label>
-                      <p className="text-gray-900">{pssrData.dueDate}</p>
+                      <label className="text-xs font-medium text-gray-600">Due Date</label>
+                      <p className="text-sm text-gray-900">{pssrData.dueDate}</p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6">
-                  <label className="text-sm font-medium text-gray-600">Scope Description</label>
-                  <p className="text-gray-900 mt-1">{pssrData.scope}</p>
+                <div className="mt-4">
+                  <label className="text-xs font-medium text-gray-600">Scope Description</label>
+                  <p className="text-sm text-gray-900 mt-1">{pssrData.scope}</p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="team" className="space-y-6">
+          <TabsContent value="team" className="space-y-4">
             {/* Technical Authorities */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <Users className="h-4 w-4 mr-2" />
                   Technical Authorities
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="pt-0">
+                <div className="space-y-2">
                   {pssrData.teamMembers.technicalAuthorities.map((member, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div>
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-sm text-gray-600">{member.role}</p>
+                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="text-xs text-gray-600">{member.role}</p>
                       </div>
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1 ${getStatusColor(member.status)}`}
+                        className={`flex items-center gap-1 text-xs ${getStatusColor(member.status)}`}
                       >
                         {getStatusIcon(member.status)}
                         {member.status}
@@ -219,20 +218,20 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
 
             {/* Asset Team */}
             <Card>
-              <CardHeader>
-                <CardTitle>Asset Team</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Asset Team</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="pt-0">
+                <div className="space-y-2">
                   {pssrData.teamMembers.assetTeam.map((member, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div>
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-sm text-gray-600">{member.role}</p>
+                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="text-xs text-gray-600">{member.role}</p>
                       </div>
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1 ${getStatusColor(member.status)}`}
+                        className={`flex items-center gap-1 text-xs ${getStatusColor(member.status)}`}
                       >
                         {getStatusIcon(member.status)}
                         {member.status}
@@ -245,20 +244,20 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
 
             {/* Project Team */}
             <Card>
-              <CardHeader>
-                <CardTitle>Project Team</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Project Team</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="pt-0">
+                <div className="space-y-2">
                   {pssrData.teamMembers.projectTeam.map((member, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div>
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-sm text-gray-600">{member.role}</p>
+                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="text-xs text-gray-600">{member.role}</p>
                       </div>
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1 ${getStatusColor(member.status)}`}
+                        className={`flex items-center gap-1 text-xs ${getStatusColor(member.status)}`}
                       >
                         {getStatusIcon(member.status)}
                         {member.status}
@@ -271,20 +270,20 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
 
             {/* HSSE Team */}
             <Card>
-              <CardHeader>
-                <CardTitle>HSSE Team</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">HSSE Team</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="pt-0">
+                <div className="space-y-2">
                   {pssrData.teamMembers.hsse.map((member, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div>
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-sm text-gray-600">{member.role}</p>
+                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="text-xs text-gray-600">{member.role}</p>
                       </div>
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1 ${getStatusColor(member.status)}`}
+                        className={`flex items-center gap-1 text-xs ${getStatusColor(member.status)}`}
                       >
                         {getStatusIcon(member.status)}
                         {member.status}
@@ -296,36 +295,36 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="checklist" className="space-y-6">
+          <TabsContent value="checklist" className="space-y-4">
             {/* Checklist Progress */}
             {Object.entries(pssrData.checklist).map(([category, data]) => (
               <Card key={category}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center justify-between text-lg">
                     <span className="capitalize">{category.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="text-xs">
                       {data.approved}/{data.total} Approved
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
                       <span>Progress: {data.completed}/{data.total} completed</span>
                       <span>{Math.round((data.completed / data.total) * 100)}%</span>
                     </div>
-                    <Progress value={(data.completed / data.total) * 100} />
+                    <Progress value={(data.completed / data.total) * 100} className="h-2" />
                     
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div className="text-center p-3 bg-green-50 rounded">
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      <div className="text-center p-2 bg-green-50 rounded">
                         <p className="text-lg font-bold text-green-600">{data.approved}</p>
                         <p className="text-xs text-gray-600">Approved</p>
                       </div>
-                      <div className="text-center p-3 bg-yellow-50 rounded">
+                      <div className="text-center p-2 bg-yellow-50 rounded">
                         <p className="text-lg font-bold text-yellow-600">{data.completed - data.approved}</p>
                         <p className="text-xs text-gray-600">Under Review</p>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 rounded">
+                      <div className="text-center p-2 bg-gray-50 rounded">
                         <p className="text-lg font-bold text-gray-600">{data.total - data.completed}</p>
                         <p className="text-xs text-gray-600">Pending</p>
                       </div>
@@ -336,44 +335,44 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
             ))}
           </TabsContent>
 
-          <TabsContent value="activity" className="space-y-6">
+          <TabsContent value="activity" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MessageSquare className="h-5 w-5 mr-2" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <MessageSquare className="h-4 w-4 mr-2" />
                   Recent Activity
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
                     <div className="p-1 bg-green-100 rounded-full">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="h-3 w-3 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Technical Authority approval received</p>
+                      <p className="text-xs font-medium">Technical Authority approval received</p>
                       <p className="text-xs text-gray-600">Dr. Sarah Wilson approved Process Engineering review</p>
                       <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
                     <div className="p-1 bg-blue-100 rounded-full">
-                      <FileText className="h-4 w-4 text-blue-600" />
+                      <FileText className="h-3 w-3 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Checklist item submitted</p>
+                      <p className="text-xs font-medium">Checklist item submitted</p>
                       <p className="text-xs text-gray-600">Safety Systems Integration - submitted for review</p>
                       <p className="text-xs text-gray-500 mt-1">5 hours ago</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
                     <div className="p-1 bg-yellow-100 rounded-full">
-                      <Clock className="h-4 w-4 text-yellow-600" />
+                      <Clock className="h-3 w-3 text-yellow-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Team member assigned</p>
+                      <p className="text-xs font-medium">Team member assigned</p>
                       <p className="text-xs text-gray-600">John Smith assigned as Technical Safety TA</p>
                       <p className="text-xs text-gray-500 mt-1">1 day ago</p>
                     </div>
