@@ -23,10 +23,97 @@ const BackgroundSlideshow: React.FC = () => {
     '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png'
   ];
 
-  const bgcFacts = [
-    "ONE OF THE WORLD'S LARGEST",
-    "GAS FLARING REDUCTION PROJECT",
-    "POWERING PROGRESS IN IRAQ"
+  const bgcFactsSets = [
+    [
+      "ONE OF THE WORLD'S LARGEST",
+      "GAS FLARING REDUCTION PROJECT",
+      "POWERING PROGRESS IN IRAQ"
+    ],
+    [
+      "TRANSFORMING WASTED GAS",
+      "INTO VALUABLE ENERGY",
+      "FOR A SUSTAINABLE FUTURE"
+    ],
+    [
+      "CAPTURING 300 MILLION",
+      "CUBIC FEET PER DAY",
+      "OF ASSOCIATED GAS"
+    ],
+    [
+      "REDUCING CO2 EMISSIONS",
+      "BY 9 MILLION TONS",
+      "ANNUALLY"
+    ],
+    [
+      "POWERING 3 MILLION",
+      "IRAQI HOMES",
+      "WITH CLEAN ENERGY"
+    ],
+    [
+      "CREATING THOUSANDS",
+      "OF LOCAL JOBS",
+      "IN BASRAH REGION"
+    ],
+    [
+      "WORLD-CLASS TECHNOLOGY",
+      "FOR GAS PROCESSING",
+      "AND POWER GENERATION"
+    ],
+    [
+      "PARTNERSHIP BETWEEN",
+      "SHELL AND GOVERNMENT",
+      "OF IRAQ"
+    ],
+    [
+      "REDUCING GAS FLARING",
+      "BY 60% IN IRAQ",
+      "SINCE OPERATIONS BEGAN"
+    ],
+    [
+      "SUPPLYING CLEAN FUEL",
+      "TO IRAQI NATIONAL",
+      "ELECTRICITY GRID"
+    ],
+    [
+      "ENVIRONMENTAL PROTECTION",
+      "THROUGH ADVANCED",
+      "GAS CAPTURE TECHNOLOGY"
+    ],
+    [
+      "CONTRIBUTING TO IRAQ'S",
+      "ENERGY INDEPENDENCE",
+      "AND ECONOMIC GROWTH"
+    ],
+    [
+      "STATE-OF-THE-ART",
+      "GAS PROCESSING FACILITY",
+      "IN KHOR AL-ZUBAIR"
+    ],
+    [
+      "SUPPORTING IRAQ'S",
+      "CLIMATE CHANGE",
+      "COMMITMENTS"
+    ],
+    [
+      "CONVERTING FLARED GAS",
+      "INTO ELECTRICITY",
+      "AND LPG PRODUCTS"
+    ],
+    [
+      "OPERATIONAL EXCELLENCE",
+      "IN MIDDLE EAST",
+      "GAS PROCESSING"
+    ],
+    [
+      "BUILDING SUSTAINABLE",
+      "ENERGY INFRASTRUCTURE",
+      "FOR FUTURE GENERATIONS"
+    ],
+    [
+      "MAXIMIZING VALUE",
+      "FROM IRAQ'S",
+      "NATURAL RESOURCES"
+    ]
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -38,6 +125,8 @@ const BackgroundSlideshow: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
+
+  const currentFacts = bgcFactsSets[currentImageIndex] || bgcFactsSets[0];
 
   return (
     <div className="fixed inset-0 -z-10">
@@ -60,7 +149,7 @@ const BackgroundSlideshow: React.FC = () => {
       <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
         <div className="bg-black/70 backdrop-blur-sm rounded-lg p-8 text-white max-w-4xl ml-80">
           <div className="text-center space-y-2">
-            {bgcFacts.map((fact, index) => (
+            {currentFacts.map((fact, index) => (
               <p key={index} className="text-4xl font-bold leading-tight tracking-wide">
                 {fact}
               </p>
