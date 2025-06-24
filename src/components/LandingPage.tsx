@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     {
       id: 'pssr',
       title: 'PSSR',
-      description: 'Pre-Start Up Safety Review processes and checklists',
+      description: 'Pre-Start Up Safety Review',
       icon: FileText,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
