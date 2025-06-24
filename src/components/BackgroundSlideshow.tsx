@@ -146,10 +146,10 @@ const BackgroundSlideshow: React.FC = () => {
       
       {/* BGC Fun Facts Overlay - Positioned to the right of login modal */}
       <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
-        <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 text-white max-w-4xl ml-80">
-          <div className="text-center space-y-3">
+        <div className="bg-black/20 backdrop-blur-sm rounded-lg p-12 text-white max-w-5xl ml-80">
+          <div className="text-left space-y-2">
             {currentFacts.map((fact, index) => (
-              <p key={index} className="text-3xl font-semibold leading-relaxed tracking-normal drop-shadow-lg">
+              <p key={index} className="text-5xl font-bold leading-tight tracking-wide text-white uppercase">
                 {fact}
               </p>
             ))}
