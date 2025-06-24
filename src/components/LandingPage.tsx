@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       {/* Header */}
-      <div className="max-w-6xl mx-auto mb-8">
+      <div className="max-w-6xl mx-auto mb-16">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <img 
@@ -65,28 +66,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       </div>
 
       {/* Main Canvas Sections */}
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto mt-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {canvasSections.map((section) => {
             const IconComponent = section.icon;
             return (
               <Card 
                 key={section.id}
-                className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-gray-300"
+                className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-gray-300 h-80 flex flex-col"
                 onClick={() => onNavigate(section.id)}
               >
-                <CardHeader className="text-center pb-4">
+                <CardHeader className="text-center pb-4 flex-shrink-0">
                   <div className={`mx-auto w-16 h-16 rounded-full ${section.color} ${section.hoverColor} flex items-center justify-center mb-4 transition-colors group-hover:shadow-lg`}>
                     <IconComponent className="h-8 w-8 text-white" />
                   </div>
                   <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-gray-700">
                     {section.title}
                   </CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-gray-600 text-sm leading-relaxed min-h-[4rem]">
                     {section.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center mt-auto pt-4">
                   <Button 
                     className={`w-full ${section.color} ${section.hoverColor} text-white transition-all duration-300`}
                     onClick={(e) => {
@@ -107,3 +108,4 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default LandingPage;
+
