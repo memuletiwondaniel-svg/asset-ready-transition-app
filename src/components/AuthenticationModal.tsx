@@ -52,7 +52,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm fixed left-8 top-1/2 translate-x-0 translate-y-[-50%]">
+      <DialogContent className="max-w-sm fixed left-8 top-1/2 translate-x-0 translate-y-[-50%] z-[100]">
         <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-3 mb-2">
           <DialogTitle className="flex items-center justify-center">
             <P2ALogo size={24} />
