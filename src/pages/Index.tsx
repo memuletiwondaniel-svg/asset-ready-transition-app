@@ -28,6 +28,15 @@ const Index = () => {
       
       {!showAuth && (
         <div className="relative z-10 text-center text-white bg-black/20 backdrop-blur-sm rounded-lg p-8 shadow-lg">
+          {/* BGC Logo */}
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/7b355182-435a-4d3b-895f-46eaf9ce6bfa.png" 
+              alt="Basrah Gas Company Logo" 
+              className="h-20 w-auto"
+            />
+          </div>
+          
           <h1 className="text-4xl font-bold mb-8 drop-shadow-lg">
             Welcome to BGC's Project-to-Asset Management System
           </h1>
