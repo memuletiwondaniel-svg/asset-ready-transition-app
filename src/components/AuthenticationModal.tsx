@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -53,37 +54,37 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-2">
+      <DialogContent className="max-w-sm">
+        <DialogHeader className="bg-white/80 backdrop-blur-sm rounded-lg p-3 mb-2">
           <DialogTitle className="flex items-center justify-center">
-            <P2ALogo size={32} />
+            <P2ALogo size={24} />
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {loginMode === 'login' && (
             <Card className="bg-white/95 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Single Sign-On</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Single Sign-On</CardTitle>
+                <CardDescription className="text-sm">
                   For BGC and Kent employees
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2">
                 <Button 
-                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
+                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg text-sm py-2" 
                   variant="secondary"
                   onClick={() => handleSSOLogin('BGC')}
                 >
-                  <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-6 w-6 mr-2" />
+                  <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-4 w-4 mr-2" />
                   Login with BGC
                 </Button>
                 <Button 
-                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg" 
+                  className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg text-sm py-2" 
                   variant="secondary"
                   onClick={() => handleSSOLogin('Kent')}
                 >
-                  <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-6 w-6 mr-2" />
+                  <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-4 w-4 mr-2" />
                   Login with Kent
                 </Button>
               </CardContent>
@@ -91,57 +92,59 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
           )}
 
           <Card className="bg-white/95 backdrop-blur-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className={`text-lg ${loginMode === 'register' ? 'text-center font-bold text-blue-600' : ''}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className={`text-base ${loginMode === 'register' ? 'text-center font-bold text-blue-600' : ''}`}>
                 {loginMode === 'login' ? 'Standard Login' : 'New User Registration'}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {loginMode === 'login' 
                   ? 'For registered external users or new user registration'
                   : ''
                 }
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               {loginMode === 'login' ? (
                 <>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-sm">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="your.email@company.com"
+                      className="h-8"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-sm">Password</Label>
                     <Input
                       id="password"
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      className="h-8"
                     />
                   </div>
-                  <div className="flex justify-center mb-4">
+                  <div className="flex justify-center mb-3">
                     <div className="flex gap-2 group">
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => handleRegularLogin()}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border group-hover:group-hover:[&:not(:hover)]:opacity-60"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border group-hover:group-hover:[&:not(:hover)]:opacity-60 text-sm py-1"
                       >
-                        <User className="h-4 w-4 mr-2" />
+                        <User className="h-3 w-3 mr-1" />
                         Login
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setLoginMode('register')}
-                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border hover:group-hover:[&~button]:opacity-60"
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border hover:group-hover:[&~button]:opacity-60 text-sm py-1"
                       >
-                        <UserPlus className="h-4 w-4 mr-2" />
+                        <UserPlus className="h-3 w-3 mr-1" />
                         Register
                       </Button>
                     </div>
@@ -150,65 +153,70 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
               ) : (
                 <>
                   <div>
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name" className="text-sm">Full Name</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       placeholder="John Doe"
+                      className="h-8"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="reg-email">Email Address</Label>
+                    <Label htmlFor="reg-email" className="text-sm">Email Address</Label>
                     <Input
                       id="reg-email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="john.doe@company.com"
+                      className="h-8"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="company">Company</Label>
+                    <Label htmlFor="company" className="text-sm">Company</Label>
                     <Input
                       id="company"
                       value={formData.company}
                       onChange={(e) => setFormData({...formData, company: e.target.value})}
                       placeholder="Company Name"
+                      className="h-8"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="role">Role/Position</Label>
+                    <Label htmlFor="role" className="text-sm">Role/Position</Label>
                     <Input
                       id="role"
                       value={formData.role}
                       onChange={(e) => setFormData({...formData, role: e.target.value})}
                       placeholder="e.g., Safety Engineer"
+                      className="h-8"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="justification">Access Justification</Label>
+                    <Label htmlFor="justification" className="text-sm">Access Justification</Label>
                     <Input
                       id="justification"
                       value={formData.justification}
                       onChange={(e) => setFormData({...formData, justification: e.target.value})}
                       placeholder="Reason for needing P2A access"
+                      className="h-8"
                     />
                   </div>
-                  <div className="space-y-3 group">
+                  <div className="space-y-2 group">
                     <Button 
-                      className="w-full flex flex-col py-1.5 leading-tight transition-all duration-300 hover:scale-105 hover:shadow-md group-hover:[&:not(:hover)]:bg-gray-200 group-hover:[&:not(:hover)]:text-gray-600" 
+                      className="w-full flex flex-col py-1 leading-tight transition-all duration-300 hover:scale-105 hover:shadow-md group-hover:[&:not(:hover)]:bg-gray-200 group-hover:[&:not(:hover)]:text-gray-600 text-sm h-auto" 
                       onClick={handleRegistration}
                     >
                       <span>Submit Registration</span>
-                      <span className="text-[9px] opacity-75 -mt-0.5">approval required by BGC</span>
+                      <span className="text-[8px] opacity-75 -mt-0.5">approval required by BGC</span>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border group-hover:[&:not(:hover)]:bg-gray-100 group-hover:[&:not(:hover)]:text-gray-500"
+                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border group-hover:[&:not(:hover)]:bg-gray-100 group-hover:[&:not(:hover)]:text-gray-500 text-sm py-1"
                       onClick={() => setLoginMode('login')}
                     >
-                      <User className="h-4 w-4 mr-2" />
+                      <User className="h-3 w-3 mr-1" />
                       Return to Login Menu
                     </Button>
                   </div>
@@ -223,3 +231,4 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
 };
 
 export default AuthenticationModal;
+
