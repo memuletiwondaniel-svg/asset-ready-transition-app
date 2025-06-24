@@ -24,30 +24,46 @@ const BackgroundSlideshow: React.FC = () => {
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [nextImageIndex, setNextImageIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === images.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 4000); // Reduced from 5000ms to 4000ms
+      setIsTransitioning(true);
+      
+      // Start transition to next image
+      setTimeout(() => {
+        setCurrentImageIndex(nextImageIndex);
+        setNextImageIndex((nextImageIndex + 1) % images.length);
+        setIsTransitioning(false);
+      }, 1500); // Half the transition duration for smoother overlap
+    }, 5000); // Increased interval to allow for longer transitions
 
     return () => clearInterval(interval);
-  }, [images.length]);
+  }, [nextImageIndex, images.length]);
 
   return (
     <div className="fixed inset-0 -z-10">
-      {images.map((image, index) => (
-        <div
-          key={image}
-          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-2000 ease-in-out ${
-            index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-          }`}
-          style={{
-            backgroundImage: `url(${image})`,
-          }}
-        />
-      ))}
+      {/* Current image */}
+      <div
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-3000 ease-in-out ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+        style={{
+          backgroundImage: `url(${images[currentImageIndex]})`,
+        }}
+      />
+      
+      {/* Next image that fades in during transition */}
+      <div
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-3000 ease-in-out ${
+          isTransitioning ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          backgroundImage: `url(${images[nextImageIndex]})`,
+        }}
+      />
+      
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
     </div>
