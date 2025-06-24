@@ -277,17 +277,15 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div className="flex-1">
-                    {/* PSSR ID with original styling first */}
-                    <div className="mb-2">
+                    {/* Project ID and Name with PSSR ID badge on the same row */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {pssr.projectId} - {pssr.projectName}
+                      </h3>
                       <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
                         {pssr.id}
                       </Badge>
                     </div>
-                    
-                    {/* Project ID and Name */}
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {pssr.projectId} - {pssr.projectName}
-                    </h3>
                     
                     {/* Plant info */}
                     <div className="flex items-center gap-3 mb-2">
