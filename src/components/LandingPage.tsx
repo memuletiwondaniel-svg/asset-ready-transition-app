@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,28 +100,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
               </Card>
             );
           })}
-        </div>
-
-        {/* Quick Stats or Additional Info */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-white/50 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-blue-600">24/7</CardTitle>
-              <CardDescription>System Availability</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white/50 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-green-600">Secure</CardTitle>
-              <CardDescription>Data Protection</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white/50 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-purple-600">Integrated</CardTitle>
-              <CardDescription>Workflow Management</CardDescription>
-            </CardHeader>
-          </Card>
         </div>
       </div>
     </div>
