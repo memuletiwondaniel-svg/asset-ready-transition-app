@@ -195,6 +195,9 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       placeholder="Reason for needing P2A access"
                     />
                   </div>
+                  <Button className="w-full" onClick={handleRegistration}>
+                    Submit Registration
+                  </Button>
                   <div className="flex justify-center mb-4">
                     <div className="flex gap-2 group">
                       <Button
@@ -208,9 +211,6 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       </Button>
                     </div>
                   </div>
-                  <Button className="w-full" onClick={handleRegistration}>
-                    Submit Registration
-                  </Button>
                   <div className="text-center">
                     <Badge variant="outline" className="text-xs">
                       Approval required by BGC
