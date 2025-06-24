@@ -277,9 +277,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div className="flex-1">
-                    {/* Most prominent: PSSR ID first, then Project ID and Name */}
+                    {/* PSSR ID first with original design, then Project ID and Name */}
                     <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {pssr.id} - {pssr.projectId} - {pssr.projectName}
+                      <span className="text-blue-600">{pssr.id}</span> - {pssr.projectId} - {pssr.projectName}
                     </h3>
                     
                     {/* Plant info */}
