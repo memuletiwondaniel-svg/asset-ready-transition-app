@@ -143,6 +143,15 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     }
   };
 
+  const getProgressBarColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved': return 'bg-green-600';
+      case 'under review': return 'bg-yellow-600';
+      case 'draft': return 'bg-gray-600';
+      default: return 'bg-gray-600';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved': return <CheckCircle2 className="h-4 w-4" />;
@@ -334,7 +343,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       <div className="flex items-center gap-2">
                         <div className="w-20 bg-gray-200 rounded-full h-2">
                           <div 
-                            className="bg-blue-600 h-2 rounded-full transition-all" 
+                            className={`h-2 rounded-full transition-all ${getProgressBarColor(pssr.status)}`}
                             style={{ width: `${pssr.progress}%` }}
                           ></div>
                         </div>
