@@ -28,13 +28,10 @@ const Index = () => {
       
       {!showAuth && (
         <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
-          {/* BGC Logo */}
-          <div className="flex justify-center mb-6">
-            <img 
-              src="/lovable-uploads/7b355182-435a-4d3b-895f-46eaf9ce6bfa.png" 
-              alt="Basrah Gas Company Logo" 
-              className="h-32 w-auto"
-            />
+          {/* BGC Logo - Text Version */}
+          <div className="flex flex-col items-center mb-6">
+            <h1 className="text-4xl font-bold text-white mb-2">Basrah Gas Company</h1>
+            <p className="text-2xl text-white" dir="rtl">شركة البصرة للغاز</p>
           </div>
           
           <h1 className="text-4xl font-bold mb-8 drop-shadow-lg">
