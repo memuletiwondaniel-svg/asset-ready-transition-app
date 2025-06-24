@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,12 +53,12 @@ const PSSRCard: React.FC<PSSRCardProps> = ({ pssr, onViewDetails }) => {
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-4">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Project ID and Name with PSSR ID badge on the same row */}
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-lg font-bold text-gray-900 truncate">
+            <div className="flex items-center gap-2 mb-1.5">
+              <h3 className="text-base font-bold text-gray-900 truncate">
                 {pssr.projectId} - {pssr.projectName}
               </h3>
               <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 flex-shrink-0">
@@ -66,12 +67,12 @@ const PSSRCard: React.FC<PSSRCardProps> = ({ pssr, onViewDetails }) => {
             </div>
             
             {/* Plant info */}
-            <div className="mb-2">
+            <div className="mb-1.5">
               <p className="text-sm text-gray-600">Plant: <span className="font-medium">{pssr.asset}</span></p>
             </div>
 
             {/* Status with pending approvals */}
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-1.5 flex items-center gap-2">
               <Badge 
                 variant="outline" 
                 className={`flex items-center gap-1 w-fit ${getStatusColor(pssr.status)}`}
@@ -87,8 +88,8 @@ const PSSRCard: React.FC<PSSRCardProps> = ({ pssr, onViewDetails }) => {
             </div>
             
             {/* PSSR Lead with Avatar */}
-            <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-              <Avatar className="h-7 w-7 flex-shrink-0">
+            <div className="text-sm text-gray-600 mb-1.5 flex items-center gap-2">
+              <Avatar className="h-6 w-6 flex-shrink-0">
                 <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
                 <AvatarFallback className="text-xs">
                   {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
