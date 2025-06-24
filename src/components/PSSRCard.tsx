@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,10 +34,10 @@ const PSSRCard: React.FC<PSSRCardProps> = ({ pssr, onViewDetails }) => {
 
   const getProgressBarColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved': return 'bg-green-600';
-      case 'under review': return 'bg-yellow-600';
-      case 'draft': return 'bg-gray-600';
-      default: return 'bg-gray-600';
+      case 'approved': return 'bg-green-800';
+      case 'under review': return 'bg-yellow-800';
+      case 'draft': return 'bg-gray-800';
+      default: return 'bg-gray-800';
     }
   };
 
