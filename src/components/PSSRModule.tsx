@@ -21,36 +21,51 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const pssrList = [
     {
       id: 'PSSR-2024-001',
-      title: 'NRNGL Plant Start-up Commissioning',
-      asset: 'NRNGL Plant',
+      projectId: 'DP 300',
+      projectName: 'HM Additional Compressors',
+      asset: 'Compression Station',
       status: 'Under Review',
       progress: 75,
       created: '2024-01-15',
       dueDate: '2024-02-15',
-      initiator: 'Ahmed Al-Rashid',
+      pssrLead: 'Ahmed Al-Rashid',
       pendingApprovals: 3
     },
     {
       id: 'PSSR-2024-002',
-      title: 'Compression Station Restart',
-      asset: 'Compression Station',
+      projectId: 'DP 163',
+      projectName: 'LPG Unit 12.1 Rehabilitation',
+      asset: 'KAZ Plant',
       status: 'Draft',
       progress: 30,
       created: '2024-01-20',
       dueDate: '2024-02-20',
-      initiator: 'Sarah Johnson',
+      pssrLead: 'Sarah Johnson',
       pendingApprovals: 0
     },
     {
       id: 'PSSR-2024-003',
-      title: 'KAZ Plant Safety System Modification',
-      asset: 'KAZ Plant',
+      projectId: 'DP 083C',
+      projectName: 'UQ Jetty 2 Export Terminal',
+      asset: 'UQ Asset',
       status: 'Approved',
       progress: 100,
       created: '2024-01-10',
       dueDate: '2024-02-10',
-      initiator: 'Mohammed Hassan',
+      pssrLead: 'Mohammed Hassan',
       pendingApprovals: 0
+    },
+    {
+      id: 'PSSR-2024-004',
+      projectId: 'DP 317',
+      projectName: 'Majnoon New Gas Tie-in',
+      asset: 'NRNGL Asset',
+      status: 'Under Review',
+      progress: 45,
+      created: '2024-01-25',
+      dueDate: '2024-02-25',
+      pssrLead: 'Omar Al-Basri',
+      pendingApprovals: 5
     }
   ];
 
@@ -136,34 +151,49 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{pssr.id}</h3>
+                    {/* Most prominent: Project ID and Name */}
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {pssr.projectId} - {pssr.projectName}
+                    </h3>
+                    
+                    {/* Asset info and small PSSR ID */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <p className="text-gray-600">Asset: <span className="font-medium">{pssr.asset}</span></p>
+                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">{pssr.id}</span>
+                    </div>
+
+                    {/* Second important: Status */}
+                    <div className="mb-3">
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1 ${getStatusColor(pssr.status)}`}
+                        className={`flex items-center gap-1 w-fit ${getStatusColor(pssr.status)}`}
                       >
                         {getStatusIcon(pssr.status)}
                         {pssr.status}
                       </Badge>
                     </div>
-                    <p className="text-gray-700 font-medium mb-1">{pssr.title}</p>
-                    <p className="text-sm text-gray-500 mb-3">Asset: {pssr.asset}</p>
                     
+                    {/* Third important: Progress, PSSR Lead, and pending approvals */}
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                      <span>Initiator: {pssr.initiator}</span>
-                      <span>Created: {pssr.created}</span>
-                      <span>Due: {pssr.dueDate}</span>
+                      <span className="font-medium">Progress: {pssr.progress}%</span>
+                      <span>PSSR Lead: {pssr.pssrLead}</span>
                       {pssr.pendingApprovals > 0 && (
                         <span className="text-orange-600 font-medium">
                           {pssr.pendingApprovals} pending approvals
                         </span>
                       )}
                     </div>
+                    
+                    {/* Additional info */}
+                    <div className="flex flex-wrap gap-4 text-xs text-gray-500 mt-2">
+                      <span>Created: {pssr.created}</span>
+                      <span>Due: {pssr.dueDate}</span>
+                    </div>
                   </div>
                   
                   <div className="flex flex-col items-end gap-3">
                     <div className="text-right">
-                      <p className="text-sm text-gray-600 mb-1">Progress</p>
+                      <p className="text-sm text-gray-600 mb-1">Overall Progress</p>
                       <div className="flex items-center gap-2">
                         <div className="w-24 bg-gray-200 rounded-full h-2">
                           <div 
