@@ -23,7 +23,8 @@ const BackgroundSlideshow: React.FC = () => {
   ];
 
   const bgcFacts = [
-    "One of the World's Largest Gas Flaring Reduction project"
+    "One of the World's Largest Gas Flaring Reduction project",
+    "Powering Progress in Iraq"
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
