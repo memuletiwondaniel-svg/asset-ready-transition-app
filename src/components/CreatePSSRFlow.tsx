@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,11 +33,11 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   });
 
   const assets = [
-    'Umm Qasr (UQ)',
-    'KAZ Plant',
-    'NRNGL Plant',
-    'BNGL Plant',
-    'Compression Station'
+    'KAZ',
+    'NRNGL',
+    'UQ',
+    'Compressor Station (CS)',
+    'BNGL'
   ];
 
   const reasons = [
