@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -129,7 +128,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => setLoginMode('login')}
+                        onClick={() => handleRegularLogin()}
                         className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border group-hover:group-hover:[&:not(:hover)]:opacity-60"
                       >
                         <User className="h-4 w-4 mr-2" />
@@ -195,8 +194,9 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       placeholder="Reason for needing P2A access"
                     />
                   </div>
-                  <Button className="w-full" onClick={handleRegistration}>
-                    Submit Registration
+                  <Button className="w-full flex flex-col py-3" onClick={handleRegistration}>
+                    <span>Submit Registration</span>
+                    <span className="text-xs opacity-75 mt-1">approval required by BGC</span>
                   </Button>
                   <div className="flex justify-center mb-4">
                     <div className="flex gap-2 group">
@@ -210,11 +210,6 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         Login
                       </Button>
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <Badge variant="outline" className="text-xs">
-                      Approval required by BGC
-                    </Badge>
                   </div>
                 </>
               )}
