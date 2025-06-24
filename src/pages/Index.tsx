@@ -33,7 +33,7 @@ const Index = () => {
             <img 
               src="/lovable-uploads/7b355182-435a-4d3b-895f-46eaf9ce6bfa.png" 
               alt="Basrah Gas Company Logo" 
-              className="h-20 w-auto"
+              className="h-32 w-auto"
             />
           </div>
           
