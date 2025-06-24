@@ -275,24 +275,24 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
           {filteredPSSRs.map((pssr) => (
             <Card key={pssr.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                  <div className="flex-1">
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex-1 min-w-0">
                     {/* Project ID and Name with PSSR ID badge on the same row */}
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold text-gray-900">
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="text-lg font-bold text-gray-900 truncate">
                         {pssr.projectId} - {pssr.projectName}
                       </h3>
-                      <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
+                      <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 flex-shrink-0">
                         {pssr.id}
                       </Badge>
                     </div>
                     
                     {/* Plant info */}
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="mb-2">
                       <p className="text-sm text-gray-600">Plant: <span className="font-medium">{pssr.asset}</span></p>
                     </div>
 
-                    {/* Second important: Status with pending approvals */}
+                    {/* Status with pending approvals */}
                     <div className="mb-2 flex items-center gap-2">
                       <Badge 
                         variant="outline" 
@@ -308,15 +308,15 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       )}
                     </div>
                     
-                    {/* Third important: PSSR Lead with Avatar first */}
+                    {/* PSSR Lead with Avatar */}
                     <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-7 w-7 flex-shrink-0">
                         <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
                         <AvatarFallback className="text-xs">
                           {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{pssr.pssrLead} (PSSR Lead)</span>
+                      <span className="truncate">{pssr.pssrLead} (PSSR Lead)</span>
                     </div>
                     
                     {/* Additional info */}
@@ -328,7 +328,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-end gap-3 flex-shrink-0">
                     <div className="text-right">
                       <p className="text-xs text-gray-600 mb-1">Overall Progress</p>
                       <div className="flex items-center gap-2">
