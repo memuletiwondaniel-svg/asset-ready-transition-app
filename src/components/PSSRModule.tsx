@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,8 +161,13 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">{pssr.id}</span>
                     </div>
 
-                    {/* Second important: Status */}
-                    <div className="mb-3">
+                    {/* Second important: Status with pending approvals */}
+                    <div className="mb-3 flex items-center gap-2">
+                      {pssr.pendingApprovals > 0 && (
+                        <span className="text-sm text-orange-600 font-medium">
+                          {pssr.pendingApprovals} pending approvals -
+                        </span>
+                      )}
                       <Badge 
                         variant="outline" 
                         className={`flex items-center gap-1 w-fit ${getStatusColor(pssr.status)}`}
@@ -173,14 +177,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       </Badge>
                     </div>
                     
-                    {/* Third important: PSSR Lead and pending approvals */}
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    {/* Third important: PSSR Lead */}
+                    <div className="text-sm text-gray-600 mb-2">
                       <span>PSSR Lead: {pssr.pssrLead}</span>
-                      {pssr.pendingApprovals > 0 && (
-                        <span className="text-orange-600 font-medium">
-                          {pssr.pendingApprovals} pending approvals
-                        </span>
-                      )}
                     </div>
                     
                     {/* Additional info */}
