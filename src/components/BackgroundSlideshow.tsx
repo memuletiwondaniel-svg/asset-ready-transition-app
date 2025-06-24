@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 interface BackgroundSlideshowProps {
@@ -152,6 +153,15 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       {showFunFacts && (
         <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
           <div className="bg-black/20 backdrop-blur-sm rounded-lg p-12 text-white max-w-5xl ml-80">
+            {/* BGC Logo at the top center */}
+            <div className="flex justify-center mb-8">
+              <img 
+                src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" 
+                alt="BGC Logo" 
+                className="h-16 w-auto"
+              />
+            </div>
+            
             <div className="text-left space-y-2">
               {currentFacts.map((fact, index) => (
                 <p key={index} className="text-4xl font-bold leading-tight tracking-wide text-white uppercase">
