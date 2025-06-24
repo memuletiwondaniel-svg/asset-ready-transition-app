@@ -22,7 +22,7 @@ const Index = () => {
       {!showAuth && <div className="relative z-10 text-center text-white bg-gray-900/30 backdrop-blur-sm rounded-lg p-8 shadow-lg">
           {/* BGC Logo - Text Version */}
           <div className="flex flex-col items-center mb-6">
-            <h1 className="text-4xl font-bold text-white mb-2">Basrah Gas Company</h1>
+            <h1 className="font-bold text-white mb-2 text-3xl">Basrah Gas Company</h1>
             <p className="text-2xl text-white" dir="rtl">شركة البصرة للغاز</p>
           </div>
           
