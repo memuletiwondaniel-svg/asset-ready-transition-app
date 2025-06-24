@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import PSSRChecklist from './PSSRChecklist';
 import AddNewProjectWidget from './AddNewProjectWidget';
 
@@ -54,24 +55,29 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     'Others (specify in the Scope Description)'
   ];
 
-  // Extended projects list with team information
+  // Extended projects list with team and plant information
   const projects = [
     { 
       id: 'DP 300', 
       name: 'HM Additional Compressors',
+      plant: 'KAZ',
+      subdivision: 'CS-7',
       hubLead: {
         name: 'Ahmed Al-Rashid',
+        email: 'ahmed.alrashid@company.com',
         avatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'Sarah Johnson',
           role: 'Commissioning Lead',
+          email: 'sarah.johnson@company.com',
           avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
         },
         {
           name: 'Mohammed Hassan',
           role: 'Construction Lead',
+          email: 'mohammed.hassan@company.com',
           avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -79,14 +85,17 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 163', 
       name: 'LPG Unit 12.1 Rehabilitation',
+      plant: 'NRNGL',
       hubLead: {
         name: 'Omar Al-Basri',
+        email: 'omar.albasri@company.com',
         avatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'Lisa Chen',
           role: 'Commissioning Lead',
+          email: 'lisa.chen@company.com',
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -94,19 +103,23 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 083C', 
       name: 'UQ Jetty 2 Export Terminal',
+      plant: 'UQ',
       hubLead: {
         name: 'David Rodriguez',
+        email: 'david.rodriguez@company.com',
         avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'Elena Petrov',
           role: 'Construction Lead',
+          email: 'elena.petrov@company.com',
           avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b77c?w=150&h=150&fit=crop&crop=face'
         },
         {
           name: 'Marcus Thompson',
           role: 'Commissioning Lead',
+          email: 'marcus.thompson@company.com',
           avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -114,14 +127,18 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 317', 
       name: 'Majnoon New Gas Tie-in',
+      plant: 'Compressor Station (CS)',
+      subdivision: 'CS-3',
       hubLead: {
         name: 'Fatima Al-Zahra',
+        email: 'fatima.alzahra@company.com',
         avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'John Mitchell',
           role: 'Construction Lead',
+          email: 'john.mitchell@company.com',
           avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -129,8 +146,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 33A', 
       name: 'Hammar New TEG',
+      plant: 'BNGL',
       hubLead: {
         name: 'Yasmin Ibrahim',
+        email: 'yasmin.ibrahim@company.com',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'
       },
       others: []
@@ -138,14 +157,18 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 368', 
       name: 'CS7 to CS6 Cross-over Line',
+      plant: 'Compressor Station (CS)',
+      subdivision: 'CS-6',
       hubLead: {
         name: 'Ali Hassan',
+        email: 'ali.hassan@company.com',
         avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'Nina Volkov',
           role: 'Commissioning Lead',
+          email: 'nina.volkov@company.com',
           avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -153,8 +176,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 245', 
       name: 'KAZ Flare System Upgrade',
+      plant: 'KAZ',
       hubLead: {
         name: 'Karim Al-Sudani',
+        email: 'karim.alsudani@company.com',
         avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=150&h=150&fit=crop&crop=face'
       },
       others: []
@@ -162,14 +187,17 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 156', 
       name: 'NRNGL Gas Processing Enhancement',
+      plant: 'NRNGL',
       hubLead: {
         name: 'Layla Mahmoud',
+        email: 'layla.mahmoud@company.com',
         avatar: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'Robert Kim',
           role: 'Construction Lead',
+          email: 'robert.kim@company.com',
           avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -177,8 +205,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 421', 
       name: 'BNGL Storage Tank Expansion',
+      plant: 'BNGL',
       hubLead: {
         name: 'Noor Al-Tamimi',
+        email: 'noor.altamimi@company.com',
         avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face'
       },
       others: []
@@ -186,19 +216,23 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     { 
       id: 'DP 289', 
       name: 'UQ Pipeline Integrity Project',
+      plant: 'UQ',
       hubLead: {
         name: 'Hassan Al-Baghdadi',
+        email: 'hassan.albaghdadi@company.com',
         avatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=face'
       },
       others: [
         {
           name: 'Maria Santos',
           role: 'Commissioning Lead',
+          email: 'maria.santos@company.com',
           avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face'
         },
         {
           name: 'James Wilson',
           role: 'Construction Lead',
+          email: 'james.wilson@company.com',
           avatar: 'https://images.unsplash.com/photo-1520975954732-35dd22299614?w=150&h=150&fit=crop&crop=face'
         }
       ]
@@ -241,7 +275,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         projectName: selectedProject?.name || ''
       }));
       setProjectSearchOpen(false);
-      setShowOthers(false); // Reset others view when selecting new project
+      setShowOthers(false);
     }
   };
 
@@ -252,6 +286,20 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
       projectName: projectData.projectTitle
     }));
     setShowAddProjectWidget(false);
+  };
+
+  const handleContextAction = (action: string, person: any) => {
+    switch (action) {
+      case 'chat':
+        window.open(`msteams:/l/chat/0/0?users=${person.email}`, '_blank');
+        break;
+      case 'email':
+        window.open(`mailto:${person.email}`, '_blank');
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(person.email);
+        break;
+    }
   };
 
   const selectedProject = projects.find(p => p.id === formData.projectId);
@@ -336,9 +384,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                               aria-expanded={projectSearchOpen}
                               className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors"
                             >
-                              {formData.projectId
-                                ? `${formData.projectId} - ${projects.find((project) => project.id === formData.projectId)?.name}`
-                                : "Search projects..."}
+                              {formData.projectId || "Search projects..."}
                               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
@@ -407,21 +453,50 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                       </div>
                     </div>
 
-                    {/* Project Details Section */}
+                    {/* Plant Information */}
                     {selectedProject && (
                       <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                        <h5 className="font-medium text-gray-900 mb-4">Plant Information</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <span className="text-sm text-gray-500 block mb-1">Plant</span>
+                            <span className="text-lg font-semibold text-gray-900">{selectedProject.plant}</span>
+                          </div>
+                          {selectedProject.subdivision && selectedProject.plant === 'Compressor Station (CS)' && (
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                              <span className="text-sm text-gray-500 block mb-1">Subdivision</span>
+                              <span className="text-lg font-semibold text-gray-900">{selectedProject.subdivision}</span>
+                            </div>
+                          )}
+                        </div>
+                        
                         <h5 className="font-medium text-gray-900 mb-4">Project Team</h5>
                         
                         {/* Project Hub Lead */}
                         <div className="space-y-4">
                           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={selectedProject.hubLead.avatar} alt={selectedProject.hubLead.name} />
-                                <AvatarFallback className="bg-blue-100 text-blue-700">
-                                  {selectedProject.hubLead.name.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                              </Avatar>
+                              <ContextMenu>
+                                <ContextMenuTrigger>
+                                  <Avatar className="h-10 w-10 cursor-pointer">
+                                    <AvatarImage src={selectedProject.hubLead.avatar} alt={selectedProject.hubLead.name} />
+                                    <AvatarFallback className="bg-blue-100 text-blue-700">
+                                      {selectedProject.hubLead.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </ContextMenuTrigger>
+                                <ContextMenuContent>
+                                  <ContextMenuItem onClick={() => handleContextAction('chat', selectedProject.hubLead)}>
+                                    Chat with {selectedProject.hubLead.name}
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => handleContextAction('email', selectedProject.hubLead)}>
+                                    Send {selectedProject.hubLead.name} an email
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => handleContextAction('copy', selectedProject.hubLead)}>
+                                    Copy {selectedProject.hubLead.name} email address
+                                  </ContextMenuItem>
+                                </ContextMenuContent>
+                              </ContextMenu>
                               <div>
                                 <p className="font-medium text-gray-900">{selectedProject.hubLead.name}</p>
                                 <p className="text-sm text-gray-600">Project Hub Lead</p>
@@ -451,12 +526,27 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
                                 <div className="space-y-2 mt-2">
                                   {selectedProject.others.map((member, index) => (
                                     <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                      <Avatar className="h-8 w-8">
-                                        <AvatarImage src={member.avatar} alt={member.name} />
-                                        <AvatarFallback className="bg-green-100 text-green-700 text-xs">
-                                          {member.name.split(' ').map(n => n[0]).join('')}
-                                        </AvatarFallback>
-                                      </Avatar>
+                                      <ContextMenu>
+                                        <ContextMenuTrigger>
+                                          <Avatar className="h-8 w-8 cursor-pointer">
+                                            <AvatarImage src={member.avatar} alt={member.name} />
+                                            <AvatarFallback className="bg-green-100 text-green-700 text-xs">
+                                              {member.name.split(' ').map(n => n[0]).join('')}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                        </ContextMenuTrigger>
+                                        <ContextMenuContent>
+                                          <ContextMenuItem onClick={() => handleContextAction('chat', member)}>
+                                            Chat with {member.name}
+                                          </ContextMenuItem>
+                                          <ContextMenuItem onClick={() => handleContextAction('email', member)}>
+                                            Send {member.name} an email
+                                          </ContextMenuItem>
+                                          <ContextMenuItem onClick={() => handleContextAction('copy', member)}>
+                                            Copy {member.name} email address
+                                          </ContextMenuItem>
+                                        </ContextMenuContent>
+                                      </ContextMenu>
                                       <div>
                                         <p className="text-sm font-medium text-gray-900">{member.name}</p>
                                         <p className="text-xs text-gray-600">{member.role}</p>
