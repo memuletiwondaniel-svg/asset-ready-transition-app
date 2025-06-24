@@ -31,13 +31,13 @@ const BackgroundSlideshow: React.FC = () => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
       
-      // Start transition to next image
+      // Start transition to next image - much longer delay for slower transition
       setTimeout(() => {
         setCurrentImageIndex(nextImageIndex);
         setNextImageIndex((nextImageIndex + 1) % images.length);
         setIsTransitioning(false);
-      }, 1500); // Half the transition duration for smoother overlap
-    }, 5000); // Increased interval to allow for longer transitions
+      }, 3000); // Increased from 1500ms to 3000ms for much slower transition
+    }, 7000); // Increased interval to 7 seconds to allow for the longer transitions
 
     return () => clearInterval(interval);
   }, [nextImageIndex, images.length]);
@@ -46,7 +46,7 @@ const BackgroundSlideshow: React.FC = () => {
     <div className="fixed inset-0 -z-10">
       {/* Current image */}
       <div
-        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-3000 ease-in-out ${
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[6000ms] ease-in-out ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
         style={{
@@ -56,7 +56,7 @@ const BackgroundSlideshow: React.FC = () => {
       
       {/* Next image that fades in during transition */}
       <div
-        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-3000 ease-in-out ${
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[6000ms] ease-in-out ${
           isTransitioning ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
