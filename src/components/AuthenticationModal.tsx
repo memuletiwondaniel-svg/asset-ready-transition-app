@@ -124,15 +124,26 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     />
                   </div>
                   <div className="flex justify-center mb-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setLoginMode('login')}
-                      className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border"
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Login
-                    </Button>
+                    <div className="flex gap-2 group">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setLoginMode('login')}
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md transform border group-hover:group-hover:[&:not(:hover)]:opacity-60"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Login
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLoginMode('register')}
+                        className="transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border hover:group-hover:[&~button]:opacity-60"
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Register
+                      </Button>
+                    </div>
                   </div>
                 </>
               ) : (
