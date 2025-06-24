@@ -12,7 +12,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const canvasSections = [
     {
       id: 'pssr',
-      title: 'PSSR',
+      title: 'PAC',
       description: 'Pre-Start Up Safety Review',
       icon: FileText,
       color: 'bg-blue-500',
