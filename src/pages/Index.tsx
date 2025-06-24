@@ -31,7 +31,7 @@ const Index = () => {
           {/* BGC Logo with Text */}
           <div className="flex items-center justify-center mb-6">
             <img 
-              src="/lovable-uploads/9070d994-4812-46b4-bc7f-a47e97ab706d.png" 
+              src="/lovable-uploads/2a2a9f93-6c5a-4520-b802-82ee00f3a43c.png" 
               alt="BGC Logo" 
               className="h-16 w-auto mr-4"
             />
