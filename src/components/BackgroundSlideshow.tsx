@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const BackgroundSlideshow: React.FC = () => {
@@ -24,13 +23,12 @@ const BackgroundSlideshow: React.FC = () => {
   ];
 
   const bgcFacts = [
-    "BGC is one of the world's largest gas flaring reduction projects, capturing and processing associated gas that would otherwise be flared.",
-    "The Basrah Gas Company is powering progress in Iraq by transforming the energy sector and contributing to sustainable development.",
-    "BGC transforms wasted gas into valuable energy for Iraq, reducing environmental impact while meeting growing energy demands."
+    "One of the World's Largest Gas Flaring Reduction project",
+    "Powering Progress in Iraq",
+    "Transforming Wasted Gas into Energy for Iraq"
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [currentFactIndex, setCurrentFactIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -39,14 +37,6 @@ const BackgroundSlideshow: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
-
-  useEffect(() => {
-    const factInterval = setInterval(() => {
-      setCurrentFactIndex((prevIndex) => (prevIndex + 1) % bgcFacts.length);
-    }, 10000); // Change fact every 10 seconds
-
-    return () => clearInterval(factInterval);
-  }, [bgcFacts.length]);
 
   return (
     <div className="fixed inset-0 -z-10">
@@ -65,19 +55,16 @@ const BackgroundSlideshow: React.FC = () => {
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* BGC Facts Overlay - Positioned to the right of login modal */}
+      {/* BGC Fun Facts Overlay - Positioned to the right of login modal */}
       <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
         <div 
-          className={`bg-black/70 backdrop-blur-sm rounded-lg p-8 text-white transition-opacity duration-[3000ms] ease-in-out max-w-5xl ml-80 ${
-            bgcFacts[currentFactIndex] ? 'opacity-100' : 'opacity-0'
+          className={`bg-black/70 backdrop-blur-sm rounded-lg p-6 text-white transition-opacity duration-[3000ms] ease-in-out max-w-4xl ml-80 ${
+            bgcFacts[0] ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-blue-400 mb-4">Basrah Gas Company</h3>
-            <p className="text-lg font-medium leading-relaxed">
-              {bgcFacts[currentFactIndex]}
-            </p>
-          </div>
+          <p className="text-xl font-medium leading-relaxed text-center">
+            {bgcFacts[0]}
+          </p>
         </div>
       </div>
     </div>
