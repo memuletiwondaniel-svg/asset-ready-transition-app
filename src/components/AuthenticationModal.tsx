@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -204,7 +205,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border group-hover:[&:not(:hover)]:bg-primary group-hover:[&:not(:hover)]:text-white"
+                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border group-hover:[&:not(:hover)]:bg-gray-100 group-hover:[&:not(:hover)]:text-gray-500"
                       onClick={() => setLoginMode('login')}
                     >
                       <User className="h-4 w-4 mr-2" />
