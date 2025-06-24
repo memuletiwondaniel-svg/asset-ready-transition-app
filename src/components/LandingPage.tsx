@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,14 +71,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
             return (
               <Card 
                 key={section.id}
-                className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-gray-300 h-80 flex flex-col"
+                className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 border-2 hover:border-gray-300 h-80 flex flex-col shadow-lg hover:shadow-xl"
                 onClick={() => onNavigate(section.id)}
               >
                 <CardHeader className="text-center pb-4 flex-shrink-0">
-                  <div className={`mx-auto w-16 h-16 rounded-full ${section.color} ${section.hoverColor} flex items-center justify-center mb-4 transition-colors group-hover:shadow-lg`}>
+                  <div className={`mx-auto w-16 h-16 rounded-full ${section.color} ${section.hoverColor} flex items-center justify-center mb-4 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110`}>
                     <IconComponent className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-gray-700">
+                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
                     {section.title}
                   </CardTitle>
                   <CardDescription className="text-gray-600 text-sm leading-relaxed min-h-[4rem]">
@@ -90,7 +87,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                 </CardHeader>
                 <CardContent className="text-center mt-auto pt-4">
                   <Button 
-                    className={`w-full ${section.color} ${section.hoverColor} text-white transition-all duration-300`}
+                    className={`w-full ${section.color} ${section.hoverColor} text-white transition-all duration-300 shadow-md hover:shadow-lg group-hover:scale-105`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onNavigate(section.id);
@@ -109,5 +106,3 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default LandingPage;
-
-
