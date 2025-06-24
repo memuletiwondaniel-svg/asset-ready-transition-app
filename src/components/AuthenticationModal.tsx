@@ -194,18 +194,23 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                       placeholder="Reason for needing P2A access"
                     />
                   </div>
-                  <Button className="w-full flex flex-col py-1.5 leading-tight" onClick={handleRegistration}>
-                    <span>Submit Registration</span>
-                    <span className="text-[9px] opacity-75 -mt-0.5">approval required by BGC</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-black hover:bg-gray-300 transform border"
-                    onClick={() => setLoginMode('login')}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Return to Login Menu
-                  </Button>
+                  <div className="space-y-3 group">
+                    <Button 
+                      className="w-full flex flex-col py-1.5 leading-tight transition-all duration-300 hover:scale-105 hover:shadow-md group-hover:[&:not(:hover)]:bg-gray-200 group-hover:[&:not(:hover)]:text-gray-600" 
+                      onClick={handleRegistration}
+                    >
+                      <span>Submit Registration</span>
+                      <span className="text-[9px] opacity-75 -mt-0.5">approval required by BGC</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border group-hover:[&:not(:hover)]:bg-primary group-hover:[&:not(:hover)]:text-white"
+                      onClick={() => setLoginMode('login')}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Return to Login Menu
+                    </Button>
+                  </div>
                 </>
               )}
             </CardContent>
