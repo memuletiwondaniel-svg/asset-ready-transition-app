@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus } from 'lucide-react';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
@@ -82,28 +82,31 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const uniqueStatuses = [...new Set(pssrList.map(pssr => pssr.status))];
   const uniqueLeads = [...new Set(pssrList.map(pssr => pssr.pssrLead))];
 
-  // Filter logic
-  const filteredPSSRs = pssrList.filter(pssr => {
-    // Search term filter
-    const matchesSearch = searchTerm === '' || 
-      pssr.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pssr.projectId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pssr.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pssr.asset.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pssr.pssrLead.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pssr.status.toLowerCase().includes(searchTerm.toLowerCase());
+  // Memoized filter logic for better performance
+  const filteredPSSRs = useMemo(() => {
+    return pssrList.filter(pssr => {
+      // Search term filter - case insensitive and trims whitespace
+      const searchQuery = searchTerm.toLowerCase().trim();
+      const matchesSearch = searchQuery === '' || 
+        pssr.id.toLowerCase().includes(searchQuery) ||
+        pssr.projectId.toLowerCase().includes(searchQuery) ||
+        pssr.projectName.toLowerCase().includes(searchQuery) ||
+        pssr.asset.toLowerCase().includes(searchQuery) ||
+        pssr.pssrLead.toLowerCase().includes(searchQuery) ||
+        pssr.status.toLowerCase().includes(searchQuery);
 
-    // Plant filter
-    const matchesPlant = filters.plant.length === 0 || filters.plant.includes(pssr.asset);
-    
-    // Status filter
-    const matchesStatus = filters.status.length === 0 || filters.status.includes(pssr.status);
-    
-    // Lead filter
-    const matchesLead = filters.lead.length === 0 || filters.lead.includes(pssr.pssrLead);
+      // Plant filter
+      const matchesPlant = filters.plant.length === 0 || filters.plant.includes(pssr.asset);
+      
+      // Status filter
+      const matchesStatus = filters.status.length === 0 || filters.status.includes(pssr.status);
+      
+      // Lead filter
+      const matchesLead = filters.lead.length === 0 || filters.lead.includes(pssr.pssrLead);
 
-    return matchesSearch && matchesPlant && matchesStatus && matchesLead;
-  });
+      return matchesSearch && matchesPlant && matchesStatus && matchesLead;
+    });
+  }, [searchTerm, filters, pssrList]);
 
   const toggleFilter = (category: 'plant' | 'status' | 'lead', value: string) => {
     setFilters(prev => ({
@@ -125,6 +128,11 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const handleViewDetails = (pssrId: string) => {
     setSelectedPSSR(pssrId);
     setActiveView('details');
+  };
+
+  // Handle search input change with real-time filtering
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
   };
 
   if (activeView === 'create') {
@@ -170,7 +178,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
         {/* Search and Filter */}
         <PSSRFilters
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={handleSearchChange}
           filters={filters}
           onToggleFilter={toggleFilter}
           onClearFilters={clearAllFilters}
