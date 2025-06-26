@@ -16,7 +16,7 @@ interface Project {
 export const useProjectsData = () => {
   const [projects, setProjects] = useState<Project[]>([
     { 
-      id: 'DP 300', 
+      id: '300', 
       name: 'HM Additional Compressors',
       plant: 'KAZ',
       subdivision: 'CS-7',
@@ -45,7 +45,7 @@ export const useProjectsData = () => {
       ]
     },
     { 
-      id: 'DP 163', 
+      id: '163', 
       name: 'LPG Unit 12.1 Rehabilitation',
       plant: 'NRNGL',
       scope: 'Major rehabilitation of LPG processing unit including vessel replacements, piping upgrades, and control system modernization to restore full operational capacity.',
@@ -66,7 +66,7 @@ export const useProjectsData = () => {
       ]
     },
     { 
-      id: 'DP 083C', 
+      id: '083C', 
       name: 'UQ Jetty 2 Export Terminal',
       plant: 'UQ',
       scope: 'Construction of new marine export terminal with loading arms, metering systems, and safety equipment for enhanced export capacity.',
@@ -94,7 +94,7 @@ export const useProjectsData = () => {
       ]
     },
     { 
-      id: 'DP 317', 
+      id: '317', 
       name: 'Majnoon New Gas Tie-in',
       plant: 'Compressor Station (CS)',
       subdivision: 'CS-3',
@@ -116,7 +116,7 @@ export const useProjectsData = () => {
       ]
     },
     { 
-      id: 'DP 33A', 
+      id: '33A', 
       name: 'Hammar New TEG',
       plant: 'BNGL',
       scope: 'Installation of new Triethylene Glycol (TEG) dehydration unit for natural gas processing with regeneration system and utilities.',
@@ -129,7 +129,7 @@ export const useProjectsData = () => {
       others: []
     },
     { 
-      id: 'DP 368', 
+      id: '368', 
       name: 'CS7 to CS6 Cross-over Line',
       plant: 'Compressor Station (CS)',
       subdivision: 'CS-6',
@@ -151,7 +151,7 @@ export const useProjectsData = () => {
       ]
     },
     { 
-      id: 'DP 245', 
+      id: '245', 
       name: 'KAZ Flare System Upgrade',
       plant: 'KAZ',
       scope: 'Upgrade of existing flare system with new flare tip, knockout drum, and enhanced safety systems for improved environmental compliance.',
@@ -164,7 +164,7 @@ export const useProjectsData = () => {
       others: []
     },
     { 
-      id: 'DP 156', 
+      id: '156', 
       name: 'NRNGL Gas Processing Enhancement',
       plant: 'NRNGL',
       scope: 'Enhancement of gas processing capabilities through installation of additional separation equipment and process optimization systems.',
@@ -185,7 +185,7 @@ export const useProjectsData = () => {
       ]
     },
     { 
-      id: 'DP 421', 
+      id: '421', 
       name: 'BNGL Storage Tank Expansion',
       plant: 'BNGL',
       scope: 'Construction of additional storage tanks with associated piping, instrumentation, and fire protection systems to increase storage capacity.',
@@ -198,7 +198,7 @@ export const useProjectsData = () => {
       others: []
     },
     { 
-      id: 'DP 289', 
+      id: '289', 
       name: 'UQ Pipeline Integrity Project',
       plant: 'UQ',
       scope: 'Comprehensive pipeline integrity assessment and rehabilitation including smart pig runs, coating repairs, and cathodic protection upgrades.',
