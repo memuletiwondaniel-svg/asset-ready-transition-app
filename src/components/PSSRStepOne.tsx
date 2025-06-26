@@ -49,6 +49,8 @@ interface PSSRStepOneProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
   onContextAction: (action: string, person: any) => void;
+  onProjectDelete: (projectId: string) => void;
+  onProjectUpdate: (updatedProject: Project) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
@@ -63,7 +65,9 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onProjectSelect,
   onFileUpload,
   onRemoveFile,
-  onContextAction
+  onContextAction,
+  onProjectDelete,
+  onProjectUpdate
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
 
@@ -164,7 +168,8 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
-                  onProjectUpdate={handleProjectUpdate}
+                  onProjectUpdate={onProjectUpdate}
+                  onProjectDelete={onProjectDelete}
                 />
               )}
             </div>
