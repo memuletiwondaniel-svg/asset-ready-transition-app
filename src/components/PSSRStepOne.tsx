@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -7,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileText, Briefcase, Building2 } from 'lucide-react';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
-import { AddNewProjectWidget } from './AddNewProjectWidget';
+import AddNewProjectWidget from './AddNewProjectWidget';
 
 interface FormData {
   asset: string;
