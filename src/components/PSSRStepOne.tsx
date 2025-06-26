@@ -38,6 +38,7 @@ interface PSSRStepOneProps {
   formData: FormData;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   assets: string[];
   reasons: string[];
   projectSearchOpen: boolean;
@@ -54,6 +55,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   formData,
   setFormData,
   projects,
+  setProjects,
   assets,
   reasons,
   projectSearchOpen,
@@ -64,6 +66,17 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onContextAction
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
+
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProjects(prevProjects => 
+      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
+    );
+  };
+
+  const handleNewProjectCreate = (newProject: Project) => {
+    setProjects(prevProjects => [...prevProjects, newProject]);
+    setFormData(prev => ({ ...prev, projectId: newProject.id, projectName: newProject.name }));
+  };
 
   return (
     <div className="space-y-8">
@@ -129,30 +142,36 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           </div>
 
           {formData.reason === 'Start-up or Commissioning of a new Asset' && (
-            <div className="p-6 bg-blue-50 rounded-xl border-l-4 border-blue-500">
-              <h4 className="font-semibold text-gray-900 mb-4">Project Information</h4>
-              <ProjectSelector
-                projectId={formData.projectId}
-                projectName={formData.projectName}
-                projects={projects}
-                projectSearchOpen={projectSearchOpen}
-                onProjectSearchOpenChange={setProjectSearchOpen}
-                onProjectSelect={onProjectSelect}
-                onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
-              />
+            <div className="p-6 bg-blue-50 rounded-xl">
+              
+              <div className="mb-4">
+                <div className="w-64">
+                  <ProjectSelector
+                    projectId={formData.projectId}
+                    projectName={formData.projectName}
+                    projects={projects}
+                    projectSearchOpen={projectSearchOpen}
+                    onProjectSearchOpenChange={setProjectSearchOpen}
+                    onProjectSelect={onProjectSelect}
+                    onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
+                    onNewProjectCreate={handleNewProjectCreate}
+                  />
+                </div>
+              </div>
 
               {/* Project Details */}
               {selectedProject && (
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
+                  onProjectUpdate={handleProjectUpdate}
                 />
               )}
             </div>
           )}
 
           <div className="space-y-3">
-            <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">Scope Description *</Label>
+            <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <Textarea 
               value={formData.scope}
               onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
