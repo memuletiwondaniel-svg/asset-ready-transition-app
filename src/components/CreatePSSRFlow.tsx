@@ -116,19 +116,19 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
       
       <header className="bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-12">
             <div className="flex items-center space-x-4">
               <Button variant="ghost" onClick={onBack} className="hover:bg-gray-100">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to PSSR List
               </Button>
               <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-lg font-bold text-gray-900">
                 {currentStep === 1 ? "Create New PSSR" : currentStep === 2 ? "PSSR Created" : "PSSR Checklist"}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" className="border-gray-300 hover:bg-gray-50">
+              <Button variant="outline" className="border-gray-300 hover:bg-gray-50 text-sm px-3 py-1">
                 <Save className="h-4 w-4 mr-2" />
                 Save Draft
               </Button>
@@ -149,7 +149,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         />
       </main>
 
-      <Dialog open={showConfirmDialog} onOpenChange={(open) => setShowConfirmDialog(open)}>
+      {/* Bottom fade gradient */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none z-30" />
+
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">

@@ -51,16 +51,16 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   const updateTeamMember = (role: keyof typeof formData, field: keyof TeamMember, value: string) => {
     setFormData((prev: any) => ({
       ...prev,
-      [role]: { ...(prev[role] as TeamMember), [field]: value }
+      [role]: { ...(prev[role] || {}), [field]: value }
     }));
   };
 
   return (
     <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-      <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg">
-        <CardTitle className="text-xl flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <Users className="h-8 w-8" />
+      <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg" style={{ minHeight: '60px' }}>
+        <CardTitle className="text-lg flex items-center gap-3">
+          <div className="p-1.5 bg-white/20 rounded-lg">
+            <Users className="h-6 w-6" />
           </div>
           Team Members
         </CardTitle>
@@ -70,24 +70,24 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CoreTeamMemberInput
             role="Project Hub Lead"
-            name=""
-            email=""
+            name={formData.projectHubLead?.name || ""}
+            email={formData.projectHubLead?.email || ""}
             onNameChange={(value) => updateTeamMember('projectHubLead', 'name', value)}
             onEmailChange={(value) => updateTeamMember('projectHubLead', 'email', value)}
             required
           />
           <CoreTeamMemberInput
             role="Commissioning Lead"
-            name=""
-            email=""
+            name={formData.commissioningLead?.name || ""}
+            email={formData.commissioningLead?.email || ""}
             onNameChange={(value) => updateTeamMember('commissioningLead', 'name', value)}
             onEmailChange={(value) => updateTeamMember('commissioningLead', 'email', value)}
             required
           />
           <CoreTeamMemberInput
             role="Construction Lead"
-            name=""
-            email=""
+            name={formData.constructionLead?.name || ""}
+            email={formData.constructionLead?.email || ""}
             onNameChange={(value) => updateTeamMember('constructionLead', 'name', value)}
             onEmailChange={(value) => updateTeamMember('constructionLead', 'email', value)}
             required
@@ -96,7 +96,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
 
         {/* Additional Team Members */}
         <AdditionalTeamMembersSection
-          additionalPersons={formData.additionalPersons}
+          additionalPersons={formData.additionalPersons || []}
           onAdd={addAdditionalPerson}
           onUpdate={updateAdditionalPerson}
           onRemove={removeAdditionalPerson}
