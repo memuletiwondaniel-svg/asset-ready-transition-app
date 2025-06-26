@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -35,6 +34,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
   });
 
   const [customApprovers, setCustomApprovers] = useState<string[]>([]);
+  const [removedDefaultApprovers, setRemovedDefaultApprovers] = useState<string[]>([]);
 
   if (!item || !response) return null;
 
@@ -101,6 +101,14 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
     setCustomApprovers(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeDefaultApprover = (approverName: string) => {
+    setRemovedDefaultApprovers(prev => [...prev, approverName]);
+  };
+
+  const restoreDefaultApprover = (approverName: string) => {
+    setRemovedDefaultApprovers(prev => prev.filter(name => name !== approverName));
+  };
+
   const renderContent = () => {
     switch (response) {
       case 'N/A':
@@ -124,6 +132,8 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
 
       case 'YES':
         const defaultApprovers = item.approvingAuthority.split(', ').map(name => getApproverData(name.trim()));
+        const activeDefaultApprovers = defaultApprovers.filter(approver => !removedDefaultApprovers.includes(approver.name));
+        const removedApprovers = defaultApprovers.filter(approver => removedDefaultApprovers.includes(approver.name));
         
         return (
           <div className="space-y-6">
@@ -145,7 +155,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <UserCheck className="h-5 w-5 text-blue-600" />
-                  <Label className="text-sm font-semibold text-gray-700">Default Approvers</Label>
+                  <Label className="text-sm font-semibold text-gray-700">Approvers</Label>
                 </div>
                 <Button
                   variant="outline"
@@ -158,52 +168,105 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
                 </Button>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                {defaultApprovers.map((approver, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={approver.image} alt={approver.name} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-semibold">
-                        {approver.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{approver.name}</p>
-                      <Badge variant="secondary" className="text-xs">Default</Badge>
-                    </div>
+              {/* Active Default Approvers */}
+              {activeDefaultApprovers.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Default Approvers</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {activeDefaultApprovers.map((approver, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={approver.image} alt={approver.name} />
+                          <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-semibold">
+                            {approver.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{approver.name}</p>
+                          <Badge variant="secondary" className="text-xs">Default</Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeDefaultApprover(approver.name)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                
-                {customApprovers.map((approver, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-blue-200 text-blue-700">
-                        <Users className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Enter approver name..."
-                        value={approver}
-                        onChange={(e) => {
-                          const newApprovers = [...customApprovers];
-                          newApprovers[index] = e.target.value;
-                          setCustomApprovers(newApprovers);
-                        }}
-                        className="text-sm"
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCustomApprover(index)}
-                      className="text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                </div>
+              )}
+
+              {/* Removed Default Approvers */}
+              {removedApprovers.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Removed Default Approvers</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {removedApprovers.map((approver, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200 opacity-60">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={approver.image} alt={approver.name} />
+                          <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
+                            {approver.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-600">{approver.name}</p>
+                          <Badge variant="outline" className="text-xs border-red-300 text-red-600">Removed</Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => restoreDefaultApprover(approver.name)}
+                          className="text-blue-600 hover:bg-blue-50"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Custom Approvers */}
+              {customApprovers.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Custom Approvers</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {customApprovers.map((approver, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-blue-200 text-blue-700">
+                            <Users className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Enter approver name..."
+                            value={approver}
+                            onChange={(e) => {
+                              const newApprovers = [...customApprovers];
+                              newApprovers[index] = e.target.value;
+                              setCustomApprovers(newApprovers);
+                            }}
+                            className="text-sm"
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomApprover(index)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
