@@ -8,6 +8,7 @@ import ProgressSteps from './ProgressSteps';
 import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
 import PSSRFlowNavigation from './PSSRFlowNavigation';
+import ScrollIndicator from './ScrollIndicator';
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { usePSSRFormData } from '@/hooks/usePSSRFormData';
 import { ASSETS, REASONS } from '@/constants/pssrConstants';
@@ -109,7 +110,9 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
+      <ScrollIndicator showFade={true} />
+      
       <header className="bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -133,7 +136,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
         <ProgressSteps currentStep={currentStep} />
         {renderStepContent()}
 
@@ -145,7 +148,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         />
       </main>
 
-      <Dialog open={showConfirmDialog} onOpenChange={(open: boolean) => setShowConfirmDialog(open)}>
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
