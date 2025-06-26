@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -109,7 +110,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
 
         {/* Project Scope - Compact */}
         <div className="mb-4">
-          <h5 className="text-sm font-medium text-gray-900 mb-2">PSSR Scope Description</h5>
+          <h5 className="text-sm font-medium text-gray-900 mb-2">Project Scope</h5>
           <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
             <p className="text-sm text-gray-700 leading-relaxed">{project.scope}</p>
           </div>
@@ -219,3 +220,4 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
 };
 
 export default ProjectDetails;
+
