@@ -17,6 +17,8 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       
+      console.log('Scroll progress:', { scrollTop, docHeight, progress });
+      
       setScrollProgress(progress);
       setIsVisible(progress < 95); // Hide progress when near bottom
       setShowFloatingButton(progress < 85); // Hide floating button earlier when near bottom
@@ -27,6 +29,11 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
 
     return () => window.removeEventListener('scroll', updateScrollProgress);
   }, []);
+
+  const handleFloatingButtonClick = () => {
+    console.log('Floating button clicked, scrolling...');
+    window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+  };
 
   return (
     <>
@@ -46,8 +53,10 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
       {/* Floating Scroll Indicator - Only show when not near bottom */}
       {showFloatingButton && scrollProgress < 15 && (
         <div className="fixed bottom-8 right-8 z-40 animate-bounce">
-          <div className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer"
-               onClick={() => window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' })}>
+          <div 
+            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer"
+            onClick={handleFloatingButtonClick}
+          >
             <ChevronDown className="h-5 w-5" />
           </div>
         </div>

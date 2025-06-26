@@ -22,19 +22,25 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
   const [currentStep, setCurrentStep] = useState(1);
   const { formData, updateFormData, resetFormData, handleFileUpload, removeFile } = usePSSRFormData();
 
+  console.log('CreatePSSRFlow - Current formData:', formData);
+  console.log('CreatePSSRFlow - Current step:', currentStep);
+
   const handleNext = () => {
+    console.log('HandleNext called, current step:', currentStep);
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
+    console.log('HandleBack called, current step:', currentStep);
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
   const handleClose = () => {
+    console.log('HandleClose called');
     resetFormData();
     setCurrentStep(1);
     onClose();
@@ -48,6 +54,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
   };
 
   const handleReturnToList = () => {
+    console.log('HandleReturnToList called');
     resetFormData();
     setCurrentStep(1);
     onComplete();
@@ -110,11 +117,27 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
   };
 
   const isStepValid = () => {
+    console.log('Checking step validity for step:', currentStep);
+    console.log('Current formData for validation:', formData);
+    
     switch (currentStep) {
       case 1:
-        return formData.assetName && formData.reason && formData.projectId;
+        const isValid1 = formData.assetName && formData.reason && formData.projectId;
+        console.log('Step 1 validation:', { 
+          assetName: formData.assetName, 
+          reason: formData.reason, 
+          projectId: formData.projectId,
+          isValid: isValid1 
+        });
+        return isValid1;
       case 2:
-        return formData.coreTeam.projectManager.name && formData.coreTeam.projectManager.email;
+        const isValid2 = formData.coreTeam.projectManager.name && formData.coreTeam.projectManager.email;
+        console.log('Step 2 validation:', { 
+          pmName: formData.coreTeam.projectManager.name,
+          pmEmail: formData.coreTeam.projectManager.email,
+          isValid: isValid2 
+        });
+        return isValid2;
       case 3:
         return true;
       default:
@@ -168,7 +191,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
                 </Card>
               </div>
             ) : (
-              <div className="h-full">
+              <div className="h-full overflow-y-auto">
                 {renderStepContent()}
               </div>
             )}
