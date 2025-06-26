@@ -82,7 +82,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
             reasons={REASONS}
             projectSearchOpen={projectSearchOpen}
             setProjectSearchOpen={setProjectSearchOpen}
-            showAddProjectWidget={false}
+            showAddProjectWidget={showAddProjectWidget}
             setShowAddProjectWidget={setShowAddProjectWidget}
             onProjectSelect={handleProjectSelect}
             onFileUpload={handleFileUpload}
