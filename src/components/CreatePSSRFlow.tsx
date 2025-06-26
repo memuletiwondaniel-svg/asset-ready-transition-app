@@ -55,10 +55,9 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     
     const newProject = handleNewProjectAdded(projectData);
     
-    // Set the form data to use this new project - make sure projectId is stored without DP prefix
     setFormData(prev => ({
       ...prev,
-      projectId: projectData.projectId, // This should be just the number, not with DP prefix
+      projectId: projectData.projectId,
       projectName: projectData.projectTitle
     }));
     
