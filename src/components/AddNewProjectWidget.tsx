@@ -303,8 +303,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       </div>
                       
                       <div className="col-span-3 space-y-2">
-                        <Label htmlFor="projectTitle" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-blue-500" />
+                        <Label htmlFor="projectTitle" className="text-sm font-medium text-gray-700">
                           Project Title *
                         </Label>
                         <Input
@@ -602,15 +601,17 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                           <Button
                             type="button"
                             onClick={handleFindDocumentsInAssai}
-                            className="bg-blue-600 hover:bg-blue-700 text-white h-8 px-3 text-xs flex items-center gap-2"
+                            variant="outline"
+                            className="h-8 px-3 text-xs flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
                           >
-                            <img src="/lovable-uploads/4212ee05-645e-47ce-b29a-11d1355c9360.png" alt="Assai" className="h-4 w-4" />
+                            <img src="/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png" alt="Assai" className="h-4 w-4" />
                             Find Documents in Assai
                           </Button>
                           <Button
                             type="button"
                             onClick={handleFindDocumentsInWrench}
-                            className="bg-teal-500 hover:bg-teal-600 text-white h-8 px-3 text-xs flex items-center gap-2"
+                            variant="outline"
+                            className="h-8 px-3 text-xs flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
                           >
                             <img src="/lovable-uploads/81080018-90d7-4e00-a4b2-ee1682e5d8bd.png" alt="Wrench" className="h-4 w-4" />
                             Find Documents in Wrench
