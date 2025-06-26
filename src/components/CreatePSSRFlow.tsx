@@ -149,7 +149,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         />
       </main>
 
-      <Dialog open={showConfirmDialog} onOpenChange={(open: boolean) => setShowConfirmDialog(open)}>
+      <Dialog open={showConfirmDialog} onOpenChange={(open) => setShowConfirmDialog(open)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
