@@ -81,6 +81,10 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
     setShowAddProjectWidget(false);
   };
 
+  const formatProjectId = (id: string) => {
+    return `DP ${id}`;
+  };
+
   return (
     <>
       <div className="space-y-3">
@@ -93,7 +97,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
               aria-expanded={projectSearchOpen}
               className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors"
             >
-              {projectId || "Search projects..."}
+              {projectId ? formatProjectId(projectId) : "Search projects..."}
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -129,7 +133,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                     >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="font-medium">{project.id}</span>
+                        <span className="font-medium">{formatProjectId(project.id)}</span>
                         <span className="text-gray-600">- {project.name}</span>
                       </div>
                     </CommandItem>
