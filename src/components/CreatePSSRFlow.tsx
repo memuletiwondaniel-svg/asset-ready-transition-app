@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -122,7 +123,11 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && handleClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        handleClose();
+      }
+    }}>
       <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
         <div className="flex flex-col h-full">
           {/* Header */}
