@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
 import PSSRChecklist from './PSSRChecklist';
 import ProgressSteps from './ProgressSteps';
-import { usePSSRFormData } from '@/hooks/usePSSRFormData';
+import { usePSSRFormData, PSSRFormData } from '@/hooks/usePSSRFormData';
 
 interface CreatePSSRFlowProps {
   isOpen: boolean;
@@ -20,7 +19,7 @@ interface CreatePSSRFlowProps {
 
 const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const { formData, updateFormData, resetFormData } = usePSSRFormData();
+  const { formData, updateFormData, resetFormData, handleFileUpload, removeFile } = usePSSRFormData();
 
   const handleNext = () => {
     if (currentStep < 3) {
@@ -60,6 +59,8 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
           <PSSRStepOne 
             formData={formData} 
             setFormData={updateFormData}
+            onFileUpload={handleFileUpload}
+            onRemoveFile={removeFile}
           />
         );
       case 2:

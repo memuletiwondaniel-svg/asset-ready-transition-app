@@ -8,21 +8,7 @@ import { FileText, Briefcase, Building2 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
-
-interface FormData {
-  asset: string;
-  reason: string;
-  projectId: string;
-  projectName: string;
-  scope: string;
-  files: File[];
-  teamMembers: {
-    technicalAuthorities: {};
-    assetTeam: {};
-    projectTeam: {};
-    hsse: {};
-  };
-}
+import { PSSRFormData } from '@/hooks/usePSSRFormData';
 
 interface Project {
   id: string;
@@ -35,51 +21,50 @@ interface Project {
 }
 
 interface PSSRStepOneProps {
-  formData: FormData;
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-  projects: Project[];
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
-  assets: string[];
-  reasons: string[];
-  projectSearchOpen: boolean;
-  setProjectSearchOpen: (open: boolean) => void;
-  showAddProjectWidget: boolean;
-  setShowAddProjectWidget: (show: boolean) => void;
-  onProjectSelect: (value: string) => void;
+  formData: PSSRFormData;
+  setFormData: (updates: Partial<PSSRFormData>) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
-  onContextAction: (action: string, person: any) => void;
-  onProjectDelete: (projectId: string) => void;
-  onProjectUpdate: (updatedProject: Project) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   formData,
   setFormData,
-  projects,
-  setProjects,
-  assets,
-  reasons,
-  projectSearchOpen,
-  setProjectSearchOpen,
-  onProjectSelect,
   onFileUpload,
-  onRemoveFile,
-  onContextAction,
-  onProjectDelete,
-  onProjectUpdate
+  onRemoveFile
 }) => {
+  // Mock data - in real app this would come from props or context
+  const projects: Project[] = [];
+  const assets = ['Asset 1', 'Asset 2', 'Asset 3'];
+  const reasons = [
+    'Start-up or Commissioning of a new Asset',
+    'Modification to existing Asset',
+    'Restart after shutdown'
+  ];
+
   const selectedProject = projects.find(p => p.id === formData.projectId);
 
   const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(prevProjects => 
-      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
-    );
+    // Handle project update logic
   };
 
   const handleNewProjectCreate = (newProject: Project) => {
-    setProjects(prevProjects => [...prevProjects, newProject]);
-    setFormData(prev => ({ ...prev, projectId: newProject.id, projectName: newProject.name }));
+    setFormData({ projectId: newProject.id, projectName: newProject.name });
+  };
+
+  const onProjectSelect = (value: string) => {
+    const project = projects.find(p => p.id === value);
+    if (project) {
+      setFormData({ projectId: project.id, projectName: project.name });
+    }
+  };
+
+  const onContextAction = (action: string, person: any) => {
+    // Handle context actions
+  };
+
+  const onProjectDelete = (projectId: string) => {
+    // Handle project deletion
   };
 
   return (
@@ -106,7 +91,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <Briefcase className="h-4 w-4 text-blue-600" />
                 Reason for PSSR *
               </Label>
-              <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({...prev, reason: value}))}>
+              <Select value={formData.reason} onValueChange={(value) => setFormData({ reason: value })}>
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
@@ -126,7 +111,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                   <Building2 className="h-4 w-4 text-blue-600" />
                   Select Asset *
                 </Label>
-                <Select value={formData.asset} onValueChange={(value) => setFormData(prev => ({...prev, asset: value}))}>
+                <Select value={formData.asset} onValueChange={(value) => setFormData({ asset: value })}>
                   <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="Choose an asset" />
                   </SelectTrigger>
@@ -154,10 +139,10 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     projectId={formData.projectId}
                     projectName={formData.projectName}
                     projects={projects}
-                    projectSearchOpen={projectSearchOpen}
-                    onProjectSearchOpenChange={setProjectSearchOpen}
+                    projectSearchOpen={false}
+                    onProjectSearchOpenChange={() => {}}
                     onProjectSelect={onProjectSelect}
-                    onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
+                    onProjectNameChange={(name) => setFormData({ projectName: name })}
                     onNewProjectCreate={handleNewProjectCreate}
                   />
                 </div>
@@ -168,7 +153,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
-                  onProjectUpdate={onProjectUpdate}
+                  onProjectUpdate={handleProjectUpdate}
                   onProjectDelete={onProjectDelete}
                 />
               )}
@@ -179,7 +164,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
             <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <Textarea 
               value={formData.scope}
-              onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
+              onChange={(e) => setFormData({ scope: e.target.value })}
               placeholder="Describe the scope of the PSSR..."
               rows={4}
               className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none"
