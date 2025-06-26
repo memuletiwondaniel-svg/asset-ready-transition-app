@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -273,9 +274,9 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 {/* Project Information Section */}
                 <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
                   <CardHeader className="pb-3 bg-gradient-to-r from-blue-300 to-blue-400 text-white rounded-t-lg">
-                    <CardTitle className="text-lg flex items-center gap-3">
+                    <CardTitle className="text-2xl flex items-center gap-3">
                       <div className="p-2 bg-white/20 rounded-lg">
-                        <Building2 className="h-6 w-6" />
+                        <Building2 className="h-8 w-8" />
                       </div>
                       Project Information
                     </CardTitle>
@@ -410,9 +411,9 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 {/* Team Members Section */}
                 <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
                   <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg">
-                    <CardTitle className="text-lg flex items-center gap-3">
+                    <CardTitle className="text-2xl flex items-center gap-3">
                       <div className="p-2 bg-white/20 rounded-lg">
-                        <Users className="h-6 w-6" />
+                        <Users className="h-8 w-8" />
                       </div>
                       Team Members
                     </CardTitle>
@@ -566,16 +567,16 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 {/* Project Documents Section */}
                 <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
                   <CardHeader className="pb-3 bg-gradient-to-r from-emerald-300 to-emerald-400 text-white rounded-t-lg">
-                    <CardTitle className="text-lg flex items-center gap-3">
+                    <CardTitle className="text-2xl flex items-center gap-3">
                       <div className="p-2 bg-white/20 rounded-lg">
-                        <FolderOpen className="h-6 w-6" />
+                        <FolderOpen className="h-8 w-8" />
                       </div>
                       Project Documents
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
                     {/* Document Search Filters */}
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <Label className="text-sm font-medium text-gray-700">Find Documents</Label>
                       <div className="flex items-center gap-2 flex-wrap">
                         {Object.entries(filterOptions).map(([key, options], index) => (
@@ -597,26 +598,26 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                             )}
                           </div>
                         ))}
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            onClick={handleFindDocumentsInAssai}
-                            variant="outline"
-                            className="h-8 px-3 text-xs flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
-                            <img src="/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png" alt="Assai" className="h-4 w-4" />
-                            Find Documents in Assai
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={handleFindDocumentsInWrench}
-                            variant="outline"
-                            className="h-8 px-3 text-xs flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
-                            <img src="/lovable-uploads/81080018-90d7-4e00-a4b2-ee1682e5d8bd.png" alt="Wrench" className="h-4 w-4" />
-                            Find Documents in Wrench
-                          </Button>
-                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-6">
+                        <Button
+                          type="button"
+                          onClick={handleFindDocumentsInAssai}
+                          variant="outline"
+                          className="h-8 px-3 text-xs flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:shadow-sm transition-all duration-200 shadow-none"
+                        >
+                          <img src="/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png" alt="Assai" className="h-4 w-4" />
+                          Find Documents in Assai
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleFindDocumentsInWrench}
+                          variant="outline"
+                          className="h-8 px-3 text-xs flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:shadow-sm transition-all duration-200 shadow-none"
+                        >
+                          <img src="/lovable-uploads/81080018-90d7-4e00-a4b2-ee1682e5d8bd.png" alt="Wrench" className="h-4 w-4" />
+                          Find Documents in Wrench
+                        </Button>
                       </div>
                     </div>
 
