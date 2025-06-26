@@ -59,7 +59,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   return (
     <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
       <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg">
-        <CardTitle className="text-2xl flex items-center gap-3">
+        <CardTitle className="text-xl flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg">
             <Users className="h-8 w-8" />
           </div>

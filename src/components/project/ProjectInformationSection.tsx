@@ -43,7 +43,7 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
   return (
     <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
       <CardHeader className="pb-3 bg-gradient-to-r from-blue-300 to-blue-400 text-white rounded-t-lg">
-        <CardTitle className="text-2xl flex items-center gap-3">
+        <CardTitle className="text-xl flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg">
             <Building2 className="h-8 w-8" />
           </div>
