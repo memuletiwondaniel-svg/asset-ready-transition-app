@@ -28,14 +28,14 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   const addAdditionalPerson = () => {
     setFormData((prev: any) => ({
       ...prev,
-      additionalPersons: [...prev.additionalPersons, { name: '', email: '', role: '' }]
+      additionalPersons: [...(prev.additionalPersons || []), { name: '', email: '', role: '' }]
     }));
   };
 
   const updateAdditionalPerson = (index: number, field: string, value: string) => {
     setFormData((prev: any) => ({
       ...prev,
-      additionalPersons: prev.additionalPersons.map((person: AdditionalPerson, i: number) => 
+      additionalPersons: (prev.additionalPersons || []).map((person: AdditionalPerson, i: number) => 
         i === index ? { ...person, [field]: value } : person
       )
     }));
@@ -44,7 +44,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   const removeAdditionalPerson = (index: number) => {
     setFormData((prev: any) => ({
       ...prev,
-      additionalPersons: prev.additionalPersons.filter((_: any, i: number) => i !== index)
+      additionalPersons: (prev.additionalPersons || []).filter((_: any, i: number) => i !== index)
     }));
   };
 
@@ -57,7 +57,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
 
   return (
     <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-      <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg" style={{ minHeight: '60px' }}>
+      <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg" style={{ minHeight: '50px' }}>
         <CardTitle className="text-lg flex items-center gap-3">
           <div className="p-1.5 bg-white/20 rounded-lg">
             <Users className="h-6 w-6" />

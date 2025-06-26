@@ -9,6 +9,7 @@ interface ScrollIndicatorProps {
 const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [showFloatingButton, setShowFloatingButton] = useState(true);
 
   useEffect(() => {
     const updateScrollProgress = () => {
@@ -17,7 +18,8 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
       const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       
       setScrollProgress(progress);
-      setIsVisible(progress < 95); // Hide when near bottom
+      setIsVisible(progress < 95); // Hide progress when near bottom
+      setShowFloatingButton(progress < 85); // Hide floating button earlier when near bottom
     };
 
     window.addEventListener('scroll', updateScrollProgress);
@@ -25,8 +27,6 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
 
     return () => window.removeEventListener('scroll', updateScrollProgress);
   }, []);
-
-  if (!isVisible) return null;
 
   return (
     <>
@@ -38,13 +38,13 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
         />
       </div>
 
-      {/* Bottom Fade Gradient */}
+      {/* Enhanced Bottom Fade Gradient */}
       {showFade && (
-        <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-30" />
+        <div className="fixed bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none z-30" />
       )}
 
-      {/* Floating Scroll Indicator */}
-      {scrollProgress < 10 && (
+      {/* Floating Scroll Indicator - Only show when not near bottom */}
+      {showFloatingButton && scrollProgress < 15 && (
         <div className="fixed bottom-8 right-8 z-40 animate-bounce">
           <div className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer"
                onClick={() => window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' })}>
@@ -54,14 +54,16 @@ const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ showFade = true }) =>
       )}
 
       {/* Side Scroll Progress Indicator */}
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
-        <div className="w-1 h-32 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="w-full bg-blue-600 transition-all duration-150 ease-out rounded-full"
-            style={{ height: `${scrollProgress}%` }}
-          />
+      {isVisible && (
+        <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
+          <div className="w-1 h-32 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="w-full bg-blue-600 transition-all duration-150 ease-out rounded-full"
+              style={{ height: `${scrollProgress}%` }}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
