@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Search, 
@@ -29,6 +29,16 @@ interface ChecklistItemStatus {
   response?: 'N/A' | 'YES' | 'NO';
   data?: any;
 }
+
+// Mock approver data with avatars
+const getApprovers = (approvingAuthority: string) => {
+  const approversList = approvingAuthority.split(',').map(auth => auth.trim());
+  return approversList.map((approver, index) => ({
+    name: approver,
+    avatar: `https://images.unsplash.com/photo-${1581090464777 + index}-f3220bbe1b8b?w=100&h=100&fit=crop&crop=face`,
+    approved: Math.random() > 0.6 // Random approval status for demo
+  }));
+};
 
 const PSSRChecklist: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -102,6 +112,47 @@ const PSSRChecklist: React.FC = () => {
       default:
         return <Badge variant="outline" className="text-xs">Draft</Badge>;
     }
+  };
+
+  const renderApprovers = (item: ChecklistItem) => {
+    const approvers = getApprovers(item.approvingAuthority);
+    const pendingApprovals = approvers.filter(a => !a.approved).length;
+    const displayApprovers = approvers.slice(0, 3);
+    const remainingCount = approvers.length - 3;
+
+    return (
+      <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
+          <Users className="h-4 w-4 text-blue-600" />
+          <span className="text-gray-600 font-medium text-sm">Approvers:</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <div className="flex -space-x-2">
+            {displayApprovers.map((approver, index) => (
+              <Avatar key={index} className="h-8 w-8 border-2 border-white ring-1 ring-gray-200">
+                <AvatarImage src={approver.avatar} alt={approver.name} />
+                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                  {approver.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+          
+          {remainingCount > 0 && (
+            <span className="text-sm text-gray-600 ml-2">
+              and {remainingCount} others
+            </span>
+          )}
+          
+          {pendingApprovals > 0 && (
+            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs ml-2">
+              {pendingApprovals} pending
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const getCategoryStats = (category: string) => {
@@ -205,12 +256,8 @@ const PSSRChecklist: React.FC = () => {
                             </div>
                             <p className="text-gray-700 leading-relaxed mb-4">{item.description}</p>
                             
-                            <div className="flex items-center space-x-4 text-sm">
-                              <div className="flex items-center space-x-2">
-                                <Users className="h-4 w-4 text-blue-600" />
-                                <span className="text-gray-600 font-medium">Approvers:</span>
-                                <span className="text-gray-700">{item.approvingAuthority}</span>
-                              </div>
+                            <div className="mb-4">
+                              {renderApprovers(item)}
                             </div>
                           </div>
                         </div>
