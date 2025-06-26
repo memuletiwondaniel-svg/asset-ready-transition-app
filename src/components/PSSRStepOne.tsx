@@ -5,9 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Briefcase, Building2 } from 'lucide-react';
-import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
+import { AddNewProjectWidget } from './AddNewProjectWidget';
 
 interface FormData {
   asset: string;
@@ -32,6 +32,7 @@ interface Project {
   scope: string;
   hubLead: any;
   others: any[];
+  scorecardProject?: string;
 }
 
 interface PSSRStepOneProps {
@@ -58,6 +59,8 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   reasons,
   projectSearchOpen,
   setProjectSearchOpen,
+  showAddProjectWidget,
+  setShowAddProjectWidget,
   onProjectSelect,
   onFileUpload,
   onRemoveFile,
@@ -131,15 +134,17 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           {formData.reason === 'Start-up or Commissioning of a new Asset' && (
             <div className="p-6 bg-blue-50 rounded-xl border-l-4 border-blue-500">
               <h4 className="font-semibold text-gray-900 mb-4">Project Information</h4>
-              <ProjectSelector
-                projectId={formData.projectId}
-                projectName={formData.projectName}
-                projects={projects}
-                projectSearchOpen={projectSearchOpen}
-                onProjectSearchOpenChange={setProjectSearchOpen}
-                onProjectSelect={onProjectSelect}
-                onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
-              />
+              
+              {/* Project ID Selector moved here */}
+              <div className="mb-6">
+                <ProjectIDSelector
+                  projectId={formData.projectId}
+                  projects={projects}
+                  projectSearchOpen={projectSearchOpen}
+                  onProjectSearchOpenChange={setProjectSearchOpen}
+                  onProjectSelect={onProjectSelect}
+                />
+              </div>
 
               {/* Project Details */}
               {selectedProject && (
@@ -169,6 +174,48 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           />
         </CardContent>
       </Card>
+
+      <AddNewProjectWidget
+        open={showAddProjectWidget}
+        onClose={() => setShowAddProjectWidget(false)}
+        onSubmit={(projectData) => {
+          console.log('New project data:', projectData);
+          setShowAddProjectWidget(false);
+        }}
+      />
+    </div>
+  );
+};
+
+// New component for Project ID Selector
+const ProjectIDSelector: React.FC<{
+  projectId: string;
+  projects: Project[];
+  projectSearchOpen: boolean;
+  onProjectSearchOpenChange: (open: boolean) => void;
+  onProjectSelect: (value: string) => void;
+}> = ({ projectId, projects, projectSearchOpen, onProjectSearchOpenChange, onProjectSelect }) => {
+  return (
+    <div className="space-y-3">
+      <Label htmlFor="projectId" className="text-sm font-semibold text-gray-700">Project ID</Label>
+      <div className="w-64"> {/* Reduced width */}
+        {/* Project search functionality will be implemented here */}
+        <Select value={projectId} onValueChange={onProjectSelect}>
+          <SelectTrigger className="h-10 border-2 border-gray-200 focus:border-blue-500 transition-colors">
+            <SelectValue placeholder="Select project..." />
+          </SelectTrigger>
+          <SelectContent>
+            {projects.map((project) => (
+              <SelectItem key={project.id} value={project.id} className="py-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="font-medium">{project.id}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };
