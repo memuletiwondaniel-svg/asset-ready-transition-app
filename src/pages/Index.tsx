@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import { Languages, Phone } from "lucide-react";
 import AuthenticationModal from "@/components/AuthenticationModal";
 import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";
+import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -81,7 +83,8 @@ const Index = () => {
 
   // Show welcome screen before authentication
   return (
-    <div className="min-h-screen relative flex items-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen relative flex items-center">
+      <BackgroundSlideshow showFunFacts={showAuth} />
       
       {/* Top Left - Language Selector and Contact */}
       <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
@@ -149,3 +152,4 @@ const Index = () => {
 };
 
 export default Index;
+
