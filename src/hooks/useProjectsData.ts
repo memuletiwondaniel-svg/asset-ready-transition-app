@@ -263,9 +263,21 @@ export const useProjectsData = () => {
     return newProject;
   };
 
+  const handleProjectDelete = (projectId: string) => {
+    setProjects(prev => prev.filter(project => project.id !== projectId));
+  };
+
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProjects(prev => prev.map(project => 
+      project.id === updatedProject.id ? updatedProject : project
+    ));
+  };
+
   return {
     projects,
     setProjects,
-    handleNewProjectAdded
+    handleNewProjectAdded,
+    handleProjectDelete,
+    handleProjectUpdate
   };
 };

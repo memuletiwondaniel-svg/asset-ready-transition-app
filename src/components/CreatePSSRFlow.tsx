@@ -24,7 +24,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [showAddProjectWidget, setShowAddProjectWidget] = useState<boolean>(false);
   const [projectSearchOpen, setProjectSearchOpen] = useState<boolean>(false);
   
-  const { projects, setProjects, handleNewProjectAdded } = useProjectsData();
+  const { projects, setProjects, handleNewProjectAdded, handleProjectDelete, handleProjectUpdate } = useProjectsData();
   const { formData, setFormData, handleFileUpload, removeFile } = usePSSRFormData();
 
   const handleContinue = () => {
@@ -88,6 +88,8 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
             onFileUpload={handleFileUpload}
             onRemoveFile={removeFile}
             onContextAction={handleContextAction}
+            onProjectDelete={handleProjectDelete}
+            onProjectUpdate={handleProjectUpdate}
           />
         );
 
