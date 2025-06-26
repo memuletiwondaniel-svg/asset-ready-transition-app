@@ -6,6 +6,7 @@ import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
 import PSSRFilters from './PSSRFilters';
 import PSSRList from './PSSRList';
+import ScrollIndicator from './ScrollIndicator';
 
 interface PSSRModuleProps {
   onBack: () => void;
@@ -77,7 +78,6 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     setActiveView('details');
   };
 
-  // Handle search input change with real-time filtering
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
   };
@@ -96,7 +96,9 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
+      <ScrollIndicator showFade={true} />
+      
       <header className="bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -119,7 +121,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
         {/* Enhanced Create New PSSR Button */}
         <div className="mb-8">
           <Button 
