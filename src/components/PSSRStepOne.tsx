@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -130,7 +129,6 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
 
           {formData.reason === 'Start-up or Commissioning of a new Asset' && (
             <div className="p-6 bg-blue-50 rounded-xl border-l-4 border-blue-500">
-              <h4 className="font-semibold text-gray-900 mb-4">Project Information</h4>
               
               <div className="mb-4">
                 <div className="w-64">
