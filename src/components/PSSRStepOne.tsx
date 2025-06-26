@@ -155,7 +155,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           )}
 
           <div className="space-y-3">
-            <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">Scope Description *</Label>
+            <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <Textarea 
               value={formData.scope}
               onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
