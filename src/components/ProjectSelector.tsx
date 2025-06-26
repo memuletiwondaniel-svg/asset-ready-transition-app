@@ -52,9 +52,9 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   const handleNewProjectSubmit = (projectData: any) => {
     console.log('New project created:', projectData);
     
-    // Create new project object
+    // Create new project object - ensure ID is stored without DP prefix
     const newProject: Project = {
-      id: projectData.projectId,
+      id: projectData.projectId, // Store just the number
       name: projectData.projectTitle,
       plant: projectData.plant,
       subdivision: projectData.csLocation,
@@ -81,8 +81,10 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
     setShowAddProjectWidget(false);
   };
 
+  // Format project ID for display only - add DP prefix only when displaying
   const formatProjectId = (id: string) => {
-    return `DP ${id}`;
+    // If ID already has DP, don't add it again
+    return id.startsWith('DP') ? id : `DP ${id}`;
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
@@ -55,10 +56,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     
     const newProject = handleNewProjectAdded(projectData);
     
-    // Set the form data to use this new project
+    // Set the form data to use this new project - make sure projectId is stored without DP prefix
     setFormData(prev => ({
       ...prev,
-      projectId: projectData.projectId,
+      projectId: projectData.projectId, // This should be just the number, not with DP prefix
       projectName: projectData.projectTitle
     }));
     

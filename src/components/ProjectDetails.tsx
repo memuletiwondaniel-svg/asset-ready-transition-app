@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +50,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
 
   const handleEditProject = (updatedProjectData: any) => {
     const updatedProject: Project = {
-      id: updatedProjectData.projectId,
+      id: updatedProjectData.projectId, // Store just the number without DP prefix
       name: updatedProjectData.projectTitle,
       plant: updatedProjectData.plant,
       subdivision: updatedProjectData.csLocation,
@@ -86,8 +87,10 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     }
   };
 
+  // Format project ID for display only - add DP prefix only when displaying
   const formatProjectId = (id: string) => {
-    return `DP ${id}`;
+    // If ID already has DP, don't add it again
+    return id.startsWith('DP') ? id : `DP ${id}`;
   };
 
   return (
@@ -245,7 +248,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
         onSubmit={handleEditProject}
         editMode={true}
         existingProject={{
-          projectId: project.id,
+          projectId: project.id, // Pass the raw ID without DP prefix
           projectTitle: project.name,
           plant: project.plant,
           csLocation: project.subdivision,
