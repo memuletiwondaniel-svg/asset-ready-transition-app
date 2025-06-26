@@ -272,10 +272,10 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Project Information Section */}
               <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-                <CardHeader className="pb-3 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-t-lg">
-                  <CardTitle className="text-sm flex items-center gap-3">
+                <CardHeader className="pb-3 bg-gradient-to-r from-blue-300 to-blue-400 text-white rounded-t-lg">
+                  <CardTitle className="text-xs flex items-center gap-3">
                     <div className="p-1.5 bg-white/20 rounded-lg">
-                      <Building2 className="h-4 w-4" />
+                      <Building2 className="h-3 w-3" />
                     </div>
                     Project Information
                   </CardTitle>
@@ -399,7 +399,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         value={formData.projectScope}
                         onChange={(e) => setFormData(prev => ({ ...prev, projectScope: e.target.value }))}
                         placeholder="Describe the comprehensive project scope, objectives, and deliverables..."
-                        rows={16}
+                        rows={5}
                         required
                         className="resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                       />
@@ -410,10 +410,10 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
 
               {/* Team Members Section */}
               <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-                <CardHeader className="pb-3 bg-gradient-to-r from-purple-400 to-purple-500 text-white rounded-t-lg">
-                  <CardTitle className="text-sm flex items-center gap-3">
+                <CardHeader className="pb-3 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-t-lg">
+                  <CardTitle className="text-xs flex items-center gap-3">
                     <div className="p-1.5 bg-white/20 rounded-lg">
-                      <Users className="h-4 w-4" />
+                      <Users className="h-3 w-3" />
                     </div>
                     Team Members
                   </CardTitle>
@@ -566,10 +566,10 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
 
               {/* Project Documents Section */}
               <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-                <CardHeader className="pb-3 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white rounded-t-lg">
-                  <CardTitle className="text-sm flex items-center gap-3">
+                <CardHeader className="pb-3 bg-gradient-to-r from-emerald-300 to-emerald-400 text-white rounded-t-lg">
+                  <CardTitle className="text-xs flex items-center gap-3">
                     <div className="p-1.5 bg-white/20 rounded-lg">
-                      <FolderOpen className="h-4 w-4" />
+                      <FolderOpen className="h-3 w-3" />
                     </div>
                     Project Documents
                   </CardTitle>
