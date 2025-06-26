@@ -20,8 +20,8 @@ interface CreatePSSRFlowProps {
 const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
-  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+  const [showAddProjectWidget, setShowAddProjectWidget] = useState<boolean>(false);
+  const [projectSearchOpen, setProjectSearchOpen] = useState<boolean>(false);
   
   const { projects, setProjects, handleNewProjectAdded } = useProjectsData();
   const { formData, setFormData, handleFileUpload, removeFile } = usePSSRFormData();
@@ -144,7 +144,6 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         />
       </main>
 
-      {/* Enhanced Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -174,7 +173,6 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Add New Project Widget */}
       <AddNewProjectWidget
         open={showAddProjectWidget}
         onClose={() => setShowAddProjectWidget(false)}
