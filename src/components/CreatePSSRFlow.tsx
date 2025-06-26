@@ -152,7 +152,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
       {/* Enhanced Bottom fade gradient */}
       <div className="fixed bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none z-30" />
 
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <Dialog open={showConfirmDialog} onOpenChange={(open: boolean) => setShowConfirmDialog(open)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
