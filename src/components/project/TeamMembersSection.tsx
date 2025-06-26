@@ -69,7 +69,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
       <CardContent className="p-6 space-y-6">
         {/* Core Team Members */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Project Hub Lead */}
+          {/* Project Hub Lead - cleared */}
           <div className="space-y-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
             <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
               <User className="h-4 w-4 text-purple-500" />
@@ -77,7 +77,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             </Label>
             <Input
               placeholder="Full name"
-              value={formData.projectHubLead.name}
+              value=""
               onChange={(e) => updateTeamMember('projectHubLead', 'name', e.target.value)}
               required
               className="h-9 border-gray-300 focus:border-purple-400"
@@ -87,7 +87,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               <Input
                 type="email"
                 placeholder="Email address"
-                value={formData.projectHubLead.email}
+                value=""
                 onChange={(e) => updateTeamMember('projectHubLead', 'email', e.target.value)}
                 required
                 className="h-9 pl-10 border-gray-300 focus:border-purple-400"
@@ -95,7 +95,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             </div>
           </div>
 
-          {/* Commissioning Lead */}
+          {/* Commissioning Lead - cleared */}
           <div className="space-y-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
             <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
               <User className="h-4 w-4 text-purple-500" />
@@ -103,7 +103,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             </Label>
             <Input
               placeholder="Full name"
-              value={formData.commissioningLead.name}
+              value=""
               onChange={(e) => updateTeamMember('commissioningLead', 'name', e.target.value)}
               required
               className="h-9 border-gray-300 focus:border-purple-400"
@@ -113,7 +113,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               <Input
                 type="email"
                 placeholder="Email address"
-                value={formData.commissioningLead.email}
+                value=""
                 onChange={(e) => updateTeamMember('commissioningLead', 'email', e.target.value)}
                 required
                 className="h-9 pl-10 border-gray-300 focus:border-purple-400"
@@ -121,7 +121,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             </div>
           </div>
 
-          {/* Construction Lead */}
+          {/* Construction Lead - cleared */}
           <div className="space-y-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
             <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
               <User className="h-4 w-4 text-purple-500" />
@@ -129,7 +129,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             </Label>
             <Input
               placeholder="Full name"
-              value={formData.constructionLead.name}
+              value=""
               onChange={(e) => updateTeamMember('constructionLead', 'name', e.target.value)}
               required
               className="h-9 border-gray-300 focus:border-purple-400"
@@ -139,7 +139,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               <Input
                 type="email"
                 placeholder="Email address"
-                value={formData.constructionLead.email}
+                value=""
                 onChange={(e) => updateTeamMember('constructionLead', 'email', e.target.value)}
                 required
                 className="h-9 pl-10 border-gray-300 focus:border-purple-400"
