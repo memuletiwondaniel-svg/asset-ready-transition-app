@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, FileText } from 'lucide-react';
@@ -22,13 +21,27 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     lead: [] as string[]
   });
 
-  // Empty PSSR list
-  const pssrList: any[] = [];
+  // Sample PSSR data
+  const pssrList = [
+    {
+      id: 'PSSR-2024-004',
+      projectId: 'DP 300',
+      projectName: 'Digital Platform Enhancement',
+      asset: 'Main Processing Unit',
+      status: 'Under Review',
+      progress: 65,
+      created: '2024-01-15',
+      pssrLead: 'John Smith',
+      pssrLeadAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+      pendingApprovals: 3,
+      completedDate: null
+    }
+  ];
 
   // Get unique values for filter options
-  const uniquePlants: string[] = [];
-  const uniqueStatuses: string[] = [];
-  const uniqueLeads: string[] = [];
+  const uniquePlants = [...new Set(pssrList.map(pssr => pssr.asset))];
+  const uniqueStatuses = [...new Set(pssrList.map(pssr => pssr.status))];
+  const uniqueLeads = [...new Set(pssrList.map(pssr => pssr.pssrLead))];
 
   // Memoized filter logic for better performance
   const filteredPSSRs = useMemo(() => {
@@ -83,7 +96,13 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   };
 
   if (activeView === 'create') {
-    return <CreatePSSRFlow onBack={() => setActiveView('list')} />;
+    return (
+      <CreatePSSRFlow 
+        isOpen={true}
+        onClose={() => setActiveView('list')}
+        onComplete={() => setActiveView('list')}
+      />
+    );
   }
 
   if (activeView === 'details' && selectedPSSR) {

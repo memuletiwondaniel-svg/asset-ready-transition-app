@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, ClipboardCheck } from 'lucide-react';
+import { CheckCircle, ClipboardCheck, Target, Building2 } from 'lucide-react';
 
 interface FormData {
   asset: string;
@@ -67,7 +67,10 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {formData.asset && (
                 <div className="p-4 bg-white rounded-lg border border-gray-200">
-                  <span className="text-sm text-gray-500 block mb-1">Asset</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm text-gray-500">Asset / Plant</span>
+                  </div>
                   <span className="text-lg font-semibold text-gray-900">{formData.asset}</span>
                 </div>
               )}
@@ -78,7 +81,16 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
               {formData.projectId && (
                 <div className="p-4 bg-white rounded-lg border border-gray-200">
                   <span className="text-sm text-gray-500 block mb-1">Project ID</span>
-                  <span className="text-lg font-semibold text-gray-900">{formData.projectId}</span>
+                  <span className="text-lg font-semibold text-gray-900">DP {formData.projectId}</span>
+                </div>
+              )}
+              {formData.scope && (
+                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm text-gray-500">Project Scope</span>
+                  </div>
+                  <span className="text-lg font-semibold text-gray-900">{formData.scope}</span>
                 </div>
               )}
               <div className="p-4 bg-white rounded-lg border border-gray-200">

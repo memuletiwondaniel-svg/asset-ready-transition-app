@@ -2,12 +2,36 @@
 import { useState } from 'react';
 
 export interface PSSRFormData {
+  assetName: string;
   asset: string;
   reason: string;
   projectId: string;
   projectName: string;
   scope: string;
   files: File[];
+  coreTeam: {
+    projectManager: {
+      name: string;
+      email: string;
+    };
+  };
+  projectHubLead?: {
+    name: string;
+    email: string;
+  };
+  commissioningLead?: {
+    name: string;
+    email: string;
+  };
+  constructionLead?: {
+    name: string;
+    email: string;
+  };
+  additionalPersons?: Array<{
+    name: string;
+    email: string;
+    role: string;
+  }>;
   teamMembers: {
     technicalAuthorities: {};
     assetTeam: {};
@@ -18,12 +42,19 @@ export interface PSSRFormData {
 
 export const usePSSRFormData = () => {
   const [formData, setFormData] = useState<PSSRFormData>({
+    assetName: '',
     asset: '',
     reason: '',
     projectId: '',
     projectName: '',
     scope: '',
     files: [] as File[],
+    coreTeam: {
+      projectManager: {
+        name: '',
+        email: ''
+      }
+    },
     teamMembers: {
       technicalAuthorities: {},
       assetTeam: {},
@@ -51,11 +82,36 @@ export const usePSSRFormData = () => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
+  const resetFormData = () => {
+    setFormData({
+      assetName: '',
+      asset: '',
+      reason: '',
+      projectId: '',
+      projectName: '',
+      scope: '',
+      files: [],
+      coreTeam: {
+        projectManager: {
+          name: '',
+          email: ''
+        }
+      },
+      teamMembers: {
+        technicalAuthorities: {},
+        assetTeam: {},
+        projectTeam: {},
+        hsse: {}
+      }
+    });
+  };
+
   return {
     formData,
     setFormData,
     handleFileUpload,
     removeFile,
-    updateFormData
+    updateFormData,
+    resetFormData
   };
 };

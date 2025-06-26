@@ -47,20 +47,27 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
     onComplete();
   };
 
+  const handleReturnToList = () => {
+    resetFormData();
+    setCurrentStep(1);
+    onComplete();
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <PSSRStepOne 
             formData={formData} 
-            updateFormData={updateFormData}
+            setFormData={updateFormData}
           />
         );
       case 2:
         return (
           <PSSRStepTwo 
             formData={formData} 
-            updateFormData={updateFormData}
+            onBack={handleReturnToList}
+            onContinueToChecklist={() => setCurrentStep(3)}
           />
         );
       case 3:
