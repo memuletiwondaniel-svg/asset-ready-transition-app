@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 
-export interface PSSRFormData {
+export interface PSSRData {
   assetName: string;
   asset: string;
   reason: string;
@@ -41,7 +41,7 @@ export interface PSSRFormData {
 }
 
 export const usePSSRFormData = () => {
-  const [formData, setFormData] = useState<PSSRFormData>({
+  const [formData, setFormData] = useState<PSSRData>({
     assetName: '',
     asset: '',
     reason: '',
@@ -78,7 +78,7 @@ export const usePSSRFormData = () => {
     }));
   };
 
-  const updateFormData = (updates: Partial<PSSRFormData>) => {
+  const updateFormData = (updates: Partial<PSSRData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 

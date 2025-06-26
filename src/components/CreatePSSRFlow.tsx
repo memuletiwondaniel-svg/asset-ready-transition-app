@@ -9,7 +9,7 @@ import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
 import PSSRChecklist from './PSSRChecklist';
 import ProgressSteps from './ProgressSteps';
-import { usePSSRFormData, PSSRFormData } from '@/hooks/usePSSRFormData';
+import { usePSSRFormData, PSSRData } from '@/hooks/usePSSRFormData';
 
 interface CreatePSSRFlowProps {
   isOpen: boolean;

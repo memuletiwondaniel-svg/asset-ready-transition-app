@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -8,7 +7,7 @@ import { FileText, Briefcase, Building2 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
-import { PSSRFormData } from '@/hooks/usePSSRFormData';
+import { PSSRData } from '@/hooks/usePSSRFormData';
 
 interface Project {
   id: string;
@@ -21,8 +20,8 @@ interface Project {
 }
 
 interface PSSRStepOneProps {
-  formData: PSSRFormData;
-  setFormData: (updates: Partial<PSSRFormData>) => void;
+  formData: PSSRData;
+  setFormData: (updates: Partial<PSSRData>) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
 }
