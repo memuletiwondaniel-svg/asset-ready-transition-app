@@ -12,6 +12,16 @@ interface CreatePSSRFlowProps {
   onBack: () => void;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  plant: string;
+  subdivision?: string;
+  scope: string;
+  hubLead: any;
+  others: any[];
+}
+
 const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -48,7 +58,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   ];
 
   // Extended projects list with team, plant, and scope information
-  const projects = [
+  const [projects, setProjects] = useState<Project[]>([
     { 
       id: 'DP 300', 
       name: 'HM Additional Compressors',
@@ -259,7 +269,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         }
       ]
     }
-  ];
+  ]);
 
   const handleContinue = () => {
     setShowConfirmDialog(true);
@@ -331,6 +341,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
             formData={formData}
             setFormData={setFormData}
             projects={projects}
+            setProjects={setProjects}
             assets={assets}
             reasons={reasons}
             projectSearchOpen={projectSearchOpen}
