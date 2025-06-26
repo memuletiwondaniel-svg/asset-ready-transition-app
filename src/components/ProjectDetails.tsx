@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -110,15 +111,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div className="p-2 bg-blue-50 rounded-md">
             <span className="text-xs text-gray-600 block mb-1">Project Name</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900">{currentProject.name}</span>
-              {currentProject.scorecardProject === 'Yes' && (
-                <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 border-yellow-500 flex items-center gap-1 text-xs px-2 py-0.5">
-                  <Award className="h-3 w-3" />
-                  Scorecard
-                </Badge>
-              )}
-            </div>
+            <span className="text-sm font-medium text-gray-900">{currentProject.name}</span>
           </div>
           
           <div className="p-2 bg-gray-50 rounded-md">
@@ -136,7 +129,15 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
           {currentProject.milestone && (
             <div className="p-2 bg-green-50 rounded-md">
               <span className="text-xs text-gray-600 block mb-1">{currentYear} Project Milestone</span>
-              <span className="text-sm font-medium text-gray-900">{currentProject.milestone}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900">{currentProject.milestone}</span>
+                {currentProject.scorecardProject === 'Yes' && (
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 border-yellow-500 flex items-center gap-1 text-xs px-2 py-0.5">
+                    <Award className="h-3 w-3" />
+                    Scorecard
+                  </Badge>
+                )}
+              </div>
             </div>
           )}
         </div>
