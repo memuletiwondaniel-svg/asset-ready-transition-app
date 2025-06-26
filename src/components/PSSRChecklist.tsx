@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +18,7 @@ import {
   Award,
   Target,
   Shield,
-  Cog,
-  ChevronUp
+  Cog
 } from 'lucide-react';
 import { pssrChecklistData, checklistCategories, ChecklistItem } from '@/data/pssrChecklistData';
 import ChecklistItemModal from './ChecklistItemModal';
@@ -48,8 +47,6 @@ const PSSRChecklist: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<'N/A' | 'YES' | 'NO' | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const filteredItems = pssrChecklistData.filter(item => {
     const matchesCategory = item.category === selectedCategory;
@@ -83,34 +80,6 @@ const PSSRChecklist: React.FC = () => {
         return [...prev, { id: itemId, status, response, data }];
       }
     });
-  };
-
-  // Check if there are more items above the current view
-  useEffect(() => {
-    const checkScrollPosition = () => {
-      if (scrollContainerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-        const isScrolledDown = scrollTop > 100; // Show indicator if scrolled down more than 100px
-        setShowScrollIndicator(isScrolledDown);
-      }
-    };
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', checkScrollPosition);
-      checkScrollPosition(); // Initial check
-      
-      return () => container.removeEventListener('scroll', checkScrollPosition);
-    }
-  }, []);
-
-  const scrollToTop = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
   };
 
   const getStatusIcon = (status?: ChecklistItemStatus) => {
@@ -213,7 +182,7 @@ const PSSRChecklist: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">PSSR Checklist</h2>
@@ -263,27 +232,17 @@ const PSSRChecklist: React.FC = () => {
 
         {checklistCategories.map((category) => (
           <TabsContent key={category} value={category} className="mt-6">
-            <div 
-              ref={scrollContainerRef}
-              className="space-y-4 max-h-[70vh] overflow-y-auto relative"
-            >
-              {/* Fade overlay for last few items */}
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-10" />
-              
-              {filteredItems.map((item, index) => {
+            <div className="space-y-4">
+              {filteredItems.map((item) => {
                 const status = getItemStatus(item.id);
-                const isLastFew = index >= filteredItems.length - 3;
                 return (
-                  <Card 
-                    key={item.id} 
-                    className={`transition-all duration-200 hover:shadow-lg border-l-4 ${
-                      status?.status === 'NOT APPLICABLE' ? 'opacity-60 border-l-gray-400' :
-                      status?.status === 'APPROVED' ? 'border-l-green-500' :
-                      status?.status === 'UNDER REVIEW' ? 'border-l-blue-500' :
-                      status?.status === 'DRAFT' ? 'border-l-orange-500' :
-                      'border-l-gray-300'
-                    } ${isLastFew ? 'opacity-75' : ''}`}
-                  >
+                  <Card key={item.id} className={`transition-all duration-200 hover:shadow-lg border-l-4 ${
+                    status?.status === 'NOT APPLICABLE' ? 'opacity-60 border-l-gray-400' :
+                    status?.status === 'APPROVED' ? 'border-l-green-500' :
+                    status?.status === 'UNDER REVIEW' ? 'border-l-blue-500' :
+                    status?.status === 'DRAFT' ? 'border-l-orange-500' :
+                    'border-l-gray-300'
+                  }`}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4 flex-1">
@@ -346,24 +305,6 @@ const PSSRChecklist: React.FC = () => {
           </TabsContent>
         ))}
       </Tabs>
-
-      {/* Scroll Up Indicator */}
-      {showScrollIndicator && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20">
-          <Button
-            onClick={scrollToTop}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 animate-bounce"
-            size="icon"
-          >
-            <ChevronUp className="h-5 w-5" />
-          </Button>
-          <div className="text-center mt-2">
-            <span className="text-xs text-gray-600 bg-white px-2 py-1 rounded-md shadow-sm">
-              More items above
-            </span>
-          </div>
-        </div>
-      )}
 
       <ChecklistItemModal
         isOpen={modalOpen}
