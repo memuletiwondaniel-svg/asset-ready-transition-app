@@ -18,6 +18,8 @@ interface Project {
   plant: string;
   subdivision?: string;
   scope: string;
+  milestone?: string;
+  scorecardProject?: string;
   hubLead: any;
   others: any[];
 }
@@ -311,11 +313,50 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   };
 
   const handleNewProjectAdded = (projectData: any) => {
+    console.log('New project data received:', projectData);
+    
+    // Create a complete project object with all fields
+    const newProject: Project = {
+      id: projectData.projectId,
+      name: projectData.projectTitle,
+      plant: projectData.plant,
+      subdivision: projectData.csLocation || undefined,
+      scope: projectData.projectScope,
+      milestone: projectData.projectMilestone,
+      scorecardProject: projectData.scorecardProject,
+      hubLead: {
+        ...projectData.projectHubLead,
+        role: 'Project Hub Lead'
+      },
+      others: [
+        ...(projectData.commissioningLead?.name ? [{
+          ...projectData.commissioningLead,
+          role: 'Commissioning Lead'
+        }] : []),
+        ...(projectData.constructionLead?.name ? [{
+          ...projectData.constructionLead,
+          role: 'Construction Lead'
+        }] : []),
+        ...projectData.additionalPersons.map((person: any) => ({
+          name: person.name,
+          email: person.email,
+          avatar: person.avatar || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face`,
+          status: person.status || 'green',
+          role: person.role
+        }))
+      ]
+    };
+
+    // Add the new project to the projects list
+    setProjects(prev => [...prev, newProject]);
+    
+    // Set the form data to use this new project
     setFormData(prev => ({
       ...prev,
       projectId: projectData.projectId,
       projectName: projectData.projectTitle
     }));
+    
     setShowAddProjectWidget(false);
   };
 
