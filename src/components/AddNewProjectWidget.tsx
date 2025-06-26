@@ -257,8 +257,8 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] p-0 bg-gradient-to-br from-slate-50 to-blue-50/30">
-        <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+      <DialogContent className="max-w-7xl h-[90vh] p-0 bg-gradient-to-br from-slate-50 to-blue-50/30 flex flex-col">
+        <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-white/95 backdrop-blur-sm flex-shrink-0">
           <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center gap-3">
             <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
               <Plus className="h-5 w-5 text-white" />
@@ -267,15 +267,15 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="relative flex-1">
+        <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Project Information Section */}
-              <Card className="shadow-md border-0 bg-white/95 backdrop-blur-sm">
-                <CardHeader className="pb-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
-                  <CardTitle className="text-base flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-lg">
-                      <Building2 className="h-5 w-5" />
+              <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
+                <CardHeader className="pb-3 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-t-lg">
+                  <CardTitle className="text-sm flex items-center gap-3">
+                    <div className="p-1.5 bg-white/20 rounded-lg">
+                      <Building2 className="h-4 w-4" />
                     </div>
                     Project Information
                   </CardTitle>
@@ -297,7 +297,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                           onChange={handleProjectIdChange}
                           placeholder="425"
                           required
-                          className="h-10 pl-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                          className="h-10 pl-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 w-32"
                         />
                       </div>
                     </div>
@@ -399,7 +399,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         value={formData.projectScope}
                         onChange={(e) => setFormData(prev => ({ ...prev, projectScope: e.target.value }))}
                         placeholder="Describe the comprehensive project scope, objectives, and deliverables..."
-                        rows={12}
+                        rows={16}
                         required
                         className="resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                       />
@@ -409,11 +409,11 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
               </Card>
 
               {/* Team Members Section */}
-              <Card className="shadow-md border-0 bg-white/95 backdrop-blur-sm">
-                <CardHeader className="pb-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
-                  <CardTitle className="text-base flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-lg">
-                      <Users className="h-5 w-5" />
+              <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
+                <CardHeader className="pb-3 bg-gradient-to-r from-purple-400 to-purple-500 text-white rounded-t-lg">
+                  <CardTitle className="text-sm flex items-center gap-3">
+                    <div className="p-1.5 bg-white/20 rounded-lg">
+                      <Users className="h-4 w-4" />
                     </div>
                     Team Members
                   </CardTitle>
@@ -565,11 +565,11 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
               </Card>
 
               {/* Project Documents Section */}
-              <Card className="shadow-md border-0 bg-white/95 backdrop-blur-sm">
-                <CardHeader className="pb-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-t-lg">
-                  <CardTitle className="text-base flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-lg">
-                      <FolderOpen className="h-5 w-5" />
+              <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
+                <CardHeader className="pb-3 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white rounded-t-lg">
+                  <CardTitle className="text-sm flex items-center gap-3">
+                    <div className="p-1.5 bg-white/20 rounded-lg">
+                      <FolderOpen className="h-4 w-4" />
                     </div>
                     Project Documents
                   </CardTitle>
@@ -580,7 +580,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                     <Label className="text-sm font-medium text-gray-700">Find Documents</Label>
                     <div className="flex items-center gap-2 flex-wrap">
                       {Object.entries(filterOptions).map(([key, options], index) => (
-                        <React.Fragment key={key}>
+                        <div key={key} className="flex items-center gap-2">
                           <div className="min-w-[120px]">
                             <Select value={documentFilters[key as keyof DocumentFilter]} onValueChange={(value) => updateDocumentFilter(key as keyof DocumentFilter, value)}>
                               <SelectTrigger className="h-8 text-xs border-gray-300">
@@ -596,7 +596,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                           {index < Object.keys(filterOptions).length - 1 && (
                             <span className="text-gray-400 text-sm">-</span>
                           )}
-                        </React.Fragment>
+                        </div>
                       ))}
                       <div className="flex gap-2">
                         <Button
@@ -698,7 +698,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-slate-200 bg-white/95 backdrop-blur-sm">
+        <div className="flex justify-end space-x-3 p-6 border-t border-slate-200 bg-white/95 backdrop-blur-sm flex-shrink-0">
           <Button type="button" variant="outline" onClick={onClose} className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50">
             Cancel
           </Button>
