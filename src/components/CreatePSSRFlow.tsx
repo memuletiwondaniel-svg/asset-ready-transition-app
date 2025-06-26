@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
@@ -18,10 +19,10 @@ interface CreatePSSRFlowProps {
 }
 
 const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
-  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
+  const [showAddProjectWidget, setShowAddProjectWidget] = useState<boolean>(false);
+  const [projectSearchOpen, setProjectSearchOpen] = useState<boolean>(false);
   
   const { projects, setProjects, handleNewProjectAdded } = useProjectsData();
   const { formData, setFormData, handleFileUpload, removeFile } = usePSSRFormData();
