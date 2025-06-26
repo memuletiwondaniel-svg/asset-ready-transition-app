@@ -1,192 +1,191 @@
 
 import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import PSSRChecklist from './PSSRChecklist';
-import AddNewProjectWidget from './AddNewProjectWidget';
-import ProgressSteps from './ProgressSteps';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { ArrowLeft, ArrowRight, Clock, CheckCircle, AlertTriangle, Users } from 'lucide-react';
 import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
-import PSSRFlowNavigation from './PSSRFlowNavigation';
-import ScrollIndicator from './ScrollIndicator';
-import { useProjectsData } from '@/hooks/useProjectsData';
+import PSSRChecklist from './PSSRChecklist';
+import ProgressSteps from './ProgressSteps';
 import { usePSSRFormData } from '@/hooks/usePSSRFormData';
-import { ASSETS, REASONS } from '@/constants/pssrConstants';
-import { handleContextAction } from '@/utils/contextActions';
 
 interface CreatePSSRFlowProps {
-  onBack: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onComplete: () => void;
 }
 
-const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
-  const [showAddProjectWidget, setShowAddProjectWidget] = useState<boolean>(false);
-  const [projectSearchOpen, setProjectSearchOpen] = useState<boolean>(false);
-  
-  const { projects, setProjects, handleNewProjectAdded, handleProjectDelete, handleProjectUpdate } = useProjectsData();
-  const { formData, setFormData, handleFileUpload, removeFile } = usePSSRFormData();
+const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const { formData, updateFormData, resetFormData } = usePSSRFormData();
 
-  const handleContinue = () => {
-    setShowConfirmDialog(true);
-  };
-
-  const handleConfirm = () => {
-    setCurrentStep(2);
-    setShowConfirmDialog(false);
-  };
-
-  const handleProjectSelect = (value: string) => {
-    if (value === 'add-new') {
-      setShowAddProjectWidget(true);
-      setProjectSearchOpen(false);
-    } else {
-      const selectedProject = projects.find(p => p.id === value);
-      setFormData(prev => ({
-        ...prev,
-        projectId: value,
-        projectName: selectedProject?.name || ''
-      }));
-      setProjectSearchOpen(false);
+  const handleNext = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
-  const handleNewProjectCreate = (projectData: any) => {
-    console.log('New project data received:', projectData);
-    
-    const newProject = handleNewProjectAdded(projectData);
-    
-    setFormData(prev => ({
-      ...prev,
-      projectId: projectData.projectId,
-      projectName: projectData.projectTitle
-    }));
-    
-    setShowAddProjectWidget(false);
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
-  const canContinue = formData.reason && formData.scope && 
-    (formData.reason === 'Start-up or Commissioning of a new Asset' || formData.asset);
+  const handleClose = () => {
+    resetFormData();
+    setCurrentStep(1);
+    onClose();
+  };
+
+  const handleComplete = () => {
+    console.log('PSSR Created:', formData);
+    resetFormData();
+    setCurrentStep(1);
+    onComplete();
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <PSSRStepOne
-            formData={formData}
-            setFormData={setFormData}
-            projects={projects}
-            setProjects={setProjects}
-            assets={ASSETS}
-            reasons={REASONS}
-            projectSearchOpen={projectSearchOpen}
-            setProjectSearchOpen={setProjectSearchOpen}
-            showAddProjectWidget={showAddProjectWidget}
-            setShowAddProjectWidget={setShowAddProjectWidget}
-            onProjectSelect={handleProjectSelect}
-            onFileUpload={handleFileUpload}
-            onRemoveFile={removeFile}
-            onContextAction={handleContextAction}
-            onProjectDelete={handleProjectDelete}
-            onProjectUpdate={handleProjectUpdate}
+          <PSSRStepOne 
+            formData={formData} 
+            updateFormData={updateFormData}
           />
         );
-
       case 2:
         return (
-          <PSSRStepTwo
-            formData={formData}
-            onBack={onBack}
-            onContinueToChecklist={() => setCurrentStep(3)}
+          <PSSRStepTwo 
+            formData={formData} 
+            updateFormData={updateFormData}
           />
         );
-
       case 3:
-        return <PSSRChecklist />;
-
+        return (
+          <PSSRChecklist 
+            onSaveDraft={handleComplete}
+          />
+        );
       default:
         return null;
     }
   };
 
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1:
+        return 'Project Information';
+      case 2:
+        return 'Team Members & Documents';
+      case 3:
+        return 'PSSR Checklist';
+      default:
+        return '';
+    }
+  };
+
+  const getStepDescription = () => {
+    switch (currentStep) {
+      case 1:
+        return 'Provide basic project details and information';
+      case 2:
+        return 'Add team members and upload required documents';
+      case 3:
+        return 'Complete the PSSR checklist items';
+      default:
+        return '';
+    }
+  };
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.assetName && formData.reason && formData.projectId;
+      case 2:
+        return formData.coreTeam.projectManager.name && formData.coreTeam.projectManager.email;
+      case 3:
+        return true;
+      default:
+        return false;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
-      <ScrollIndicator showFade={true} />
-      
-      <header className="bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-12">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={onBack} className="hover:bg-gray-100">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to PSSR List
-              </Button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-lg font-bold text-gray-900">
-                {currentStep === 1 ? "Create New PSSR" : currentStep === 2 ? "PSSR Created" : "PSSR Checklist"}
-              </h1>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && handleClose()}>
+      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <DialogHeader className="px-6 py-4 border-b bg-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  Create New PSSR
+                </DialogTitle>
+                <p className="text-gray-600 mt-1">{getStepDescription()}</p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-sm text-gray-500">
+                  Step {currentStep} of 3
+                </div>
+                <Progress value={(currentStep / 3) * 100} className="w-24" />
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" className="border-gray-300 hover:bg-gray-50 text-sm px-3 py-1">
-                <Save className="h-4 w-4 mr-2" />
-                Save Draft
-              </Button>
+            
+            {/* Progress Steps */}
+            <div className="mt-4">
+              <ProgressSteps currentStep={currentStep} />
             </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
-        <ProgressSteps currentStep={currentStep} />
-        {renderStepContent()}
-
-        <PSSRFlowNavigation
-          currentStep={currentStep}
-          onBack={onBack}
-          onContinue={handleContinue}
-          canContinue={canContinue}
-        />
-      </main>
-
-      {/* Bottom fade gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none z-30" />
-
-      <Dialog open={showConfirmDialog} onOpenChange={(open: boolean) => setShowConfirmDialog(open)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
-              <CheckCircle className="h-8 w-8 text-blue-600" />
-            </div>
-            <DialogTitle className="text-center text-xl">Create PSSR</DialogTitle>
-            <DialogDescription className="text-center text-gray-600">
-              Are you ready to create this PSSR? Once created, a unique ID will be generated and you can proceed to complete the checklist.
-            </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center space-x-3 mt-6">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowConfirmDialog(false)}
-              className="px-6"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleConfirm}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-            >
-              Continue
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      <AddNewProjectWidget
-        open={showAddProjectWidget}
-        onClose={() => setShowAddProjectWidget(false)}
-        onSubmit={handleNewProjectCreate}
-      />
-    </div>
+          {/* Content */}
+          <div className="flex-1 overflow-hidden">
+            {currentStep < 3 ? (
+              <div className="h-full overflow-y-auto p-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{getStepTitle()}</CardTitle>
+                    <CardDescription>{getStepDescription()}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {renderStepContent()}
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="h-full">
+                {renderStepContent()}
+              </div>
+            )}
+          </div>
+
+          {/* Footer Navigation */}
+          {currentStep < 3 && (
+            <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
+              <Button
+                variant="outline"
+                onClick={currentStep === 1 ? handleClose : handleBack}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>{currentStep === 1 ? 'Cancel' : 'Back'}</span>
+              </Button>
+
+              <Button
+                onClick={handleNext}
+                disabled={!isStepValid()}
+                className="flex items-center space-x-2"
+              >
+                <span>Next</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
