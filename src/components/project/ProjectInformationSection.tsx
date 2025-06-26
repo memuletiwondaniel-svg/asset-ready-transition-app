@@ -51,8 +51,8 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
-        {/* First Row: Project ID and Title */}
-        <div className="grid grid-cols-4 gap-4">
+        {/* First Row: Project ID and Title - Closer spacing */}
+        <div className="flex gap-3 items-end">
           <div className="space-y-2">
             <Label htmlFor="projectId" className="text-sm font-medium text-gray-700">
               Project ID *
@@ -72,7 +72,7 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
             </div>
           </div>
           
-          <div className="col-span-3 space-y-2">
+          <div className="flex-1 space-y-2">
             <Label htmlFor="projectTitle" className="text-sm font-medium text-gray-700">
               Project Title *
             </Label>
