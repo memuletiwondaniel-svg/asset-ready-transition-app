@@ -131,15 +131,20 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           {formData.reason === 'Start-up or Commissioning of a new Asset' && (
             <div className="p-6 bg-blue-50 rounded-xl border-l-4 border-blue-500">
               <h4 className="font-semibold text-gray-900 mb-4">Project Information</h4>
-              <ProjectSelector
-                projectId={formData.projectId}
-                projectName={formData.projectName}
-                projects={projects}
-                projectSearchOpen={projectSearchOpen}
-                onProjectSearchOpenChange={setProjectSearchOpen}
-                onProjectSelect={onProjectSelect}
-                onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
-              />
+              
+              <div className="mb-4">
+                <div className="w-64">
+                  <ProjectSelector
+                    projectId={formData.projectId}
+                    projectName={formData.projectName}
+                    projects={projects}
+                    projectSearchOpen={projectSearchOpen}
+                    onProjectSearchOpenChange={setProjectSearchOpen}
+                    onProjectSelect={onProjectSelect}
+                    onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
+                  />
+                </div>
+              </div>
 
               {/* Project Details */}
               {selectedProject && (
