@@ -38,6 +38,7 @@ interface PSSRStepOneProps {
   formData: FormData;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   assets: string[];
   reasons: string[];
   projectSearchOpen: boolean;
@@ -54,6 +55,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   formData,
   setFormData,
   projects,
+  setProjects,
   assets,
   reasons,
   projectSearchOpen,
@@ -64,6 +66,17 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onContextAction
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
+
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProjects(prevProjects => 
+      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
+    );
+  };
+
+  const handleNewProjectCreate = (newProject: Project) => {
+    setProjects(prevProjects => [...prevProjects, newProject]);
+    setFormData(prev => ({ ...prev, projectId: newProject.id, projectName: newProject.name }));
+  };
 
   return (
     <div className="space-y-8">
@@ -141,6 +154,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     onProjectSearchOpenChange={setProjectSearchOpen}
                     onProjectSelect={onProjectSelect}
                     onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
+                    onNewProjectCreate={handleNewProjectCreate}
                   />
                 </div>
               </div>
@@ -150,6 +164,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
+                  onProjectUpdate={handleProjectUpdate}
                 />
               )}
             </div>
