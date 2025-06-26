@@ -9,6 +9,7 @@ import ProgressSteps from './ProgressSteps';
 import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
 import PSSRFlowNavigation from './PSSRFlowNavigation';
+import ScrollIndicator from './ScrollIndicator';
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { usePSSRFormData } from '@/hooks/usePSSRFormData';
 import { ASSETS, REASONS } from '@/constants/pssrConstants';
@@ -24,7 +25,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [showAddProjectWidget, setShowAddProjectWidget] = useState<boolean>(false);
   const [projectSearchOpen, setProjectSearchOpen] = useState<boolean>(false);
   
-  const { projects, setProjects, handleNewProjectAdded } = useProjectsData();
+  const { projects, setProjects, handleNewProjectAdded, handleProjectDelete, handleProjectUpdate } = useProjectsData();
   const { formData, setFormData, handleFileUpload, removeFile } = usePSSRFormData();
 
   const handleContinue = () => {
@@ -56,10 +57,9 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     
     const newProject = handleNewProjectAdded(projectData);
     
-    // Set the form data to use this new project - make sure projectId is stored without DP prefix
     setFormData(prev => ({
       ...prev,
-      projectId: projectData.projectId, // This should be just the number, not with DP prefix
+      projectId: projectData.projectId,
       projectName: projectData.projectTitle
     }));
     
@@ -88,6 +88,8 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
             onFileUpload={handleFileUpload}
             onRemoveFile={removeFile}
             onContextAction={handleContextAction}
+            onProjectDelete={handleProjectDelete}
+            onProjectUpdate={handleProjectUpdate}
           />
         );
 
@@ -109,22 +111,24 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
+      <ScrollIndicator showFade={true} />
+      
       <header className="bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-12">
             <div className="flex items-center space-x-4">
               <Button variant="ghost" onClick={onBack} className="hover:bg-gray-100">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to PSSR List
               </Button>
               <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-lg font-bold text-gray-900">
                 {currentStep === 1 ? "Create New PSSR" : currentStep === 2 ? "PSSR Created" : "PSSR Checklist"}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" className="border-gray-300 hover:bg-gray-50">
+              <Button variant="outline" className="border-gray-300 hover:bg-gray-50 text-sm px-3 py-1">
                 <Save className="h-4 w-4 mr-2" />
                 Save Draft
               </Button>
@@ -133,7 +137,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
         <ProgressSteps currentStep={currentStep} />
         {renderStepContent()}
 
@@ -145,7 +149,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
         />
       </main>
 
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      {/* Bottom fade gradient */}
+      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none z-30" />
+
+      <Dialog open={showConfirmDialog} onOpenChange={(open: boolean) => setShowConfirmDialog(open)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">

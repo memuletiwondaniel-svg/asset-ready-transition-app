@@ -42,16 +42,16 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
 
   return (
     <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-      <CardHeader className="pb-3 bg-gradient-to-r from-blue-300 to-blue-400 text-white rounded-t-lg">
-        <CardTitle className="text-xl flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <Building2 className="h-8 w-8" />
+      <CardHeader className="pb-3 bg-gradient-to-r from-blue-300 to-blue-400 text-white rounded-t-lg" style={{ minHeight: '50px' }}>
+        <CardTitle className="text-lg flex items-center gap-3">
+          <div className="p-1.5 bg-white/20 rounded-lg">
+            <Building2 className="h-6 w-6" />
           </div>
           Project Information
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
-        {/* First Row: Project ID and Title - Closer spacing */}
+        {/* First Row: Project ID and Title */}
         <div className="flex gap-3 items-end">
           <div className="space-y-2">
             <Label htmlFor="projectId" className="text-sm font-medium text-gray-700">
@@ -127,34 +127,35 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
               </div>
             )}
 
-            {/* 2025 Project Milestone */}
-            <div className="space-y-2">
-              <Label htmlFor="projectMilestone" className="text-sm font-medium text-gray-700">
-                {currentYear} Project Milestone
-              </Label>
-              <Input
-                id="projectMilestone"
-                value={formData.projectMilestone}
-                onChange={(e) => setFormData((prev: any) => ({ ...prev, projectMilestone: e.target.value }))}
-                placeholder={`Enter ${currentYear} milestone`}
-                className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
-              />
-            </div>
+            {/* 2025 Project Milestone and Score Card Project - Side by Side */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="projectMilestone" className="text-sm font-medium text-gray-700">
+                  {currentYear} Project Milestone
+                </Label>
+                <Input
+                  id="projectMilestone"
+                  value={formData.projectMilestone}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, projectMilestone: e.target.value }))}
+                  placeholder={`Enter ${currentYear} milestone`}
+                  className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                />
+              </div>
 
-            {/* Score Card Project */}
-            <div className="space-y-2">
-              <Label htmlFor="scorecardProject" className="text-sm font-medium text-gray-700">
-                Score Card Project *
-              </Label>
-              <Select value={formData.scorecardProject} onValueChange={(value) => setFormData((prev: any) => ({ ...prev, scorecardProject: value }))}>
-                <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
-                  <SelectValue placeholder="Select option" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Yes">Yes</SelectItem>
-                  <SelectItem value="No">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="scorecardProject" className="text-sm font-medium text-gray-700">
+                  Score Card Project *
+                </Label>
+                <Select value={formData.scorecardProject} onValueChange={(value) => setFormData((prev: any) => ({ ...prev, scorecardProject: value }))}>
+                  <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
+                    <SelectValue placeholder="Select option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

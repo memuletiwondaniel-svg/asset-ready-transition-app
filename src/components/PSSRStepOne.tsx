@@ -49,6 +49,8 @@ interface PSSRStepOneProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
   onContextAction: (action: string, person: any) => void;
+  onProjectDelete: (projectId: string) => void;
+  onProjectUpdate: (updatedProject: Project) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
@@ -63,7 +65,9 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onProjectSelect,
   onFileUpload,
   onRemoveFile,
-  onContextAction
+  onContextAction,
+  onProjectDelete,
+  onProjectUpdate
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
 
@@ -81,14 +85,14 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   return (
     <div className="space-y-8">
       <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-slate-50">
-        <CardHeader className="pb-8">
+        <CardHeader className="pb-6" style={{ minHeight: '120px' }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <FileText className="h-6 w-6 text-blue-600" />
+            <div className="p-2.5 bg-blue-100 rounded-xl">
+              <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-gray-900">PSSR Information</CardTitle>
-              <CardDescription className="text-base text-gray-600 mt-2">
+              <CardTitle className="text-xl font-bold text-gray-900">PSSR Information</CardTitle>
+              <CardDescription className="text-sm text-gray-600 mt-1">
                 The PSSR process manages the safe introduction of hydrocarbons into newly constructed facilities. 
                 This requires proper assurance and checks by an integrated team from Project, Asset, Engineering and Contractor teams.
               </CardDescription>
@@ -164,7 +168,8 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
-                  onProjectUpdate={handleProjectUpdate}
+                  onProjectUpdate={onProjectUpdate}
+                  onProjectDelete={onProjectDelete}
                 />
               )}
             </div>

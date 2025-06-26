@@ -10,6 +10,16 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Building2, 
   Users, 
@@ -19,7 +29,8 @@ import {
   Mail, 
   Copy, 
   Edit,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-react';
 import AddNewProjectWidget from './AddNewProjectWidget';
 
@@ -39,18 +50,21 @@ interface ProjectDetailsProps {
   project: Project;
   onContextAction: (action: string, person: any) => void;
   onProjectUpdate?: (project: Project) => void;
+  onProjectDelete?: (projectId: string) => void;
 }
 
 const ProjectDetails: React.FC<ProjectDetailsProps> = ({ 
   project, 
   onContextAction, 
-  onProjectUpdate 
+  onProjectUpdate,
+  onProjectDelete 
 }) => {
   const [showEditWidget, setShowEditWidget] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleEditProject = (updatedProjectData: any) => {
     const updatedProject: Project = {
-      id: updatedProjectData.projectId, // Store just the number without DP prefix
+      id: updatedProjectData.projectId,
       name: updatedProjectData.projectTitle,
       plant: updatedProjectData.plant,
       subdivision: updatedProjectData.csLocation,
@@ -78,6 +92,11 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     setShowEditWidget(false);
   };
 
+  const handleDeleteProject = () => {
+    onProjectDelete?.(project.id);
+    setShowDeleteDialog(false);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'green': return 'bg-green-500';
@@ -87,9 +106,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     }
   };
 
-  // Format project ID for display only - add DP prefix only when displaying
   const formatProjectId = (id: string) => {
-    // If ID already has DP, don't add it again
     return id.startsWith('DP') ? id : `DP ${id}`;
   };
 
@@ -127,15 +144,26 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 </div>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowEditWidget(true)}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEditWidget(true)}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </div>
           </div>
         </CardHeader>
         
@@ -248,7 +276,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
         onSubmit={handleEditProject}
         editMode={true}
         existingProject={{
-          projectId: project.id, // Pass the raw ID without DP prefix
+          projectId: project.id,
           projectTitle: project.name,
           plant: project.plant,
           csLocation: project.subdivision,
@@ -262,6 +290,28 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           supportingDocs: []
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete project "{formatProjectId(project.id)} - {project.name}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteProject}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
