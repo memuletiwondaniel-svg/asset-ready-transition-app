@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -213,10 +212,10 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] p-0 bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <DialogContent className="max-w-7xl h-[90vh] p-0 bg-gradient-to-br from-slate-50 to-slate-100/50">
         <DialogHeader className="px-6 py-4 border-b border-slate-200/60 bg-white/95 backdrop-blur-sm">
           <DialogTitle className="text-xl font-semibold text-slate-900 flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg shadow-sm">
+            <div className="p-2 bg-slate-600 rounded-lg shadow-sm">
               <Plus className="h-5 w-5 text-white" />
             </div>
             {editMode ? 'Edit Project' : 'Create New Project'}
@@ -227,7 +226,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Project Information Section */}
             <Card className="shadow-sm border-0 bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+              <CardHeader className="pb-4 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-t-lg">
                 <CardTitle className="text-lg flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <Building2 className="h-5 w-5" />
@@ -240,7 +239,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 <div className="grid grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="projectId" className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-blue-600" />
+                      <Briefcase className="h-4 w-4 text-slate-600" />
                       Project ID (DP Number) *
                     </Label>
                     <Input
@@ -249,13 +248,13 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
                       placeholder="e.g., DP 425"
                       required
-                      className="h-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
+                      className="h-10 border-slate-300 focus:border-slate-500 focus:ring-slate-500/20"
                     />
                   </div>
                   
                   <div className="col-span-2 space-y-2">
                     <Label htmlFor="projectTitle" className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-blue-600" />
+                      <FileText className="h-4 w-4 text-slate-600" />
                       Project Title *
                     </Label>
                     <Input
@@ -264,7 +263,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       onChange={(e) => setFormData(prev => ({ ...prev, projectTitle: e.target.value }))}
                       placeholder="Enter comprehensive project title"
                       required
-                      className="h-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
+                      className="h-10 border-slate-300 focus:border-slate-500 focus:ring-slate-500/20"
                     />
                   </div>
                 </div>
@@ -279,7 +278,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         Select Plant *
                       </Label>
                       <Select value={formData.plant} onValueChange={(value) => setFormData(prev => ({ ...prev, plant: value }))}>
-                        <SelectTrigger className="h-10 border-slate-300 focus:border-blue-500">
+                        <SelectTrigger className="h-10 border-slate-300 focus:border-slate-500">
                           <SelectValue placeholder="Choose plant" />
                         </SelectTrigger>
                         <SelectContent>
@@ -297,7 +296,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                           CS Location *
                         </Label>
                         <Select value={formData.csLocation} onValueChange={(value) => setFormData(prev => ({ ...prev, csLocation: value }))}>
-                          <SelectTrigger className="h-10 border-slate-300 focus:border-blue-500">
+                          <SelectTrigger className="h-10 border-slate-300 focus:border-slate-500">
                             <SelectValue placeholder="Choose CS location" />
                           </SelectTrigger>
                           <SelectContent>
@@ -312,7 +311,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                     {/* 2025 Project Milestone */}
                     <div className="space-y-2">
                       <Label htmlFor="projectMilestone" className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                        <Target className="h-4 w-4 text-blue-600" />
+                        <Target className="h-4 w-4 text-slate-600" />
                         {currentYear} Project Milestone
                       </Label>
                       <Input
@@ -320,7 +319,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         value={formData.projectMilestone}
                         onChange={(e) => setFormData(prev => ({ ...prev, projectMilestone: e.target.value }))}
                         placeholder={`Enter ${currentYear} milestone`}
-                        className="h-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
+                        className="h-10 border-slate-300 focus:border-slate-500 focus:ring-slate-500/20"
                       />
                     </div>
 
@@ -330,7 +329,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         Score Card Project *
                       </Label>
                       <Select value={formData.scorecardProject} onValueChange={(value) => setFormData(prev => ({ ...prev, scorecardProject: value }))}>
-                        <SelectTrigger className="h-10 border-slate-300 focus:border-blue-500">
+                        <SelectTrigger className="h-10 border-slate-300 focus:border-slate-500">
                           <SelectValue placeholder="Select option" />
                         </SelectTrigger>
                         <SelectContent>
@@ -353,7 +352,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       placeholder="Describe the comprehensive project scope, objectives, and deliverables..."
                       rows={8}
                       required
-                      className="resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
+                      className="resize-none border-slate-300 focus:border-slate-500 focus:ring-slate-500/20"
                     />
                   </div>
                 </div>
@@ -362,7 +361,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
 
             {/* Project Documents Section */}
             <Card className="shadow-sm border-0 bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-t-lg">
+              <CardHeader className="pb-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-t-lg">
                 <CardTitle className="text-lg flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <FolderOpen className="h-5 w-5" />
@@ -397,7 +396,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                     <Button
                       type="button"
                       onClick={handleFindDocumentsInAssai}
-                      className="bg-amber-600 hover:bg-amber-700 text-white h-8 px-3 text-xs"
+                      className="bg-slate-600 hover:bg-slate-700 text-white h-8 px-3 text-xs"
                     >
                       <Search className="h-3 w-3 mr-1" />
                       Find Documents in Assai
@@ -408,12 +407,12 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 {/* File Upload Section */}
                 <div className="space-y-4">
                   <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <Upload className="h-4 w-4 text-amber-600" />
+                    <Upload className="h-4 w-4 text-slate-600" />
                     Upload Supporting Documents
                   </Label>
                   <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                    <div className="p-3 bg-amber-100 rounded-full w-fit mx-auto mb-3">
-                      <Upload className="h-6 w-6 text-amber-600" />
+                    <div className="p-3 bg-slate-100 rounded-full w-fit mx-auto mb-3">
+                      <Upload className="h-6 w-6 text-slate-600" />
                     </div>
                     <p className="text-sm font-medium text-slate-900 mb-1">
                       Click to upload files or drag and drop
@@ -432,7 +431,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       type="button"
                       variant="outline" 
                       onClick={() => document.getElementById('project-file-upload')?.click()}
-                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Choose Files
@@ -447,8 +446,8 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         {formData.supportingDocs.map((file, index) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-amber-100 rounded-lg">
-                                <FileText className="h-4 w-4 text-amber-600" />
+                              <div className="p-2 bg-slate-100 rounded-lg">
+                                <FileText className="h-4 w-4 text-slate-600" />
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-slate-900">{file.name}</p>
@@ -475,7 +474,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
 
             {/* Team Members Section */}
             <Card className="shadow-sm border-0 bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+              <CardHeader className="pb-4 bg-gradient-to-r from-slate-700 to-slate-800 text-white rounded-t-lg">
                 <CardTitle className="text-lg flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     <Users className="h-5 w-5" />
@@ -487,9 +486,9 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 {/* Core Team Members */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Project Hub Lead */}
-                  <div className="space-y-3 p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                      <User className="h-4 w-4 text-green-600" />
+                      <User className="h-4 w-4 text-slate-600" />
                       Project Hub Lead *
                     </Label>
                     <Input
@@ -497,7 +496,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       value={formData.projectHubLead.name}
                       onChange={(e) => updateTeamMember('projectHubLead', 'name', e.target.value)}
                       required
-                      className="h-9 border-green-300 focus:border-green-500"
+                      className="h-9 border-slate-300 focus:border-slate-500"
                     />
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -507,15 +506,15 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         value={formData.projectHubLead.email}
                         onChange={(e) => updateTeamMember('projectHubLead', 'email', e.target.value)}
                         required
-                        className="h-9 pl-10 border-green-300 focus:border-green-500"
+                        className="h-9 pl-10 border-slate-300 focus:border-slate-500"
                       />
                     </div>
                   </div>
 
                   {/* Commissioning Lead */}
-                  <div className="space-y-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                      <User className="h-4 w-4 text-blue-600" />
+                      <User className="h-4 w-4 text-slate-600" />
                       Commissioning Lead *
                     </Label>
                     <Input
@@ -523,7 +522,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       value={formData.commissioningLead.name}
                       onChange={(e) => updateTeamMember('commissioningLead', 'name', e.target.value)}
                       required
-                      className="h-9 border-blue-300 focus:border-blue-500"
+                      className="h-9 border-slate-300 focus:border-slate-500"
                     />
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -533,15 +532,15 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         value={formData.commissioningLead.email}
                         onChange={(e) => updateTeamMember('commissioningLead', 'email', e.target.value)}
                         required
-                        className="h-9 pl-10 border-blue-300 focus:border-blue-500"
+                        className="h-9 pl-10 border-slate-300 focus:border-slate-500"
                       />
                     </div>
                   </div>
 
                   {/* Construction Lead */}
-                  <div className="space-y-3 p-4 bg-orange-50 rounded-xl border border-orange-200">
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                      <User className="h-4 w-4 text-orange-600" />
+                      <User className="h-4 w-4 text-slate-600" />
                       Construction Lead *
                     </Label>
                     <Input
@@ -549,7 +548,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       value={formData.constructionLead.name}
                       onChange={(e) => updateTeamMember('constructionLead', 'name', e.target.value)}
                       required
-                      className="h-9 border-orange-300 focus:border-orange-500"
+                      className="h-9 border-slate-300 focus:border-slate-500"
                     />
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -559,7 +558,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                         value={formData.constructionLead.email}
                         onChange={(e) => updateTeamMember('constructionLead', 'email', e.target.value)}
                         required
-                        className="h-9 pl-10 border-orange-300 focus:border-orange-500"
+                        className="h-9 pl-10 border-slate-300 focus:border-slate-500"
                       />
                     </div>
                   </div>
@@ -569,7 +568,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                      <Users className="h-4 w-4 text-purple-600" />
+                      <Users className="h-4 w-4 text-slate-600" />
                       Additional Team Members
                     </Label>
                     <Button
@@ -577,7 +576,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={addAdditionalPerson}
-                      className="flex items-center gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
+                      className="flex items-center gap-2 border-slate-300 text-slate-600 hover:bg-slate-50"
                     >
                       <Plus className="h-4 w-4" />
                       Add Person
@@ -587,13 +586,13 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                   {formData.additionalPersons.length > 0 && (
                     <div className="space-y-3 max-h-40 overflow-y-auto">
                       {formData.additionalPersons.map((person, index) => (
-                        <div key={index} className="p-4 border border-purple-200 rounded-xl bg-purple-50/50">
+                        <div key={index} className="p-4 border border-slate-200 rounded-xl bg-slate-50/50">
                           <div className="grid grid-cols-4 gap-3">
                             <Input
                               placeholder="Full name"
                               value={person.name}
                               onChange={(e) => updateAdditionalPerson(index, 'name', e.target.value)}
-                              className="h-9 border-purple-300 focus:border-purple-500"
+                              className="h-9 border-slate-300 focus:border-slate-500"
                             />
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -602,14 +601,14 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
                                 placeholder="Email"
                                 value={person.email}
                                 onChange={(e) => updateAdditionalPerson(index, 'email', e.target.value)}
-                                className="h-9 pl-10 border-purple-300 focus:border-purple-500"
+                                className="h-9 pl-10 border-slate-300 focus:border-slate-500"
                               />
                             </div>
                             <Input
                               placeholder="Role/Title"
                               value={person.role}
                               onChange={(e) => updateAdditionalPerson(index, 'role', e.target.value)}
-                              className="h-9 border-purple-300 focus:border-purple-500"
+                              className="h-9 border-slate-300 focus:border-slate-500"
                             />
                             <Button
                               type="button"
@@ -638,7 +637,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
           </Button>
           <Button 
             onClick={handleSubmit}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg"
+            className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-6 py-2 shadow-lg"
           >
             <Plus className="h-4 w-4 mr-2" />
             {editMode ? 'Update Project' : 'Create Project'}
