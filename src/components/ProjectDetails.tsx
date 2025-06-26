@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Button } from '@/components/ui/button';
-import { Edit2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Edit2, Award } from 'lucide-react';
 import AddNewProjectWidget from './AddNewProjectWidget';
 
 interface ProjectMember {
@@ -20,6 +22,7 @@ interface Project {
   subdivision?: string;
   scope: string;
   milestone?: string;
+  scorecardProject?: string;
   hubLead: ProjectMember;
   others: ProjectMember[];
 }
@@ -73,7 +76,15 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div className="p-2 bg-blue-50 rounded-md">
             <span className="text-xs text-gray-600 block mb-1">Project Name</span>
-            <span className="text-sm font-medium text-gray-900">{project.name}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-900">{project.name}</span>
+              {project.scorecardProject === 'Yes' && (
+                <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 border-yellow-500 flex items-center gap-1 text-xs px-2 py-0.5">
+                  <Award className="h-3 w-3" />
+                  Scorecard
+                </Badge>
+              )}
+            </div>
           </div>
           
           <div className="p-2 bg-gray-50 rounded-md">
@@ -200,7 +211,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
             role: m.role || ''
           })),
           supportingDocs: [],
-          scorecardProject: 'No'
+          scorecardProject: project.scorecardProject || 'No'
         }}
       />
     </>
