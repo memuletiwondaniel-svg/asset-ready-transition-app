@@ -1,27 +1,12 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, ClipboardCheck, Target, Building2 } from 'lucide-react';
-
-interface FormData {
-  asset: string;
-  reason: string;
-  projectId: string;
-  projectName: string;
-  scope: string;
-  files: File[];
-  teamMembers: {
-    technicalAuthorities: {};
-    assetTeam: {};
-    projectTeam: {};
-    hsse: {};
-  };
-}
+import { PSSRData } from '@/hooks/usePSSRFormData';
 
 interface PSSRStepTwoProps {
-  formData: FormData;
+  formData: PSSRData;
   onBack: () => void;
   onContinueToChecklist: () => void;
 }
