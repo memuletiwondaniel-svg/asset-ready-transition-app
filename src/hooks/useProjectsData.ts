@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useUsersContext } from '@/contexts/UsersContext';
 
 interface Project {
   id: string;
@@ -16,11 +17,15 @@ interface Project {
 
 export const useProjectsData = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const { addUsersFromProject } = useUsersContext();
 
   console.log('useProjectsData: Current projects state:', projects);
 
   const handleNewProjectAdded = (projectData: any) => {
     console.log('useProjectsData: Adding new project:', projectData);
+    
+    // Add users to the global users list
+    addUsersFromProject(projectData);
     
     const newProject: Project = {
       id: projectData.projectId,

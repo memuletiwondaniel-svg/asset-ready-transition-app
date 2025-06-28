@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,16 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Edit, Plus, ArrowLeft, Users, Mail, Shield } from 'lucide-react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  status: 'active' | 'inactive';
-  lastLogin?: string;
-}
+import { useUsersContext } from '@/contexts/UsersContext';
 
 interface UserListProps {
   onBack?: () => void;
@@ -24,35 +15,7 @@ interface UserListProps {
 
 const UserList: React.FC<UserListProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const [users] = useState<User[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@bgc.com',
-      role: 'Project Manager',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      status: 'active',
-      lastLogin: '2 hours ago'
-    },
-    {
-      id: '2',
-      name: 'Sarah Smith',
-      email: 'sarah.smith@bgc.com',
-      role: 'Commissioning Lead',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b9c1e6b4?w=150&h=150&fit=crop&crop=face',
-      status: 'active',
-      lastLogin: '1 day ago'
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      email: 'mike.johnson@bgc.com',
-      role: 'Construction Lead',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-      status: 'inactive',
-      lastLogin: '1 week ago'
-    }
-  ]);
+  const { users } = useUsersContext();
 
   const handleBack = () => {
     console.log('Navigating back from User List');
