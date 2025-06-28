@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus, ArrowLeft, Building, MapPin, User, Calendar, Crown } from 'lucide-react';
-import { useProjectsData } from '@/hooks/useProjectsData';
+import { useProjectsContext } from '@/contexts/ProjectsContext';
 import AddNewProjectWidget from '@/components/AddNewProjectWidget';
 import { format } from 'date-fns';
 
@@ -16,7 +16,7 @@ interface ProjectListProps {
 
 const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const { projects, handleNewProjectAdded } = useProjectsData();
+  const { projects, handleNewProjectAdded } = useProjectsContext();
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
 

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UsersProvider } from "@/contexts/UsersContext";
+import { ProjectsProvider } from "@/contexts/ProjectsContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProjectList from "./pages/ProjectList";
@@ -21,16 +22,18 @@ const App = () => (
       <Sonner />
       <ErrorBoundary>
         <UsersProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/projects" element={<ProjectList />} />
-              <Route path="/users" element={<UserList />} />
-              <Route path="/pssr-checklists" element={<PSSRChecklistPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <ProjectsProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/projects" element={<ProjectList />} />
+                <Route path="/users" element={<UserList />} />
+                <Route path="/pssr-checklists" element={<PSSRChecklistPage />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ProjectsProvider>
         </UsersProvider>
       </ErrorBoundary>
     </TooltipProvider>

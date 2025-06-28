@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
-import { useProjectsData } from './useProjectsData';
+import { useProjectsContext } from '@/contexts/ProjectsContext';
 
 export const useProjectCreation = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
-  const { handleNewProjectAdded } = useProjectsData();
+  const { handleNewProjectAdded } = useProjectsContext();
 
   const openCreateProject = () => {
     console.log('Opening create project modal');
