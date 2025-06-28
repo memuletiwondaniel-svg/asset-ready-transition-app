@@ -110,12 +110,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => {
-      // Ensure we only handle boolean false to close
-      if (open === false) {
-        handleClose();
-      }
-    }}>
+    <Dialog open={isOpen}>
       <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
         <div className="flex flex-col h-full">
           <CreatePSSRFlowHeader 
