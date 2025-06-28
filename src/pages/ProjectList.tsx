@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus, ArrowLeft, Building, MapPin, User } from 'lucide-react';
 import { useProjectsData } from '@/hooks/useProjectsData';
+import AddNewProjectWidget from '@/components/AddNewProjectWidget';
 
 interface ProjectListProps {
   onBack?: () => void;
@@ -14,8 +15,9 @@ interface ProjectListProps {
 
 const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
   const navigate = useNavigate();
-  const { projects } = useProjectsData();
+  const { projects, handleNewProjectAdded } = useProjectsData();
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [showCreateProject, setShowCreateProject] = useState(false);
 
   const handleBack = () => {
     console.log('Navigating back from Project List');
@@ -33,8 +35,14 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
   };
 
   const handleCreateProject = () => {
-    // TODO: Open create project modal
-    console.log('Create new project');
+    console.log('Opening create project modal');
+    setShowCreateProject(true);
+  };
+
+  const handleCreateProjectSubmit = (projectData: any) => {
+    console.log('Creating new project:', projectData);
+    handleNewProjectAdded(projectData);
+    setShowCreateProject(false);
   };
 
   return (
@@ -139,6 +147,14 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Create Project Modal */}
+      <AddNewProjectWidget
+        open={showCreateProject}
+        onClose={() => setShowCreateProject(false)}
+        onSubmit={handleCreateProjectSubmit}
+        editMode={false}
+      />
     </div>
   );
 };
