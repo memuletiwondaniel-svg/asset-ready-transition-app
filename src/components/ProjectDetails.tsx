@@ -73,7 +73,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
       scorecardProject: updatedProjectData.scorecardProject,
       hubLead: {
         ...updatedProjectData.projectHubLead,
-        role: 'Project Hub Lead'
+        role: 'Project Manager'
       },
       others: [
         ...(updatedProjectData.commissioningLead?.name ? [{
@@ -181,7 +181,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
               Team Members
             </h4>
             <div className="space-y-3">
-              {/* Project Hub Lead */}
+              {/* Project Manager */}
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -195,7 +195,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{project.hubLead.name}</p>
-                    <p className="text-sm text-blue-600 font-medium">Project Hub Lead</p>
+                    <p className="text-sm text-blue-600 font-medium">Project Manager</p>
                     <p className="text-xs text-gray-500">{project.hubLead.email}</p>
                   </div>
                 </div>

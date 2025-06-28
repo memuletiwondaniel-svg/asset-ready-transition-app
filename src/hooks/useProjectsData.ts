@@ -29,7 +29,7 @@ export const useProjectsData = () => {
       scorecardProject: projectData.scorecardProject,
       hubLead: {
         ...projectData.projectHubLead,
-        role: 'Project Hub Lead'
+        role: 'Project Manager'
       },
       others: [
         ...(projectData.commissioningLead?.name ? [{

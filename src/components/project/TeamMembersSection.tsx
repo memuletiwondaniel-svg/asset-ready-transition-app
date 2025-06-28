@@ -132,7 +132,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
         {/* Core Team Members Input */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CoreTeamMemberInput
-            role="Project Hub Lead"
+            role="Project Manager"
             name={formData.projectHubLead?.name || ""}
             email={formData.projectHubLead?.email || ""}
             onNameChange={(value) => updateTeamMember('projectHubLead', 'name', value)}
@@ -164,7 +164,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
             Project Team Overview
           </h4>
           <div className="flex flex-wrap gap-4">
-            {formData.projectHubLead?.name && renderTeamMemberCard('Project Hub Lead', formData.projectHubLead)}
+            {formData.projectHubLead?.name && renderTeamMemberCard('Project Manager', formData.projectHubLead)}
             {formData.commissioningLead?.name && renderTeamMemberCard('Commissioning Lead', formData.commissioningLead)}
             {formData.constructionLead?.name && renderTeamMemberCard('Construction Lead', formData.constructionLead)}
           </div>
