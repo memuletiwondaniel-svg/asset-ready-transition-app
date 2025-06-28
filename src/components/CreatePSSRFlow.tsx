@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { usePSSRFormData } from '@/hooks/usePSSRFormData';
@@ -110,8 +109,9 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => {
-      if (!open) {
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Ensure we only handle boolean false to close
+      if (open === false) {
         handleClose();
       }
     }}>
