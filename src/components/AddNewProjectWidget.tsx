@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -49,6 +50,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
     projectTitle: '',
     projectScope: '',
     projectMilestone: '',
+    milestoneDate: undefined as Date | undefined,
     plant: '',
     csLocation: '',
     scorecardProject: '',
@@ -83,6 +85,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
         projectTitle: '',
         projectScope: '',
         projectMilestone: '',
+        milestoneDate: undefined,
         plant: '',
         csLocation: '',
         scorecardProject: '',
@@ -153,6 +156,7 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
         projectTitle: '',
         projectScope: '',
         projectMilestone: '',
+        milestoneDate: undefined,
         plant: '',
         csLocation: '',
         scorecardProject: '',

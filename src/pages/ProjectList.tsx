@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Plus, ArrowLeft, Building, MapPin, User } from 'lucide-react';
+import { Edit, Plus, ArrowLeft, Building, MapPin, User, Calendar, Crown } from 'lucide-react';
 import { useProjectsData } from '@/hooks/useProjectsData';
 import AddNewProjectWidget from '@/components/AddNewProjectWidget';
+import { format } from 'date-fns';
 
 interface ProjectListProps {
   onBack?: () => void;
@@ -43,6 +44,11 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
     console.log('Creating new project:', projectData);
     handleNewProjectAdded(projectData);
     setShowCreateProject(false);
+  };
+
+  // Format project ID for display - add DP prefix
+  const formatProjectId = (id: string) => {
+    return id.startsWith('DP') ? id : `DP ${id}`;
   };
 
   return (
@@ -89,11 +95,14 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>DP Number</TableHead>
                     <TableHead>Project Name</TableHead>
                     <TableHead>Plant</TableHead>
                     <TableHead>Subdivision</TableHead>
                     <TableHead>Scope</TableHead>
-                    <TableHead>Hub Lead</TableHead>
+                    <TableHead>Project Manager</TableHead>
+                    <TableHead>Milestone</TableHead>
+                    <TableHead>Milestone Date</TableHead>
                     <TableHead>Team Size</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -101,6 +110,17 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
                 <TableBody>
                   {projects.map((project) => (
                     <TableRow key={project.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {formatProjectId(project.id)}
+                          {project.scorecardProject === 'yes' && (
+                            <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">
+                              <Crown className="h-3 w-3 mr-1" />
+                              Scorecard
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{project.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -121,6 +141,17 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-gray-400" />
                           {project.hubLead?.name || 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {project.milestone || 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          {project.milestoneDate ? format(project.milestoneDate, 'MMM dd, yyyy') : 'N/A'}
                         </div>
                       </TableCell>
                       <TableCell>

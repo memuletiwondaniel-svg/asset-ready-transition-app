@@ -8,6 +8,7 @@ interface Project {
   subdivision?: string;
   scope: string;
   milestone?: string;
+  milestoneDate?: Date;
   scorecardProject?: string;
   hubLead: any;
   others: any[];
@@ -24,6 +25,7 @@ export const useProjectsData = () => {
       subdivision: projectData.csLocation || undefined,
       scope: projectData.projectScope,
       milestone: projectData.projectMilestone,
+      milestoneDate: projectData.milestoneDate,
       scorecardProject: projectData.scorecardProject,
       hubLead: {
         ...projectData.projectHubLead,
