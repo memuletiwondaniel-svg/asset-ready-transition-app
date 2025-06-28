@@ -80,35 +80,6 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
     }
   };
 
-  const isStepValid = () => {
-    console.log('Checking step validity for step:', currentStep);
-    console.log('Current formData for validation:', formData);
-    
-    switch (currentStep) {
-      case 1:
-        const isValid1 = formData.assetName && formData.reason && formData.projectId;
-        console.log('Step 1 validation:', { 
-          assetName: formData.assetName, 
-          reason: formData.reason, 
-          projectId: formData.projectId,
-          isValid: isValid1 
-        });
-        return isValid1;
-      case 2:
-        const isValid2 = formData.coreTeam.projectManager.name && formData.coreTeam.projectManager.email;
-        console.log('Step 2 validation:', { 
-          pmName: formData.coreTeam.projectManager.name,
-          pmEmail: formData.coreTeam.projectManager.email,
-          isValid: isValid2 
-        });
-        return isValid2;
-      case 3:
-        return true;
-      default:
-        return false;
-    }
-  };
-
   return (
     <Dialog open={isOpen}>
       <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
@@ -133,7 +104,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
 
           <CreatePSSRFlowFooter
             currentStep={currentStep}
-            isStepValid={isStepValid()}
+            isStepValid={true}
             onBack={handleBack}
             onNext={handleNext}
             onClose={handleClose}
