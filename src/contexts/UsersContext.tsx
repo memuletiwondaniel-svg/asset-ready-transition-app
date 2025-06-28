@@ -10,6 +10,7 @@ interface User {
   avatar?: string;
   status: 'active' | 'inactive';
   lastLogin?: string;
+  projects?: string[]; // Array of project IDs the user is associated with
 }
 
 interface UsersContextType {

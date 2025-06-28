@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Edit, Plus, ArrowLeft, Users, Mail, Shield } from 'lucide-react';
+import { Edit, Plus, ArrowLeft, Users, Mail, Shield, Briefcase } from 'lucide-react';
 import { useUsersContext } from '@/contexts/UsersContext';
+import { useProjectsContext } from '@/contexts/ProjectsContext';
 
 interface UserListProps {
   onBack?: () => void;
@@ -16,6 +17,7 @@ interface UserListProps {
 const UserList: React.FC<UserListProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const { users } = useUsersContext();
+  const { projects } = useProjectsContext();
 
   const handleBack = () => {
     console.log('Navigating back from User List');
@@ -38,6 +40,10 @@ const UserList: React.FC<UserListProps> = ({ onBack }) => {
 
   const getStatusColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  };
+
+  const getUserProjects = (userProjects: string[] = []) => {
+    return projects.filter(project => userProjects.includes(project.id));
   };
 
   return (
@@ -69,7 +75,7 @@ const UserList: React.FC<UserListProps> = ({ onBack }) => {
               All Users ({users.length})
             </CardTitle>
             <CardDescription>
-              View and manage all application users
+              View and manage all application users and their project associations
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,58 +85,78 @@ const UserList: React.FC<UserListProps> = ({ onBack }) => {
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Associated Projects</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Login</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        {user.email}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-gray-400" />
-                        {user.role}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(user.status)}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-600">
-                      {user.lastLogin}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditUser(user.id)}
-                        className="flex items-center gap-1"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {users.map((user) => {
+                  const userProjects = getUserProjects(user.projects);
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>
+                              {user.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{user.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          {user.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-gray-400" />
+                          {user.role}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-4 w-4 text-gray-400" />
+                          <div className="flex flex-wrap gap-1">
+                            {userProjects.length > 0 ? (
+                              userProjects.map((project) => (
+                                <Badge key={project.id} variant="outline" className="text-xs">
+                                  DP {project.id}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-gray-500 text-sm">No projects</span>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(user.status)}>
+                          {user.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        {user.lastLogin}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditUser(user.id)}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

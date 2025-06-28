@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useProjectsContext } from '@/contexts/ProjectsContext';
 
 interface User {
   id: string;
@@ -9,6 +10,7 @@ interface User {
   avatar?: string;
   status: 'active' | 'inactive';
   lastLogin?: string;
+  projects?: string[]; // Array of project IDs
 }
 
 export const useUsersData = () => {
@@ -20,7 +22,8 @@ export const useUsersData = () => {
       role: 'Project Manager',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
       status: 'active',
-      lastLogin: '2 hours ago'
+      lastLogin: '2 hours ago',
+      projects: []
     },
     {
       id: '2',
@@ -29,7 +32,8 @@ export const useUsersData = () => {
       role: 'Commissioning Lead',
       avatar: 'https://images.unsplash.com/photo-1494790108755-2616b9c1e6b4?w=150&h=150&fit=crop&crop=face',
       status: 'active',
-      lastLogin: '1 day ago'
+      lastLogin: '1 day ago',
+      projects: []
     },
     {
       id: '3',
@@ -38,7 +42,8 @@ export const useUsersData = () => {
       role: 'Construction Lead',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
       status: 'inactive',
-      lastLogin: '1 week ago'
+      lastLogin: '1 week ago',
+      projects: []
     }
   ]);
 
@@ -48,11 +53,19 @@ export const useUsersData = () => {
     console.log('useUsersData: Adding users from project:', projectData);
     
     const newUsers: User[] = [];
+    const projectId = projectData.projectId;
     
     // Add project hub lead
     if (projectData.projectHubLead?.name && projectData.projectHubLead?.email) {
-      const existingUser = users.find(u => u.email === projectData.projectHubLead.email);
-      if (!existingUser) {
+      const existingUserIndex = users.findIndex(u => u.email === projectData.projectHubLead.email);
+      if (existingUserIndex >= 0) {
+        // Update existing user to include this project
+        setUsers(prev => prev.map((user, index) => 
+          index === existingUserIndex 
+            ? { ...user, projects: [...(user.projects || []), projectId].filter((id, i, arr) => arr.indexOf(id) === i) }
+            : user
+        ));
+      } else {
         newUsers.push({
           id: `user_${Date.now()}_${Math.random()}`,
           name: projectData.projectHubLead.name,
@@ -60,15 +73,22 @@ export const useUsersData = () => {
           role: 'Project Manager',
           avatar: `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face`,
           status: 'active',
-          lastLogin: 'Recently added'
+          lastLogin: 'Recently added',
+          projects: [projectId]
         });
       }
     }
 
     // Add commissioning lead
     if (projectData.commissioningLead?.name && projectData.commissioningLead?.email) {
-      const existingUser = users.find(u => u.email === projectData.commissioningLead.email);
-      if (!existingUser) {
+      const existingUserIndex = users.findIndex(u => u.email === projectData.commissioningLead.email);
+      if (existingUserIndex >= 0) {
+        setUsers(prev => prev.map((user, index) => 
+          index === existingUserIndex 
+            ? { ...user, projects: [...(user.projects || []), projectId].filter((id, i, arr) => arr.indexOf(id) === i) }
+            : user
+        ));
+      } else {
         newUsers.push({
           id: `user_${Date.now()}_${Math.random()}`,
           name: projectData.commissioningLead.name,
@@ -76,15 +96,22 @@ export const useUsersData = () => {
           role: 'Commissioning Lead',
           avatar: `https://images.unsplash.com/photo-1494790108755-2616b9c1e6b4?w=150&h=150&fit=crop&crop=face`,
           status: 'active',
-          lastLogin: 'Recently added'
+          lastLogin: 'Recently added',
+          projects: [projectId]
         });
       }
     }
 
     // Add construction lead
     if (projectData.constructionLead?.name && projectData.constructionLead?.email) {
-      const existingUser = users.find(u => u.email === projectData.constructionLead.email);
-      if (!existingUser) {
+      const existingUserIndex = users.findIndex(u => u.email === projectData.constructionLead.email);
+      if (existingUserIndex >= 0) {
+        setUsers(prev => prev.map((user, index) => 
+          index === existingUserIndex 
+            ? { ...user, projects: [...(user.projects || []), projectId].filter((id, i, arr) => arr.indexOf(id) === i) }
+            : user
+        ));
+      } else {
         newUsers.push({
           id: `user_${Date.now()}_${Math.random()}`,
           name: projectData.constructionLead.name,
@@ -92,7 +119,8 @@ export const useUsersData = () => {
           role: 'Construction Lead',
           avatar: `https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face`,
           status: 'active',
-          lastLogin: 'Recently added'
+          lastLogin: 'Recently added',
+          projects: [projectId]
         });
       }
     }
@@ -101,8 +129,14 @@ export const useUsersData = () => {
     if (projectData.additionalPersons && Array.isArray(projectData.additionalPersons)) {
       projectData.additionalPersons.forEach((person: any) => {
         if (person.name && person.email) {
-          const existingUser = users.find(u => u.email === person.email);
-          if (!existingUser) {
+          const existingUserIndex = users.findIndex(u => u.email === person.email);
+          if (existingUserIndex >= 0) {
+            setUsers(prev => prev.map((user, index) => 
+              index === existingUserIndex 
+                ? { ...user, projects: [...(user.projects || []), projectId].filter((id, i, arr) => arr.indexOf(id) === i) }
+                : user
+            ));
+          } else {
             newUsers.push({
               id: `user_${Date.now()}_${Math.random()}`,
               name: person.name,
@@ -110,7 +144,8 @@ export const useUsersData = () => {
               role: person.role || 'Team Member',
               avatar: `https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face`,
               status: 'active',
-              lastLogin: 'Recently added'
+              lastLogin: 'Recently added',
+              projects: [projectId]
             });
           }
         }
