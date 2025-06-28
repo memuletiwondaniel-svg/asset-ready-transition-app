@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,10 +20,12 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
   const [showCreateProject, setShowCreateProject] = useState(false);
 
   console.log('ProjectList: Component rendered with projects:', projects);
+  console.log('ProjectList: Projects count:', projects.length);
   console.log('ProjectList: showCreateProject state:', showCreateProject);
 
   useEffect(() => {
     console.log('ProjectList: useEffect triggered, projects changed:', projects);
+    console.log('ProjectList: Current projects in effect:', projects.map(p => ({ id: p.id, name: p.name })));
   }, [projects]);
 
   const handleBack = () => {
@@ -82,6 +83,13 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
             <Plus className="h-4 w-4" />
             Create Project
           </Button>
+        </div>
+
+        {/* Debug Info */}
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h3 className="font-semibold text-yellow-800">Debug Info:</h3>
+          <p className="text-yellow-700">Total Projects: {projects.length}</p>
+          <p className="text-yellow-700">Project IDs: {projects.map(p => p.id).join(', ')}</p>
         </div>
 
         {/* Projects Table */}

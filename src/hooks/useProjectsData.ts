@@ -16,10 +16,21 @@ interface Project {
 }
 
 export const useProjectsData = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  // Initialize with some sample data for testing
+  const [projects, setProjects] = useState<Project[]>([
+    {
+      id: 'DP001',
+      name: 'Sample Project 1',
+      plant: 'Plant A',
+      scope: 'Development',
+      hubLead: { name: 'John Doe', email: 'john@example.com' },
+      others: []
+    }
+  ]);
   const { addUsersFromProject } = useUsersContext();
 
   console.log('useProjectsData: Current projects state:', projects);
+  console.log('useProjectsData: Projects count:', projects.length);
 
   const handleNewProjectAdded = (projectData: any) => {
     console.log('useProjectsData: Adding new project:', projectData);
@@ -64,6 +75,7 @@ export const useProjectsData = () => {
     setProjects(prev => {
       const updated = [...prev, newProject];
       console.log('useProjectsData: Updated projects array:', updated);
+      console.log('useProjectsData: Total projects after addition:', updated.length);
       return updated;
     });
     
