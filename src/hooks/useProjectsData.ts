@@ -17,7 +17,11 @@ interface Project {
 export const useProjectsData = () => {
   const [projects, setProjects] = useState<Project[]>([]);
 
+  console.log('useProjectsData: Current projects state:', projects);
+
   const handleNewProjectAdded = (projectData: any) => {
+    console.log('useProjectsData: Adding new project:', projectData);
+    
     const newProject: Project = {
       id: projectData.projectId,
       name: projectData.projectTitle,
@@ -50,18 +54,35 @@ export const useProjectsData = () => {
       ]
     };
 
-    setProjects(prev => [...prev, newProject]);
+    console.log('useProjectsData: Created new project object:', newProject);
+
+    setProjects(prev => {
+      const updated = [...prev, newProject];
+      console.log('useProjectsData: Updated projects array:', updated);
+      return updated;
+    });
+    
     return newProject;
   };
 
   const handleProjectDelete = (projectId: string) => {
-    setProjects(prev => prev.filter(project => project.id !== projectId));
+    console.log('useProjectsData: Deleting project:', projectId);
+    setProjects(prev => {
+      const filtered = prev.filter(project => project.id !== projectId);
+      console.log('useProjectsData: Projects after deletion:', filtered);
+      return filtered;
+    });
   };
 
   const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(prev => prev.map(project => 
-      project.id === updatedProject.id ? updatedProject : project
-    ));
+    console.log('useProjectsData: Updating project:', updatedProject);
+    setProjects(prev => {
+      const updated = prev.map(project => 
+        project.id === updatedProject.id ? updatedProject : project
+      );
+      console.log('useProjectsData: Projects after update:', updated);
+      return updated;
+    });
   };
 
   return {

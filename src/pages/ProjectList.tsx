@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,8 +20,15 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
 
+  console.log('ProjectList: Component rendered with projects:', projects);
+  console.log('ProjectList: showCreateProject state:', showCreateProject);
+
+  useEffect(() => {
+    console.log('ProjectList: useEffect triggered, projects changed:', projects);
+  }, [projects]);
+
   const handleBack = () => {
-    console.log('Navigating back from Project List');
+    console.log('ProjectList: Navigating back from Project List');
     if (onBack) {
       onBack();
     } else {
@@ -30,26 +37,31 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
   };
 
   const handleEditProject = (projectId: string) => {
+    console.log('ProjectList: Edit project clicked:', projectId);
     setSelectedProject(projectId);
     // TODO: Open edit modal or navigate to edit page
-    console.log('Edit project:', projectId);
+    console.log('ProjectList: Edit project:', projectId);
   };
 
   const handleCreateProject = () => {
-    console.log('Opening create project modal');
+    console.log('ProjectList: Opening create project modal');
     setShowCreateProject(true);
   };
 
   const handleCreateProjectSubmit = (projectData: any) => {
-    console.log('Creating new project:', projectData);
-    handleNewProjectAdded(projectData);
+    console.log('ProjectList: Creating new project with data:', projectData);
+    const newProject = handleNewProjectAdded(projectData);
+    console.log('ProjectList: New project created:', newProject);
     setShowCreateProject(false);
+    console.log('ProjectList: Create project modal closed');
   };
 
   // Format project ID for display - add DP prefix
   const formatProjectId = (id: string) => {
     return id.startsWith('DP') ? id : `DP ${id}`;
   };
+
+  console.log('ProjectList: About to render with', projects.length, 'projects');
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -108,70 +120,73 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projects.map((project) => (
-                    <TableRow key={project.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {formatProjectId(project.id)}
-                          {project.scorecardProject === 'yes' && (
-                            <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">
-                              <Crown className="h-3 w-3 mr-1" />
-                              Scorecard
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{project.name}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-gray-400" />
-                          {project.plant}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {project.subdivision || 'N/A'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{project.scope}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          {project.hubLead?.name || 'N/A'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {project.milestone || 'N/A'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {project.milestoneDate ? format(project.milestoneDate, 'MMM dd, yyyy') : 'N/A'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {1 + project.others.length} members
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditProject(project.id)}
-                          className="flex items-center gap-1"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {projects.map((project) => {
+                    console.log('ProjectList: Rendering project row:', project);
+                    return (
+                      <TableRow key={project.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {formatProjectId(project.id)}
+                            {project.scorecardProject === 'yes' && (
+                              <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">
+                                <Crown className="h-3 w-3 mr-1" />
+                                Scorecard
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{project.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4 text-gray-400" />
+                            {project.plant}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            {project.subdivision || 'N/A'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{project.scope}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-gray-400" />
+                            {project.hubLead?.name || 'N/A'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {project.milestone || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            {project.milestoneDate ? format(project.milestoneDate, 'MMM dd, yyyy') : 'N/A'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {1 + project.others.length} members
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditProject(project.id)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Edit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -182,7 +197,10 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
       {/* Create Project Modal */}
       <AddNewProjectWidget
         open={showCreateProject}
-        onClose={() => setShowCreateProject(false)}
+        onClose={() => {
+          console.log('ProjectList: Closing create project modal');
+          setShowCreateProject(false);
+        }}
         onSubmit={handleCreateProjectSubmit}
         editMode={false}
       />
