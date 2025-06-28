@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,16 +25,24 @@ interface PSSRStepOneProps {
   setFormData: (updates: Partial<PSSRData>) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
+  projects: Project[];
+  onNewProjectAdded: (projectData: any) => Project;
+  onProjectUpdate: (project: Project) => void;
+  onProjectDelete: (projectId: string) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   formData,
   setFormData,
   onFileUpload,
-  onRemoveFile
+  onRemoveFile,
+  projects,
+  onNewProjectAdded,
+  onProjectUpdate,
+  onProjectDelete
 }) => {
-  // Mock data - in real app this would come from props or context
-  const projects: Project[] = [];
+  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+  
   const assets = ['Asset 1', 'Asset 2', 'Asset 3'];
   const reasons = [
     'Start-up or Commissioning of a new Asset',
@@ -43,12 +52,9 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
 
   const selectedProject = projects.find(p => p.id === formData.projectId);
 
-  const handleProjectUpdate = (updatedProject: Project) => {
-    // Handle project update logic
-  };
-
   const handleNewProjectCreate = (newProject: Project) => {
-    setFormData({ projectId: newProject.id, projectName: newProject.name });
+    const project = onNewProjectAdded(newProject);
+    setFormData({ projectId: project.id, projectName: project.name });
   };
 
   const onProjectSelect = (value: string) => {
@@ -56,14 +62,11 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
     if (project) {
       setFormData({ projectId: project.id, projectName: project.name });
     }
+    setProjectSearchOpen(false);
   };
 
   const onContextAction = (action: string, person: any) => {
     // Handle context actions
-  };
-
-  const onProjectDelete = (projectId: string) => {
-    // Handle project deletion
   };
 
   return (
@@ -131,15 +134,14 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
 
           {formData.reason === 'Start-up or Commissioning of a new Asset' && (
             <div className="p-6 bg-blue-50 rounded-xl">
-              
               <div className="mb-4">
                 <div className="w-64">
                   <ProjectSelector
                     projectId={formData.projectId}
                     projectName={formData.projectName}
                     projects={projects}
-                    projectSearchOpen={false}
-                    onProjectSearchOpenChange={() => {}}
+                    projectSearchOpen={projectSearchOpen}
+                    onProjectSearchOpenChange={setProjectSearchOpen}
                     onProjectSelect={onProjectSelect}
                     onProjectNameChange={(name) => setFormData({ projectName: name })}
                     onNewProjectCreate={handleNewProjectCreate}
@@ -152,7 +154,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
-                  onProjectUpdate={handleProjectUpdate}
+                  onProjectUpdate={onProjectUpdate}
                   onProjectDelete={onProjectDelete}
                 />
               )}

@@ -6,6 +6,16 @@ import PSSRStepTwo from './PSSRStepTwo';
 import PSSRChecklist from './PSSRChecklist';
 import { PSSRData } from '@/hooks/usePSSRFormData';
 
+interface Project {
+  id: string;
+  name: string;
+  plant: string;
+  subdivision?: string;
+  scope: string;
+  hubLead: any;
+  others: any[];
+}
+
 interface CreatePSSRFlowContentProps {
   currentStep: number;
   formData: PSSRData;
@@ -17,6 +27,10 @@ interface CreatePSSRFlowContentProps {
   onComplete: () => void;
   getStepTitle: () => string;
   getStepDescription: () => string;
+  projects: Project[];
+  onNewProjectAdded: (projectData: any) => Project;
+  onProjectUpdate: (project: Project) => void;
+  onProjectDelete: (projectId: string) => void;
 }
 
 const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
@@ -29,7 +43,11 @@ const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
   onContinueToChecklist,
   onComplete,
   getStepTitle,
-  getStepDescription
+  getStepDescription,
+  projects,
+  onNewProjectAdded,
+  onProjectUpdate,
+  onProjectDelete
 }) => {
   const renderStepContent = () => {
     switch (currentStep) {
@@ -40,6 +58,10 @@ const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
             setFormData={updateFormData}
             onFileUpload={handleFileUpload}
             onRemoveFile={removeFile}
+            projects={projects}
+            onNewProjectAdded={onNewProjectAdded}
+            onProjectUpdate={onProjectUpdate}
+            onProjectDelete={onProjectDelete}
           />
         );
       case 2:

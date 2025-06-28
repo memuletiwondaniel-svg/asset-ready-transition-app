@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { usePSSRFormData } from '@/hooks/usePSSRFormData';
+import { useProjectsData } from '@/hooks/useProjectsData';
 import CreatePSSRFlowHeader from './CreatePSSRFlowHeader';
 import CreatePSSRFlowContent from './CreatePSSRFlowContent';
 import CreatePSSRFlowFooter from './CreatePSSRFlowFooter';
@@ -15,13 +16,54 @@ interface CreatePSSRFlowProps {
 const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const { formData, updateFormData, resetFormData, handleFileUpload, removeFile } = usePSSRFormData();
+  const { projects, handleNewProjectAdded, handleProjectDelete, handleProjectUpdate } = useProjectsData();
 
   console.log('CreatePSSRFlow - Current formData:', formData);
   console.log('CreatePSSRFlow - Current step:', currentStep);
 
+  const isStepValid = () => {
+    console.log('Checking step validity for step:', currentStep);
+    console.log('Current formData for validation:', formData);
+    
+    switch (currentStep) {
+      case 1:
+        const isValid1 = formData.reason && formData.scope && (
+          formData.reason !== 'Start-up or Commissioning of a new Asset' || 
+          (formData.projectId && formData.projectName)
+        ) && (
+          formData.reason === 'Start-up or Commissioning of a new Asset' || 
+          formData.asset
+        );
+        console.log('Step 1 validation:', { 
+          reason: formData.reason, 
+          scope: formData.scope,
+          projectId: formData.projectId,
+          projectName: formData.projectName,
+          asset: formData.asset,
+          isValid: isValid1 
+        });
+        return isValid1;
+      case 2:
+        const isValid2 = formData.projectHubLead?.name && formData.projectHubLead?.email &&
+                         formData.commissioningLead?.name && formData.commissioningLead?.email &&
+                         formData.constructionLead?.name && formData.constructionLead?.email;
+        console.log('Step 2 validation:', { 
+          hubLead: formData.projectHubLead,
+          commissioningLead: formData.commissioningLead,
+          constructionLead: formData.constructionLead,
+          isValid: isValid2 
+        });
+        return isValid2;
+      case 3:
+        return true;
+      default:
+        return false;
+    }
+  };
+
   const handleNext = () => {
     console.log('HandleNext called, current step:', currentStep);
-    if (currentStep < 3) {
+    if (currentStep < 3 && isStepValid()) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -100,11 +142,15 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
             onComplete={handleComplete}
             getStepTitle={getStepTitle}
             getStepDescription={getStepDescription}
+            projects={projects}
+            onNewProjectAdded={handleNewProjectAdded}
+            onProjectUpdate={handleProjectUpdate}
+            onProjectDelete={handleProjectDelete}
           />
 
           <CreatePSSRFlowFooter
             currentStep={currentStep}
-            isStepValid={true}
+            isStepValid={isStepValid()}
             onBack={handleBack}
             onNext={handleNext}
             onClose={handleClose}
