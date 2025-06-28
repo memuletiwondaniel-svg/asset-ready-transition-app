@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUsersContext } from '@/contexts/UsersContext';
 
 interface Project {
@@ -15,9 +15,26 @@ interface Project {
   others: any[];
 }
 
-export const useProjectsData = () => {
-  // Initialize with some sample data for testing
-  const [projects, setProjects] = useState<Project[]>([
+const PROJECTS_STORAGE_KEY = 'lovable_projects';
+
+// Helper function to load projects from localStorage
+const loadProjectsFromStorage = (): Project[] => {
+  try {
+    const stored = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Convert milestoneDate strings back to Date objects
+      return parsed.map((project: any) => ({
+        ...project,
+        milestoneDate: project.milestoneDate ? new Date(project.milestoneDate) : undefined
+      }));
+    }
+  } catch (error) {
+    console.error('Error loading projects from localStorage:', error);
+  }
+  
+  // Return sample project if nothing in storage
+  return [
     {
       id: 'DP001',
       name: 'Sample Project 1',
@@ -26,8 +43,36 @@ export const useProjectsData = () => {
       hubLead: { name: 'John Doe', email: 'john@example.com' },
       others: []
     }
-  ]);
+  ];
+};
+
+// Helper function to save projects to localStorage
+const saveProjectsToStorage = (projects: Project[]) => {
+  try {
+    localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+    console.log('Projects saved to localStorage:', projects.length);
+  } catch (error) {
+    console.error('Error saving projects to localStorage:', error);
+  }
+};
+
+export const useProjectsData = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
   const { addUsersFromProject } = useUsersContext();
+
+  // Load projects from localStorage on component mount
+  useEffect(() => {
+    const loadedProjects = loadProjectsFromStorage();
+    console.log('useProjectsData: Loading projects from storage:', loadedProjects);
+    setProjects(loadedProjects);
+  }, []);
+
+  // Save projects to localStorage whenever projects change
+  useEffect(() => {
+    if (projects.length > 0) {
+      saveProjectsToStorage(projects);
+    }
+  }, [projects]);
 
   console.log('useProjectsData: Current projects state:', projects);
   console.log('useProjectsData: Projects count:', projects.length);
