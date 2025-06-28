@@ -47,20 +47,25 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Information</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Project ID */}
+          {/* Project ID with DP prefix */}
           <div className="space-y-2">
             <Label htmlFor="projectId" className="text-sm font-medium text-gray-700">
               Project ID <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="projectId"
-              type="text"
-              placeholder="Enter project ID"
-              value={formData.projectId}
-              onChange={(e) => handleInputChange('projectId', e.target.value)}
-              className="h-11"
-              required
-            />
+            <div className="flex items-center">
+              <div className="flex items-center bg-gray-100 border border-r-0 border-gray-300 rounded-l-md px-3 h-11">
+                <span className="text-gray-700 font-medium">DP</span>
+              </div>
+              <Input
+                id="projectId"
+                type="text"
+                placeholder="Enter project ID"
+                value={formData.projectId}
+                onChange={(e) => handleInputChange('projectId', e.target.value)}
+                className="h-11 rounded-l-none border-l-0 focus:border-l"
+                required
+              />
+            </div>
           </div>
 
           {/* Project Title */}
@@ -78,6 +83,46 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
               required
             />
           </div>
+
+          {/* Plant - moved to come after Project Title */}
+          <div className="space-y-2">
+            <Label htmlFor="plant" className="text-sm font-medium text-gray-700">
+              Plant <span className="text-red-500">*</span>
+            </Label>
+            <Select value={formData.plant} onValueChange={(value) => handleInputChange('plant', value)}>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Select plant" />
+              </SelectTrigger>
+              <SelectContent>
+                {plants.map((plant) => (
+                  <SelectItem key={plant} value={plant}>
+                    {plant}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* CS Location - only show if plant is CS */}
+          {formData.plant === 'Compressor Station (CS)' && (
+            <div className="space-y-2">
+              <Label htmlFor="csLocation" className="text-sm font-medium text-gray-700">
+                CS Location <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.csLocation} onValueChange={(value) => handleInputChange('csLocation', value)}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Select CS location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {csLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Project Scope */}
           <div className="space-y-2">
@@ -139,46 +184,6 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
               </PopoverContent>
             </Popover>
           </div>
-
-          {/* Plant */}
-          <div className="space-y-2">
-            <Label htmlFor="plant" className="text-sm font-medium text-gray-700">
-              Plant <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.plant} onValueChange={(value) => handleInputChange('plant', value)}>
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="Select plant" />
-              </SelectTrigger>
-              <SelectContent>
-                {plants.map((plant) => (
-                  <SelectItem key={plant} value={plant}>
-                    {plant}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* CS Location - only show if plant is CS */}
-          {formData.plant === 'Compressor Station (CS)' && (
-            <div className="space-y-2">
-              <Label htmlFor="csLocation" className="text-sm font-medium text-gray-700">
-                CS Location <span className="text-red-500">*</span>
-              </Label>
-              <Select value={formData.csLocation} onValueChange={(value) => handleInputChange('csLocation', value)}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select CS location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {csLocations.map((location) => (
-                    <SelectItem key={location} value={location}>
-                      {location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* Scorecard Project */}
           <div className="space-y-2">
