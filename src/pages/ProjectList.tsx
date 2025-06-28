@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Plus, ArrowLeft, Building, MapPin, User, Calendar, Crown } from 'lucide-react';
+import { Edit, Plus, ArrowLeft, Building, MapPin, User, Calendar } from 'lucide-react';
 import { useProjectsContext } from '@/contexts/ProjectsContext';
 import AddNewProjectWidget from '@/components/AddNewProjectWidget';
 import { format } from 'date-fns';
@@ -135,15 +136,18 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {formatProjectId(project.id)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {project.name}
                             {project.scorecardProject === 'yes' && (
                               <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">
-                                <Crown className="h-3 w-3 mr-1" />
                                 Scorecard
                               </Badge>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{project.name}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Building className="h-4 w-4 text-gray-400" />
