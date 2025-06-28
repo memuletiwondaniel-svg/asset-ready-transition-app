@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import PSSRStepRenderer from './PSSRStepRenderer';
 import { PSSRData } from '@/hooks/usePSSRFormData';
 
@@ -48,34 +49,36 @@ const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
   onProjectDelete
 }) => {
   return (
-    <div className="flex-1 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0">
       {currentStep < 3 ? (
-        <div className="h-full overflow-y-auto p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{getStepTitle()}</CardTitle>
-              <CardDescription>{getStepDescription()}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PSSRStepRenderer
-                currentStep={currentStep}
-                formData={formData}
-                updateFormData={updateFormData}
-                handleFileUpload={handleFileUpload}
-                removeFile={removeFile}
-                onReturnToList={onReturnToList}
-                onContinueToChecklist={onContinueToChecklist}
-                onComplete={onComplete}
-                projects={projects}
-                onNewProjectAdded={onNewProjectAdded}
-                onProjectUpdate={onProjectUpdate}
-                onProjectDelete={onProjectDelete}
-              />
-            </CardContent>
-          </Card>
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{getStepTitle()}</CardTitle>
+                <CardDescription>{getStepDescription()}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PSSRStepRenderer
+                  currentStep={currentStep}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  handleFileUpload={handleFileUpload}
+                  removeFile={removeFile}
+                  onReturnToList={onReturnToList}
+                  onContinueToChecklist={onContinueToChecklist}
+                  onComplete={onComplete}
+                  projects={projects}
+                  onNewProjectAdded={onNewProjectAdded}
+                  onProjectUpdate={onProjectUpdate}
+                  onProjectDelete={onProjectDelete}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </ScrollArea>
       ) : (
-        <div className="h-full overflow-y-auto">
+        <ScrollArea className="flex-1">
           <PSSRStepRenderer
             currentStep={currentStep}
             formData={formData}
@@ -90,7 +93,7 @@ const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
             onProjectUpdate={onProjectUpdate}
             onProjectDelete={onProjectDelete}
           />
-        </div>
+        </ScrollArea>
       )}
     </div>
   );

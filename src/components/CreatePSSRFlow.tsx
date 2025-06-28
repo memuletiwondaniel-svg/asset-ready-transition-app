@@ -54,38 +54,36 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ isOpen, onClose, onComp
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
-        <div className="flex flex-col h-full">
-          <CreatePSSRFlowHeader 
-            currentStep={currentStep}
-            getStepDescription={getStepDescription}
-          />
+      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden flex flex-col">
+        <CreatePSSRFlowHeader 
+          currentStep={currentStep}
+          getStepDescription={getStepDescription}
+        />
 
-          <CreatePSSRFlowContent
-            currentStep={currentStep}
-            formData={formData}
-            updateFormData={updateFormData}
-            handleFileUpload={handleFileUpload}
-            removeFile={removeFile}
-            onReturnToList={handleReturnToList}
-            onContinueToChecklist={() => setCurrentStep(3)}
-            onComplete={handleComplete}
-            getStepTitle={getStepTitle}
-            getStepDescription={getStepDescription}
-            projects={projects}
-            onNewProjectAdded={handleNewProjectAdded}
-            onProjectUpdate={handleProjectUpdate}
-            onProjectDelete={handleProjectDelete}
-          />
+        <CreatePSSRFlowContent
+          currentStep={currentStep}
+          formData={formData}
+          updateFormData={updateFormData}
+          handleFileUpload={handleFileUpload}
+          removeFile={removeFile}
+          onReturnToList={handleReturnToList}
+          onContinueToChecklist={() => setCurrentStep(3)}
+          onComplete={handleComplete}
+          getStepTitle={getStepTitle}
+          getStepDescription={getStepDescription}
+          projects={projects}
+          onNewProjectAdded={handleNewProjectAdded}
+          onProjectUpdate={handleProjectUpdate}
+          onProjectDelete={handleProjectDelete}
+        />
 
-          <CreatePSSRFlowFooter
-            currentStep={currentStep}
-            isStepValid={isStepValid()}
-            onBack={handleBack}
-            onNext={handleNext}
-            onClose={handleClose}
-          />
-        </div>
+        <CreatePSSRFlowFooter
+          currentStep={currentStep}
+          isStepValid={isStepValid()}
+          onBack={handleBack}
+          onNext={handleNext}
+          onClose={handleClose}
+        />
       </DialogContent>
     </Dialog>
   );
