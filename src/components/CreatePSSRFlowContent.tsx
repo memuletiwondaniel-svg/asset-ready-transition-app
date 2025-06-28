@@ -1,9 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import PSSRStepOne from './PSSRStepOne';
-import PSSRStepTwo from './PSSRStepTwo';
-import PSSRChecklist from './PSSRChecklist';
+import PSSRStepRenderer from './PSSRStepRenderer';
 import { PSSRData } from '@/hooks/usePSSRFormData';
 
 interface Project {
@@ -49,40 +47,6 @@ const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
   onProjectUpdate,
   onProjectDelete
 }) => {
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <PSSRStepOne 
-            formData={formData} 
-            setFormData={updateFormData}
-            onFileUpload={handleFileUpload}
-            onRemoveFile={removeFile}
-            projects={projects}
-            onNewProjectAdded={onNewProjectAdded}
-            onProjectUpdate={onProjectUpdate}
-            onProjectDelete={onProjectDelete}
-          />
-        );
-      case 2:
-        return (
-          <PSSRStepTwo 
-            formData={formData} 
-            onBack={onReturnToList}
-            onContinueToChecklist={onContinueToChecklist}
-          />
-        );
-      case 3:
-        return (
-          <PSSRChecklist 
-            onSaveDraft={onComplete}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="flex-1 overflow-hidden">
       {currentStep < 3 ? (
@@ -93,13 +57,39 @@ const CreatePSSRFlowContent: React.FC<CreatePSSRFlowContentProps> = ({
               <CardDescription>{getStepDescription()}</CardDescription>
             </CardHeader>
             <CardContent>
-              {renderStepContent()}
+              <PSSRStepRenderer
+                currentStep={currentStep}
+                formData={formData}
+                updateFormData={updateFormData}
+                handleFileUpload={handleFileUpload}
+                removeFile={removeFile}
+                onReturnToList={onReturnToList}
+                onContinueToChecklist={onContinueToChecklist}
+                onComplete={onComplete}
+                projects={projects}
+                onNewProjectAdded={onNewProjectAdded}
+                onProjectUpdate={onProjectUpdate}
+                onProjectDelete={onProjectDelete}
+              />
             </CardContent>
           </Card>
         </div>
       ) : (
         <div className="h-full overflow-y-auto">
-          {renderStepContent()}
+          <PSSRStepRenderer
+            currentStep={currentStep}
+            formData={formData}
+            updateFormData={updateFormData}
+            handleFileUpload={handleFileUpload}
+            removeFile={removeFile}
+            onReturnToList={onReturnToList}
+            onContinueToChecklist={onContinueToChecklist}
+            onComplete={onComplete}
+            projects={projects}
+            onNewProjectAdded={onNewProjectAdded}
+            onProjectUpdate={onProjectUpdate}
+            onProjectDelete={onProjectDelete}
+          />
         </div>
       )}
     </div>
