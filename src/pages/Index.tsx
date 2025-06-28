@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,27 +14,55 @@ import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [showAuth, setShowAuth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
 
+  // Initialize authentication state from localStorage
+  useEffect(() => {
+    const savedAuthState = localStorage.getItem('p2a_authenticated');
+    const savedSection = localStorage.getItem('p2a_current_section');
+    
+    console.log('Initializing auth state:', { savedAuthState, savedSection });
+    
+    if (savedAuthState === 'true') {
+      setIsAuthenticated(true);
+      console.log('User authenticated from localStorage');
+    }
+    
+    if (savedSection) {
+      setCurrentSection(savedSection);
+      console.log('Restored current section:', savedSection);
+    }
+  }, []);
+
   const handleAuthenticated = () => {
+    console.log('User authenticated successfully');
     setIsAuthenticated(true);
     setShowAuth(false);
+    localStorage.setItem('p2a_authenticated', 'true');
   };
 
   const handleBack = () => {
+    console.log('Logging out user');
     setIsAuthenticated(false);
     setCurrentSection(null);
+    localStorage.removeItem('p2a_authenticated');
+    localStorage.removeItem('p2a_current_section');
   };
 
   const handleNavigate = (section: string) => {
+    console.log('Navigating to section:', section);
     setCurrentSection(section);
+    localStorage.setItem('p2a_current_section', section);
   };
 
   const handleBackToLanding = () => {
+    console.log('Returning to landing page');
     setCurrentSection(null);
+    localStorage.removeItem('p2a_current_section');
   };
 
   const languages = [

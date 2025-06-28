@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,12 +9,22 @@ import { Edit, Plus, ArrowLeft, Building, MapPin, User } from 'lucide-react';
 import { useProjectsData } from '@/hooks/useProjectsData';
 
 interface ProjectListProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
+  const navigate = useNavigate();
   const { projects } = useProjectsData();
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+
+  const handleBack = () => {
+    console.log('Navigating back from Project List');
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleEditProject = (projectId: string) => {
     setSelectedProject(projectId);
@@ -32,7 +43,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onBack }) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleBack} className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
