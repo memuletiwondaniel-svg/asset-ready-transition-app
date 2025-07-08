@@ -1,12 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Search, Plus } from 'lucide-react';
 import AddNewProjectWidget from './AddNewProjectWidget';
-import { useProjectCreation } from '@/hooks/useProjectCreation';
 
 interface Project {
   id: string;
@@ -39,11 +38,11 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   onProjectNameChange,
   onNewProjectCreate
 }) => {
-  const { showCreateProject, openCreateProject, closeCreateProject, handleCreateProjectSubmit } = useProjectCreation();
+  const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
 
   const handleProjectSelect = (value: string) => {
     if (value === 'add-new') {
-      openCreateProject();
+      setShowAddProjectWidget(true);
       onProjectSearchOpenChange(false);
     } else {
       onProjectSelect(value);
@@ -51,10 +50,10 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   };
 
   const handleNewProjectSubmit = (projectData: any) => {
-    const newProject = handleCreateProjectSubmit(projectData);
+    console.log('New project created:', projectData);
     
-    // Create new project object for the selector
-    const projectForSelector: Project = {
+    // Create new project object
+    const newProject: Project = {
       id: projectData.projectId,
       name: projectData.projectTitle,
       plant: projectData.plant,
@@ -78,13 +77,8 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
     };
 
     // Add to projects list and select it
-    onNewProjectCreate?.(projectForSelector);
-  };
-
-  // Format project ID for display only - add DP prefix only when displaying
-  const formatProjectId = (id: string) => {
-    // If ID already has DP, don't add it again
-    return id.startsWith('DP') ? id : `DP ${id}`;
+    onNewProjectCreate?.(newProject);
+    setShowAddProjectWidget(false);
   };
 
   return (
@@ -99,7 +93,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
               aria-expanded={projectSearchOpen}
               className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors"
             >
-              {projectId ? formatProjectId(projectId) : "Search projects..."}
+              {projectId || "Search projects..."}
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -135,7 +129,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                     >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="font-medium">{formatProjectId(project.id)}</span>
+                        <span className="font-medium">{project.id}</span>
                         <span className="text-gray-600">- {project.name}</span>
                       </div>
                     </CommandItem>
@@ -159,8 +153,8 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
 
       {/* Add New Project Widget */}
       <AddNewProjectWidget
-        open={showCreateProject}
-        onClose={closeCreateProject}
+        open={showAddProjectWidget}
+        onClose={() => setShowAddProjectWidget(false)}
         onSubmit={handleNewProjectSubmit}
         editMode={false}
       />

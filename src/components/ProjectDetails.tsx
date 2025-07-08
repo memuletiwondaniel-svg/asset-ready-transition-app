@@ -1,38 +1,19 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { 
-  Building2, 
-  Users, 
-  Award, 
-  MoreVertical, 
-  MessageCircle, 
-  Mail, 
-  Copy, 
-  Edit,
-  Calendar,
-  Trash2
-} from 'lucide-react';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Edit2, Award } from 'lucide-react';
 import AddNewProjectWidget from './AddNewProjectWidget';
+
+interface ProjectMember {
+  name: string;
+  role?: string;
+  email: string;
+  avatar: string;
+  status: string;
+}
 
 interface Project {
   id: string;
@@ -42,276 +23,232 @@ interface Project {
   scope: string;
   milestone?: string;
   scorecardProject?: string;
-  hubLead: any;
-  others: any[];
+  hubLead: ProjectMember;
+  others: ProjectMember[];
 }
 
 interface ProjectDetailsProps {
   project: Project;
-  onContextAction: (action: string, person: any) => void;
-  onProjectUpdate?: (project: Project) => void;
-  onProjectDelete?: (projectId: string) => void;
+  onContextAction: (action: string, person: ProjectMember) => void;
+  onProjectUpdate?: (updatedProject: Project) => void;
 }
 
-const ProjectDetails: React.FC<ProjectDetailsProps> = ({ 
-  project, 
-  onContextAction, 
-  onProjectUpdate,
-  onProjectDelete 
-}) => {
-  const [showEditWidget, setShowEditWidget] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextAction, onProjectUpdate }) => {
+  const [showEditProject, setShowEditProject] = useState(false);
+  const [currentProject, setCurrentProject] = useState(project);
+  const currentYear = new Date().getFullYear();
 
-  const handleEditProject = (updatedProjectData: any) => {
-    const updatedProject: Project = {
-      id: updatedProjectData.projectId,
-      name: updatedProjectData.projectTitle,
-      plant: updatedProjectData.plant,
-      subdivision: updatedProjectData.csLocation,
-      scope: updatedProjectData.projectScope,
-      milestone: updatedProjectData.projectMilestone,
-      scorecardProject: updatedProjectData.scorecardProject,
-      hubLead: {
-        ...updatedProjectData.projectHubLead,
-        role: 'Project Manager'
-      },
-      others: [
-        ...(updatedProjectData.commissioningLead?.name ? [{
-          ...updatedProjectData.commissioningLead,
-          role: 'Commissioning Lead'
-        }] : []),
-        ...(updatedProjectData.constructionLead?.name ? [{
-          ...updatedProjectData.constructionLead,
-          role: 'Construction Lead'
-        }] : []),
-        ...updatedProjectData.additionalPersons
-      ]
-    };
-
-    onProjectUpdate?.(updatedProject);
-    setShowEditWidget(false);
-  };
-
-  const handleDeleteProject = () => {
-    onProjectDelete?.(project.id);
-    setShowDeleteDialog(false);
-  };
+  // Update local state when project prop changes
+  React.useEffect(() => {
+    setCurrentProject(project);
+  }, [project]);
 
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'green': return 'bg-green-500';
-      case 'amber': return 'bg-amber-500';
-      case 'red': return 'bg-red-500';
-      default: return 'bg-gray-400';
+    switch (status) {
+      case 'green':
+        return 'bg-green-500';
+      case 'amber':
+        return 'bg-yellow-500';
+      case 'red':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
-  const formatProjectId = (id: string) => {
-    return id.startsWith('DP') ? id : `DP ${id}`;
+  const handleEditProject = (projectData: any) => {
+    console.log('Project updated:', projectData);
+    
+    // Create updated project object
+    const updatedProject: Project = {
+      id: currentProject.id,
+      name: projectData.projectTitle,
+      plant: projectData.plant,
+      subdivision: projectData.csLocation,
+      scope: projectData.projectScope,
+      milestone: projectData.projectMilestone,
+      scorecardProject: projectData.scorecardProject,
+      hubLead: {
+        ...projectData.projectHubLead,
+        role: 'Project Hub Lead'
+      },
+      others: [
+        ...(projectData.commissioningLead?.name ? [{
+          ...projectData.commissioningLead,
+          role: 'Commissioning Lead'
+        }] : []),
+        ...(projectData.constructionLead?.name ? [{
+          ...projectData.constructionLead,
+          role: 'Construction Lead'
+        }] : []),
+        ...projectData.additionalPersons
+      ]
+    };
+
+    setCurrentProject(updatedProject);
+    onProjectUpdate?.(updatedProject);
+    setShowEditProject(false);
   };
 
   return (
     <>
-      <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-        <CardHeader className="pb-4">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Building2 className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-3">
-                  {formatProjectId(project.id)} - {project.name}
-                  {project.scorecardProject === 'Yes' && (
-                    <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 border-0 shadow-sm">
-                      <Award className="h-3 w-3 mr-1" />
-                      Scorecard
-                    </Badge>
-                  )}
-                </CardTitle>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <Building2 className="h-4 w-4" />
-                    {project.plant}
-                    {project.subdivision && ` - ${project.subdivision}`}
-                  </span>
-                  {project.milestone && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {project.milestone}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowEditWidget(true)}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </Button>
-            </div>
+      <div className="mt-4 p-3 bg-white rounded-lg border border-gray-200">
+        {/* Header with Edit Button */}
+        <div className="flex justify-between items-center mb-3">
+          <h4 className="text-base font-semibold text-gray-900">Project Information</h4>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEditProject(true)}
+            className="text-xs px-2 py-1 h-7"
+          >
+            <Edit2 className="h-3 w-3 mr-1" />
+            Edit
+          </Button>
+        </div>
+
+        {/* Project Details Grid - Optimized Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <div className="p-2 bg-blue-50 rounded-md">
+            <span className="text-xs text-gray-600 block mb-1">Project Name</span>
+            <span className="text-sm font-medium text-gray-900">{currentProject.name}</span>
           </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-2">Project Scope</h4>
-            <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-3 rounded-lg">
-              {project.scope}
-            </p>
+          
+          <div className="p-2 bg-gray-50 rounded-md">
+            <span className="text-xs text-gray-600 block mb-1">Plant</span>
+            <span className="text-sm font-medium text-gray-900">{currentProject.plant}</span>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-600" />
-              Team Members
-            </h4>
-            <div className="space-y-3">
-              {/* Project Manager */}
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                      <AvatarImage src={project.hubLead.avatar} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
-                        {project.hubLead.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+          {currentProject.subdivision && currentProject.plant === 'Compressor Station (CS)' && (
+            <div className="p-2 bg-gray-50 rounded-md">
+              <span className="text-xs text-gray-600 block mb-1">Subdivision</span>
+              <span className="text-sm font-medium text-gray-900">{currentProject.subdivision}</span>
+            </div>
+          )}
+
+          {currentProject.milestone && (
+            <div className="p-2 bg-green-50 rounded-md">
+              <span className="text-xs text-gray-600 block mb-1">{currentYear} Project Milestone</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900">{currentProject.milestone}</span>
+                {currentProject.scorecardProject === 'Yes' && (
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 border-yellow-500 flex items-center gap-1 text-xs px-2 py-0.5">
+                    <Award className="h-3 w-3" />
+                    Scorecard
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Project Scope - Compact */}
+        <div className="mb-4">
+          <h5 className="text-sm font-medium text-gray-900 mb-2">Project Scope</h5>
+          <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+            <p className="text-sm text-gray-700 leading-relaxed">{currentProject.scope}</p>
+          </div>
+        </div>
+        
+        {/* Project Team - Compact Layout */}
+        <div className="space-y-3">
+          <h5 className="text-sm font-medium text-gray-900">Project Team</h5>
+          
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 rounded-md">
+            {/* Project Hub Lead */}
+            <div className="flex items-center gap-2">
+              <ContextMenu>
+                <ContextMenuTrigger>
+                  <div className="relative cursor-pointer">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={currentProject.hubLead.avatar} alt={currentProject.hubLead.name} />
+                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                        {currentProject.hubLead.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusColor(project.hubLead.status)} rounded-full border-2 border-white`}></div>
+                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusColor(currentProject.hubLead.status)} rounded-full border-2 border-white`}></div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{project.hubLead.name}</p>
-                    <p className="text-sm text-blue-600 font-medium">Project Manager</p>
-                    <p className="text-xs text-gray-500">{project.hubLead.email}</p>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-blue-100">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg">
-                    <DropdownMenuItem onClick={() => onContextAction('chat', project.hubLead)} className="cursor-pointer">
-                      <MessageCircle className="h-4 w-4 mr-2 text-blue-600" />
-                      Start Chat
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onContextAction('email', project.hubLead)} className="cursor-pointer">
-                      <Mail className="h-4 w-4 mr-2 text-green-600" />
-                      Send Email
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onContextAction('copy', project.hubLead)} className="cursor-pointer">
-                      <Copy className="h-4 w-4 mr-2 text-gray-600" />
-                      Copy Email
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => onContextAction('chat', currentProject.hubLead)}>
+                    Chat with {currentProject.hubLead.name}
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onContextAction('email', currentProject.hubLead)}>
+                    Send {currentProject.hubLead.name} an email
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onContextAction('copy', currentProject.hubLead)}>
+                    Copy {currentProject.hubLead.name} email address
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+              <div>
+                <p className="font-medium text-gray-900 text-xs">{currentProject.hubLead.name}</p>
+                <p className="text-xs text-gray-600">Project Hub Lead</p>
               </div>
+            </div>
 
-              {/* Other Team Members */}
-              {project.others.map((member, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
-                        <AvatarImage src={member.avatar} />
-                        <AvatarFallback className="bg-gray-200 text-gray-700 font-medium text-sm">
-                          {member.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+            {/* Others */}
+            {currentProject.others.map((member, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <ContextMenu>
+                  <ContextMenuTrigger>
+                    <div className="relative cursor-pointer">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarFallback className="bg-green-100 text-green-700 text-xs">
+                          {member.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
                       <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusColor(member.status)} rounded-full border-2 border-white`}></div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">{member.name}</p>
-                      <p className="text-xs text-gray-600">{member.role}</p>
-                      <p className="text-xs text-gray-500">{member.email}</p>
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-gray-200">
-                        <MoreVertical className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg">
-                      <DropdownMenuItem onClick={() => onContextAction('chat', member)} className="cursor-pointer">
-                        <MessageCircle className="h-4 w-4 mr-2 text-blue-600" />
-                        Start Chat
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onContextAction('email', member)} className="cursor-pointer">
-                        <Mail className="h-4 w-4 mr-2 text-green-600" />
-                        Send Email
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onContextAction('copy', member)} className="cursor-pointer">
-                        <Copy className="h-4 w-4 mr-2 text-gray-600" />
-                        Copy Email
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => onContextAction('chat', member)}>
+                      Chat with {member.name}
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => onContextAction('email', member)}>
+                      Send {member.name} an email
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => onContextAction('copy', member)}>
+                      Copy {member.name} email address
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+                <div>
+                  <p className="font-medium text-gray-900 text-xs">{member.name}</p>
+                  <p className="text-xs text-gray-600">{member.role}</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Edit Project Widget */}
       <AddNewProjectWidget
-        open={showEditWidget}
-        onClose={() => setShowEditWidget(false)}
+        open={showEditProject}
+        onClose={() => setShowEditProject(false)}
         onSubmit={handleEditProject}
         editMode={true}
         existingProject={{
-          projectId: project.id,
-          projectTitle: project.name,
-          plant: project.plant,
-          csLocation: project.subdivision,
-          projectScope: project.scope,
-          projectMilestone: project.milestone,
-          scorecardProject: project.scorecardProject,
-          projectHubLead: project.hubLead,
-          commissioningLead: project.others.find(m => m.role === 'Commissioning Lead'),
-          constructionLead: project.others.find(m => m.role === 'Construction Lead'),
-          additionalPersons: project.others.filter(m => !['Commissioning Lead', 'Construction Lead'].includes(m.role)),
-          supportingDocs: []
+          projectId: currentProject.id,
+          projectTitle: currentProject.name,
+          plant: currentProject.plant,
+          csLocation: currentProject.subdivision || '',
+          projectScope: currentProject.scope,
+          projectMilestone: currentProject.milestone || '',
+          projectHubLead: currentProject.hubLead,
+          commissioningLead: currentProject.others.find(m => m.role === 'Commissioning Lead') || { name: '', email: '' },
+          constructionLead: currentProject.others.find(m => m.role === 'Construction Lead') || { name: '', email: '' },
+          additionalPersons: currentProject.others.filter(m => !['Commissioning Lead', 'Construction Lead'].includes(m.role || '')).map(m => ({
+            name: m.name,
+            email: m.email,
+            role: m.role || ''
+          })),
+          supportingDocs: [],
+          scorecardProject: currentProject.scorecardProject || 'No'
         }}
       />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete project "{formatProjectId(project.id)} - {project.name}"? 
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteProject}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete Project
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +8,21 @@ import { FileText, Briefcase, Building2 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
-import { PSSRData } from '@/hooks/usePSSRFormData';
+
+interface FormData {
+  asset: string;
+  reason: string;
+  projectId: string;
+  projectName: string;
+  scope: string;
+  files: File[];
+  teamMembers: {
+    technicalAuthorities: {};
+    assetTeam: {};
+    projectTeam: {};
+    hsse: {};
+  };
+}
 
 interface Project {
   id: string;
@@ -21,65 +35,60 @@ interface Project {
 }
 
 interface PSSRStepOneProps {
-  formData: PSSRData;
-  setFormData: (updates: Partial<PSSRData>) => void;
+  formData: FormData;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  assets: string[];
+  reasons: string[];
+  projectSearchOpen: boolean;
+  setProjectSearchOpen: (open: boolean) => void;
+  showAddProjectWidget: boolean;
+  setShowAddProjectWidget: (show: boolean) => void;
+  onProjectSelect: (value: string) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
-  projects: Project[];
-  onNewProjectAdded: (projectData: any) => Project;
-  onProjectUpdate: (project: Project) => void;
-  onProjectDelete: (projectId: string) => void;
+  onContextAction: (action: string, person: any) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   formData,
   setFormData,
+  projects,
+  setProjects,
+  assets,
+  reasons,
+  projectSearchOpen,
+  setProjectSearchOpen,
+  onProjectSelect,
   onFileUpload,
   onRemoveFile,
-  projects,
-  onNewProjectAdded,
-  onProjectUpdate,
-  onProjectDelete
+  onContextAction
 }) => {
-  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
-  
-  const assets = ['Asset 1', 'Asset 2', 'Asset 3'];
-  const reasons = [
-    'Start-up or Commissioning of a new Asset',
-    'Modification to existing Asset',
-    'Restart after shutdown'
-  ];
-
   const selectedProject = projects.find(p => p.id === formData.projectId);
 
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProjects(prevProjects => 
+      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
+    );
+  };
+
   const handleNewProjectCreate = (newProject: Project) => {
-    const project = onNewProjectAdded(newProject);
-    setFormData({ projectId: project.id, projectName: project.name });
-  };
-
-  const onProjectSelect = (value: string) => {
-    const project = projects.find(p => p.id === value);
-    if (project) {
-      setFormData({ projectId: project.id, projectName: project.name });
-    }
-    setProjectSearchOpen(false);
-  };
-
-  const onContextAction = (action: string, person: any) => {
-    // Handle context actions
+    setProjects(prevProjects => [...prevProjects, newProject]);
+    setFormData(prev => ({ ...prev, projectId: newProject.id, projectName: newProject.name }));
   };
 
   return (
     <div className="space-y-8">
       <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-slate-50">
-        <CardHeader className="pb-6" style={{ minHeight: '120px' }}>
+        <CardHeader className="pb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 bg-blue-100 rounded-xl">
-              <FileText className="h-5 w-5 text-blue-600" />
+            <div className="p-3 bg-blue-100 rounded-xl">
+              <FileText className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold text-gray-900">PSSR Information</CardTitle>
-              <CardDescription className="text-sm text-gray-600 mt-1">
+              <CardTitle className="text-2xl font-bold text-gray-900">PSSR Information</CardTitle>
+              <CardDescription className="text-base text-gray-600 mt-2">
                 The PSSR process manages the safe introduction of hydrocarbons into newly constructed facilities. 
                 This requires proper assurance and checks by an integrated team from Project, Asset, Engineering and Contractor teams.
               </CardDescription>
@@ -93,7 +102,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <Briefcase className="h-4 w-4 text-blue-600" />
                 Reason for PSSR *
               </Label>
-              <Select value={formData.reason} onValueChange={(value) => setFormData({ reason: value })}>
+              <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({...prev, reason: value}))}>
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
@@ -113,7 +122,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                   <Building2 className="h-4 w-4 text-blue-600" />
                   Select Asset *
                 </Label>
-                <Select value={formData.asset} onValueChange={(value) => setFormData({ asset: value })}>
+                <Select value={formData.asset} onValueChange={(value) => setFormData(prev => ({...prev, asset: value}))}>
                   <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="Choose an asset" />
                   </SelectTrigger>
@@ -134,6 +143,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
 
           {formData.reason === 'Start-up or Commissioning of a new Asset' && (
             <div className="p-6 bg-blue-50 rounded-xl">
+              
               <div className="mb-4">
                 <div className="w-64">
                   <ProjectSelector
@@ -143,7 +153,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     projectSearchOpen={projectSearchOpen}
                     onProjectSearchOpenChange={setProjectSearchOpen}
                     onProjectSelect={onProjectSelect}
-                    onProjectNameChange={(name) => setFormData({ projectName: name })}
+                    onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
                     onNewProjectCreate={handleNewProjectCreate}
                   />
                 </div>
@@ -154,8 +164,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <ProjectDetails
                   project={selectedProject}
                   onContextAction={onContextAction}
-                  onProjectUpdate={onProjectUpdate}
-                  onProjectDelete={onProjectDelete}
+                  onProjectUpdate={handleProjectUpdate}
                 />
               )}
             </div>
@@ -165,7 +174,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
             <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <Textarea 
               value={formData.scope}
-              onChange={(e) => setFormData({ scope: e.target.value })}
+              onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
               placeholder="Describe the scope of the PSSR..."
               rows={4}
               className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none"
