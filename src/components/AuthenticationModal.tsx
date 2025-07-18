@@ -30,9 +30,14 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
   });
 
   const handleSSOLogin = (provider: string) => {
-    // Simulate SSO login
     console.log(`SSO Login with ${provider}`);
-    onAuthenticated();
+    // Check if user is from BGC or Kent for SSO access
+    if (provider === 'BGC' || provider === 'Kent') {
+      // Simulate SSO authentication for BGC/Kent users
+      onAuthenticated();
+    } else {
+      alert('SSO access is only available for BGC and Kent employees. Please use regular registration.');
+    }
   };
 
   const handleRegularLogin = () => {
@@ -43,9 +48,9 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
   };
 
   const handleRegistration = () => {
-    // Simulate registration
+    // Simulate registration - requires BGC approval for non-BGC/Kent users
     if (formData.email && formData.name && formData.company) {
-      alert('Registration submitted. A BGC representative will review your request.');
+      alert('Registration submitted! Your account is pending approval from BGC. You will receive an email once approved.');
       onClose();
     }
   };

@@ -13,6 +13,7 @@ import AuthenticationModal from "@/components/AuthenticationModal";
 import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
+import UserManagement from "@/pages/UserManagement";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -49,6 +50,8 @@ const Index = () => {
     switch (currentSection) {
       case 'pssr':
         return <PSSRModule onBack={handleBackToLanding} />;
+      case 'users':
+        return <UserManagement onBack={handleBackToLanding} />;
       case 'assets':
         // Placeholder for Asset Management - can be implemented later
         return (

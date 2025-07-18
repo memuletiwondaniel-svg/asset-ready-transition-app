@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Settings, BarChart3, ArrowLeft } from 'lucide-react';
+import { FileText, Settings, BarChart3, ArrowLeft, Users } from 'lucide-react';
 
 interface LandingPageProps {
   onBack: () => void;
@@ -18,6 +18,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       icon: FileText,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
+    },
+    {
+      id: 'users',
+      title: 'User Management',
+      description: 'Manage users, roles, permissions, and access control across the P2A application with SSO integration for BGC and Kent employees',
+      icon: Users,
+      color: 'bg-orange-500',
+      hoverColor: 'hover:bg-orange-600'
     },
     {
       id: 'assets',
