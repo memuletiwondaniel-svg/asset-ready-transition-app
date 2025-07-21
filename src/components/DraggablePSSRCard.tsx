@@ -73,7 +73,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       }`}
     >
       <div 
-        className={`fluent-card p-4 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
+        className={`fluent-card p-3 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
           isPinned ? 'border-l-warning bg-warning/5' : 'border-l-primary/20'
         } hover:border-l-primary relative overflow-hidden ${
           isDragging ? 'ring-2 ring-primary/50 bg-primary/5' : ''
@@ -115,17 +115,17 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           
           {/* Primary Info - Project ID and Name (Most Prominent) */}
           <div className="flex-1 min-w-0 max-w-md">
-            <div className="flex items-center gap-3 mb-1.5">
-              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2.5 py-1 rounded-xl font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2 py-0.5 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200">
                 {pssr.projectId}
               </div>
-              <div className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
+              <div className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
                 {pssr.priority}
               </div>
               {getStatusIcon(pssr.status)}
             </div>
             
-            <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-1 leading-tight line-clamp-2">
+            <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-1 leading-tight line-clamp-2">
               {pssr.projectName}
             </h3>
             
@@ -143,65 +143,65 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </div>
 
           {/* PSSR Lead with Enhanced Info (Center) */}
-          <div className="flex items-center gap-4 px-4 flex-1 min-w-0">
+          <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
             {/* Lead Profile */}
             <div className="text-center flex-shrink-0">
-              <div className="text-xs text-muted-foreground font-medium mb-1">PSSR Lead</div>
-              <div className="relative mb-1.5">
+              <div className="text-xs text-muted-foreground font-medium mb-0.5">PSSR Lead</div>
+              <div className="relative mb-1">
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
-                  className="w-10 h-10 rounded-2xl border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
+                  className="w-8 h-8 rounded-xl border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
                 />
                 {/* Teams-style status indicator with dynamic colors */}
-                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-card rounded-full flex items-center justify-center border border-border">
-                  <div className={`w-2 h-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)}`}></div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-card rounded-full flex items-center justify-center border border-border">
+                  <div className={`w-1.5 h-1.5 rounded-full ${getTeamStatusColor(pssr.teamStatus)}`}></div>
                 </div>
               </div>
-              <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate max-w-20">
+              <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate max-w-16">
                 {pssr.pssrLead.split(' ')[0]}
               </div>
             </div>
 
             {/* Additional Information Cards */}
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-2.5 flex-wrap">
               {/* Team Info */}
-              <div className="bg-muted/30 border border-border/50 rounded-lg p-2.5 min-w-0 hover:bg-muted/50 transition-colors duration-200">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Users className="h-3 w-3 text-primary" />
+              <div className="bg-muted/30 border border-border/50 rounded-lg p-2 min-w-0 hover:bg-muted/50 transition-colors duration-200">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <Users className="h-2.5 w-2.5 text-primary" />
                   <span className="text-xs font-medium text-muted-foreground">Team</span>
                 </div>
-                <div className="text-sm font-semibold text-foreground">{pssr.teamMembers} members</div>
+                <div className="text-xs font-semibold text-foreground">{pssr.teamMembers} members</div>
                 <div className="text-xs text-muted-foreground truncate">{pssr.location}</div>
               </div>
 
               {/* Risk Level */}
-              <div className={`border rounded-lg p-2.5 min-w-0 hover:opacity-80 transition-all duration-200 ${getRiskLevelColor(pssr.riskLevel)}`}>
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <AlertTriangle className="h-3 w-3" />
+              <div className={`border rounded-lg p-2 min-w-0 hover:opacity-80 transition-all duration-200 ${getRiskLevelColor(pssr.riskLevel)}`}>
+                <div className="flex items-center gap-1 mb-0.5">
+                  <AlertTriangle className="h-2.5 w-2.5" />
                   <span className="text-xs font-medium">Risk</span>
                 </div>
-                <div className="text-sm font-semibold">{pssr.riskLevel}</div>
+                <div className="text-xs font-semibold">{pssr.riskLevel}</div>
                 <div className="text-xs opacity-70">Level</div>
               </div>
 
               {/* Activity Status - De-emphasized */}
-              <div className="bg-muted/20 border border-border/30 rounded-lg p-2.5 min-w-0 hover:bg-muted/30 transition-colors duration-200">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
+              <div className="bg-muted/20 border border-border/30 rounded-lg p-2 min-w-0 hover:bg-muted/30 transition-colors duration-200">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <Clock className="h-2.5 w-2.5 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground">Activity</span>
                 </div>
-                <div className="text-sm font-semibold text-foreground">{pssr.lastActivity}</div>
+                <div className="text-xs font-semibold text-foreground">{pssr.lastActivity}</div>
                 <div className="text-xs text-muted-foreground">Last update</div>
               </div>
             </div>
           </div>
 
           {/* Status and Progress (Right) */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0 min-w-0">
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0 min-w-0">
             {/* Status Badge - More Prominent */}
             <div className="flex items-center gap-2">
-              <div className={`px-2.5 py-1 rounded-lg font-semibold text-xs border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md ${
+              <div className={`px-2 py-0.5 rounded-lg font-semibold text-xs border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md ${
                 pssr.status === 'Approved' ? 'bg-success/10 text-success border-success/30' :
                 pssr.status === 'Under Review' ? 'bg-warning/10 text-warning border-warning/30' :
                 'bg-muted/30 text-muted-foreground border-muted/30'
@@ -212,29 +212,29 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
 
             {/* Progress Indicator - Enhanced */}
             <div className="text-center">
-              <div className="text-xs text-muted-foreground font-medium mb-1">Progress</div>
+              <div className="text-xs text-muted-foreground font-medium mb-0.5">Progress</div>
               <div className="relative">
                 {/* Circular Progress */}
-                <div className="relative w-12 h-12">
-                  <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
+                <div className="relative w-10 h-10">
+                  <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
                     <circle
-                      cx="24"
-                      cy="24"
-                      r="20"
+                      cx="20"
+                      cy="20"
+                      r="16"
                       stroke="currentColor"
-                      strokeWidth="3"
+                      strokeWidth="2.5"
                       fill="none"
                       className="text-muted/20"
                     />
                     <circle
-                      cx="24"
-                      cy="24"
-                      r="20"
+                      cx="20"
+                      cy="20"
+                      r="16"
                       stroke="currentColor"
-                      strokeWidth="3"
+                      strokeWidth="2.5"
                       fill="none"
-                      strokeDasharray={`${2 * Math.PI * 20}`}
-                      strokeDashoffset={`${2 * Math.PI * 20 * (1 - pssr.progress / 100)}`}
+                      strokeDasharray={`${2 * Math.PI * 16}`}
+                      strokeDashoffset={`${2 * Math.PI * 16 * (1 - pssr.progress / 100)}`}
                       className={`transition-all duration-500 ${
                         pssr.status === 'Approved' ? 'text-success' :
                         pssr.status === 'Under Review' ? 'text-warning' :
@@ -253,7 +253,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             {/* Pending Approvals Indicator */}
             {pssr.pendingApprovals > 0 && (
               <div className="flex items-center gap-1 px-1.5 py-0.5 bg-warning/10 border border-warning/30 rounded-md">
-                <AlertTriangle className="h-3 w-3 text-warning" />
+                <AlertTriangle className="h-2.5 w-2.5 text-warning" />
                 <span className="text-xs font-medium text-warning">{pssr.pendingApprovals} pending</span>
               </div>
             )}
