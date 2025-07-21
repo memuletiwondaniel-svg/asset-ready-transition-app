@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Settings, BarChart3, Users } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
@@ -16,7 +16,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       id: 'safe-startup',
       title: 'Safe Start-Up',
       description: 'Manage the safe introduction of hydrocarbons into new facilities using the Pre-Start Up Safety Review (PSSR) process and comprehensive safety checklists',
-      icon: FileText,
+      icon: ShieldCheck,
       gradient: 'from-destructive/20 via-destructive/10 to-destructive/5',
       iconBg: 'bg-gradient-to-br from-destructive to-destructive/80',
       accentColor: 'destructive'
