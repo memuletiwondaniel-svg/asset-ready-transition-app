@@ -174,17 +174,17 @@ const Index = () => {
                 
                 {/* Feature Highlights */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
-                      <div className="w-6 h-6 rounded bg-primary" />
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-6 h-6 rounded bg-gradient-to-br from-destructive to-destructive/80" />
                     </div>
                     <h3 className="font-semibold text-white mb-2">Safe Start-Up</h3>
                     <p className="text-white/70 text-sm">PSSR compliance and safety protocols</p>
                   </div>
                   
-                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-                    <div className="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center mb-4">
-                      <div className="w-6 h-6 rounded bg-success" />
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-primary/80" />
                     </div>
                     <h3 className="font-semibold text-white mb-2">P2O Handover</h3>
                     <p className="text-white/70 text-sm">Seamless asset transition management</p>
@@ -237,22 +237,22 @@ const Index = () => {
               {/* Right Column - Feature Cards */}
               <div className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                 {/* Main Feature Card */}
-                <div className="fluent-card p-8 bg-card/20 backdrop-blur-xl border border-white/20 rounded-3xl shadow-fluent-2xl group hover:shadow-fluent-2xl/80 transition-all duration-500">
+                <div className="bg-card/20 border border-border/20 rounded-3xl p-8 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500 group hover:bg-card/30">
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-2xl font-bold text-white">Platform Overview</h3>
-                      <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <div className="w-6 h-6 rounded bg-primary" />
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-primary/80" />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm">
+                      <div className="text-center p-4 rounded-2xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
                         <div className="text-3xl font-bold text-primary mb-1">2</div>
                         <div className="text-white/70 text-sm">Core Modules</div>
                       </div>
-                      <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm">
-                        <div className="text-3xl font-bold text-success mb-1">SSO</div>
+                      <div className="text-center p-4 rounded-2xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
+                        <div className="text-3xl font-bold text-primary mb-1">SSO</div>
                         <div className="text-white/70 text-sm">Authentication</div>
                       </div>
                     </div>
@@ -265,12 +265,12 @@ const Index = () => {
                 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm text-center">
-                    <div className="text-4xl font-bold text-white mb-2">100%</div>
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm text-center hover:bg-card/30 transition-all duration-300 group">
+                    <div className="text-4xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">100%</div>
                     <div className="text-white/70">Compliance Ready</div>
                   </div>
-                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm text-center">
-                    <div className="text-4xl font-bold text-white mb-2">24/7</div>
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm text-center hover:bg-card/30 transition-all duration-300 group">
+                    <div className="text-4xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">24/7</div>
                     <div className="text-white/70">System Availability</div>
                   </div>
                 </div>
