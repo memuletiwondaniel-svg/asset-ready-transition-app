@@ -53,7 +53,7 @@ const Index = () => {
     en: {
       title: "Operation Readiness",
       subtitle: "Start-Up & Handover",
-      description: "Transform your project handover experience with our comprehensive platform.",
+      description: "Transform your project start-up and handover experience with the ORSH comprehensive platform.",
       safeStartup: "Safe Start-Up",
       safeStartupDesc: "Manage the safe introduction of hydrocarbons into a new facility using the Pre-Start Up Safety Review (PSSR) process and checklists",
       p2oHandover: "P2O Handover",
@@ -66,7 +66,7 @@ const Index = () => {
     ar: {
       title: "جاهزية العمليات",
       subtitle: "البدء والتسليم",
-      description: "حول تجربة تسليم مشروعك مع منصتنا الشاملة.",
+      description: "حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH الشاملة.",
       safeStartup: "البدء الآمن",
       safeStartupDesc: "إدارة الإدخال الآمن للهيدروكربونات في منشأة جديدة باستخدام عملية مراجعة السلامة قبل البدء وقوائم التحقق",
       p2oHandover: "تسليم P2O",
@@ -79,7 +79,7 @@ const Index = () => {
     fr: {
       title: "Préparation Opérationnelle",
       subtitle: "Démarrage et Remise",
-      description: "Transformez votre expérience de remise de projet avec notre plateforme complète.",
+      description: "Transformez votre expérience de démarrage et de remise de projet avec la plateforme complète ORSH.",
       safeStartup: "Démarrage Sécurisé",
       safeStartupDesc: "Gérer l'introduction sécurisée des hydrocarbures dans une nouvelle installation en utilisant le processus de révision de sécurité avant démarrage (PSSR) et les listes de contrôle",
       p2oHandover: "Remise P2O",
@@ -92,7 +92,7 @@ const Index = () => {
     ms: {
       title: "Kesediaan Operasi",
       subtitle: "Permulaan & Penyerahan",
-      description: "Transformasikan pengalaman penyerahan projek anda dengan platform komprehensif kami.",
+      description: "Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform komprehensif ORSH.",
       safeStartup: "Permulaan Selamat",
       safeStartupDesc: "Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak",
       p2oHandover: "Penyerahan P2O",
@@ -105,7 +105,7 @@ const Index = () => {
     ru: {
       title: "Операционная Готовность",
       subtitle: "Запуск и Передача",
-      description: "Преобразуйте опыт передачи проекта с помощью нашей комплексной платформы.",
+      description: "Преобразуйте опыт запуска и передачи проекта с помощью комплексной платформы ORSH.",
       safeStartup: "Безопасный Запуск",
       safeStartupDesc: "Управление безопасным введением углеводородов в новое предприятие с использованием процесса предпускового обзора безопасности (PSSR) и контрольных списков",
       p2oHandover: "Передача P2O",
@@ -211,26 +211,74 @@ const Index = () => {
                   </h1>
                   
                   <p className="text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
-                    {t.description}
+                    Transform your project start-up and handover experience with the{" "}
+                    <span className="font-semibold bg-gradient-to-r from-primary via-primary-hover to-accent bg-clip-text text-transparent drop-shadow-lg">
+                      ORSH
+                    </span>{" "}
+                    comprehensive platform.
                   </p>
                 </div>
                 
-                {/* Feature Highlights */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-7 h-7 rounded bg-gradient-to-br from-destructive to-destructive/80" />
+                {/* Feature Highlights - Microsoft Fluent Design */}
+                <div className="grid grid-cols-2 gap-8">
+                  {/* Safe Start-up Card */}
+                  <div className="relative group">
+                    {/* Card Background with Acrylic Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.15] to-white/[0.05] rounded-3xl backdrop-blur-xl border border-white/[0.18] shadow-2xl group-hover:shadow-fluent-2xl transition-all duration-500"></div>
+                    
+                    {/* Content */}
+                    <div className="relative p-8 space-y-5">
+                      {/* Icon with Microsoft-style layering */}
+                      <div className="relative w-16 h-16 mb-6">
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl backdrop-blur-sm"></div>
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-fluent transform group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                          <div className="w-8 h-8 bg-white/90 rounded-lg shadow-inner"></div>
+                        </div>
+                      </div>
+                      
+                      {/* Title with Microsoft Typography */}
+                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transition-colors duration-200">
+                        {t.safeStartup}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-white/75 text-sm leading-relaxed font-medium">
+                        {t.safeStartupDesc}
+                      </p>
                     </div>
-                    <h3 className="font-bold text-white mb-2 text-lg">{t.safeStartup}</h3>
-                    <p className="text-white/70 text-base leading-relaxed">{t.safeStartupDesc}</p>
+                    
+                    {/* Hover Effect Border */}
+                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-white/20 transition-all duration-300"></div>
                   </div>
                   
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-7 h-7 rounded bg-gradient-to-br from-primary to-primary/80" />
+                  {/* P2O Handover Card */}
+                  <div className="relative group">
+                    {/* Card Background with Acrylic Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.15] to-white/[0.05] rounded-3xl backdrop-blur-xl border border-white/[0.18] shadow-2xl group-hover:shadow-fluent-2xl transition-all duration-500"></div>
+                    
+                    {/* Content */}
+                    <div className="relative p-8 space-y-5">
+                      {/* Icon with Microsoft-style layering */}
+                      <div className="relative w-16 h-16 mb-6">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl backdrop-blur-sm"></div>
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-fluent transform group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                          <div className="w-8 h-8 bg-white/90 rounded-lg shadow-inner"></div>
+                        </div>
+                      </div>
+                      
+                      {/* Title with Microsoft Typography */}
+                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transition-colors duration-200">
+                        {t.p2oHandover}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-white/75 text-sm leading-relaxed font-medium">
+                        {t.p2oHandoverDesc}
+                      </p>
                     </div>
-                    <h3 className="font-bold text-white mb-2 text-lg">{t.p2oHandover}</h3>
-                    <p className="text-white/70 text-base leading-relaxed">{t.p2oHandoverDesc}</p>
+                    
+                    {/* Hover Effect Border */}
+                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-white/20 transition-all duration-300"></div>
                   </div>
                 </div>
                 
