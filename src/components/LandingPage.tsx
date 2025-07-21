@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, Handshake, Languages, ChevronDown } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
@@ -19,7 +19,73 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   // State management
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
   
+  // Language translations
+  const translations = {
+    English: {
+      dashboard: 'Your Dashboard',
+      newTasks: 'new tasks added on',
+      showAll: 'Show All Tasks',
+      showLess: 'Show Less',
+      filter: 'Filter',
+      search: 'Search',
+      chooseWorkspace: 'Choose your',
+      workspace: 'workspace',
+      accessTools: 'Access the tools you need for operational readiness, safety compliance, and seamless project handovers',
+      launch: 'Launch',
+      signOut: 'Sign Out',
+      viewDetails: 'View Details',
+      poweredBy: 'Powered by Microsoft Fluent Design • Basrah Gas Company © 2024'
+    },
+    العربية: {
+      dashboard: 'لوحة التحكم الخاصة بك',
+      newTasks: 'مهام جديدة أضيفت في',
+      showAll: 'عرض جميع المهام',
+      showLess: 'عرض أقل',
+      filter: 'تصفية',
+      search: 'بحث',
+      chooseWorkspace: 'اختر',
+      workspace: 'مساحة العمل',
+      accessTools: 'الوصول إلى الأدوات التي تحتاجها للاستعداد التشغيلي والامتثال للسلامة وتسليم المشاريع بسلاسة',
+      launch: 'تشغيل',
+      signOut: 'تسجيل الخروج',
+      viewDetails: 'عرض التفاصيل',
+      poweredBy: 'مدعوم من Microsoft Fluent Design • شركة البصرة للغاز © 2024'
+    },
+    Русский: {
+      dashboard: 'Ваша панель',
+      newTasks: 'новых задач добавлено',
+      showAll: 'Показать все задачи',
+      showLess: 'Показать меньше',
+      filter: 'Фильтр',
+      search: 'Поиск',
+      chooseWorkspace: 'Выберите',
+      workspace: 'рабочее пространство',
+      accessTools: 'Доступ к инструментам, необходимым для операционной готовности, соблюдения безопасности и бесшовной передачи проектов',
+      launch: 'Запустить',
+      signOut: 'Выйти',
+      viewDetails: 'Подробности',
+      poweredBy: 'Работает на Microsoft Fluent Design • Basrah Gas Company © 2024'
+    },
+    Bahasa: {
+      dashboard: 'Papan Pemuka Anda',
+      newTasks: 'tugas baru ditambah pada',
+      showAll: 'Tunjuk Semua Tugas',
+      showLess: 'Tunjuk Kurang',
+      filter: 'Penapis',
+      search: 'Cari',
+      chooseWorkspace: 'Pilih',
+      workspace: 'ruang kerja',
+      accessTools: 'Akses alat yang anda perlukan untuk kesediaan operasi, pematuhan keselamatan dan penyerahan projek yang lancar',
+      launch: 'Lancar',
+      signOut: 'Log Keluar',
+      viewDetails: 'Lihat Butiran',
+      poweredBy: 'Dikuasakan oleh Microsoft Fluent Design • Basrah Gas Company © 2024'
+    }
+  };
+
   // Language options
   const languages = [
     { code: 'en', name: 'English' },
@@ -27,6 +93,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     { code: 'ru', name: 'Русский (Russian)' },
     { code: 'ms', name: 'Bahasa Melayu' }
   ];
+
+  // Get current translations
+  const t = translations[selectedLanguage] || translations.English;
+
   // Mock pending tasks data - expanded to 8 tasks
   const pendingTasks = [
     {
@@ -103,6 +173,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     }
   ];
 
+  // Filter tasks based on search and filter
+  const filteredTasks = pendingTasks.filter(task => {
+    const matchesSearch = searchQuery === '' || 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFilter = filterType === 'all' || task.criticality === filterType;
+    
+    return matchesSearch && matchesFilter;
+  });
+
   const allSections = [
     {
       id: 'safe-startup',
@@ -118,7 +199,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       id: 'p2o',
       title: 'Project-to-Operations (P2O)',
       description: 'Manage seamless transition and handover from Project team to Asset Operations Team using PAC and FAC workflows for operational readiness',
-      icon: Handshake,
+      icon: KeyRound,
       gradient: 'from-primary/20 via-primary/10 to-primary/5',
       iconBg: 'bg-gradient-to-br from-primary to-primary/80',
       accentColor: 'primary',
@@ -191,7 +272,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                 className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
               >
                 <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-                Sign Out
+                {t.signOut}
               </Button>
             </div>
           </div>
@@ -203,9 +284,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
         <div className="mb-12 animate-fade-in-up">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <h2 className="text-3xl font-bold text-foreground">Your Dashboard</h2>
+              <h2 className="text-3xl font-bold text-foreground">{t.dashboard}</h2>
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                2 new tasks added on 02/04/2025
+                2 {t.newTasks} 02/04/2025
               </Badge>
             </div>
             <div className="flex items-center space-x-2">
@@ -216,22 +297,68 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                 onClick={() => setShowAllTasks(!showAllTasks)}
               >
                 <Eye className="h-3 w-3 mr-1" />
-                {showAllTasks ? 'Show Less' : 'Show All Tasks'}
+                {showAllTasks ? t.showLess : t.showAll}
               </Button>
-              <Button variant="outline" size="sm" className="h-8">
-                <Filter className="h-3 w-3 mr-1" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm" className="h-8">
-                <Search className="h-3 w-3 mr-1" />
-                Search
-              </Button>
+              
+              {/* Filter Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8">
+                    <Filter className="h-3 w-3 mr-1" />
+                    {t.filter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('all')}
+                    className={`cursor-pointer ${filterType === 'all' ? 'bg-primary/10' : ''}`}
+                  >
+                    All Tasks
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('critical')}
+                    className={`cursor-pointer ${filterType === 'critical' ? 'bg-primary/10' : ''}`}
+                  >
+                    Critical
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('high')}
+                    className={`cursor-pointer ${filterType === 'high' ? 'bg-primary/10' : ''}`}
+                  >
+                    High Priority
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('medium')}
+                    className={`cursor-pointer ${filterType === 'medium' ? 'bg-primary/10' : ''}`}
+                  >
+                    Medium Priority
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('low')}
+                    className={`cursor-pointer ${filterType === 'low' ? 'bg-primary/10' : ''}`}
+                  >
+                    Low Priority
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder={t.search}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 bg-white/80 backdrop-blur-sm w-32"
+                />
+              </div>
             </div>
           </div>
 
           {/* Ultra Modern Microsoft Fluent Task Cards Grid - Compact Design */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 transition-all duration-500">
-            {(showAllTasks ? pendingTasks : pendingTasks.slice(0, 5)).map((task, index) => {
+            {(showAllTasks ? filteredTasks : filteredTasks.slice(0, 5)).map((task, index) => {
               const IconComponent = task.icon;
               const getCriticalityColor = (criticality: string) => {
                 switch (criticality) {
@@ -300,7 +427,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                     {/* Hover action overlay */}
                     <div className="absolute inset-0 bg-primary/5 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex items-center justify-center">
                       <button className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white/90 hover:bg-white text-primary text-xs font-semibold shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                        <span>View Details</span>
+                        <span>{t.viewDetails}</span>
                         <ArrowRight className="h-3 w-3 ml-1 transition-transform duration-200" />
                       </button>
                     </div>
@@ -318,11 +445,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
         <div className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <div className="text-center mb-12">
             <h2 className="text-4xl font-light text-foreground mb-4 tracking-tight">
-              Choose your
-              <span className="fluent-hero-text font-semibold"> workspace</span>
+              {t.chooseWorkspace}
+              <span className="fluent-hero-text font-semibold"> {t.workspace}</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Access the tools you need for operational readiness, safety compliance, and seamless project handovers
+              {t.accessTools}
             </p>
           </div>
 
@@ -370,7 +497,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                             onNavigate(section.id);
                           }}
                         >
-                          Launch {section.title}
+                          {t.launch} {section.title}
                           <ArrowLeft className="h-4 w-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform duration-200" />
                         </Button>
                       </div>
@@ -393,7 +520,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
           <div className="inline-flex items-center px-6 py-3 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 shadow-fluent-sm">
             <div className="w-2 h-2 rounded-full bg-success mr-3 animate-pulse-subtle" />
             <p className="text-sm text-muted-foreground font-medium">
-              Powered by Microsoft Fluent Design • Basrah Gas Company © 2024
+              {t.poweredBy}
             </p>
           </div>
         </div>
