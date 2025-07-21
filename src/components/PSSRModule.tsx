@@ -25,7 +25,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   // Mock PSSR data with enhanced structure
   const pssrList = [
     {
-      id: 'SSU-2024-001',
+      id: 'PSSR-2024-001',
       projectId: 'DP 300',
       projectName: 'HM Additional Compressors',
       asset: 'Compression Station',
@@ -41,7 +41,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: '2024-02-15'
     },
     {
-      id: 'SSU-2024-002',
+      id: 'PSSR-2024-002',
       projectId: 'DP 163',
       projectName: 'LPG Unit 12.1 Rehabilitation',
       asset: 'KAZ',
@@ -57,7 +57,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: '2024-02-20'
     },
     {
-      id: 'SSU-2024-003',
+      id: 'PSSR-2024-003',
       projectId: 'DP 083C',
       projectName: 'UQ Jetty 2 Export Terminal',
       asset: 'UQ',
@@ -73,7 +73,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: null
     },
     {
-      id: 'SSU-2024-004',
+      id: 'PSSR-2024-004',
       projectId: 'DP 317',
       projectName: 'Majnoon New Gas Tie-in',
       asset: 'NRNGL',
@@ -232,7 +232,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                 className="fluent-button bg-primary hover:bg-primary-hover text-primary-foreground shadow-fluent-md hover:shadow-fluent-lg group"
               >
                 <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                New Safe Start-Up Review
+                New PSSR
               </Button>
             </div>
           </div>
@@ -315,7 +315,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-foreground">
-              Safe Start-Up Reviews ({filteredPSSRs.length})
+              PSSR Reviews ({filteredPSSRs.length})
             </h2>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Showing {filteredPSSRs.length} of {stats.total} reviews</span>
@@ -326,74 +326,114 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             {filteredPSSRs.map((pssr, index) => (
               <div 
                 key={pssr.id} 
-                className="fluent-card p-6 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in"
+                className="fluent-card p-8 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 border-l-primary/20 hover:border-l-primary"
                 style={{ animationDelay: `${0.7 + index * 0.1}s` }}
                 onClick={() => handleViewDetails(pssr.id)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-6 flex-1">
-                    {/* Status Indicator */}
-                    <div className="flex items-center gap-3">
+                  
+                  {/* Primary Info - Project ID and Name (Most Prominent) */}
+                  <div className="flex-1 min-w-0 mr-8">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-lg border border-primary/20">
+                        {pssr.projectId}
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
+                        {pssr.priority}
+                      </div>
                       {getStatusIcon(pssr.status)}
-                      <div>
-                        <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
-                          {pssr.id}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{pssr.projectId}</div>
-                      </div>
                     </div>
-
-                    {/* Project Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors duration-200">
-                        {pssr.projectName}
-                      </h3>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                        <span>Asset: {pssr.asset}</span>
-                        <span>•</span>
-                        <span>Created: {new Date(pssr.created).toLocaleDateString()}</span>
-                      </div>
+                    
+                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-2 leading-tight">
+                      {pssr.projectName}
+                    </h3>
+                    
+                    <div className="flex items-center gap-6 text-muted-foreground text-sm">
+                      <span className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        PSSR ID: {pssr.id}
+                      </span>
+                      <span>Asset: {pssr.asset}</span>
+                      <span>Created: {new Date(pssr.created).toLocaleDateString()}</span>
                     </div>
+                  </div>
 
-                    {/* Priority Badge */}
-                    <div className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
-                      {pssr.priority}
+                  {/* PSSR Lead (Prominent) */}
+                  <div className="flex items-center gap-4 mr-8">
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground font-medium">PSSR Lead</div>
+                      <div className="text-lg font-semibold text-foreground">{pssr.pssrLead}</div>
                     </div>
-
-                    {/* Progress */}
-                    <div className="text-center">
-                      <div className="text-lg font-semibold text-foreground">{pssr.progress}%</div>
-                      <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary transition-all duration-500" 
-                          style={{ width: `${pssr.progress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Lead */}
-                    <div className="flex items-center gap-3">
+                    <div className="relative">
                       <img 
                         src={pssr.pssrLeadAvatar} 
                         alt={pssr.pssrLead}
-                        className="w-10 h-10 rounded-full border-2 border-border"
+                        className="w-14 h-14 rounded-2xl border-3 border-border shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200"
                       />
-                      <div className="text-sm">
-                        <div className="font-medium text-foreground">{pssr.pssrLead}</div>
-                        <div className="text-muted-foreground">Lead</div>
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success rounded-full border-2 border-background"></div>
+                    </div>
+                  </div>
+
+                  {/* Progress (Prominent) */}
+                  <div className="text-center mr-6">
+                    <div className="mb-3">
+                      <div className="text-3xl font-bold text-foreground mb-1">{pssr.progress}%</div>
+                      <div className="text-sm text-muted-foreground font-medium">Progress</div>
+                    </div>
+                    
+                    <div className="relative w-24 h-24">
+                      <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="hsl(var(--muted))"
+                          strokeWidth="8"
+                          fill="none"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${2 * Math.PI * 40}`}
+                          strokeDashoffset={`${2 * Math.PI * 40 * (1 - pssr.progress / 100)}`}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 ease-out"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CheckCircle className={`h-6 w-6 ${pssr.progress === 100 ? 'text-success' : 'text-muted-foreground/40'}`} />
                       </div>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  {/* Status and Actions */}
+                  <div className="flex flex-col items-end gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className="font-semibold text-foreground">{pssr.status}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {pssr.status === 'Approved' && pssr.completedDate
+                            ? `Completed ${new Date(pssr.completedDate).toLocaleDateString()}`
+                            : pssr.nextReview
+                            ? `Next review: ${new Date(pssr.nextReview).toLocaleDateString()}`
+                            : 'In progress'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    
                     {pssr.pendingApprovals > 0 && (
-                      <div className="flex items-center gap-2 px-3 py-1 bg-warning/10 text-warning rounded-lg text-sm font-medium">
-                        <Clock className="h-3 w-3" />
-                        {pssr.pendingApprovals} pending
+                      <div className="flex items-center gap-2 px-3 py-2 bg-warning/10 text-warning rounded-xl text-sm font-semibold border border-warning/20">
+                        <Clock className="h-4 w-4" />
+                        {pssr.pendingApprovals} pending approval{pssr.pendingApprovals > 1 ? 's' : ''}
                       </div>
                     )}
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    
+                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
@@ -405,18 +445,18 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
           {filteredPSSRs.length === 0 && (
             <div className="fluent-card p-12 text-center">
               <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No reviews found</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No PSSR reviews found</h3>
               <p className="text-muted-foreground mb-6">
                 {searchTerm || Object.values(filters).some(f => f.length > 0) 
                   ? "Try adjusting your search or filters" 
-                  : "Create your first Safe Start-Up Review to get started"}
+                  : "Create your first PSSR to get started with safe start-up reviews"}
               </p>
               <Button 
                 onClick={() => setActiveView('create')}
                 className="fluent-button bg-primary hover:bg-primary-hover text-primary-foreground"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create New Review
+                Create New PSSR
               </Button>
             </div>
           )}
