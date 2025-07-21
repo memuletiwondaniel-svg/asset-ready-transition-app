@@ -212,8 +212,13 @@ const Index = () => {
                   
                   <div className="flex items-center gap-2 text-2xl text-white/85 font-light leading-relaxed max-w-2xl flex-wrap">
                     <span>Transform your project start-up and handover experience with the</span>
-                    <span className="font-bold text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg tracking-wide">
-                      ORSH
+                    <span className="relative inline-block">
+                      <span className="font-black text-3xl text-white drop-shadow-2xl tracking-widest font-mono bg-black/30 px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm">
+                        ORSH
+                      </span>
+                      <span className="absolute inset-0 font-black text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mix-blend-overlay tracking-widest font-mono px-3 py-1">
+                        ORSH
+                      </span>
                     </span>
                     <span>comprehensive platform.</span>
                   </div>
