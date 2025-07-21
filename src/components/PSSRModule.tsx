@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Shield, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, ShieldCheck, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
@@ -55,7 +55,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       created: '2024-01-20',
       pssrLead: 'Sarah Johnson',
       pssrLeadAvatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face',
-      teamStatus: 'amber', // Team partially available
+      teamStatus: 'red', // Team has issues
       pendingApprovals: 0,
       completedDate: null,
       riskLevel: 'Low',
@@ -75,7 +75,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       created: '2024-01-10',
       pssrLead: 'Mohammed Hassan',
       pssrLeadAvatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face',
-      teamStatus: 'green', // Team fully available
+      teamStatus: 'amber', // Team partially available
       pendingApprovals: 0,
       completedDate: '2024-02-08',
       riskLevel: 'Low',
@@ -243,10 +243,10 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-                  <Shield className="h-6 w-6 text-primary" />
+                  <ShieldCheck className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">Safe Start-Up Management</h1>
+                  <h1 className="text-2xl font-bold text-foreground">Safe Start-Up</h1>
                   <p className="text-sm text-muted-foreground font-medium">Pre-Start-Up Safety Review System</p>
                 </div>
               </div>
@@ -345,7 +345,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     
                     <div className="flex flex-col gap-1 text-muted-foreground text-xs">
                       <span className="flex items-center gap-1.5">
-                        <Shield className="h-3 w-3 flex-shrink-0" />
+                        <ShieldCheck className="h-3 w-3 flex-shrink-0" />
                         <span className="truncate">{pssr.id}</span>
                       </span>
                       <div className="flex items-center gap-3">
@@ -411,65 +411,80 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     </div>
                   </div>
 
-                  {/* Enhanced Progress Circle (Prominent) */}
-                  <div className="text-center mr-6 flex-shrink-0">
-                    <div className="mb-3">
+                  {/* Enhanced Progress Circle - Consistently Aligned */}
+                  <div className="flex flex-col items-center mr-6 flex-shrink-0 w-24">
+                    <div className="mb-3 text-center">
                       <div className="text-2xl font-bold text-foreground mb-1">{pssr.progress}%</div>
                       <div className="text-xs text-muted-foreground font-medium">Complete</div>
                     </div>
                     
-                    <div className="relative w-20 h-20">
-                      {/* Background ring with subtle shadow */}
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-muted/30 to-muted/50 shadow-inner"></div>
+                    <div className="relative w-24 h-24 flex items-center justify-center">
+                      {/* Outer ring with shadow and depth */}
+                      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-background via-muted/20 to-muted/40 shadow-inner border border-border/30"></div>
                       
-                      <svg className="w-20 h-20 transform -rotate-90 relative z-10" viewBox="0 0 100 100">
-                        {/* Background circle */}
+                      <svg className="w-24 h-24 transform -rotate-90 relative z-10" viewBox="0 0 100 100">
+                        {/* Background track with layered styling */}
                         <circle
                           cx="50"
                           cy="50"
-                          r="35"
-                          stroke="hsl(var(--muted))"
-                          strokeWidth="4"
+                          r="32"
+                          stroke="hsl(var(--muted) / 0.4)"
+                          strokeWidth="5"
                           fill="none"
-                          opacity="0.3"
+                          className="drop-shadow-sm"
                         />
                         
-                        {/* Progress circle with gradient */}
+                        {/* Progress circle with advanced gradient and glow */}
                         <circle
                           cx="50"
                           cy="50"
-                          r="35"
-                          stroke="url(#progressGradient)"
+                          r="32"
+                          stroke="url(#modernProgressGradient)"
                           strokeWidth="6"
                           fill="none"
-                          strokeDasharray={`${2 * Math.PI * 35}`}
-                          strokeDashoffset={`${2 * Math.PI * 35 * (1 - pssr.progress / 100)}`}
+                          strokeDasharray={`${2 * Math.PI * 32}`}
+                          strokeDashoffset={`${2 * Math.PI * 32 * (1 - pssr.progress / 100)}`}
                           strokeLinecap="round"
-                          className="transition-all duration-1000 ease-out group-hover:stroke-[7] drop-shadow-lg"
+                          className="transition-all duration-1000 ease-out group-hover:stroke-[7] filter drop-shadow-lg"
+                          style={{
+                            filter: 'drop-shadow(0 0 6px hsl(var(--primary) / 0.4))'
+                          }}
                         />
                         
-                        {/* Gradient definition */}
+                        {/* Enhanced gradient definition with multiple stops */}
                         <defs>
-                          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <linearGradient id="modernProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.9" />
+                            <stop offset="100%" stopColor="hsl(var(--primary) / 0.8)" stopOpacity="0.8" />
                           </linearGradient>
+                          
+                          {/* Radial gradient for glowing effect */}
+                          <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="hsl(var(--primary) / 0.1)" stopOpacity="1" />
+                            <stop offset="100%" stopColor="hsl(var(--primary) / 0.05)" stopOpacity="0" />
+                          </radialGradient>
                         </defs>
                       </svg>
                       
-                      {/* Center icon with subtle glow */}
+                      {/* Center icon with enhanced styling */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className={`rounded-full p-2 transition-all duration-300 ${
+                        <div className={`rounded-full p-2.5 transition-all duration-500 border ${
                           pssr.progress === 100 
-                            ? 'bg-success/20 text-success shadow-fluent-sm' 
-                            : 'bg-primary/10 text-primary/60'
+                            ? 'bg-success/20 text-success border-success/30 shadow-lg shadow-success/20' 
+                            : 'bg-primary/10 text-primary/70 border-primary/20 shadow-md shadow-primary/10'
                         }`}>
-                          <CheckCircle className="h-5 w-5" />
+                          <CheckCircle className="h-6 w-6" />
                         </div>
                       </div>
                       
-                      {/* Subtle outer glow on hover */}
-                      <div className="absolute inset-0 rounded-full bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
+                      {/* Subtle animated glow on hover */}
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
+                      
+                      {/* Progress completion indicator */}
+                      {pssr.progress === 100 && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background shadow-md animate-pulse"></div>
+                      )}
                     </div>
                   </div>
 
@@ -514,7 +529,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
 
           {filteredPSSRs.length === 0 && (
             <div className="fluent-card p-12 text-center">
-              <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <ShieldCheck className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">No PSSR reviews found</h3>
               <p className="text-muted-foreground mb-6">
                 {searchTerm || Object.values(filters).some(f => f.length > 0) 
