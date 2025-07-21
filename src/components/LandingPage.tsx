@@ -38,57 +38,71 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto mb-16">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-              alt="BGC Logo" 
-              className="h-12 w-auto mr-4" 
-            />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Operation Readiness & Start-up Handover (ORSH)</h1>
-              <p className="text-gray-600 mt-1">Basrah Gas Company - ORSH Platform</p>
+    <div className="min-h-screen bg-background">
+      {/* Header with Fluent Design acrylic effect */}
+      <div className="fluent-acrylic border-b border-border/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <img 
+                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                alt="BGC Logo" 
+                className="h-10 w-auto" 
+              />
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">Operation Readiness & Start-up Handover</h1>
+                <p className="text-sm text-muted-foreground">Basrah Gas Company - ORSH Platform</p>
+              </div>
             </div>
+            <Button 
+              variant="outline" 
+              onClick={onBack}
+              className="fluent-button hover:bg-secondary-hover"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={onBack}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Logout
-          </Button>
         </div>
       </div>
 
-      {/* Main Canvas Sections */}
-      <div className="max-w-6xl mx-auto mt-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Main Content with Microsoft spacing */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-light text-foreground mb-4">
+            Choose your module
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Select the module you need to access for your operational readiness activities
+          </p>
+        </div>
+
+        {/* Module Cards with Fluent Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {canvasSections.map((section) => {
             const IconComponent = section.icon;
             return (
-              <Card 
+              <div
                 key={section.id}
-                className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 border-2 hover:border-gray-300 h-80 flex flex-col shadow-lg hover:shadow-xl"
+                className="fluent-card fluent-hover group cursor-pointer p-6 animate-fade-in"
                 onClick={() => onNavigate(section.id)}
+                style={{ animationDelay: `${canvasSections.indexOf(section) * 100}ms` }}
               >
-                <CardHeader className="text-center pb-4 flex-shrink-0">
-                  <div className={`mx-auto w-16 h-16 rounded-full ${section.color} ${section.hoverColor} flex items-center justify-center mb-4 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110`}>
+                <div className="text-center">
+                  <div className={`mx-auto w-16 h-16 rounded-xl ${section.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200`}>
                     <IconComponent className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
+                  
+                  <h3 className="text-xl font-semibold text-card-foreground mb-3 group-hover:text-primary transition-colors duration-200">
                     {section.title}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 text-sm leading-relaxed min-h-[4rem]">
+                  </h3>
+                  
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-6 min-h-[4rem]">
                     {section.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-center mt-auto pb-6">
+                  </p>
+                  
                   <Button 
-                    className={`w-full ${section.color} ${section.hoverColor} text-white transition-all duration-300 shadow-md hover:shadow-lg group-hover:scale-105`}
+                    className={`w-full ${section.color} hover:${section.hoverColor} text-white fluent-button font-medium`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onNavigate(section.id);
@@ -96,10 +110,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                   >
                     Access {section.title}
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
+        </div>
+        
+        {/* Footer with system info */}
+        <div className="mt-16 text-center">
+          <p className="text-xs text-muted-foreground">
+            Built with Microsoft Fluent Design System | Basrah Gas Company © 2024
+          </p>
         </div>
       </div>
     </div>

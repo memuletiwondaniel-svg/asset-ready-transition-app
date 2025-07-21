@@ -78,62 +78,68 @@ const Index = () => {
     <div className="min-h-screen relative flex items-center">
       <BackgroundSlideshow showFunFacts={showAuth} />
       
-      {/* Top Left - Language Selector and Contact */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all duration-300 rounded-full px-6 py-2 shadow-lg">
-              <Languages className="h-4 w-4 mr-2" />
-              {selectedLanguage}
+      {/* Top Navigation Bar with Fluent acrylic effect */}
+      <div className="absolute top-0 left-0 right-0 z-20 fluent-acrylic border-b border-border/30">
+        <div className="flex items-center justify-between px-6 py-4">
+          {/* Language and Contact */}
+          <div className="flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="fluent-acrylic text-white hover:bg-white/20 transition-all duration-300 rounded-lg px-4 py-2 border border-white/20">
+                  <Languages className="h-4 w-4 mr-2" />
+                  {selectedLanguage}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="fluent-acrylic border border-border/30 shadow-xl rounded-lg z-50">
+                {languages.map((language) => (
+                  <DropdownMenuItem
+                    key={language.code}
+                    onClick={() => setSelectedLanguage(language.name)}
+                    className="cursor-pointer hover:bg-accent/80 transition-colors"
+                  >
+                    {language.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button variant="ghost" className="fluent-acrylic text-white hover:bg-white/20 transition-all duration-300 rounded-lg px-4 py-2 border border-white/20">
+              <Phone className="h-4 w-4 mr-2" />
+              Contact
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-white/30 shadow-xl rounded-lg">
-            {languages.map((language) => (
-              <DropdownMenuItem
-                key={language.code}
-                onClick={() => setSelectedLanguage(language.name)}
-                className="cursor-pointer hover:bg-gray-100/80 transition-colors"
-              >
-                {language.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <Button variant="ghost" className="bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all duration-300 rounded-full px-6 py-2 shadow-lg">
-          <Phone className="h-4 w-4 mr-2" />
-          Contact
-        </Button>
-      </div>
+          </div>
 
-      {/* Top Middle - BGC Logo and Text */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="flex items-center bg-white/10 backdrop-blur-md rounded-lg p-4 shadow-lg">
-          <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-12 w-auto mr-3" />
-          <div className="flex flex-col text-right">
-            <h1 className="font-bold text-white text-lg">Basrah Gas Company</h1>
-            <p dir="rtl" className="text-sm text-white/90">شركة البصرة للغاز</p>
+          {/* BGC Logo and Text */}
+          <div className="flex items-center fluent-acrylic rounded-lg p-3 border border-white/20">
+            <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-10 w-auto mr-3" />
+            <div className="flex flex-col text-right">
+              <h1 className="font-semibold text-white text-lg">Basrah Gas Company</h1>
+              <p dir="rtl" className="text-sm text-white/90">شركة البصرة للغاز</p>
+            </div>
           </div>
         </div>
       </div>
       
       {!showAuth && (
-        <div className="relative z-10 ml-16 max-w-2xl">
-          {/* Main Heading - Split into two lines with large text */}
+        <div className="relative z-10 ml-16 max-w-3xl animate-slide-up">
+          {/* Main Heading with Microsoft Typography */}
           <div className="mb-12">
-            <h1 className="text-7xl font-bold text-white leading-tight mb-4 drop-shadow-2xl">
-              Seamless Transition
+            <h1 className="text-7xl font-light text-white leading-tight mb-4 drop-shadow-2xl">
+              Operation Readiness
             </h1>
-            <h2 className="text-6xl font-bold text-white leading-tight drop-shadow-2xl">
-              from Project to Asset Operation
+            <h2 className="text-6xl font-light text-white leading-tight drop-shadow-2xl mb-4">
+              & Start-up Handover
             </h2>
+            <p className="text-xl text-white/90 font-light mt-6 drop-shadow-lg">
+              Seamless transition from project to asset operation with Microsoft Fluent Design
+            </p>
           </div>
           
           <Button 
             onClick={() => setShowAuth(true)} 
-            className="bg-red-600 hover:bg-red-700 text-white px-12 py-4 text-xl font-semibold shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 rounded-lg"
+            className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 py-4 text-lg font-medium shadow-fluent-medium hover:shadow-fluent-high transform hover:scale-105 transition-all duration-300 rounded-lg"
           >
-            GET STARTED &gt;
+            GET STARTED →
           </Button>
         </div>
       )}

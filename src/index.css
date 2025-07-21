@@ -2,93 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* Microsoft Fluent Design System Implementation */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Microsoft Fluent Color Palette */
+    --background: 0 0% 98%;
+    --foreground: 220 9% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 9% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 9% 13%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Microsoft Blue (#0078D4) */
+    --primary: 206 100% 42%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 206 100% 37%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Microsoft Light Gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 13%;
+    --secondary-hover: 220 14% 92%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Microsoft Neutral Colors */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 13%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Microsoft Red for destructive actions */
+    --destructive: 359 100% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders and inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 206 100% 42%;
 
-    --radius: 0.5rem;
+    /* Microsoft corner radius */
+    --radius: 0.25rem;
 
+    /* Fluent Design specific colors */
+    --fluent-acrylic: 0 0% 100% / 0.7;
+    --fluent-shadow-light: 0 0% 0% / 0.13;
+    --fluent-shadow-medium: 0 0% 0% / 0.24;
+    --fluent-elevation-low: 0 1px 3px var(--fluent-shadow-light);
+    --fluent-elevation-medium: 0 4px 8px var(--fluent-shadow-medium);
+    --fluent-elevation-high: 0 8px 16px var(--fluent-shadow-medium);
+
+    /* Sidebar tokens for consistency */
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
+    --sidebar-foreground: 220 9% 13%;
+    --sidebar-primary: 206 100% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 9% 13%;
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 206 100% 42%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Microsoft Dark Theme */
+    --background: 220 13% 9%;
+    --foreground: 0 0% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 13% 9%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 13% 9%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 206 100% 50%;
+    --primary-foreground: 220 13% 9%;
+    --primary-hover: 206 100% 55%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 0 0% 95%;
+    --secondary-hover: 220 13% 20%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 220 13% 15%;
+    --accent-foreground: 0 0% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 359 100% 55%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 220 13% 15%;
+    --input: 220 13% 15%;
+    --ring: 206 100% 50%;
+
+    --fluent-acrylic: 220 13% 9% / 0.7;
+    --fluent-shadow-light: 0 0% 0% / 0.3;
+    --fluent-shadow-medium: 0 0% 0% / 0.5;
+
+    --sidebar-background: 220 13% 9%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 206 100% 50%;
+    --sidebar-primary-foreground: 220 13% 9%;
+    --sidebar-accent: 220 13% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 13% 15%;
+    --sidebar-ring: 206 100% 50%;
   }
 }
 
@@ -98,6 +117,34 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Microsoft Fluent Design specific styles */
+  .fluent-card {
+    @apply bg-card border border-border rounded-lg shadow-sm backdrop-blur-sm;
+    background: hsl(var(--card) / 0.9);
+  }
+
+  .fluent-button {
+    @apply transition-all duration-200 ease-out;
+    backdrop-filter: blur(8px);
+  }
+
+  .fluent-hover {
+    @apply transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  .fluent-acrylic {
+    backdrop-filter: blur(30px) saturate(180%);
+    background: hsl(var(--fluent-acrylic));
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
   }
 }
