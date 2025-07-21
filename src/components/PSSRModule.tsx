@@ -35,10 +35,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       created: '2024-01-15',
       pssrLead: 'Ahmed Al-Rashid',
       pssrLeadAvatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face',
+      teamStatus: 'green', // Team availability status
       pendingApprovals: 3,
       completedDate: null,
       riskLevel: 'Medium',
-      nextReview: '2024-02-15'
+      nextReview: '2024-02-15',
+      teamMembers: 8,
+      lastActivity: '2 hours ago',
+      location: 'Hassi Messaoud'
     },
     {
       id: 'PSSR-2024-002',
@@ -51,10 +55,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       created: '2024-01-20',
       pssrLead: 'Sarah Johnson',
       pssrLeadAvatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face',
+      teamStatus: 'amber', // Team partially available
       pendingApprovals: 0,
       completedDate: null,
       riskLevel: 'Low',
-      nextReview: '2024-02-20'
+      nextReview: '2024-02-20',
+      teamMembers: 5,
+      lastActivity: '1 day ago',
+      location: 'Kazachstan'
     },
     {
       id: 'PSSR-2024-003',
@@ -67,10 +75,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       created: '2024-01-10',
       pssrLead: 'Mohammed Hassan',
       pssrLeadAvatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face',
+      teamStatus: 'green', // Team fully available
       pendingApprovals: 0,
       completedDate: '2024-02-08',
       riskLevel: 'Low',
-      nextReview: null
+      nextReview: null,
+      teamMembers: 12,
+      lastActivity: 'Completed',
+      location: 'Queensland'
     },
     {
       id: 'PSSR-2024-004',
@@ -83,10 +95,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       created: '2024-01-25',
       pssrLead: 'Omar Al-Basri',
       pssrLeadAvatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face',
+      teamStatus: 'red', // Team unavailable/issues
       pendingApprovals: 5,
       completedDate: null,
       riskLevel: 'High',
-      nextReview: '2024-02-10'
+      nextReview: '2024-02-10',
+      teamMembers: 6,
+      lastActivity: '30 minutes ago',
+      location: 'Majnoon Field'
     }
   ];
 
@@ -173,6 +189,24 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       case 'Medium': return 'bg-primary text-primary-foreground';
       case 'Low': return 'bg-muted text-muted-foreground';
       default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getTeamStatusColor = (teamStatus: string) => {
+    switch (teamStatus) {
+      case 'green': return 'bg-success';
+      case 'amber': return 'bg-warning';
+      case 'red': return 'bg-destructive';
+      default: return 'bg-muted';
+    }
+  };
+
+  const getRiskLevelColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'High': return 'text-destructive bg-destructive/10 border-destructive/20';
+      case 'Medium': return 'text-warning bg-warning/10 border-warning/20';
+      case 'Low': return 'text-success bg-success/10 border-success/20';
+      default: return 'text-muted-foreground bg-muted/10 border-muted/20';
     }
   };
 
@@ -322,9 +356,10 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     </div>
                   </div>
 
-                  {/* PSSR Lead (Center - Fills Empty Space) */}
-                  <div className="flex items-center gap-4 px-6">
-                    <div className="text-center">
+                  {/* PSSR Lead with Enhanced Info (Center) */}
+                  <div className="flex items-center gap-6 px-6 flex-1 min-w-0">
+                    {/* Lead Profile */}
+                    <div className="text-center flex-shrink-0">
                       <div className="text-xs text-muted-foreground font-medium mb-1">PSSR Lead</div>
                       <div className="relative mb-2">
                         <img 
@@ -332,19 +367,52 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                           alt={pssr.pssrLead}
                           className="w-12 h-12 rounded-2xl border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
                         />
-                        {/* Modern Teams-style status indicator */}
+                        {/* Teams-style status indicator with dynamic colors */}
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-card rounded-full flex items-center justify-center border border-border">
-                          <div className="w-2.5 h-2.5 bg-success rounded-full"></div>
+                          <div className={`w-2.5 h-2.5 rounded-full ${getTeamStatusColor(pssr.teamStatus)}`}></div>
                         </div>
                       </div>
                       <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate max-w-24">
                         {pssr.pssrLead.split(' ')[0]}
                       </div>
                     </div>
+
+                    {/* Additional Information Cards */}
+                    <div className="flex gap-4 flex-wrap">
+                      {/* Team Info */}
+                      <div className="bg-muted/30 border border-border/50 rounded-xl p-3 min-w-0 hover:bg-muted/50 transition-colors duration-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users className="h-3 w-3 text-primary" />
+                          <span className="text-xs font-medium text-muted-foreground">Team</span>
+                        </div>
+                        <div className="text-sm font-semibold text-foreground">{pssr.teamMembers} members</div>
+                        <div className="text-xs text-muted-foreground truncate">{pssr.location}</div>
+                      </div>
+
+                      {/* Risk Level */}
+                      <div className={`border rounded-xl p-3 min-w-0 hover:opacity-80 transition-all duration-200 ${getRiskLevelColor(pssr.riskLevel)}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span className="text-xs font-medium">Risk</span>
+                        </div>
+                        <div className="text-sm font-semibold">{pssr.riskLevel}</div>
+                        <div className="text-xs opacity-70">Level</div>
+                      </div>
+
+                      {/* Activity Status */}
+                      <div className="bg-accent/30 border border-accent/50 rounded-xl p-3 min-w-0 hover:bg-accent/50 transition-colors duration-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="h-3 w-3 text-accent-foreground" />
+                          <span className="text-xs font-medium text-accent-foreground/80">Activity</span>
+                        </div>
+                        <div className="text-sm font-semibold text-accent-foreground">{pssr.lastActivity}</div>
+                        <div className="text-xs text-accent-foreground/70">Last update</div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Progress (Prominent) */}
-                  <div className="text-center mr-4">
+                  {/* Progress Circle (Prominent) */}
+                  <div className="text-center mr-6 flex-shrink-0">
                     <div className="mb-2">
                       <div className="text-xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
                       <div className="text-xs text-muted-foreground font-medium">Progress</div>
