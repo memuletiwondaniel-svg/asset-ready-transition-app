@@ -97,12 +97,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   // Get current translations
   const t = translations[selectedLanguage] || translations.English;
 
-  // Mock pending tasks data - expanded to 8 tasks
-  const pendingTasks = [
+  // Mock pending tasks data with translations
+  const getTasksData = () => [
     {
       id: 1,
-      title: "Authenticate 3 New Users",
-      description: "BGC and Kent employees awaiting SSO setup",
+      title: {
+        English: "Authenticate 3 New Users",
+        العربية: "مصادقة 3 مستخدمين جدد",
+        Русский: "Аутентификация 3 новых пользователей",
+        Bahasa: "Sahkan 3 Pengguna Baru"
+      },
+      description: {
+        English: "BGC and Kent employees awaiting SSO setup",
+        العربية: "موظفو BGC و Kent في انتظار إعداد تسجيل الدخول الموحد",
+        Русский: "Сотрудники BGC и Kent ожидают настройки SSO",
+        Bahasa: "Pekerja BGC dan Kent menunggu persediaan SSO"
+      },
       age: "2 days",
       criticality: "high",
       type: "authentication",
@@ -110,8 +120,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 2,
-      title: "Approve DP300 PSSR Line Items",
-      description: "Safety review items pending approval",
+      title: {
+        English: "Approve DP300 PSSR Line Items",
+        العربية: "الموافقة على عناصر DP300 PSSR",
+        Русский: "Утвердить элементы DP300 PSSR",
+        Bahasa: "Luluskan Item Barisan DP300 PSSR"
+      },
+      description: {
+        English: "Safety review items pending approval",
+        العربية: "عناصر مراجعة السلامة في انتظار الموافقة",
+        Русский: "Элементы обзора безопасности ожидают утверждения",
+        Bahasa: "Item kajian keselamatan menunggu kelulusan"
+      },
       age: "4 hours",
       criticality: "critical",
       type: "pssr",
@@ -119,8 +139,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 3,
-      title: "Sign PAC Certificate for DP083C UQ Jetty 2",
-      description: "Project Acceptance Certificate awaiting signature",
+      title: {
+        English: "Sign PAC Certificate for DP083C UQ Jetty 2",
+        العربية: "توقيع شهادة PAC لـ DP083C UQ Jetty 2",
+        Русский: "Подписать сертификат PAC для DP083C UQ Jetty 2",
+        Bahasa: "Tandatangan Sijil PAC untuk DP083C UQ Jetty 2"
+      },
+      description: {
+        English: "Project Acceptance Certificate awaiting signature",
+        العربية: "شهادة قبول المشروع في انتظار التوقيع",
+        Русский: "Сертификат принятия проекта ожидает подписи",
+        Bahasa: "Sijil Penerimaan Projek menunggu tandatangan"
+      },
       age: "1 day",
       criticality: "medium",
       type: "pac",
@@ -128,8 +158,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 4,
-      title: "Review Emergency Shutdown Procedures",
-      description: "Critical safety protocol review required",
+      title: {
+        English: "Review Emergency Shutdown Procedures",
+        العربية: "مراجعة إجراءات الإغلاق الطارئ",
+        Русский: "Проверить процедуры аварийного останова",
+        Bahasa: "Kaji Prosedur Penutupan Kecemasan"
+      },
+      description: {
+        English: "Critical safety protocol review required",
+        العربية: "مطلوب مراجعة بروتوكول السلامة الحرج",
+        Русский: "Требуется проверка критического протокола безопасности",
+        Bahasa: "Kajian protokol keselamatan kritikal diperlukan"
+      },
       age: "6 hours",
       criticality: "critical",
       type: "safety",
@@ -137,8 +177,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 5,
-      title: "Complete Handover Documentation",
-      description: "Project handover checklist completion",
+      title: {
+        English: "Complete Handover Documentation",
+        العربية: "إكمال وثائق التسليم",
+        Русский: "Завершить документацию передачи",
+        Bahasa: "Lengkapkan Dokumentasi Penyerahan"
+      },
+      description: {
+        English: "Project handover checklist completion",
+        العربية: "إكمال قائمة مراجعة تسليم المشروع",
+        Русский: "Завершение контрольного списка передачи проекта",
+        Bahasa: "Penyelesaian senarai semak penyerahan projek"
+      },
       age: "3 days",
       criticality: "medium",
       type: "handover",
@@ -146,8 +196,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 6,
-      title: "Approve Training Certifications",
-      description: "5 training certificates awaiting approval",
+      title: {
+        English: "Approve Training Certifications",
+        العربية: "الموافقة على شهادات التدريب",
+        Русский: "Утвердить сертификаты обучения",
+        Bahasa: "Luluskan Sijil Latihan"
+      },
+      description: {
+        English: "5 training certificates awaiting approval",
+        العربية: "5 شهادات تدريب في انتظار الموافقة",
+        Русский: "5 сертификатов обучения ожидают утверждения",
+        Bahasa: "5 sijil latihan menunggu kelulusan"
+      },
       age: "1 day",
       criticality: "low",
       type: "training",
@@ -155,8 +215,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 7,
-      title: "Update Asset Register",
-      description: "New equipment registration pending",
+      title: {
+        English: "Update Asset Register",
+        العربية: "تحديث سجل الأصول",
+        Русский: "Обновить реестр активов",
+        Bahasa: "Kemaskini Daftar Aset"
+      },
+      description: {
+        English: "New equipment registration pending",
+        العربية: "تسجيل معدات جديدة معلق",
+        Русский: "Регистрация нового оборудования ожидается",
+        Bahasa: "Pendaftaran peralatan baru tertangguh"
+      },
       age: "5 days",
       criticality: "medium",
       type: "assets",
@@ -164,8 +234,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 8,
-      title: "Schedule Maintenance Windows",
-      description: "Q2 maintenance schedule review",
+      title: {
+        English: "Schedule Maintenance Windows",
+        العربية: "جدولة نوافذ الصيانة",
+        Русский: "Запланировать окна обслуживания",
+        Bahasa: "Jadualkan Tetingkap Penyelenggaraan"
+      },
+      description: {
+        English: "Q2 maintenance schedule review",
+        العربية: "مراجعة جدول صيانة الربع الثاني",
+        Русский: "Проверка графика обслуживания Q2",
+        Bahasa: "Kajian jadual penyelenggaraan Q2"
+      },
       age: "12 hours",
       criticality: "high",
       type: "maintenance",
@@ -173,22 +253,38 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     }
   ];
 
+  const pendingTasks = getTasksData();
+
   // Filter tasks based on search and filter
   const filteredTasks = pendingTasks.filter(task => {
+    const currentTitle = task.title[selectedLanguage] || task.title.English;
+    const currentDescription = task.description[selectedLanguage] || task.description.English;
+    
     const matchesSearch = searchQuery === '' || 
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+      currentTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      currentDescription.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesFilter = filterType === 'all' || task.criticality === filterType;
     
     return matchesSearch && matchesFilter;
   });
 
-  const allSections = [
+  // Define section data with translations
+  const getSectionData = () => [
     {
       id: 'safe-startup',
-      title: 'Safe Start-Up',
-      description: 'Manage the safe introduction of hydrocarbons into new facilities using the Pre-Start Up Safety Review (PSSR) process and comprehensive safety checklists',
+      title: {
+        English: 'Safe Start-Up',
+        العربية: 'البدء الآمن',
+        Русский: 'Безопасный запуск',
+        Bahasa: 'Permulaan Selamat'
+      },
+      description: {
+        English: 'Manage the safe introduction of hydrocarbons into new facilities using the Pre-Start Up Safety Review (PSSR) process and comprehensive safety checklists',
+        العربية: 'إدارة الإدخال الآمن للهيدروكربونات إلى المرافق الجديدة باستخدام عملية مراجعة السلامة قبل البدء (PSSR) وقوائم مراجعة السلامة الشاملة',
+        Русский: 'Управление безопасным вводом углеводородов в новые объекты с использованием процесса предпускового обзора безопасности (PSSR) и комплексных контрольных списков безопасности',
+        Bahasa: 'Urus pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak keselamatan yang komprehensif'
+      },
       icon: ShieldCheck,
       gradient: 'from-destructive/20 via-destructive/10 to-destructive/5',
       iconBg: 'bg-gradient-to-br from-destructive to-destructive/80',
@@ -197,8 +293,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 'p2o',
-      title: 'Project-to-Operations (P2O)',
-      description: 'Manage seamless transition and handover from Project team to Asset Operations Team using PAC and FAC workflows for operational readiness',
+      title: {
+        English: 'Project-to-Operations (P2O)',
+        العربية: 'المشروع إلى العمليات (P2O)',
+        Русский: 'Проект в Эксплуатацию (P2O)',
+        Bahasa: 'Projek-ke-Operasi (P2O)'
+      },
+      description: {
+        English: 'Manage seamless transition and handover from Project team to Asset Operations Team using PAC and FAC workflows for operational readiness',
+        العربية: 'إدارة الانتقال السلس والتسليم من فريق المشروع إلى فريق عمليات الأصول باستخدام سير عمل PAC و FAC للاستعداد التشغيلي',
+        Русский: 'Управление плавным переходом и передачей от проектной команды к команде эксплуатации активов с использованием рабочих процессов PAC и FAC для операционной готовности',
+        Bahasa: 'Urus peralihan dan penyerahan yang lancar dari pasukan Projek kepada Pasukan Operasi Aset menggunakan aliran kerja PAC dan FAC untuk kesediaan operasi'
+      },
       icon: KeyRound,
       gradient: 'from-primary/20 via-primary/10 to-primary/5',
       iconBg: 'bg-gradient-to-br from-primary to-primary/80',
@@ -207,8 +313,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     },
     {
       id: 'admin-tools',
-      title: 'Admin & Tools',
-      description: 'Manage users, roles, permissions, projects, and access control across the ORSH application with comprehensive tracking and reporting',
+      title: {
+        English: 'Admin & Tools',
+        العربية: 'الإدارة والأدوات',
+        Русский: 'Админ и Инструменты',
+        Bahasa: 'Admin & Alatan'
+      },
+      description: {
+        English: 'Manage users, roles, permissions, projects, and access control across the ORSH application with comprehensive tracking and reporting',
+        العربية: 'إدارة المستخدمين والأدوار والأذونات والمشاريع والتحكم في الوصول عبر تطبيق ORSH مع التتبع والتقارير الشاملة',
+        Русский: 'Управление пользователями, ролями, разрешениями, проектами и контролем доступа в приложении ORSH с комплексным отслеживанием и отчетностью',
+        Bahasa: 'Urus pengguna, peranan, kebenaran, projek, dan kawalan akses merentas aplikasi ORSH dengan penjejakan dan pelaporan yang komprehensif'
+      },
       icon: BarChart3,
       gradient: 'from-muted-foreground/20 via-muted-foreground/10 to-muted-foreground/5',
       iconBg: 'bg-gradient-to-br from-muted-foreground to-muted-foreground/80',
@@ -216,6 +332,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       allowedRoles: ['admin']
     }
   ];
+
+  const allSections = getSectionData();
 
   // Filter sections based on user role
   const availableSections = allSections.filter(section => 
@@ -400,14 +518,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-gray-900 group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                          {task.title}
+                          {task.title[selectedLanguage] || task.title.English}
                         </h3>
                       </div>
                     </div>
 
                     {/* Compact description */}
                     <p className="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-2 group-hover:text-gray-700 transition-colors duration-200">
-                      {task.description}
+                      {task.description[selectedLanguage] || task.description.English}
                     </p>
 
                     {/* Compact footer */}
@@ -481,11 +599,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                     {/* Content */}
                     <div className="text-center space-y-4 flex-1 flex flex-col">
                       <h3 className="text-xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
-                        {section.title}
+                        {section.title[selectedLanguage] || section.title.English}
                       </h3>
                       
                       <p className="text-muted-foreground leading-relaxed text-sm flex-1">
-                        {section.description}
+                        {section.description[selectedLanguage] || section.description.English}
                       </p>
                       
                       {/* Modern CTA Button - Always at bottom */}
@@ -497,7 +615,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                             onNavigate(section.id);
                           }}
                         >
-                          {t.launch} {section.title}
+                          {t.launch}
                           <ArrowLeft className="h-4 w-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform duration-200" />
                         </Button>
                       </div>
