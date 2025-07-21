@@ -44,8 +44,85 @@ const Index = () => {
   const languages = [
     { code: "en", name: "English" },
     { code: "ar", name: "العربية" },
-    { code: "fr", name: "Français" }
+    { code: "fr", name: "Français" },
+    { code: "ms", name: "Bahasa Melayu" },
+    { code: "ru", name: "Русский" }
   ];
+
+  const translations = {
+    en: {
+      title: "Operation Readiness",
+      subtitle: "Start-Up & Handover",
+      description: "Transform your project handover experience with our comprehensive platform.",
+      safeStartup: "Safe Start-Up",
+      safeStartupDesc: "Manage the safe introduction of hydrocarbons into a new facility using the Pre-Start Up Safety Review (PSSR) process and checklists",
+      p2oHandover: "P2O Handover",
+      p2oHandoverDesc: "Seamless asset transition management",
+      accessButton: "Access ORSH Platform",
+      enterpriseSecure: "Enterprise Secure",
+      isoCompliant: "ISO Compliant",
+      support24: "24/7 Support"
+    },
+    ar: {
+      title: "جاهزية العمليات",
+      subtitle: "البدء والتسليم",
+      description: "حول تجربة تسليم مشروعك مع منصتنا الشاملة.",
+      safeStartup: "البدء الآمن",
+      safeStartupDesc: "إدارة الإدخال الآمن للهيدروكربونات في منشأة جديدة باستخدام عملية مراجعة السلامة قبل البدء وقوائم التحقق",
+      p2oHandover: "تسليم P2O",
+      p2oHandoverDesc: "إدارة انتقال الأصول بسلاسة",
+      accessButton: "الوصول إلى منصة ORSH",
+      enterpriseSecure: "أمان المؤسسة",
+      isoCompliant: "متوافق مع ISO",
+      support24: "دعم 24/7"
+    },
+    fr: {
+      title: "Préparation Opérationnelle",
+      subtitle: "Démarrage et Remise",
+      description: "Transformez votre expérience de remise de projet avec notre plateforme complète.",
+      safeStartup: "Démarrage Sécurisé",
+      safeStartupDesc: "Gérer l'introduction sécurisée des hydrocarbures dans une nouvelle installation en utilisant le processus de révision de sécurité avant démarrage (PSSR) et les listes de contrôle",
+      p2oHandover: "Remise P2O",
+      p2oHandoverDesc: "Gestion transparente de la transition des actifs",
+      accessButton: "Accéder à la Plateforme ORSH",
+      enterpriseSecure: "Sécurité Entreprise",
+      isoCompliant: "Conforme ISO",
+      support24: "Support 24/7"
+    },
+    ms: {
+      title: "Kesediaan Operasi",
+      subtitle: "Permulaan & Penyerahan",
+      description: "Transformasikan pengalaman penyerahan projek anda dengan platform komprehensif kami.",
+      safeStartup: "Permulaan Selamat",
+      safeStartupDesc: "Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak",
+      p2oHandover: "Penyerahan P2O",
+      p2oHandoverDesc: "Pengurusan peralihan aset yang lancar",
+      accessButton: "Akses Platform ORSH",
+      enterpriseSecure: "Keselamatan Perusahaan",
+      isoCompliant: "Patuh ISO",
+      support24: "Sokongan 24/7"
+    },
+    ru: {
+      title: "Операционная Готовность",
+      subtitle: "Запуск и Передача",
+      description: "Преобразуйте опыт передачи проекта с помощью нашей комплексной платформы.",
+      safeStartup: "Безопасный Запуск",
+      safeStartupDesc: "Управление безопасным введением углеводородов в новое предприятие с использованием процесса предпускового обзора безопасности (PSSR) и контрольных списков",
+      p2oHandover: "Передача P2O",
+      p2oHandoverDesc: "Беспрепятственное управление переходом активов",
+      accessButton: "Доступ к Платформе ORSH",
+      enterpriseSecure: "Корпоративная Безопасность",
+      isoCompliant: "Соответствие ISO",
+      support24: "Поддержка 24/7"
+    }
+  };
+
+  const getCurrentTranslation = () => {
+    const langCode = languages.find(lang => lang.name === selectedLanguage)?.code || 'en';
+    return translations[langCode as keyof typeof translations];
+  };
+
+  const t = getCurrentTranslation();
 
   // Show specific section based on navigation
   if (isAuthenticated && currentSection) {
@@ -86,38 +163,32 @@ const Index = () => {
       
       {/* Modern Navigation Header */}
       <header className="relative z-20">
-        <div className="bg-card/10 border-b border-border/20 backdrop-blur-xl shadow-lg">
-          <div className="max-w-7xl mx-auto px-8 py-6">
-            <div className="flex items-center justify-between">
-              {/* Left Navigation */}
-              <nav className="flex items-center gap-8">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="lg"
-                      className="fluent-acrylic text-white hover:bg-white/10 transition-all duration-300 rounded-2xl px-8 py-4 border border-white/10 backdrop-blur-md font-medium shadow-fluent-sm hover:shadow-fluent-md group"
-                    >
-                      <Languages className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-base">{selectedLanguage}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="fluent-acrylic border border-border/30 shadow-fluent-2xl rounded-2xl p-2 backdrop-blur-xl min-w-[200px]">
-                    {languages.map((language) => (
-                      <DropdownMenuItem
-                        key={language.code}
-                        onClick={() => setSelectedLanguage(language.name)}
-                        className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-xl py-3 px-4 text-base font-medium"
-                      >
-                        {language.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-              </nav>
-
-            </div>
+        <div className="max-w-7xl mx-auto px-8 py-4">
+          <div className="flex items-center justify-end">
+            {/* Language Selector - Top Right */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group"
+                >
+                  <Languages className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-sm">{selectedLanguage}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
+                {languages.map((language) => (
+                  <DropdownMenuItem
+                    key={language.code}
+                    onClick={() => setSelectedLanguage(language.name)}
+                    className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground"
+                  >
+                    {language.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -133,35 +204,33 @@ const Index = () => {
                 <div className="space-y-6">
                   
                   <h1 className="font-light text-white leading-none tracking-tight">
-                    <span className="text-5xl lg:text-6xl">Operation Readiness</span>,
+                    <span className="text-5xl lg:text-6xl">{t.title}</span>,
                     <span className="block text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
-                      Start-Up & Handover
+                      {t.subtitle}
                     </span>
                   </h1>
                   
                   <p className="text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
-                    Transform your project handover experience with our comprehensive platform. 
-                    Built for <span className="font-semibold text-white">Basrah Gas Company</span> with 
-                    enterprise-grade security and compliance.
+                    {t.description}
                   </p>
                 </div>
                 
                 {/* Feature Highlights */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-6 h-6 rounded bg-gradient-to-br from-destructive to-destructive/80" />
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-8 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-8 h-8 rounded bg-gradient-to-br from-destructive to-destructive/80" />
                     </div>
-                    <h3 className="font-semibold text-white mb-2">Safe Start-Up</h3>
-                    <p className="text-white/70 text-sm">PSSR compliance and safety protocols</p>
+                    <h3 className="font-bold text-white mb-3 text-lg">{t.safeStartup}</h3>
+                    <p className="text-white/70 text-base leading-relaxed">{t.safeStartupDesc}</p>
                   </div>
                   
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-primary/80" />
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-8 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-primary/80" />
                     </div>
-                    <h3 className="font-semibold text-white mb-2">P2O Handover</h3>
-                    <p className="text-white/70 text-sm">Seamless asset transition management</p>
+                    <h3 className="font-bold text-white mb-3 text-lg">{t.p2oHandover}</h3>
+                    <p className="text-white/70 text-base leading-relaxed">{t.p2oHandoverDesc}</p>
                   </div>
                 </div>
                 
@@ -176,61 +245,31 @@ const Index = () => {
                       {/* Button background effect */}
                       <div className="absolute inset-0 bg-gradient-to-r from-primary-hover to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <span className="relative z-10 flex items-center">
-                        Access ORSH Platform
+                        {t.accessButton}
                         <ArrowLeft className="h-6 w-6 ml-4 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
                       </span>
                     </Button>
                     
                   </div>
                   
-                  {/* Trust Indicators */}
-                  <div className="flex items-center gap-8 text-white/70">
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-success animate-pulse-subtle" />
-                      <span className="text-lg font-medium">Enterprise Secure</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-primary animate-pulse-subtle" />
-                      <span className="text-lg font-medium">ISO Compliant</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-warning animate-pulse-subtle" />
-                      <span className="text-lg font-medium">24/7 Support</span>
-                    </div>
-                  </div>
+                   {/* Trust Indicators */}
+                   <div className="flex items-center gap-8 text-white/70">
+                     <div className="flex items-center gap-3">
+                       <div className="w-4 h-4 rounded-full bg-success animate-pulse-subtle" />
+                       <span className="text-lg font-medium">{t.enterpriseSecure}</span>
+                     </div>
+                     <div className="flex items-center gap-3">
+                       <div className="w-4 h-4 rounded-full bg-primary animate-pulse-subtle" />
+                       <span className="text-lg font-medium">{t.isoCompliant}</span>
+                     </div>
+                     <div className="flex items-center gap-3">
+                       <div className="w-4 h-4 rounded-full bg-warning animate-pulse-subtle" />
+                       <span className="text-lg font-medium">{t.support24}</span>
+                     </div>
+                   </div>
                 </div>
               </div>
               
-              {/* Right Column - Feature Cards */}
-              <div className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                {/* Main Feature Card - Reduced Size */}
-                <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 group hover:bg-card/30">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-bold text-white">Platform Overview</h3>
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-primary to-primary/80" />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-3 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
-                        <div className="text-2xl font-bold text-primary mb-1">2</div>
-                        <div className="text-white/70 text-xs">Core Modules</div>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
-                        <div className="text-2xl font-bold text-primary mb-1">SSO</div>
-                        <div className="text-white/70 text-xs">Authentication</div>
-                      </div>
-                    </div>
-                    
-                    <p className="text-white/80 leading-relaxed text-sm">
-                      Comprehensive operational readiness platform designed for energy sector compliance and safety management.
-                    </p>
-                  </div>
-                </div>
-                
-              </div>
               
             </div>
           </div>
