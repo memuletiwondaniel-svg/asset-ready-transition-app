@@ -158,9 +158,9 @@ const Index = () => {
                     <span className="text-primary font-semibold text-sm tracking-wide uppercase">Microsoft Fluent Design</span>
                   </div>
                   
-                  <h1 className="text-6xl lg:text-7xl font-light text-white leading-none tracking-tight">
-                    Operation Readiness,
-                    <span className="block font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
+                  <h1 className="font-light text-white leading-none tracking-tight">
+                    <span className="text-8xl lg:text-9xl">Operation Readiness</span>,
+                    <span className="block text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
                       Start-Up & Handover
                     </span>
                   </h1>
