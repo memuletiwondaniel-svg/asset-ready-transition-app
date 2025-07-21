@@ -15,6 +15,7 @@ import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
+import AdminToolsPage from "@/components/AdminToolsPage";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -53,6 +54,8 @@ const Index = () => {
         return <PSSRModule onBack={handleBackToLanding} />;
       case 'users':
         return <UserManagement onBack={handleBackToLanding} />;
+      case 'admin-tools':
+        return <AdminToolsPage onBack={handleBackToLanding} onNavigate={handleNavigate} />;
       case 'p2o':
         // Placeholder for P2O Module - can be implemented later
         return (
