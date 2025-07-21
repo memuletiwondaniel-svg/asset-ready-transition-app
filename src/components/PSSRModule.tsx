@@ -240,48 +240,6 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       </header>
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
-        {/* Compact Statistics Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-primary/20 transition-colors duration-200">
-              <Shield className="h-4 w-4 text-primary" />
-            </div>
-            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.total}</div>
-            <div className="text-xs text-muted-foreground font-medium">Total Reviews</div>
-          </div>
-
-          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.1s' }}>
-            <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-success/20 transition-colors duration-200">
-              <CheckCircle className="h-4 w-4 text-success" />
-            </div>
-            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.approved}</div>
-            <div className="text-xs text-muted-foreground font-medium">Approved</div>
-          </div>
-
-          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.2s' }}>
-            <div className="w-8 h-8 rounded-xl bg-warning/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-warning/20 transition-colors duration-200">
-              <Clock className="h-4 w-4 text-warning" />
-            </div>
-            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.underReview}</div>
-            <div className="text-xs text-muted-foreground font-medium">Under Review</div>
-          </div>
-
-          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.3s' }}>
-            <div className="w-8 h-8 rounded-xl bg-muted/20 flex items-center justify-center mx-auto mb-2 group-hover:bg-muted/30 transition-colors duration-200">
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.draft}</div>
-            <div className="text-xs text-muted-foreground font-medium">Draft</div>
-          </div>
-
-          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.4s' }}>
-            <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-destructive/20 transition-colors duration-200">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </div>
-            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.criticalIssues}</div>
-            <div className="text-xs text-muted-foreground font-medium">Critical</div>
-          </div>
-        </div>
 
         {/* Search and Filters */}
         <div className="fluent-card p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
