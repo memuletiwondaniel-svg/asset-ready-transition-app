@@ -326,32 +326,32 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             {filteredPSSRs.map((pssr, index) => (
               <div 
                 key={pssr.id} 
-                className="fluent-card p-8 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 border-l-primary/20 hover:border-l-primary"
+                className="fluent-card p-5 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 border-l-primary/20 hover:border-l-primary"
                 style={{ animationDelay: `${0.7 + index * 0.1}s` }}
                 onClick={() => handleViewDetails(pssr.id)}
               >
                 <div className="flex items-center justify-between">
                   
                   {/* Primary Info - Project ID and Name (Most Prominent) */}
-                  <div className="flex-1 min-w-0 mr-8">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-lg border border-primary/20">
+                  <div className="flex-1 min-w-0 mr-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold text-base border border-primary/20">
                         {pssr.projectId}
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
+                      <div className={`px-2 py-1 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
                         {pssr.priority}
                       </div>
                       {getStatusIcon(pssr.status)}
                     </div>
                     
-                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-2 leading-tight">
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-1.5 leading-tight">
                       {pssr.projectName}
                     </h3>
                     
-                    <div className="flex items-center gap-6 text-muted-foreground text-sm">
-                      <span className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        PSSR ID: {pssr.id}
+                    <div className="flex items-center gap-4 text-muted-foreground text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <Shield className="h-3 w-3" />
+                        {pssr.id}
                       </span>
                       <span>Asset: {pssr.asset}</span>
                       <span>Created: {new Date(pssr.created).toLocaleDateString()}</span>
@@ -359,34 +359,34 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                   </div>
 
                   {/* PSSR Lead (Prominent) */}
-                  <div className="flex items-center gap-4 mr-8">
+                  <div className="flex items-center gap-3 mr-6">
                     <div className="text-right">
-                      <div className="text-sm text-muted-foreground font-medium">PSSR Lead</div>
-                      <div className="text-lg font-semibold text-foreground">{pssr.pssrLead}</div>
+                      <div className="text-xs text-muted-foreground font-medium">PSSR Lead</div>
+                      <div className="text-sm font-semibold text-foreground">{pssr.pssrLead}</div>
                     </div>
                     <div className="relative">
                       <img 
                         src={pssr.pssrLeadAvatar} 
                         alt={pssr.pssrLead}
-                        className="w-14 h-14 rounded-2xl border-3 border-border shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200"
+                        className="w-10 h-10 rounded-xl border-2 border-border shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200"
                       />
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success rounded-full border-2 border-background"></div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background"></div>
                     </div>
                   </div>
 
                   {/* Progress (Prominent) */}
-                  <div className="text-center mr-6">
-                    <div className="mb-3">
-                      <div className="text-3xl font-bold text-foreground mb-1">{pssr.progress}%</div>
-                      <div className="text-sm text-muted-foreground font-medium">Progress</div>
+                  <div className="text-center mr-4">
+                    <div className="mb-2">
+                      <div className="text-xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
+                      <div className="text-xs text-muted-foreground font-medium">Progress</div>
                     </div>
                     
-                    <div className="relative w-24 h-24">
-                      <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                    <div className="relative w-16 h-16">
+                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
                         <circle
                           cx="50"
                           cy="50"
-                          r="40"
+                          r="35"
                           stroke="hsl(var(--muted))"
                           strokeWidth="8"
                           fill="none"
@@ -394,48 +394,50 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                         <circle
                           cx="50"
                           cy="50"
-                          r="40"
+                          r="35"
                           stroke="hsl(var(--primary))"
                           strokeWidth="8"
                           fill="none"
-                          strokeDasharray={`${2 * Math.PI * 40}`}
-                          strokeDashoffset={`${2 * Math.PI * 40 * (1 - pssr.progress / 100)}`}
+                          strokeDasharray={`${2 * Math.PI * 35}`}
+                          strokeDashoffset={`${2 * Math.PI * 35 * (1 - pssr.progress / 100)}`}
                           strokeLinecap="round"
                           className="transition-all duration-1000 ease-out"
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <CheckCircle className={`h-6 w-6 ${pssr.progress === 100 ? 'text-success' : 'text-muted-foreground/40'}`} />
+                        <CheckCircle className={`h-4 w-4 ${pssr.progress === 100 ? 'text-success' : 'text-muted-foreground/40'}`} />
                       </div>
                     </div>
                   </div>
 
                   {/* Status and Actions */}
-                  <div className="flex flex-col items-end gap-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
                       <div className="text-right">
-                        <div className="font-semibold text-foreground">{pssr.status}</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="font-semibold text-foreground text-sm">{pssr.status}</div>
+                        <div className="text-xs text-muted-foreground">
                           {pssr.status === 'Approved' && pssr.completedDate
-                            ? `Completed ${new Date(pssr.completedDate).toLocaleDateString()}`
+                            ? `${new Date(pssr.completedDate).toLocaleDateString()}`
                             : pssr.nextReview
-                            ? `Next review: ${new Date(pssr.nextReview).toLocaleDateString()}`
+                            ? `Next: ${new Date(pssr.nextReview).toLocaleDateString()}`
                             : 'In progress'
                           }
                         </div>
                       </div>
                     </div>
                     
-                    {pssr.pendingApprovals > 0 && (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-warning/10 text-warning rounded-xl text-sm font-semibold border border-warning/20">
-                        <Clock className="h-4 w-4" />
-                        {pssr.pendingApprovals} pending approval{pssr.pendingApprovals > 1 ? 's' : ''}
-                      </div>
-                    )}
-                    
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {pssr.pendingApprovals > 0 && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-warning/10 text-warning rounded-lg text-xs font-semibold border border-warning/20">
+                          <Clock className="h-3 w-3" />
+                          {pssr.pendingApprovals}
+                        </div>
+                      )}
+                      
+                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10 h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
