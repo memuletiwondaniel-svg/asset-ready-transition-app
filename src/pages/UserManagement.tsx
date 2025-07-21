@@ -28,7 +28,7 @@ import {
   Edit,
   ArrowLeft
 } from "lucide-react";
-import CreateUserModal from "@/components/user-management/CreateUserModal";
+import EnhancedCreateUserModal from "@/components/user-management/EnhancedCreateUserModal";
 import UserDetailsModal from "@/components/user-management/UserDetailsModal";
 import { useUsers } from "@/hooks/useUsers";
 
@@ -316,7 +316,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                     <TableCell>
                       <Badge 
                         variant={user.status === 'active' ? "default" : 
-                                user.status === 'pending' ? "secondary" : "destructive"}
+                                user.status === 'awaiting authentication' ? "secondary" : 
+                                user.status === 'new' ? "default" : "destructive"}
                       >
                         {user.status}
                       </Badge>
@@ -347,10 +348,11 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
       </div>
 
       {/* Modals */}
-      <CreateUserModal
+      <EnhancedCreateUserModal
         isOpen={showCreateUser}
         onClose={() => setShowCreateUser(false)}
         onCreateUser={handleCreateUser}
+        isAdminCreated={true}
       />
 
       {selectedUser && (

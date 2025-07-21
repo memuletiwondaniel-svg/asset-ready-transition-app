@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, User } from 'lucide-react';
 import P2ALogo from '@/components/P2ALogo';
+import EnhancedCreateUserModal from '@/components/user-management/EnhancedCreateUserModal';
+import { useUsers } from '@/hooks/useUsers';
 
 interface AuthenticationModalProps {
   isOpen: boolean;
@@ -20,14 +22,13 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
   onAuthenticated,
 }) => {
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    name: '',
-    company: '',
-    role: '',
-    justification: ''
+    password: ''
   });
+
+  const { addUser } = useUsers();
 
   const handleSSOLogin = (provider: string) => {
     console.log(`SSO Login with ${provider}`);
@@ -47,12 +48,10 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
     }
   };
 
-  const handleRegistration = () => {
-    // Simulate registration - requires BGC approval for non-BGC/Kent users
-    if (formData.email && formData.name && formData.company) {
-      alert('Registration submitted! Your account is pending approval from BGC. You will receive an email once approved.');
-      onClose();
-    }
+  const handleCreateUser = (userData: any) => {
+    addUser(userData);
+    setShowRegistrationModal(false);
+    onClose();
   };
 
   return (
@@ -155,68 +154,20 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                 </>
               ) : (
                 <>
-                  <div>
-                    <Label htmlFor="name" className="text-sm">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      placeholder="John Doe"
-                      className="h-8"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="reg-email" className="text-sm">Email Address</Label>
-                    <Input
-                      id="reg-email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="john.doe@company.com"
-                      className="h-8"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="company" className="text-sm">Company</Label>
-                    <Input
-                      id="company"
-                      value={formData.company}
-                      onChange={(e) => setFormData({...formData, company: e.target.value})}
-                      placeholder="Company Name"
-                      className="h-8"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="role" className="text-sm">Role/Position</Label>
-                    <Input
-                      id="role"
-                      value={formData.role}
-                      onChange={(e) => setFormData({...formData, role: e.target.value})}
-                      placeholder="e.g., Safety Engineer"
-                      className="h-8"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="justification" className="text-sm">Access Justification</Label>
-                    <Input
-                      id="justification"
-                      value={formData.justification}
-                      onChange={(e) => setFormData({...formData, justification: e.target.value})}
-                      placeholder="Reason for needing P2A access"
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-2 group">
+                  <div className="text-center space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Create your P2A account with detailed information and project associations.
+                    </p>
                     <Button 
-                      className="w-full flex flex-col py-1 leading-tight transition-all duration-300 hover:scale-105 hover:shadow-md group-hover:[&:not(:hover)]:bg-gray-200 group-hover:[&:not(:hover)]:text-gray-600 text-sm h-auto" 
-                      onClick={handleRegistration}
+                      className="w-full flex flex-col py-1 leading-tight transition-all duration-300 hover:scale-105 hover:shadow-md text-sm h-auto" 
+                      onClick={() => setShowRegistrationModal(true)}
                     >
-                      <span>Submit Registration</span>
+                      <span>Create Your Account</span>
                       <span className="text-[8px] opacity-75 -mt-0.5">approval required by BGC</span>
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border group-hover:[&:not(:hover)]:bg-gray-100 group-hover:[&:not(:hover)]:text-gray-500 text-sm py-1"
+                      className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md text-gray-500 bg-gray-100 hover:text-white hover:bg-primary transform border text-sm py-1"
                       onClick={() => setLoginMode('login')}
                     >
                       <User className="h-3 w-3 mr-1" />
@@ -229,6 +180,13 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
           </Card>
         </div>
       </DialogContent>
+      
+      <EnhancedCreateUserModal
+        isOpen={showRegistrationModal}
+        onClose={() => setShowRegistrationModal(false)}
+        onCreateUser={handleCreateUser}
+        isAdminCreated={false}
+      />
     </Dialog>
   );
 };

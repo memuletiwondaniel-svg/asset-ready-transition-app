@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
 
+interface PhoneNumber {
+  countryCode: string;
+  number: string;
+}
+
 interface User {
   id: string;
   firstName: string;
@@ -7,16 +12,20 @@ interface User {
   email: string;
   isFunctionalEmail?: boolean;
   personalEmail?: string;
-  phone: string;
+  phoneNumbers: PhoneNumber[];
   company: string;
   role: string;
   discipline?: string;
   commission?: string;
   privileges: string[];
-  status: 'active' | 'pending' | 'inactive';
+  status: 'new' | 'awaiting authentication' | 'rejected' | 'active' | 'inactive';
   associatedProjects: string[];
   pendingActions: number;
   createdAt: string;
+  authenticator?: string;
+  rejectionReason?: string;
+  createdBy?: 'admin' | 'self';
+  temporaryPassword?: string;
 }
 
 export const useUsers = () => {
@@ -35,21 +44,22 @@ export const useUsers = () => {
           firstName: "Ahmed",
           lastName: "Al-Rashid",
           email: "ahmed.rashid@bgc.iq",
-          phone: "+964 770 123 4567",
+          phoneNumbers: [{ countryCode: "+964", number: "770 123 4567" }],
           company: "BGC",
           role: "Plant Director",
-          privileges: ["Edit or Create New Project", "Edit or Create New User"],
+          privileges: ["Edit or Create New Project", "Edit, Create or Authenticate New User"],
           status: "active",
           associatedProjects: ["Project Alpha", "Project Beta"],
           pendingActions: 2,
-          createdAt: "2024-01-15T10:00:00Z"
+          createdAt: "2024-01-15T10:00:00Z",
+          createdBy: "admin"
         },
         {
           id: "2",
           firstName: "Sarah",
           lastName: "Mitchell",
           email: "sarah.mitchell@kent.com",
-          phone: "+44 20 7946 0958",
+          phoneNumbers: [{ countryCode: "+44", number: "20 7946 0958" }],
           company: "Kent",
           role: "Technical Authority (TA2)",
           discipline: "Process",
@@ -58,7 +68,8 @@ export const useUsers = () => {
           status: "active",
           associatedProjects: ["Project Alpha"],
           pendingActions: 0,
-          createdAt: "2024-02-10T14:30:00Z"
+          createdAt: "2024-02-10T14:30:00Z",
+          createdBy: "admin"
         },
         {
           id: "3",
@@ -67,14 +78,16 @@ export const useUsers = () => {
           email: "omar.hassan@contractor.com",
           isFunctionalEmail: true,
           personalEmail: "omar.personal@gmail.com",
-          phone: "+964 771 987 6543",
+          phoneNumbers: [{ countryCode: "+964", number: "771 987 6543" }],
           company: "Others",
           role: "Commissioning Lead",
           privileges: ["Complete assigned tasks or delegate"],
-          status: "pending",
+          status: "awaiting authentication",
           associatedProjects: [],
           pendingActions: 1,
-          createdAt: "2024-03-05T09:15:00Z"
+          createdAt: "2024-03-05T09:15:00Z",
+          authenticator: "Daniel Memuletiwon",
+          createdBy: "self"
         }
       ];
       setUsers(sampleUsers);
@@ -123,18 +136,34 @@ export const useUsers = () => {
   };
 
   const getPendingUsers = () => {
-    return users.filter(user => user.status === 'pending');
+    return users.filter(user => user.status === 'awaiting authentication');
+  };
+
+  const getAwaitingAuthenticationUsers = () => {
+    return users.filter(user => user.status === 'awaiting authentication');
+  };
+
+  const getRejectedUsers = () => {
+    return users.filter(user => user.status === 'rejected');
+  };
+
+  const getNewUsers = () => {
+    return users.filter(user => user.status === 'new');
   };
 
   const totalUsers = users.length;
   const activeUsers = users.filter(user => user.status === 'active').length;
-  const pendingUsers = users.filter(user => user.status === 'pending').length;
+  const pendingUsers = users.filter(user => user.status === 'awaiting authentication').length;
+  const newUsers = users.filter(user => user.status === 'new').length;
+  const rejectedUsers = users.filter(user => user.status === 'rejected').length;
 
   return {
     users,
     totalUsers,
     activeUsers,
     pendingUsers,
+    newUsers,
+    rejectedUsers,
     addUser,
     updateUser,
     deleteUser,
@@ -143,5 +172,8 @@ export const useUsers = () => {
     getUsersByCompany,
     getUsersByRole,
     getPendingUsers,
+    getAwaitingAuthenticationUsers,
+    getRejectedUsers,
+    getNewUsers,
   };
 };
