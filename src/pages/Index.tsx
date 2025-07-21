@@ -156,33 +156,44 @@ const Index = () => {
 
   // Show welcome screen before authentication
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Background with enhanced gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-indigo-500/3 to-purple-600/5" />
       <BackgroundSlideshow showFunFacts={showAuth} />
       
-      {/* Modern Navigation Header */}
-      <header className="relative z-20">
-        <div className="max-w-7xl mx-auto px-8 py-4">
-          <div className="flex items-center justify-end">
-            {/* Language Selector - Top Right */}
+      {/* Fluent Design Acrylic Header */}
+      <header className="relative z-20 backdrop-blur-xl bg-white/10 border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* ORSH Brand */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm">ORSH</span>
+              </div>
+              <div className="text-white">
+                <div className="font-semibold text-lg tracking-tight">Operation Readiness</div>
+                <div className="text-sm text-white/70 -mt-1">Start-up & Handover</div>
+              </div>
+            </div>
+            
+            {/* Language Selector - Modern Microsoft Style */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group"
+                  className="text-white hover:bg-white/10 transition-all duration-200 rounded-lg px-4 py-2 border border-white/10 backdrop-blur-sm font-medium shadow-sm hover:shadow-lg hover:border-white/20 group"
                 >
                   <Languages className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-sm">{selectedLanguage}</span>
+                  <span className="text-sm font-medium">{selectedLanguage}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
+              <DropdownMenuContent className="bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl rounded-xl p-2 min-w-[180px] z-50">
                 {languages.map((language) => (
                   <DropdownMenuItem
                     key={language.code}
                     onClick={() => setSelectedLanguage(language.name)}
-                    className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground"
+                    className="cursor-pointer hover:bg-blue-50/80 transition-all duration-200 rounded-lg py-3 px-4 text-sm font-medium text-gray-700 hover:text-blue-700"
                   >
                     {language.name}
                   </DropdownMenuItem>
@@ -194,83 +205,110 @@ const Index = () => {
       </header>
       
       {!showAuth && (
-        <main className="relative z-10 flex items-center min-h-[calc(100vh-120px)] pt-8">
-          <div className="max-w-7xl mx-auto px-8 w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <main className="relative z-10 flex items-center min-h-[calc(100vh-120px)] pt-12">
+          <div className="max-w-7xl mx-auto px-6 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               
               {/* Left Column - Hero Content */}
-              <div className="space-y-12 animate-fade-in-up">
-                {/* Hero Heading */}
-                <div className="space-y-6">
-                  
-                  <h1 className="font-light text-white leading-none tracking-tight">
-                    <span className="text-5xl lg:text-6xl">{t.title}</span>,
-                    <span className="block text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
-                      {t.subtitle}
-                    </span>
-                  </h1>
-                  
-                  <p className="text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
-                    {t.description}
-                  </p>
-                </div>
+              <div className="lg:col-span-7 space-y-10 animate-fade-in">
                 
-                {/* Feature Highlights */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-7 h-7 rounded bg-gradient-to-br from-destructive to-destructive/80" />
-                    </div>
-                    <h3 className="font-bold text-white mb-2 text-lg">{t.safeStartup}</h3>
-                    <p className="text-white/70 text-base leading-relaxed">{t.safeStartupDesc}</p>
-                  </div>
-                  
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-7 h-7 rounded bg-gradient-to-br from-primary to-primary/80" />
-                    </div>
-                    <h3 className="font-bold text-white mb-2 text-lg">{t.p2oHandover}</h3>
-                    <p className="text-white/70 text-base leading-relaxed">{t.p2oHandoverDesc}</p>
-                  </div>
-                </div>
-                
-                {/* CTA Section */}
+                {/* Hero Section with Microsoft Typography */}
                 <div className="space-y-8">
-                  <div className="flex flex-col sm:flex-row gap-6 items-start">
-                    <Button 
-                      onClick={() => setShowAuth(true)} 
-                      size="lg"
-                      className="bg-primary hover:bg-primary-hover text-primary-foreground px-12 py-6 text-xl font-semibold shadow-fluent-2xl hover:shadow-fluent-2xl/60 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 rounded-2xl group border-0 relative overflow-hidden"
-                    >
-                      {/* Button background effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary-hover to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <span className="relative z-10 flex items-center">
-                        {t.accessButton}
-                        <ArrowLeft className="h-6 w-6 ml-4 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
+                  <div className="space-y-6">
+                    <h1 className="font-light text-white leading-[1.1] tracking-tight">
+                      <span className="text-4xl lg:text-6xl xl:text-7xl font-light">{t.title}</span>
+                      <span className="block text-3xl lg:text-5xl xl:text-6xl font-normal mt-2 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
+                        {t.subtitle}
                       </span>
-                    </Button>
+                    </h1>
                     
+                    <p className="text-xl lg:text-2xl text-white/90 font-light leading-relaxed max-w-2xl">
+                      {t.description}
+                    </p>
                   </div>
+                </div>
+                
+                {/* Primary CTA - Microsoft Style */}
+                <div className="space-y-6">
+                  <Button 
+                    onClick={() => setShowAuth(true)} 
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-medium shadow-xl hover:shadow-2xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-lg group border-0 relative overflow-hidden min-w-[280px]"
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      {t.accessButton}
+                      <ArrowLeft className="h-5 w-5 ml-3 rotate-180 group-hover:translate-x-1 transition-transform duration-300" />
+                    </span>
+                  </Button>
                   
-                   {/* Trust Indicators */}
-                   <div className="flex items-center gap-8 text-white/70">
-                     <div className="flex items-center gap-3">
-                       <div className="w-4 h-4 rounded-full bg-success animate-pulse-subtle" />
-                       <span className="text-lg font-medium">{t.enterpriseSecure}</span>
-                     </div>
-                     <div className="flex items-center gap-3">
-                       <div className="w-4 h-4 rounded-full bg-primary animate-pulse-subtle" />
-                       <span className="text-lg font-medium">{t.isoCompliant}</span>
-                     </div>
-                     <div className="flex items-center gap-3">
-                       <div className="w-4 h-4 rounded-full bg-warning animate-pulse-subtle" />
-                       <span className="text-lg font-medium">{t.support24}</span>
-                     </div>
-                   </div>
+                  {/* Trust Indicators - Microsoft Style */}
+                  <div className="flex flex-wrap items-center gap-6 text-white/80 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                      <span className="font-medium">{t.enterpriseSecure}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-400" />
+                      <span className="font-medium">{t.isoCompliant}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-orange-400" />
+                      <span className="font-medium">{t.support24}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              
+              {/* Right Column - Feature Cards */}
+              <div className="lg:col-span-5 space-y-6">
+                
+                {/* Safe Startup Card - Microsoft Fluent Design */}
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+                  <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all duration-300 group-hover:transform group-hover:scale-[1.02] shadow-2xl">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                        <div className="w-6 h-6 bg-white rounded-sm" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-white mb-3 text-xl leading-tight">{t.safeStartup}</h3>
+                        <p className="text-white/80 text-base leading-relaxed">{t.safeStartupDesc}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* P2O Handover Card - Microsoft Fluent Design */}
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+                  <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all duration-300 group-hover:transform group-hover:scale-[1.02] shadow-2xl">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                        <div className="w-6 h-6 bg-white rounded-sm" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-white mb-3 text-xl leading-tight">{t.p2oHandover}</h3>
+                        <p className="text-white/80 text-base leading-relaxed">{t.p2oHandoverDesc}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Additional Information Card */}
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+                  <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 group-hover:transform group-hover:scale-[1.02] shadow-2xl">
+                    <div className="text-center">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg mx-auto mb-4">
+                        <div className="w-5 h-5 bg-white rounded-sm" />
+                      </div>
+                      <h4 className="font-semibold text-white mb-2 text-lg">Enterprise Ready</h4>
+                      <p className="text-white/80 text-sm">Scalable, secure, and designed for global operations</p>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
             </div>
           </div>
         </main>
