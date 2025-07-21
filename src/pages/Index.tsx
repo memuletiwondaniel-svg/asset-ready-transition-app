@@ -1,6 +1,6 @@
 
-
 import { useState } from "react";
+import orshIcon from "@/assets/orsh-icon.png";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -194,37 +194,35 @@ const Index = () => {
       </header>
       
       {!showAuth && (
-        <main className="relative z-10 flex items-center min-h-[calc(100vh-120px)] pt-8">
-          <div className="max-w-7xl mx-auto px-8 w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <main className="relative z-10 flex items-center min-h-[calc(100vh-100px)] py-4">
+          <div className="max-w-7xl mx-auto px-6 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               
               {/* Left Column - Hero Content */}
-              <div className="space-y-12 animate-fade-in-up">
+              <div className="space-y-8 animate-fade-in-up">
                 {/* Hero Heading */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                   
                   <h1 className="font-light text-white leading-none tracking-tight">
-                    <span className="text-5xl lg:text-6xl">{t.title}</span>,
-                    <span className="block text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
+                    <span className="text-4xl lg:text-5xl">{t.title}</span>,
+                    <span className="block text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
                       {t.subtitle}
                     </span>
                   </h1>
                   
-                  <p className="text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
-                    Transform your project start-up and handover experience with the{" "}
-                    <span className="relative inline-block">
-                      <span className="font-bold text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-2xl animate-pulse-subtle tracking-wider">
-                        ORSH
-                      </span>
-                      <span className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 via-blue-400/20 to-purple-400/20 blur-xl rounded-lg animate-pulse-subtle"></span>
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60"></span>
-                    </span>{" "}
-                    comprehensive platform.
-                  </p>
+                  <div className="flex items-center gap-4 text-xl text-white/85 font-light leading-relaxed max-w-2xl">
+                    <span>Transform your project start-up and handover experience with the</span>
+                    <img 
+                      src={orshIcon} 
+                      alt="ORSH" 
+                      className="h-8 w-auto inline-block drop-shadow-lg"
+                    />
+                    <span>comprehensive platform.</span>
+                  </div>
                 </div>
                 
                 {/* Feature Highlights - Enhanced Microsoft Fluent Design */}
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-2 gap-6">
                   {/* Safe Start-up Card */}
                   <div className="relative group transform hover:scale-[1.02] transition-all duration-500">
                     {/* Animated background glow */}
@@ -237,17 +235,17 @@ const Index = () => {
                     <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-br from-red-500/20 via-orange-500/10 to-transparent bg-clip-border opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     
                     {/* Content */}
-                    <div className="relative p-10 space-y-6">
+                    <div className="relative p-8 space-y-4">
                       {/* Enhanced Icon with Microsoft-style layering and animation */}
-                      <div className="relative w-20 h-20 mb-8">
+                      <div className="relative w-16 h-16 mb-6">
                         {/* Icon glow effect */}
                         <div className="absolute -inset-2 bg-gradient-to-br from-red-500/40 to-orange-500/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                         
                         {/* Icon background layers */}
                         <div className="absolute inset-0 bg-gradient-to-br from-red-500/25 to-orange-500/25 rounded-2xl backdrop-blur-sm transform group-hover:rotate-3 transition-all duration-300"></div>
-                        <div className="relative w-20 h-20 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-6 transition-all duration-500">
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-6 transition-all duration-500">
                           {/* Inner icon element with animation */}
-                          <div className="w-10 h-10 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"></div>
+                          <div className="w-8 h-8 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"></div>
                           
                           {/* Sparkle effects */}
                           <div className="absolute top-1 right-1 w-2 h-2 bg-white/80 rounded-full animate-ping opacity-0 group-hover:opacity-100"></div>
@@ -256,13 +254,13 @@ const Index = () => {
                       </div>
                       
                       {/* Enhanced Title with Microsoft Typography and animations */}
-                      <h3 className="text-2xl font-semibold text-white mb-4 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
+                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
                         {t.safeStartup}
                         <div className="w-0 h-0.5 bg-gradient-to-r from-red-400 to-orange-400 group-hover:w-full transition-all duration-500 mt-2"></div>
                       </h3>
                       
                       {/* Enhanced Description */}
-                      <p className="text-white/80 text-base leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
+                      <p className="text-white/80 text-sm leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
                         {t.safeStartupDesc}
                       </p>
                       
@@ -287,17 +285,17 @@ const Index = () => {
                     <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent bg-clip-border opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     
                     {/* Content */}
-                    <div className="relative p-10 space-y-6">
+                    <div className="relative p-8 space-y-4">
                       {/* Enhanced Icon with Microsoft-style layering and animation */}
-                      <div className="relative w-20 h-20 mb-8">
+                      <div className="relative w-16 h-16 mb-6">
                         {/* Icon glow effect */}
                         <div className="absolute -inset-2 bg-gradient-to-br from-blue-500/40 to-cyan-500/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                         
                         {/* Icon background layers */}
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/25 to-cyan-500/25 rounded-2xl backdrop-blur-sm transform group-hover:-rotate-3 transition-all duration-300"></div>
-                        <div className="relative w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:-rotate-6 transition-all duration-500">
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:-rotate-6 transition-all duration-500">
                           {/* Inner icon element with animation */}
-                          <div className="w-10 h-10 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300"></div>
+                          <div className="w-8 h-8 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300"></div>
                           
                           {/* Sparkle effects */}
                           <div className="absolute top-1 left-1 w-2 h-2 bg-white/80 rounded-full animate-ping opacity-0 group-hover:opacity-100"></div>
@@ -306,13 +304,13 @@ const Index = () => {
                       </div>
                       
                       {/* Enhanced Title with Microsoft Typography and animations */}
-                      <h3 className="text-2xl font-semibold text-white mb-4 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
+                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
                         {t.p2oHandover}
                         <div className="w-0 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 group-hover:w-full transition-all duration-500 mt-2"></div>
                       </h3>
                       
                       {/* Enhanced Description */}
-                      <p className="text-white/80 text-base leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
+                      <p className="text-white/80 text-sm leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
                         {t.p2oHandoverDesc}
                       </p>
                       
@@ -327,37 +325,37 @@ const Index = () => {
                 </div>
                 
                 {/* CTA Section */}
-                <div className="space-y-8">
-                  <div className="flex flex-col sm:flex-row gap-6 items-start">
-                    <Button 
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <Button
                       onClick={() => setShowAuth(true)} 
                       size="lg"
-                      className="bg-primary hover:bg-primary-hover text-primary-foreground px-12 py-6 text-xl font-semibold shadow-fluent-2xl hover:shadow-fluent-2xl/60 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 rounded-2xl group border-0 relative overflow-hidden"
+                      className="bg-primary hover:bg-primary-hover text-primary-foreground px-10 py-5 text-lg font-semibold shadow-fluent-2xl hover:shadow-fluent-2xl/60 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 rounded-2xl group border-0 relative overflow-hidden"
                     >
                       {/* Button background effect */}
                       <div className="absolute inset-0 bg-gradient-to-r from-primary-hover to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <span className="relative z-10 flex items-center">
                         {t.accessButton}
-                        <ArrowLeft className="h-6 w-6 ml-4 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
+                        <ArrowLeft className="h-5 w-5 ml-3 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
                       </span>
                     </Button>
                     
                   </div>
                   
-                   {/* Trust Indicators */}
-                   <div className="flex items-center gap-8 text-white/70">
+                    {/* Trust Indicators */}
+                    <div className="flex items-center gap-6 text-white/70">
                      <div className="flex items-center gap-3">
                        <div className="w-4 h-4 rounded-full bg-success animate-pulse-subtle" />
-                       <span className="text-lg font-medium">{t.enterpriseSecure}</span>
-                     </div>
+                        <span className="text-base font-medium">{t.enterpriseSecure}</span>
+                      </div>
                      <div className="flex items-center gap-3">
                        <div className="w-4 h-4 rounded-full bg-primary animate-pulse-subtle" />
-                       <span className="text-lg font-medium">{t.isoCompliant}</span>
-                     </div>
+                        <span className="text-base font-medium">{t.isoCompliant}</span>
+                      </div>
                      <div className="flex items-center gap-3">
                        <div className="w-4 h-4 rounded-full bg-warning animate-pulse-subtle" />
-                       <span className="text-lg font-medium">{t.support24}</span>
-                     </div>
+                        <span className="text-base font-medium">{t.support24}</span>
+                      </div>
                    </div>
                 </div>
               </div>
