@@ -1,11 +1,30 @@
 
 import React, { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut } from 'lucide-react';
-import { ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut, GripVertical, Pin, PinOff, ArrowLeft } from 'lucide-react';
+import DraggableTaskCard from './DraggableTaskCard';
 
 interface LandingPageProps {
   onBack: () => void;
@@ -21,6 +40,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [taskOrder, setTaskOrder] = useState<number[]>([]);
+  const [pinnedTasks, setPinnedTasks] = useState<number[]>([]);
   
   // Language translations
   const translations = {
@@ -255,7 +277,60 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
 
   const pendingTasks = getTasksData();
 
-  // Filter tasks based on search and filter
+  // Initialize task order on first render
+  const initializeTaskOrder = () => {
+    if (taskOrder.length === 0) {
+      setTaskOrder(pendingTasks.map(task => task.id));
+    }
+  };
+
+  React.useEffect(() => {
+    initializeTaskOrder();
+  }, []);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+  };
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveDragId(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setTaskOrder((items) => {
+      const oldIndex = items.indexOf(Number(active.id));
+      const newIndex = items.indexOf(Number(over.id));
+
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
+
+  const handleToggleTaskPin = (taskId: number) => {
+    setPinnedTasks(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  // Filter tasks based on search and filter with sorting
   const filteredTasks = pendingTasks.filter(task => {
     const currentTitle = task.title[selectedLanguage] || task.title.English;
     const currentDescription = task.description[selectedLanguage] || task.description.English;
@@ -283,6 +358,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     }
     
     return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+    // Sort with pinned items first, then by custom order
+    const aPinned = pinnedTasks.includes(a.id);
+    const bPinned = pinnedTasks.includes(b.id);
+    
+    // Pinned items come first
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    
+    // If both pinned or both unpinned, use custom order
+    if (taskOrder.length > 0) {
+      const aIndex = taskOrder.indexOf(a.id);
+      const bIndex = taskOrder.indexOf(b.id);
+      
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+    }
+    
+    return 0;
   });
 
   // Define section data with translations
@@ -553,88 +651,43 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
           </div>
 
           {/* Ultra Modern Microsoft Fluent Task Cards Grid - Compact Design */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 transition-all duration-500">
-            {(showAllTasks ? filteredTasks : filteredTasks.slice(0, 5)).map((task, index) => {
-              const IconComponent = task.icon;
-              const getCriticalityColor = (criticality: string) => {
-                switch (criticality) {
-                  case 'critical': return { bg: 'bg-red-50/80', text: 'text-red-800', dot: 'bg-red-500', glow: 'shadow-red-100' };
-                  case 'high': return { bg: 'bg-orange-50/80', text: 'text-orange-800', dot: 'bg-orange-500', glow: 'shadow-orange-100' };
-                  case 'medium': return { bg: 'bg-blue-50/80', text: 'text-blue-800', dot: 'bg-blue-500', glow: 'shadow-blue-100' };
-                  default: return { bg: 'bg-gray-50/80', text: 'text-gray-800', dot: 'bg-gray-400', glow: 'shadow-gray-100' };
-                }
-              };
-              
-              const criticalityStyle = getCriticalityColor(task.criticality);
-              
-              return (
-                <div
-                  key={task.id}
-                  className={`group relative overflow-hidden rounded-xl bg-white/90 backdrop-blur-md border border-gray-200/50 hover:border-primary/30 ${criticalityStyle.glow} hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer animate-fade-in-up`}
-                  style={{ 
-                    animationDelay: `${index * 0.05}s`,
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`View task: ${task.title}`}
-                >
-                  {/* Fluent Material Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Priority indicator */}
-                  <div className="absolute top-2 right-2 flex items-center space-x-1">
-                    <div className={`w-2 h-2 rounded-full ${criticalityStyle.dot} animate-pulse-subtle`} />
-                  </div>
-                  
-                  <div className="relative p-3">
-                    {/* Compact header */}
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="relative flex-shrink-0">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                          <IconComponent className="h-4 w-4 text-primary" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-gray-900 group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                          {task.title[selectedLanguage] || task.title.English}
-                        </h3>
-                      </div>
-                    </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={filteredTasks.map(task => task.id)} strategy={verticalListSortingStrategy}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 transition-all duration-500">
+                {(showAllTasks ? filteredTasks : filteredTasks.slice(0, 5)).map((task, index) => (
+                  <DraggableTaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    selectedLanguage={selectedLanguage}
+                    isPinned={pinnedTasks.includes(task.id)}
+                    onTogglePin={handleToggleTaskPin}
+                    viewDetailsText={t.viewDetails}
+                  />
+                ))}
+              </div>
+            </SortableContext>
 
-                    {/* Compact description */}
-                    <p className="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-2 group-hover:text-gray-700 transition-colors duration-200">
-                      {task.description[selectedLanguage] || task.description.English}
+            <DragOverlay>
+              {activeDragId ? (
+                <div className="bg-white/95 backdrop-blur-md border-2 border-primary/50 rounded-xl p-3 shadow-2xl">
+                  <div className="text-center">
+                    <Clock className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <p className="font-semibold text-foreground text-sm">Moving Task...</p>
+                    <p className="text-xs text-muted-foreground">
+                      {filteredTasks.find(t => t.id === Number(activeDragId))?.title[selectedLanguage] || 
+                       filteredTasks.find(t => t.id === Number(activeDragId))?.title.English}
                     </p>
-
-                    {/* Compact footer */}
-                    <div className="flex items-center justify-between">
-                      {/* Age with icon */}
-                      <div className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100/60 backdrop-blur-sm">
-                        <Clock className="h-3 w-3 text-gray-500 mr-1" />
-                        <span className="text-xs font-medium text-gray-700">{task.age}</span>
-                      </div>
-                      
-                      {/* Priority badge */}
-                      <div className={`px-2 py-0.5 rounded-md text-xs font-medium ${criticalityStyle.bg} ${criticalityStyle.text} backdrop-blur-sm`}>
-                        {task.criticality}
-                      </div>
-                    </div>
-
-                    {/* Hover action overlay */}
-                    <div className="absolute inset-0 bg-primary/5 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex items-center justify-center">
-                      <button className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white/90 hover:bg-white text-primary text-xs font-semibold shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                        <span>{t.viewDetails}</span>
-                        <ArrowRight className="h-3 w-3 ml-1 transition-transform duration-200" />
-                      </button>
-                    </div>
                   </div>
-
-                  {/* Modern focus ring */}
-                  <div className="absolute inset-0 rounded-xl ring-2 ring-primary/0 group-focus:ring-primary/30 transition-all duration-200" />
                 </div>
-              );
-            })}
-          </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </div>
 
         {/* Workspace Selection */}

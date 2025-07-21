@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, ShieldCheck, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
@@ -36,6 +36,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
+  const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
@@ -207,28 +208,31 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       return matchesSearch && matchesPlant && matchesStatus && matchesLead;
     });
 
-    // Then apply custom ordering if available
-    if (pssrOrder.length > 0) {
-      return filtered.sort((a, b) => {
+    // Sort with pinned items first, then by custom order
+    return filtered.sort((a, b) => {
+      const aPinned = pinnedPSSRs.includes(a.id);
+      const bPinned = pinnedPSSRs.includes(b.id);
+      
+      // Pinned items come first
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      
+      // If both pinned or both unpinned, use custom order
+      if (pssrOrder.length > 0) {
         const aIndex = pssrOrder.indexOf(a.id);
         const bIndex = pssrOrder.indexOf(b.id);
         
-        // If both items are in the custom order, sort by that order
         if (aIndex !== -1 && bIndex !== -1) {
           return aIndex - bIndex;
         }
         
-        // If only one is in the custom order, it comes first
         if (aIndex !== -1) return -1;
         if (bIndex !== -1) return 1;
-        
-        // If neither is in custom order, maintain original order
-        return 0;
-      });
-    }
-
-    return filtered;
-  }, [searchTerm, filters, pssrList, pssrOrder]);
+      }
+      
+      return 0;
+    });
+  }, [searchTerm, filters, pssrList, pssrOrder, pinnedPSSRs]);
 
   const toggleFilter = (category: 'plant' | 'status' | 'lead', value: string) => {
     setFilters(prev => ({
@@ -250,6 +254,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const handleViewDetails = (pssrId: string) => {
     setSelectedPSSR(pssrId);
     setActiveView('details');
+  };
+
+  const handleTogglePin = (pssrId: string) => {
+    setPinnedPSSRs(prev => 
+      prev.includes(pssrId) 
+        ? prev.filter(id => id !== pssrId)
+        : [...prev, pssrId]
+    );
   };
 
   // Handle search input change with real-time filtering
@@ -327,7 +339,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-                  <ShieldCheck className="h-6 w-6 text-primary" />
+                  <ClipboardList className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Safe Start-Up</h1>
@@ -365,7 +377,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search reviews by ID, project, asset, or lead..."
+                placeholder="Search PSSR by Project ID, Asset, Lead..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-12 h-12 rounded-xl border-border/50 bg-muted/20 focus:bg-background transition-colors duration-200"
@@ -374,8 +386,6 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             
             <div className="flex items-center gap-4">
               <PSSRFilters
-                searchTerm={searchTerm}
-                onSearchChange={handleSearchChange}
                 filters={filters}
                 onToggleFilter={toggleFilter}
                 onClearFilters={clearAllFilters}
@@ -419,6 +429,8 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                     getStatusIcon={getStatusIcon}
                     getTeamStatusColor={getTeamStatusColor}
                     getRiskLevelColor={getRiskLevelColor}
+                    isPinned={pinnedPSSRs.includes(pssr.id)}
+                    onTogglePin={handleTogglePin}
                   />
                 ))}
               </div>

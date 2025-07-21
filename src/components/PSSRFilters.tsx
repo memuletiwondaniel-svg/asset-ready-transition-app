@@ -20,8 +20,6 @@ interface Filters {
 }
 
 interface PSSRFiltersProps {
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
   filters: Filters;
   onToggleFilter: (category: 'plant' | 'status' | 'lead', value: string) => void;
   onClearFilters: () => void;
@@ -31,8 +29,6 @@ interface PSSRFiltersProps {
 }
 
 const PSSRFilters: React.FC<PSSRFiltersProps> = ({
-  searchTerm,
-  onSearchChange,
   filters,
   onToggleFilter,
   onClearFilters,
@@ -43,16 +39,7 @@ const PSSRFilters: React.FC<PSSRFiltersProps> = ({
   const hasActiveFilters = filters.plant.length > 0 || filters.status.length > 0 || filters.lead.length > 0;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-4">
-      <div className="flex-1 relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="Search PSSRs..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+    <div className="flex items-center gap-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
