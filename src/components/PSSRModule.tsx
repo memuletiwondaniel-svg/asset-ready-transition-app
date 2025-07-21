@@ -399,51 +399,77 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                         <div className="text-xs opacity-70">Level</div>
                       </div>
 
-                      {/* Activity Status */}
-                      <div className="bg-accent/30 border border-accent/50 rounded-xl p-3 min-w-0 hover:bg-accent/50 transition-colors duration-200">
+                      {/* Activity Status - De-emphasized */}
+                      <div className="bg-muted/20 border border-border/30 rounded-xl p-3 min-w-0 hover:bg-muted/30 transition-colors duration-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <Clock className="h-3 w-3 text-accent-foreground" />
-                          <span className="text-xs font-medium text-accent-foreground/80">Activity</span>
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground">Activity</span>
                         </div>
-                        <div className="text-sm font-semibold text-accent-foreground">{pssr.lastActivity}</div>
-                        <div className="text-xs text-accent-foreground/70">Last update</div>
+                        <div className="text-sm font-semibold text-foreground">{pssr.lastActivity}</div>
+                        <div className="text-xs text-muted-foreground">Last update</div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Progress Circle (Prominent) */}
+                  {/* Enhanced Progress Circle (Prominent) */}
                   <div className="text-center mr-6 flex-shrink-0">
-                    <div className="mb-2">
-                      <div className="text-xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
-                      <div className="text-xs text-muted-foreground font-medium">Progress</div>
+                    <div className="mb-3">
+                      <div className="text-2xl font-bold text-foreground mb-1">{pssr.progress}%</div>
+                      <div className="text-xs text-muted-foreground font-medium">Complete</div>
                     </div>
                     
-                    <div className="relative w-16 h-16">
-                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
+                    <div className="relative w-20 h-20">
+                      {/* Background ring with subtle shadow */}
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-muted/30 to-muted/50 shadow-inner"></div>
+                      
+                      <svg className="w-20 h-20 transform -rotate-90 relative z-10" viewBox="0 0 100 100">
+                        {/* Background circle */}
                         <circle
                           cx="50"
                           cy="50"
                           r="35"
                           stroke="hsl(var(--muted))"
-                          strokeWidth="6"
+                          strokeWidth="4"
                           fill="none"
+                          opacity="0.3"
                         />
+                        
+                        {/* Progress circle with gradient */}
                         <circle
                           cx="50"
                           cy="50"
                           r="35"
-                          stroke="hsl(var(--primary))"
+                          stroke="url(#progressGradient)"
                           strokeWidth="6"
                           fill="none"
                           strokeDasharray={`${2 * Math.PI * 35}`}
                           strokeDashoffset={`${2 * Math.PI * 35 * (1 - pssr.progress / 100)}`}
                           strokeLinecap="round"
-                          className="transition-all duration-1000 ease-out group-hover:stroke-[8]"
+                          className="transition-all duration-1000 ease-out group-hover:stroke-[7] drop-shadow-lg"
                         />
+                        
+                        {/* Gradient definition */}
+                        <defs>
+                          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                          </linearGradient>
+                        </defs>
                       </svg>
+                      
+                      {/* Center icon with subtle glow */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <CheckCircle className={`h-4 w-4 transition-colors duration-200 ${pssr.progress === 100 ? 'text-success' : 'text-muted-foreground/40'}`} />
+                        <div className={`rounded-full p-2 transition-all duration-300 ${
+                          pssr.progress === 100 
+                            ? 'bg-success/20 text-success shadow-fluent-sm' 
+                            : 'bg-primary/10 text-primary/60'
+                        }`}>
+                          <CheckCircle className="h-5 w-5" />
+                        </div>
                       </div>
+                      
+                      {/* Subtle outer glow on hover */}
+                      <div className="absolute inset-0 rounded-full bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
                     </div>
                   </div>
 
