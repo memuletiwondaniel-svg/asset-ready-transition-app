@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
@@ -264,7 +264,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       currentTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       currentDescription.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesFilter = filterType === 'all' || task.criticality === filterType;
+    let matchesFilter = true;
+    
+    if (filterType === 'all') {
+      matchesFilter = true;
+    } else if (['critical', 'high', 'medium', 'low'].includes(filterType)) {
+      matchesFilter = task.criticality === filterType;
+    } else if (filterType === 'pssr') {
+      matchesFilter = task.type === 'pssr';
+    } else if (filterType === 'pac') {
+      matchesFilter = task.type === 'pac';
+    } else if (filterType === 'recent') {
+      matchesFilter = ['4 hours', '6 hours', '12 hours', '1 day', '2 days'].includes(task.age);
+    } else if (filterType === 'older') {
+      matchesFilter = ['3 days', '5 days'].includes(task.age);
+    } else if (filterType === 'project') {
+      matchesFilter = true; // All tasks belong to some project
+    }
     
     return matchesSearch && matchesFilter;
   });
@@ -280,12 +296,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
         Bahasa: 'Permulaan Selamat'
       },
       description: {
-        English: 'Manage the safe introduction of hydrocarbons into new facilities using the Pre-Start Up Safety Review (PSSR) process and comprehensive safety checklists',
-        العربية: 'إدارة الإدخال الآمن للهيدروكربونات إلى المرافق الجديدة باستخدام عملية مراجعة السلامة قبل البدء (PSSR) وقوائم مراجعة السلامة الشاملة',
-        Русский: 'Управление безопасным вводом углеводородов в новые объекты с использованием процесса предпускового обзора безопасности (PSSR) и комплексных контрольных списков безопасности',
-        Bahasa: 'Urus pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak keselamatan yang komprehensif'
+        English: 'Manage the safe introduction of hydrocarbons into a new facility using the Pre-Start Up Safety Review (PSSR) process and checklists',
+        العربية: 'إدارة الإدخال الآمن للهيدروكربونات إلى مرفق جديد باستخدام عملية مراجعة السلامة قبل البدء (PSSR) وقوائم المراجعة',
+        Русский: 'Управление безопасным вводом углеводородов в новый объект с использованием процесса предпускового обзора безопасности (PSSR) и контрольных списков',
+        Bahasa: 'Urus pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak'
       },
-      icon: ShieldCheck,
+      icon: ClipboardList,
       gradient: 'from-destructive/20 via-destructive/10 to-destructive/5',
       iconBg: 'bg-gradient-to-br from-destructive to-destructive/80',
       accentColor: 'destructive',
@@ -358,7 +374,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                   Operation Readiness, Start-Up & Handover
                 </h1>
-                <p className="text-sm text-muted-foreground font-medium">Basrah Gas Company • ORSH Platform</p>
+                
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -384,14 +400,42 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <Button 
-                variant="outline" 
-                onClick={onBack}
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-                {t.signOut}
-              </Button>
+              {/* User Avatar Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0 relative overflow-hidden group">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-sm border-border/50 shadow-lg">
+                  <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 group">
+                    <User className="h-4 w-4 mr-3 text-muted-foreground group-hover:text-primary" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 group">
+                    <Settings className="h-4 w-4 mr-3 text-muted-foreground group-hover:text-primary" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 group">
+                    <ShieldCheck className="h-4 w-4 mr-3 text-muted-foreground group-hover:text-primary" />
+                    Security
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 group">
+                    <AlertTriangle className="h-4 w-4 mr-3 text-muted-foreground group-hover:text-primary" />
+                    Support
+                  </DropdownMenuItem>
+                  <div className="h-px bg-border/50 my-1" />
+                  <DropdownMenuItem 
+                    className="cursor-pointer hover:bg-red-50 text-red-600 hover:text-red-700 group font-medium"
+                    onClick={onBack}
+                  >
+                    <LogOut className="h-4 w-4 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">{t.signOut}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -426,34 +470,68 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                     {t.filter}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
                     onClick={() => setFilterType('all')}
                     className={`cursor-pointer ${filterType === 'all' ? 'bg-primary/10' : ''}`}
                   >
                     All Tasks
                   </DropdownMenuItem>
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Project</div>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('project')}
+                    className={`cursor-pointer ${filterType === 'project' ? 'bg-primary/10' : ''} pl-4`}
+                  >
+                    By Project
+                  </DropdownMenuItem>
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Task Type</div>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('pssr')}
+                    className={`cursor-pointer ${filterType === 'pssr' ? 'bg-primary/10' : ''} pl-4`}
+                  >
+                    PSSR
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('pac')}
+                    className={`cursor-pointer ${filterType === 'pac' ? 'bg-primary/10' : ''} pl-4`}
+                  >
+                    PAC
+                  </DropdownMenuItem>
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Days in Queue</div>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('recent')}
+                    className={`cursor-pointer ${filterType === 'recent' ? 'bg-primary/10' : ''} pl-4`}
+                  >
+                    Recent (0-2 days)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFilterType('older')}
+                    className={`cursor-pointer ${filterType === 'older' ? 'bg-primary/10' : ''} pl-4`}
+                  >
+                    Older (3+ days)
+                  </DropdownMenuItem>
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Criticality</div>
                   <DropdownMenuItem
                     onClick={() => setFilterType('critical')}
-                    className={`cursor-pointer ${filterType === 'critical' ? 'bg-primary/10' : ''}`}
+                    className={`cursor-pointer ${filterType === 'critical' ? 'bg-primary/10' : ''} pl-4`}
                   >
                     Critical
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setFilterType('high')}
-                    className={`cursor-pointer ${filterType === 'high' ? 'bg-primary/10' : ''}`}
+                    className={`cursor-pointer ${filterType === 'high' ? 'bg-primary/10' : ''} pl-4`}
                   >
                     High Priority
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setFilterType('medium')}
-                    className={`cursor-pointer ${filterType === 'medium' ? 'bg-primary/10' : ''}`}
+                    className={`cursor-pointer ${filterType === 'medium' ? 'bg-primary/10' : ''} pl-4`}
                   >
                     Medium Priority
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setFilterType('low')}
-                    className={`cursor-pointer ${filterType === 'low' ? 'bg-primary/10' : ''}`}
+                    className={`cursor-pointer ${filterType === 'low' ? 'bg-primary/10' : ''} pl-4`}
                   >
                     Low Priority
                   </DropdownMenuItem>
