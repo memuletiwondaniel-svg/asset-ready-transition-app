@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Settings, BarChart3, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
@@ -11,7 +12,18 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
-  const canvasSections = [
+  // Mock user role - in a real app, this would come from authentication context
+  const userRole = 'admin'; // Change to 'user' to test role-based access
+  
+  // Mock pending tasks data
+  const pendingTasks = {
+    pssrReviews: 3,
+    approvalsPending: 5,
+    documentsReview: 2,
+    handoverTasks: 4
+  };
+
+  const allSections = [
     {
       id: 'safe-startup',
       title: 'Safe Start-Up',
@@ -19,7 +31,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       icon: ShieldCheck,
       gradient: 'from-destructive/20 via-destructive/10 to-destructive/5',
       iconBg: 'bg-gradient-to-br from-destructive to-destructive/80',
-      accentColor: 'destructive'
+      accentColor: 'destructive',
+      allowedRoles: ['user', 'admin']
     },
     {
       id: 'p2o',
@@ -28,7 +41,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       icon: Settings,
       gradient: 'from-primary/20 via-primary/10 to-primary/5',
       iconBg: 'bg-gradient-to-br from-primary to-primary/80',
-      accentColor: 'primary'
+      accentColor: 'primary',
+      allowedRoles: ['user', 'admin']
     },
     {
       id: 'users',
@@ -37,9 +51,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       icon: Users,
       gradient: 'from-muted-foreground/20 via-muted-foreground/10 to-muted-foreground/5',
       iconBg: 'bg-gradient-to-br from-muted-foreground to-muted-foreground/80',
-      accentColor: 'muted-foreground'
+      accentColor: 'muted-foreground',
+      allowedRoles: ['admin']
+    },
+    {
+      id: 'projects',
+      title: 'Project Management',
+      description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
+      icon: BarChart3,
+      gradient: 'from-blue-500/20 via-blue-500/10 to-blue-500/5',
+      iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
+      accentColor: 'blue-500',
+      allowedRoles: ['admin']
     }
   ];
+
+  // Filter sections based on user role
+  const availableSections = allSections.filter(section => 
+    section.allowedRoles.includes(userRole)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -56,8 +86,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                 />
               </div>
               <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h1 className="font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  <span className="text-5xl">Operation Readiness</span>, <span className="text-2xl">Start-Up</span> & <span className="text-2xl">Handover</span>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                  Operation Readiness, Start-Up & Handover
                 </h1>
                 <p className="text-sm text-muted-foreground font-medium">Basrah Gas Company • ORSH Platform</p>
               </div>
@@ -74,81 +104,161 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
         </div>
       </div>
 
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-8 py-16">
-        <div className="text-center mb-20 animate-fade-in-up">
-          <h2 className="text-6xl font-light text-foreground mb-6 tracking-tight">
-            Choose your
-            <span className="fluent-hero-text font-semibold"> workspace</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Access the tools you need for operational readiness, safety compliance, and seamless project handovers
-          </p>
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        {/* Pending Tasks Summary */}
+        <div className="mb-12 animate-fade-in-up">
+          <h2 className="text-3xl font-bold text-foreground mb-6">Your Dashboard</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('safe-startup')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-destructive/10">
+                    <ShieldCheck className="h-6 w-6 text-destructive" />
+                  </div>
+                  <Badge variant="destructive" className="animate-pulse">
+                    {pendingTasks.pssrReviews}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">PSSR Reviews</h3>
+                <p className="text-sm text-muted-foreground">Pending safety reviews</p>
+                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
+                  View all <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('safe-startup')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-amber-500/10">
+                    <Clock className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                    {pendingTasks.approvalsPending}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Approvals Pending</h3>
+                <p className="text-sm text-muted-foreground">Awaiting your approval</p>
+                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
+                  Review <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('p2o')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <ClipboardList className="h-6 w-6 text-primary" />
+                  </div>
+                  <Badge variant="outline" className="border-primary text-primary">
+                    {pendingTasks.documentsReview}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Documents Review</h3>
+                <p className="text-sm text-muted-foreground">P2O documentation</p>
+                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
+                  Review <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('p2o')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-blue-500/10">
+                    <Settings className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <Badge variant="outline" className="border-blue-500 text-blue-600">
+                    {pendingTasks.handoverTasks}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Handover Tasks</h3>
+                <p className="text-sm text-muted-foreground">Active transitions</p>
+                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
+                  Manage <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Enhanced Module Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {canvasSections.map((section, index) => {
-            const IconComponent = section.icon;
-            return (
-              <div
-                key={section.id}
-                className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal"
-                onClick={() => onNavigate(section.id)}
-                style={{ 
-                  animationDelay: `${index * 200}ms`,
-                }}
-              >
-                {/* Gradient overlay */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${section.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                
-                {/* Content container */}
-                <div className="relative z-10 p-8">
-                  {/* Icon with modern styling */}
-                  <div className="flex justify-center mb-8">
-                    <div className={`w-20 h-20 rounded-2xl ${section.iconBg} flex items-center justify-center group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-xl`}>
-                      <IconComponent className="h-10 w-10 text-white" />
-                    </div>
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="text-center space-y-6">
-                    <h3 className="text-2xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
-                      {section.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground leading-relaxed text-base min-h-[5rem]">
-                      {section.description}
-                    </p>
-                    
-                    {/* Modern CTA Button */}
-                    <div className="pt-4">
-                      <Button 
-                        className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-3 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(section.id);
-                        }}
-                      >
-                        Launch {section.title}
-                        <ArrowLeft className="h-4 w-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform duration-200" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+        {/* Workspace Selection */}
+        <div className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-light text-foreground mb-4 tracking-tight">
+              Choose your
+              <span className="fluent-hero-text font-semibold"> workspace</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Access the tools you need for operational readiness, safety compliance, and seamless project handovers
+            </p>
+          </div>
 
-                {/* Decorative accent */}
-                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${section.accentColor} to-${section.accentColor}/60`} />
-                
-                {/* Hover glow effect */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm -z-10" />
-              </div>
-            );
-          })}
+          {/* Enhanced Module Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {availableSections.map((section, index) => {
+              const IconComponent = section.icon;
+              return (
+                <div
+                  key={section.id}
+                  className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal"
+                  onClick={() => onNavigate(section.id)}
+                  style={{ 
+                    animationDelay: `${0.4 + index * 0.1}s`,
+                  }}
+                >
+                  {/* Gradient overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${section.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  
+                  {/* Content container */}
+                  <div className="relative z-10 p-8">
+                    {/* Icon with modern styling */}
+                    <div className="flex justify-center mb-8">
+                      <div className={`w-20 h-20 rounded-2xl ${section.iconBg} flex items-center justify-center group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-xl`}>
+                        <IconComponent className="h-10 w-10 text-white" />
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="text-center space-y-6">
+                      <h3 className="text-2xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
+                        {section.title}
+                      </h3>
+                      
+                      <p className="text-muted-foreground leading-relaxed text-base min-h-[5rem]">
+                        {section.description}
+                      </p>
+                      
+                      {/* Modern CTA Button */}
+                      <div className="pt-4">
+                        <Button 
+                          className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-3 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate(section.id);
+                          }}
+                        >
+                          Launch {section.title}
+                          <ArrowLeft className="h-4 w-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform duration-200" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Decorative accent */}
+                  <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${section.accentColor} to-${section.accentColor}/60`} />
+                  
+                  {/* Hover glow effect */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm -z-10" />
+                </div>
+              );
+            })}
+          </div>
         </div>
         
         {/* Enhanced Footer */}
-        <div className="mt-24 text-center animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+        <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
           <div className="inline-flex items-center px-6 py-3 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 shadow-fluent-sm">
             <div className="w-2 h-2 rounded-full bg-success mr-3 animate-pulse-subtle" />
             <p className="text-sm text-muted-foreground font-medium">
