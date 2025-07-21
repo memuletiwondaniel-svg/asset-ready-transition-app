@@ -221,10 +221,11 @@ const Index = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span>experience with the</span>
                       <span className="relative inline-block">
-                        <span className="font-black text-3xl text-white drop-shadow-2xl tracking-widest font-mono bg-gradient-to-r from-black/40 to-black/20 px-4 py-2 rounded-xl border border-white/30 backdrop-blur-md shadow-fluent-xl">
-                          ORSH
+                        <span className="font-black text-3xl text-white tracking-widest font-mono bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-cyan-600/20 px-4 py-2 rounded-xl border-2 border-white/40 backdrop-blur-md relative overflow-hidden">
+                          <span className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 animate-pulse-subtle"></span>
+                          <span className="relative z-10">ORSH</span>
                         </span>
-                        <span className="absolute inset-0 font-black text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mix-blend-overlay tracking-widest font-mono px-4 py-2">
+                        <span className="absolute inset-0 font-black text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent tracking-widest font-mono px-4 py-2 opacity-80">
                           ORSH
                         </span>
                       </span>
