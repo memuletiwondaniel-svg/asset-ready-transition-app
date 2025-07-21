@@ -23,8 +23,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut, GripVertical, Pin, PinOff, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut, GripVertical, Pin, PinOff, ArrowLeft, Grid3X3, List } from 'lucide-react';
 import DraggableTaskCard from './DraggableTaskCard';
+import DraggableTaskList from './DraggableTaskList';
 
 interface LandingPageProps {
   onBack: () => void;
@@ -43,6 +44,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [taskOrder, setTaskOrder] = useState<number[]>([]);
   const [pinnedTasks, setPinnedTasks] = useState<number[]>([]);
+  const [taskViewMode, setTaskViewMode] = useState<'cards' | 'list'>('cards');
   
   // Language translations
   const translations = {
@@ -546,10 +548,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
             <div className="flex items-center space-x-4">
               <h2 className="text-3xl font-bold text-foreground">{t.dashboard}</h2>
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                2 {t.newTasks} 02/04/2025
+                {filteredTasks.length} {t.newTasks} {new Date().toLocaleDateString()}
               </Badge>
             </div>
             <div className="flex items-center space-x-2">
+              {/* View Toggle */}
+              <div className="flex rounded-lg border border-border/50 bg-muted/20 p-1">
+                <button
+                  onClick={() => setTaskViewMode('cards')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    taskViewMode === 'cards'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <Grid3X3 className="h-3 w-3" />
+                  Cards
+                </button>
+                <button
+                  onClick={() => setTaskViewMode('list')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    taskViewMode === 'list'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <List className="h-3 w-3" />
+                  List
+                </button>
+              </div>
+
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -650,7 +678,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
             </div>
           </div>
 
-          {/* Ultra Modern Microsoft Fluent Task Cards Grid - Compact Design */}
+          {/* Task Display - Cards or List */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -658,19 +686,34 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={filteredTasks.map(task => task.id)} strategy={verticalListSortingStrategy}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 transition-all duration-500">
-                {(showAllTasks ? filteredTasks : filteredTasks.slice(0, 5)).map((task, index) => (
-                  <DraggableTaskCard
-                    key={task.id}
-                    task={task}
-                    index={index}
-                    selectedLanguage={selectedLanguage}
-                    isPinned={pinnedTasks.includes(task.id)}
-                    onTogglePin={handleToggleTaskPin}
-                    viewDetailsText={t.viewDetails}
-                  />
-                ))}
-              </div>
+              {taskViewMode === 'cards' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 transition-all duration-500">
+                  {(showAllTasks ? filteredTasks : filteredTasks.slice(0, 5)).map((task, index) => (
+                    <DraggableTaskCard
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      selectedLanguage={selectedLanguage}
+                      isPinned={pinnedTasks.includes(task.id)}
+                      onTogglePin={handleToggleTaskPin}
+                      viewDetailsText={t.viewDetails}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2 max-w-4xl">
+                  {(showAllTasks ? filteredTasks : filteredTasks.slice(0, 5)).map((task, index) => (
+                    <DraggableTaskList
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      selectedLanguage={selectedLanguage}
+                      isPinned={pinnedTasks.includes(task.id)}
+                      onTogglePin={handleToggleTaskPin}
+                    />
+                  ))}
+                </div>
+              )}
             </SortableContext>
 
             <DragOverlay>
