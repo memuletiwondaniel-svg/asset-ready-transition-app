@@ -206,52 +206,88 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
             </div>
           </div>
 
-          {/* Expandable Task Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-all duration-500">
-            {(showAllTasks ? pendingTasks : pendingTasks.slice(0, 4)).map((task) => {
+          {/* Modern Microsoft Fluent Task Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-all duration-500">
+            {(showAllTasks ? pendingTasks : pendingTasks.slice(0, 4)).map((task, index) => {
               const IconComponent = task.icon;
               const getCriticalityColor = (criticality: string) => {
                 switch (criticality) {
-                  case 'critical': return 'destructive';
-                  case 'high': return 'orange';
-                  case 'medium': return 'blue';
-                  default: return 'secondary';
+                  case 'critical': return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', accent: 'bg-red-500' };
+                  case 'high': return { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', accent: 'bg-orange-500' };
+                  case 'medium': return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', accent: 'bg-blue-500' };
+                  default: return { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', accent: 'bg-gray-500' };
                 }
               };
               
+              const criticalityStyle = getCriticalityColor(task.criticality);
+              
               return (
-                <Card 
-                  key={task.id} 
-                  className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group border-0 bg-white/60 backdrop-blur-xl shadow-sm hover:shadow-lg hover:bg-white/80"
+                <div
+                  key={task.id}
+                  className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-white/20 shadow-sm hover:shadow-xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1 cursor-pointer animate-fade-in-up"
+                  style={{ 
+                    animationDelay: `${index * 0.1}s`,
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View task: ${task.title}`}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-3 mb-3">
-                      <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                        <IconComponent className="h-4 w-4 text-primary" />
+                  {/* Subtle gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Priority accent bar */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 ${criticalityStyle.accent} opacity-80`} />
+                  
+                  <div className="relative p-5">
+                    {/* Header with icon and priority badge */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <IconComponent className="h-5 w-5 text-primary" />
+                          </div>
+                          {/* Subtle glow effect */}
+                          <div className="absolute inset-0 w-10 h-10 rounded-xl bg-primary/20 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base text-gray-900 mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                            {task.title}
+                          </h3>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-foreground mb-1 truncate">{task.title}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+                      
+                      {/* Priority badge with modern styling */}
+                      <div className={`px-2.5 py-1 rounded-full text-xs font-medium ${criticalityStyle.bg} ${criticalityStyle.text} ${criticalityStyle.border} border backdrop-blur-sm`}>
+                        {task.criticality}
                       </div>
                     </div>
+
+                    {/* Description with improved typography */}
+                    <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2 group-hover:text-gray-700 transition-colors duration-200">
+                      {task.description}
+                    </p>
+
+                    {/* Footer with age and action */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full">
-                          {task.age}
-                        </Badge>
-                        <Badge 
-                          variant={getCriticalityColor(task.criticality) as any} 
-                          className="text-xs px-2 py-0.5 rounded-full"
-                        >
-                          {task.criticality}
-                        </Badge>
+                        {/* Modern age badge */}
+                        <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-100/80 backdrop-blur-sm border border-gray-200/50">
+                          <Clock className="h-3 w-3 text-gray-500 mr-1.5" />
+                          <span className="text-xs font-medium text-gray-700">{task.age}</span>
+                        </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="h-6 p-0 text-xs group-hover:text-primary">
-                        View <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                      
+                      {/* Modern action button */}
+                      <button className="inline-flex items-center px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-1">
+                        <span>View</span>
+                        <ArrowRight className="h-3 w-3 ml-1.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+                      </button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  {/* Focus ring for accessibility */}
+                  <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 ring-offset-2 opacity-0 group-focus:opacity-100 transition-opacity duration-200" />
+                </div>
               );
             })}
           </div>
