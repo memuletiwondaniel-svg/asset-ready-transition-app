@@ -240,46 +240,46 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       </header>
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
-        {/* Statistics Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <div className="fluent-card p-6 text-center animate-fade-in">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Shield className="h-6 w-6 text-primary" />
+        {/* Compact Statistics Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-primary/20 transition-colors duration-200">
+              <Shield className="h-4 w-4 text-primary" />
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">{stats.total}</div>
-            <div className="text-sm text-muted-foreground font-medium">Total Reviews</div>
+            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.total}</div>
+            <div className="text-xs text-muted-foreground font-medium">Total Reviews</div>
           </div>
 
-          <div className="fluent-card p-6 text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="h-6 w-6 text-success" />
+          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.1s' }}>
+            <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-success/20 transition-colors duration-200">
+              <CheckCircle className="h-4 w-4 text-success" />
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">{stats.approved}</div>
-            <div className="text-sm text-muted-foreground font-medium">Approved</div>
+            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.approved}</div>
+            <div className="text-xs text-muted-foreground font-medium">Approved</div>
           </div>
 
-          <div className="fluent-card p-6 text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <div className="w-12 h-12 rounded-2xl bg-warning/10 flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-6 w-6 text-warning" />
+          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.2s' }}>
+            <div className="w-8 h-8 rounded-xl bg-warning/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-warning/20 transition-colors duration-200">
+              <Clock className="h-4 w-4 text-warning" />
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">{stats.underReview}</div>
-            <div className="text-sm text-muted-foreground font-medium">Under Review</div>
+            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.underReview}</div>
+            <div className="text-xs text-muted-foreground font-medium">Under Review</div>
           </div>
 
-          <div className="fluent-card p-6 text-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="w-12 h-12 rounded-2xl bg-muted/20 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.3s' }}>
+            <div className="w-8 h-8 rounded-xl bg-muted/20 flex items-center justify-center mx-auto mb-2 group-hover:bg-muted/30 transition-colors duration-200">
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">{stats.draft}</div>
-            <div className="text-sm text-muted-foreground font-medium">Draft</div>
+            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.draft}</div>
+            <div className="text-xs text-muted-foreground font-medium">Draft</div>
           </div>
 
-          <div className="fluent-card p-6 text-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
+          <div className="fluent-card p-4 text-center animate-fade-in group hover:shadow-fluent-md transition-all duration-300" style={{ animationDelay: '0.4s' }}>
+            <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-destructive/20 transition-colors duration-200">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">{stats.criticalIssues}</div>
-            <div className="text-sm text-muted-foreground font-medium">Critical</div>
+            <div className="text-2xl font-bold text-foreground mb-0.5">{stats.criticalIssues}</div>
+            <div className="text-xs text-muted-foreground font-medium">Critical</div>
           </div>
         </div>
 
@@ -326,16 +326,19 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             {filteredPSSRs.map((pssr, index) => (
               <div 
                 key={pssr.id} 
-                className="fluent-card p-5 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 border-l-primary/20 hover:border-l-primary"
+                className="fluent-card p-5 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 border-l-primary/20 hover:border-l-primary relative overflow-hidden"
                 style={{ animationDelay: `${0.7 + index * 0.1}s` }}
                 onClick={() => handleViewDetails(pssr.id)}
               >
-                <div className="flex items-center justify-between">
+                {/* Modern gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <div className="relative z-10 flex items-center justify-between">
                   
                   {/* Primary Info - Project ID and Name (Most Prominent) */}
-                  <div className="flex-1 min-w-0 mr-6">
+                  <div className="flex-1 min-w-0 max-w-md">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold text-base border border-primary/20">
+                      <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-3 py-1.5 rounded-xl font-bold text-base shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200">
                         {pssr.projectId}
                       </div>
                       <div className={`px-2 py-1 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
@@ -344,33 +347,41 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                       {getStatusIcon(pssr.status)}
                     </div>
                     
-                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-1.5 leading-tight">
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-200 mb-1.5 leading-tight line-clamp-2">
                       {pssr.projectName}
                     </h3>
                     
-                    <div className="flex items-center gap-4 text-muted-foreground text-xs">
+                    <div className="flex flex-col gap-1 text-muted-foreground text-xs">
                       <span className="flex items-center gap-1.5">
-                        <Shield className="h-3 w-3" />
-                        {pssr.id}
+                        <Shield className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{pssr.id}</span>
                       </span>
-                      <span>Asset: {pssr.asset}</span>
-                      <span>Created: {new Date(pssr.created).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-3">
+                        <span>Asset: {pssr.asset}</span>
+                        <span>•</span>
+                        <span>{new Date(pssr.created).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* PSSR Lead (Prominent) */}
-                  <div className="flex items-center gap-3 mr-6">
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground font-medium">PSSR Lead</div>
-                      <div className="text-sm font-semibold text-foreground">{pssr.pssrLead}</div>
-                    </div>
-                    <div className="relative">
-                      <img 
-                        src={pssr.pssrLeadAvatar} 
-                        alt={pssr.pssrLead}
-                        className="w-10 h-10 rounded-xl border-2 border-border shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200"
-                      />
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background"></div>
+                  {/* PSSR Lead (Center - Fills Empty Space) */}
+                  <div className="flex items-center gap-4 px-6">
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground font-medium mb-1">PSSR Lead</div>
+                      <div className="relative mb-2">
+                        <img 
+                          src={pssr.pssrLeadAvatar} 
+                          alt={pssr.pssrLead}
+                          className="w-12 h-12 rounded-2xl border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
+                        />
+                        {/* Modern Teams-style status indicator */}
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-card rounded-full flex items-center justify-center border border-border">
+                          <div className="w-2.5 h-2.5 bg-success rounded-full"></div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate max-w-24">
+                        {pssr.pssrLead.split(' ')[0]}
+                      </div>
                     </div>
                   </div>
 
@@ -388,7 +399,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                           cy="50"
                           r="35"
                           stroke="hsl(var(--muted))"
-                          strokeWidth="8"
+                          strokeWidth="6"
                           fill="none"
                         />
                         <circle
@@ -396,45 +407,50 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                           cy="50"
                           r="35"
                           stroke="hsl(var(--primary))"
-                          strokeWidth="8"
+                          strokeWidth="6"
                           fill="none"
                           strokeDasharray={`${2 * Math.PI * 35}`}
                           strokeDashoffset={`${2 * Math.PI * 35 * (1 - pssr.progress / 100)}`}
                           strokeLinecap="round"
-                          className="transition-all duration-1000 ease-out"
+                          className="transition-all duration-1000 ease-out group-hover:stroke-[8]"
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <CheckCircle className={`h-4 w-4 ${pssr.progress === 100 ? 'text-success' : 'text-muted-foreground/40'}`} />
+                        <CheckCircle className={`h-4 w-4 transition-colors duration-200 ${pssr.progress === 100 ? 'text-success' : 'text-muted-foreground/40'}`} />
                       </div>
                     </div>
                   </div>
 
                   {/* Status and Actions */}
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <div className="font-semibold text-foreground text-sm">{pssr.status}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {pssr.status === 'Approved' && pssr.completedDate
-                            ? `${new Date(pssr.completedDate).toLocaleDateString()}`
-                            : pssr.nextReview
-                            ? `Next: ${new Date(pssr.nextReview).toLocaleDateString()}`
-                            : 'In progress'
-                          }
-                        </div>
+                  <div className="flex flex-col items-end gap-2 min-w-fit">
+                    <div className="text-right">
+                      <div className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors duration-200">
+                        {pssr.status}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {pssr.status === 'Approved' && pssr.completedDate
+                          ? new Date(pssr.completedDate).toLocaleDateString()
+                          : pssr.nextReview
+                          ? `Next: ${new Date(pssr.nextReview).toLocaleDateString()}`
+                          : 'In progress'
+                        }
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
                       {pssr.pendingApprovals > 0 && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-warning/10 text-warning rounded-lg text-xs font-semibold border border-warning/20">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-warning/10 text-warning rounded-lg text-xs font-semibold border border-warning/20 hover:bg-warning/20 transition-colors duration-200">
                           <Clock className="h-3 w-3" />
-                          {pssr.pendingApprovals}
+                          <span>{pssr.pendingApprovals}</span>
                         </div>
                       )}
                       
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10 h-8 w-8 p-0">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-primary/10 h-8 w-8 p-0 rounded-xl hover:scale-110"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </div>
