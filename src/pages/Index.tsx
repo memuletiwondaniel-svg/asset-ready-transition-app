@@ -48,28 +48,17 @@ const Index = () => {
   // Show specific section based on navigation
   if (isAuthenticated && currentSection) {
     switch (currentSection) {
-      case 'pssr':
+      case 'safe-startup':
         return <PSSRModule onBack={handleBackToLanding} />;
       case 'users':
         return <UserManagement onBack={handleBackToLanding} />;
-      case 'assets':
-        // Placeholder for Asset Management - can be implemented later
+      case 'p2o':
+        // Placeholder for P2O Module - can be implemented later
         return (
           <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4">Asset Management</h1>
-              <p className="text-gray-600 mb-6">Coming Soon...</p>
-              <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
-            </div>
-          </div>
-        );
-      case 'analytics':
-        // Placeholder for Analytics - can be implemented later
-        return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4">Analytics & Reporting</h1>
-              <p className="text-gray-600 mb-6">Coming Soon...</p>
+              <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
+              <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
               <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
             </div>
           </div>

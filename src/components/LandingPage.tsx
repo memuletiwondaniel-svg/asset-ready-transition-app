@@ -12,10 +12,18 @@ interface LandingPageProps {
 const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const canvasSections = [
     {
-      id: 'pssr',
-      title: 'PSSR',
-      description: 'Manage the risks of introduction of hydrocarbons and ensue safe start-up using the Pre-Start Up Safety Review (PSSR) Process and Checklist',
+      id: 'safe-startup',
+      title: 'Safe Start-Up',
+      description: 'Manage the safe introduction of hydrocarbons into new facilities using the Pre-Start Up Safety Review (PSSR) process and comprehensive safety checklists',
       icon: FileText,
+      color: 'bg-red-500',
+      hoverColor: 'hover:bg-red-600'
+    },
+    {
+      id: 'p2o',
+      title: 'Project-to-Operations (P2O)',
+      description: 'Manage seamless transition and handover from Project team to Asset Operations Team using PAC and FAC workflows for operational readiness',
+      icon: Settings,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
     },
@@ -24,24 +32,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       title: 'User Management',
       description: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for BGC and Kent employees',
       icon: Users,
-      color: 'bg-orange-500',
-      hoverColor: 'hover:bg-orange-600'
-    },
-    {
-      id: 'assets',
-      title: 'PAC', 
-      description: 'Manage the provisional transfer of Custody, Care and Operational Control from Project to Asset teams using the Provisional Acceptance Certificate (PAC) workflow',
-      icon: Settings,
-      color: 'bg-green-500',
-      hoverColor: 'hover:bg-green-600'
-    },
-    {
-      id: 'analytics',
-      title: 'FAC',
-      description: 'Seamlessly Manage all prerequisites to enable final transfer of an operational facility from Project to Asset team using the Final Acceptance Certificate (FAC) and Handover workflow',
-      icon: BarChart3,
-      color: 'bg-purple-500',
-      hoverColor: 'hover:bg-purple-600'
+      color: 'bg-gray-500',
+      hoverColor: 'hover:bg-gray-600'
     }
   ];
 
