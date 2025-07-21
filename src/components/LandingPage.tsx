@@ -1,9 +1,9 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
@@ -18,7 +18,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   // State management
   const [showWorkspace, setShowWorkspace] = useState(true);
   const [showAllTasks, setShowAllTasks] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Mock pending tasks data - expanded to 8 tasks
   const pendingTasks = [
@@ -95,20 +94,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       icon: Clock
     }
   ];
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 320; // Width of one card + gap
-      const newScrollLeft = direction === 'left' 
-        ? scrollContainerRef.current.scrollLeft - scrollAmount
-        : scrollContainerRef.current.scrollLeft + scrollAmount;
-      
-      scrollContainerRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   const allSections = [
     {
@@ -221,79 +206,54 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
             </div>
           </div>
 
-          {/* Horizontal Scrollable Task Cards */}
-          <div className="relative">
-            {/* Scroll Controls */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 p-0 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg hover:shadow-xl"
-              onClick={() => scroll('left')}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 p-0 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg hover:shadow-xl"
-              onClick={() => scroll('right')}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-
-            {/* Scrollable Container */}
-            <div 
-              ref={scrollContainerRef}
-              className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-8"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {(showAllTasks ? pendingTasks : pendingTasks.slice(0, 5)).map((task) => {
-                const IconComponent = task.icon;
-                const getCriticalityColor = (criticality: string) => {
-                  switch (criticality) {
-                    case 'critical': return 'destructive';
-                    case 'high': return 'orange';
-                    case 'medium': return 'blue';
-                    default: return 'secondary';
-                  }
-                };
-                
-                return (
-                  <Card 
-                    key={task.id} 
-                    className="flex-shrink-0 w-80 fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group border-0 bg-white/60 backdrop-blur-xl shadow-sm hover:shadow-lg hover:bg-white/80"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3 mb-3">
-                        <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                          <IconComponent className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm text-foreground mb-1 truncate">{task.title}</h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
-                        </div>
+          {/* Expandable Task Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-all duration-500">
+            {(showAllTasks ? pendingTasks : pendingTasks.slice(0, 4)).map((task) => {
+              const IconComponent = task.icon;
+              const getCriticalityColor = (criticality: string) => {
+                switch (criticality) {
+                  case 'critical': return 'destructive';
+                  case 'high': return 'orange';
+                  case 'medium': return 'blue';
+                  default: return 'secondary';
+                }
+              };
+              
+              return (
+                <Card 
+                  key={task.id} 
+                  className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group border-0 bg-white/60 backdrop-blur-xl shadow-sm hover:shadow-lg hover:bg-white/80"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-3 mb-3">
+                      <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                        <IconComponent className="h-4 w-4 text-primary" />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full">
-                            {task.age}
-                          </Badge>
-                          <Badge 
-                            variant={getCriticalityColor(task.criticality) as any} 
-                            className="text-xs px-2 py-0.5 rounded-full"
-                          >
-                            {task.criticality}
-                          </Badge>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-6 p-0 text-xs group-hover:text-primary">
-                          View <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                        </Button>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm text-foreground mb-1 truncate">{task.title}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full">
+                          {task.age}
+                        </Badge>
+                        <Badge 
+                          variant={getCriticalityColor(task.criticality) as any} 
+                          className="text-xs px-2 py-0.5 rounded-full"
+                        >
+                          {task.criticality}
+                        </Badge>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-6 p-0 text-xs group-hover:text-primary">
+                        View <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
