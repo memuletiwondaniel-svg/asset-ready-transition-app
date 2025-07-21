@@ -54,7 +54,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
               </div>
               <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Operation Readiness & Start-up Handover
+                  Operation Readiness, Start-Up & Handover
                 </h1>
                 <p className="text-sm text-muted-foreground font-medium">Basrah Gas Company • ORSH Platform</p>
               </div>

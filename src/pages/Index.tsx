@@ -77,13 +77,13 @@ const Index = () => {
   // Show welcome screen before authentication
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background with modern gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/10" />
+      {/* Background with enhanced gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
       <BackgroundSlideshow showFunFacts={showAuth} />
       
       {/* Modern Navigation Header */}
       <header className="relative z-20">
-        <div className="fluent-acrylic border-b border-border/20 backdrop-blur-xl">
+        <div className="bg-card/10 border-b border-border/20 backdrop-blur-xl shadow-lg">
           <div className="max-w-7xl mx-auto px-8 py-6">
             <div className="flex items-center justify-between">
               {/* Left Navigation */}
@@ -145,7 +145,7 @@ const Index = () => {
       </header>
       
       {!showAuth && (
-        <main className="relative z-10 flex items-center min-h-screen pt-32">
+        <main className="relative z-10 flex items-center min-h-[calc(100vh-120px)] pt-8">
           <div className="max-w-7xl mx-auto px-8 w-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               
@@ -158,13 +158,10 @@ const Index = () => {
                     <span className="text-primary font-semibold text-sm tracking-wide uppercase">Microsoft Fluent Design</span>
                   </div>
                   
-                  <h1 className="text-7xl lg:text-8xl font-light text-white leading-none tracking-tight">
-                    Operation
+                  <h1 className="text-6xl lg:text-7xl font-light text-white leading-none tracking-tight">
+                    Operation Readiness,
                     <span className="block font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
-                      Readiness
-                    </span>
-                    <span className="block text-6xl lg:text-7xl font-light text-white/95 mt-2">
-                      & Start-up Handover
+                      Start-Up & Handover
                     </span>
                   </h1>
                   
