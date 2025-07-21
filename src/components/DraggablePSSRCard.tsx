@@ -73,7 +73,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       }`}
     >
       <div 
-        className={`fluent-card p-3 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
+        className={`fluent-card h-32 p-3 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
           isPinned ? 'border-l-warning bg-warning/5' : 'border-l-primary/20'
         } hover:border-l-primary relative overflow-hidden ${
           isDragging ? 'ring-2 ring-primary/50 bg-primary/5' : ''
@@ -111,10 +111,10 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
         {/* Modern gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        <div className="relative z-10 flex items-center justify-between ml-7 mr-8">
+        <div className="relative z-10 flex items-stretch justify-between ml-7 mr-8 h-full">
           
           {/* Primary Info - Project ID and Name (Most Prominent) */}
-          <div className="flex-1 min-w-0 max-w-md">
+          <div className="flex-1 min-w-0 max-w-md flex flex-col justify-center">
             <div className="flex items-center gap-2.5 mb-1">
               <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2 py-0.5 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200">
                 {pssr.projectId}
@@ -175,6 +175,9 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 <div className="text-xs text-muted-foreground truncate">{pssr.location}</div>
               </div>
 
+              {/* Separator between Team and Risk/Activity */}
+              <div className="w-px bg-border/30 mx-1"></div>
+
               {/* Risk Level */}
               <div className={`border rounded-lg p-2 min-w-0 hover:opacity-80 transition-all duration-200 ${getRiskLevelColor(pssr.riskLevel)}`}>
                 <div className="flex items-center gap-1 mb-0.5">
@@ -198,7 +201,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </div>
 
           {/* Status and Progress (Right) */}
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0 min-w-0">
+          <div className="flex flex-col items-end justify-center gap-1.5 flex-shrink-0 min-w-0">
             {/* Status Badge - More Prominent */}
             <div className="flex items-center gap-2">
               <div className={`px-2 py-0.5 rounded-lg font-semibold text-xs border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md ${
