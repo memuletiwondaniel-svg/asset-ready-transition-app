@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import orshLogo from "@/assets/orsh-logo-text.png";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -210,13 +210,11 @@ const Index = () => {
                     </span>
                   </h1>
                   
-                  <div className="flex items-center gap-4 text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
+                  <div className="flex items-center gap-2 text-2xl text-white/85 font-light leading-relaxed max-w-2xl flex-wrap">
                     <span>Transform your project start-up and handover experience with the</span>
-                    <img 
-                      src={orshLogo} 
-                      alt="ORSH" 
-                      className="h-10 w-auto inline-block drop-shadow-lg"
-                    />
+                    <span className="font-bold text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg tracking-wide">
+                      ORSH
+                    </span>
                     <span>comprehensive platform.</span>
                   </div>
                 </div>
