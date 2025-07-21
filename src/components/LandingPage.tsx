@@ -333,7 +333,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
               return (
                 <div
                   key={section.id}
-                  className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal"
+                  className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal flex flex-col h-[320px]"
                   onClick={() => onNavigate(section.id)}
                   style={{ 
                     animationDelay: `${0.4 + index * 0.1}s`,
@@ -343,28 +343,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                   <div className={`absolute inset-0 bg-gradient-to-br ${section.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   
                   {/* Content container */}
-                  <div className="relative z-10 p-8">
+                  <div className="relative z-10 p-6 flex flex-col flex-1">
                     {/* Icon with modern styling */}
-                    <div className="flex justify-center mb-8">
-                      <div className={`w-20 h-20 rounded-2xl ${section.iconBg} flex items-center justify-center group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-xl`}>
-                        <IconComponent className="h-10 w-10 text-white" />
+                    <div className="flex justify-center mb-6">
+                      <div className={`w-16 h-16 rounded-2xl ${section.iconBg} flex items-center justify-center group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-xl`}>
+                        <IconComponent className="h-8 w-8 text-white" />
                       </div>
                     </div>
                     
                     {/* Content */}
-                    <div className="text-center space-y-6">
-                      <h3 className="text-2xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
+                    <div className="text-center space-y-4 flex-1 flex flex-col">
+                      <h3 className="text-xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
                         {section.title}
                       </h3>
                       
-                      <p className="text-muted-foreground leading-relaxed text-base min-h-[5rem]">
+                      <p className="text-muted-foreground leading-relaxed text-sm flex-1">
                         {section.description}
                       </p>
                       
-                      {/* Modern CTA Button */}
-                      <div className="pt-4">
+                      {/* Modern CTA Button - Always at bottom */}
+                      <div className="mt-auto pt-4">
                         <Button 
-                          className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-3 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
+                          className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-2.5 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
                           onClick={(e) => {
                             e.stopPropagation();
                             onNavigate(section.id);
