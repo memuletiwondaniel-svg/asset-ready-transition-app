@@ -136,8 +136,8 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* BGC Logo in top-right corner - Always visible on all slides */}
-      <div className="absolute top-6 right-6 z-20">
+      {/* BGC Logo in top-middle - Always visible on all slides */}
+      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20">
         <img 
           src="/lovable-uploads/421778ce-4ffe-4e3b-b370-8d1bb24a3d51.png" 
           alt="BGC Logo" 

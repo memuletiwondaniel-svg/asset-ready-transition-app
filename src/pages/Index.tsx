@@ -57,7 +57,7 @@ const Index = () => {
       safeStartup: "Safe Start-Up",
       safeStartupDesc: "Manage the safe introduction of hydrocarbons into a new facility using the Pre-Start Up Safety Review (PSSR) process and checklists",
       p2oHandover: "P2O Handover",
-      p2oHandoverDesc: "Seamless asset transition management",
+      p2oHandoverDesc: "Seamless transition and handover from construction and commissioning to Asset Operation",
       accessButton: "Access ORSH Platform",
       enterpriseSecure: "Enterprise Secure",
       isoCompliant: "ISO Compliant",
@@ -70,7 +70,7 @@ const Index = () => {
       safeStartup: "البدء الآمن",
       safeStartupDesc: "إدارة الإدخال الآمن للهيدروكربونات في منشأة جديدة باستخدام عملية مراجعة السلامة قبل البدء وقوائم التحقق",
       p2oHandover: "تسليم P2O",
-      p2oHandoverDesc: "إدارة انتقال الأصول بسلاسة",
+      p2oHandoverDesc: "انتقال وتسليم سلس من البناء والتشغيل إلى تشغيل الأصول",
       accessButton: "الوصول إلى منصة ORSH",
       enterpriseSecure: "أمان المؤسسة",
       isoCompliant: "متوافق مع ISO",
@@ -83,7 +83,7 @@ const Index = () => {
       safeStartup: "Démarrage Sécurisé",
       safeStartupDesc: "Gérer l'introduction sécurisée des hydrocarbures dans une nouvelle installation en utilisant le processus de révision de sécurité avant démarrage (PSSR) et les listes de contrôle",
       p2oHandover: "Remise P2O",
-      p2oHandoverDesc: "Gestion transparente de la transition des actifs",
+      p2oHandoverDesc: "Transition et remise transparentes de la construction et de la mise en service à l'exploitation des actifs",
       accessButton: "Accéder à la Plateforme ORSH",
       enterpriseSecure: "Sécurité Entreprise",
       isoCompliant: "Conforme ISO",
@@ -96,7 +96,7 @@ const Index = () => {
       safeStartup: "Permulaan Selamat",
       safeStartupDesc: "Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak",
       p2oHandover: "Penyerahan P2O",
-      p2oHandoverDesc: "Pengurusan peralihan aset yang lancar",
+      p2oHandoverDesc: "Peralihan dan penyerahan yang lancar dari pembinaan dan komisioning kepada Operasi Aset",
       accessButton: "Akses Platform ORSH",
       enterpriseSecure: "Keselamatan Perusahaan",
       isoCompliant: "Patuh ISO",
@@ -109,7 +109,7 @@ const Index = () => {
       safeStartup: "Безопасный Запуск",
       safeStartupDesc: "Управление безопасным введением углеводородов в новое предприятие с использованием процесса предпускового обзора безопасности (PSSR) и контрольных списков",
       p2oHandover: "Передача P2O",
-      p2oHandoverDesc: "Беспрепятственное управление переходом активов",
+      p2oHandoverDesc: "Бесшовный переход и передача от строительства и ввода в эксплуатацию к эксплуатации активов",
       accessButton: "Доступ к Платформе ORSH",
       enterpriseSecure: "Корпоративная Безопасность",
       isoCompliant: "Соответствие ISO",
@@ -217,19 +217,19 @@ const Index = () => {
                 
                 {/* Feature Highlights */}
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-8 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-8 h-8 rounded bg-gradient-to-br from-destructive to-destructive/80" />
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-7 h-7 rounded bg-gradient-to-br from-destructive to-destructive/80" />
                     </div>
-                    <h3 className="font-bold text-white mb-3 text-lg">{t.safeStartup}</h3>
+                    <h3 className="font-bold text-white mb-2 text-lg">{t.safeStartup}</h3>
                     <p className="text-white/70 text-base leading-relaxed">{t.safeStartupDesc}</p>
                   </div>
                   
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-8 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-primary/80" />
+                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm hover:bg-card/30 transition-all duration-300 group">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-7 h-7 rounded bg-gradient-to-br from-primary to-primary/80" />
                     </div>
-                    <h3 className="font-bold text-white mb-3 text-lg">{t.p2oHandover}</h3>
+                    <h3 className="font-bold text-white mb-2 text-lg">{t.p2oHandover}</h3>
                     <p className="text-white/70 text-base leading-relaxed">{t.p2oHandoverDesc}</p>
                   </div>
                 </div>
