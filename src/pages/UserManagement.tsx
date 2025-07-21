@@ -52,9 +52,9 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
     const matchesSearch = user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = !filterRole || user.role === filterRole;
-    const matchesCompany = !filterCompany || user.company === filterCompany;
-    const matchesProject = !filterProject || user.associatedProjects.includes(filterProject);
+    const matchesRole = !filterRole || filterRole === "all" || user.role === filterRole;
+    const matchesCompany = !filterCompany || filterCompany === "all" || user.company === filterCompany;
+    const matchesProject = !filterProject || filterProject === "all" || user.associatedProjects.includes(filterProject);
     
     return matchesSearch && matchesRole && matchesCompany && matchesProject;
   });
@@ -174,7 +174,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                   <SelectValue placeholder="Filter by Role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Roles</SelectItem>
+                  <SelectItem value="all">All Roles</SelectItem>
                   {roles.map(role => (
                     <SelectItem key={role} value={role}>{role}</SelectItem>
                   ))}
@@ -186,7 +186,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                   <SelectValue placeholder="Filter by Company" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Companies</SelectItem>
+                  <SelectItem value="all">All Companies</SelectItem>
                   {companies.map(company => (
                     <SelectItem key={company} value={company}>{company}</SelectItem>
                   ))}
@@ -198,7 +198,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                   <SelectValue placeholder="Filter by Project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Projects</SelectItem>
+                  <SelectItem value="all">All Projects</SelectItem>
                   {projects.map(project => (
                     <SelectItem key={project} value={project}>{project}</SelectItem>
                   ))}
