@@ -159,8 +159,8 @@ const Index = () => {
                   </div>
                   
                   <h1 className="font-light text-white leading-none tracking-tight">
-                    <span className="text-8xl lg:text-9xl">Operation Readiness</span>,
-                    <span className="block text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
+                    <span className="text-5xl lg:text-6xl">Operation Readiness</span>,
+                    <span className="block text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
                       Start-Up & Handover
                     </span>
                   </h1>
