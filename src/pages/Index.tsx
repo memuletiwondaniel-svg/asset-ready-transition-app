@@ -8,7 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Languages, Phone, ArrowLeft } from "lucide-react";
+import { Languages, Phone } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import AuthenticationModal from "@/components/AuthenticationModal";
 import PSSRModule from "@/components/PSSRModule";
 import LandingPage from "@/components/LandingPage";

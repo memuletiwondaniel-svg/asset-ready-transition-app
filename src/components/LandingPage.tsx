@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Settings, BarChart3, ArrowLeft, Users } from 'lucide-react';
+import { FileText, Settings, BarChart3, Users } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
   onBack: () => void;
