@@ -53,7 +53,7 @@ const Index = () => {
     en: {
       title: "Operation Readiness",
       subtitle: "Start-Up & Handover",
-      description: "Transform your project start-up and handover experience with the ORSH comprehensive platform.",
+      description: "Transform your project start-up and handover experience with the ORSH platform.",
       safeStartup: "Safe Start-Up",
       safeStartupDesc: "Manage the safe introduction of hydrocarbons into a new facility using the Pre-Start Up Safety Review (PSSR) process and checklists",
       p2oHandover: "P2O Handover",
@@ -66,7 +66,7 @@ const Index = () => {
     ar: {
       title: "جاهزية العمليات",
       subtitle: "البدء والتسليم",
-      description: "حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH الشاملة.",
+      description: "حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH.",
       safeStartup: "البدء الآمن",
       safeStartupDesc: "إدارة الإدخال الآمن للهيدروكربونات في منشأة جديدة باستخدام عملية مراجعة السلامة قبل البدء وقوائم التحقق",
       p2oHandover: "تسليم P2O",
@@ -79,7 +79,7 @@ const Index = () => {
     fr: {
       title: "Préparation Opérationnelle",
       subtitle: "Démarrage et Remise",
-      description: "Transformez votre expérience de démarrage et de remise de projet avec la plateforme complète ORSH.",
+      description: "Transformez votre expérience de démarrage et de remise de projet avec la plateforme ORSH.",
       safeStartup: "Démarrage Sécurisé",
       safeStartupDesc: "Gérer l'introduction sécurisée des hydrocarbures dans une nouvelle installation en utilisant le processus de révision de sécurité avant démarrage (PSSR) et les listes de contrôle",
       p2oHandover: "Remise P2O",
@@ -92,7 +92,7 @@ const Index = () => {
     ms: {
       title: "Kesediaan Operasi",
       subtitle: "Permulaan & Penyerahan",
-      description: "Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform komprehensif ORSH.",
+      description: "Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform ORSH.",
       safeStartup: "Permulaan Selamat",
       safeStartupDesc: "Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak",
       p2oHandover: "Penyerahan P2O",
@@ -105,7 +105,7 @@ const Index = () => {
     ru: {
       title: "Операционная Готовность",
       subtitle: "Запуск и Передача",
-      description: "Преобразуйте опыт запуска и передачи проекта с помощью комплексной платформы ORSH.",
+      description: "Преобразуйте опыт запуска и передачи проекта с помощью платформы ORSH.",
       safeStartup: "Безопасный Запуск",
       safeStartupDesc: "Управление безопасным введением углеводородов в новое предприятие с использованием процесса предпускового обзора безопасности (PSSR) и контрольных списков",
       p2oHandover: "Передача P2O",
@@ -203,24 +203,33 @@ const Index = () => {
                 {/* Hero Heading */}
                 <div className="space-y-4">
                   
-                  <h1 className="font-light text-white leading-none tracking-tight">
-                    <span className="text-5xl lg:text-6xl">{t.title}</span>,
-                    <span className="block text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
+                  {/* Enhanced Microsoft Fluent Typography */}
+                  <h1 className="font-light text-white leading-[0.9] tracking-tight">
+                    <span className="text-5xl lg:text-7xl font-extralight bg-gradient-to-r from-white via-white/95 to-white/85 bg-clip-text text-transparent drop-shadow-2xl">
+                      {t.title}
+                    </span>
+                    <span className="block text-4xl lg:text-6xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent mt-2 drop-shadow-xl">
                       {t.subtitle}
                     </span>
                   </h1>
                   
-                  <div className="flex items-center gap-2 text-2xl text-white/85 font-light leading-relaxed max-w-2xl flex-wrap">
-                    <span>Transform your project start-up and handover experience with the</span>
-                    <span className="relative inline-block">
-                      <span className="font-black text-3xl text-white drop-shadow-2xl tracking-widest font-mono bg-black/30 px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm">
-                        ORSH
+                  {/* Two-line description with enhanced Microsoft typography */}
+                  <div className="space-y-2 text-2xl text-white/90 font-light leading-relaxed max-w-2xl">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span>Transform your project start-up and handover</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span>experience with the</span>
+                      <span className="relative inline-block">
+                        <span className="font-black text-3xl text-white drop-shadow-2xl tracking-widest font-mono bg-gradient-to-r from-black/40 to-black/20 px-4 py-2 rounded-xl border border-white/30 backdrop-blur-md shadow-fluent-xl">
+                          ORSH
+                        </span>
+                        <span className="absolute inset-0 font-black text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mix-blend-overlay tracking-widest font-mono px-4 py-2">
+                          ORSH
+                        </span>
                       </span>
-                      <span className="absolute inset-0 font-black text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mix-blend-overlay tracking-widest font-mono px-3 py-1">
-                        ORSH
-                      </span>
-                    </span>
-                    <span>comprehensive platform.</span>
+                      <span>platform.</span>
+                    </div>
                   </div>
                 </div>
                 
@@ -330,16 +339,19 @@ const Index = () => {
                 {/* CTA Section */}
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row gap-4 items-start">
-                    <Button
+                    {/* Enhanced Microsoft Fluent CTA Button */}
+                    <Button 
                       onClick={() => setShowAuth(true)} 
                       size="lg"
-                      className="bg-primary hover:bg-primary-hover text-primary-foreground px-10 py-5 text-lg font-semibold shadow-fluent-2xl hover:shadow-fluent-2xl/60 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 rounded-2xl group border-0 relative overflow-hidden"
+                      className="relative group bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white px-12 py-6 text-lg font-semibold shadow-fluent-3xl hover:shadow-fluent-4xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-2xl border-0 overflow-hidden backdrop-blur-sm"
                     >
-                      {/* Button background effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary-hover to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <span className="relative z-10 flex items-center">
+                      {/* Microsoft Fluent Button Effects */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                      <div className="absolute inset-0 border border-white/10 rounded-2xl group-hover:border-white/20 transition-colors duration-300" />
+                      
+                      <span className="relative z-10 flex items-center font-medium tracking-wide">
                         {t.accessButton}
-                        <ArrowLeft className="h-5 w-5 ml-3 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
+                        <ArrowLeft className="h-5 w-5 ml-4 rotate-180 group-hover:translate-x-1 transition-transform duration-300" />
                       </span>
                     </Button>
                     
