@@ -38,89 +38,115 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header with Fluent Design acrylic effect */}
-      <div className="fluent-acrylic border-b border-border/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+      {/* Enhanced Navigation Bar */}
+      <div className="fluent-navigation sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <img 
-                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                alt="BGC Logo" 
-                className="h-10 w-auto" 
-              />
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">Operation Readiness & Start-up Handover</h1>
-                <p className="text-sm text-muted-foreground">Basrah Gas Company - ORSH Platform</p>
+            <div className="flex items-center space-x-6">
+              <div className="fluent-reveal">
+                <img 
+                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                  alt="BGC Logo" 
+                  className="h-12 w-auto animate-float" 
+                />
+              </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                  Operation Readiness & Start-up Handover
+                </h1>
+                <p className="text-sm text-muted-foreground font-medium">Basrah Gas Company • ORSH Platform</p>
               </div>
             </div>
             <Button 
               variant="outline" 
               onClick={onBack}
-              className="fluent-button hover:bg-secondary-hover"
+              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Logout
+              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+              Sign Out
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Main Content with Microsoft spacing */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-light text-foreground mb-4">
-            Choose your module
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-8 py-16">
+        <div className="text-center mb-20 animate-fade-in-up">
+          <h2 className="text-6xl font-light text-foreground mb-6 tracking-tight">
+            Choose your
+            <span className="fluent-hero-text font-semibold"> workspace</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Select the module you need to access for your operational readiness activities
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Access the tools you need for operational readiness, safety compliance, and seamless project handovers
           </p>
         </div>
 
-        {/* Module Cards with Fluent Design */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {canvasSections.map((section) => {
+        {/* Enhanced Module Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {canvasSections.map((section, index) => {
             const IconComponent = section.icon;
             return (
               <div
                 key={section.id}
-                className="fluent-card fluent-hover group cursor-pointer p-6 animate-fade-in"
+                className="fluent-card group cursor-pointer p-8 relative overflow-hidden border-0 bg-card/80 backdrop-blur-xl animate-reveal"
                 onClick={() => onNavigate(section.id)}
-                style={{ animationDelay: `${canvasSections.indexOf(section) * 100}ms` }}
+                style={{ 
+                  animationDelay: `${index * 200}ms`,
+                  background: 'linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card))/0.8 100%)'
+                }}
               >
-                <div className="text-center">
-                  <div className={`mx-auto w-16 h-16 rounded-xl ${section.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200`}>
-                    <IconComponent className="h-8 w-8 text-white" />
+                {/* Reveal effect overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <div className="relative z-10">
+                  {/* Icon with enhanced styling */}
+                  <div className={`w-20 h-20 rounded-2xl ${section.color} flex items-center justify-center mb-8 mx-auto group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-fluent-lg group-hover:shadow-fluent-xl`}>
+                    <IconComponent className="h-10 w-10 text-white" />
                   </div>
                   
-                  <h3 className="text-xl font-semibold text-card-foreground mb-3 group-hover:text-primary transition-colors duration-200">
-                    {section.title}
-                  </h3>
-                  
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-6 min-h-[4rem]">
-                    {section.description}
-                  </p>
-                  
-                  <Button 
-                    className={`w-full ${section.color} hover:${section.hoverColor} text-white fluent-button font-medium`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate(section.id);
-                    }}
-                  >
-                    Access {section.title}
-                  </Button>
+                  {/* Content */}
+                  <div className="text-center space-y-4">
+                    <h3 className="text-2xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
+                      {section.title}
+                    </h3>
+                    
+                    <p className="text-muted-foreground leading-relaxed min-h-[5rem] text-base">
+                      {section.description}
+                    </p>
+                    
+                    {/* Enhanced CTA Button */}
+                    <div className="pt-6">
+                      <Button 
+                        className={`w-full ${section.color} hover:${section.hoverColor} text-white fluent-button font-semibold py-3 rounded-xl group-hover:scale-105 shadow-fluent-md hover:shadow-fluent-lg transition-all duration-300`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate(section.id);
+                        }}
+                      >
+                        Launch {section.title}
+                        <ArrowLeft className="h-4 w-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform duration-200" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Decorative elements */}
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-4 left-4 w-6 h-6 rounded-full bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
             );
           })}
         </div>
         
-        {/* Footer with system info */}
-        <div className="mt-16 text-center">
-          <p className="text-xs text-muted-foreground">
-            Built with Microsoft Fluent Design System | Basrah Gas Company © 2024
-          </p>
+        {/* Enhanced Footer */}
+        <div className="mt-24 text-center animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <div className="inline-flex items-center px-6 py-3 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 shadow-fluent-sm">
+            <div className="w-2 h-2 rounded-full bg-success mr-3 animate-pulse-subtle" />
+            <p className="text-sm text-muted-foreground font-medium">
+              Powered by Microsoft Fluent Design • Basrah Gas Company © 2024
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -6,108 +6,118 @@
 
 @layer base {
   :root {
-    /* Microsoft Fluent Color Palette */
-    --background: 0 0% 98%;
-    --foreground: 220 9% 13%;
+    /* Microsoft Fluent Design System v2 */
+    --background: 250 250 250;
+    --foreground: 16 16 16;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 9% 13%;
+    --card: 255 255 255;
+    --card-foreground: 16 16 16;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 9% 13%;
+    --popover: 255 255 255;
+    --popover-foreground: 16 16 16;
 
-    /* Microsoft Blue (#0078D4) */
-    --primary: 206 100% 42%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 206 100% 37%;
+    /* Microsoft Blue Palette */
+    --primary: 210 100% 42%;           /* #0078D4 */
+    --primary-foreground: 255 255 255;
+    --primary-hover: 210 100% 37%;     /* #106EBE */
+    --primary-pressed: 210 100% 32%;   /* #005A9E */
 
-    /* Microsoft Light Gray */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 13%;
-    --secondary-hover: 220 14% 92%;
+    /* Microsoft Neutral Palette */
+    --secondary: 0 0% 96%;             /* #F5F5F5 */
+    --secondary-foreground: 16 16 16;
+    --secondary-hover: 0 0% 92%;       /* #EBEBEB */
 
-    /* Microsoft Neutral Colors */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 0 0% 98%;                 /* #FAFAFA */
+    --muted-foreground: 107 107 107;   /* #6B6B6B */
 
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 9% 13%;
+    --accent: 210 100% 42%;
+    --accent-foreground: 255 255 255;
 
-    /* Microsoft Red for destructive actions */
-    --destructive: 359 100% 45%;
-    --destructive-foreground: 0 0% 100%;
+    /* Microsoft System Colors */
+    --destructive: 4 90% 58%;          /* #D13438 */
+    --destructive-foreground: 255 255 255;
+    
+    --warning: 37 100% 50%;            /* #FF8C00 */
+    --warning-foreground: 255 255 255;
+    
+    --success: 107 76% 39%;            /* #107C10 */
+    --success-foreground: 255 255 255;
 
-    /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 206 100% 42%;
+    /* Surface and Border Colors */
+    --border: 0 0% 90%;                /* #E5E5E5 */
+    --input: 0 0% 90%;
+    --ring: 210 100% 42%;
 
-    /* Microsoft corner radius */
-    --radius: 0.25rem;
+    /* Modern Corner Radius */
+    --radius: 0.375rem;                /* 6px */
+    --radius-lg: 0.5rem;               /* 8px */
+    --radius-xl: 0.75rem;              /* 12px */
 
-    /* Fluent Design specific colors */
-    --fluent-acrylic: 0 0% 100% / 0.7;
-    --fluent-shadow-light: 0 0% 0% / 0.13;
-    --fluent-shadow-medium: 0 0% 0% / 0.24;
-    --fluent-elevation-low: 0 1px 3px var(--fluent-shadow-light);
-    --fluent-elevation-medium: 0 4px 8px var(--fluent-shadow-medium);
-    --fluent-elevation-high: 0 8px 16px var(--fluent-shadow-medium);
+    /* Fluent Design Elevations */
+    --elevation-shadow-rest: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.12), 0 0 0 0.0625rem rgba(0, 0, 0, 0.08);
+    --elevation-shadow-hover: 0 0.5rem 1rem rgba(0, 0, 0, 0.18), 0 0 0 0.0625rem rgba(0, 0, 0, 0.08);
+    --elevation-shadow-pressed: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.12), 0 0 0 0.0625rem rgba(0, 0, 0, 0.08);
+    
+    /* Acrylic Effects */
+    --fluent-acrylic-background: rgba(243, 243, 243, 0.8);
+    --fluent-acrylic-border: rgba(255, 255, 255, 0.4);
+    --fluent-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
 
-    /* Sidebar tokens for consistency */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 9% 13%;
-    --sidebar-primary: 206 100% 42%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 9% 13%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 206 100% 42%;
+    /* Sidebar */
+    --sidebar-background: 255 255 255;
+    --sidebar-foreground: 16 16 16;
+    --sidebar-primary: 210 100% 42%;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 16 16 16;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 210 100% 42%;
   }
 
   .dark {
     /* Microsoft Dark Theme */
-    --background: 220 13% 9%;
-    --foreground: 0 0% 95%;
+    --background: 18 18 18;
+    --foreground: 255 255 255;
 
-    --card: 220 13% 9%;
-    --card-foreground: 0 0% 95%;
+    --card: 31 31 31;
+    --card-foreground: 255 255 255;
 
-    --popover: 220 13% 9%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 31 31 31;
+    --popover-foreground: 255 255 255;
 
-    --primary: 206 100% 50%;
-    --primary-foreground: 220 13% 9%;
-    --primary-hover: 206 100% 55%;
+    --primary: 96 165% 57%;             /* #0086F0 */
+    --primary-foreground: 18 18 18;
+    --primary-hover: 96 165% 62%;
+    --primary-pressed: 96 165% 52%;
 
-    --secondary: 220 13% 15%;
-    --secondary-foreground: 0 0% 95%;
-    --secondary-hover: 220 13% 20%;
+    --secondary: 44 44 44;              /* #2C2C2C */
+    --secondary-foreground: 255 255 255;
+    --secondary-hover: 58 58 58;        /* #3A3A3A */
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 31 31 31;
+    --muted-foreground: 153 153 153;    /* #999999 */
 
-    --accent: 220 13% 15%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 96 165% 57%;
+    --accent-foreground: 18 18 18;
 
-    --destructive: 359 100% 55%;
-    --destructive-foreground: 0 0% 95%;
+    --destructive: 4 90% 65%;
+    --destructive-foreground: 255 255 255;
 
-    --border: 220 13% 15%;
-    --input: 220 13% 15%;
-    --ring: 206 100% 50%;
+    --border: 44 44 44;
+    --input: 44 44 44;
+    --ring: 96 165% 57%;
 
-    --fluent-acrylic: 220 13% 9% / 0.7;
-    --fluent-shadow-light: 0 0% 0% / 0.3;
-    --fluent-shadow-medium: 0 0% 0% / 0.5;
+    --fluent-acrylic-background: rgba(44, 44, 44, 0.8);
+    --fluent-acrylic-border: rgba(255, 255, 255, 0.1);
 
-    --sidebar-background: 220 13% 9%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 206 100% 50%;
-    --sidebar-primary-foreground: 220 13% 9%;
-    --sidebar-accent: 220 13% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 220 13% 15%;
-    --sidebar-ring: 206 100% 50%;
+    --sidebar-background: 18 18 18;
+    --sidebar-foreground: 255 255 255;
+    --sidebar-primary: 96 165% 57%;
+    --sidebar-primary-foreground: 18 18 18;
+    --sidebar-accent: 44 44 44;
+    --sidebar-accent-foreground: 255 255 255;
+    --sidebar-border: 44 44 44;
+    --sidebar-ring: 96 165% 57%;
   }
 }
 
@@ -117,34 +127,131 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variation-settings: "wght" 400;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Microsoft Fluent Design specific styles */
+  /* Microsoft Fluent Design Components */
   .fluent-card {
-    @apply bg-card border border-border rounded-lg shadow-sm backdrop-blur-sm;
-    background: hsl(var(--card) / 0.9);
+    @apply bg-card border border-border rounded-xl transition-all duration-300 ease-out;
+    box-shadow: var(--elevation-shadow-rest);
+    backdrop-filter: blur(30px) saturate(120%);
+  }
+
+  .fluent-card:hover {
+    box-shadow: var(--elevation-shadow-hover);
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  .fluent-card:active {
+    box-shadow: var(--elevation-shadow-pressed);
+    transform: translateY(0) scale(1);
   }
 
   .fluent-button {
-    @apply transition-all duration-200 ease-out;
+    @apply transition-all duration-200 ease-out font-medium;
     backdrop-filter: blur(8px);
   }
 
-  .fluent-hover {
-    @apply transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-0.5;
+  .fluent-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .fluent-button:active {
+    transform: translateY(0);
   }
 
   .fluent-acrylic {
-    backdrop-filter: blur(30px) saturate(180%);
-    background: hsl(var(--fluent-acrylic));
-    border: 1px solid hsl(var(--border) / 0.3);
+    background: var(--fluent-acrylic-background);
+    backdrop-filter: blur(30px) saturate(120%);
+    border: 1px solid var(--fluent-acrylic-border);
+    position: relative;
+  }
+
+  .fluent-acrylic::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--fluent-noise);
+    opacity: 0.02;
+    pointer-events: none;
+  }
+
+  .fluent-navigation {
+    @apply bg-card/80 backdrop-blur-xl border-b border-border/50;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .fluent-hero-text {
+    background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .fluent-depth-1 {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .fluent-depth-2 {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .fluent-depth-3 {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .fluent-reveal {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fluent-reveal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .fluent-reveal:hover::before {
+    left: 100%;
+  }
+
+  /* Modern scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Focus visible improvements */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 }
