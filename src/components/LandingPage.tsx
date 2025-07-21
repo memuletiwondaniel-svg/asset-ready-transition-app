@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
 interface LandingPageProps {
@@ -16,12 +16,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   // Mock pending tasks data
-  const pendingTasks = {
-    pssrReviews: 3,
-    approvalsPending: 5,
-    documentsReview: 2,
-    handoverTasks: 4
-  };
+  const pendingTasks = [
+    {
+      id: 1,
+      title: "Authenticate 3 New User",
+      description: "BGC and Kent employees awaiting SSO setup",
+      age: "2 days",
+      criticality: "high",
+      type: "authentication",
+      icon: Users
+    },
+    {
+      id: 2,
+      title: "Approve DP300 PSSR Line Items",
+      description: "Safety review items pending approval",
+      age: "4 hours",
+      criticality: "critical",
+      type: "pssr",
+      icon: ShieldCheck
+    },
+    {
+      id: 3,
+      title: "Sign PAC Certificate for DP083C UQ Jetty 2",
+      description: "Project Acceptance Certificate awaiting signature",
+      age: "1 day",
+      criticality: "medium",
+      type: "pac",
+      icon: ClipboardList
+    }
+  ];
 
   const allSections = [
     {
@@ -45,23 +68,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       allowedRoles: ['user', 'admin']
     },
     {
-      id: 'users',
-      title: 'User Management',
-      description: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for BGC and Kent employees',
-      icon: Users,
+      id: 'admin-tools',
+      title: 'Admin & Tools',
+      description: 'Manage users, roles, permissions, projects, and access control across the ORSH application with comprehensive tracking and reporting',
+      icon: BarChart3,
       gradient: 'from-muted-foreground/20 via-muted-foreground/10 to-muted-foreground/5',
       iconBg: 'bg-gradient-to-br from-muted-foreground to-muted-foreground/80',
       accentColor: 'muted-foreground',
-      allowedRoles: ['admin']
-    },
-    {
-      id: 'projects',
-      title: 'Project Management',
-      description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
-      icon: BarChart3,
-      gradient: 'from-blue-500/20 via-blue-500/10 to-blue-500/5',
-      iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-      accentColor: 'blue-500',
       allowedRoles: ['admin']
     }
   ];
@@ -107,79 +120,66 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
       <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Pending Tasks Summary */}
         <div className="mb-12 animate-fade-in-up">
-          <h2 className="text-3xl font-bold text-foreground mb-6">Your Dashboard</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('safe-startup')}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-destructive/10">
-                    <ShieldCheck className="h-6 w-6 text-destructive" />
-                  </div>
-                  <Badge variant="destructive" className="animate-pulse">
-                    {pendingTasks.pssrReviews}
-                  </Badge>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">PSSR Reviews</h3>
-                <p className="text-sm text-muted-foreground">Pending safety reviews</p>
-                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
-                  View all <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('safe-startup')}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-amber-500/10">
-                    <Clock className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-                    {pendingTasks.approvalsPending}
-                  </Badge>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Approvals Pending</h3>
-                <p className="text-sm text-muted-foreground">Awaiting your approval</p>
-                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
-                  Review <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('p2o')}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-primary/10">
-                    <ClipboardList className="h-6 w-6 text-primary" />
-                  </div>
-                  <Badge variant="outline" className="border-primary text-primary">
-                    {pendingTasks.documentsReview}
-                  </Badge>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Documents Review</h3>
-                <p className="text-sm text-muted-foreground">P2O documentation</p>
-                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
-                  Review <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group" onClick={() => onNavigate('p2o')}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-blue-500/10">
-                    <Settings className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <Badge variant="outline" className="border-blue-500 text-blue-600">
-                    {pendingTasks.handoverTasks}
-                  </Badge>
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Handover Tasks</h3>
-                <p className="text-sm text-muted-foreground">Active transitions</p>
-                <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto group-hover:text-primary">
-                  Manage <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-foreground">Your Dashboard</h2>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" className="h-8">
+                <Filter className="h-3 w-3 mr-1" />
+                Filter
+              </Button>
+              <Button variant="outline" size="sm" className="h-8">
+                <Search className="h-3 w-3 mr-1" />
+                Search
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {pendingTasks.map((task) => {
+              const IconComponent = task.icon;
+              const getCriticalityColor = (criticality: string) => {
+                switch (criticality) {
+                  case 'critical': return 'destructive';
+                  case 'high': return 'orange';
+                  case 'medium': return 'blue';
+                  default: return 'secondary';
+                }
+              };
+              
+              return (
+                <Card key={task.id} className="fluent-card hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <IconComponent className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm text-foreground mb-1">{task.title}</h3>
+                          <p className="text-xs text-muted-foreground">{task.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="text-xs px-2 py-0">
+                          {task.age}
+                        </Badge>
+                        <Badge 
+                          variant={getCriticalityColor(task.criticality) as any} 
+                          className="text-xs px-2 py-0"
+                        >
+                          {task.criticality}
+                        </Badge>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-6 p-0 text-xs group-hover:text-primary">
+                        View <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
