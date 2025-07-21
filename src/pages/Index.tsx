@@ -156,9 +156,9 @@ const Index = () => {
 
   // Show welcome screen before authentication
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Background with enhanced gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-indigo-500/3 to-purple-600/5" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background with enhanced gradient - transparent to show slideshow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/10" />
       <BackgroundSlideshow showFunFacts={showAuth} />
       
       {/* Fluent Design Acrylic Header */}
