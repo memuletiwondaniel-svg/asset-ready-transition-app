@@ -115,33 +115,8 @@ const Index = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 
-                <Button 
-                  variant="ghost" 
-                  size="lg"
-                  className="fluent-acrylic text-white hover:bg-white/10 transition-all duration-300 rounded-2xl px-8 py-4 border border-white/10 backdrop-blur-md font-medium shadow-fluent-sm hover:shadow-fluent-md group"
-                >
-                  <Phone className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">Support Center</span>
-                </Button>
               </nav>
 
-              {/* Center Logo - Enhanced */}
-              <div className="absolute left-1/2 transform -translate-x-1/2">
-                <div className="flex items-center fluent-acrylic rounded-3xl py-4 px-8 border border-white/20 backdrop-blur-xl shadow-fluent-lg group hover:shadow-fluent-xl transition-all duration-300">
-                  <div className="relative">
-                    <img 
-                      src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                      alt="BGC Logo" 
-                      className="h-14 w-auto mr-6 animate-float group-hover:scale-105 transition-transform duration-300" 
-                    />
-                    <div className="absolute -inset-2 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                  <div className="text-right">
-                    <h1 className="font-bold text-white text-xl tracking-wide mb-1">Basrah Gas Company</h1>
-                    <p dir="rtl" className="text-base text-white/90 font-medium">شركة البصرة للغاز</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -156,10 +131,6 @@ const Index = () => {
               <div className="space-y-12 animate-fade-in-up">
                 {/* Hero Heading */}
                 <div className="space-y-6">
-                  <div className="inline-flex items-center px-6 py-3 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
-                    <div className="w-2 h-2 rounded-full bg-primary mr-3 animate-pulse" />
-                    <span className="text-primary font-semibold text-sm tracking-wide uppercase">Microsoft Fluent Design</span>
-                  </div>
                   
                   <h1 className="font-light text-white leading-none tracking-tight">
                     <span className="text-5xl lg:text-6xl">Operation Readiness</span>,
@@ -210,13 +181,6 @@ const Index = () => {
                       </span>
                     </Button>
                     
-                    <Button 
-                      variant="outline"
-                      size="lg"
-                      className="border-white/30 text-white hover:bg-white/10 hover:border-white/50 px-8 py-6 text-lg font-medium rounded-2xl backdrop-blur-sm transition-all duration-300"
-                    >
-                      Learn More
-                    </Button>
                   </div>
                   
                   {/* Trust Indicators */}
@@ -239,44 +203,33 @@ const Index = () => {
               
               {/* Right Column - Feature Cards */}
               <div className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                {/* Main Feature Card */}
-                <div className="bg-card/20 border border-border/20 rounded-3xl p-8 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500 group hover:bg-card/30">
-                  <div className="space-y-6">
+                {/* Main Feature Card - Reduced Size */}
+                <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 group hover:bg-card/30">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-2xl font-bold text-white">Platform Overview</h3>
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-primary/80" />
+                      <h3 className="text-xl font-bold text-white">Platform Overview</h3>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-primary to-primary/80" />
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 rounded-2xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
-                        <div className="text-3xl font-bold text-primary mb-1">2</div>
-                        <div className="text-white/70 text-sm">Core Modules</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center p-3 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
+                        <div className="text-2xl font-bold text-primary mb-1">2</div>
+                        <div className="text-white/70 text-xs">Core Modules</div>
                       </div>
-                      <div className="text-center p-4 rounded-2xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
-                        <div className="text-3xl font-bold text-primary mb-1">SSO</div>
-                        <div className="text-white/70 text-sm">Authentication</div>
+                      <div className="text-center p-3 rounded-xl bg-card/30 border border-border/10 backdrop-blur-sm hover:bg-card/40 transition-colors duration-300">
+                        <div className="text-2xl font-bold text-primary mb-1">SSO</div>
+                        <div className="text-white/70 text-xs">Authentication</div>
                       </div>
                     </div>
                     
-                    <p className="text-white/80 leading-relaxed">
+                    <p className="text-white/80 leading-relaxed text-sm">
                       Comprehensive operational readiness platform designed for energy sector compliance and safety management.
                     </p>
                   </div>
                 </div>
                 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm text-center hover:bg-card/30 transition-all duration-300 group">
-                    <div className="text-4xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">100%</div>
-                    <div className="text-white/70">Compliance Ready</div>
-                  </div>
-                  <div className="bg-card/20 border border-border/20 rounded-2xl p-6 backdrop-blur-sm text-center hover:bg-card/30 transition-all duration-300 group">
-                    <div className="text-4xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">24/7</div>
-                    <div className="text-white/70">System Availability</div>
-                  </div>
-                </div>
               </div>
               
             </div>
