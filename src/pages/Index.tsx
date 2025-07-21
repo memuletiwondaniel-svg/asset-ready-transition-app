@@ -220,7 +220,7 @@ const Index = () => {
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span>experience with the</span>
-                      <span className="font-bold text-2xl text-white">
+                      <span className="font-black text-3xl text-white tracking-wider">
                         ORSH
                       </span>
                       <span>platform.</span>
