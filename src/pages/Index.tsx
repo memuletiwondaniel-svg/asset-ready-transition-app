@@ -76,105 +76,212 @@ const Index = () => {
 
   // Show welcome screen before authentication
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background via-card to-muted/30">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background with modern gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/10" />
       <BackgroundSlideshow showFunFacts={showAuth} />
       
-      {/* Modern Navigation Bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 fluent-acrylic border-b border-border/20">
-        <div className="flex items-center justify-between px-8 py-6">
-          {/* Left Side Controls */}
-          <div className="flex items-center gap-6">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+      {/* Modern Navigation Header */}
+      <header className="relative z-20">
+        <div className="fluent-acrylic border-b border-border/20 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-8 py-6">
+            <div className="flex items-center justify-between">
+              {/* Left Navigation */}
+              <nav className="flex items-center gap-8">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="lg"
+                      className="fluent-acrylic text-white hover:bg-white/10 transition-all duration-300 rounded-2xl px-8 py-4 border border-white/10 backdrop-blur-md font-medium shadow-fluent-sm hover:shadow-fluent-md group"
+                    >
+                      <Languages className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-base">{selectedLanguage}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="fluent-acrylic border border-border/30 shadow-fluent-2xl rounded-2xl p-2 backdrop-blur-xl min-w-[200px]">
+                    {languages.map((language) => (
+                      <DropdownMenuItem
+                        key={language.code}
+                        onClick={() => setSelectedLanguage(language.name)}
+                        className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-xl py-3 px-4 text-base font-medium"
+                      >
+                        {language.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
                 <Button 
                   variant="ghost" 
-                  className="fluent-acrylic text-white hover:bg-white/20 transition-all duration-300 rounded-xl px-6 py-3 border border-white/20 backdrop-blur-md font-medium shadow-fluent-sm hover:shadow-fluent-md"
+                  size="lg"
+                  className="fluent-acrylic text-white hover:bg-white/10 transition-all duration-300 rounded-2xl px-8 py-4 border border-white/10 backdrop-blur-md font-medium shadow-fluent-sm hover:shadow-fluent-md group"
                 >
-                  <Languages className="h-4 w-4 mr-3" />
-                  {selectedLanguage}
+                  <Phone className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-base">Support Center</span>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="fluent-acrylic border border-border/30 shadow-fluent-xl rounded-xl z-50 backdrop-blur-xl">
-                {languages.map((language) => (
-                  <DropdownMenuItem
-                    key={language.code}
-                    onClick={() => setSelectedLanguage(language.name)}
-                    className="cursor-pointer hover:bg-accent/80 transition-colors rounded-lg mx-1 my-1"
-                  >
-                    {language.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Button 
-              variant="ghost" 
-              className="fluent-acrylic text-white hover:bg-white/20 transition-all duration-300 rounded-xl px-6 py-3 border border-white/20 backdrop-blur-md font-medium shadow-fluent-sm hover:shadow-fluent-md group"
-            >
-              <Phone className="h-4 w-4 mr-3 group-hover:scale-110 transition-transform duration-200" />
-              Contact Support
-            </Button>
-          </div>
+              </nav>
 
-          {/* Center Logo */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <div className="flex items-center fluent-acrylic rounded-2xl p-4 border border-white/20 backdrop-blur-md shadow-fluent-lg">
-              <img 
-                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                alt="BGC Logo" 
-                className="h-12 w-auto mr-4 animate-float" 
-              />
-              <div className="text-right">
-                <h1 className="font-bold text-white text-lg tracking-wide">Basrah Gas Company</h1>
-                <p dir="rtl" className="text-sm text-white/90 font-medium">شركة البصرة للغاز</p>
+              {/* Center Logo - Enhanced */}
+              <div className="absolute left-1/2 transform -translate-x-1/2">
+                <div className="flex items-center fluent-acrylic rounded-3xl py-4 px-8 border border-white/20 backdrop-blur-xl shadow-fluent-lg group hover:shadow-fluent-xl transition-all duration-300">
+                  <div className="relative">
+                    <img 
+                      src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                      alt="BGC Logo" 
+                      className="h-14 w-auto mr-6 animate-float group-hover:scale-105 transition-transform duration-300" 
+                    />
+                    <div className="absolute -inset-2 bg-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                  <div className="text-right">
+                    <h1 className="font-bold text-white text-xl tracking-wide mb-1">Basrah Gas Company</h1>
+                    <p dir="rtl" className="text-base text-white/90 font-medium">شركة البصرة للغاز</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
       
       {!showAuth && (
-        <div className="relative z-10 flex items-center min-h-screen">
-          <div className="ml-20 max-w-4xl animate-slide-up">
-            {/* Enhanced Hero Content */}
-            <div className="mb-16 space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-8xl font-light text-white leading-none tracking-tight drop-shadow-2xl">
-                  Operation
-                  <span className="block font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                    Readiness
-                  </span>
-                </h1>
-                <h2 className="text-6xl font-light text-white/95 leading-tight drop-shadow-xl">
-                  & Start-up Handover
-                </h2>
+        <main className="relative z-10 flex items-center min-h-screen pt-32">
+          <div className="max-w-7xl mx-auto px-8 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              
+              {/* Left Column - Hero Content */}
+              <div className="space-y-12 animate-fade-in-up">
+                {/* Hero Heading */}
+                <div className="space-y-6">
+                  <div className="inline-flex items-center px-6 py-3 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
+                    <div className="w-2 h-2 rounded-full bg-primary mr-3 animate-pulse" />
+                    <span className="text-primary font-semibold text-sm tracking-wide uppercase">Microsoft Fluent Design</span>
+                  </div>
+                  
+                  <h1 className="text-7xl lg:text-8xl font-light text-white leading-none tracking-tight">
+                    Operation
+                    <span className="block font-bold bg-gradient-to-r from-white via-white to-primary/90 bg-clip-text text-transparent">
+                      Readiness
+                    </span>
+                    <span className="block text-6xl lg:text-7xl font-light text-white/95 mt-2">
+                      & Start-up Handover
+                    </span>
+                  </h1>
+                  
+                  <p className="text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
+                    Transform your project handover experience with our comprehensive platform. 
+                    Built for <span className="font-semibold text-white">Basrah Gas Company</span> with 
+                    enterprise-grade security and compliance.
+                  </p>
+                </div>
+                
+                {/* Feature Highlights */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                      <div className="w-6 h-6 rounded bg-primary" />
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">Safe Start-Up</h3>
+                    <p className="text-white/70 text-sm">PSSR compliance and safety protocols</p>
+                  </div>
+                  
+                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+                    <div className="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center mb-4">
+                      <div className="w-6 h-6 rounded bg-success" />
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">P2O Handover</h3>
+                    <p className="text-white/70 text-sm">Seamless asset transition management</p>
+                  </div>
+                </div>
+                
+                {/* CTA Section */}
+                <div className="space-y-8">
+                  <div className="flex flex-col sm:flex-row gap-6 items-start">
+                    <Button 
+                      onClick={() => setShowAuth(true)} 
+                      size="lg"
+                      className="bg-primary hover:bg-primary-hover text-primary-foreground px-12 py-6 text-xl font-semibold shadow-fluent-2xl hover:shadow-fluent-2xl/60 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 rounded-2xl group border-0 relative overflow-hidden"
+                    >
+                      {/* Button background effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary-hover to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <span className="relative z-10 flex items-center">
+                        Access ORSH Platform
+                        <ArrowLeft className="h-6 w-6 ml-4 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
+                      </span>
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      size="lg"
+                      className="border-white/30 text-white hover:bg-white/10 hover:border-white/50 px-8 py-6 text-lg font-medium rounded-2xl backdrop-blur-sm transition-all duration-300"
+                    >
+                      Learn More
+                    </Button>
+                  </div>
+                  
+                  {/* Trust Indicators */}
+                  <div className="flex items-center gap-8 text-white/70">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full bg-success animate-pulse-subtle" />
+                      <span className="text-lg font-medium">Enterprise Secure</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full bg-primary animate-pulse-subtle" />
+                      <span className="text-lg font-medium">ISO Compliant</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full bg-warning animate-pulse-subtle" />
+                      <span className="text-lg font-medium">24/7 Support</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="max-w-2xl">
-                <p className="text-2xl text-white/90 font-light leading-relaxed drop-shadow-lg">
-                  Experience seamless project-to-asset transitions with our comprehensive platform built on 
-                  <span className="font-semibold text-white"> Microsoft Fluent Design</span>
-                </p>
+              {/* Right Column - Feature Cards */}
+              <div className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                {/* Main Feature Card */}
+                <div className="fluent-card p-8 bg-card/20 backdrop-blur-xl border border-white/20 rounded-3xl shadow-fluent-2xl group hover:shadow-fluent-2xl/80 transition-all duration-500">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-2xl font-bold text-white">Platform Overview</h3>
+                      <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-6 h-6 rounded bg-primary" />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm">
+                        <div className="text-3xl font-bold text-primary mb-1">2</div>
+                        <div className="text-white/70 text-sm">Core Modules</div>
+                      </div>
+                      <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm">
+                        <div className="text-3xl font-bold text-success mb-1">SSO</div>
+                        <div className="text-white/70 text-sm">Authentication</div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-white/80 leading-relaxed">
+                      Comprehensive operational readiness platform designed for energy sector compliance and safety management.
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm text-center">
+                    <div className="text-4xl font-bold text-white mb-2">100%</div>
+                    <div className="text-white/70">Compliance Ready</div>
+                  </div>
+                  <div className="fluent-acrylic rounded-2xl p-6 border border-white/10 backdrop-blur-sm text-center">
+                    <div className="text-4xl font-bold text-white mb-2">24/7</div>
+                    <div className="text-white/70">System Availability</div>
+                  </div>
+                </div>
               </div>
-            </div>
-            
-            {/* Enhanced CTA Section */}
-            <div className="flex flex-col sm:flex-row gap-6 items-start">
-              <Button 
-                onClick={() => setShowAuth(true)} 
-                className="bg-primary hover:bg-primary-hover text-primary-foreground px-10 py-5 text-xl font-semibold shadow-fluent-2xl hover:shadow-fluent-2xl/80 transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 rounded-2xl group border-0"
-              >
-                Get Started
-                <ArrowLeft className="h-5 w-5 ml-3 rotate-180 group-hover:translate-x-2 transition-transform duration-300" />
-              </Button>
               
-              <div className="flex items-center text-white/80 text-lg font-medium">
-                <div className="w-3 h-3 rounded-full bg-success mr-3 animate-pulse-subtle shadow-fluent-sm" />
-                Secure • Compliant • Ready
-              </div>
             </div>
           </div>
-        </div>
+        </main>
       )}
 
       <AuthenticationModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
