@@ -22,7 +22,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
     {
       id: 'users',
       title: 'User Management',
-      description: 'Manage users, roles, permissions, and access control across the P2A application with SSO integration for BGC and Kent employees',
+      description: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for BGC and Kent employees',
       icon: Users,
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-600'
@@ -57,8 +57,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
               className="h-12 w-auto mr-4" 
             />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Project-to-Asset Management System</h1>
-              <p className="text-gray-600 mt-1">Basrah Gas Company - P2A Platform</p>
+              <h1 className="text-3xl font-bold text-gray-900">Operation Readiness & Start-up Handover (ORSH)</h1>
+              <p className="text-gray-600 mt-1">Basrah Gas Company - ORSH Platform</p>
             </div>
           </div>
           <Button 
