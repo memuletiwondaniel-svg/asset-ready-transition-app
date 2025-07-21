@@ -212,73 +212,117 @@ const Index = () => {
                   
                   <p className="text-2xl text-white/85 font-light leading-relaxed max-w-2xl">
                     Transform your project start-up and handover experience with the{" "}
-                    <span className="font-semibold bg-gradient-to-r from-primary via-primary-hover to-accent bg-clip-text text-transparent drop-shadow-lg">
-                      ORSH
+                    <span className="relative inline-block">
+                      <span className="font-bold text-3xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-2xl animate-pulse-subtle tracking-wider">
+                        ORSH
+                      </span>
+                      <span className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 via-blue-400/20 to-purple-400/20 blur-xl rounded-lg animate-pulse-subtle"></span>
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60"></span>
                     </span>{" "}
                     comprehensive platform.
                   </p>
                 </div>
                 
-                {/* Feature Highlights - Microsoft Fluent Design */}
+                {/* Feature Highlights - Enhanced Microsoft Fluent Design */}
                 <div className="grid grid-cols-2 gap-8">
                   {/* Safe Start-up Card */}
-                  <div className="relative group">
-                    {/* Card Background with Acrylic Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.15] to-white/[0.05] rounded-3xl backdrop-blur-xl border border-white/[0.18] shadow-2xl group-hover:shadow-fluent-2xl transition-all duration-500"></div>
+                  <div className="relative group transform hover:scale-[1.02] transition-all duration-500">
+                    {/* Animated background glow */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-red-600/30 via-orange-500/20 to-yellow-400/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse-subtle"></div>
+                    
+                    {/* Card Background with Enhanced Acrylic Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.18] via-white/[0.12] to-white/[0.06] rounded-3xl backdrop-blur-2xl border border-white/[0.25] shadow-fluent-2xl group-hover:shadow-fluent-3xl group-hover:border-white/[0.35] transition-all duration-500"></div>
+                    
+                    {/* Animated border effect */}
+                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-br from-red-500/20 via-orange-500/10 to-transparent bg-clip-border opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     
                     {/* Content */}
-                    <div className="relative p-8 space-y-5">
-                      {/* Icon with Microsoft-style layering */}
-                      <div className="relative w-16 h-16 mb-6">
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl backdrop-blur-sm"></div>
-                        <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-fluent transform group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                          <div className="w-8 h-8 bg-white/90 rounded-lg shadow-inner"></div>
+                    <div className="relative p-10 space-y-6">
+                      {/* Enhanced Icon with Microsoft-style layering and animation */}
+                      <div className="relative w-20 h-20 mb-8">
+                        {/* Icon glow effect */}
+                        <div className="absolute -inset-2 bg-gradient-to-br from-red-500/40 to-orange-500/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                        
+                        {/* Icon background layers */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/25 to-orange-500/25 rounded-2xl backdrop-blur-sm transform group-hover:rotate-3 transition-all duration-300"></div>
+                        <div className="relative w-20 h-20 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-6 transition-all duration-500">
+                          {/* Inner icon element with animation */}
+                          <div className="w-10 h-10 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"></div>
+                          
+                          {/* Sparkle effects */}
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-white/80 rounded-full animate-ping opacity-0 group-hover:opacity-100"></div>
+                          <div className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-yellow-300/80 rounded-full animate-pulse opacity-0 group-hover:opacity-100 animation-delay-300"></div>
                         </div>
                       </div>
                       
-                      {/* Title with Microsoft Typography */}
-                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transition-colors duration-200">
+                      {/* Enhanced Title with Microsoft Typography and animations */}
+                      <h3 className="text-2xl font-semibold text-white mb-4 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
                         {t.safeStartup}
+                        <div className="w-0 h-0.5 bg-gradient-to-r from-red-400 to-orange-400 group-hover:w-full transition-all duration-500 mt-2"></div>
                       </h3>
                       
-                      {/* Description */}
-                      <p className="text-white/75 text-sm leading-relaxed font-medium">
+                      {/* Enhanced Description */}
+                      <p className="text-white/80 text-base leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
                         {t.safeStartupDesc}
                       </p>
+                      
+                      {/* Floating particles effect */}
+                      <div className="absolute top-4 right-4 w-1 h-1 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-200 transition-all duration-300"></div>
+                      <div className="absolute top-8 right-8 w-1.5 h-1.5 bg-red-300/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-500 transition-all duration-300"></div>
                     </div>
                     
-                    {/* Hover Effect Border */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-white/20 transition-all duration-300"></div>
+                    {/* Enhanced Hover Effect Border with ripple */}
+                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-gradient-to-br group-hover:from-red-400/30 group-hover:to-orange-400/30 transition-all duration-500"></div>
                   </div>
                   
                   {/* P2O Handover Card */}
-                  <div className="relative group">
-                    {/* Card Background with Acrylic Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.15] to-white/[0.05] rounded-3xl backdrop-blur-xl border border-white/[0.18] shadow-2xl group-hover:shadow-fluent-2xl transition-all duration-500"></div>
+                  <div className="relative group transform hover:scale-[1.02] transition-all duration-500">
+                    {/* Animated background glow */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/30 via-cyan-500/20 to-teal-400/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse-subtle"></div>
+                    
+                    {/* Card Background with Enhanced Acrylic Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.18] via-white/[0.12] to-white/[0.06] rounded-3xl backdrop-blur-2xl border border-white/[0.25] shadow-fluent-2xl group-hover:shadow-fluent-3xl group-hover:border-white/[0.35] transition-all duration-500"></div>
+                    
+                    {/* Animated border effect */}
+                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent bg-clip-border opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     
                     {/* Content */}
-                    <div className="relative p-8 space-y-5">
-                      {/* Icon with Microsoft-style layering */}
-                      <div className="relative w-16 h-16 mb-6">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl backdrop-blur-sm"></div>
-                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-fluent transform group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                          <div className="w-8 h-8 bg-white/90 rounded-lg shadow-inner"></div>
+                    <div className="relative p-10 space-y-6">
+                      {/* Enhanced Icon with Microsoft-style layering and animation */}
+                      <div className="relative w-20 h-20 mb-8">
+                        {/* Icon glow effect */}
+                        <div className="absolute -inset-2 bg-gradient-to-br from-blue-500/40 to-cyan-500/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                        
+                        {/* Icon background layers */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/25 to-cyan-500/25 rounded-2xl backdrop-blur-sm transform group-hover:-rotate-3 transition-all duration-300"></div>
+                        <div className="relative w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:-rotate-6 transition-all duration-500">
+                          {/* Inner icon element with animation */}
+                          <div className="w-10 h-10 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300"></div>
+                          
+                          {/* Sparkle effects */}
+                          <div className="absolute top-1 left-1 w-2 h-2 bg-white/80 rounded-full animate-ping opacity-0 group-hover:opacity-100"></div>
+                          <div className="absolute bottom-2 right-2 w-1.5 h-1.5 bg-cyan-300/80 rounded-full animate-pulse opacity-0 group-hover:opacity-100 animation-delay-300"></div>
                         </div>
                       </div>
                       
-                      {/* Title with Microsoft Typography */}
-                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transition-colors duration-200">
+                      {/* Enhanced Title with Microsoft Typography and animations */}
+                      <h3 className="text-2xl font-semibold text-white mb-4 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
                         {t.p2oHandover}
+                        <div className="w-0 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 group-hover:w-full transition-all duration-500 mt-2"></div>
                       </h3>
                       
-                      {/* Description */}
-                      <p className="text-white/75 text-sm leading-relaxed font-medium">
+                      {/* Enhanced Description */}
+                      <p className="text-white/80 text-base leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
                         {t.p2oHandoverDesc}
                       </p>
+                      
+                      {/* Floating particles effect */}
+                      <div className="absolute top-4 left-4 w-1 h-1 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-200 transition-all duration-300"></div>
+                      <div className="absolute top-8 left-8 w-1.5 h-1.5 bg-blue-300/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-500 transition-all duration-300"></div>
                     </div>
                     
-                    {/* Hover Effect Border */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-white/20 transition-all duration-300"></div>
+                    {/* Enhanced Hover Effect Border with ripple */}
+                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-gradient-to-br group-hover:from-blue-400/30 group-hover:to-cyan-400/30 transition-all duration-500"></div>
                   </div>
                 </div>
                 

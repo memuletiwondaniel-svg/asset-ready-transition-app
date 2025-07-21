@@ -6,8 +6,6 @@ interface BackgroundSlideshowProps {
 
 const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts = false }) => {
   const images = [
-    '/lovable-uploads/16bc5478-aecb-4b44-82d1-0ff41eb10dbb.png',
-    '/lovable-uploads/f183d942-af72-43b6-8db2-66997da17688.png',
     '/lovable-uploads/6e7690dd-d946-4f2a-96b7-f91c6a67c6ea.png',
     '/lovable-uploads/1603b99b-2f9f-47bc-afc2-caba228eff09.png',
     '/lovable-uploads/c6de085c-618d-4ee2-93d2-3e02711541e1.png',
