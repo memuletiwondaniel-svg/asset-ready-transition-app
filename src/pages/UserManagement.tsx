@@ -26,10 +26,16 @@ import {
   ArrowUpDown, 
   Eye,
   Edit,
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Clock,
+  UserCheck,
+  AlertTriangle
 } from "lucide-react";
 import EnhancedCreateUserModal from "@/components/user-management/EnhancedCreateUserModal";
 import UserDetailsModal from "@/components/user-management/UserDetailsModal";
+import AuthenticatorApprovalModal from "@/components/user-management/AuthenticatorApprovalModal";
 import { useUsers } from "@/hooks/useUsers";
 
 interface UserManagementProps {
@@ -45,8 +51,19 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [userToApprove, setUserToApprove] = useState<any>(null);
   
-  const { users, totalUsers, addUser, updateUser } = useUsers();
+  const { 
+    users, 
+    totalUsers, 
+    activeUsers, 
+    pendingUsers, 
+    newUsers, 
+    rejectedUsers,
+    addUser, 
+    updateUser 
+  } = useUsers();
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -87,6 +104,30 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
   const handleCreateUser = (userData: any) => {
     addUser(userData);
     setShowCreateUser(false);
+  };
+
+  const handleApproveUser = (userId: string, privileges: string[], userData: any) => {
+    updateUser(userId, {
+      ...userData,
+      privileges,
+      status: 'new',
+    });
+    setShowApprovalModal(false);
+    setUserToApprove(null);
+  };
+
+  const handleRejectUser = (userId: string, reason: string) => {
+    updateUser(userId, {
+      status: 'rejected',
+      rejectionReason: reason,
+    });
+    setShowApprovalModal(false);
+    setUserToApprove(null);
+  };
+
+  const openApprovalModal = (user: any) => {
+    setUserToApprove(user);
+    setShowApprovalModal(true);
   };
 
   const roles = [
@@ -134,11 +175,45 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <Users className="h-8 w-8 text-blue-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Total Users</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <UserCheck className="h-8 w-8 text-green-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Active Users</p>
+                  <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-8 w-8 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Pending Approval</p>
+                  <p className="text-2xl font-bold text-yellow-600">{pendingUsers}</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Rejected</p>
+                  <p className="text-2xl font-bold text-red-600">{rejectedUsers}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+          <div className="flex items-center gap-4 mt-4">
             <Button 
               onClick={() => setShowCreateUser(true)}
               className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
@@ -324,19 +399,37 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setSelectedUser(user)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        {user.status === 'awaiting authentication' ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openApprovalModal(user)}
+                              className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Approve
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setSelectedUser(user)}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title="Edit User"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -360,6 +453,16 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
           user={selectedUser}
           isOpen={!!selectedUser}
           onClose={() => setSelectedUser(null)}
+        />
+      )}
+
+      {userToApprove && (
+        <AuthenticatorApprovalModal
+          isOpen={showApprovalModal}
+          onClose={() => setShowApprovalModal(false)}
+          user={userToApprove}
+          onApprove={handleApproveUser}
+          onReject={handleRejectUser}
         />
       )}
     </div>
