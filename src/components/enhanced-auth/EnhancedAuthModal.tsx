@@ -115,76 +115,76 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
         <div 
-          className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background/95 to-muted/30"
+          className="min-h-screen flex items-center justify-center p-4 relative"
+          style={{
+            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, hsl(var(--accent) / 0.05) 100%)',
+          }}
         >
-          <div className="w-full max-w-sm">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary to-accent rounded-full shadow-elevation-3 flex items-center justify-center">
-                <div className="w-10 h-10 bg-primary-foreground/20 rounded-full flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-primary-foreground" />
-                </div>
-              </div>
-            </div>
-
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-[0.02]">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent rounded-full blur-3xl transform translate-x-1/2 translate-y-1/2"></div>
+          </div>
+          
+          <div className="w-full max-w-sm relative z-10">
             {/* Login Card */}
-            <div className="fluent-card bg-card/80 backdrop-blur-xl rounded-2xl shadow-elevation-4 p-8 border border-border/30 relative overflow-hidden">
-              {/* Subtle gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-card/50 via-transparent to-accent/5 pointer-events-none" />
+            <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/30 p-8 relative overflow-hidden">
+              {/* Subtle inner glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-2xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10">
+                {/* Sign In Header */}
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-semibold text-foreground mb-2 tracking-tight">Welcome back</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Sign in to your ORSH account
+                  </p>
+                </div>
 
-              {/* Sign In Header */}
-              <div className="text-center mb-8 relative z-10">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent mb-2">
-                  Welcome Back
-                </h2>
-                <p className="text-muted-foreground text-sm font-medium">
-                  Sign in to continue to ORSH
-                </p>
-              </div>
-
-              <div className="space-y-6 relative z-10">
+              <div className="space-y-4">
                   {/* Email/Password Sign In */}
-                  <form onSubmit={handleSignIn} className="space-y-5">
-                    <div className="space-y-3">
-                      <Label htmlFor="signin-email" className="text-foreground font-semibold text-sm">Email</Label>
-                      <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email" className="text-foreground font-medium">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="signin-email"
                           type="email"
                           placeholder="your.email@bgc.com"
                           value={signInData.email}
                           onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                          className="pl-12 h-12 text-sm border-2 border-border bg-input/50 backdrop-blur-sm rounded-xl transition-all duration-300 hover:border-primary/30 focus:border-primary focus:shadow-elevation-2 focus:bg-input"
+                          className="pl-11 h-10 text-sm border-border bg-input"
                           required
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <Label htmlFor="signin-password" className="text-foreground font-semibold text-sm">Password</Label>
-                      <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password" className="text-foreground font-medium">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="signin-password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Enter your password"
                           value={signInData.password}
                           onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                          className="pl-12 pr-12 h-12 text-sm border-2 border-border bg-input/50 backdrop-blur-sm rounded-xl transition-all duration-300 hover:border-primary/30 focus:border-primary focus:shadow-elevation-2 focus:bg-input"
+                          className="pl-11 pr-11 h-10 text-sm border-border bg-input"
                           required
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-10 w-10 px-0 hover:bg-muted/50 rounded-lg transition-colors"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            <EyeOff className="h-5 w-5" />
                           ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            <Eye className="h-5 w-5" />
                           )}
                         </Button>
                       </div>
@@ -202,43 +202,36 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                     <Button 
                       type="submit" 
-                      className="w-full h-12 text-sm font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground rounded-xl shadow-elevation-2 hover:shadow-elevation-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary-hover text-primary-foreground" 
                       disabled={loading}
                     >
-                      {loading ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                          <span>Signing in...</span>
-                        </div>
-                      ) : (
-                        'Sign In'
-                      )}
+                      {loading ? 'Signing in...' : 'Sign In'}
                     </Button>
                   </form>
 
                   {/* Divider */}
-                  <div className="relative my-8">
+                  <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-border/50" />
+                      <span className="w-full border-t border-border" />
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase tracking-wider">
-                      <span className="bg-card/80 px-4 py-1 text-muted-foreground font-medium rounded-full backdrop-blur-sm">
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-3 text-muted-foreground font-medium">
                         OR CONTINUE WITH
                       </span>
                     </div>
                   </div>
 
                   {/* SSO Buttons */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <Button
                       onClick={() => handleSSO('azure')}
                       disabled={loading}
-                      className="w-full h-12 text-sm font-semibold bg-bgc text-bgc-foreground hover:bg-bgc/90 rounded-xl border border-bgc/20 shadow-elevation-1 hover:shadow-elevation-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none group"
+                      className="w-full h-10 text-sm font-medium bg-bgc text-bgc-foreground hover:opacity-90"
                     >
                       <img 
                         src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" 
                         alt="BGC Logo" 
-                        className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110"
+                        className="w-5 h-5 mr-3"
                       />
                       Continue with BGC
                     </Button>
@@ -246,12 +239,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('google')}
                       disabled={loading}
-                      className="w-full h-12 text-sm font-semibold bg-kent text-kent-foreground hover:bg-kent/90 rounded-xl border border-kent/20 shadow-elevation-1 hover:shadow-elevation-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none group"
+                      className="w-full h-10 text-sm font-medium bg-kent text-kent-foreground hover:opacity-90"
                     >
                       <img 
                         src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" 
                         alt="Kent Logo" 
-                        className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110"
+                        className="w-5 h-5 mr-3"
                       />
                       Continue with Kent
                     </Button>
@@ -281,6 +274,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     </Button>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
         </div>
