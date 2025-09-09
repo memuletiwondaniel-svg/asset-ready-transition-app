@@ -7,8 +7,34 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, Building2, Sparkles } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, Building2, Sparkles, Phone, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Country codes for phone numbers
+const countryCodes = [
+  { code: '+964', country: 'Iraq' },
+  { code: '+1', country: 'United States' },
+  { code: '+44', country: 'United Kingdom' },
+  { code: '+971', country: 'UAE' },
+  { code: '+966', country: 'Saudi Arabia' },
+  { code: '+965', country: 'Kuwait' },
+  { code: '+973', country: 'Bahrain' },
+  { code: '+974', country: 'Qatar' },
+  { code: '+968', country: 'Oman' },
+  { code: '+962', country: 'Jordan' },
+  { code: '+961', country: 'Lebanon' },
+  { code: '+20', country: 'Egypt' },
+  { code: '+49', country: 'Germany' },
+  { code: '+33', country: 'France' },
+  { code: '+39', country: 'Italy' },
+  { code: '+31', country: 'Netherlands' },
+  { code: '+47', country: 'Norway' },
+  { code: '+91', country: 'India' },
+  { code: '+86', country: 'China' },
+  { code: '+81', country: 'Japan' }
+];
 
 const AuthPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +45,10 @@ const AuthPage: React.FC = () => {
     password: '',
     confirmPassword: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    functionalEmail: false,
+    personalEmail: '',
+    phoneNumbers: [{ countryCode: '+964', number: '' }]
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
@@ -55,6 +84,15 @@ const AuthPage: React.FC = () => {
       newErrors.email = 'Please enter a valid email address';
     }
 
+    // Personal email validation if functional email is checked
+    if (authMode === 'signup' && formData.functionalEmail) {
+      if (!formData.personalEmail) {
+        newErrors.personalEmail = 'Personal email is required when using functional email';
+      } else if (!emailRegex.test(formData.personalEmail)) {
+        newErrors.personalEmail = 'Please enter a valid personal email address';
+      }
+    }
+
     // Password validation for signup
     if (authMode === 'signup') {
       if (!formData.firstName) newErrors.firstName = 'First name is required';
@@ -69,6 +107,18 @@ const AuthPage: React.FC = () => {
       if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'Passwords do not match';
       }
+
+      // Phone number validation
+      formData.phoneNumbers.forEach((phone, index) => {
+        if (!phone.countryCode) {
+          newErrors[`phone_${index}_country`] = 'Country code is required';
+        }
+        if (!phone.number) {
+          newErrors[`phone_${index}_number`] = 'Phone number is required';
+        } else if (phone.number.length < 7) {
+          newErrors[`phone_${index}_number`] = 'Phone number must be at least 7 digits';
+        }
+      });
     } else if (authMode === 'login' && !formData.password) {
       newErrors.password = 'Password is required';
     }
@@ -77,11 +127,39 @@ const AuthPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handlePhoneChange = (index: number, field: 'countryCode' | 'number', value: string) => {
+    const newPhones = [...formData.phoneNumbers];
+    newPhones[index] = { ...newPhones[index], [field]: value };
+    setFormData(prev => ({ ...prev, phoneNumbers: newPhones }));
+    
+    // Clear errors for this phone field
+    const errorKey = `phone_${index}_${field === 'countryCode' ? 'country' : 'number'}`;
+    if (errors[errorKey]) {
+      setErrors(prev => ({ ...prev, [errorKey]: '' }));
+    }
+  };
+
+  const addPhoneNumber = () => {
+    setFormData(prev => ({
+      ...prev,
+      phoneNumbers: [...prev.phoneNumbers, { countryCode: '+964', number: '' }]
+    }));
+  };
+
+  const removePhoneNumber = (index: number) => {
+    if (formData.phoneNumbers.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumbers: prev.phoneNumbers.filter((_, i) => i !== index)
+      }));
     }
   };
 
@@ -412,8 +490,8 @@ const AuthPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signupEmail">Email</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="signupEmail">Email Address</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -426,12 +504,121 @@ const AuthPage: React.FC = () => {
                         disabled={isLoading}
                       />
                     </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="functionalEmail"
+                        checked={formData.functionalEmail}
+                        onCheckedChange={(checked) => handleInputChange('functionalEmail', !!checked)}
+                      />
+                      <Label htmlFor="functionalEmail" className="text-sm">
+                        This is a functional email (requires personal email)
+                      </Label>
+                    </div>
+
+                    {formData.functionalEmail && (
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="personalEmail"
+                          type="email"
+                          placeholder="your.personal@email.com"
+                          value={formData.personalEmail}
+                          onChange={(e) => handleInputChange('personalEmail', e.target.value)}
+                          className="pl-10"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    )}
+
                     {errors.email && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>{errors.email}</AlertDescription>
                       </Alert>
                     )}
+                    
+                    {errors.personalEmail && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{errors.personalEmail}</AlertDescription>
+                      </Alert>
+                    )}
+                   </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Phone Numbers</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addPhoneNumber}
+                        className="flex items-center gap-1"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add Phone
+                      </Button>
+                    </div>
+                    
+                    {formData.phoneNumbers.map((phone, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex gap-2">
+                          <div className="w-32">
+                            <Select
+                              value={phone.countryCode}
+                              onValueChange={(value) => handlePhoneChange(index, 'countryCode', value)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Code" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border border-border shadow-lg z-50 max-h-60 overflow-y-auto">
+                                {countryCodes.map((country) => (
+                                  <SelectItem 
+                                    key={country.code} 
+                                    value={country.code}
+                                    className="hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                  >
+                                    {country.code} ({country.country})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="flex-1 relative">
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="tel"
+                              placeholder="Phone number"
+                              value={phone.number}
+                              onChange={(e) => handlePhoneChange(index, 'number', e.target.value.replace(/\D/g, ''))}
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                          
+                          {formData.phoneNumbers.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removePhoneNumber(index)}
+                              className="px-2"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {errors[`phone_${index}_country`] && (
+                          <p className="text-sm text-destructive">{errors[`phone_${index}_country`]}</p>
+                        )}
+                        {errors[`phone_${index}_number`] && (
+                          <p className="text-sm text-destructive">{errors[`phone_${index}_number`]}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
 
                   <div className="space-y-2">
