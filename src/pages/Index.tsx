@@ -11,10 +11,10 @@ import {
 import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
-
+import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
 import LandingPage from "@/components/LandingPage";
-
+import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
@@ -30,12 +30,7 @@ const Index = () => {
     setShowAuth(false);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentSection(null);
-  };
-
-  const handleBackToHome = () => {
+  const handleBack = () => {
     setIsAuthenticated(false);
     setCurrentSection(null);
   };
@@ -154,13 +149,13 @@ const Index = () => {
           </div>
         );
       default:
-        return <LandingPage onBack={handleBackToHome} onNavigate={handleNavigate} />;
+        return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
     }
   }
 
   // Show landing page after authentication
   if (isAuthenticated) {
-    return <LandingPage onBack={handleBackToHome} onNavigate={handleNavigate} />;
+    return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
   }
 
   // Show welcome screen before authentication
@@ -168,7 +163,7 @@ const Index = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with enhanced gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
-      
+      <BackgroundSlideshow showFunFacts={showAuth} />
       
       {/* Modern Navigation Header */}
       <header className="relative z-20">
@@ -385,7 +380,7 @@ const Index = () => {
         </main>
       )}
 
-      
+      <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
     </div>
   );
 };

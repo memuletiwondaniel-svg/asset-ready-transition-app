@@ -57,18 +57,6 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				bgc: {
-					DEFAULT: 'hsl(var(--bgc-blue))',
-					foreground: 'hsl(var(--bgc-blue-foreground))',
-				},
-				kent: {
-					DEFAULT: 'hsl(var(--kent-orange))',
-					foreground: 'hsl(var(--kent-orange-foreground))',
-				},
-				google: {
-					DEFAULT: 'hsl(var(--google-gray))',
-					foreground: 'hsl(var(--google-gray-foreground))',
-				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
