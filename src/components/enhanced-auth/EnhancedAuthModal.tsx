@@ -115,16 +115,63 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden">
         <div 
-          className="w-screen h-screen flex items-center justify-center p-4 relative fixed inset-0"
+          className="w-screen h-screen flex items-center justify-center p-4 relative fixed inset-0 overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--accent) / 0.12) 50%, hsl(var(--secondary) / 0.05) 100%)',
+            background: `
+              radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.15) 0%, transparent 40%),
+              radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.12) 0%, transparent 40%),
+              radial-gradient(circle at 50% 10%, hsl(var(--secondary) / 0.08) 0%, transparent 30%),
+              linear-gradient(135deg, 
+                hsl(var(--background)) 0%, 
+                hsl(var(--background) / 0.95) 25%,
+                hsl(var(--primary) / 0.03) 50%,
+                hsl(var(--accent) / 0.05) 75%,
+                hsl(var(--background) / 0.98) 100%
+              )
+            `,
           }}
         >
-          {/* Enhanced Background Pattern with Fluent Design */}
-          <div className="absolute inset-0">
-            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-tl from-accent/8 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
-            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-secondary/6 to-transparent rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2"></div>
+          {/* Dynamic Background Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Floating Orbs with Animation */}
+            <div className="absolute top-1/4 left-1/6 w-64 h-64 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/3 right-1/5 w-80 h-80 bg-gradient-to-tl from-accent/15 via-accent/8 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-to-r from-secondary/12 via-secondary/6 to-transparent rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse delay-500"></div>
+            
+            {/* Geometric Grid Pattern */}
+            <div className="absolute inset-0 opacity-[0.02]">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `
+                  linear-gradient(hsl(var(--foreground) / 0.1) 1px, transparent 1px),
+                  linear-gradient(90deg, hsl(var(--foreground) / 0.1) 1px, transparent 1px)
+                `,
+                backgroundSize: '60px 60px'
+              }}></div>
+            </div>
+            
+            {/* Flowing Light Streaks */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent transform rotate-45 animate-pulse delay-2000"></div>
+            <div className="absolute bottom-0 right-0 w-full h-1 bg-gradient-to-l from-transparent via-accent/25 to-transparent transform -rotate-45 animate-pulse delay-3000"></div>
+            
+            {/* Floating Glass Elements */}
+            <div className="absolute top-1/6 right-1/4 w-32 h-32 bg-gradient-to-br from-background/20 to-background/5 backdrop-blur-sm rounded-2xl border border-border/10 rotate-12 animate-bounce"></div>
+            <div className="absolute bottom-1/4 left-1/6 w-24 h-24 bg-gradient-to-tl from-card/30 to-card/10 backdrop-blur-sm rounded-xl border border-border/15 -rotate-12 animate-bounce delay-1000"></div>
+            
+            {/* Subtle Particle Effect */}
+            <div className="absolute inset-0 opacity-[0.4]">
+              {[...Array(15)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-1 h-1 bg-primary/20 rounded-full animate-pulse"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    animationDuration: `${2 + Math.random() * 3}s`
+                  }}
+                ></div>
+              ))}
+            </div>
           </div>
           
           <div className="w-full max-w-sm relative z-10">
