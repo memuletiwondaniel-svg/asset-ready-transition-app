@@ -194,39 +194,20 @@ const AuthPage: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsLoading(true);
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            full_name: `${formData.firstName} ${formData.lastName}`,
-          }
-        }
-      });
+    // For the multi-step signup, we don't create the account here
+    // Instead, we navigate to step 2 with the form data
+    const step1Data = {
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      functionalEmail: formData.functionalEmail,
+      personalEmail: formData.personalEmail,
+      phoneNumbers: formData.phoneNumbers
+    };
 
-      if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('An account with this email already exists. Please sign in instead.');
-          setAuthMode('login');
-        } else {
-          toast.error(error.message);
-        }
-      } else {
-        toast.success('Please check your email to confirm your account.');
-        setAuthMode('login');
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    // Navigate to step 2 with the form data
+    navigate('/signup/step2', { state: { formData: step1Data } });
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {

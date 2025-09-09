@@ -7,6 +7,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import SignUpStep2 from "./components/SignUpStep2";
+import SignUpReview from "./components/SignUpReview";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
@@ -21,6 +23,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/signup/step2" element={<SignUpStep2 />} />
+            <Route path="/signup/review" element={<SignUpReview />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Index />

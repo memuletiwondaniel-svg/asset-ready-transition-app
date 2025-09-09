@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'REVIEW_REQUEST' | 'DELEGATION_NOTIFICATION' | 'PSSR_APPROVAL_REQUEST';
+  type: 'REVIEW_REQUEST' | 'DELEGATION_NOTIFICATION' | 'PSSR_APPROVAL_REQUEST' | 'USER_REGISTRATION_APPROVAL';
   recipientEmail: string;
   approverName?: string;
   checklistItemId?: string;
@@ -17,6 +17,12 @@ interface NotificationRequest {
   delegatedTo?: string;
   delegationReason?: string;
   approverTier?: number;
+  // New user registration fields
+  newUserName?: string;
+  newUserEmail?: string;
+  newUserCompany?: string;
+  newUserRole?: string;
+  userId?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -34,7 +40,12 @@ const handler = async (req: Request): Promise<Response> => {
       pssrId, 
       delegatedTo, 
       delegationReason,
-      approverTier 
+      approverTier,
+      newUserName,
+      newUserEmail,
+      newUserCompany,
+      newUserRole,
+      userId
     }: NotificationRequest = await req.json();
 
     let emailResponse;
@@ -111,6 +122,39 @@ const handler = async (req: Request): Promise<Response> => {
                 <li><strong>Tier 3:</strong> Senior Leadership ${approverTier === 3 ? '← Current' : 'Pending'}</li>
               </ul>
               <p>Best regards,<br>PSSR System</p>
+            </div>
+          `
+        });
+        break;
+
+      case 'USER_REGISTRATION_APPROVAL':
+        emailResponse = await resend.emails.send({
+          from: "ORSH System <noreply@bgc.com>",
+          to: [recipientEmail],
+          subject: `New User Registration - Approval Required`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #1f2937;">New User Registration Request</h2>
+              <p>Dear ${approverName},</p>
+              <p>A new user registration request requires your approval:</p>
+              <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                <p><strong>Name:</strong> ${newUserName}</p>
+                <p><strong>Email:</strong> ${newUserEmail}</p>
+                <p><strong>Company:</strong> ${newUserCompany}</p>
+                <p><strong>Role:</strong> ${newUserRole}</p>
+              </div>
+              <div style="margin: 20px 0;">
+                <a href="${process.env.SUPABASE_URL || ''}/users?action=approve&user=${userId}" 
+                   style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;">
+                  Approve Request
+                </a>
+                <a href="${process.env.SUPABASE_URL || ''}/users?action=reject&user=${userId}"
+                   style="background-color: #ef4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                  Reject Request
+                </a>
+              </div>
+              <p>Please log in to the ORSH system to review the full details.</p>
+              <p>Best regards,<br>ORSH System</p>
             </div>
           `
         });
