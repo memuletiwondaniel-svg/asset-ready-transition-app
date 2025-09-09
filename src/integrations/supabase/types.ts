@@ -180,13 +180,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "profiles_manager_id_fkey"
-            columns: ["manager_id"]
-            isOneToOne: false
-            referencedRelation: "user_management_view"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       pssr_approvers: {
@@ -506,13 +499,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "user_audit_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_management_view"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       user_roles: {
@@ -546,50 +532,37 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "user_roles_granted_by_fkey"
-            columns: ["granted_by"]
-            isOneToOne: false
-            referencedRelation: "user_management_view"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "user_roles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_management_view"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
     }
     Views: {
-      user_management_view: {
-        Row: {
-          account_status: string | null
-          company: Database["public"]["Enums"]["user_company"] | null
-          created_at: string | null
-          email: string | null
-          employee_id: string | null
-          full_name: string | null
-          job_title: string | null
-          last_login_at: string | null
-          manager_name: string | null
-          phone_number: string | null
-          roles: Database["public"]["Enums"]["user_role"][] | null
-          sso_enabled: boolean | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_user_management_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          account_status: string
+          company: Database["public"]["Enums"]["user_company"]
+          created_at: string
+          email: string
+          employee_id: string
+          full_name: string
+          job_title: string
+          last_login_at: string
+          manager_name: string
+          phone_number: string
+          roles: string[]
+          sso_enabled: boolean
+          user_id: string
+        }[]
+      }
       user_has_role: {
         Args: { role_name: string; user_uuid: string }
         Returns: boolean
