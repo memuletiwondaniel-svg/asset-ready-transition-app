@@ -128,9 +128,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   <ArrowRight className="w-6 h-6 text-white transform -rotate-12" />
                 </div>
               </div>
-              <p className="text-muted-foreground text-sm">
-                Basrah Gas Company Operations Platform
-              </p>
             </div>
 
             {/* Login Card */}
