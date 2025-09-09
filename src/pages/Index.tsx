@@ -135,7 +135,7 @@ const Index = () => {
       case 'manage-checklist':
         return <ManageChecklistPage onBack={handleBackToLanding} />;
       case 'admin-tools':
-        return <AdminToolsPage onBack={handleBackToLanding} onNavigate={handleNavigate} />;
+        return <AdminToolsPage onBack={handleBackToLanding} />;
       case 'p2o':
         // Placeholder for P2O Module - can be implemented later
         return (
