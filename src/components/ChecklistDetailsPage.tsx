@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings } from 'lucide-react';
 import { pssrChecklistData, checklistCategories, ChecklistItem } from '@/data/pssrChecklistData';
+import EditChecklistForm from './EditChecklistForm';
+import EditChecklistItemForm from './EditChecklistItemForm';
 
 interface ChecklistData {
   id: string;
@@ -31,6 +33,13 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showEditChecklist, setShowEditChecklist] = useState(false);
+  const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
+  const [checklistItems, setChecklistItems] = useState(pssrChecklistData);
+  const [selectedItems, setSelectedItems] = useState<string[]>(
+    // Mock selected items - in real app this would come from the checklist data
+    pssrChecklistData.slice(0, Math.floor(pssrChecklistData.length * 0.7)).map(item => item.id)
+  );
 
   // Mock active PSSR data
   const activePSSRs = [
@@ -41,7 +50,10 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
 
   // Filter and sort checklist items
   const filteredItems = useMemo(() => {
-    let items = pssrChecklistData.filter(item => {
+    let items = checklistItems.filter(item => {
+      // Only show selected items for this checklist
+      if (!selectedItems.includes(item.id)) return false;
+      
       const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            item.supportingEvidence.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -70,13 +82,41 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
     });
 
     return items;
-  }, [searchQuery, selectedCategory, sortBy, sortOrder]);
+  }, [searchQuery, selectedCategory, sortBy, sortOrder, checklistItems, selectedItems]);
+
+  const handleEditChecklist = () => {
+    setShowEditChecklist(true);
+  };
+
+  const handleSaveChecklist = (updatedChecklist: any, updatedSelectedItems: string[]) => {
+    // Update checklist and selected items
+    setSelectedItems(updatedSelectedItems);
+    setShowEditChecklist(false);
+    // In real app, this would save to database
+  };
+
+  const handleEditItem = (item: ChecklistItem) => {
+    setEditingItem(item);
+  };
+
+  const handleSaveItem = (updatedItem: ChecklistItem) => {
+    setChecklistItems(prev => 
+      prev.map(item => item.id === updatedItem.id ? updatedItem : item)
+    );
+    setEditingItem(null);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    setChecklistItems(prev => prev.filter(item => item.id !== itemId));
+    setSelectedItems(prev => prev.filter(id => id !== itemId));
+    setEditingItem(null);
+  };
 
   const getCategoryStats = (category: string) => {
-    if (category === 'all') {
-      return pssrChecklistData.length;
-    }
-    return pssrChecklistData.filter(item => item.category === category).length;
+    const categoryItems = category === 'all' 
+      ? selectedItems
+      : checklistItems.filter(item => selectedItems.includes(item.id) && item.category === category);
+    return Array.isArray(categoryItems) ? categoryItems.length : 0;
   };
 
   const getStatusBadge = (status: string) => {
@@ -102,6 +142,18 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
       setSortOrder('asc');
     }
   };
+
+  // Show edit checklist form
+  if (showEditChecklist) {
+    return (
+      <EditChecklistForm 
+        checklist={checklist}
+        onBack={() => setShowEditChecklist(false)}
+        onSave={handleSaveChecklist}
+        initialSelectedItems={selectedItems}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -149,7 +201,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                   </CardDescription>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleEditChecklist}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Checklist
                   </Button>
@@ -305,10 +357,19 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                           <TableCell className="text-sm">{item.approvingAuthority}</TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditItem(item)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="text-destructive hover:bg-destructive/10"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -371,6 +432,22 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Item Modal */}
+      {editingItem && (
+        <EditChecklistItemForm 
+          item={editingItem}
+          onBack={() => setEditingItem(null)}
+          onSave={handleSaveItem}
+          onDelete={handleDeleteItem}
+          availableUsers={[
+            // Mock users - in real app this would come from user microservice
+            { id: '1', name: 'Ahmed Al-Rashid', role: 'PSSR Lead' },
+            { id: '2', name: 'Sarah Johnson', role: 'Operations Manager' },
+            { id: '3', name: 'Mohammed Hassan', role: 'Safety Manager' }
+          ]}
+        />
+      )}
     </div>
   );
 };
