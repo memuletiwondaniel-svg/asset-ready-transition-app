@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
+import PSSRStepThree from './PSSRStepThree';
 
 interface CreatePSSRWorkflowProps {
   onBack: () => void;
@@ -152,6 +153,16 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
             }}
             onBack={handleBack}
             onContinueToChecklist={handleNext}
+          />
+        );
+      case 3:
+        return (
+          <PSSRStepThree
+            data={pssrData}
+            onDataUpdate={handleDataUpdate}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSave={handleSave}
           />
         );
       default:
