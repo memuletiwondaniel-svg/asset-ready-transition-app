@@ -135,7 +135,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+                  
                   <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
                 </TabsList>
 
@@ -256,6 +256,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     and{' '}
                     <Button variant="link" className="p-0 h-auto text-primary text-xs">
                       Privacy Policy
+                    </Button>
+                  </div>
+                  {/* New User Prompt */}
+                  <div className="text-center text-sm text-muted-foreground mt-6">
+                    New to ORSH?{' '}
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-primary text-sm"
+                      onClick={() => setActiveTab('signup')}
+                    >
+                      Create your account
                     </Button>
                   </div>
                 </TabsContent>
