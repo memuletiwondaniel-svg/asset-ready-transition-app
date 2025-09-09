@@ -113,39 +113,47 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
+      <DialogContent className="max-w-full max-h-full w-screen h-screen p-0 bg-transparent border-none shadow-none">
         <div 
-          className="min-h-screen flex items-center justify-center p-4 bg-gray-50"
+          className="w-full h-full flex items-center justify-center p-6"
+          style={{
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            minHeight: '100vh'
+          }}
         >
-          <div className="w-full max-w-sm">
+          <div className="w-full max-w-md">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="mb-4">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <ArrowRight className="w-6 h-6 text-white" />
+            <div className="text-center mb-8">
+              <div className="mb-6">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl border border-white/20">
+                  <ArrowRight className="w-8 h-8 text-white" />
                 </div>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              <h1 className="text-3xl font-light text-gray-800 mb-2 tracking-wide">
                 Welcome to ORSH
               </h1>
             </div>
 
             {/* Login Card */}
-            <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
+            <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 p-8"
+              style={{
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2)'
+              }}
+            >
               {/* Close button */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 rounded-full p-2"
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 hover:bg-white/50 rounded-full p-3 transition-all duration-200"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </Button>
 
               {/* Sign In Header */}
-              <div className="text-center mb-6 mt-2">
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Sign In</h2>
-                <p className="text-gray-600 text-sm">
+              <div className="text-center mb-8 mt-4">
+                <h2 className="text-2xl font-light text-gray-800 mb-2 tracking-wide">Sign In</h2>
+                <p className="text-gray-500 text-sm font-light">
                   Enter your credentials to access ORSH
                 </p>
               </div>
