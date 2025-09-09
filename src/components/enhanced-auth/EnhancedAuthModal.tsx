@@ -252,7 +252,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       className="w-full h-10 text-sm font-medium bg-bgc text-bgc-foreground hover:opacity-90"
                     >
                       <img 
-                        src="/lovable-uploads/421778ce-4ffe-4e3b-b370-8d1bb24a3d51.png" 
+                        src="/lovable-uploads/3500f340-f92e-4cc2-ac18-cd2d5afacdaf.png" 
                         alt="BGC Logo" 
                         className="w-5 h-5 mr-3"
                       />
