@@ -440,18 +440,17 @@ const AuthPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <Button type="submit" className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/25 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary" disabled={isLoading}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
                     {isLoading ? (
-                      <>
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
-                        <span className="relative z-10">Signing in...</span>
-                      </>
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                        Signing in...
+                      </div>
                     ) : (
-                      <>
-                        <span className="relative z-10">Sign In</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
-                      </>
+                      <div className="flex items-center justify-center">
+                        <span>Sign In</span>
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
                     )}
                   </Button>
                 </form>
@@ -669,18 +668,17 @@ const AuthPage: React.FC = () => {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-secondary/25 bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary border border-secondary/20 hover:border-secondary/40" disabled={isLoading}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
                     {isLoading ? (
-                      <>
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
-                        <span className="relative z-10">Processing...</span>
-                      </>
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                        Processing...
+                      </div>
                     ) : (
-                      <>
-                        <span className="relative z-10">Next</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
-                      </>
+                      <div className="flex items-center justify-center">
+                        <span>Next</span>
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
                     )}
                   </Button>
                 </form>
@@ -711,18 +709,17 @@ const AuthPage: React.FC = () => {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/25 bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent border border-accent/20 hover:border-accent/40" disabled={isLoading}>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <Button type="submit" className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
                   {isLoading ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
-                      <span className="relative z-10">Sending...</span>
-                    </>
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                      Sending...
+                    </div>
                   ) : (
-                    <>
-                      <span className="relative z-10">Send Reset Link</span>
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
-                    </>
+                    <div className="flex items-center justify-center">
+                      <span>Send Reset Link</span>
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </div>
                   )}
                 </Button>
 
