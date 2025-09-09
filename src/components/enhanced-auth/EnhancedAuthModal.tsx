@@ -258,6 +258,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       Privacy Policy
                     </Button>
                   </div>
+                  {/* New User Prompt */}
+                  <div className="text-center text-sm text-muted-foreground mt-6">
+                    New to ORSH?{' '}
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-primary text-sm"
+                      onClick={() => setActiveTab('signup')}
+                    >
+                      Create your account
+                    </Button>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="signup" className="space-y-4">
