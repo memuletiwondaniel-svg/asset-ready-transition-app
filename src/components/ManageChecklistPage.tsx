@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
+import CreateChecklistForm from './CreateChecklistForm';
+import ChecklistSuccessPage from './ChecklistSuccessPage';
 
 interface ChecklistData {
   id: string;
@@ -23,11 +25,37 @@ interface ManageChecklistPageProps {
   onBack: () => void;
 }
 
+interface NewChecklistData {
+  name: string;
+  reason: string;
+  selectedItems: string[];
+  customReason?: string;
+}
+
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => {
   const [selectedChecklist, setSelectedChecklist] = useState<ChecklistData | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showSuccessPage, setShowSuccessPage] = useState(false);
+  const [newChecklistData, setNewChecklistData] = useState<NewChecklistData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+
+  const handleCreateComplete = (checklistData: NewChecklistData) => {
+    setNewChecklistData(checklistData);
+    setShowCreateForm(false);
+    setShowSuccessPage(true);
+  };
+
+  const handleBackToChecklists = () => {
+    setShowSuccessPage(false);
+    setShowCreateForm(false);
+    setNewChecklistData(null);
+  };
+
+  const handleBackToDashboard = () => {
+    onBack();
+  };
 
   // Mock checklist data - in a real app, this would come from the database
   const [checklists] = useState<ChecklistData[]>([
@@ -99,6 +127,27 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
     }
   };
 
+  if (showCreateForm) {
+    return (
+      <CreateChecklistForm 
+        onBack={() => setShowCreateForm(false)}
+        onComplete={handleCreateComplete}
+      />
+    );
+  }
+
+  if (showSuccessPage && newChecklistData) {
+    return (
+      <ChecklistSuccessPage 
+        checklistName={newChecklistData.name}
+        reason={newChecklistData.customReason || newChecklistData.reason}
+        selectedItemsCount={newChecklistData.selectedItems.length}
+        onBackToChecklists={handleBackToChecklists}
+        onBackToDashboard={handleBackToDashboard}
+      />
+    );
+  }
+
   if (selectedChecklist) {
     return (
       <ChecklistDetailsPage 
@@ -154,7 +203,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                 Manage and configure Pre-Startup Safety Review checklists for your projects
               </p>
             </div>
-            <Button className="fluent-button bg-primary hover:bg-primary-hover shadow-fluent-md hover:shadow-fluent-lg">
+            <Button 
+              className="fluent-button bg-primary hover:bg-primary-hover shadow-fluent-md hover:shadow-fluent-lg"
+              onClick={() => setShowCreateForm(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create New Checklist
             </Button>
@@ -212,7 +264,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                 : 'Create your first PSSR checklist to get started with safety reviews.'
               }
             </p>
-            <Button className="fluent-button bg-primary hover:bg-primary-hover">
+            <Button 
+              className="fluent-button bg-primary hover:bg-primary-hover"
+              onClick={() => setShowCreateForm(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create First Checklist
             </Button>
