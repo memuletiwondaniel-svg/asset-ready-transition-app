@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AuthPage: React.FC = () => {
@@ -517,9 +517,7 @@ const AuthPage: React.FC = () => {
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700"
                 disabled={isLoading}
               >
-                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                </svg>
+                <Building2 className="mr-2 h-4 w-4" />
                 Continue with Kent
               </Button>
 
