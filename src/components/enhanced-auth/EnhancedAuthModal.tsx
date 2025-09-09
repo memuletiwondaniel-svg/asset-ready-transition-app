@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 
@@ -177,6 +177,16 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <div className="w-full max-w-sm relative z-10">
             {/* Modern Fluent Design Card */}
             <div className="bg-card/80 backdrop-blur-2xl rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
+              {/* Close Button */}
+              <Button
+                onClick={onClose}
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 right-4 z-20 w-8 h-8 p-0 hover:bg-muted/20 text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              
               {/* Fluent Design Acrylic Effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-3xl"></div>
               <div className="absolute inset-0 bg-gradient-to-t from-transparent via-background/5 to-foreground/3 rounded-3xl"></div>
