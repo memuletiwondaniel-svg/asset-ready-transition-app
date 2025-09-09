@@ -380,7 +380,7 @@ const Index = () => {
         </main>
       )}
 
-      <AuthenticationModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
+      <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
     </div>
   );
 };

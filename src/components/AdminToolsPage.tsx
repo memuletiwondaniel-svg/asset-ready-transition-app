@@ -14,7 +14,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist'>('dashboard');
 
   if (activeView === 'users') {
-    return <UserManagement onBack={() => setActiveView('dashboard')} />;
+    return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} />;
   }
 
   if (activeView === 'checklist') {
