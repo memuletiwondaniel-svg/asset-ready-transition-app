@@ -159,9 +159,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-50 rounded-lg p-1">
-                  <TabsTrigger value="signin" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-50/80 rounded-xl p-1">
+                  <TabsTrigger value="signin" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg font-light">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg font-light">Create your Account</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signin" className="space-y-4">
@@ -286,10 +286,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   </div>
                 </TabsContent>
 
-                <TabsContent value="signup" className="space-y-4">
+                <TabsContent value="signup" className="space-y-6">
                   <div className="text-center">
+                    <p className="text-gray-600 text-sm font-light mb-6">
+                      Start your journey with ORSH by creating your account
+                    </p>
                     <Button 
-                      className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]" 
+                      className="w-full h-12 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] rounded-xl" 
                       onClick={() => setShowRegistrationForm(true)}
                     >
                       Create Your Account
