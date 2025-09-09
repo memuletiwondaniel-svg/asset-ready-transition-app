@@ -233,10 +233,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('azure')}
                       disabled={loading}
-                      className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-bgc to-bgc/90 text-bgc-foreground 
-                                 shadow-md hover:shadow-lg transition-all duration-300 ease-out
+                      className="w-full h-11 text-sm font-semibold bg-muted/40 text-muted-foreground 
+                                 hover:bg-gradient-to-r hover:from-bgc hover:to-bgc/90 hover:text-bgc-foreground
+                                 shadow-sm hover:shadow-lg transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
-                                 border border-bgc/20 hover:border-bgc/40
+                                 border border-border/40 hover:border-bgc/40
                                  relative overflow-hidden group"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -244,7 +245,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         <img 
                           src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" 
                           alt="BGC Logo" 
-                          className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110"
+                          className="w-5 h-5 mr-3 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110"
                         />
                         Continue with BGC
                       </div>
@@ -253,10 +254,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('google')}
                       disabled={loading}
-                      className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-kent to-kent/90 text-kent-foreground 
-                                 shadow-md hover:shadow-lg transition-all duration-300 ease-out
+                      className="w-full h-11 text-sm font-semibold bg-muted/40 text-muted-foreground 
+                                 hover:bg-gradient-to-r hover:from-kent hover:to-kent/90 hover:text-kent-foreground
+                                 shadow-sm hover:shadow-lg transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
-                                 border border-kent/20 hover:border-kent/40
+                                 border border-border/40 hover:border-kent/40
                                  relative overflow-hidden group"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -264,7 +266,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         <img 
                           src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" 
                           alt="Kent Logo" 
-                          className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110"
+                          className="w-5 h-5 mr-3 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110"
                         />
                         Continue with Kent
                       </div>
