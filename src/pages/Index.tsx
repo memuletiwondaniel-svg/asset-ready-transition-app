@@ -12,7 +12,7 @@ import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import AuthenticationModal from "@/components/AuthenticationModal";
 import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
-import DashboardLandingPage from "@/components/DashboardLandingPage";
+import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
@@ -148,13 +148,13 @@ const Index = () => {
           </div>
         );
       default:
-        return <DashboardLandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+        return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
     }
   }
 
   // Show landing page after authentication
   if (isAuthenticated) {
-    return <DashboardLandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+    return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
   }
 
   // Show welcome screen before authentication

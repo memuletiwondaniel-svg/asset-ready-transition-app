@@ -3,15 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import SignUpStep2 from "./components/SignUpStep2";
-import SignUpReview from "./components/SignUpReview";
-import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
-import OrshLandingPage from "./components/OrshLandingPage";
 
 const queryClient = new QueryClient();
 
@@ -21,25 +14,11 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup/step2" element={<SignUpStep2 />} />
-            <Route path="/signup/review" element={<SignUpReview />} />
-            <Route path="/landing" element={<OrshLandingPage />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            } />
-            <Route path="/users" element={
-              <ProtectedRoute requireAdmin>
-                <UserManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

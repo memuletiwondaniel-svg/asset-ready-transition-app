@@ -39,7 +39,7 @@ import AuthenticatorApprovalModal from "@/components/user-management/Authenticat
 import { useUsers } from "@/hooks/useUsers";
 
 interface UserManagementProps {
-  onBack?: () => void;
+  onBack: () => void;
 }
 
 const UserManagement = ({ onBack }: UserManagementProps) => {
