@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, BarChart3, Settings, ArrowLeft, ArrowRight, Upload } from 'lucide-react';
-import UserManagement from "@/pages/UserManagement";
+import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ChecklistManagementPage from "./ChecklistManagementPage";
 
 interface AdminToolsPageProps {

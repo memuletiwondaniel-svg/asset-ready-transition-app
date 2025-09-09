@@ -24,7 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 interface CreateUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateUser: (userData: any) => void;
+  onCreateUser?: (userData: any) => void;
+  onUserCreated?: () => void;
 }
 
 const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps) => {

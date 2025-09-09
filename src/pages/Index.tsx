@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
-import AuthenticationModal from "@/components/AuthenticationModal";
+import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
+import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
 import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
