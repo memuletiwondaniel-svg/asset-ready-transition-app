@@ -26,14 +26,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut, GripVertical, Pin, PinOff, ArrowLeft, Grid3X3, List } from 'lucide-react';
 import DraggableTaskCard from './DraggableTaskCard';
 import DraggableTaskList from './DraggableTaskList';
-import { useAuth } from '@/hooks/useAuth';
 
 interface LandingPageProps {
+  onBack: () => void;
   onNavigate: (section: string) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
-  const { profile, signOut } = useAuth();
+const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
@@ -511,10 +510,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-sm border-border/50 shadow-lg">
-                  <div className="px-3 py-2 border-b border-border/50">
-                    <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">{profile?.company || 'Company'} • {profile?.job_title || 'User'}</p>
-                  </div>
                   <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 group">
                     <User className="h-4 w-4 mr-3 text-muted-foreground group-hover:text-primary" />
                     Profile
@@ -534,7 +529,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <div className="h-px bg-border/50 my-1" />
                   <DropdownMenuItem 
                     className="cursor-pointer hover:bg-red-50 text-red-600 hover:text-red-700 group font-medium"
-                    onClick={signOut}
+                    onClick={onBack}
                   >
                     <LogOut className="h-4 w-4 mr-3 group-hover:scale-110 transition-transform duration-200" />
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">{t.signOut}</span>
