@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, Building2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AuthPage: React.FC = () => {
@@ -233,25 +233,57 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img 
-            src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-            alt="BGC Logo" 
-            className="h-16 w-auto mx-auto mb-4" 
-          />
-          <h1 className="text-3xl font-bold text-foreground">Welcome to ORSH</h1>
-          <p className="text-muted-foreground mt-2">Basrah Gas Company Operations Platform</p>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
+      {/* Floating Particles Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${3 + Math.random() * 2}s`
+            }}
+          >
+            <div className="w-2 h-2 bg-primary/30 rounded-full animate-bounce" 
+                 style={{ animationDelay: `${Math.random() * 2}s` }} />
+          </div>
+        ))}
+      </div>
+
+      {/* Animated Gradient Orbs */}
+      <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full blur-xl animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-gradient-to-r from-accent/20 to-primary/20 rounded-full blur-lg animate-pulse" style={{ animationDelay: '1s' }} />
+      
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="relative group">
+            <img 
+              src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+              alt="BGC Logo" 
+              className="h-16 w-auto mx-auto mb-4 transition-transform duration-300 group-hover:scale-110" 
+            />
+            <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground animate-slide-in-right">
+            Welcome to ORSH
+            <Sparkles className="inline-block ml-2 h-6 w-6 text-primary animate-pulse" />
+          </h1>
+          <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            Basrah Gas Company Operations Platform
+          </p>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">
+        <Card className="shadow-lg backdrop-blur-sm bg-card/95 border-2 hover:border-primary/20 transition-all duration-300 animate-scale-in group">
+          <CardHeader className="space-y-1 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-lg" />
+            <CardTitle className="text-2xl text-center relative z-10 transition-colors duration-300 group-hover:text-primary">
               {authMode === 'login' ? 'Sign In' : 
                authMode === 'signup' ? 'Create Account' : 'Reset Password'}
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center relative z-10">
               {authMode === 'login' ? 'Enter your credentials to access ORSH' :
                authMode === 'signup' ? 'Fill in your details to create an account' :
                'Enter your email to reset your password'}
@@ -327,9 +359,18 @@ const AuthPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign In'}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button type="submit" className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        Sign In
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
@@ -437,9 +478,18 @@ const AuthPage: React.FC = () => {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating account...' : 'Create Account'}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button type="submit" className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                        Creating account...
+                      </>
+                    ) : (
+                      <>
+                        Create Account
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
@@ -469,8 +519,18 @@ const AuthPage: React.FC = () => {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Sending...' : 'Send Reset Link'}
+                <Button type="submit" className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Reset Link
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </>
+                  )}
                 </Button>
 
                 <div className="text-center">
@@ -499,40 +559,42 @@ const AuthPage: React.FC = () => {
                 variant="outline" 
                 type="button" 
                 onClick={handleBGCSignIn}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white border-slate-800 hover:border-slate-900 transition-all duration-200"
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white border-slate-800 hover:border-slate-900 group transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden"
                 disabled={isLoading}
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-700/0 via-slate-500/20 to-slate-700/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <img 
                   src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
                   alt="BGC Logo" 
-                  className="mr-2 h-4 w-4 object-contain" 
+                  className="mr-2 h-4 w-4 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110" 
                 />
-                Continue with BGC
+                <span className="relative z-10">Continue with BGC</span>
               </Button>
 
               <Button 
                 variant="outline" 
                 type="button" 
                 onClick={handleKentSignIn}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 transition-all duration-200"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 group transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden"
                 disabled={isLoading}
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-300/20 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <img 
                   src="/lovable-uploads/a38e7106-c33c-4a6c-9cf7-1a84ce322f21.png" 
                   alt="Kent Logo" 
-                  className="mr-2 h-4 w-4 object-contain" 
+                  className="mr-2 h-4 w-4 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110" 
                 />
-                Continue with Kent
+                <span className="relative z-10">Continue with Kent</span>
               </Button>
 
               <Button 
                 variant="outline" 
                 type="button" 
                 onClick={handleGoogleSignIn}
-                className="w-full"
+                className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-md"
                 disabled={isLoading}
               >
-                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                <svg className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-12" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     fill="#4285F4"
@@ -554,8 +616,11 @@ const AuthPage: React.FC = () => {
               </Button>
             </div>
 
-            <p className="text-center text-sm text-muted-foreground">
-              By signing in, you agree to our Terms of Service and Privacy Policy
+            <p className="text-center text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              By signing in, you agree to our{' '}
+              <span className="text-primary hover:underline cursor-pointer transition-colors duration-200">Terms of Service</span>
+              {' '}and{' '}
+              <span className="text-primary hover:underline cursor-pointer transition-colors duration-200">Privacy Policy</span>
             </p>
           </CardContent>
         </Card>
