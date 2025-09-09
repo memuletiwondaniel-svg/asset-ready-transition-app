@@ -11,7 +11,7 @@ import {
 import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import AuthenticationModal from "@/components/AuthenticationModal";
-import PSSRModule from "@/components/PSSRModule";
+import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
 import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
@@ -129,7 +129,7 @@ const Index = () => {
   if (isAuthenticated && currentSection) {
     switch (currentSection) {
       case 'safe-startup':
-        return <PSSRModule onBack={handleBackToLanding} />;
+        return <SafeStartupSummaryPage onBack={handleBackToLanding} />;
       case 'users':
         return <UserManagement onBack={handleBackToLanding} />;
       case 'manage-checklist':
