@@ -208,6 +208,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                                  shadow-lg hover:shadow-xl transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
                                  border border-primary/20 hover:border-primary/40
+                                 peer-hover:opacity-50 peer-hover:scale-95 peer-hover:shadow-sm
                                  relative overflow-hidden group" 
                       disabled={loading}
                     >
@@ -238,6 +239,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                                  shadow-sm hover:shadow-lg transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
                                  border border-border/40 hover:border-bgc/40
+                                 peer
                                  relative overflow-hidden group"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -259,6 +261,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                                  shadow-sm hover:shadow-lg transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
                                  border border-border/40 hover:border-kent/40
+                                 peer
                                  relative overflow-hidden group"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
