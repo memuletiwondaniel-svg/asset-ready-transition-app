@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, Building2, Sparkles, Phone, Plus, X } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ArrowLeft, AlertCircle, Building2, Sparkles, Phone, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Country codes for phone numbers
@@ -338,6 +338,18 @@ const AuthPage: React.FC = () => {
         <Card className="shadow-lg backdrop-blur-sm bg-card/95 border-2 hover:border-primary/20 transition-all duration-300 animate-scale-in group">
           <CardHeader className="space-y-1 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-lg" />
+            
+            {/* Back to Home Link */}
+            <div className="flex justify-start mb-2">
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors duration-200 group/back"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1 transition-transform duration-200 group-hover/back:-translate-x-1" />
+                Back to ORSH
+              </button>
+            </div>
+            
             <CardTitle className="text-2xl text-center relative z-10 transition-colors duration-300 group-hover:text-primary">
               {authMode === 'login' ? 'Sign In' : 
                authMode === 'signup' ? 'Create Account' : 'Reset Password'}
