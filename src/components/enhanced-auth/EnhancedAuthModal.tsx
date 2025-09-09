@@ -115,10 +115,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
         <div 
-          className="min-h-screen flex items-center justify-center p-4"
-          style={{
-            background: 'var(--orsh-gradient)',
-          }}
+          className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-muted/10 via-background to-muted/20"
         >
           <div className="w-full max-w-sm">
             {/* Header */}
