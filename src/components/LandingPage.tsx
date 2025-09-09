@@ -754,7 +754,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateTo
                 <div
                   key={section.id}
                   className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal flex flex-col h-[320px]"
-                  onClick={() => onNavigate(section.id)}
+                  onClick={() => console.log('Navigate to', section.id)}
                   style={{ 
                     animationDelay: `${0.4 + index * 0.1}s`,
                   }}
@@ -787,7 +787,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateTo
                           className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-2.5 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onNavigate(section.id);
+                            console.log('Navigate to', section.id);
                           }}
                         >
                           {t.launch}
