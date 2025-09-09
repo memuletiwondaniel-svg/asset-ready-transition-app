@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      checklist_item_reviews: {
+        Row: {
+          checklist_item_id: string
+          comments: string | null
+          created_at: string
+          id: string
+          pssr_id: string
+          reviewed_at: string | null
+          reviewer_user_id: string
+          status: string
+        }
+        Insert: {
+          checklist_item_id: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          pssr_id: string
+          reviewed_at?: string | null
+          reviewer_user_id: string
+          status: string
+        }
+        Update: {
+          checklist_item_id?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          pssr_id?: string
+          reviewed_at?: string | null
+          reviewer_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_item_reviews_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          checklist_item_id: string | null
+          content: string
+          created_at: string
+          id: string
+          pssr_id: string | null
+          recipient_email: string
+          recipient_user_id: string
+          sender_user_id: string | null
+          sent_at: string | null
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          pssr_id?: string | null
+          recipient_email: string
+          recipient_user_id: string
+          sender_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+          type: string
+        }
+        Update: {
+          checklist_item_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          pssr_id?: string | null
+          recipient_email?: string
+          recipient_user_id?: string
+          sender_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          position: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          position?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          position?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pssr_approvers: {
         Row: {
           approved_at: string | null
@@ -253,6 +389,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      task_delegations: {
+        Row: {
+          checklist_item_id: string
+          created_at: string
+          created_by: string
+          delegated_to_user_id: string
+          delegation_reason: string | null
+          id: string
+          original_approver_id: string
+          pssr_id: string
+        }
+        Insert: {
+          checklist_item_id: string
+          created_at?: string
+          created_by: string
+          delegated_to_user_id: string
+          delegation_reason?: string | null
+          id?: string
+          original_approver_id: string
+          pssr_id: string
+        }
+        Update: {
+          checklist_item_id?: string
+          created_at?: string
+          created_by?: string
+          delegated_to_user_id?: string
+          delegation_reason?: string | null
+          id?: string
+          original_approver_id?: string
+          pssr_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_delegations_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
