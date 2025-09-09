@@ -116,9 +116,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
         <div 
           className="min-h-screen flex items-center justify-center p-4"
-          style={{
-            background: 'var(--orsh-gradient)',
-          }}
         >
           <div className="w-full max-w-sm">
             {/* Header */}
@@ -128,6 +125,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   <ArrowRight className="w-6 h-6 text-white transform -rotate-12" />
                 </div>
               </div>
+              <h1 className="text-2xl font-bold text-foreground mb-1">
+                Welcome to ORSH
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Basrah Gas Company Operations Platform
+              </p>
             </div>
 
             {/* Login Card */}
