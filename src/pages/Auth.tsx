@@ -348,92 +348,100 @@ const AuthPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as any)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
+            {/* Login Form */}
+            {authMode === 'login' && (
+              <div>
+                <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as any)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@bgc.com"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="pl-10"
-                        disabled={isLoading}
-                      />
-                    </div>
-                    {errors.email && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.email}</AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={(e) => handleInputChange('password', e.target.value)}
-                        className="pl-10 pr-10"
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    {errors.password && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.password}</AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode('reset')}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-
-                  <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
-                    {isLoading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                        Signing in...
+                  <TabsContent value="login">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="your.email@bgc.com"
+                            value={formData.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            className="pl-10"
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {errors.email && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{errors.email}</AlertDescription>
+                          </Alert>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-center">
-                        <span>Sign In</span>
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </div>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
 
-              <TabsContent value="signup">
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter your password"
+                            value={formData.password}
+                            onChange={(e) => handleInputChange('password', e.target.value)}
+                            className="pl-10 pr-10"
+                            disabled={isLoading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {errors.password && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{errors.password}</AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode('reset')}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+
+                      <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
+                        {isLoading ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                            Signing in...
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center">
+                            <span>Sign In</span>
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </div>
+                        )}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+
+            {/* Signup Form */}
+            {authMode === 'signup' && (
+              <div>
                 {/* Progress indicator */}
                 <div className="mb-6">
                   <div className="flex items-center justify-center space-x-3">
@@ -491,16 +499,16 @@ const AuthPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <Label htmlFor="signupEmail">Email Address</Label>
+                    <Label htmlFor="signupEmail" className="text-sm font-medium text-foreground">Email Address</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signupEmail"
                         type="email"
                         placeholder="your.email@bgc.com"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="pl-10"
+                        className="h-11 pl-10 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                         disabled={isLoading}
                       />
                     </div>
@@ -518,14 +526,14 @@ const AuthPage: React.FC = () => {
 
                     {formData.functionalEmail && (
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="personalEmail"
                           type="email"
                           placeholder="your.personal@email.com"
                           value={formData.personalEmail}
                           onChange={(e) => handleInputChange('personalEmail', e.target.value)}
-                          className="pl-10"
+                          className="h-11 pl-10 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                           disabled={isLoading}
                         />
                       </div>
@@ -544,11 +552,11 @@ const AuthPage: React.FC = () => {
                         <AlertDescription>{errors.personalEmail}</AlertDescription>
                       </Alert>
                     )}
-                   </div>
+                  </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label>Phone Numbers</Label>
+                      <Label className="text-sm font-medium text-foreground">Phone Numbers</Label>
                       <Button
                         type="button"
                         variant="outline"
@@ -569,7 +577,7 @@ const AuthPage: React.FC = () => {
                               value={phone.countryCode}
                               onValueChange={(value) => handlePhoneChange(index, 'countryCode', value)}
                             >
-                              <SelectTrigger className="w-full">
+                              <SelectTrigger className="w-full h-11">
                                 <SelectValue placeholder="Code" />
                               </SelectTrigger>
                               <SelectContent className="bg-background border border-border shadow-lg z-50 max-h-60 overflow-y-auto">
@@ -587,13 +595,13 @@ const AuthPage: React.FC = () => {
                           </div>
                           
                           <div className="flex-1 relative">
-                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               type="tel"
                               placeholder="Phone number"
                               value={phone.number}
                               onChange={(e) => handlePhoneChange(index, 'number', e.target.value.replace(/\D/g, ''))}
-                              className="pl-10"
+                              className="h-11 pl-10 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                               disabled={isLoading}
                             />
                           </div>
@@ -604,7 +612,7 @@ const AuthPage: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => removePhoneNumber(index)}
-                              className="px-2"
+                              className="px-2 h-11"
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -621,23 +629,23 @@ const AuthPage: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signupPassword">Password</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="signupPassword" className="text-sm font-medium text-foreground">Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signupPassword"
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a strong password"
                         value={formData.password}
                         onChange={(e) => handleInputChange('password', e.target.value)}
-                        className="pl-10 pr-10"
+                        className="h-11 pl-10 pr-10 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                         disabled={isLoading}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -647,17 +655,17 @@ const AuthPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">Confirm Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="confirmPassword"
                         type="password"
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                        className="pl-10"
+                        className="h-11 pl-10 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                         disabled={isLoading}
                       />
                     </div>
@@ -666,22 +674,38 @@ const AuthPage: React.FC = () => {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
-                    {isLoading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                        Processing...
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center">
-                        <span>Next</span>
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </div>
-                    )}
-                  </Button>
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate('/')}
+                      className="flex-1 h-11 border-input hover:bg-accent hover:text-accent-foreground transition-colors"
+                      disabled={isLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                          Processing...
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center">
+                          <span>Next</span>
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      )}
+                    </Button>
+                  </div>
                 </form>
-              </TabsContent>
-            </Tabs>
+              </div>
+            )}
 
             {authMode === 'reset' && (
               <form onSubmit={handlePasswordReset} className="space-y-4">
