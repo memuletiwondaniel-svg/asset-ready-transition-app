@@ -14,7 +14,7 @@ import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
 
 import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
 import LandingPage from "@/components/LandingPage";
-import BackgroundSlideshow from "@/components/BackgroundSlideshow";
+
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
@@ -163,7 +163,7 @@ const Index = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with enhanced gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
-      <BackgroundSlideshow showFunFacts={showAuth} />
+      
       
       {/* Modern Navigation Header */}
       <header className="relative z-20">
