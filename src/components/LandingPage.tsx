@@ -28,12 +28,11 @@ import DraggableTaskCard from './DraggableTaskCard';
 import DraggableTaskList from './DraggableTaskList';
 
 interface LandingPageProps {
-  user: any;
-  onSignOut: () => void;
-  onNavigateToReview: () => void;
+  onBack: () => void;
+  onNavigate: (section: string) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateToReview }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
@@ -530,7 +529,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateTo
                   <div className="h-px bg-border/50 my-1" />
                   <DropdownMenuItem 
                     className="cursor-pointer hover:bg-red-50 text-red-600 hover:text-red-700 group font-medium"
-                    onClick={() => window.history.back()}
+                    onClick={onBack}
                   >
                     <LogOut className="h-4 w-4 mr-3 group-hover:scale-110 transition-transform duration-200" />
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">{t.signOut}</span>
@@ -754,7 +753,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateTo
                 <div
                   key={section.id}
                   className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal flex flex-col h-[320px]"
-                  onClick={() => console.log('Navigate to', section.id)}
+                  onClick={() => onNavigate(section.id)}
                   style={{ 
                     animationDelay: `${0.4 + index * 0.1}s`,
                   }}
@@ -787,7 +786,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateTo
                           className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-2.5 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
                           onClick={(e) => {
                             e.stopPropagation();
-                            console.log('Navigate to', section.id);
+                            onNavigate(section.id);
                           }}
                         >
                           {t.launch}
