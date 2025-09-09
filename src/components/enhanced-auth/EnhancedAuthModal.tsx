@@ -115,102 +115,106 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
         <div 
-          className="min-h-screen flex items-center justify-center p-4"
-          style={{
-            background: 'linear-gradient(135deg, hsl(220, 30%, 97%) 0%, hsl(220, 20%, 95%) 50%, hsl(220, 25%, 92%) 100%)',
-          }}
+          className="min-h-screen flex items-center justify-center p-4 bg-background"
         >
           <div className="w-full max-w-sm">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="mb-4">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <ArrowRight className="w-6 h-6 text-white" />
+            <div className="text-center mb-8">
+              <div className="mb-6">
+                <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <ArrowRight className="w-4 h-4 text-primary-foreground" />
+                  </div>
                 </div>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              <h1 className="text-3xl font-light text-foreground mb-2">
                 Welcome to ORSH
               </h1>
+              <p className="text-muted-foreground text-sm font-normal">
+                Sign in to your account to continue
+              </p>
             </div>
 
             {/* Login Card */}
-            <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
+            <div className="relative bg-card rounded-xl shadow-sm border border-border p-8">
               {/* Close button */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 rounded-full p-2"
+                className="absolute top-6 right-6 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md h-8 w-8 p-0"
               >
                 <X className="w-4 h-4" />
               </Button>
 
-              {/* Sign In Header */}
-              <div className="text-center mb-6 mt-2">
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Sign In</h2>
-                <p className="text-gray-600 text-sm">
-                  Enter your credentials to access ORSH
-                </p>
-              </div>
-
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-50 rounded-lg p-1">
-                  <TabsTrigger value="signin" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 rounded-lg p-1 h-11">
+                  <TabsTrigger value="signin" className="text-sm font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup" className="text-sm font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-md">Create your Account</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="signin" className="space-y-4">
+                <TabsContent value="signin" className="space-y-6">
                   {/* Email/Password Sign In */}
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signin-email" className="text-foreground font-medium">Email</Label>
+                      <Label htmlFor="signin-email" className="text-sm font-medium text-foreground">Email address</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signin-email"
                           type="email"
-                          placeholder="your.email@bgc.com"
+                          placeholder="Enter your email"
                           value={signInData.email}
                           onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                          className="pl-11 h-10 text-sm border-border bg-input"
+                          className="pl-10 h-11 text-sm bg-background border-border focus:border-primary focus:ring-1 focus:ring-primary/20"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="signin-password" className="text-foreground font-medium">Password</Label>
+                      <Label htmlFor="signin-password" className="text-sm font-medium text-foreground">Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signin-password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Enter your password"
                           value={signInData.password}
                           onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                          className="pl-11 pr-11 h-10 text-sm border-border bg-input"
+                          className="pl-10 pr-10 h-11 text-sm bg-background border-border focus:border-primary focus:ring-1 focus:ring-primary/20"
                           required
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <Eye className="h-5 w-5" />
+                            <Eye className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="remember"
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
+                        />
+                        <Label htmlFor="remember" className="text-sm text-muted-foreground">
+                          Keep me signed in
+                        </Label>
+                      </div>
                       <Button 
                         variant="link" 
-                        className="p-0 h-auto text-primary text-sm"
+                        className="p-0 h-auto text-primary text-sm font-medium hover:underline"
                         onClick={() => setActiveTab('reset')}
                       >
                         Forgot password?
@@ -219,22 +223,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                     <Button 
                       type="submit" 
-                      className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]" 
+                      className="w-full h-11 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200" 
                       disabled={loading}
                     >
-                      {loading ? 'Signing in...' : 'Sign In'}
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {loading ? 'Signing in...' : 'Sign in'}
                     </Button>
                   </form>
 
                   {/* Divider */}
-                  <div className="relative my-6">
+                  <div className="relative my-8">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t border-border" />
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-3 text-muted-foreground font-medium">
-                        OR CONTINUE WITH
+                    <div className="relative flex justify-center text-xs">
+                      <span className="bg-card px-4 text-muted-foreground font-medium">
+                        or continue with
                       </span>
                     </div>
                   </div>
@@ -244,7 +247,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('azure')}
                       disabled={loading}
-                      className="w-full h-10 text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                      variant="outline"
+                      className="w-full h-11 text-sm font-medium bg-background hover:bg-muted/50 border-border transition-colors duration-200"
                     >
                       <img 
                         src="/lovable-uploads/3500f340-f92e-4cc2-ac18-cd2d5afacdaf.png" 
@@ -257,7 +261,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('google')}
                       disabled={loading}
-                      className="w-full h-10 text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                      variant="outline"
+                      className="w-full h-11 text-sm font-medium bg-background hover:bg-muted/50 border-border transition-colors duration-200"
                     >
                       <img 
                         src="/lovable-uploads/9104f3e3-ab82-4f30-acff-da61a68da7e0.png" 
@@ -267,24 +272,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       Continue with Kent
                     </Button>
                   </div>
-
-                  {/* Terms */}
-                  <div className="text-center text-xs text-muted-foreground mt-6">
-                    By signing in, you agree to our{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-xs">
-                      Terms of Service
-                    </Button>{' '}
-                    and{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-xs">
-                      Privacy Policy
-                    </Button>
-                  </div>
                 </TabsContent>
 
-                <TabsContent value="signup" className="space-y-4">
-                  <div className="text-center">
+                <TabsContent value="signup" className="space-y-6">
+                  <div className="text-center space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-medium text-foreground">Create your account</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Get started with ORSH by creating your account
+                      </p>
+                    </div>
                     <Button 
-                      className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]" 
+                      className="w-full h-11 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200" 
                       onClick={() => setShowRegistrationForm(true)}
                     >
                       Create Your Account
