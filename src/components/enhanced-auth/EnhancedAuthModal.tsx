@@ -117,20 +117,22 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         <div 
           className="min-h-screen flex items-center justify-center p-4 relative"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, hsl(var(--accent) / 0.05) 100%)',
+            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--accent) / 0.12) 50%, hsl(var(--secondary) / 0.05) 100%)',
           }}
         >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-[0.02]">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent rounded-full blur-3xl transform translate-x-1/2 translate-y-1/2"></div>
+          {/* Enhanced Background Pattern with Fluent Design */}
+          <div className="absolute inset-0">
+            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-tl from-accent/8 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-secondary/6 to-transparent rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2"></div>
           </div>
           
           <div className="w-full max-w-sm relative z-10">
-            {/* Login Card */}
-            <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/30 p-8 relative overflow-hidden">
-              {/* Subtle inner glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-2xl"></div>
+            {/* Modern Fluent Design Card */}
+            <div className="bg-card/80 backdrop-blur-2xl rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
+              {/* Fluent Design Acrylic Effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-3xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-background/5 to-foreground/3 rounded-3xl"></div>
               
               {/* Content */}
               <div className="relative z-10">
@@ -202,10 +204,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                     <Button 
                       type="submit" 
-                      className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary-hover text-primary-foreground" 
+                      className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground 
+                                 shadow-lg hover:shadow-xl transition-all duration-300 ease-out
+                                 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
+                                 border border-primary/20 hover:border-primary/40
+                                 relative overflow-hidden group" 
                       disabled={loading}
                     >
-                      {loading ? 'Signing in...' : 'Sign In'}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                      <span className="relative z-10">{loading ? 'Signing in...' : 'Sign In'}</span>
                     </Button>
                   </form>
 
@@ -226,27 +233,41 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('azure')}
                       disabled={loading}
-                      className="w-full h-10 text-sm font-medium bg-bgc text-bgc-foreground hover:opacity-90"
+                      className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-bgc to-bgc/90 text-bgc-foreground 
+                                 shadow-md hover:shadow-lg transition-all duration-300 ease-out
+                                 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
+                                 border border-bgc/20 hover:border-bgc/40
+                                 relative overflow-hidden group"
                     >
-                      <img 
-                        src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" 
-                        alt="BGC Logo" 
-                        className="w-5 h-5 mr-3"
-                      />
-                      Continue with BGC
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                      <div className="relative z-10 flex items-center justify-center">
+                        <img 
+                          src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" 
+                          alt="BGC Logo" 
+                          className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110"
+                        />
+                        Continue with BGC
+                      </div>
                     </Button>
                     
                     <Button
                       onClick={() => handleSSO('google')}
                       disabled={loading}
-                      className="w-full h-10 text-sm font-medium bg-kent text-kent-foreground hover:opacity-90"
+                      className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-kent to-kent/90 text-kent-foreground 
+                                 shadow-md hover:shadow-lg transition-all duration-300 ease-out
+                                 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
+                                 border border-kent/20 hover:border-kent/40
+                                 relative overflow-hidden group"
                     >
-                      <img 
-                        src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" 
-                        alt="Kent Logo" 
-                        className="w-5 h-5 mr-3"
-                      />
-                      Continue with Kent
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                      <div className="relative z-10 flex items-center justify-center">
+                        <img 
+                          src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" 
+                          alt="Kent Logo" 
+                          className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110"
+                        />
+                        Continue with Kent
+                      </div>
                     </Button>
                   </div>
 
