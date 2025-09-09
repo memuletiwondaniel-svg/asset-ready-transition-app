@@ -201,64 +201,106 @@ export type Database = {
       profiles: {
         Row: {
           account_status: string | null
+          authenticator_id: string | null
           avatar_url: string | null
           company: Database["public"]["Enums"]["user_company"] | null
+          country_code: string | null
           created_at: string
           department: string | null
           email: string
           employee_id: string | null
+          first_name: string | null
           full_name: string | null
+          functional_email: boolean | null
           id: string
           is_active: boolean
           job_title: string | null
           last_login_at: string | null
+          last_name: string | null
           manager_id: string | null
+          password_reset_required: boolean | null
+          personal_email: string | null
           phone_number: string | null
           position: string | null
+          primary_phone: string | null
+          rejection_reason: string | null
           role: string
+          secondary_phone: string | null
           sso_enabled: boolean | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          ta2_commission: Database["public"]["Enums"]["ta2_commission"] | null
+          ta2_discipline: Database["public"]["Enums"]["ta2_discipline"] | null
+          temporary_password: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           account_status?: string | null
+          authenticator_id?: string | null
           avatar_url?: string | null
           company?: Database["public"]["Enums"]["user_company"] | null
+          country_code?: string | null
           created_at?: string
           department?: string | null
           email: string
           employee_id?: string | null
+          first_name?: string | null
           full_name?: string | null
+          functional_email?: boolean | null
           id?: string
           is_active?: boolean
           job_title?: string | null
           last_login_at?: string | null
+          last_name?: string | null
           manager_id?: string | null
+          password_reset_required?: boolean | null
+          personal_email?: string | null
           phone_number?: string | null
           position?: string | null
+          primary_phone?: string | null
+          rejection_reason?: string | null
           role?: string
+          secondary_phone?: string | null
           sso_enabled?: boolean | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          ta2_commission?: Database["public"]["Enums"]["ta2_commission"] | null
+          ta2_discipline?: Database["public"]["Enums"]["ta2_discipline"] | null
+          temporary_password?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           account_status?: string | null
+          authenticator_id?: string | null
           avatar_url?: string | null
           company?: Database["public"]["Enums"]["user_company"] | null
+          country_code?: string | null
           created_at?: string
           department?: string | null
           email?: string
           employee_id?: string | null
+          first_name?: string | null
           full_name?: string | null
+          functional_email?: boolean | null
           id?: string
           is_active?: boolean
           job_title?: string | null
           last_login_at?: string | null
+          last_name?: string | null
           manager_id?: string | null
+          password_reset_required?: boolean | null
+          personal_email?: string | null
           phone_number?: string | null
           position?: string | null
+          primary_phone?: string | null
+          rejection_reason?: string | null
           role?: string
+          secondary_phone?: string | null
           sso_enabled?: boolean | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          ta2_commission?: Database["public"]["Enums"]["ta2_commission"] | null
+          ta2_discipline?: Database["public"]["Enums"]["ta2_discipline"] | null
+          temporary_password?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -591,6 +633,70 @@ export type Database = {
           },
         ]
       }
+      user_privileges: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          privilege: Database["public"]["Enums"]["user_privilege"]
+          user_id: string | null
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          privilege: Database["public"]["Enums"]["user_privilege"]
+          user_id?: string | null
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          privilege?: Database["public"]["Enums"]["user_privilege"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_privileges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_projects: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          project_name: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          project_name: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          project_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           granted_at: string | null
@@ -653,13 +759,38 @@ export type Database = {
           user_id: string
         }[]
       }
+      user_has_privilege: {
+        Args: {
+          privilege_name: Database["public"]["Enums"]["user_privilege"]
+          user_uuid: string
+        }
+        Returns: boolean
+      }
       user_has_role: {
         Args: { role_name: string; user_uuid: string }
         Returns: boolean
       }
     }
     Enums: {
+      ta2_commission: "Asset" | "Project and Engineering"
+      ta2_discipline:
+        | "Civil"
+        | "Static"
+        | "PACO"
+        | "Process"
+        | "Technical Safety"
       user_company: "BGC" | "KENT"
+      user_privilege:
+        | "view_only"
+        | "complete_assigned_tasks"
+        | "edit_checklist_approvers"
+        | "edit_create_authenticate_user"
+        | "edit_create_project"
+        | "edit_create_master_checklist"
+        | "create_approve_operation_readiness"
+        | "create_approve_training_plan"
+        | "create_approve_pac"
+        | "create_approve_fac"
       user_role:
         | "admin"
         | "manager"
@@ -667,6 +798,12 @@ export type Database = {
         | "safety_officer"
         | "technical_authority"
         | "user"
+      user_status:
+        | "active"
+        | "inactive"
+        | "pending_approval"
+        | "rejected"
+        | "new"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -794,7 +931,27 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ta2_commission: ["Asset", "Project and Engineering"],
+      ta2_discipline: [
+        "Civil",
+        "Static",
+        "PACO",
+        "Process",
+        "Technical Safety",
+      ],
       user_company: ["BGC", "KENT"],
+      user_privilege: [
+        "view_only",
+        "complete_assigned_tasks",
+        "edit_checklist_approvers",
+        "edit_create_authenticate_user",
+        "edit_create_project",
+        "edit_create_master_checklist",
+        "create_approve_operation_readiness",
+        "create_approve_training_plan",
+        "create_approve_pac",
+        "create_approve_fac",
+      ],
       user_role: [
         "admin",
         "manager",
@@ -802,6 +959,13 @@ export const Constants = {
         "safety_officer",
         "technical_authority",
         "user",
+      ],
+      user_status: [
+        "active",
+        "inactive",
+        "pending_approval",
+        "rejected",
+        "new",
       ],
     },
   },
