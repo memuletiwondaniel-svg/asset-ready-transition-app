@@ -213,6 +213,25 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  const handleKentSignIn = async () => {
+    try {
+      // This would use a custom OAuth provider configured in Supabase for Kent SSO
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure' as any, // Kent would typically use their own Azure AD or OAuth provider
+        options: {
+          redirectTo: `${window.location.origin}/`,
+          scopes: 'openid profile email',
+        }
+      });
+
+      if (error) {
+        toast.error('Kent SSO sign-in failed. Please contact your IT administrator.');
+      }
+    } catch (error) {
+      toast.error('Kent SSO is not configured. Please use regular sign-in or contact support.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -487,6 +506,19 @@ const AuthPage: React.FC = () => {
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
                 Continue with BGC
+              </Button>
+
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={handleKentSignIn}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700"
+                disabled={isLoading}
+              >
+                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                </svg>
+                Continue with Kent
               </Button>
 
               <Button 
