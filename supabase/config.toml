@@ -81,3 +81,24 @@ verify_jwt = false
 
 [functions.send-welcome-email]
 verify_jwt = false
+
+[functions.send-rejection-email]
+verify_jwt = false
+
+[functions.validate-auth-token]
+verify_jwt = false
+
+[functions.assign-user-privilege]
+verify_jwt = false
+
+[functions.use-auth-token]
+verify_jwt = false
+
+[functions.send-user-approval-request]
+verify_jwt = false
+
+[functions.process-user-approval]
+verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false

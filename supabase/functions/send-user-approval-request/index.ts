@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -37,13 +38,31 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { authenticatorId, userData, requestId }: UserApprovalRequest = await req.json();
 
-    // Get authenticator email from the database (in a real implementation)
+    // Create secure authentication tokens
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    
+    const { data: approveToken } = await supabase.rpc('create_authentication_token', {
+      request_id: requestId,
+      auth_id: authenticatorId,
+      action: 'approve'
+    });
+    
+    const { data: rejectToken } = await supabase.rpc('create_authentication_token', {
+      request_id: requestId,
+      auth_id: authenticatorId,
+      action: 'reject'
+    });
+
+    // Get authenticator email from the database
     const authenticatorEmail = "daniel.memuletiwon@bgc.com"; // Default for now
     
-    // Create approval/rejection URLs
-    const baseUrl = Deno.env.get("SUPABASE_URL") || "https://your-project.supabase.co";
-    const approveUrl = `${baseUrl}/functions/v1/process-user-approval?action=approve&requestId=${requestId}`;
-    const rejectUrl = `${baseUrl}/functions/v1/process-user-approval?action=reject&requestId=${requestId}`;
+    // Create approval/rejection URLs with tokens
+    const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('/auth/v1', '') || "https://your-project.supabase.co";
+    const approveUrl = `${baseUrl}/auth?token=${approveToken}&action=approve`;
+    const rejectUrl = `${baseUrl}/auth?token=${rejectToken}&action=reject`;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -219,11 +238,11 @@ const handler = async (req: Request): Promise<Response> => {
             
             <div class="actions">
               <h3>Please choose an action:</h3>
-              <a href="${approveUrl}" class="btn btn-approve">✅ Approve Request</a>
-              <a href="${rejectUrl}" class="btn btn-reject">❌ Reject Request</a>
+              <a href="${approveUrl}" class="btn btn-approve">✅ Review & Approve Request</a>
+              <a href="${rejectUrl}" class="btn btn-reject">❌ Review & Reject Request</a>
             </div>
             
-            <p><strong>Important:</strong> Once you approve this request, the user will receive their login credentials via email and will be able to access the ORSH platform.</p>
+            <p><strong>Important:</strong> Clicking on the buttons above will take you to a secure authentication page where you can review the user details, assign privileges, and complete the approval or rejection process.</p>
             
             <p>If you have any questions about this request, please contact the system administrator.</p>
           </div>
