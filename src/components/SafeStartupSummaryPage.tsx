@@ -41,7 +41,7 @@ import {
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import CreatePSSRFlow from './CreatePSSRFlow';
-import PSSRDetails from './PSSRDetails';
+import PSSRDashboard from './PSSRDashboard';
 import ManageChecklistPage from './ManageChecklistPage';
 
 interface SafeStartupSummaryPageProps {
@@ -354,7 +354,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
   if (activeView === 'details' && selectedPSSR) {
     return (
-      <PSSRDetails 
+      <PSSRDashboard 
         pssrId={selectedPSSR} 
         onBack={() => setActiveView('list')} 
       />
