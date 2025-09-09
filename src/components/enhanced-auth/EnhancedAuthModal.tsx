@@ -115,7 +115,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
         <div 
-          className="min-h-screen flex items-center justify-center p-4 bg-background"
+          className="min-h-screen flex items-center justify-center p-4 bg-muted/30"
         >
           <div className="w-full max-w-sm">
             {/* Header */}
