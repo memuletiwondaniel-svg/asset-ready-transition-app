@@ -11,7 +11,7 @@ import {
 import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
-import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
+
 import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
 import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
@@ -380,7 +380,7 @@ const Index = () => {
         </main>
       )}
 
-      <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
+      
     </div>
   );
 };
