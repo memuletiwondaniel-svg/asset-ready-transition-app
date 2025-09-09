@@ -40,7 +40,8 @@ import {
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
-import CreatePSSRFlow from './CreatePSSRFlow';
+import CreatePSSRIntroModal from './CreatePSSRIntroModal';
+import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
 import ManageChecklistPage from './ManageChecklistPage';
 
@@ -74,11 +75,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'manage-checklist'>('list');
-  const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
+  const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
   const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
@@ -349,7 +351,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
   // Render different views
   if (activeView === 'create') {
-    return <CreatePSSRFlow onBack={() => setActiveView('list')} />;
+    return <CreatePSSRWorkflow onBack={() => setActiveView('list')} />;
   }
 
   if (activeView === 'details' && selectedPSSR) {
@@ -605,7 +607,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   }
                 </p>
                 <Button 
-                  onClick={() => setActiveView('create')}
+                  onClick={() => setShowCreateIntro(true)}
                   className="fluent-button bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Plus className="h-4 w-4 mr-2" />
