@@ -564,42 +564,46 @@ const AuthPage: React.FC = () => {
                     variant="outline" 
                     type="button" 
                     onClick={handleBGCSignIn}
-                    className="w-full bg-slate-800 hover:bg-slate-900 text-white border-slate-800 hover:border-slate-900 group transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden"
+                    className="w-full bg-slate-800 hover:bg-slate-900 text-white border-slate-800 hover:border-slate-900 group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-slate-800/50"
                     disabled={isLoading}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-slate-700/0 via-slate-500/20 to-slate-700/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-700/0 via-slate-500/30 to-slate-700/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 delay-200" />
                     <img 
                       src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
                       alt="BGC Logo" 
-                      className="mr-2 h-4 w-4 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110" 
+                      className="mr-2 h-4 w-4 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" 
                     />
-                    <span className="relative z-10">Continue with BGC</span>
+                    <span className="relative z-10 transition-all duration-300 group-hover:tracking-wide">Continue with BGC</span>
                   </Button>
 
                   <Button 
                     variant="outline" 
                     type="button" 
                     onClick={handleKentSignIn}
-                    className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 group transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden"
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-orange-600/50"
                     disabled={isLoading}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-300/20 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-300/30 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 delay-200" />
                     <img 
                       src="/lovable-uploads/a38e7106-c33c-4a6c-9cf7-1a84ce322f21.png" 
                       alt="Kent Logo" 
-                      className="mr-2 h-4 w-4 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110" 
+                      className="mr-2 h-4 w-4 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" 
                     />
-                    <span className="relative z-10">Continue with Kent</span>
+                    <span className="relative z-10 transition-all duration-300 group-hover:tracking-wide">Continue with Kent</span>
                   </Button>
 
                   <Button 
                     variant="outline" 
                     type="button" 
                     onClick={handleGoogleSignIn}
-                    className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-md"
+                    className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/25 bg-gradient-to-r from-background to-background hover:from-accent/5 hover:to-accent/10 border border-border hover:border-primary/30"
                     disabled={isLoading}
                   >
-                    <svg className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-12" viewBox="0 0 24 24">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-500 delay-300" />
+                    <svg className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 relative z-10" viewBox="0 0 24 24">
                       <path
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                         fill="#4285F4"
@@ -617,7 +621,7 @@ const AuthPage: React.FC = () => {
                         fill="#EA4335"
                       />
                     </svg>
-                    Continue with Google
+                    <span className="relative z-10 transition-all duration-300 group-hover:tracking-wide">Continue with Google</span>
                   </Button>
                 </div>
               </>
