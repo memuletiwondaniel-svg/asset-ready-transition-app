@@ -379,6 +379,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
       case 1:
         return (
           <PSSRStepOne
+            data={formData}
+            onDataUpdate={() => {}}
+            onNext={() => setCurrentStep(2)}
+            onBack={onBack}
             formData={formData}
             setFormData={setFormData}
             projects={projects}
@@ -399,8 +403,11 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
       case 2:
         return (
           <PSSRStepTwo
-            formData={formData}
+            data={formData}
+            onDataUpdate={() => {}}
+            onNext={() => setCurrentStep(3)}
             onBack={onBack}
+            formData={formData}
             onContinueToChecklist={() => setCurrentStep(3)}
           />
         );

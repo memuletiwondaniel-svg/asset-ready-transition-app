@@ -35,20 +35,25 @@ interface Project {
 }
 
 interface PSSRStepOneProps {
-  formData: FormData;
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-  projects: Project[];
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
-  assets: string[];
-  reasons: string[];
-  projectSearchOpen: boolean;
-  setProjectSearchOpen: (open: boolean) => void;
-  showAddProjectWidget: boolean;
-  setShowAddProjectWidget: (show: boolean) => void;
-  onProjectSelect: (value: string) => void;
-  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveFile: (index: number) => void;
-  onContextAction: (action: string, person: any) => void;
+  data: any;
+  onDataUpdate: (stepData: any) => void;
+  onNext: () => void;
+  onBack: () => void;
+  // Legacy props for backward compatibility
+  formData?: FormData;
+  setFormData?: React.Dispatch<React.SetStateAction<FormData>>;
+  projects?: Project[];
+  setProjects?: React.Dispatch<React.SetStateAction<Project[]>>;
+  assets?: string[];
+  reasons?: string[];
+  projectSearchOpen?: boolean;
+  setProjectSearchOpen?: (open: boolean) => void;
+  showAddProjectWidget?: boolean;
+  setShowAddProjectWidget?: (show: boolean) => void;
+  onProjectSelect?: (value: string) => void;
+  onFileUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveFile?: (index: number) => void;
+  onContextAction?: (action: string, person: any) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({

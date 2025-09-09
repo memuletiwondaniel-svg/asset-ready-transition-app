@@ -21,12 +21,18 @@ interface FormData {
 }
 
 interface PSSRStepTwoProps {
-  formData: FormData;
+  data: any;
+  onDataUpdate: (stepData: any) => void;
+  onNext: () => void;
   onBack: () => void;
-  onContinueToChecklist: () => void;
+  // Legacy props for backward compatibility
+  formData?: FormData;
+  onContinueToChecklist?: () => void;
 }
 
-const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueToChecklist }) => {
+const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ data, onDataUpdate, onNext, onBack, formData, onContinueToChecklist }) => {
+  // Use data prop primarily, fall back to formData for backward compatibility
+  const currentData = data || formData;
   return (
     <div className="space-y-6">
       <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 to-emerald-50">
@@ -46,7 +52,7 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={onContinueToChecklist}
+                onClick={onContinueToChecklist || onNext}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
               >
                 <ClipboardCheck className="h-5 w-5 mr-2" />
@@ -65,25 +71,25 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
           <div className="border-t border-gray-200 pt-8">
             <h4 className="font-bold text-xl text-gray-900 mb-6">PSSR Summary</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {formData.asset && (
+              {(currentData?.plant || currentData?.asset) && (
                 <div className="p-4 bg-white rounded-lg border border-gray-200">
                   <span className="text-sm text-gray-500 block mb-1">Asset</span>
-                  <span className="text-lg font-semibold text-gray-900">{formData.asset}</span>
+                  <span className="text-lg font-semibold text-gray-900">{currentData.plant || currentData.asset}</span>
                 </div>
               )}
               <div className="p-4 bg-white rounded-lg border border-gray-200">
                 <span className="text-sm text-gray-500 block mb-1">Reason</span>
-                <span className="text-lg font-semibold text-gray-900">{formData.reason}</span>
+                <span className="text-lg font-semibold text-gray-900">{currentData?.reason}</span>
               </div>
-              {formData.projectId && (
+              {(currentData?.project?.id || currentData?.projectId) && (
                 <div className="p-4 bg-white rounded-lg border border-gray-200">
                   <span className="text-sm text-gray-500 block mb-1">Project ID</span>
-                  <span className="text-lg font-semibold text-gray-900">{formData.projectId}</span>
+                  <span className="text-lg font-semibold text-gray-900">{currentData.project?.id || currentData.projectId}</span>
                 </div>
               )}
               <div className="p-4 bg-white rounded-lg border border-gray-200">
                 <span className="text-sm text-gray-500 block mb-1">Uploaded Files</span>
-                <span className="text-lg font-semibold text-gray-900">{formData.files.length} files</span>
+                <span className="text-lg font-semibold text-gray-900">{currentData?.supportingDocuments?.length || currentData?.files?.length || 0} files</span>
               </div>
             </div>
           </div>
