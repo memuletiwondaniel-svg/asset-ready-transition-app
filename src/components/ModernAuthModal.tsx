@@ -3,9 +3,13 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import P2ALogo from '@/components/P2ALogo';
+import { Separator } from '@/components/ui/separator';
+import { Eye, EyeOff, Mail, Lock, X, Building, Key } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import EnhancedCreateUserModal from '@/components/user-management/EnhancedCreateUserModal';
+import { useUsers } from '@/hooks/useUsers';
 
 interface ModernAuthModalProps {
   isOpen: boolean;
@@ -16,147 +20,247 @@ interface ModernAuthModalProps {
 const ModernAuthModal: React.FC<ModernAuthModalProps> = ({
   isOpen,
   onClose,
-  onAuthenticated,
+  onAuthenticated
 }) => {
+  const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [formData, setFormData] = useState({
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const [signInData, setSignInData] = useState({
     email: '',
     password: ''
   });
 
-  const handleSSOLogin = (provider: string) => {
-    console.log(`SSO Login with ${provider}`);
-    if (provider === 'BGC' || provider === 'Kent') {
-      onAuthenticated();
-    } else {
-      alert('SSO access is only available for BGC and Kent employees.');
+  const { addUser } = useUsers();
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (signInData.email && signInData.password) {
+      setLoading(true);
+      // Simulate authentication
+      setTimeout(() => {
+        onAuthenticated();
+        setLoading(false);
+      }, 1000);
     }
   };
 
-  const handleSignIn = () => {
-    if (formData.email && formData.password) {
+  const handleSSO = async (provider: string) => {
+    setLoading(true);
+    // Simulate SSO authentication
+    setTimeout(() => {
       onAuthenticated();
-    }
+      setLoading(false);
+    }, 1000);
+  };
+
+  const handleCreateUser = (userData: any) => {
+    addUser(userData);
+    setShowCreateAccount(false);
+    onClose();
+  };
+
+  const handleForgotPassword = () => {
+    // Handle forgot password logic
+    console.log('Forgot password clicked');
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 border-0 bg-transparent shadow-none">
-        <div className="bg-card/95 backdrop-blur-xl border border-border/20 rounded-2xl p-8 shadow-2xl">
-          {/* Header with Logo */}
-          <div className="text-center mb-8">
-            <P2ALogo size={40} className="justify-center mb-4" />
-            <h1 className="text-2xl font-semibold text-foreground mb-2">Welcome</h1>
-            <p className="text-muted-foreground text-sm">Access the ORSH Platform</p>
-          </div>
-
-          {/* Sign In Content */}
-          <div className="space-y-6">
-            {/* SSO Buttons */}
-            <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full h-12 text-left justify-start bg-background hover:bg-muted/50 border-border/50 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
-                onClick={() => handleSSOLogin('BGC')}
-              >
-                <Building className="h-5 w-5 mr-3 text-primary" />
-                <span className="font-medium">Continue with BGC</span>
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full h-12 text-left justify-start bg-background hover:bg-muted/50 border-border/50 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
-                onClick={() => handleSSOLogin('Kent')}
-              >
-                <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-5 w-5 mr-3" />
-                <span className="font-medium">Continue with Kent</span>
-              </Button>
-            </div>
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/30" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or sign in with email</span>
-              </div>
-            </div>
-
-            {/* Email and Password Fields */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                  Email address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="your.email@company.com"
-                    className="pl-10 h-12 rounded-xl border-border/50 bg-background focus:border-primary focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    placeholder="Enter your password"
-                    className="pl-10 pr-10 h-12 rounded-xl border-border/50 bg-background focus:border-primary focus:ring-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Remember Me and Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked === true)}
-                  className="rounded border-border/50"
-                />
-                <Label htmlFor="remember" className="text-sm text-foreground cursor-pointer">
-                  Keep me signed in
-                </Label>
-              </div>
-              <button className="text-sm text-primary hover:text-primary/80 font-medium transition-colors">
-                Forgot password?
-              </button>
-            </div>
-
-            {/* Sign In Button */}
-            <Button 
-              onClick={handleSignIn}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-sm hover:shadow-md"
+    <>
+      <Dialog open={isOpen && !showCreateAccount} onOpenChange={onClose}>
+        <DialogContent className="max-w-[400px] p-0 bg-white rounded-xl border-0 shadow-2xl overflow-hidden">
+          {/* Header with close button */}
+          <div className="flex justify-end p-4 pb-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
             >
-              Sign In
+              <X className="h-4 w-4 text-gray-500" />
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+          {/* Main Content */}
+          <div className="px-8 pb-8">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              {/* Tab Navigation */}
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-lg p-1 mb-6">
+                <TabsTrigger 
+                  value="signin" 
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md text-sm font-medium"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup" 
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md text-sm font-medium"
+                >
+                  Create your Account
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Sign In Tab */}
+              <TabsContent value="signin" className="space-y-4 mt-0">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  {/* Email Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Email address
+                    </Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={signInData.email}
+                        onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                        className="pl-10 bg-gray-50 border-gray-200 rounded-lg h-12 text-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        value={signInData.password}
+                        onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                        className="pl-10 pr-10 bg-gray-50 border-gray-200 rounded-lg h-12 text-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Remember me and Forgot password */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="remember" 
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        className="rounded"
+                      />
+                      <Label htmlFor="remember" className="text-sm text-gray-600">
+                        Keep me signed in
+                      </Label>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={handleForgotPassword}
+                      className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      Forgot password?
+                    </Button>
+                  </div>
+
+                  {/* Sign In Button */}
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 text-sm font-medium transition-colors duration-200"
+                    disabled={loading}
+                  >
+                    {loading ? 'Signing in...' : 'Sign in'}
+                  </Button>
+                </form>
+
+                {/* Separator */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">or continue with</span>
+                  </div>
+                </div>
+
+                {/* SSO Buttons */}
+                <div className="space-y-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSSO('bgc')}
+                    disabled={loading}
+                    className="w-full border-gray-200 rounded-lg h-12 text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <img src="/lovable-uploads/56e2bdd1-5d9e-40c7-8e71-c975282eb2ef.png" alt="BGC Logo" className="h-4 w-4 mr-3" />
+                    Continue with BGC
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSSO('kent')}
+                    disabled={loading}
+                    className="w-full border-gray-200 rounded-lg h-12 text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <Key className="h-4 w-4 mr-3 text-green-600" />
+                    Continue with Kent
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Create Account Tab */}
+              <TabsContent value="signup" className="space-y-4 mt-0">
+                <div className="text-center space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Join the ORSH Platform
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Create your account with detailed information and project associations.
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => setShowCreateAccount(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 text-sm font-medium transition-colors duration-200"
+                  >
+                    Create Your Account
+                  </Button>
+                  
+                  <p className="text-xs text-gray-500">
+                    Account approval required by BGC administrators
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <EnhancedCreateUserModal
+        isOpen={showCreateAccount}
+        onClose={() => setShowCreateAccount(false)}
+        onCreateUser={handleCreateUser}
+        isAdminCreated={false}
+      />
+    </>
   );
 };
 
