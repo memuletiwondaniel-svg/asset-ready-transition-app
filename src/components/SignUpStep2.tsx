@@ -198,27 +198,6 @@ const SignUpStep2: React.FC<SignUpStep2Props> = () => {
             className="h-16 w-auto mx-auto mb-4" 
           />
           <h1 className="text-3xl font-bold text-foreground">Complete Your Profile</h1>
-          <p className="text-muted-foreground mt-2">Step 2 of 2 - Professional Details</p>
-          
-          {/* Progress indicator */}
-          <div className="mt-4">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                  ✓
-                </div>
-                <span className="ml-2 text-sm text-muted-foreground line-through">Personal Info</span>
-              </div>
-              <div className="w-8 h-0.5 bg-primary"></div>
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                  2
-                </div>
-                <span className="ml-2 text-sm text-foreground font-medium">Professional Details</span>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">Step 2 of 2</p>
-          </div>
         </div>
 
         <Card className="shadow-lg backdrop-blur-sm bg-card/95 border-2">
@@ -227,11 +206,27 @@ const SignUpStep2: React.FC<SignUpStep2Props> = () => {
               <Building2 className="h-6 w-6" />
               Professional Details
             </CardTitle>
-            <CardDescription className="text-center">
-              Please provide your work-related information
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Progress indicator */}
+            <div className="mb-6">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                    ✓
+                  </div>
+                  <span className="ml-2 text-sm text-muted-foreground">Personal Information</span>
+                </div>
+                <div className="w-12 h-0.5 bg-primary"></div>
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                    2
+                  </div>
+                  <span className="ml-2 text-sm text-foreground font-medium">Professional Details</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">Step 2 of 2</p>
+            </div>
             {/* Company Selection */}
             <div className="space-y-2">
               <Label htmlFor="company">Company *</Label>

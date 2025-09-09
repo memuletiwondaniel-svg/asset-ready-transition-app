@@ -333,28 +333,6 @@ const AuthPage: React.FC = () => {
           <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             Basrah Gas Company Operations Platform
           </p>
-          
-          {/* Progress indicator for signup */}
-          {authMode === 'signup' && (
-            <div className="mt-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-              <div className="flex items-center justify-center space-x-2">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                    1
-                  </div>
-                  <span className="ml-2 text-sm text-foreground font-medium">Personal Info</span>
-                </div>
-                <div className="w-8 h-0.5 bg-muted-foreground/30"></div>
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-sm">
-                    2
-                  </div>
-                  <span className="ml-2 text-sm text-muted-foreground">Professional Details</span>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">Step 1 of 2</p>
-            </div>
-          )}
         </div>
 
         <Card className="shadow-lg backdrop-blur-sm bg-card/95 border-2 hover:border-primary/20 transition-all duration-300 animate-scale-in group">
@@ -366,8 +344,7 @@ const AuthPage: React.FC = () => {
             </CardTitle>
             <CardDescription className="text-center relative z-10">
               {authMode === 'login' ? 'Enter your credentials to access ORSH' :
-               authMode === 'signup' ? 'Fill in your details to create an account' :
-               'Enter your email to reset your password'}
+               authMode === 'reset' ? 'Enter your email to reset your password' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -457,18 +434,38 @@ const AuthPage: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
+                {/* Progress indicator */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                        1
+                      </div>
+                      <span className="ml-2 text-sm text-foreground font-medium">Personal Information</span>
+                    </div>
+                    <div className="w-12 h-0.5 bg-muted"></div>
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-xs">
+                        2
+                      </div>
+                      <span className="ml-2 text-sm text-muted-foreground">Professional Details</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">Step 1 of 2</p>
+                </div>
+                
+                <form onSubmit={handleSignUp} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="firstName" className="text-sm font-medium text-foreground">First Name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="firstName"
-                          placeholder="John"
+                          placeholder="Enter your first name"
                           value={formData.firstName}
                           onChange={(e) => handleInputChange('firstName', e.target.value)}
-                          className="pl-10"
+                          className="h-11 pl-10 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                           disabled={isLoading}
                         />
                       </div>
@@ -477,13 +474,14 @@ const AuthPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="lastName" className="text-sm font-medium text-foreground">Last Name</Label>
                       <Input
                         id="lastName"
-                        placeholder="Doe"
+                        placeholder="Enter your last name"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        className="h-11 border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                         disabled={isLoading}
                       />
                       {errors.lastName && (
