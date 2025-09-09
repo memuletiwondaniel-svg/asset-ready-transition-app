@@ -233,17 +233,7 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      {/* Dynamic animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-teal-500/10 animate-pulse"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/8 via-blue-500/8 to-violet-500/8 animate-[pulse_3s_ease-in-out_infinite]"></div>
-      <div className="absolute inset-0 bg-gradient-to-bl from-orange-500/6 via-pink-500/6 to-cyan-500/6 animate-[pulse_4s_ease-in-out_infinite]"></div>
-      
-      {/* Overlay for content readability */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
-      
-      {/* Content container */}
-      <div className="relative z-10 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img 
@@ -569,7 +559,6 @@ const AuthPage: React.FC = () => {
             </p>
           </CardContent>
         </Card>
-      </div>
       </div>
     </div>
   );
