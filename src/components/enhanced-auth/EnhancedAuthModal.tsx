@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Building, Key, Mail, Phone, User, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from './AuthProvider';
-import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 
 interface EnhancedAuthModalProps {
   isOpen: boolean;
@@ -28,7 +27,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   // Form states
   const [signInData, setSignInData] = useState({
@@ -221,17 +219,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
-              
-              <div className="text-center">
-                <span className="text-sm text-muted-foreground">Don't have an account? </span>
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-sm"
-                  onClick={() => setShowRegistrationForm(true)}
-                >
-                  Create Your Account
-                </Button>
-              </div>
             </form>
           </TabsContent>
 
@@ -413,16 +400,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           </TabsContent>
         </Tabs>
       </DialogContent>
-      
-      <EnhancedRegistrationForm
-        isOpen={showRegistrationForm}
-        onClose={() => setShowRegistrationForm(false)}
-        onSuccess={() => {
-          setShowRegistrationForm(false);
-          setActiveTab('signin');
-        }}
-        isAdminCreated={false}
-      />
     </Dialog>
   );
 };
