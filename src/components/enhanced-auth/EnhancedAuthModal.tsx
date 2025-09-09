@@ -135,7 +135,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+                  
                   <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
                 </TabsList>
 
