@@ -499,7 +499,7 @@ const AuthPage: React.FC = () => {
                 variant="outline" 
                 type="button" 
                 onClick={handleBGCSignIn}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                className="w-full bg-slate-700 hover:bg-slate-800 text-white border-slate-700 hover:border-slate-800 transition-all duration-200"
                 disabled={isLoading}
               >
                 <img 
@@ -514,7 +514,7 @@ const AuthPage: React.FC = () => {
                 variant="outline" 
                 type="button" 
                 onClick={handleKentSignIn}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700"
+                className="w-full bg-slate-600 hover:bg-slate-700 text-white border-slate-600 hover:border-slate-700 transition-all duration-200"
                 disabled={isLoading}
               >
                 <img 
