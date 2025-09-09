@@ -741,18 +741,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_public_profile_info: {
-        Args: { target_user_id: string }
-        Returns: {
-          company: Database["public"]["Enums"]["user_company"]
-          department: string
-          first_name: string
-          full_name: string
-          job_title: string
-          last_name: string
-          user_id: string
-        }[]
-      }
       get_user_management_data: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -780,10 +768,6 @@ export type Database = {
       }
       user_has_role: {
         Args: { role_name: string; user_uuid: string }
-        Returns: boolean
-      }
-      user_is_admin: {
-        Args: { user_uuid: string }
         Returns: boolean
       }
     }
