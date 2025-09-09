@@ -168,7 +168,6 @@ const Index = () => {
           <BackgroundSlideshow showFunFacts={false} />
         </>
       )}
-      
       {/* Modern Navigation Header */}
       <header className="relative z-20">
         <div className="max-w-7xl mx-auto px-8 py-4">
