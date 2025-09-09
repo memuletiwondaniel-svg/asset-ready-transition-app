@@ -161,9 +161,13 @@ const Index = () => {
   // Show welcome screen before authentication
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background with enhanced gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
-      <BackgroundSlideshow showFunFacts={showAuth} />
+      {/* Background removed during sign-in */}
+      {!showAuth && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
+          <BackgroundSlideshow showFunFacts={false} />
+        </>
+      )}
       
       {/* Modern Navigation Header */}
       <header className="relative z-20">
