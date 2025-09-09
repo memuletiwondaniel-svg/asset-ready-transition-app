@@ -124,16 +124,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
             {/* Login Card */}
             <div className="bg-card rounded-xl shadow-xl p-6 backdrop-blur-sm border border-border/20">
-              {/* Back to ORSH Link */}
-              <div className="mb-4">
-                <Button
-                  variant="ghost"
-                  onClick={onClose}
-                  className="text-muted-foreground hover:text-foreground p-0 h-auto text-sm"
-                >
-                  Back to ORSH
-                </Button>
-              </div>
 
               {/* Sign In Header */}
               <div className="text-center mb-6">
