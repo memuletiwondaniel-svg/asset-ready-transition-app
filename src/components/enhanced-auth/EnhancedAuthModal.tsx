@@ -120,11 +120,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <div className="w-full max-w-sm">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="mb-4">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg transform rotate-12">
-                  <ArrowRight className="w-6 h-6 text-white transform -rotate-12" />
-                </div>
-              </div>
             </div>
 
             {/* Login Card */}
@@ -136,7 +131,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   onClick={onClose}
                   className="text-muted-foreground hover:text-foreground p-0 h-auto text-sm"
                 >
-                  <ArrowLeft className="w-3 h-3 mr-1" />
                   Back to ORSH
                 </Button>
               </div>
@@ -219,7 +213,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       disabled={loading}
                     >
                       {loading ? 'Signing in...' : 'Sign In'}
-                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </form>
 
