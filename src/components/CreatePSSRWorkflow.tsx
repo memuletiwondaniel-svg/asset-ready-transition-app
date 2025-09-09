@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
 import PSSRStepThree from './PSSRStepThree';
+import PSSRStepFour from './PSSRStepFour';
 
 interface CreatePSSRWorkflowProps {
   onBack: () => void;
@@ -158,6 +159,16 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
       case 3:
         return (
           <PSSRStepThree
+            data={pssrData}
+            onDataUpdate={handleDataUpdate}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSave={handleSave}
+          />
+        );
+      case 4:
+        return (
+          <PSSRStepFour
             data={pssrData}
             onDataUpdate={handleDataUpdate}
             onNext={handleNext}
