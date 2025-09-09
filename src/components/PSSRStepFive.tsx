@@ -21,7 +21,7 @@ import {
   FileCheck,
   HourglassIcon
 } from 'lucide-react';
-import { pssrChecklistData } from '@/data/pssrChecklistData';
+import { pssrChecklistData as checklistData } from '@/data/pssrChecklistData';
 
 interface PSSRStepFiveProps {
   data: any;
@@ -55,7 +55,7 @@ const PSSRStepFive: React.FC<PSSRStepFiveProps> = ({
   onSave 
 }) => {
   const [checklistResponses, setChecklistResponses] = useState<ChecklistResponse[]>(() => 
-    pssrChecklistData.map(item => ({
+    checklistData.map(item => ({
       id: item.id,
       response: null,
       status: 'NOT_SUBMITTED',
@@ -228,7 +228,7 @@ const PSSRStepFive: React.FC<PSSRStepFiveProps> = ({
     onNext(); // Return to summary
   };
 
-  const categorizedItems = pssrChecklistData.reduce((acc, item) => {
+  const categorizedItems = checklistData.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
     }
@@ -536,7 +536,7 @@ const PSSRStepFive: React.FC<PSSRStepFiveProps> = ({
                 {checklistResponses
                   .filter(r => r.response !== null)
                   .map((response) => {
-                    const item = pssrChecklistData.find(i => i.id === response.id);
+                    const item = checklistData.find(i => i.id === response.id);
                     return (
                       <div key={response.id} className="flex items-center space-x-3 p-3 border rounded-lg">
                         <Checkbox
