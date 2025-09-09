@@ -26,6 +26,8 @@ interface PSSRFiltersProps {
   uniquePlants: string[];
   uniqueStatuses: string[];
   uniqueLeads: string[];
+  uniquePriorities?: string[];
+  uniqueReasons?: string[];
 }
 
 const PSSRFilters: React.FC<PSSRFiltersProps> = ({
@@ -34,7 +36,9 @@ const PSSRFilters: React.FC<PSSRFiltersProps> = ({
   onClearFilters,
   uniquePlants,
   uniqueStatuses,
-  uniqueLeads
+  uniqueLeads,
+  uniquePriorities = [],
+  uniqueReasons = []
 }) => {
   const hasActiveFilters = filters.plant.length > 0 || filters.status.length > 0 || filters.lead.length > 0;
 
