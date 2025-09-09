@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 
@@ -117,51 +117,46 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         <div 
           className="min-h-screen flex items-center justify-center p-4"
           style={{
-            background: 'var(--orsh-gradient)',
+            background: 'linear-gradient(135deg, hsl(220, 30%, 97%) 0%, hsl(220, 20%, 95%) 50%, hsl(220, 25%, 92%) 100%)',
           }}
         >
           <div className="w-full max-w-sm">
             {/* Header */}
             <div className="text-center mb-6">
               <div className="mb-4">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg transform rotate-12">
-                  <ArrowRight className="w-6 h-6 text-white transform -rotate-12" />
+                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <ArrowRight className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <h1 className="text-2xl font-bold text-foreground mb-1">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
                 Welcome to ORSH
               </h1>
-              <p className="text-muted-foreground text-sm">
-                Basrah Gas Company Operations Platform
-              </p>
             </div>
 
             {/* Login Card */}
-            <div className="bg-card rounded-xl shadow-xl p-6 backdrop-blur-sm border border-border/20">
-              {/* Back to ORSH Link */}
-              <div className="mb-4">
-                <Button
-                  variant="ghost"
-                  onClick={onClose}
-                  className="text-muted-foreground hover:text-foreground p-0 h-auto text-sm"
-                >
-                  <ArrowLeft className="w-3 h-3 mr-1" />
-                  Back to ORSH
-                </Button>
-              </div>
+            <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
+              {/* Close button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 rounded-full p-2"
+              >
+                <X className="w-4 h-4" />
+              </Button>
 
               {/* Sign In Header */}
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-foreground mb-1">Sign In</h2>
-                <p className="text-muted-foreground text-sm">
+              <div className="text-center mb-6 mt-2">
+                <h2 className="text-xl font-semibold text-gray-900 mb-1">Sign In</h2>
+                <p className="text-gray-600 text-sm">
                   Enter your credentials to access ORSH
                 </p>
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-50 rounded-lg p-1">
+                  <TabsTrigger value="signin" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup" className="text-sm transition-all duration-200 hover:bg-white data-[state=active]:bg-white data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signin" className="space-y-4">
@@ -224,7 +219,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                     <Button 
                       type="submit" 
-                      className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary-hover text-primary-foreground" 
+                      className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]" 
                       disabled={loading}
                     >
                       {loading ? 'Signing in...' : 'Sign In'}
@@ -249,7 +244,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('azure')}
                       disabled={loading}
-                      className="w-full h-10 text-sm font-medium bg-bgc text-bgc-foreground hover:opacity-90"
+                      className="w-full h-10 text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                     >
                       <img 
                         src="/lovable-uploads/3500f340-f92e-4cc2-ac18-cd2d5afacdaf.png" 
@@ -262,7 +257,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <Button
                       onClick={() => handleSSO('google')}
                       disabled={loading}
-                      className="w-full h-10 text-sm font-medium bg-kent text-kent-foreground hover:opacity-90"
+                      className="w-full h-10 text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                     >
                       <img 
                         src="/lovable-uploads/9104f3e3-ab82-4f30-acff-da61a68da7e0.png" 
@@ -289,7 +284,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                 <TabsContent value="signup" className="space-y-4">
                   <div className="text-center">
                     <Button 
-                      className="w-full h-10 text-sm font-medium" 
+                      className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]" 
                       onClick={() => setShowRegistrationForm(true)}
                     >
                       Create Your Account
