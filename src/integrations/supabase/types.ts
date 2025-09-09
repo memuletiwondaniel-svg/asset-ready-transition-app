@@ -55,6 +55,96 @@ export type Database = {
           },
         ]
       }
+      checklist_items: {
+        Row: {
+          approving_authority: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_active: boolean
+          responsible_party: string | null
+          supporting_evidence: string | null
+          topic: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          approving_authority?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id: string
+          is_active?: boolean
+          responsible_party?: string | null
+          supporting_evidence?: string | null
+          topic?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          approving_authority?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          responsible_party?: string | null
+          supporting_evidence?: string | null
+          topic?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      checklist_uploads: {
+        Row: {
+          error_log: string | null
+          file_path: string
+          filename: string
+          id: string
+          items_added: number | null
+          items_failed: number | null
+          items_processed: number | null
+          items_updated: number | null
+          upload_status: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          error_log?: string | null
+          file_path: string
+          filename: string
+          id?: string
+          items_added?: number | null
+          items_failed?: number | null
+          items_processed?: number | null
+          items_updated?: number | null
+          upload_status?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          error_log?: string | null
+          file_path?: string
+          filename?: string
+          id?: string
+          items_added?: number | null
+          items_failed?: number | null
+          items_processed?: number | null
+          items_updated?: number | null
+          upload_status?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           checklist_item_id: string | null
@@ -110,45 +200,77 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           avatar_url: string | null
+          company: Database["public"]["Enums"]["user_company"] | null
           created_at: string
           department: string | null
           email: string
+          employee_id: string | null
           full_name: string | null
           id: string
           is_active: boolean
+          job_title: string | null
+          last_login_at: string | null
+          manager_id: string | null
+          phone_number: string | null
           position: string | null
           role: string
+          sso_enabled: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_status?: string | null
           avatar_url?: string | null
+          company?: Database["public"]["Enums"]["user_company"] | null
           created_at?: string
           department?: string | null
           email: string
+          employee_id?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean
+          job_title?: string | null
+          last_login_at?: string | null
+          manager_id?: string | null
+          phone_number?: string | null
           position?: string | null
           role?: string
+          sso_enabled?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_status?: string | null
           avatar_url?: string | null
+          company?: Database["public"]["Enums"]["user_company"] | null
           created_at?: string
           department?: string | null
           email?: string
+          employee_id?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean
+          job_title?: string | null
+          last_login_at?: string | null
+          manager_id?: string | null
+          phone_number?: string | null
           position?: string | null
           role?: string
+          sso_enabled?: boolean | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       pssr_approvers: {
         Row: {
@@ -431,15 +553,120 @@ export type Database = {
           },
         ]
       }
+      user_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string | null
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_management_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          account_status: string
+          company: Database["public"]["Enums"]["user_company"]
+          created_at: string
+          email: string
+          employee_id: string
+          full_name: string
+          job_title: string
+          last_login_at: string
+          manager_name: string
+          phone_number: string
+          roles: string[]
+          sso_enabled: boolean
+          user_id: string
+        }[]
+      }
+      user_has_role: {
+        Args: { role_name: string; user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_company: "BGC" | "KENT"
+      user_role:
+        | "admin"
+        | "manager"
+        | "engineer"
+        | "safety_officer"
+        | "technical_authority"
+        | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -566,6 +793,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_company: ["BGC", "KENT"],
+      user_role: [
+        "admin",
+        "manager",
+        "engineer",
+        "safety_officer",
+        "technical_authority",
+        "user",
+      ],
+    },
   },
 } as const

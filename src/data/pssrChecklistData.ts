@@ -3,8 +3,18 @@ export interface ChecklistItem {
   id: string;
   category: string;
   description: string;
-  supportingEvidence: string;
-  approvingAuthority: string;
+  supportingEvidence?: string;
+  approvingAuthority?: string;
+  topic?: string;
+  responsible_party?: string;
+  supporting_evidence?: string;
+  approving_authority?: string;
+  is_active?: boolean;
+  version?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export const pssrChecklistData: ChecklistItem[] = [

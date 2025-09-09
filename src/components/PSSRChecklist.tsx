@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,8 @@ import {
   Shield,
   Cog
 } from 'lucide-react';
-import { pssrChecklistData, checklistCategories, ChecklistItem } from '@/data/pssrChecklistData';
+import { ChecklistItem } from '@/data/pssrChecklistData';
+import { useChecklistItems, useChecklistCategories } from '@/hooks/useChecklistItems';
 import ChecklistItemModal from './ChecklistItemModal';
 
 interface ChecklistItemStatus {
@@ -38,7 +38,10 @@ const PSSRChecklist: React.FC = () => {
   const [selectedResponse, setSelectedResponse] = useState<'N/A' | 'YES' | 'NO' | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const filteredItems = pssrChecklistData.filter(item => {
+  const { data: checklistItems = [], isLoading } = useChecklistItems();
+  const { data: categories = [] } = useChecklistCategories();
+
+  const filteredItems = checklistItems.filter(item => {
     const matchesCategory = item.category === selectedCategory;
     const matchesSearch = item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -105,7 +108,7 @@ const PSSRChecklist: React.FC = () => {
   };
 
   const getCategoryStats = (category: string) => {
-    const categoryItems = pssrChecklistData.filter(item => item.category === category);
+    const categoryItems = checklistItems.filter(item => item.category === category);
     const total = categoryItems.length;
     const completed = categoryItems.filter(item => {
       const status = getItemStatus(item.id);
@@ -119,16 +122,29 @@ const PSSRChecklist: React.FC = () => {
     switch (category) {
       case 'General':
         return <FileText className="h-4 w-4" />;
-      case 'Technical':
+      case 'Hardware Integrity':
         return <Cog className="h-4 w-4" />;
-      case 'Safety':
+      case 'Process Safety':
         return <Shield className="h-4 w-4" />;
-      case 'Operations':
-        return <Target className="h-4 w-4" />;
+      case 'Documentation':
+        return <FileText className="h-4 w-4" />;
+      case 'Organization':
+        return <Users className="h-4 w-4" />;
+      case 'Health & Safety':
+        return <Shield className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Loading checklist items...</div>;
+  }
+
+  // Set default category if not set
+  if (categories.length > 0 && !categories.includes(selectedCategory)) {
+    setSelectedCategory(categories[0]);
+  }
 
   return (
     <div className="space-y-6">
@@ -151,8 +167,8 @@ const PSSRChecklist: React.FC = () => {
       </div>
 
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className="grid w-full grid-cols-4 h-auto bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-xl">
-          {checklistCategories.map((category) => {
+        <TabsList className="grid w-full grid-cols-auto h-auto bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-xl">
+          {categories.map((category) => {
             const stats = getCategoryStats(category);
             return (
               <TabsTrigger 
@@ -179,7 +195,7 @@ const PSSRChecklist: React.FC = () => {
           })}
         </TabsList>
 
-        {checklistCategories.map((category) => (
+        {categories.map((category) => (
           <TabsContent key={category} value={category} className="mt-6">
             <div className="space-y-4">
               {filteredItems.map((item) => {
@@ -205,11 +221,27 @@ const PSSRChecklist: React.FC = () => {
                             </div>
                             <p className="text-gray-700 leading-relaxed mb-4">{item.description}</p>
                             
+                            {item.topic && (
+                              <div className="text-sm text-muted-foreground mb-2">
+                                <strong>Topic:</strong> {item.topic}
+                              </div>
+                            )}
+                            
+                            <div className="text-sm text-muted-foreground mb-2">
+                              <strong>Supporting Evidence:</strong> {item.supporting_evidence || "Not specified"}
+                            </div>
+                            
+                            {item.responsible_party && (
+                              <div className="text-sm text-muted-foreground mb-2">
+                                <strong>Responsible Party:</strong> {item.responsible_party}
+                              </div>
+                            )}
+                            
                             <div className="flex items-center space-x-4 text-sm">
                               <div className="flex items-center space-x-2">
                                 <Users className="h-4 w-4 text-blue-600" />
                                 <span className="text-gray-600 font-medium">Approvers:</span>
-                                <span className="text-gray-700">{item.approvingAuthority}</span>
+                                <span className="text-gray-700">{item.approving_authority || "Not specified"}</span>
                               </div>
                             </div>
                           </div>

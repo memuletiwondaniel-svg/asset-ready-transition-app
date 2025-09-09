@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, BarChart3, Settings, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Users, BarChart3, Settings, ArrowLeft, ArrowRight, Upload } from 'lucide-react';
+import UserManagement from "@/pages/UserManagement";
+import ChecklistManagementPage from "./ChecklistManagementPage";
 
 interface AdminToolsPageProps {
   onBack: () => void;
-  onNavigate: (section: string) => void;
 }
 
-const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) => {
+const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist'>('dashboard');
+
+  if (activeView === 'users') {
+    return <UserManagement onBack={() => setActiveView('dashboard')} />;
+  }
+
+  if (activeView === 'checklist') {
+    return <ChecklistManagementPage onBack={() => setActiveView('dashboard')} />;
+  }
+
   const adminTools = [
     {
       id: 'users',
@@ -18,11 +29,22 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) =
       icon: Users,
       gradient: 'from-blue-500/20 via-blue-500/10 to-blue-500/5',
       iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-      stats: { total: 45, pending: 3 }
+      stats: { total: 45, pending: 3 },
+      onClick: () => setActiveView('users')
+    },
+    {
+      id: 'checklist',
+      title: 'Checklist Management',
+      description: 'Upload and manage PSSR checklist items from Excel files with version control and audit tracking',
+      icon: Upload,
+      gradient: 'from-green-500/20 via-green-500/10 to-green-500/5',
+      iconBg: 'bg-gradient-to-br from-green-500 to-green-600',
+      stats: { total: 65, active: 65 },
+      onClick: () => setActiveView('checklist')
     },
     {
       id: 'manage-checklist',
-      title: 'Manage Checklist',
+      title: 'PSSR Configuration',
       description: 'Configure and manage PSSR checklists for Pre-Startup Safety Reviews across all facility start-up operations',
       icon: Settings,
       gradient: 'from-purple-500/20 via-purple-500/10 to-purple-500/5',
@@ -34,8 +56,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) =
       title: 'Project Management',
       description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
       icon: BarChart3,
-      gradient: 'from-green-500/20 via-green-500/10 to-green-500/5',
-      iconBg: 'bg-gradient-to-br from-green-500 to-green-600',
+      gradient: 'from-orange-500/20 via-orange-500/10 to-orange-500/5',
+      iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
       stats: { total: 12, active: 8 }
     }
   ];
@@ -95,7 +117,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) =
               <div
                 key={tool.id}
                 className="group cursor-pointer relative overflow-hidden border border-border/20 bg-card/90 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-reveal"
-                onClick={() => onNavigate(tool.id)}
+                onClick={tool.onClick}
                 style={{ 
                   animationDelay: `${0.2 + index * 0.1}s`,
                 }}
@@ -146,7 +168,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) =
                         className="w-full bg-card-foreground hover:bg-primary text-card border-0 font-semibold py-3 rounded-xl group-hover:scale-105 shadow-md hover:shadow-lg transition-all duration-300"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onNavigate(tool.id);
+                          if (tool.onClick) tool.onClick();
                         }}
                       >
                         Manage {tool.title.split(' ')[0]}
@@ -175,7 +197,11 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) =
                 <Settings className="h-4 w-4 mr-2" />
                 System Settings
               </Button>
-              <Button variant="outline" className="justify-start h-12">
+              <Button 
+                variant="outline" 
+                className="justify-start h-12"
+                onClick={() => setActiveView('users')}
+              >
                 <Users className="h-4 w-4 mr-2" />
                 Bulk User Import
               </Button>
