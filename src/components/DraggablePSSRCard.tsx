@@ -6,8 +6,8 @@ import { GripVertical, ShieldCheck, AlertTriangle, CheckCircle, Clock, Users, Pi
 interface DraggablePSSRCardProps {
   pssr: {
     id: string;
-    projectId?: string;
-    projectName?: string;
+    projectId: string;
+    projectName: string;
     asset: string;
     status: string;
     priority: string;
