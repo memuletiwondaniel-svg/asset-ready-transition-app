@@ -208,7 +208,7 @@ const ModernAuthModal: React.FC<ModernAuthModalProps> = ({
                     disabled={loading}
                     className="w-full border-gray-200 rounded-lg h-12 text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
                   >
-                    <Building className="h-4 w-4 mr-3 text-blue-600" />
+                    <img src="/lovable-uploads/56e2bdd1-5d9e-40c7-8e71-c975282eb2ef.png" alt="BGC Logo" className="h-4 w-4 mr-3" />
                     Continue with BGC
                   </Button>
                   
