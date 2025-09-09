@@ -18,20 +18,24 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
 import PSSRFilters from './PSSRFilters';
 import PSSRList from './PSSRList';
 import DraggablePSSRCard from './DraggablePSSRCard';
+import ManageChecklistPage from './ManageChecklistPage';
 
 interface PSSRModuleProps {
   onBack: () => void;
 }
 
 const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'details'>('list');
+  // Mock user role - in a real app, this would come from authentication context
+  const userRole = 'admin'; // Change to 'user' to test role-based access
+  
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'manage-checklist'>('list');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -319,6 +323,10 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     );
   }
 
+  if (activeView === 'manage-checklist') {
+    return <ManageChecklistPage onBack={() => setActiveView('list')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20">
       {/* Modern Header */}
@@ -357,6 +365,16 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                 <Filter className="h-4 w-4 mr-2" />
                 Export
               </Button>
+              {userRole === 'admin' && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setActiveView('manage-checklist')}
+                  className="fluent-button border-border/50 hover:bg-secondary/50"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Checklists
+                </Button>
+              )}
               <Button 
                 onClick={() => setActiveView('create')}
                 className="fluent-button bg-primary hover:bg-primary-hover text-primary-foreground shadow-fluent-md hover:shadow-fluent-lg group"

@@ -16,6 +16,7 @@ import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
+import ManageChecklistPage from "@/components/ManageChecklistPage";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -131,6 +132,8 @@ const Index = () => {
         return <PSSRModule onBack={handleBackToLanding} />;
       case 'users':
         return <UserManagement onBack={handleBackToLanding} />;
+      case 'manage-checklist':
+        return <ManageChecklistPage onBack={handleBackToLanding} />;
       case 'admin-tools':
         return <AdminToolsPage onBack={handleBackToLanding} onNavigate={handleNavigate} />;
       case 'p2o':

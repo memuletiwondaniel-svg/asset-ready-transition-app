@@ -21,6 +21,15 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack, onNavigate }) =
       stats: { total: 45, pending: 3 }
     },
     {
+      id: 'manage-checklist',
+      title: 'Manage Checklist',
+      description: 'Configure and manage PSSR checklists for Pre-Startup Safety Reviews across all facility start-up operations',
+      icon: Settings,
+      gradient: 'from-purple-500/20 via-purple-500/10 to-purple-500/5',
+      iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
+      stats: { total: 3, active: 2 }
+    },
+    {
       id: 'projects',
       title: 'Project Management',
       description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
