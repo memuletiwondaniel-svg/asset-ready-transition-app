@@ -292,8 +292,11 @@ const AuthPage: React.FC = () => {
           <CardContent className="space-y-4">
             <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as any)} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="login" className="transition-all duration-300 hover:scale-105">Sign In</TabsTrigger>
+                <TabsTrigger value="signup" className="transition-all duration-300 hover:scale-105 hover:bg-primary/10 hover:text-primary group relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                  <span className="relative z-10">Sign Up</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -375,106 +378,108 @@ const AuthPage: React.FC = () => {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
+              <TabsContent value="signup" className="group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg pointer-events-none" />
+                <form onSubmit={handleSignUp} className="space-y-4 relative z-10">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                    <div className="space-y-2 group">
+                      <Label htmlFor="firstName" className="transition-colors duration-300 group-hover:text-primary">First Name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                         <Input
                           id="firstName"
                           placeholder="John"
                           value={formData.firstName}
                           onChange={(e) => handleInputChange('firstName', e.target.value)}
-                          className="pl-10"
+                          className="pl-10 transition-all duration-300 hover:border-primary/50 focus:border-primary group-hover:shadow-md"
                           disabled={isLoading}
                         />
                       </div>
                       {errors.firstName && (
-                        <p className="text-sm text-destructive">{errors.firstName}</p>
+                        <p className="text-sm text-destructive animate-fade-in">{errors.firstName}</p>
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                    <div className="space-y-2 group">
+                      <Label htmlFor="lastName" className="transition-colors duration-300 group-hover:text-primary">Last Name</Label>
                       <Input
                         id="lastName"
                         placeholder="Doe"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        className="transition-all duration-300 hover:border-primary/50 focus:border-primary group-hover:shadow-md"
                         disabled={isLoading}
                       />
                       {errors.lastName && (
-                        <p className="text-sm text-destructive">{errors.lastName}</p>
+                        <p className="text-sm text-destructive animate-fade-in">{errors.lastName}</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signupEmail">Email</Label>
+                  <div className="space-y-2 group">
+                    <Label htmlFor="signupEmail" className="transition-colors duration-300 group-hover:text-primary">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                       <Input
                         id="signupEmail"
                         type="email"
                         placeholder="your.email@bgc.com"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="pl-10"
+                        className="pl-10 transition-all duration-300 hover:border-primary/50 focus:border-primary group-hover:shadow-md"
                         disabled={isLoading}
                       />
                     </div>
                     {errors.email && (
-                      <Alert variant="destructive">
+                      <Alert variant="destructive" className="animate-fade-in">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>{errors.email}</AlertDescription>
                       </Alert>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signupPassword">Password</Label>
+                  <div className="space-y-2 group">
+                    <Label htmlFor="signupPassword" className="transition-colors duration-300 group-hover:text-primary">Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                       <Input
                         id="signupPassword"
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a strong password"
                         value={formData.password}
                         onChange={(e) => handleInputChange('password', e.target.value)}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 transition-all duration-300 hover:border-primary/50 focus:border-primary group-hover:shadow-md"
                         disabled={isLoading}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors duration-300"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {errors.password && (
-                      <p className="text-sm text-destructive">{errors.password}</p>
+                      <p className="text-sm text-destructive animate-fade-in">{errors.password}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="space-y-2 group">
+                    <Label htmlFor="confirmPassword" className="transition-colors duration-300 group-hover:text-primary">Confirm Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                       <Input
                         id="confirmPassword"
                         type="password"
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                        className="pl-10"
+                        className="pl-10 transition-all duration-300 hover:border-primary/50 focus:border-primary group-hover:shadow-md"
                         disabled={isLoading}
                       />
                     </div>
                     {errors.confirmPassword && (
-                      <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                      <p className="text-sm text-destructive animate-fade-in">{errors.confirmPassword}</p>
                     )}
                   </div>
 
