@@ -9,6 +9,7 @@ import PSSRStepTwo from './PSSRStepTwo';
 import PSSRStepThree from './PSSRStepThree';
 import PSSRStepFour from './PSSRStepFour';
 import PSSRStepFive from './PSSRStepFive';
+import PSSRStepSix from './PSSRStepSix';
 
 interface CreatePSSRWorkflowProps {
   onBack: () => void;
@@ -185,6 +186,17 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
             onNext={handleNext}
             onBack={handleBack}
             onSave={handleSave}
+          />
+        );
+      case 6:
+        return (
+          <PSSRStepSix
+            data={pssrData}
+            onDataUpdate={handleDataUpdate}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSave={handleSave}
+            currentPssrId={pssrId}
           />
         );
       default:
