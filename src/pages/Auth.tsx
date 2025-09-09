@@ -517,7 +517,11 @@ const AuthPage: React.FC = () => {
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700"
                 disabled={isLoading}
               >
-                <Building2 className="mr-2 h-4 w-4" />
+                <img 
+                  src="/lovable-uploads/a38e7106-c33c-4a6c-9cf7-1a84ce322f21.png" 
+                  alt="Kent Logo" 
+                  className="mr-2 h-4 w-4 object-contain" 
+                />
                 Continue with Kent
               </Button>
 
