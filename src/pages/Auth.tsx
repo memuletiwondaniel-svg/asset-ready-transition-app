@@ -342,7 +342,7 @@ const AuthPage: React.FC = () => {
             {/* Back to Home Link */}
             <div className="flex justify-start mb-2">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/landing')}
                 className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors duration-200 group/back"
               >
                 <ArrowLeft className="h-4 w-4 mr-1 transition-transform duration-200 group-hover/back:-translate-x-1" />

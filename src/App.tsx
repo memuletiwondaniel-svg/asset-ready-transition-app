@@ -11,6 +11,7 @@ import SignUpStep2 from "./components/SignUpStep2";
 import SignUpReview from "./components/SignUpReview";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
+import LandingPage from "./components/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,12 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup/step2" element={<SignUpStep2 />} />
             <Route path="/signup/review" element={<SignUpReview />} />
+            <Route path="/landing" element={
+              <LandingPage 
+                onBack={() => {}} 
+                onNavigate={(section) => console.log('Navigate to:', section)} 
+              />
+            } />
             <Route path="/" element={
               <ProtectedRoute>
                 <Index />
