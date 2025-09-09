@@ -9,8 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus } from 'lucide-react';
 import { pssrChecklistData, ChecklistItem } from '@/data/pssrChecklistData';
+import CreateChecklistItemForm from './CreateChecklistItemForm';
+import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 
 interface CreateChecklistFormProps {
   onBack: () => void;
@@ -26,6 +28,11 @@ interface NewChecklistData {
 
 const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showCreateItem, setShowCreateItem] = useState(false);
+  const [showItemSuccess, setShowItemSuccess] = useState(false);
+  const [newCreatedItem, setNewCreatedItem] = useState<ChecklistItem | null>(null);
+  const [customChecklistItems, setCustomChecklistItems] = useState<ChecklistItem[]>([]);
+  
   const [formData, setFormData] = useState<NewChecklistData>({
     name: '',
     reason: '',
@@ -34,6 +41,9 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [customReason, setCustomReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Combine original and custom items
+  const allChecklistItems = [...pssrChecklistData, ...customChecklistItems];
 
   // Checklist reasons
   const checklistReasons = [
@@ -44,54 +54,86 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     'Others'
   ];
 
-  // Categories with icons and colors
+  // Categories with icons and colors - use dynamic data
   const categories = [
     { 
       id: 'Plant Integrity', 
       name: 'Plant Integrity', 
       icon: Shield, 
       color: 'text-blue-600 bg-blue-100 border-blue-200',
-      items: pssrChecklistData.filter(item => item.category === 'Technical Integrity')
+      items: allChecklistItems.filter(item => item.category === 'Technical Integrity')
     },
     { 
       id: 'Process Safety', 
       name: 'Process Safety', 
       icon: AlertTriangle, 
       color: 'text-orange-600 bg-orange-100 border-orange-200',
-      items: pssrChecklistData.filter(item => item.category === 'Health & Safety')
+      items: allChecklistItems.filter(item => item.category === 'Health & Safety')
     },
     { 
       id: 'People', 
       name: 'People', 
       icon: Users, 
       color: 'text-green-600 bg-green-100 border-green-200',
-      items: pssrChecklistData.filter(item => item.category === 'Start-Up Readiness')
+      items: allChecklistItems.filter(item => item.category === 'Start-Up Readiness')
     },
     { 
       id: 'Documentation', 
       name: 'Documentation', 
       icon: FileText, 
       color: 'text-purple-600 bg-purple-100 border-purple-200',
-      items: pssrChecklistData.filter(item => item.category === 'General')
+      items: allChecklistItems.filter(item => item.category === 'General')
     },
     { 
       id: 'Health & Safety', 
       name: 'Health & Safety', 
       icon: Heart, 
       color: 'text-red-600 bg-red-100 border-red-200',
-      items: pssrChecklistData.filter(item => item.category === 'Health & Safety')
+      items: allChecklistItems.filter(item => item.category === 'Health & Safety')
     },
     { 
       id: 'PSSR Walkdown', 
       name: 'PSSR Walkdown', 
       icon: ClipboardCheck, 
       color: 'text-teal-600 bg-teal-100 border-teal-200',
-      items: pssrChecklistData.filter(item => item.category === 'Technical Integrity')
+      items: allChecklistItems.filter(item => item.category === 'Technical Integrity')
     }
   ];
 
   // Get unselected items
-  const unselectedItems = pssrChecklistData.filter(item => !formData.selectedItems.includes(item.id));
+  const unselectedItems = allChecklistItems.filter(item => !formData.selectedItems.includes(item.id));
+
+  const handleCreateNewItem = (newItemData: Omit<ChecklistItem, 'id'>) => {
+    // Generate a new ID
+    const newId = `CUST-${String(customChecklistItems.length + 1).padStart(3, '0')}`;
+    
+    const newItem: ChecklistItem = {
+      id: newId,
+      ...newItemData
+    };
+
+    // Add to custom items and automatically select it
+    setCustomChecklistItems(prev => [...prev, newItem]);
+    setFormData(prev => ({
+      ...prev,
+      selectedItems: [...prev.selectedItems, newId]
+    }));
+    
+    setNewCreatedItem(newItem);
+    setShowCreateItem(false);
+    setShowItemSuccess(true);
+  };
+
+  const handleItemSuccessBack = () => {
+    setShowItemSuccess(false);
+    setNewCreatedItem(null);
+  };
+
+  const handleCreateAnother = () => {
+    setShowItemSuccess(false);
+    setNewCreatedItem(null);
+    setShowCreateItem(true);
+  };
 
   const handleItemToggle = (itemId: string) => {
     setFormData(prev => ({
@@ -134,6 +176,28 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     const selected = categoryItems.filter(item => formData.selectedItems.includes(item.id)).length;
     return { total, selected, percentage: total > 0 ? Math.round((selected / total) * 100) : 0 };
   };
+
+  // Show create item form
+  if (showCreateItem) {
+    return (
+      <CreateChecklistItemForm 
+        onBack={() => setShowCreateItem(false)}
+        onComplete={handleCreateNewItem}
+        existingCategories={[...new Set(allChecklistItems.map(item => item.category))]}
+      />
+    );
+  }
+
+  // Show item success page
+  if (showItemSuccess && newCreatedItem) {
+    return (
+      <ChecklistItemSuccessPage 
+        newItem={newCreatedItem}
+        onBackToChecklist={handleItemSuccessBack}
+        onCreateAnother={handleCreateAnother}
+      />
+    );
+  }
 
   if (currentStep === 1) {
     return (
@@ -285,12 +349,12 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             </div>
             <div className="flex space-x-3">
               <Button 
-                variant="outline" 
-                onClick={() => setCurrentStep(1)}
+                variant="outline"
+                onClick={() => setShowCreateItem(true)}
                 className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Item
               </Button>
               <Button 
                 onClick={handleComplete}
@@ -333,10 +397,37 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 {formData.selectedItems.length} items selected
               </Badge>
               <Badge variant="outline" className="px-3 py-1">
-                {pssrChecklistData.length} total items
+                {allChecklistItems.length} total items
               </Badge>
+              {customChecklistItems.length > 0 && (
+                <Badge variant="default" className="px-3 py-1 bg-green-100 text-green-700 border-green-200">
+                  {customChecklistItems.length} custom items
+                </Badge>
+              )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Back and Create Item Buttons */}
+      <div className="max-w-7xl mx-auto px-8 mb-6">
+        <div className="flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={() => setCurrentStep(1)}
+            className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Step 1
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setShowCreateItem(true)}
+            className="fluent-button bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Checklist Item
+          </Button>
         </div>
       </div>
 
@@ -382,12 +473,14 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
               <CardContent>
                 <ScrollArea className="h-96">
                   <div className="space-y-4">
-                    {pssrChecklistData.filter(item => 
+                    {allChecklistItems.filter(item => 
                       searchQuery === '' || 
                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       item.supportingEvidence.toLowerCase().includes(searchQuery.toLowerCase())
                     ).map((item) => (
-                      <div key={item.id} className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors">
+                      <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
+                        customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
+                      }`}>
                         <Checkbox
                           checked={formData.selectedItems.includes(item.id)}
                           onCheckedChange={() => handleItemToggle(item.id)}
@@ -395,7 +488,14 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                         />
                         <div className="flex-1 space-y-2">
                           <div className="flex items-start justify-between">
-                            <h4 className="font-medium text-sm">{item.id}</h4>
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-sm">{item.id}</h4>
+                              {customChecklistItems.some(custom => custom.id === item.id) && (
+                                <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                  New
+                                </Badge>
+                              )}
+                            </div>
                             <Badge variant="outline" className="text-xs">
                               {item.category}
                             </Badge>
@@ -470,14 +570,23 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     <ScrollArea className="h-96">
                       <div className="space-y-4">
                         {items.map((item) => (
-                          <div key={item.id} className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors">
+                          <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
+                            customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
+                          }`}>
                             <Checkbox
                               checked={formData.selectedItems.includes(item.id)}
                               onCheckedChange={() => handleItemToggle(item.id)}
                               className="mt-1"
                             />
                             <div className="flex-1 space-y-2">
-                              <h4 className="font-medium text-sm">{item.id}</h4>
+                              <div className="flex items-center space-x-2">
+                                <h4 className="font-medium text-sm">{item.id}</h4>
+                                {customChecklistItems.some(custom => custom.id === item.id) && (
+                                  <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                    New
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-foreground">{item.description}</p>
                               <p className="text-xs text-muted-foreground font-medium">
                                 Evidence: {item.supportingEvidence}
