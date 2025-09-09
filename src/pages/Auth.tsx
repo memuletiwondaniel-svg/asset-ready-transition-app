@@ -359,16 +359,17 @@ const AuthPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <Button type="submit" className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg" disabled={isLoading}>
+                  <Button type="submit" className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/25 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary" disabled={isLoading}>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     {isLoading ? (
                       <>
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                        Signing in...
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
+                        <span className="relative z-10">Signing in...</span>
                       </>
                     ) : (
                       <>
-                        Sign In
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        <span className="relative z-10">Sign In</span>
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
                       </>
                     )}
                   </Button>
@@ -478,16 +479,17 @@ const AuthPage: React.FC = () => {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg" disabled={isLoading}>
+                  <Button type="submit" className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-secondary/25 bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary border border-secondary/20 hover:border-secondary/40" disabled={isLoading}>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     {isLoading ? (
                       <>
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                        Creating account...
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
+                        <span className="relative z-10">Creating account...</span>
                       </>
                     ) : (
                       <>
-                        Create Account
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        <span className="relative z-10">Create Account</span>
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
                       </>
                     )}
                   </Button>
@@ -519,16 +521,17 @@ const AuthPage: React.FC = () => {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full group transition-all duration-300 hover:scale-105 hover:shadow-lg" disabled={isLoading}>
+                <Button type="submit" className="w-full group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/25 bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent border border-accent/20 hover:border-accent/40" disabled={isLoading}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   {isLoading ? (
                     <>
-                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                      Sending...
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
+                      <span className="relative z-10">Sending...</span>
                     </>
                   ) : (
                     <>
-                      Send Reset Link
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      <span className="relative z-10">Send Reset Link</span>
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
                     </>
                   )}
                 </Button>
