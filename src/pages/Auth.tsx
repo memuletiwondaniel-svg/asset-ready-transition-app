@@ -333,6 +333,28 @@ const AuthPage: React.FC = () => {
           <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             Basrah Gas Company Operations Platform
           </p>
+          
+          {/* Progress indicator for signup */}
+          {authMode === 'signup' && (
+            <div className="mt-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+              <div className="flex items-center justify-center space-x-2">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
+                  <span className="ml-2 text-sm text-foreground font-medium">Personal Info</span>
+                </div>
+                <div className="w-8 h-0.5 bg-muted-foreground/30"></div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-sm">
+                    2
+                  </div>
+                  <span className="ml-2 text-sm text-muted-foreground">Professional Details</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">Step 1 of 2</p>
+            </div>
+          )}
         </div>
 
         <Card className="shadow-lg backdrop-blur-sm bg-card/95 border-2 hover:border-primary/20 transition-all duration-300 animate-scale-in group">
@@ -652,11 +674,11 @@ const AuthPage: React.FC = () => {
                     {isLoading ? (
                       <>
                         <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2 relative z-10" />
-                        <span className="relative z-10">Creating account...</span>
+                        <span className="relative z-10">Processing...</span>
                       </>
                     ) : (
                       <>
-                        <span className="relative z-10">Create Account</span>
+                        <span className="relative z-10">Next</span>
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 relative z-10" />
                       </>
                     )}
