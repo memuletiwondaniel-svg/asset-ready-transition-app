@@ -133,7 +133,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="signin" className="space-y-4">
                   {/* Email/Password Sign In */}
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
@@ -241,20 +247,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     </Button>
                   </div>
 
-                  {/* New to ORSH Text */}
-                  <div className="text-center text-sm text-muted-foreground mt-6">
-                    New to ORSH?{' '}
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto text-primary text-sm font-medium"
-                      onClick={() => setShowRegistrationForm(true)}
-                    >
-                      Create your account
-                    </Button>
-                  </div>
-
                   {/* Terms */}
-                  <div className="text-center text-xs text-muted-foreground mt-4">
+                  <div className="text-center text-xs text-muted-foreground mt-6">
                     By signing in, you agree to our{' '}
                     <Button variant="link" className="p-0 h-auto text-primary text-xs">
                       Terms of Service
@@ -264,7 +258,19 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       Privacy Policy
                     </Button>
                   </div>
-                </div>
+                </TabsContent>
+
+                <TabsContent value="signup" className="space-y-4">
+                  <div className="text-center">
+                    <Button 
+                      className="w-full h-10 text-sm font-medium" 
+                      onClick={() => setShowRegistrationForm(true)}
+                    >
+                      Create Your Account
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>
