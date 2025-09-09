@@ -115,32 +115,23 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto p-0 bg-transparent border-none shadow-none">
         <div 
-          className="min-h-screen flex items-center justify-center p-4 relative"
-          style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, hsl(var(--accent) / 0.05) 100%)',
-          }}
+          className="min-h-screen flex items-center justify-center p-4"
         >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-[0.02]">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent rounded-full blur-3xl transform translate-x-1/2 translate-y-1/2"></div>
-          </div>
-          
-          <div className="w-full max-w-sm relative z-10">
+          <div className="w-full max-w-sm">
+            {/* Header */}
+            <div className="text-center mb-6">
+            </div>
+
             {/* Login Card */}
-            <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/30 p-8 relative overflow-hidden">
-              {/* Subtle inner glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-2xl"></div>
-              
-              {/* Content */}
-              <div className="relative z-10">
-                {/* Sign In Header */}
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-semibold text-foreground mb-2 tracking-tight">Welcome back</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Sign in to your ORSH account
-                  </p>
-                </div>
+            <div className="bg-card rounded-xl shadow-xl p-6 backdrop-blur-sm border border-border/20">
+
+              {/* Sign In Header */}
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-foreground mb-1">Sign In</h2>
+                <p className="text-muted-foreground text-sm">
+                  Enter your credentials to access ORSH
+                </p>
+              </div>
 
               <div className="space-y-4">
                   {/* Email/Password Sign In */}
@@ -274,7 +265,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     </Button>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
         </div>
