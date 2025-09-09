@@ -30,7 +30,12 @@ const Index = () => {
     setShowAuth(false);
   };
 
-  const handleBack = () => {
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentSection(null);
+  };
+
+  const handleBackToHome = () => {
     setIsAuthenticated(false);
     setCurrentSection(null);
   };
@@ -149,13 +154,13 @@ const Index = () => {
           </div>
         );
       default:
-        return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+        return <LandingPage onBack={handleBackToHome} onNavigate={handleNavigate} />;
     }
   }
 
   // Show landing page after authentication
   if (isAuthenticated) {
-    return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+    return <LandingPage onBack={handleBackToHome} onNavigate={handleNavigate} />;
   }
 
   // Show welcome screen before authentication
