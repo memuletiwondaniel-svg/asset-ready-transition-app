@@ -28,11 +28,12 @@ import DraggableTaskCard from './DraggableTaskCard';
 import DraggableTaskList from './DraggableTaskList';
 
 interface LandingPageProps {
-  onBack: () => void;
-  onNavigate: (section: string) => void;
+  user: any;
+  onSignOut: () => void;
+  onNavigateToReview: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ user, onSignOut, onNavigateToReview }) => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
@@ -529,7 +530,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onNavigate }) => {
                   <div className="h-px bg-border/50 my-1" />
                   <DropdownMenuItem 
                     className="cursor-pointer hover:bg-red-50 text-red-600 hover:text-red-700 group font-medium"
-                    onClick={onBack}
+                    onClick={() => window.history.back()}
                   >
                     <LogOut className="h-4 w-4 mr-3 group-hover:scale-110 transition-transform duration-200" />
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">{t.signOut}</span>
