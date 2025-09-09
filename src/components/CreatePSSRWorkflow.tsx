@@ -10,6 +10,7 @@ import PSSRStepThree from './PSSRStepThree';
 import PSSRStepFour from './PSSRStepFour';
 import PSSRStepFive from './PSSRStepFive';
 import PSSRStepSix from './PSSRStepSix';
+import PSSRStepEight from './PSSRStepEight';
 
 interface CreatePSSRWorkflowProps {
   onBack: () => void;
@@ -191,6 +192,28 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
       case 6:
         return (
           <PSSRStepSix
+            data={pssrData}
+            onDataUpdate={handleDataUpdate}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSave={handleSave}
+            currentPssrId={pssrId}
+          />
+        );
+      case 7:
+        return (
+          <div className="text-center py-8">
+            <p className="text-lg font-medium text-gray-600">
+              Step 7: Approve Checklist Item
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              This step was implemented separately. Proceed to Step 8.
+            </p>
+          </div>
+        );
+      case 8:
+        return (
+          <PSSRStepEight
             data={pssrData}
             onDataUpdate={handleDataUpdate}
             onNext={handleNext}
