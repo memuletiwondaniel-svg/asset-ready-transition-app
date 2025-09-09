@@ -233,7 +233,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       className="w-full h-10 text-sm font-medium bg-kent text-kent-foreground hover:opacity-90"
                     >
                       <img 
-                        src="/lovable-uploads/d6ada3e2-4f29-441f-9e52-6c95d1c6bb80.png" 
+                        src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" 
                         alt="Kent Logo" 
                         className="w-5 h-5 mr-3"
                       />
