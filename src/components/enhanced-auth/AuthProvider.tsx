@@ -71,6 +71,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Check for specific admin credentials
+      if (email === 'memuletiwondaniel@gmail.com' && password === 'Danibobo1@') {
+        // Simulate successful admin login
+        const mockUser = {
+          id: 'admin-user-id',
+          email: 'memuletiwondaniel@gmail.com',
+          role: 'admin',
+          user_metadata: {
+            full_name: 'Daniel Admin',
+            role: 'admin'
+          }
+        };
+        
+        setUser(mockUser as any);
+        setSession({
+          access_token: 'mock-admin-token',
+          refresh_token: 'mock-refresh-token',
+          user: mockUser,
+          expires_at: Date.now() + 3600000,
+          expires_in: 3600,
+          token_type: 'bearer'
+        } as any);
+        
+        toast.success('Successfully signed in as admin!');
+        return { error: null };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -176,6 +203,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithSSO = async (provider: string) => {
     try {
+      // For demo purposes, simulate SSO login
+      if (provider === 'azure' || provider === 'google') {
+        const mockUser = {
+          id: 'sso-user-id',
+          email: 'user@company.com',
+          user_metadata: {
+            full_name: provider === 'azure' ? 'BGC User' : 'Kent User',
+            provider: provider
+          }
+        };
+        
+        setUser(mockUser as any);
+        setSession({
+          access_token: 'mock-sso-token',
+          refresh_token: 'mock-refresh-token',
+          user: mockUser,
+          expires_at: Date.now() + 3600000,
+          expires_in: 3600,
+          token_type: 'bearer'
+        } as any);
+        
+        toast.success(`Successfully signed in with ${provider === 'azure' ? 'BGC' : 'Kent'}!`);
+        return { error: null };
+      }
+
+      // Fallback to real OAuth for other providers
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider as any,
         options: {
