@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,13 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const isCustom = item.id.startsWith('CUST-');
   
   const { users } = useUsers();
+
+  // Sync internal state when item prop changes or modal reopens
+  useEffect(() => {
+    setEditedItem(item);
+    setSelectedApprovers(item.approving_authority ? item.approving_authority.split(', ') : []);
+    setIsEditing(false);
+  }, [item, isOpen]);
 
   // Create options for approver dropdown
   const approverOptions: ComboboxOption[] = [
