@@ -226,6 +226,32 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
               <Textarea 
                 value={formData.scope}
                 onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
+                onPaste={async (e) => {
+                  const items = e.clipboardData?.items;
+                  if (!items) return;
+                  
+                  for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.type.startsWith('image/')) {
+                      e.preventDefault();
+                      const file = item.getAsFile();
+                      if (file) {
+                        // Convert image to base64 and append to scope text
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string;
+                          const imageMarkdown = `\n\n![Pasted Image](${base64})\n\n`;
+                          setFormData(prev => ({
+                            ...prev, 
+                            scope: prev.scope + imageMarkdown
+                          }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                      break;
+                    }
+                  }
+                }}
                 placeholder="Describe the scope of the PSSR. You can paste images here..."
                 rows={6}
                 className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none"
