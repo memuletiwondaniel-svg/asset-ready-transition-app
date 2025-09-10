@@ -658,6 +658,125 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           </Card>
           {/* Checklist Items */}
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+            {/* All Categories Tab Content */}
+            <TabsContent value="all" className="mt-0">
+              <div className="space-y-6">
+                {categories.map((category) => {
+                  const filteredCategoryItems = filteredItems(category.items);
+                  if (filteredCategoryItems.length === 0) return null;
+
+                  const stats = getCategoryStats(category.items);
+
+                  return (
+                    <Card key={category.id} className="fluent-glassmorphism border-border/30 backdrop-blur-md">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <CardTitle className="text-xl font-bold">{category.name}</CardTitle>
+                              <CardDescription className="text-sm">
+                                {stats.selected} of {stats.total} items selected
+                                {stats.selected > 0 && ` (${stats.percentage}%)`}
+                              </CardDescription>
+                            </div>
+                          </div>
+                          {stats.selected > 0 && (
+                            <div className="flex items-center space-x-2">
+                              <Progress value={stats.percentage} className="w-20 h-2" />
+                              <Badge variant="secondary" className="text-xs">
+                                {stats.percentage}%
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className={category.name === "General" ? "h-64" : "h-96"}>
+                          <div className="grid gap-3">
+                            {filteredCategoryItems.map((item) => (
+                              <ChecklistItemCard key={item.id} item={item} />
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            {/* Not Selected Tab Content */}
+            <TabsContent value="not_selected" className="mt-0">
+              <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <CardTitle className="text-2xl font-bold">Not Selected Items</CardTitle>
+                        <CardDescription>
+                          Items that are not currently selected for your checklist
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-muted-foreground">
+                        {unselectedItems.length}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        items remaining
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-96">
+                    <div className="grid gap-3">
+                      {filteredItems(unselectedItems).map((item) => (
+                        <ChecklistItemCard key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Individual Category Tab Contents */}
+            {categories.map((category) => (
+              <TabsContent key={category.id} value={category.id} className="mt-0">
+                <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <CardTitle className="text-2xl font-bold">{category.name}</CardTitle>
+                          <CardDescription>
+                            Select the {category.name.toLowerCase()} items you need for your checklist
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">
+                          {getCategoryStats(category.items).selected}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          of {category.items.length} selected
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-96">
+                      <div className="grid gap-3">
+                        {filteredItems(category.items).map((item) => (
+                          <ChecklistItemCard key={item.id} item={item} />
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
+          </Tabs>
 
             {/* Not Selected Tab Content */}
             <TabsContent value="not_selected" className="mt-0">
