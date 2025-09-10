@@ -11,7 +11,7 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
   ];
 
   return (
-    <div className="mt-16 mb-3">
+    <div className="mt-4 mb-3">
       <div className="flex items-center justify-center max-w-2xl mx-auto">
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
