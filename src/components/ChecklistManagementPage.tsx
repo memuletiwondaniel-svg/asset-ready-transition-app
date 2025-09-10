@@ -18,12 +18,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { useChecklistItems } from '@/hooks/useChecklistItems';
+import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
+import EditChecklistItemModal from './EditChecklistItemModal';
 
 interface ChecklistManagementPageProps {
   onBack: () => void;
@@ -33,6 +34,8 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
 
@@ -96,6 +99,16 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
 
   const getItemsByCategory = (category: string) => {
     return checklistItems?.filter(item => item.category === category) || [];
+  };
+
+  const handleEditItem = (item: ChecklistItem) => {
+    setEditingItem(item);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingItem(null);
   };
 
   // Draggable Category Component
@@ -215,6 +228,18 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                   {item.is_active ? 'Active' : 'Inactive'}
                                 </Badge>
                               </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 hover:bg-blue-50 hover:text-blue-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditItem(item);
+                                }}
+                                title="Edit checklist item"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
                             </div>
                             
                             {/* Description */}
@@ -397,6 +422,15 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           </DndContext>
         )}
       </div>
+      
+      {/* Edit Checklist Item Modal */}
+      {editingItem && (
+        <EditChecklistItemModal
+          isOpen={showEditModal}
+          onClose={handleCloseEditModal}
+          item={editingItem}
+        />
+      )}
     </div>
   );
 };

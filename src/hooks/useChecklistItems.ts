@@ -37,3 +37,79 @@ export const useChecklistCategories = () => {
     },
   });
 };
+
+export interface UpdateChecklistItemData {
+  description?: string;
+  category?: string;
+  topic?: string;
+  supporting_evidence?: string;
+  responsible_party?: string;
+  approving_authority?: string;
+  is_active?: boolean;
+}
+
+export const useUpdateChecklistItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itemId, updateData }: { itemId: string; updateData: UpdateChecklistItemData }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('checklist_items')
+        .update({
+          ...updateData,
+          updated_by: session.user.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', itemId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
+    },
+  });
+};
+
+export interface CreateChecklistItemData {
+  id: string;
+  description: string;
+  category: string;
+  topic?: string;
+  supporting_evidence?: string;
+  responsible_party?: string;
+  approving_authority?: string;
+}
+
+export const useCreateChecklistItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemData: CreateChecklistItemData) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('checklist_items')
+        .insert({
+          ...itemData,
+          created_by: session.user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
+    },
+  });
+};
