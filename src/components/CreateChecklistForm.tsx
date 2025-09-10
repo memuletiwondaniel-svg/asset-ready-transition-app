@@ -494,44 +494,33 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Navigation Bar with Acrylic Effect - Moved to Top */}
+      {/* Navigation Bar with Acrylic Effect - Top Navigation */}
       <div className="fluent-navigation sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="fluent-reveal">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-12 w-auto animate-float" 
-                />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Select Checklist Items
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Choose items for: {formData.name}
-                </p>
-              </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentStep(1)}
+              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+              Back to Information
+            </Button>
+            
+            <div className="text-center">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                Create Checklist Items
+              </h1>
             </div>
-            <div className="flex space-x-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setCurrentStep(1)}
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-                Back to Information
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={onBack}
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-              >
-                Cancel
-              </Button>
-            </div>
+            
+            <Button 
+              className="fluent-button bg-primary hover:bg-primary/80 shadow-fluent-sm hover:shadow-fluent-md group"
+              onClick={handleComplete}
+              disabled={formData.selected_items.length === 0}
+            >
+              Next: Review Checklist
+              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+            </Button>
           </div>
         </div>
       </div>
@@ -553,31 +542,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       {/* Content Layer with Fluent Acrylic */}
       <div className="relative z-10 p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Summary Section */}
-          <div className="mb-8">
-            <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl font-bold">{formData.name}</CardTitle>
-                    <CardDescription>
-                      Select checklist items for your PSSR workflow
-                    </CardDescription>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">
-                      {formData.selected_items.length}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      items selected
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          </div>
-
-          {/* Search and Filter Controls */}
+          {/* Search Section */}
           <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md mb-6">
             <CardContent className="p-6">
               <div className="flex items-center justify-between space-x-4">
@@ -592,33 +557,18 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     />
                   </div>
                 </div>
-                <div className="flex space-x-3">
-                  <Button 
-                    onClick={() => setShowCreateItem(true)}
-                    size="sm"
-                    className="fluent-button bg-primary hover:bg-primary-hover"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Custom Item
-                  </Button>
-                  <Button 
-                    onClick={handleComplete}
-                    disabled={formData.selected_items.length === 0}
-                    className="fluent-button bg-primary hover:bg-primary-hover"
-                  >
-                    Complete Checklist
-                    <CheckCircle className="h-4 w-4 ml-2" />
-                  </Button>
+                <div className="text-sm text-muted-foreground font-medium">
+                  {formData.selected_items.length} items selected
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Category Filters - Two Rows Layout */}
-          <div className="mb-6">
-            <div className="grid grid-cols-7 gap-2">
+          <div className="mb-4">
+            <div className="space-y-2">
               {/* First Row */}
-              <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="col-span-7">
+              <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
                 <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full">
                   <TabsTrigger
                     value="all"
@@ -661,7 +611,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 
                 {/* Second Row */}
                 {categories.length > 5 && (
-                  <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full mt-2">
+                  <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full">
                     {categories.slice(5).map((category, index) => {
                       return (
                         <TabsTrigger
@@ -685,6 +635,17 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 )}
               </Tabs>
             </div>
+          </div>
+
+          {/* Create Checklist Item Button */}
+          <div className="text-center mb-6">
+            <Button 
+              onClick={() => setShowCreateItem(true)}
+              className="fluent-button bg-primary hover:bg-primary/80 px-6 py-2"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Checklist Item
+            </Button>
           </div>
 
           {/* Checklist Items */}
@@ -723,7 +684,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <ScrollArea className="h-96">
+                        <ScrollArea className={category.name === "General" ? "h-80" : "h-96"}>
                           <div className="grid gap-3">
                             {filteredCategoryItems.map((item) => (
                               <ChecklistItemCard key={item.id} item={item} />
