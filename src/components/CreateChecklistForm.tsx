@@ -355,19 +355,25 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   if (currentStep === 1) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        {/* Microsoft Fluent Background with Acrylic Material */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/40"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-purple-50/10"></div>
+        {/* Microsoft Fluent Background with Advanced Acrylic Material */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-100/60"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-200/30 via-indigo-100/20 to-purple-100/15"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-100/25 via-transparent to-blue-50/10"></div>
         
-        {/* Fluent Design Noise Texture */}
-        <div className="absolute inset-0 opacity-[0.015]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        {/* Fluent Design Advanced Noise Texture */}
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.8'%3E%3Ccircle cx='10' cy='10' r='1.5'/%3E%3Ccircle cx='30' cy='10' r='1'/%3E%3Ccircle cx='50' cy='10' r='1.5'/%3E%3Ccircle cx='70' cy='10' r='1'/%3E%3Ccircle cx='10' cy='30' r='1'/%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3Ccircle cx='50' cy='30' r='1'/%3E%3Ccircle cx='70' cy='30' r='1.5'/%3E%3Ccircle cx='10' cy='50' r='1.5'/%3E%3Ccircle cx='30' cy='50' r='1'/%3E%3Ccircle cx='50' cy='50' r='1.5'/%3E%3Ccircle cx='70' cy='50' r='1'/%3E%3Ccircle cx='10' cy='70' r='1'/%3E%3Ccircle cx='30' cy='70' r='1.5'/%3E%3Ccircle cx='50' cy='70' r='1'/%3E%3Ccircle cx='70' cy='70' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
         }}></div>
         
-        {/* Floating Geometric Elements */}
-        <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-indigo-300/20 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-br from-purple-200/15 to-pink-300/15 rounded-full blur-lg animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-32 left-40 w-20 h-20 bg-gradient-to-br from-cyan-200/20 to-blue-300/20 rounded-full blur-md animate-pulse" style={{ animationDelay: '2s' }}></div>
+        {/* Dynamic Floating Geometric Elements with Fluent Motion */}
+        <div className="absolute top-16 left-16 w-40 h-40 bg-gradient-to-br from-blue-300/25 to-indigo-400/20 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute top-32 right-24 w-32 h-32 bg-gradient-to-br from-purple-300/20 to-pink-400/15 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-24 left-32 w-28 h-28 bg-gradient-to-br from-cyan-300/25 to-blue-400/20 rounded-full blur-lg animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/3 right-1/3 w-24 h-24 bg-gradient-to-br from-indigo-300/15 to-purple-400/10 rounded-full blur-md animate-pulse" style={{ animationDelay: '3s' }}></div>
+        
+        {/* Fluent Design Glass Morphism Layers */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/10 via-white/5 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-white/10"></div>
         
         {/* Header - Top Center */}
         <div className="relative z-10 pt-8 pb-4">
@@ -535,14 +541,28 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         </div>
       </div>
 
-      {/* Microsoft Fluent Background with Acrylic Material */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/40"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-100/20 via-transparent to-blue-50/10"></div>
+      {/* Advanced Microsoft Fluent Background with Multi-layered Acrylic */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-100/70"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-200/30 via-blue-100/20 to-transparent"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-200/25 via-purple-100/15 to-transparent"></div>
+      <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,_transparent_0deg,_blue-100/10_120deg,_transparent_240deg)]"></div>
       
-      {/* Fluent Design Noise Texture */}
-      <div className="absolute inset-0 opacity-[0.015]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      {/* Enhanced Fluent Design Noise Texture */}
+      <div className="absolute inset-0 opacity-[0.025]" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.6'%3E%3Cpath d='M12 12h2v2h-2zM16 16h2v2h-2zM20 12h2v2h-2zM24 16h2v2h-2zM28 12h2v2h-2zM32 16h2v2h-2zM36 12h2v2h-2zM40 16h2v2h-2zM44 12h2v2h-2zM48 16h2v2h-2zM52 12h2v2h-2zM56 16h2v2h-2zM60 12h2v2h-2zM64 16h2v2h-2zM68 12h2v2h-2zM72 16h2v2h-2zM76 12h2v2h-2zM80 16h2v2h-2zM84 12h2v2h-2zM88 16h2v2h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}></div>
+      
+      {/* Sophisticated Floating Elements with Microsoft Fluent Motion */}
+      <div className="absolute top-12 left-12 w-48 h-48 bg-gradient-to-br from-blue-400/20 to-indigo-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+      <div className="absolute top-24 right-16 w-36 h-36 bg-gradient-to-br from-purple-400/18 to-pink-500/12 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1.5s', animationDuration: '5s' }}></div>
+      <div className="absolute bottom-16 left-24 w-32 h-32 bg-gradient-to-br from-cyan-400/22 to-blue-500/16 rounded-full blur-xl animate-pulse" style={{ animationDelay: '3s', animationDuration: '6s' }}></div>
+      <div className="absolute top-1/4 right-1/4 w-28 h-28 bg-gradient-to-br from-indigo-400/15 to-purple-500/10 rounded-full blur-lg animate-pulse" style={{ animationDelay: '4s', animationDuration: '7s' }}></div>
+      <div className="absolute bottom-1/3 right-1/3 w-24 h-24 bg-gradient-to-br from-teal-400/18 to-cyan-500/12 rounded-full blur-md animate-pulse" style={{ animationDelay: '2s', animationDuration: '5.5s' }}></div>
+      
+      {/* Advanced Glass Morphism with Depth */}
+      <div className="absolute inset-0 bg-gradient-to-t from-white/15 via-white/8 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/6 to-white/12"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-blue-50/10 via-transparent to-indigo-50/8"></div>
 
       {/* Progress Steps */}
       <div className="max-w-7xl mx-auto px-8 py-4 bg-white/60 backdrop-blur-sm">
