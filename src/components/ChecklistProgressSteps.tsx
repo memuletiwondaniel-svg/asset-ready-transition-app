@@ -7,7 +7,7 @@ interface ChecklistProgressStepsProps {
 const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ currentStep }) => {
   const steps = [
     { number: 1, title: "Step 1", subtitle: "Enter Checklist Information" },
-    { number: 2, title: "Step 2", subtitle: "Create Checklist Items" },
+    { number: 2, title: "Step 2", subtitle: "Select Checklist Items" },
     { number: 3, title: "Step 3", subtitle: "Review Checklist & Submit" }
   ];
 
@@ -15,7 +15,7 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
     <div className="mt-4 mb-3">
       <div className="flex items-center justify-center max-w-2xl mx-auto">
         {steps.map((step, index) => (
-          <React.Fragment key={step.number}>
+          <div key={step.number} className="flex items-center">
             <div className="flex items-center">
                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 aspect-square ${
                  currentStep >= step.number 
@@ -48,7 +48,7 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
                    : 'bg-gradient-to-r from-neutral-200 to-neutral-300'
                }`}></div>
             )}
-          </React.Fragment>
+          </div>
         ))}
       </div>
     </div>

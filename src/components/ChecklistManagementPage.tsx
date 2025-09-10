@@ -18,13 +18,14 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import EditChecklistItemModal from './EditChecklistItemModal';
+import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
 
 interface ChecklistManagementPageProps {
   onBack: () => void;
@@ -36,6 +37,8 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<ChecklistItem | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
 
@@ -109,6 +112,21 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     setEditingItem(null);
+  };
+
+  const handleDeleteItem = (item: ChecklistItem) => {
+    setDeletingItem(item);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeletingItem(null);
+  };
+
+  const handleItemDeleted = (deletedItemId: string) => {
+    // The item will be automatically removed from the list due to the query invalidation
+    // in the useDeleteChecklistItem hook
   };
 
   // Draggable Category Component
@@ -257,18 +275,32 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                   {item.is_active ? 'Active' : 'Inactive'}
                                 </Badge>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="opacity-0 group-hover/item:opacity-100 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 rounded-xl"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditItem(item);
-                                }}
-                                title="Edit checklist item"
-                              >
-                                <Edit3 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="opacity-0 group-hover/item:opacity-100 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 rounded-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditItem(item);
+                                  }}
+                                  title="Edit checklist item"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="opacity-0 group-hover/item:opacity-100 transition-all duration-300 hover:bg-red-50 hover:text-red-700 rounded-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteItem(item);
+                                  }}
+                                  title="Delete checklist item"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
 
                             <div className="space-y-3">
@@ -468,6 +500,16 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           isOpen={showEditModal}
           onClose={handleCloseEditModal}
           item={editingItem}
+        />
+      )}
+
+      {/* Delete Modal */}
+      {deletingItem && (
+        <ChecklistItemDeletionModal
+          item={deletingItem}
+          isOpen={showDeleteModal}
+          onClose={handleCloseDeleteModal}
+          onDeleted={handleItemDeleted}
         />
       )}
     </div>

@@ -113,3 +113,30 @@ export const useCreateChecklistItem = () => {
     },
   });
 };
+
+export const useDeleteChecklistItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('checklist_items')
+        .update({ 
+          is_active: false,
+          updated_by: session.user.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', itemId);
+
+      if (error) throw error;
+      return itemId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
+    },
+  });
+};
