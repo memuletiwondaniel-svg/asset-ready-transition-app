@@ -438,7 +438,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             className="fluent-button bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create New Checklist Item
+            Add new checklist item
           </Button>
         </div>
       </div>
