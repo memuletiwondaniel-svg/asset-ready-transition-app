@@ -369,38 +369,26 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         <div className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-br from-purple-200/15 to-pink-300/15 rounded-full blur-lg animate-pulse" style={{ animationDelay: '1s' }}></div>
         <div className="absolute bottom-32 left-40 w-20 h-20 bg-gradient-to-br from-cyan-200/20 to-blue-300/20 rounded-full blur-md animate-pulse" style={{ animationDelay: '2s' }}></div>
         
-        {/* Content Layer with Fluent Acrylic */}
-        <div className="relative z-10">
-          {/* Navigation Bar with Acrylic Effect */}
-          <div className="fluent-navigation sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg">
-            <div className="max-w-4xl mx-auto px-8 py-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
-                  <div className="fluent-reveal">
-                    <img 
-                      src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                      alt="BGC Logo" 
-                      className="h-12 w-auto animate-float" 
-                    />
-                  </div>
-                  <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                      Create New Checklist
-                    </h1>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  onClick={onBack}
-                  className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-                  Cancel
-                </Button>
+        {/* Header - Top Center */}
+        <div className="relative z-10 pt-8 pb-4">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-4 mb-2">
+              <div className="fluent-reveal">
+                <img 
+                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                  alt="BGC Logo" 
+                  className="h-12 w-auto animate-float" 
+                />
               </div>
             </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent animate-fade-in-up">
+              Create New Checklist
+            </h1>
           </div>
-
+        </div>
+        
+        {/* Content Layer with Fluent Acrylic */}
+        <div className="relative z-10">
           {/* Progress Steps */}
           <div className="max-w-4xl mx-auto px-8">
             <ChecklistProgressSteps currentStep={currentStep} />
@@ -472,7 +460,21 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-end pt-6 border-t border-border/20">
+                    <div className="flex justify-between items-center pt-6 border-t border-border/20">
+                      <Button 
+                        onClick={onBack}
+                        variant="outline"
+                        className="group relative overflow-hidden bg-gradient-to-r from-muted/80 to-muted/60 border-2 border-border/30 hover:border-destructive/40 px-6 py-3 rounded-xl font-medium text-muted-foreground hover:text-destructive transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg hover:shadow-destructive/10"
+                      >
+                        {/* Background gradient overlay on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 via-destructive/10 to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                        
+                        <div className="relative flex items-center">
+                          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-all duration-300 ease-out" />
+                          <span className="font-semibold">Cancel</span>
+                        </div>
+                      </Button>
+                      
                       <Button 
                         onClick={handleNext}
                         disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
