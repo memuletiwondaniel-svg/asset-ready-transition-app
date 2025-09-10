@@ -64,15 +64,15 @@ export const useCreateChecklist = () => {
   return useMutation({
     mutationFn: async (checklistData: CreateChecklistData): Promise<Checklist> => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session?.user?.id || null;
 
-      // If reason is "Others" and custom_reason is provided, save it as a custom reason
-      if (checklistData.reason === 'Others' && checklistData.custom_reason) {
+      // If reason is "Others" and custom_reason is provided, save it as a custom reason (only if authenticated)
+      if (checklistData.reason === 'Others' && checklistData.custom_reason && userId) {
         const { error: customReasonError } = await supabase
           .from('custom_reasons')
           .upsert({
             reason_text: checklistData.custom_reason,
-            created_by: session.user.id,
+            created_by: userId,
           }, {
             onConflict: 'reason_text',
             ignoreDuplicates: true
@@ -90,7 +90,7 @@ export const useCreateChecklist = () => {
           reason: checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason,
           custom_reason: checklistData.reason === 'Others' ? checklistData.custom_reason : null,
           selected_items: checklistData.selected_items,
-          created_by: session.user.id,
+          created_by: userId,
         })
         .select()
         .single();
@@ -101,7 +101,7 @@ export const useCreateChecklist = () => {
         ...data,
         items_count: checklistData.selected_items.length,
         active_pssr_count: 0,
-        created_by_email: session.user.email,
+        created_by_email: session?.user?.email || 'Anonymous',
       };
     },
     onSuccess: () => {

@@ -52,16 +52,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const {
     mutate: updateChecklist
   } = useUpdateChecklist();
-  const handleCreateComplete = async (checklistData: NewChecklistData) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to create a checklist.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleCreateComplete = (checklistData: NewChecklistData) => {
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
         setCreatedChecklistName(newChecklist.name);
