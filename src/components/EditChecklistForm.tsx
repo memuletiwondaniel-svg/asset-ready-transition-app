@@ -12,23 +12,12 @@ import { ArrowLeft, Save, Plus, Search, AlertTriangle, CheckCircle } from 'lucid
 import { pssrChecklistData, ChecklistItem, checklistCategories } from '@/data/pssrChecklistData';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
-
-interface ChecklistData {
-  id: string;
-  name: string;
-  reason: string;
-  itemsCount: number;
-  createdDate: string;
-  createdBy: string;
-  activePSSRCount: number;
-  category: string;
-  status: 'Active' | 'Draft' | 'Archived';
-}
+import { Checklist } from '@/hooks/useChecklists';
 
 interface EditChecklistFormProps {
-  checklist: ChecklistData;
+  checklist: Checklist;
   onBack: () => void;
-  onSave: (updatedChecklist: ChecklistData, selectedItems: string[]) => void;
+  onSave: (updatedChecklist: Checklist, selectedItems: string[]) => void;
   initialSelectedItems?: string[];
 }
 
@@ -74,11 +63,11 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   };
 
   const handleSave = () => {
-    const updatedChecklist: ChecklistData = {
+    const updatedChecklist: Checklist = {
       ...checklist,
       name: formData.name,
       reason: formData.reason === 'Others' ? customReason : formData.reason,
-      itemsCount: formData.selectedItems.length
+      items_count: formData.selectedItems.length
     };
     onSave(updatedChecklist, formData.selectedItems);
   };

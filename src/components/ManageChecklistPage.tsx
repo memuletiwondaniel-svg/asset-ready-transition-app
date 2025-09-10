@@ -1,25 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2 } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistSuccessPage from './ChecklistSuccessPage';
+import { useChecklists, Checklist } from '@/hooks/useChecklists';
+import { useToast } from '@/hooks/use-toast';
 
-interface ChecklistData {
-  id: string;
-  name: string;
-  reason: string;
-  itemsCount: number;
-  createdDate: string;
-  createdBy: string;
-  activePSSRCount: number;
-  category: string;
-  status: 'Active' | 'Draft' | 'Archived';
-}
+// Use the Checklist type from the hook
 
 interface ManageChecklistPageProps {
   onBack: () => void;
@@ -33,13 +25,16 @@ interface NewChecklistData {
 }
 
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => {
-  const [selectedChecklist, setSelectedChecklist] = useState<ChecklistData | null>(null);
+  const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
   const [newChecklistData, setNewChecklistData] = useState<NewChecklistData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  
+  const { toast } = useToast();
+  const { data: checklists = [], isLoading, error } = useChecklists();
 
   const handleCreateComplete = (checklistData: NewChecklistData) => {
     setNewChecklistData(checklistData);
@@ -57,71 +52,47 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
     onBack();
   };
 
-  // Mock checklist data - in a real app, this would come from the database
-  const [checklists] = useState<ChecklistData[]>([
-    {
-      id: '1',
-      name: 'Standard PSSR Checklist',
-      reason: 'General Pre-Startup Safety Review for new facilities',
-      itemsCount: 124,
-      createdDate: '2024-01-15',
-      createdBy: 'Ahmed Al-Rashid',
-      activePSSRCount: 3,
-      category: 'General',
-      status: 'Active'
-    },
-    {
-      id: '2',
-      name: 'Process Safety Checklist',
-      reason: 'Specialized checklist for process safety critical systems',
-      itemsCount: 89,
-      createdDate: '2024-02-10',
-      createdBy: 'Sarah Johnson',
-      activePSSRCount: 1,
-      category: 'Process Safety',
-      status: 'Active'
-    },
-    {
-      id: '3',
-      name: 'Emergency Systems Checklist',
-      reason: 'Verification of emergency response and safety systems',
-      itemsCount: 67,
-      createdDate: '2024-03-05',
-      createdBy: 'Mohammed Hassan',
-      activePSSRCount: 0,
-      category: 'Emergency Systems',
-      status: 'Draft'
+  // Show error toast if there's an error
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error loading checklists",
+        description: "Failed to load checklists. Please try again.",
+        variant: "destructive",
+      });
     }
-  ]);
+  }, [error, toast]);
 
-  const filteredChecklists = checklists.filter(checklist => {
-    const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || checklist.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredAndSortedChecklists = useMemo(() => {
+    let filtered = checklists.filter(checklist => {
+      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = filterCategory === 'all' || checklist.category === filterCategory;
+      return matchesSearch && matchesCategory;
+    });
 
-  const sortedChecklists = [...filteredChecklists].sort((a, b) => {
-    switch (sortBy) {
-      case 'name':
-        return a.name.localeCompare(b.name);
-      case 'date':
-        return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
-      case 'items':
-        return b.itemsCount - a.itemsCount;
-      default:
-        return 0;
-    }
-  });
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'date':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'items':
+          return b.items_count - a.items_count;
+        default:
+          return 0;
+      }
+    });
+  }, [checklists, searchQuery, filterCategory, sortBy]);
 
-  const getStatusBadge = (status: ChecklistData['status']) => {
+  const getStatusBadge = (status: Checklist['status']) => {
     switch (status) {
       case 'Active':
-        return <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">Active</Badge>;
+        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">Active</Badge>;
       case 'Draft':
-        return <Badge variant="secondary">Draft</Badge>;
+        return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100">Draft</Badge>;
       case 'Archived':
-        return <Badge variant="outline">Archived</Badge>;
+        return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100">Archived</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -253,8 +224,18 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
           </div>
         </div>
 
-        {/* Checklists Grid */}
-        {sortedChecklists.length === 0 ? (
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading checklists...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Checklists Grid */}
+            {filteredAndSortedChecklists.length === 0 ? (
           <div className="text-center py-16">
             <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">No Checklists Found</h3>
@@ -272,9 +253,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
               Create First Checklist
             </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sortedChecklists.map((checklist, index) => (
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredAndSortedChecklists.map((checklist, index) => (
               <Card
                 key={checklist.id}
                 className="group cursor-pointer hover:shadow-fluent-lg transition-all duration-300 border border-border/20 bg-card/90 backdrop-blur-sm hover:-translate-y-1 animate-fade-in-up"
@@ -294,34 +275,36 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                     {getStatusBadge(checklist.status)}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{checklist.itemsCount} items</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Activity className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{checklist.activePSSRCount} active PSSR</span>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2 border-t border-border/10">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(checklist.createdDate).toLocaleDateString()}</span>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{checklist.items_count} items</span>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <User className="h-3 w-3" />
-                        <span>{checklist.createdBy}</span>
+                      <div className="flex items-center space-x-2">
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{checklist.active_pssr_count} active PSSR</span>
                       </div>
                     </div>
-                  </div>
+                    
+                    <div className="pt-2 border-t border-border/10">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{new Date(checklist.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <User className="h-3 w-3" />
+                          <span>{checklist.created_by}</span>
+                        </div>
+                      </div>
+                    </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

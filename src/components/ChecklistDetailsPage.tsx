@@ -11,20 +11,10 @@ import { pssrChecklistData, checklistCategories, ChecklistItem } from '@/data/ps
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemForm from './EditChecklistItemForm';
 
-interface ChecklistData {
-  id: string;
-  name: string;
-  reason: string;
-  itemsCount: number;
-  createdDate: string;
-  createdBy: string;
-  activePSSRCount: number;
-  category: string;
-  status: 'Active' | 'Draft' | 'Archived';
-}
+import { Checklist } from '@/hooks/useChecklists';
 
 interface ChecklistDetailsPageProps {
-  checklist: ChecklistData;
+  checklist: Checklist;
   onBack: () => void;
 }
 
@@ -88,7 +78,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
     setShowEditChecklist(true);
   };
 
-  const handleSaveChecklist = (updatedChecklist: any, updatedSelectedItems: string[]) => {
+  const handleSaveChecklist = (updatedChecklist: Checklist, updatedSelectedItems: string[]) => {
     // Update checklist and selected items
     setSelectedItems(updatedSelectedItems);
     setShowEditChecklist(false);
@@ -217,28 +207,28 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                 <div className="flex items-center space-x-3">
                   <FileText className="h-8 w-8 text-primary" />
                   <div>
-                    <p className="text-2xl font-bold">{checklist.itemsCount}</p>
+                    <p className="text-2xl font-bold">{checklist.items_count}</p>
                     <p className="text-sm text-muted-foreground">Total Items</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Activity className="h-8 w-8 text-green-600" />
                   <div>
-                    <p className="text-2xl font-bold">{checklist.activePSSRCount}</p>
+                    <p className="text-2xl font-bold">{checklist.active_pssr_count}</p>
                     <p className="text-sm text-muted-foreground">Active PSSRs</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-8 w-8 text-blue-600" />
                   <div>
-                    <p className="text-sm font-semibold">{new Date(checklist.createdDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-semibold">{new Date(checklist.created_at).toLocaleDateString()}</p>
                     <p className="text-sm text-muted-foreground">Created Date</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <User className="h-8 w-8 text-purple-600" />
                   <div>
-                    <p className="text-sm font-semibold">{checklist.createdBy}</p>
+                    <p className="text-sm font-semibold">{checklist.created_by}</p>
                     <p className="text-sm text-muted-foreground">Created By</p>
                   </div>
                 </div>
