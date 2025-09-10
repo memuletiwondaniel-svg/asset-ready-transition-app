@@ -15,6 +15,7 @@ import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
 import ChecklistItemDetailModal from './ChecklistItemDetailModal';
+import ChecklistReviewSummaryPage from './ChecklistReviewSummaryPage';
 
 interface CreateChecklistFormProps {
   onBack: () => void;
@@ -32,6 +33,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [currentStep, setCurrentStep] = useState(1);
   const [showCreateItem, setShowCreateItem] = useState(false);
   const [showItemSuccess, setShowItemSuccess] = useState(false);
+  const [showReviewSummary, setShowReviewSummary] = useState(false);
   const [newCreatedItem, setNewCreatedItem] = useState<DBChecklistItem | null>(null);
   const [customChecklistItems, setCustomChecklistItems] = useState<DBChecklistItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -240,11 +242,23 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   };
 
   const handleComplete = () => {
+    setShowReviewSummary(true);
+  };
+
+  const handleConfirmChecklist = () => {
     const finalData = {
       ...formData,
       custom_reason: formData.reason === 'Others' ? customReason : undefined
     };
     onComplete(finalData);
+  };
+
+  const handleBackFromReview = () => {
+    setShowReviewSummary(false);
+  };
+
+  const handleCancelReview = () => {
+    setShowReviewSummary(false);
   };
 
   const getStepProgress = () => {
@@ -368,6 +382,18 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         onBack={() => setShowCreateItem(false)}
         onComplete={handleCreateNewItem}
         existingCategories={availableCategories}
+      />
+    );
+  }
+
+  // Show review summary page
+  if (showReviewSummary) {
+    return (
+      <ChecklistReviewSummaryPage
+        checklistData={formData}
+        onBack={handleBackFromReview}
+        onConfirm={handleConfirmChecklist}
+        onCancel={handleCancelReview}
       />
     );
   }
@@ -654,23 +680,23 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
                     <TabsTrigger
                       value="all"
-                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
+                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                     >
                       All
                     </TabsTrigger>
                     
                     <TabsTrigger
                       value="not_selected"
-                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
+                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                     >
                       Not Selected
                     </TabsTrigger>
 
-                    {categories.slice(0, 5).map((category) => (
+                    {categories.slice(0, 5).map((category, index) => (
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
-                        className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
+                        className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                       >
                         {category.name}
                       </TabsTrigger>
@@ -680,11 +706,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   {/* Second Row */}
                   {categories.length > 5 && (
                     <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
-                      {categories.slice(5).map((category) => (
+                      {categories.slice(5).map((category, index) => (
                         <TabsTrigger
                           key={category.id}
                           value={category.id}
-                          className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
+                          className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                         >
                           {category.name}
                         </TabsTrigger>

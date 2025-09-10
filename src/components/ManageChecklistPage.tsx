@@ -57,6 +57,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         setCreatedChecklistName(newChecklist.name);
         setShowCreateForm(false);
         setShowSuccessPage(true);
+        
+        // Mark this checklist as newly created for badge display
+        sessionStorage.setItem(`new-checklist-${newChecklist.id}`, 'true');
       },
       onError: error => {
         console.error('Failed to create checklist:', error);
@@ -126,6 +129,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
+  };
+
+  const isNewChecklist = (checklistId: string) => {
+    return sessionStorage.getItem(`new-checklist-${checklistId}`) === 'true';
+  };
+
+  const handleChecklistClick = (checklist: Checklist) => {
+    // Remove the "new" badge when clicked
+    sessionStorage.removeItem(`new-checklist-${checklist.id}`);
+    setSelectedChecklist(checklist);
   };
   if (showCreateForm) {
     return <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} />;
@@ -263,7 +276,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredAndSortedChecklists.map((checklist, index) => <Card key={checklist.id} className="group cursor-pointer hover:shadow-fluent-lg transition-all duration-300 border border-border/20 bg-card/90 backdrop-blur-sm hover:-translate-y-1 animate-fade-in-up" style={{
             animationDelay: `${index * 0.1}s`
-          }} onClick={() => setSelectedChecklist(checklist)}>
+          }} onClick={() => handleChecklistClick(checklist)}>
                     <CardHeader className="pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -275,6 +288,11 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                           </CardDescription>
                         </div>
                         <div className="flex items-center space-x-2">
+                          {isNewChecklist(checklist.id) && (
+                            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white animate-pulse shadow-lg">
+                              NEW
+                            </Badge>
+                          )}
                           {getStatusBadge(checklist.status)}
                           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10" onClick={e => {
                     e.stopPropagation();
