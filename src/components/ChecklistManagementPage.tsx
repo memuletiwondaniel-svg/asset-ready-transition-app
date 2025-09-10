@@ -140,45 +140,40 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           <div className="group relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-white/20 shadow-2xl hover:shadow-4xl transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2">
             {/* Microsoft Fluent Design Acrylic Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-white/60 to-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            
             {/* Animated mesh gradient background */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            
             {/* Microsoft Reveal Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1200 ease-out"></div>
-            
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out"></div>
             {/* Floating particles effect */}
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
               <div className="absolute top-4 right-8 w-2 h-2 bg-blue-400/40 rounded-full animate-pulse"></div>
               <div className="absolute top-16 right-16 w-1 h-1 bg-purple-400/50 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
               <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-400/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
-            
+
             {/* Category Header */}
             <AccordionTrigger className="hover:no-underline px-8 py-7 relative z-10 group-hover:bg-white/20 transition-all duration-500">
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center space-x-6">
-                  {/* Modern Drag Handle */}
-                  <div 
+                  {/* Drag Handle */}
+                  <div
                     {...listeners}
                     className="cursor-grab active:cursor-grabbing p-2 rounded-2xl hover:bg-white/80 transition-all duration-300 group-hover:bg-white/60 backdrop-blur-sm border border-white/30 group-hover:border-white/50 shadow-lg hover:shadow-xl"
                     title="Drag to reorder"
                   >
                     <GripVertical className="w-5 h-5 text-gray-400 hover:text-blue-600 transition-colors duration-300" />
                   </div>
-                  
+
                   <div className="relative">
-                    {/* Enhanced Icon with Multiple Glow Layers */}
+                    {/* Icon with glow */}
                     <div className="absolute -inset-4 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="absolute -inset-2 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-400" style={{ animationDelay: '0.1s' }}></div>
                     <div className="relative w-16 h-16 bg-gradient-to-br from-blue-100/80 to-purple-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-blue-200/60 group-hover:border-blue-300/80 group-hover:shadow-2xl transition-all duration-500 group-hover:scale-110">
                       <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative">
-                        {getCategoryIcon(category)}
-                      </div>
+                      <div className="relative">{getCategoryIcon(category)}</div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:via-purple-700 group-hover:to-blue-700 transition-all duration-500">
                       {category}
@@ -186,8 +181,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                     <p className="text-sm font-medium text-gray-600 group-hover:text-blue-700 transition-all duration-300">
                       {count} professional checklist items
                     </p>
-                    
-                    {/* Progress indicator */}
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: '0.2s' }}>
                       <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-1000 group-hover:w-full" style={{ width: '60%' }}></div>
@@ -196,18 +189,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <Badge 
-                    className="bg-gradient-to-r from-blue-50/90 to-purple-50/90 text-blue-700 border border-blue-200/60 group-hover:from-blue-100/90 group-hover:to-purple-100/90 group-hover:border-blue-300/80 group-hover:shadow-lg transition-all duration-500 backdrop-blur-sm px-4 py-2 text-sm font-medium"
-                  >
+                  <Badge className="bg-gradient-to-r from-blue-50/90 to-purple-50/90 text-blue-700 border border-blue-200/60 group-hover:from-blue-100/90 group-hover:to-purple-100/90 group-hover:border-blue-300/80 group-hover:shadow-lg transition-all duration-500 backdrop-blur-sm px-4 py-2 text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full group-hover:animate-pulse"></div>
                       <span>{count} items</span>
                     </div>
                   </Badge>
-                  
-                  {/* Enhanced Chevron with Morphing Animation */}
                   <div className="relative w-8 h-8 flex items-center justify-center">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-100/0 to-purple-100/0 group-hover:from-blue-100/80 group-hover:to-purple-100/80 rounded-xl transition-all duration-300"></div>
                     <ChevronDown className="w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-all duration-300 data-[state=open]:rotate-180 group-hover:scale-110" />
@@ -215,22 +204,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                 </div>
               </div>
             </AccordionTrigger>
-                    {count} items
-                  </Badge>
-                  {/* Custom Chevron with Animation */}
-                  <div className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors duration-300">
-                    <ChevronDown className="w-5 h-5 transition-transform duration-200 data-[state=open]:rotate-180" />
-                  </div>
-                </div>
-              </div>
-            </AccordionTrigger>
-            
-            {/* Enhanced Accordion Content */}
+
+            {/* Accordion Content */}
             <AccordionContent className="px-8 pb-8 relative z-10">
               <div className="space-y-6 animate-fade-in">
-                {/* Modern section divider */}
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent"></div>
-                
+
                 {categoryItems.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="relative">
@@ -247,24 +226,17 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                 ) : (
                   <div className="grid gap-6">
                     {categoryItems.map((item, index) => (
-                      <div 
-                        key={item.id} 
+                      <div
+                        key={item.id}
                         className="group/item relative overflow-hidden bg-white/80 backdrop-blur-sm border border-white/30 hover:border-blue-200/60 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] animate-fade-in rounded-2xl"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
-                        {/* Microsoft Fluent Card Background */}
                         <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-white/70 to-blue-50/30 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
-                        
-                        {/* Reveal effect for individual items */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/30 to-transparent translate-x-[-100%] group-hover/item:translate-x-[100%] transition-transform duration-1000"></div>
-                        
-                        {/* Enhanced Left Accent Border */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/30 to-transparent -translate-x-[100%] group-hover/item:translate-x-[100%] transition-transform duration-1000"></div>
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 via-blue-500 to-purple-600 group-hover/item:w-2 transition-all duration-500 shadow-lg"></div>
-                        
-                        {/* Item Content */}
+
                         <div className="p-6 ml-2 relative z-10">
                           <div className="space-y-4">
-                            {/* Enhanced Header */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-4">
                                 <div className="relative">
@@ -273,11 +245,11 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                     <span className="text-sm font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">{item.id}</span>
                                   </div>
                                 </div>
-                                <Badge 
-                                  variant={item.is_active ? "default" : "secondary"} 
+                                <Badge
+                                  variant={item.is_active ? 'default' : 'secondary'}
                                   className={`text-xs font-medium px-3 py-1.5 transition-all duration-300 ${
-                                    item.is_active 
-                                      ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 group-hover/item:shadow-md' 
+                                    item.is_active
+                                      ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 group-hover/item:shadow-md'
                                       : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 border-gray-200'
                                   }`}
                                 >
@@ -298,14 +270,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                 <Edit3 className="h-4 w-4" />
                               </Button>
                             </div>
-                            
-                            {/* Enhanced Description */}
+
                             <div className="space-y-3">
                               <p className="text-sm font-medium text-gray-800 leading-relaxed group-hover/item:text-blue-900 transition-colors duration-300 line-clamp-2">
                                 {item.description}
                               </p>
-                              
-                              {/* Enhanced Metadata Grid */}
+
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
                                 {item.topic && (
                                   <div className="flex items-start space-x-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50 group-hover/item:bg-blue-100/50 group-hover/item:border-blue-200/70 transition-all duration-300">
@@ -318,7 +288,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                     </div>
                                   </div>
                                 )}
-                                
+
                                 {item.supporting_evidence && (
                                   <div className="flex items-start space-x-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100/50 group-hover/item:bg-purple-100/50 group-hover/item:border-purple-200/70 transition-all duration-300">
                                     <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center shadow-sm">
@@ -330,7 +300,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                     </div>
                                   </div>
                                 )}
-                                
+
                                 {item.responsible_party && (
                                   <div className="flex items-start space-x-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50 group-hover/item:bg-orange-100/50 group-hover/item:border-orange-200/70 transition-all duration-300">
                                     <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center shadow-sm">
@@ -342,7 +312,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                     </div>
                                   </div>
                                 )}
-                                
+
                                 {item.approving_authority && (
                                   <div className="flex items-start space-x-3 p-3 bg-green-50/50 rounded-xl border border-green-100/50 group-hover/item:bg-green-100/50 group-hover/item:border-green-200/70 transition-all duration-300">
                                     <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center shadow-sm">
@@ -356,8 +326,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                 )}
                               </div>
                             </div>
-                            
-                            {/* Enhanced Footer with creation date */}
+
                             {item.created_at && (
                               <div className="pt-4 border-t border-gray-100/60 group-hover/item:border-blue-200/40 transition-colors duration-300">
                                 <div className="flex items-center justify-between">
@@ -366,10 +335,10 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                       <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                                     </div>
                                     <span className="text-xs text-gray-500 font-medium">
-                                      Created {new Date(item.created_at).toLocaleDateString('en-US', { 
-                                        year: 'numeric', 
-                                        month: 'short', 
-                                        day: 'numeric' 
+                                      Created {new Date(item.created_at).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
                                       })}
                                     </span>
                                   </div>
@@ -381,12 +350,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                 </div>
                               </div>
                             )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
                           </div>
                         </div>
                       </div>
