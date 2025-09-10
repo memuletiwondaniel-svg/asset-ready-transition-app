@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shi
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories } from '@/hooks/useChecklistItems';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
+import ChecklistProgressSteps from './ChecklistProgressSteps';
 
 interface CreateChecklistFormProps {
   onBack: () => void;
@@ -267,6 +268,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         </div>
 
 
+        {/* Progress Steps */}
+        <div className="max-w-4xl mx-auto px-8">
+          <ChecklistProgressSteps currentStep={currentStep} />
+        </div>
+
         {/* Form Content */}
         <div className="max-w-4xl mx-auto px-8 pb-8">
           <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
@@ -349,6 +355,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+      {/* Progress Steps */}
+      <div className="max-w-7xl mx-auto px-8 pt-6">
+        <ChecklistProgressSteps currentStep={currentStep} />
+      </div>
+
       {/* Navigation Bar */}
       <div className="fluent-navigation sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-8 py-6">
