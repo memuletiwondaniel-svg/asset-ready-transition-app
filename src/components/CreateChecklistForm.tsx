@@ -16,6 +16,7 @@ import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
 import ChecklistItemDetailModal from './ChecklistItemDetailModal';
 import ChecklistReviewSummaryPage from './ChecklistReviewSummaryPage';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateChecklistFormProps {
   onBack: () => void;
@@ -39,6 +40,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | null>(null);
   const { mutate: updateChecklistItem } = useUpdateChecklistItem();
+  const { toast } = useToast();
   const [showDetailModal, setShowDetailModal] = useState(false);
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
@@ -188,22 +190,35 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
       setCustomChecklistItems(prev =>
         prev.map(item => item.id === updatedItem.id ? updatedItem : item)
       );
+      setSelectedDetailItem(updatedItem);
+      setShowDetailModal(false);
     } else {
       // Persist changes for database-backed items
-      updateChecklistItem({
-        itemId: updatedItem.id,
-        updateData: {
-          description: updatedItem.description,
-          category: updatedItem.category,
-          topic: updatedItem.topic || undefined,
-          supporting_evidence: updatedItem.supporting_evidence || undefined,
-          responsible_party: updatedItem.responsible_party || undefined,
-          approving_authority: updatedItem.approving_authority || undefined,
+      updateChecklistItem(
+        {
+          itemId: updatedItem.id,
+          updateData: {
+            description: updatedItem.description,
+            category: updatedItem.category,
+            topic: updatedItem.topic || undefined,
+            supporting_evidence: updatedItem.supporting_evidence || undefined,
+            responsible_party: updatedItem.responsible_party || undefined,
+            approving_authority: updatedItem.approving_authority || undefined,
+          }
+        },
+        {
+          onSuccess: (serverItem) => {
+            setSelectedDetailItem(serverItem as DBChecklistItem);
+            toast({ title: 'Saved', description: 'Checklist item updated successfully.' });
+            setShowDetailModal(false);
+          },
+          onError: (error) => {
+            console.error('Failed to update checklist item:', error);
+            toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+          }
         }
-      });
+      );
     }
-    // Keep local selection in sync
-    setSelectedDetailItem(updatedItem);
   };
 
   const handleItemDelete = (itemId: string) => {
