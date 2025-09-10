@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Upload, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Upload, Download, AlertCircle, CheckCircle, XCircle, ChevronDown, ChevronRight, FileText, Users, Shield, Cog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useChecklistItems, useUploadChecklist, useChecklistUploads } from '@/hooks/useChecklistItems';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ interface ChecklistManagementPageProps {
 const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBack }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
   const { data: uploads, isLoading: uploadsLoading } = useChecklistUploads();
@@ -108,6 +110,25 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'General':
+        return <FileText className="h-4 w-4" />;
+      case 'Technical Integrity':
+        return <Cog className="h-4 w-4" />;
+      case 'Start-Up Readiness':
+        return <Shield className="h-4 w-4" />;
+      case 'Health & Safety':
+        return <Shield className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  const getItemsByCategory = (category: string) => {
+    return checklistItems?.filter(item => item.category === category) || [];
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -229,16 +250,81 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                   </div>
 
                   {categoryStats && (
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Items per Category</h3>
-                      <div className="grid gap-2">
-                        {Object.entries(categoryStats).map(([category, count]) => (
-                          <div key={category} className="flex justify-between items-center p-2 bg-muted rounded">
-                            <span className="text-sm">{category}</span>
-                            <Badge variant="secondary">{count}</Badge>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Categories & Items</h3>
+                      <Accordion type="multiple" className="w-full space-y-2">
+                        {Object.entries(categoryStats).map(([category, count]) => {
+                          const categoryItems = getItemsByCategory(category);
+                          return (
+                            <AccordionItem key={category} value={category} className="border rounded-lg">
+                              <AccordionTrigger className="hover:no-underline px-4 py-3">
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center space-x-3">
+                                    {getCategoryIcon(category)}
+                                    <span className="font-medium">{category}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {count} items
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-4 pb-4">
+                                <div className="space-y-3">
+                                  {categoryItems.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">No items in this category</p>
+                                  ) : (
+                                    categoryItems.map((item) => (
+                                      <Card key={item.id} className="p-4 border-l-4 border-l-blue-500">
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <h4 className="font-medium text-sm">{item.id}</h4>
+                                            <Badge variant="outline" className="text-xs">
+                                              {item.is_active ? 'Active' : 'Inactive'}
+                                            </Badge>
+                                          </div>
+                                          <p className="text-sm text-gray-700 leading-relaxed">
+                                            {item.description}
+                                          </p>
+                                          {item.topic && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <strong>Topic:</strong> {item.topic}
+                                            </div>
+                                          )}
+                                          {item.supporting_evidence && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <strong>Supporting Evidence:</strong> {item.supporting_evidence}
+                                            </div>
+                                          )}
+                                          {item.responsible_party && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <strong>Responsible Party:</strong> {item.responsible_party}
+                                            </div>
+                                          )}
+                                          {item.approving_authority && (
+                                            <div className="flex items-center space-x-2 text-xs">
+                                              <Users className="h-3 w-3 text-blue-600" />
+                                              <span className="text-muted-foreground">
+                                                <strong>Approvers:</strong> {item.approving_authority}
+                                              </span>
+                                            </div>
+                                          )}
+                                          {item.created_at && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <strong>Created:</strong> {new Date(item.created_at).toLocaleDateString()}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </Card>
+                                    ))
+                                  )}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          );
+                        })}
+                      </Accordion>
                     </div>
                   )}
                 </div>
