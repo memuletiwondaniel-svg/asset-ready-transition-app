@@ -572,9 +572,10 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       {/* Content Layer with Fluent Acrylic */}
       <div className="relative z-10 p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Search Section */}
+          {/* Search Section with Categories */}
           <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md mb-6">
-            <CardContent className="p-6">
+            <CardContent className="p-6 space-y-6">
+              {/* Search and Create Item Row */}
               <div className="flex items-center justify-between space-x-6">
                 <div className="flex items-center space-x-6 flex-1">
                   <div className="relative flex-1 max-w-md">
@@ -602,131 +603,61 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   {formData.selected_items.length} items selected
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Category Filters - Two Rows Layout */}
-          <div className="mb-4">
-            <div className="space-y-2">
-              {/* First Row */}
-              <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-                <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full">
-                  <TabsTrigger
-                    value="all"
-                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative z-10 flex items-center justify-center h-full">
-                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">All</span>
-                    </div>
-                  </TabsTrigger>
-                  
-                  <TabsTrigger
-                    value="not_selected"
-                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative z-10 flex items-center justify-center h-full">
-                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">Not Selected</span>
-                    </div>
-                  </TabsTrigger>
+              {/* Category Filters - Compact Two Rows */}
+              <div className="space-y-3">
+                <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+                  {/* First Row */}
+                  <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
+                    <TabsTrigger
+                      value="all"
+                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
+                    >
+                      All
+                    </TabsTrigger>
+                    
+                    <TabsTrigger
+                      value="not_selected"
+                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
+                    >
+                      Not Selected
+                    </TabsTrigger>
 
-                  {categories.slice(0, 5).map((category) => {
-                    return (
+                    {categories.slice(0, 5).map((category) => (
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
-                        className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
+                        className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative z-10 flex items-center justify-center h-full">
-                          <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">{category.name}</span>
-                        </div>
+                        {category.name}
                       </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-                
-                {/* Second Row */}
-                {categories.length > 5 && (
-                  <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full">
-                    {categories.slice(5).map((category, index) => {
-                      return (
+                    ))}
+                  </TabsList>
+                  
+                  {/* Second Row */}
+                  {categories.length > 5 && (
+                    <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
+                      {categories.slice(5).map((category) => (
                         <TabsTrigger
                           key={category.id}
                           value={category.id}
-                          className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
+                          className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/40 transition-all duration-200 rounded-lg"
                         >
-                          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          <div className="relative z-10 flex items-center justify-center h-full">
-                            <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">{category.name}</span>
-                          </div>
+                          {category.name}
                         </TabsTrigger>
-                      );
-                    })}
-                    {/* Fill remaining slots with empty space */}
-                    {Array.from({ length: 7 - categories.slice(5).length }).map((_, index) => (
-                      <div key={`empty-${index}`} className="h-10"></div>
-                    ))}
-                  </TabsList>
-                )}
-              </Tabs>
-            </div>
-          </div>
-
+                      ))}
+                      {/* Fill remaining slots with empty space */}
+                      {Array.from({ length: 7 - categories.slice(5).length }).map((_, index) => (
+                        <div key={`empty-${index}`} className="h-8"></div>
+                      ))}
+                    </TabsList>
+                  )}
+                </Tabs>
+              </div>
+            </CardContent>
+          </Card>
           {/* Checklist Items */}
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-
-            {/* All Categories Tab Content */}
-            <TabsContent value="all" className="mt-0">
-              <div className="space-y-6">
-                {categories.map((category) => {
-                  const filteredCategoryItems = filteredItems(category.items);
-                  if (filteredCategoryItems.length === 0) return null;
-
-                  const stats = getCategoryStats(category.items);
-
-                  return (
-                    <Card key={category.id} className="fluent-glassmorphism border-border/30 backdrop-blur-md">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <CardTitle className="text-xl font-bold">{category.name}</CardTitle>
-                            <CardDescription className="text-sm">
-                              {stats.selected} of {stats.total} items selected
-                              {stats.selected > 0 && ` (${stats.percentage}%)`}
-                            </CardDescription>
-                          </div>
-                        </div>
-                          {stats.selected > 0 && (
-                            <div className="flex items-center space-x-2">
-                              <Progress value={stats.percentage} className="w-20 h-2" />
-                              <Badge variant="secondary" className="text-xs">
-                                {stats.percentage}%
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ScrollArea className={category.name === "General" ? "h-64" : "h-96"}>
-                          <div className="grid gap-3">
-                            {filteredCategoryItems.map((item) => (
-                              <ChecklistItemCard key={item.id} item={item} />
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </TabsContent>
 
             {/* Not Selected Tab Content */}
             <TabsContent value="not_selected" className="mt-0">
