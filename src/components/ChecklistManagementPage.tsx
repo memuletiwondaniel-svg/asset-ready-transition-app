@@ -250,77 +250,175 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                   </div>
 
                   {categoryStats && (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Categories & Items</h3>
-                      <Accordion type="multiple" className="w-full space-y-2">
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold text-gray-900">Categories & Items</h3>
+                      <Accordion type="multiple" className="w-full space-y-4">
                         {Object.entries(categoryStats).map(([category, count]) => {
                           const categoryItems = getItemsByCategory(category);
                           return (
-                            <AccordionItem key={category} value={category} className="border rounded-lg">
-                              <AccordionTrigger className="hover:no-underline px-4 py-3">
-                                <div className="flex items-center justify-between w-full">
-                                  <div className="flex items-center space-x-3">
-                                    {getCategoryIcon(category)}
-                                    <span className="font-medium">{category}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {count} items
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="px-4 pb-4">
-                                <div className="space-y-3">
-                                  {categoryItems.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No items in this category</p>
-                                  ) : (
-                                    categoryItems.map((item) => (
-                                      <Card key={item.id} className="p-4 border-l-4 border-l-blue-500">
-                                        <div className="space-y-2">
-                                          <div className="flex items-center justify-between">
-                                            <h4 className="font-medium text-sm">{item.id}</h4>
-                                            <Badge variant="outline" className="text-xs">
-                                              {item.is_active ? 'Active' : 'Inactive'}
-                                            </Badge>
-                                          </div>
-                                          <p className="text-sm text-gray-700 leading-relaxed">
-                                            {item.description}
-                                          </p>
-                                          {item.topic && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <strong>Topic:</strong> {item.topic}
-                                            </div>
-                                          )}
-                                          {item.supporting_evidence && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <strong>Supporting Evidence:</strong> {item.supporting_evidence}
-                                            </div>
-                                          )}
-                                          {item.responsible_party && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <strong>Responsible Party:</strong> {item.responsible_party}
-                                            </div>
-                                          )}
-                                          {item.approving_authority && (
-                                            <div className="flex items-center space-x-2 text-xs">
-                                              <Users className="h-3 w-3 text-blue-600" />
-                                              <span className="text-muted-foreground">
-                                                <strong>Approvers:</strong> {item.approving_authority}
-                                              </span>
-                                            </div>
-                                          )}
-                                          {item.created_at && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <strong>Created:</strong> {new Date(item.created_at).toLocaleDateString()}
-                                            </div>
-                                          )}
+                            <AccordionItem key={category} value={category} className="border-0">
+                              <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white via-white to-slate-50/50 border border-gray-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
+                                {/* Fluent Design Acrylic Background */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                
+                                {/* Reveal Effect on Hover */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                
+                                {/* Category Header */}
+                                <AccordionTrigger className="hover:no-underline px-6 py-5 relative z-10 group-hover:bg-white/30 transition-all duration-300">
+                                  <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center space-x-4">
+                                      <div className="relative">
+                                        {/* Icon Background with Glow Effect */}
+                                        <div className="absolute -inset-2 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="relative w-12 h-12 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl flex items-center justify-center border border-blue-200/50 group-hover:border-blue-300/70 group-hover:shadow-lg transition-all duration-300">
+                                          {getCategoryIcon(category)}
                                         </div>
-                                      </Card>
-                                    ))
-                                  )}
-                                </div>
-                              </AccordionContent>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <h4 className="font-semibold text-gray-900 group-hover:text-blue-900 transition-colors duration-300">
+                                          {category}
+                                        </h4>
+                                        <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors duration-300">
+                                          {count} checklist items
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="bg-blue-50/80 text-blue-700 border border-blue-200/50 group-hover:bg-blue-100/80 group-hover:border-blue-300/60 transition-all duration-300"
+                                      >
+                                        {count} items
+                                      </Badge>
+                                      {/* Custom Chevron with Animation */}
+                                      <div className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors duration-300">
+                                        <ChevronDown className="w-5 h-5 transition-transform duration-200 data-[state=open]:rotate-180" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </AccordionTrigger>
+                                
+                                {/* Accordion Content */}
+                                <AccordionContent className="px-6 pb-6 relative z-10">
+                                  <div className="space-y-4 animate-fade-in">
+                                    {categoryItems.length === 0 ? (
+                                      <div className="text-center py-8">
+                                        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                          <FileText className="w-8 h-8 text-gray-400" />
+                                        </div>
+                                        <p className="text-sm text-gray-500">No items in this category</p>
+                                      </div>
+                                    ) : (
+                                      <div className="grid gap-4">
+                                        {categoryItems.map((item, index) => (
+                                          <Card 
+                                            key={item.id} 
+                                            className="group/item relative overflow-hidden bg-gradient-to-br from-white via-slate-50/30 to-white border border-gray-100 hover:border-blue-200/60 hover:shadow-md transition-all duration-300 hover:scale-[1.01] animate-fade-in"
+                                            style={{ animationDelay: `${index * 50}ms` }}
+                                          >
+                                            {/* Left Accent Border */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 group-hover/item:w-2 transition-all duration-300"></div>
+                                            
+                                            {/* Item Content */}
+                                            <div className="p-5 ml-2 relative">
+                                              {/* Hover Reveal Effect */}
+                                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/30 to-transparent translate-x-[-100%] group-hover/item:translate-x-[100%] transition-transform duration-700"></div>
+                                              
+                                              <div className="space-y-3 relative z-10">
+                                                {/* Header */}
+                                                <div className="flex items-center justify-between">
+                                                  <div className="flex items-center space-x-3">
+                                                    <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center border border-blue-200/50">
+                                                      <span className="text-xs font-bold text-blue-700">{item.id}</span>
+                                                    </div>
+                                                    <Badge 
+                                                      variant={item.is_active ? "default" : "secondary"} 
+                                                      className={`text-xs ${item.is_active ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                                                    >
+                                                      {item.is_active ? 'Active' : 'Inactive'}
+                                                    </Badge>
+                                                  </div>
+                                                </div>
+                                                
+                                                {/* Description */}
+                                                <p className="text-sm text-gray-700 leading-relaxed group-hover/item:text-gray-800 transition-colors duration-300">
+                                                  {item.description}
+                                                </p>
+                                                
+                                                {/* Metadata Grid */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                                  {item.topic && (
+                                                    <div className="flex items-start space-x-2">
+                                                      <div className="w-4 h-4 mt-0.5 bg-blue-100 rounded flex items-center justify-center">
+                                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                      </div>
+                                                      <div>
+                                                        <span className="text-xs font-medium text-gray-600">Topic</span>
+                                                        <p className="text-xs text-gray-700">{item.topic}</p>
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                  
+                                                  {item.supporting_evidence && (
+                                                    <div className="flex items-start space-x-2">
+                                                      <div className="w-4 h-4 mt-0.5 bg-purple-100 rounded flex items-center justify-center">
+                                                        <FileText className="w-2.5 h-2.5 text-purple-600" />
+                                                      </div>
+                                                      <div>
+                                                        <span className="text-xs font-medium text-gray-600">Evidence</span>
+                                                        <p className="text-xs text-gray-700">{item.supporting_evidence}</p>
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                  
+                                                  {item.responsible_party && (
+                                                    <div className="flex items-start space-x-2">
+                                                      <div className="w-4 h-4 mt-0.5 bg-orange-100 rounded flex items-center justify-center">
+                                                        <Users className="w-2.5 h-2.5 text-orange-600" />
+                                                      </div>
+                                                      <div>
+                                                        <span className="text-xs font-medium text-gray-600">Responsible</span>
+                                                        <p className="text-xs text-gray-700">{item.responsible_party}</p>
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                  
+                                                  {item.approving_authority && (
+                                                    <div className="flex items-start space-x-2">
+                                                      <div className="w-4 h-4 mt-0.5 bg-green-100 rounded flex items-center justify-center">
+                                                        <CheckCircle className="w-2.5 h-2.5 text-green-600" />
+                                                      </div>
+                                                      <div>
+                                                        <span className="text-xs font-medium text-gray-600">Approvers</span>
+                                                        <p className="text-xs text-gray-700">{item.approving_authority}</p>
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                
+                                                {/* Footer */}
+                                                {item.created_at && (
+                                                  <div className="pt-2 border-t border-gray-100">
+                                                    <div className="flex items-center space-x-2">
+                                                      <div className="w-3 h-3 bg-gray-100 rounded-full flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                                                      </div>
+                                                      <span className="text-xs text-gray-500">
+                                                        Created {new Date(item.created_at).toLocaleDateString()}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </Card>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </AccordionContent>
+                              </div>
                             </AccordionItem>
                           );
                         })}
