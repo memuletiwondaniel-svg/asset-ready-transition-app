@@ -19,12 +19,12 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
             <div className="flex items-center">
                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 aspect-square ${
                  currentStep >= step.number 
-                   ? 'bg-gradient-to-br from-kent-orange to-kent-orange/80 text-kent-orange-foreground shadow-lg ring-4 ring-kent-orange/30 shadow-kent-orange/30' 
-                   : 'bg-muted text-muted-foreground border-4 border-border shadow-md'
+                   ? 'bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 text-white shadow-xl ring-4 ring-purple-500/30 shadow-purple-500/40' 
+                   : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400 border-2 border-gray-300/50 shadow-sm'
                }`}>
                 <span className="font-semibold text-sm">{step.number}</span>
                  {currentStep >= step.number && (
-                   <div className="absolute inset-0 rounded-full bg-kent-orange/20 animate-pulse"></div>
+                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-400/30 to-cyan-400/30 animate-pulse"></div>
                  )}
               </div>
               <div className="ml-4 text-left">
@@ -42,10 +42,10 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
             </div>
             
             {index < steps.length - 1 && (
-               <div className={`flex-1 h-0.5 mx-8 rounded-full transition-all duration-500 min-w-[120px] ${
+               <div className={`flex-1 h-1 mx-8 rounded-full transition-all duration-500 min-w-[120px] ${
                  currentStep > step.number 
-                   ? 'bg-gradient-to-r from-kent-orange to-kent-orange/80' 
-                   : 'bg-border'
+                   ? 'bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 shadow-sm' 
+                   : 'bg-gradient-to-r from-gray-200 to-gray-300'
                }`}></div>
             )}
           </React.Fragment>
