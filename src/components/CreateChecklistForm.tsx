@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
-import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories } from '@/hooks/useChecklistItems';
+import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
@@ -37,7 +37,8 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [newCreatedItem, setNewCreatedItem] = useState<DBChecklistItem | null>(null);
   const [customChecklistItems, setCustomChecklistItems] = useState<DBChecklistItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | null>(null);
+const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | null>(null);
+  const { mutate: updateChecklistItem } = useUpdateChecklistItem();
   const [showDetailModal, setShowDetailModal] = useState(false);
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
@@ -181,14 +182,27 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     setSelectedDetailItem(null);
   };
 
-  const handleItemSave = (updatedItem: DBChecklistItem) => {
+const handleItemSave = (updatedItem: DBChecklistItem) => {
     // Update the item in customChecklistItems if it's a custom item
     if (updatedItem.id.startsWith('CUST-')) {
       setCustomChecklistItems(prev =>
         prev.map(item => item.id === updatedItem.id ? updatedItem : item)
       );
+    } else {
+      // Persist changes for database-backed items
+      updateChecklistItem({
+        itemId: updatedItem.id,
+        updateData: {
+          description: updatedItem.description,
+          category: updatedItem.category,
+          topic: updatedItem.topic || undefined,
+          supporting_evidence: updatedItem.supporting_evidence || undefined,
+          responsible_party: updatedItem.responsible_party || undefined,
+          approving_authority: updatedItem.approving_authority || undefined,
+        }
+      });
     }
-    // Note: For database items, you would typically make an API call here
+    // Keep local selection in sync
     setSelectedDetailItem(updatedItem);
   };
 
