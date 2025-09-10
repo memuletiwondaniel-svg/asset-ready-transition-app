@@ -191,43 +191,100 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           <div className="space-y-3">
             <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <div className="space-y-2">
-              <Textarea 
-                id="scope"
-                value={formData.scope}
-                onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
-                onPaste={async (e) => {
-                  const items = e.clipboardData?.items;
-                  if (!items) return;
-                  
-                  for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    if (item.type.startsWith('image/')) {
-                      e.preventDefault();
-                      const file = item.getAsFile();
-                      if (file) {
-                        // Convert image to base64 and append to scope text
+              <div className="relative">
+                <Textarea 
+                  id="scope"
+                  value={formData.scope}
+                  onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
+                  onPaste={async (e) => {
+                    const items = e.clipboardData?.items;
+                    if (!items) return;
+                    
+                    for (let i = 0; i < items.length; i++) {
+                      const item = items[i];
+                      if (item.type.startsWith('image/')) {
+                        e.preventDefault();
+                        const file = item.getAsFile();
+                        if (file) {
+                          try {
+                            // Show temporary loading indicator
+                            const currentCursor = e.currentTarget.selectionStart;
+                            const beforeCursor = formData.scope.substring(0, currentCursor);
+                            const afterCursor = formData.scope.substring(currentCursor);
+                            
+                            // Temporarily show "Processing image..." text
+                            setFormData(prev => ({
+                              ...prev, 
+                              scope: beforeCursor + "[Processing image...]" + afterCursor
+                            }));
+                            
+                            // Convert image to base64
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const base64 = event.target?.result as string;
+                              const timestamp = new Date().toLocaleTimeString();
+                              const imageMarkdown = `![Pasted Image ${timestamp}](${base64})`;
+                              
+                              // Replace the processing text with the actual image
+                              setFormData(prev => ({
+                                ...prev, 
+                                scope: beforeCursor + imageMarkdown + afterCursor
+                              }));
+                            };
+                            reader.onerror = () => {
+                              // Remove processing text on error
+                              setFormData(prev => ({
+                                ...prev, 
+                                scope: beforeCursor + afterCursor
+                              }));
+                              alert('Failed to process image. Please try again.');
+                            };
+                            reader.readAsDataURL(file);
+                          } catch (error) {
+                            console.error('Error processing pasted image:', error);
+                            alert('Error processing image. Please try again.');
+                          }
+                        }
+                        break;
+                      }
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const files = Array.from(e.dataTransfer.files);
+                    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+                    
+                    if (imageFiles.length > 0) {
+                      imageFiles.forEach(file => {
                         const reader = new FileReader();
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string;
-                          const imageMarkdown = `\n\n![Pasted Image](${base64})\n\n`;
+                          const timestamp = new Date().toLocaleTimeString();
+                          const imageMarkdown = `\n\n![Dropped Image ${timestamp}](${base64})\n\n`;
+                          
                           setFormData(prev => ({
                             ...prev, 
                             scope: prev.scope + imageMarkdown
                           }));
                         };
                         reader.readAsDataURL(file);
-                      }
-                      break;
+                      });
                     }
-                  }
-                }}
-                placeholder="Describe the scope of the PSSR. You can paste images here using Ctrl+V..."
-                rows={6}
-                className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none"
-              />
-              <p className="text-xs text-gray-500">
-                Tip: You can paste images directly into the description box using Ctrl+V
-              </p>
+                  }}
+                  placeholder="Describe the scope of the PSSR. You can paste images here using Ctrl+V or drag and drop images..."
+                  rows={6}
+                  className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>💡 Pro tip: Paste images with Ctrl+V or drag and drop image files directly into the text area</span>
+              </div>
             </div>
           </div>
 
