@@ -85,7 +85,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   const companies = [
     { value: 'BGC', label: 'BGC', logo: '/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png' },
-    { value: 'Kent', label: 'Kent' },
+    { value: 'Kent', label: 'Kent', logo: '/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png' },
     { value: 'Others', label: 'Others' }
   ];
 

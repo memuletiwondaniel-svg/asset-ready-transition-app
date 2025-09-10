@@ -368,7 +368,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           Basrah Gas Company (BGC)
                         </div>
                       </SelectItem>
-                      <SelectItem value="KENT">Kent Engineering</SelectItem>
+                      <SelectItem value="KENT">
+                        <div className="flex items-center gap-2">
+                          <img src="/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" alt="KENT" className="w-4 h-4" />
+                          Kent Engineering
+                        </div>
+                      </SelectItem>
                       <SelectItem value="CONTRACTOR">Contractor</SelectItem>
                       <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
