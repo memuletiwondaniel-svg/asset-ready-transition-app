@@ -51,37 +51,51 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
     'Operations'
   ];
 
-  // Create options for dropdowns
+  // Create options for dropdowns with enhanced user data
   const responsiblePartyOptions: ComboboxOption[] = [
-    // Default options
-    { value: 'Area Engineer', label: 'Area Engineer' },
-    { value: 'Control System Engineer', label: 'Control System Engineer' },
-    { value: 'Electrical Engineer', label: 'Electrical Engineer' },
-    { value: 'Instrument Engineer', label: 'Instrument Engineer' },
-    { value: 'Mechanical Engineer', label: 'Mechanical Engineer' },
-    { value: 'Process Engineer', label: 'Process Engineer' },
-    { value: 'Safety Engineer', label: 'Safety Engineer' },
-    // User options
-    ...users.map(user => ({
-      value: `${user.firstName} ${user.lastName}`,
-      label: `${user.firstName} ${user.lastName} (${user.role})`
-    }))
+    // Default engineering roles
+    { value: 'Area Engineer', label: 'Area Engineer (Default Role)' },
+    { value: 'Control System Engineer', label: 'Control System Engineer (Default Role)' },
+    { value: 'Electrical Engineer', label: 'Electrical Engineer (Default Role)' },
+    { value: 'Instrument Engineer', label: 'Instrument Engineer (Default Role)' },
+    { value: 'Mechanical Engineer', label: 'Mechanical Engineer (Default Role)' },
+    { value: 'Process Engineer', label: 'Process Engineer (Default Role)' },
+    { value: 'Safety Engineer', label: 'Safety Engineer (Default Role)' },
+    { value: 'Commissioning Engineer', label: 'Commissioning Engineer (Default Role)' },
+    // Active users from the microservice
+    ...users
+      .filter(user => user.status === 'active')
+      .map(user => ({
+        value: `${user.firstName} ${user.lastName}`,
+        label: `${user.firstName} ${user.lastName} - ${user.role} (${user.company})`
+      }))
   ];
 
   const approverOptions: ComboboxOption[] = [
-    // Default options
-    { value: 'Area Authority', label: 'Area Authority' },
-    { value: 'Control System Authority', label: 'Control System Authority' },
-    { value: 'Electrical Authority', label: 'Electrical Authority' },
-    { value: 'Instrument Authority', label: 'Instrument Authority' },
-    { value: 'Mechanical Authority', label: 'Mechanical Authority' },
-    { value: 'Process Authority', label: 'Process Authority' },
-    { value: 'Safety Authority', label: 'Safety Authority' },
-    // User options
-    ...users.map(user => ({
-      value: `${user.firstName} ${user.lastName}`,
-      label: `${user.firstName} ${user.lastName} (${user.role})`
-    }))
+    // Default authority roles
+    { value: 'Area Authority', label: 'Area Authority (Default Role)' },
+    { value: 'Control System Authority', label: 'Control System Authority (Default Role)' },
+    { value: 'Electrical Authority', label: 'Electrical Authority (Default Role)' },
+    { value: 'Instrument Authority', label: 'Instrument Authority (Default Role)' },
+    { value: 'Mechanical Authority', label: 'Mechanical Authority (Default Role)' },
+    { value: 'Process Authority', label: 'Process Authority (Default Role)' },
+    { value: 'Safety Authority', label: 'Safety Authority (Default Role)' },
+    { value: 'Operations Authority', label: 'Operations Authority (Default Role)' },
+    { value: 'Plant Director', label: 'Plant Director (Default Role)' },
+    { value: 'Technical Authority (TA2)', label: 'Technical Authority (TA2) (Default Role)' },
+    // Active users from the microservice with authority privileges
+    ...users
+      .filter(user => user.status === 'active' && (
+        user.privileges.includes('Edit PSSR Checklist item Default approvers and PSSR Approvers') ||
+        user.role.toLowerCase().includes('director') ||
+        user.role.toLowerCase().includes('authority') ||
+        user.role.toLowerCase().includes('manager') ||
+        user.role.toLowerCase().includes('lead')
+      ))
+      .map(user => ({
+        value: `${user.firstName} ${user.lastName}`,
+        label: `${user.firstName} ${user.lastName} - ${user.role} (${user.company})`
+      }))
   ];
 
   // Initialize form data when item changes
@@ -290,16 +304,27 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   </div>
                   Responsible Party
                 </Label>
-                <div className="relative">
-                  <Combobox
-                    options={responsiblePartyOptions}
-                    value={selectedResponsibleParty}
-                    onValueChange={setSelectedResponsibleParty}
-                    placeholder="Select responsible party..."
-                    searchPlaceholder="Search responsible parties..."
-                    className="h-14 text-lg border-2 border-border/30 bg-card/40 backdrop-blur-sm"
-                  />
-                  <div className="absolute inset-0 rounded-md bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none"></div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Select from default engineering roles or choose an active user from the system
+                  </p>
+                  <div className="relative">
+                    <Combobox
+                      options={responsiblePartyOptions}
+                      value={selectedResponsibleParty}
+                      onValueChange={setSelectedResponsibleParty}
+                      placeholder="Search and select responsible party..."
+                      searchPlaceholder="Type to search roles or users..."
+                      className="h-14 text-lg border-2 border-border/30 bg-card/40 backdrop-blur-sm"
+                    />
+                    <div className="absolute inset-0 rounded-md bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none"></div>
+                  </div>
+                  {selectedResponsibleParty && (
+                    <div className="mt-3 p-3 bg-green-50/50 border border-green-200/50 rounded-lg">
+                      <p className="text-sm font-medium text-green-800">Selected:</p>
+                      <p className="text-sm text-green-700">{selectedResponsibleParty}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -309,28 +334,39 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   <div className="p-3 bg-purple-100/50 rounded-lg backdrop-blur-sm shadow-md">
                     <Shield className="h-6 w-6 text-purple-600" />
                   </div>
-                  Approving Authority
+                  Approving Authority (Multiple Selection)
                 </Label>
-                <div className="relative">
-                  <MultiSelectCombobox
-                    options={approverOptions}
-                    values={selectedApprovers}
-                    onValuesChange={setSelectedApprovers}
-                    placeholder="Select approving authorities..."
-                    searchPlaceholder="Search approvers..."
-                    className="h-14 text-lg border-2 border-border/30 bg-card/40 backdrop-blur-sm"
-                  />
-                  <div className="absolute inset-0 rounded-md bg-gradient-to-br from-purple-500/5 to-transparent pointer-events-none"></div>
-                </div>
-                {selectedApprovers.length > 0 && (
-                  <div className="flex flex-wrap gap-3 mt-4">
-                    {selectedApprovers.map((approver) => (
-                      <Badge key={approver} variant="secondary" className="text-sm px-3 py-2 bg-secondary/80 backdrop-blur-sm shadow-md">
-                        {approver}
-                      </Badge>
-                    ))}
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Select from default authority roles or choose active users with approval privileges
+                  </p>
+                  <div className="relative">
+                    <MultiSelectCombobox
+                      options={approverOptions}
+                      values={selectedApprovers}
+                      onValuesChange={setSelectedApprovers}
+                      placeholder="Search and select approving authorities..."
+                      searchPlaceholder="Type to search authorities or users..."
+                      className="h-14 text-lg border-2 border-border/30 bg-card/40 backdrop-blur-sm"
+                    />
+                    <div className="absolute inset-0 rounded-md bg-gradient-to-br from-purple-500/5 to-transparent pointer-events-none"></div>
                   </div>
-                )}
+                  {selectedApprovers.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Selected Approvers:</p>
+                      <div className="flex flex-wrap gap-3">
+                        {selectedApprovers.map((approver, index) => (
+                          <Badge key={index} variant="secondary" className="text-sm px-3 py-2 bg-purple-100/80 text-purple-800 border border-purple-200/50 backdrop-blur-sm shadow-md">
+                            {approver}
+                          </Badge>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedApprovers.length} approver{selectedApprovers.length !== 1 ? 's' : ''} selected
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -53,15 +53,17 @@ export function Combobox({
           className={cn("w-full justify-between", className)}
           disabled={disabled}
         >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : placeholder}
+          <span className="truncate">
+            {value
+              ? options.find((option) => option.value === value)?.label
+              : placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-full p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput placeholder={searchPlaceholder} className="h-9" />
           <CommandList>
             <CommandEmpty>No option found.</CommandEmpty>
             <CommandGroup>
@@ -73,6 +75,7 @@ export function Combobox({
                     onValueChange?.(currentValue === value ? "" : currentValue)
                     setOpen(false)
                   }}
+                  className="cursor-pointer"
                 >
                   <Check
                     className={cn(
@@ -80,7 +83,7 @@ export function Combobox({
                       value === option.value ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {option.label}
+                  <span className="truncate">{option.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -127,13 +130,15 @@ export function MultiSelectCombobox({
           className={cn("w-full justify-between", className)}
           disabled={disabled}
         >
-          {selectedLabels || placeholder}
+          <span className="truncate">
+            {selectedLabels || placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-full p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput placeholder={searchPlaceholder} className="h-9" />
           <CommandList>
             <CommandEmpty>No option found.</CommandEmpty>
             <CommandGroup>
@@ -148,6 +153,7 @@ export function MultiSelectCombobox({
                       : [...values, currentValue]
                     onValuesChange?.(newValues)
                   }}
+                  className="cursor-pointer"
                 >
                   <Check
                     className={cn(
@@ -155,7 +161,7 @@ export function MultiSelectCombobox({
                       values.includes(option.value) ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {option.label}
+                  <span className="truncate">{option.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
