@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Combobox, MultiSelectCombobox, ComboboxOption } from '@/components/ui/combobox';
 import { Edit3, Save, X, User, Shield, Trash2 } from 'lucide-react';
 import { ChecklistItem as DBChecklistItem } from '@/hooks/useChecklistItems';
+import { useUsers } from '@/hooks/useUsers';
 
 interface ChecklistItemDetailModalProps {
   item: DBChecklistItem;
@@ -30,12 +32,54 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedItem, setEditedItem] = useState<DBChecklistItem>(item);
+  const [selectedApprovers, setSelectedApprovers] = useState<string[]>(
+    item.approving_authority ? item.approving_authority.split(', ') : []
+  );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isCustom = item.id.startsWith('CUST-');
+  
+  const { users } = useUsers();
+
+  // Create options for approver dropdown
+  const approverOptions: ComboboxOption[] = [
+    // Default authority roles
+    { value: 'Area Authority', label: 'Area Authority (Default Role)' },
+    { value: 'Control System Authority', label: 'Control System Authority (Default Role)' },
+    { value: 'Electrical Authority', label: 'Electrical Authority (Default Role)' },
+    { value: 'Instrument Authority', label: 'Instrument Authority (Default Role)' },
+    { value: 'Mechanical Authority', label: 'Mechanical Authority (Default Role)' },
+    { value: 'Process Authority', label: 'Process Authority (Default Role)' },
+    { value: 'Safety Authority', label: 'Safety Authority (Default Role)' },
+    { value: 'Operations Authority', label: 'Operations Authority (Default Role)' },
+    { value: 'Plant Director', label: 'Plant Director (Default Role)' },
+    { value: 'Technical Authority (TA2)', label: 'Technical Authority (TA2) (Default Role)' },
+    // Active users from the microservice with authority privileges
+    ...users
+      .filter(user => user.status === 'active' && (
+        user.privileges.includes('Edit PSSR Checklist item Default approvers and PSSR Approvers') ||
+        user.role.toLowerCase().includes('director') ||
+        user.role.toLowerCase().includes('authority') ||
+        user.role.toLowerCase().includes('manager') ||
+        user.role.toLowerCase().includes('lead')
+      ))
+      .map(user => ({
+        value: `${user.firstName} ${user.lastName}`,
+        label: `${user.firstName} ${user.lastName} - ${user.role} (${user.company})`
+      }))
+  ];
 
   const handleSave = () => {
-    onSave?.(editedItem);
+    // Update the edited item with selected approvers
+    const updatedItem = {
+      ...editedItem,
+      approving_authority: selectedApprovers.join(', ') || null
+    };
+    onSave?.(updatedItem);
     setIsEditing(false);
+  };
+
+  const removeApprover = (approverToRemove: string) => {
+    setSelectedApprovers(prev => prev.filter(approver => approver !== approverToRemove));
   };
 
   const handleCancel = () => {
@@ -288,21 +332,90 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         Approving Authority
                       </Label>
                       {isEditing ? (
-                        <div className="relative">
-                          <Input
-                            value={editedItem.approving_authority || ''}
-                            onChange={(e) => setEditedItem(prev => ({ ...prev, approving_authority: e.target.value }))}
-                            placeholder="Approving authority"
-                            className="h-12 border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50 transition-all duration-300 text-base"
-                          />
-                          <div className="absolute inset-0 rounded-md bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none"></div>
+                        <div className="space-y-3">
+                          <p className="text-xs text-muted-foreground">
+                            Select multiple authorities from default roles or choose active users with approval privileges
+                          </p>
+                          <div className="relative">
+                            <MultiSelectCombobox
+                              options={approverOptions}
+                              values={selectedApprovers}
+                              onValuesChange={setSelectedApprovers}
+                              placeholder="Search and select approving authorities..."
+                              searchPlaceholder="Type to search authorities or users..."
+                              className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50"
+                            />
+                            <div className="absolute inset-0 rounded-md bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none"></div>
+                          </div>
+                          {selectedApprovers.length > 0 && (
+                            <div className="mt-2 space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground">Selected Approvers:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedApprovers.map((approver, index) => (
+                                  <div key={index} className="relative group">
+                                    <Badge 
+                                      variant="secondary" 
+                                      className="text-xs px-3 py-1 pr-8 bg-green-100/80 text-green-800 border border-green-200/50 backdrop-blur-sm hover:bg-green-200/80 transition-colors duration-200"
+                                    >
+                                      <span className="truncate max-w-[200px]">{approver}</span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeApprover(approver);
+                                        }}
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-green-200 hover:bg-red-500 flex items-center justify-center transition-colors duration-200 group-hover:bg-red-400"
+                                        title="Remove approver"
+                                      >
+                                        <X className="h-2.5 w-2.5 text-green-800 group-hover:text-white" />
+                                      </button>
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs text-muted-foreground">
+                                  {selectedApprovers.length} approver{selectedApprovers.length !== 1 ? 's' : ''} selected
+                                </p>
+                                {selectedApprovers.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedApprovers([])}
+                                    className="text-xs text-red-600 hover:text-red-800 font-medium transition-colors duration-200"
+                                  >
+                                    Clear all
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {selectedApprovers.length === 0 && (
+                            <p className="text-xs text-amber-600 bg-amber-50/50 border border-amber-200/50 rounded-md p-2">
+                              💡 Tip: You can select multiple approvers. Each selected approver will have a delete button for easy removal.
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent rounded-xl"></div>
-                          <p className="text-foreground relative z-10 text-base">
-                            {item.approving_authority || 'Not specified'}
-                          </p>
+                          <div className="relative z-10">
+                            {item.approving_authority ? (
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                  {item.approving_authority.split(', ').map((approver, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs px-2 py-1 bg-green-50/80 text-green-800 border-green-200">
+                                      {approver}
+                                    </Badge>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.approving_authority.split(', ').length} approver{item.approving_authority.split(', ').length !== 1 ? 's' : ''} assigned
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-base text-muted-foreground">Not specified</p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

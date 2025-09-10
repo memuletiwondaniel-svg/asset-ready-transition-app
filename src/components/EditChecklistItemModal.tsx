@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Combobox, MultiSelectCombobox, ComboboxOption } from '@/components/ui/combobox';
-import { Users, Shield, Save, User, Edit3, FileText } from 'lucide-react';
+import { Users, Shield, Save, User, Edit3, FileText, X } from 'lucide-react';
 import { ChecklistItem, useUpdateChecklistItem, UpdateChecklistItemData } from '@/hooks/useChecklistItems';
 import { useUsers } from '@/hooks/useUsers';
 import { useToast } from '@/hooks/use-toast';
@@ -166,6 +166,10 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const removeApprover = (approverToRemove: string) => {
+    setSelectedApprovers(prev => prev.filter(approver => approver !== approverToRemove));
   };
 
 
@@ -338,7 +342,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                 </Label>
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">
-                    Select from default authority roles or choose active users with approval privileges
+                    Select multiple authorities from default roles or choose active users with approval privileges
                   </p>
                   <div className="relative">
                     <MultiSelectCombobox
@@ -347,23 +351,55 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                       onValuesChange={setSelectedApprovers}
                       placeholder="Search and select approving authorities..."
                       searchPlaceholder="Type to search authorities or users..."
-                      className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm"
+                      className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50"
                     />
                     <div className="absolute inset-0 rounded-md bg-gradient-to-br from-purple-500/5 to-transparent pointer-events-none"></div>
                   </div>
+                  {selectedApprovers.length === 0 && (
+                    <p className="text-xs text-amber-600 bg-amber-50/50 border border-amber-200/50 rounded-md p-2">
+                      💡 Tip: You can select multiple approvers. Each selected approver will have a delete button for easy removal.
+                    </p>
+                  )}
                   {selectedApprovers.length > 0 && (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-2">
                       <p className="text-xs font-medium text-muted-foreground">Selected Approvers:</p>
                       <div className="flex flex-wrap gap-2">
                         {selectedApprovers.map((approver, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs px-2 py-1 bg-purple-100/80 text-purple-800 border border-purple-200/50 backdrop-blur-sm">
-                            {approver}
-                          </Badge>
+                          <div key={index} className="relative group">
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs px-3 py-1 pr-8 bg-purple-100/80 text-purple-800 border border-purple-200/50 backdrop-blur-sm hover:bg-purple-200/80 transition-colors duration-200"
+                            >
+                              <span className="truncate max-w-[200px]">{approver}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeApprover(approver);
+                                }}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-purple-200 hover:bg-red-500 flex items-center justify-center transition-colors duration-200 group-hover:bg-red-400"
+                                title="Remove approver"
+                              >
+                                <X className="h-2.5 w-2.5 text-purple-800 group-hover:text-white" />
+                              </button>
+                            </Badge>
+                          </div>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedApprovers.length} approver{selectedApprovers.length !== 1 ? 's' : ''} selected
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {selectedApprovers.length} approver{selectedApprovers.length !== 1 ? 's' : ''} selected
+                        </p>
+                        {selectedApprovers.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedApprovers([])}
+                            className="text-xs text-red-600 hover:text-red-800 font-medium transition-colors duration-200"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
