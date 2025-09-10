@@ -274,7 +274,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
     setShowReviewSummary(true);
   };
 
-  const handleConfirmChecklist = () => {
+  const handleConfirmChecklist = (checklistData: any) => {
     const finalData = {
       ...formData,
       custom_reason: formData.reason === 'Others' ? customReason : undefined

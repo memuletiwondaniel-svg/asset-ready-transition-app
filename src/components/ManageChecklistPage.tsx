@@ -55,11 +55,13 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
         setCreatedChecklistName(newChecklist.name);
-        setShowCreateForm(false);
-        setShowSuccessPage(true);
         
         // Mark this checklist as newly created for badge display
         sessionStorage.setItem(`new-checklist-${newChecklist.id}`, 'true');
+        
+        // Navigate back to checklist summary page (not success page)
+        setShowCreateForm(false);
+        // Don't set setShowSuccessPage(true) since we want to go back to main list
       },
       onError: error => {
         console.error('Failed to create checklist:', error);

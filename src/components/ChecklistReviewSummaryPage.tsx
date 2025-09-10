@@ -21,6 +21,7 @@ import {
   User
 } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChecklistReviewSummaryPageProps {
   checklistData: {
@@ -30,7 +31,7 @@ interface ChecklistReviewSummaryPageProps {
     custom_reason?: string;
   };
   onBack: () => void;
-  onConfirm: () => void;
+  onConfirm: (checklistData: any) => void;
   onCancel: () => void;
 }
 
@@ -40,6 +41,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
   onConfirm,
   onCancel
 }) => {
+  const { toast } = useToast();
   const { data: allChecklistItems = [] } = useChecklistItems();
   
   // Get selected items
@@ -217,7 +219,13 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                 {/* Action Buttons */}
                 <div className="pt-4 space-y-3">
                   <Button 
-                    onClick={onConfirm}
+                    onClick={() => {
+                      toast({
+                        title: "Checklist Created",
+                        description: "Your new checklist has been successfully created!",
+                      });
+                      onConfirm(checklistData);
+                    }}
                     className="w-full fluent-button bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
