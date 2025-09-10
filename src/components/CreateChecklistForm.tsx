@@ -495,49 +495,24 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 <TabsList className="w-full h-auto p-2 grid grid-cols-2 lg:grid-cols-5 gap-2 bg-transparent">
                   <TabsTrigger
                     value="all"
-                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden"
+                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-12"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 fluent-reveal"></div>
-                    <div className="relative z-10 flex flex-col items-center space-y-2 py-4">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 transition-all duration-300 fluent-lift">
-                        <ClipboardCheck className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                      </div>
-                      <div className="text-center">
-                        <span className="block font-semibold text-sm">All Categories</span>
-                        <span className="block text-xs text-muted-foreground mt-1">
-                          {allChecklistItems.length} items
-                        </span>
-                      </div>
+                    <div className="relative z-10 flex items-center justify-center h-full">
+                      <span className="font-semibold text-sm">All Categories</span>
                     </div>
                   </TabsTrigger>
                   
                   {categories.map((category) => {
-                    const stats = getCategoryStats(category.items);
-                    const Icon = category.icon;
                     return (
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
-                        className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden"
+                        className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-12"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 fluent-reveal"></div>
-                        <div className="relative z-10 flex flex-col items-center space-y-2 py-4">
-                          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 transition-all duration-300 fluent-lift">
-                            <Icon className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                          </div>
-                          <div className="text-center">
-                            <span className="block font-semibold text-sm">{category.name}</span>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <span className="text-xs text-muted-foreground">
-                                {stats.selected}/{stats.total}
-                              </span>
-                              {stats.selected > 0 && (
-                                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
-                                  {stats.percentage}%
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
+                        <div className="relative z-10 flex items-center justify-center h-full">
+                          <span className="font-semibold text-sm">{category.name}</span>
                         </div>
                       </TabsTrigger>
                     );
