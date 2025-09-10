@@ -68,6 +68,26 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
       }))
   ];
 
+  // Create options for responsible party dropdown
+  const responsiblePartyOptions: ComboboxOption[] = [
+    // Default engineering roles
+    { value: 'Area Engineer', label: 'Area Engineer (Default Role)' },
+    { value: 'Control System Engineer', label: 'Control System Engineer (Default Role)' },
+    { value: 'Electrical Engineer', label: 'Electrical Engineer (Default Role)' },
+    { value: 'Instrument Engineer', label: 'Instrument Engineer (Default Role)' },
+    { value: 'Mechanical Engineer', label: 'Mechanical Engineer (Default Role)' },
+    { value: 'Process Engineer', label: 'Process Engineer (Default Role)' },
+    { value: 'Safety Engineer', label: 'Safety Engineer (Default Role)' },
+    { value: 'Commissioning Engineer', label: 'Commissioning Engineer (Default Role)' },
+    // Active users from the microservice
+    ...users
+      .filter(user => user.status === 'active')
+      .map(user => ({
+        value: `${user.firstName} ${user.lastName}`,
+        label: `${user.firstName} ${user.lastName} - ${user.role} (${user.company})`
+      }))
+  ];
+
   const handleSave = () => {
     // Update the edited item with selected approvers
     const updatedItem = {
@@ -80,6 +100,10 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
 
   const removeApprover = (approverToRemove: string) => {
     setSelectedApprovers(prev => prev.filter(approver => approver !== approverToRemove));
+  };
+
+  const clearResponsibleParty = () => {
+    setEditedItem(prev => ({ ...prev, responsible_party: null }));
   };
 
   const handleCancel = () => {
@@ -305,14 +329,50 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         Responsible Party
                       </Label>
                       {isEditing ? (
-                        <div className="relative">
-                          <Input
-                            value={editedItem.responsible_party || ''}
-                            onChange={(e) => setEditedItem(prev => ({ ...prev, responsible_party: e.target.value }))}
-                            placeholder="Responsible party"
-                            className="h-12 border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50 transition-all duration-300 text-base"
-                          />
-                          <div className="absolute inset-0 rounded-md bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
+                        <div className="space-y-3">
+                          <p className="text-xs text-muted-foreground">
+                            Select from default engineering roles or choose an active user from the system
+                          </p>
+                          <div className="relative">
+                            <Combobox
+                              options={responsiblePartyOptions}
+                              value={editedItem.responsible_party || ''}
+                              onValueChange={(value) => setEditedItem(prev => ({ ...prev, responsible_party: value }))}
+                              placeholder="Search and select responsible party..."
+                              searchPlaceholder="Type to search roles or users..."
+                              className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50"
+                            />
+                            <div className="absolute inset-0 rounded-md bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
+                          </div>
+                          {editedItem.responsible_party && (
+                            <div className="mt-2 space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground">Selected Responsible Party:</p>
+                              <div className="relative group inline-block">
+                                <Badge 
+                                  variant="secondary" 
+                                  className="text-xs px-3 py-1 pr-8 bg-blue-100/80 text-blue-800 border border-blue-200/50 backdrop-blur-sm hover:bg-blue-200/80 transition-colors duration-200"
+                                >
+                                  <span className="truncate max-w-[250px]">{editedItem.responsible_party}</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      clearResponsibleParty();
+                                    }}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-blue-200 hover:bg-red-500 flex items-center justify-center transition-colors duration-200 group-hover:bg-red-400"
+                                    title="Remove responsible party"
+                                  >
+                                    <X className="h-2.5 w-2.5 text-blue-800 group-hover:text-white" />
+                                  </button>
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
+                          {!editedItem.responsible_party && (
+                            <p className="text-xs text-amber-600 bg-amber-50/50 border border-amber-200/50 rounded-md p-2">
+                              💡 Tip: You can search through engineering roles or select an active user. Click the × button to remove your selection.
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
