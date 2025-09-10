@@ -618,7 +618,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       <div className="absolute inset-0 bg-gradient-to-tr from-blue-50/10 via-transparent to-indigo-50/8"></div>
 
       {/* Progress Steps */}
-      <div className="max-w-7xl mx-auto px-8 py-4 bg-white/60 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto px-8 py-4">
         <ChecklistProgressSteps currentStep={currentStep} />
       </div>
 
