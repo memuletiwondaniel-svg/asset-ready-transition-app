@@ -31,6 +31,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedItem, setEditedItem] = useState<DBChecklistItem>(item);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isCustom = item.id.startsWith('CUST-');
 
   const handleSave = () => {
     onSave?.(editedItem);
@@ -103,7 +104,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                     <X className="h-4 w-4" />
                     Cancel
                   </Button>
-                  {onDelete && item.id.startsWith('CUST-') && (
+                  {onDelete && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -307,7 +308,9 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                   </div>
                 </div>
                 <p className="text-sm text-foreground">
-                  Are you sure you want to delete this custom checklist item? It will be removed from your checklist permanently.
+                  {isCustom
+                    ? 'Are you sure you want to delete this custom checklist item? It will be removed permanently and remaining custom items will be renumbered.'
+                    : 'Are you sure you want to remove this item from your checklist? The original library item will not be deleted.'}
                 </p>
                 <div className="flex justify-end space-x-3">
                   <Button

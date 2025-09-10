@@ -223,6 +223,12 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           selected_items: updatedSelected
         };
       });
+    } else {
+      // For standard library items, just remove from the current checklist selection
+      setFormData(prev => ({
+        ...prev,
+        selected_items: prev.selected_items.filter(id => id !== itemId)
+      }));
     }
     // Note: For database items, you would typically make an API call here
   };
