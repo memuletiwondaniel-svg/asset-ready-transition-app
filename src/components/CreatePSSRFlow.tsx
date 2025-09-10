@@ -45,18 +45,19 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   });
 
   const assets = [
+    'Umm Qasr (UQ)',
     'KAZ',
-    'NRNGL',
-    'UQ',
-    'Compressor Station (CS)',
-    'BNGL'
+    'NRNGL', 
+    'BNGL',
+    'Compressor Station (CS)'
   ];
 
   const reasons = [
     'Start-up or Commissioning of a new Asset',
-    'Restart following significant modification to an existing Asset\'s Hardware, Safeguarding or Operating Philosophy',
+    'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy',
     'Restart following a process safety incident',
-    'Others (specify in the Scope Description)'
+    'Restart following a Turn Around (TAR) Event or Major Maintenance Activity',
+    'Others (Specify)'
   ];
 
   // Extended projects list with team, plant, and scope information

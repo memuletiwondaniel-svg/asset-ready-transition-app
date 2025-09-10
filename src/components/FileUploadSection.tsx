@@ -19,7 +19,23 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   return (
     <div className="space-y-4">
       <Label className="text-sm font-semibold text-gray-700">Supporting Documents</Label>
-      <div className="border-2 border-dashed border-blue-200 rounded-xl p-8 text-center bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
+      <div 
+        className="border-2 border-dashed border-blue-200 rounded-xl p-8 text-center bg-blue-50/30 hover:bg-blue-50/50 transition-colors cursor-pointer"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const files = Array.from(e.dataTransfer.files);
+          const syntheticEvent = {
+            target: { files: files as unknown as FileList }
+          } as React.ChangeEvent<HTMLInputElement>;
+          onFileUpload(syntheticEvent);
+        }}
+      >
         <div className="p-4 bg-blue-100 rounded-full w-fit mx-auto mb-4">
           <Upload className="h-8 w-8 text-blue-600" />
         </div>

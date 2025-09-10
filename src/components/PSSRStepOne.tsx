@@ -192,6 +192,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
             <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <div className="space-y-2">
               <Textarea 
+                id="scope"
                 value={formData.scope}
                 onChange={(e) => setFormData(prev => ({...prev, scope: e.target.value}))}
                 onPaste={async (e) => {
@@ -220,7 +221,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     }
                   }
                 }}
-                placeholder="Describe the scope of the PSSR. You can paste images here..."
+                placeholder="Describe the scope of the PSSR. You can paste images here using Ctrl+V..."
                 rows={6}
                 className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none"
               />
