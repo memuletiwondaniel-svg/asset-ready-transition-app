@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Edit3, Save, X, User, Shield, FileText, Calendar } from 'lucide-react';
+import { Edit3, Save, X, User, Shield, FileText, Calendar, Trash2 } from 'lucide-react';
 import { ChecklistItem as DBChecklistItem } from '@/hooks/useChecklistItems';
 
 interface ChecklistItemDetailModalProps {
@@ -16,6 +16,7 @@ interface ChecklistItemDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (updatedItem: DBChecklistItem) => void;
+  onDelete?: (itemId: string) => void;
   availableCategories: string[];
 }
 
@@ -24,10 +25,12 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   availableCategories
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedItem, setEditedItem] = useState<DBChecklistItem>(item);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = () => {
     onSave?.(editedItem);
@@ -37,6 +40,12 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const handleCancel = () => {
     setEditedItem(item);
     setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    onDelete?.(item.id);
+    setShowDeleteConfirm(false);
+    onClose();
   };
 
   return (
@@ -61,6 +70,17 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
               </DialogDescription>
             </div>
             <div className="flex space-x-2">
+              {!isEditing && onDelete && item.id.startsWith('CUST-') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              )}
               {!isEditing && onSave && (
                 <Button
                   variant="outline"
@@ -260,6 +280,46 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
             </div>
           </div>
         </ScrollArea>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-lg">
+            <div className="bg-background border border-border/20 rounded-lg p-6 max-w-md mx-4">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+                    <Trash2 className="h-5 w-5 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Delete Checklist Item</h3>
+                    <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+                  </div>
+                </div>
+                <p className="text-sm text-foreground">
+                  Are you sure you want to delete this custom checklist item? It will be removed from your checklist permanently.
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Item
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

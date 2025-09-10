@@ -190,6 +190,19 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     setSelectedDetailItem(updatedItem);
   };
 
+  const handleItemDelete = (itemId: string) => {
+    // Remove item from custom items if it's a custom item
+    if (itemId.startsWith('CUST-')) {
+      setCustomChecklistItems(prev => prev.filter(item => item.id !== itemId));
+      // Also remove from selected items if it was selected
+      setFormData(prev => ({
+        ...prev,
+        selected_items: prev.selected_items.filter(id => id !== itemId)
+      }));
+    }
+    // Note: For database items, you would typically make an API call here
+  };
+
   const handleNext = () => {
     if (currentStep === 1 && formData.name && formData.reason) {
       setCurrentStep(2);
@@ -788,6 +801,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           isOpen={showDetailModal}
           onClose={handleDetailModalClose}
           onSave={handleItemSave}
+          onDelete={handleItemDelete}
           availableCategories={availableCategories}
         />
       )}
