@@ -282,7 +282,6 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         ta2_discipline: (formData.ta2Discipline || null) as any,
         ta2_commission: (formData.ta2Commission || null) as any,
         status: 'pending_approval' as any, // This will show as "awaiting Authentication" in the UI
-        created_by_admin: isAdminCreated,
         rejection_reason: formData.comments
       };
 
