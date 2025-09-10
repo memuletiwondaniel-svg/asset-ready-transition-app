@@ -517,47 +517,62 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
               <CardContent>
                 <ScrollArea className="h-96">
                   <div className="space-y-4">
-                    {allChecklistItems.filter(item => 
-                      searchQuery === '' || 
-                      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
-                     ).map((item) => {
+                     {allChecklistItems.filter(item => 
+                       searchQuery === '' || 
+                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
+                      ).map((item) => {
                         const isExpanded = expandedItems.has(item.id);
                         return (
-                          <div key={item.id} className={`border rounded-lg transition-colors ${
-                            customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : 'hover:bg-muted/20'
+                          <div key={item.id} className={`group relative border rounded-xl transition-all duration-300 ${
+                            customChecklistItems.some(custom => custom.id === item.id) 
+                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100' 
+                              : 'hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 hover:border-blue-200/60 hover:shadow-lg hover:scale-[1.02]'
                           }`}>
+                            {/* Microsoft Fluent hover glow effect */}
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            
+                            {/* Reveal effect on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 rounded-xl"></div>
+                            
                             <div 
-                              className="flex items-start space-x-4 p-3 cursor-pointer"
+                              className="relative flex items-start space-x-4 p-4 cursor-pointer group-hover:backdrop-blur-sm transition-all duration-300"
                               onClick={() => toggleItemExpansion(item.id)}
                             >
                               <Checkbox
                                 checked={formData.selected_items.includes(item.id)}
                                 onCheckedChange={() => handleItemToggle(item.id)}
-                                className="mt-1"
+                                className="mt-1 group-hover:scale-110 transition-transform duration-200"
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center space-x-2">
-                                    <h4 className="font-medium text-sm">{item.id}</h4>
+                                    {/* Item ID and Description on same line */}
+                                    <h4 className="font-semibold text-sm text-blue-700 group-hover:text-blue-800 transition-colors duration-200">
+                                      {item.id}
+                                    </h4>
+                                    <span className="text-gray-400">•</span>
+                                    <p className="text-sm text-foreground font-medium group-hover:text-gray-800 transition-colors duration-200 line-clamp-2 flex-1">
+                                      {item.description}
+                                    </p>
                                     {customChecklistItems.some(custom => custom.id === item.id) && (
-                                      <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                      <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200 animate-pulse">
                                         New
                                       </Badge>
                                     )}
                                   </div>
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-xs group-hover:bg-white group-hover:shadow-sm transition-all duration-200">
                                     {item.category}
                                   </Badge>
                                 </div>
-                                <p className="text-sm text-foreground mt-1 line-clamp-2">{item.description}</p>
                               </div>
                             </div>
                             
                             {isExpanded && (
-                              <div className="px-3 pb-3 border-t bg-muted/10">
-                                <div className="pt-3 space-y-2">
+                              <div className="relative px-4 pb-4 border-t bg-gradient-to-r from-muted/10 to-muted/5 animate-fade-in">
+                                <div className="pt-3 space-y-3">
                                   <div>
                                     <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
                                     <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
@@ -644,33 +659,52 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   </CardHeader>
                   <CardContent>
                     <ScrollArea className="h-96">
-                      <div className="space-y-4">
-                         {items.map((item) => {
+                       <div className="space-y-4">
+                          {items.filter(item => 
+                            searchQuery === '' || 
+                            item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
+                          ).map((item) => {
                             const isExpanded = expandedItems.has(item.id);
                             return (
-                              <div key={item.id} className={`border rounded-lg transition-colors ${
-                                customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : 'hover:bg-muted/20'
+                              <div key={item.id} className={`group relative border rounded-xl transition-all duration-300 ${
+                                customChecklistItems.some(custom => custom.id === item.id) 
+                                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100' 
+                                  : 'hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 hover:border-blue-200/60 hover:shadow-lg hover:scale-[1.02]'
                               }`}>
+                                {/* Microsoft Fluent hover glow effect */}
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                
+                                {/* Reveal effect on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 rounded-xl"></div>
+                                
                                 <div 
-                                  className="flex items-start space-x-4 p-3 cursor-pointer"
+                                  className="relative flex items-start space-x-4 p-4 cursor-pointer group-hover:backdrop-blur-sm transition-all duration-300"
                                   onClick={() => toggleItemExpansion(item.id)}
                                 >
                                   <Checkbox
                                     checked={formData.selected_items.includes(item.id)}
                                     onCheckedChange={() => handleItemToggle(item.id)}
-                                    className="mt-1"
+                                    className="mt-1 group-hover:scale-110 transition-transform duration-200"
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                      <h4 className="font-medium text-sm">{item.id}</h4>
+                                    <div className="flex items-center space-x-2">
+                                      {/* Item ID and Description on same line */}
+                                      <h4 className="font-semibold text-sm text-blue-700 group-hover:text-blue-800 transition-colors duration-200">
+                                        {item.id}
+                                      </h4>
+                                      <span className="text-gray-400">•</span>
+                                      <p className="text-sm text-foreground font-medium group-hover:text-gray-800 transition-colors duration-200 line-clamp-2 flex-1">
+                                        {item.description}
+                                      </p>
                                       {customChecklistItems.some(custom => custom.id === item.id) && (
-                                        <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                        <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200 animate-pulse">
                                           New
                                         </Badge>
                                       )}
                                     </div>
-                                    <p className="text-sm text-foreground line-clamp-2">{item.description}</p>
                                   </div>
                                 </div>
                                 
@@ -731,34 +765,50 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
               <CardContent>
                 <ScrollArea className="h-96">
                   <div className="space-y-4">
-                     {unselectedItems.map((item) => {
+                     {unselectedItems.filter(item => 
+                       searchQuery === '' || 
+                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
+                     ).map((item) => {
                         const isExpanded = expandedItems.has(item.id);
                         return (
-                          <div key={item.id} className="border rounded-lg bg-muted/10 opacity-60">
+                          <div key={item.id} className="group relative border rounded-xl bg-muted/10 opacity-60 hover:opacity-80 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                            {/* Hover glow effect */}
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-400/20 to-gray-600/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            
                             <div 
-                              className="flex items-start space-x-4 p-3 cursor-pointer"
+                              className="relative flex items-start space-x-4 p-4 cursor-pointer"
                               onClick={() => toggleItemExpansion(item.id)}
                             >
                               <Checkbox
                                 checked={false}
                                 onCheckedChange={() => handleItemToggle(item.id)}
-                                className="mt-1"
+                                className="mt-1 group-hover:scale-110 transition-transform duration-200"
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
-                                  <h4 className="font-medium text-sm">{item.id}</h4>
-                                  <Badge variant="outline" className="text-xs">
+                                  <div className="flex items-center space-x-2">
+                                    {/* Item ID and Description on same line */}
+                                    <h4 className="font-semibold text-sm text-gray-600 group-hover:text-gray-700 transition-colors duration-200">
+                                      {item.id}
+                                    </h4>
+                                    <span className="text-gray-400">•</span>
+                                    <p className="text-sm font-medium group-hover:text-gray-700 transition-colors duration-200 line-clamp-2 flex-1">
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs group-hover:bg-white/50 group-hover:shadow-sm transition-all duration-200">
                                     {item.category}
                                   </Badge>
                                 </div>
-                                <p className="text-sm mt-1 line-clamp-2">{item.description}</p>
                               </div>
                             </div>
                             
                             {isExpanded && (
-                              <div className="px-3 pb-3 border-t">
-                                <div className="pt-3 space-y-2">
+                              <div className="relative px-4 pb-4 border-t animate-fade-in">
+                                <div className="pt-3 space-y-3">
                                   <div>
                                     <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
                                     <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
