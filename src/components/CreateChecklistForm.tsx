@@ -441,30 +441,67 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       {/* Categories Tabs */}
       <div className="max-w-7xl mx-auto px-8 pb-8">
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-6">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-7 h-auto p-1 bg-card/50 backdrop-blur-sm">
-            <TabsTrigger value="all" className="text-xs p-3">
-              All Items
+          <TabsList className="relative grid grid-cols-4 lg:grid-cols-7 h-auto p-2 bg-gradient-to-r from-white/90 via-white/80 to-white/90 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl overflow-hidden">
+            {/* Microsoft Fluent Design Background Pattern */}
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmMGY5ZmYiIGZpbGwtb3BhY2l0eT0iMC4zIj48cGF0aCBkPSJtMzYgMzRjMC0yLjIwOTEzOSAxLjc5MDg2MS00IDQtNCBoMTZjMi4yMDkxMzkgMCA0IDEuNzkwODYxIDQgNHYxNmMwIDIuMjA5MTM5LTEuNzkwODYxIDQtNCA0aC0xNmMtMi4yMDkxMzktNGUtMy00LTEuNzkwODYxLTQtNHptMC0zNmMwLTIuMjA5MTM5IDEuNzkwODYxLTQgNC00aDE2YzIuMjA5MTM5IDAgNCAxLjc5MDg2MSA0IDR2MTZjMCAyLjIwOTEzOS0xLjc5MDg2MSA0LTQgNGgtMTZjLTIuMjA5MTM5LTRlLTMtNC0xLjc5MDg2MS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+            
+            <TabsTrigger 
+              value="all" 
+              className="relative text-xs p-4 rounded-xl font-medium transition-all duration-500 hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-2xl hover:bg-white/80 hover:backdrop-blur-sm hover:border-blue-200/50 group"
+            >
+              {/* Hover glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative z-10">All Items</div>
             </TabsTrigger>
+            
             {categories.map((category) => {
               const IconComponent = category.icon;
               const stats = getCategoryStats(category.items);
               return (
-                <TabsTrigger key={category.id} value={category.id} className="text-xs p-3 space-y-1">
-                  <div className="flex items-center space-x-1">
-                    <IconComponent className="h-3 w-3" />
-                    <span className="hidden sm:inline">{category.name}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {stats.selected}/{stats.total}
+                <TabsTrigger 
+                  key={category.id} 
+                  value={category.id} 
+                  className="relative text-xs p-4 rounded-xl font-medium transition-all duration-500 hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-2xl hover:bg-white/80 hover:backdrop-blur-sm hover:border-blue-200/50 group"
+                >
+                  {/* Hover glow effect */}
+                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <div className="relative z-10 space-y-1">
+                    <div className="flex items-center justify-center space-x-1">
+                      <div className="relative">
+                        {/* Icon glow on hover */}
+                        <div className="absolute -inset-1 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <IconComponent className="relative h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <span className="hidden sm:inline font-medium group-hover:font-semibold transition-all duration-300">{category.name}</span>
+                    </div>
+                    <div className="text-xs opacity-70 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="inline-flex items-center space-x-1">
+                        <span className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></span>
+                        <span>{stats.selected}/{stats.total}</span>
+                      </span>
+                    </div>
                   </div>
                 </TabsTrigger>
               );
             })}
-            <TabsTrigger value="not-selected" className="text-xs p-3">
-              Not Selected
-              <Badge variant="secondary" className="ml-2 text-xs">
-                {unselectedItems.length}
-              </Badge>
+            
+            <TabsTrigger 
+              value="not-selected" 
+              className="relative text-xs p-4 rounded-xl font-medium transition-all duration-500 hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-2xl hover:bg-white/80 hover:backdrop-blur-sm hover:border-blue-200/50 group"
+            >
+              {/* Hover glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 space-y-1">
+                <div className="font-medium group-hover:font-semibold transition-all duration-300">Not Selected</div>
+                <Badge 
+                  variant="secondary" 
+                  className="ml-auto text-xs bg-white/80 text-gray-700 border-gray-200/60 group-hover:bg-white group-hover:shadow-md transition-all duration-300 backdrop-blur-sm"
+                >
+                  {unselectedItems.length}
+                </Badge>
+              </div>
             </TabsTrigger>
           </TabsList>
 
