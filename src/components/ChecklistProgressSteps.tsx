@@ -19,12 +19,12 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
             <div className="flex items-center">
                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 aspect-square ${
                  currentStep >= step.number 
-                   ? 'bg-gradient-to-br from-orange-400 via-pink-500 to-rose-500 text-white shadow-xl ring-4 ring-orange-400/30 shadow-orange-500/40' 
-                   : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 border-2 border-slate-300/50 shadow-sm'
+                   ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-xl ring-4 ring-emerald-400/30 shadow-emerald-500/40' 
+                   : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-500 border-2 border-gray-200/60 shadow-sm'
                }`}>
                 <span className="font-semibold text-sm">{step.number}</span>
                  {currentStep >= step.number && (
-                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-300/40 to-pink-400/40 animate-pulse"></div>
+                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-300/40 to-teal-400/40 animate-pulse"></div>
                  )}
               </div>
               <div className="ml-4 text-left">
@@ -44,8 +44,8 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
             {index < steps.length - 1 && (
                <div className={`flex-1 h-1 mx-8 rounded-full transition-all duration-500 min-w-[120px] ${
                  currentStep > step.number 
-                   ? 'bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 shadow-sm' 
-                   : 'bg-gradient-to-r from-slate-200 to-slate-300'
+                   ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-sm' 
+                   : 'bg-gradient-to-r from-gray-150 to-gray-200'
                }`}></div>
             )}
           </React.Fragment>
