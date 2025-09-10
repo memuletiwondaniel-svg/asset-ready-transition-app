@@ -749,14 +749,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                               </CardDescription>
                             </div>
                           </div>
-                          {stats.selected > 0 && (
-                            <div className="flex items-center space-x-2">
-                              <Progress value={stats.percentage} className="w-20 h-2" />
-                              <Badge variant="secondary" className="text-xs">
-                                {stats.percentage}%
-                              </Badge>
-                            </div>
-                          )}
                         </div>
                       </CardHeader>
                       <CardContent>
