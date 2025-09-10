@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
+import ChecklistManagementPage from './ChecklistManagementPage';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
 import { useChecklists, useCreateChecklist, Checklist } from '@/hooks/useChecklists';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +29,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
+  const [showItemsManagement, setShowItemsManagement] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
@@ -131,6 +133,14 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
     );
   }
 
+  if (showItemsManagement) {
+    return (
+      <ChecklistManagementPage 
+        onBack={() => setShowItemsManagement(false)}
+      />
+    );
+  }
+
   if (selectedChecklist) {
     return (
       <ChecklistDetailsPage 
@@ -186,13 +196,23 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                 Manage and configure Pre-Startup Safety Review checklists for your projects
               </p>
             </div>
-            <Button 
-              className="fluent-button bg-primary hover:bg-primary-hover shadow-fluent-md hover:shadow-fluent-lg"
-              onClick={() => setShowCreateForm(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Checklist
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline"
+                className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
+                onClick={() => setShowItemsManagement(true)}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Browse Items & Categories
+              </Button>
+              <Button 
+                className="fluent-button bg-primary hover:bg-primary-hover shadow-fluent-md hover:shadow-fluent-lg"
+                onClick={() => setShowCreateForm(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Checklist
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -248,23 +268,37 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
           <>
             {/* Checklists Grid */}
             {filteredAndSortedChecklists.length === 0 ? (
-          <div className="text-center py-16">
-            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No Checklists Found</h3>
-            <p className="text-muted-foreground mb-6">
-              {searchQuery || filterCategory !== 'all' 
-                ? 'No checklists match your current filters. Try adjusting your search criteria.'
-                : 'Create your first PSSR checklist to get started with safety reviews.'
-              }
-            </p>
-            <Button 
-              className="fluent-button bg-primary hover:bg-primary-hover"
-              onClick={() => setShowCreateForm(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create First Checklist
-            </Button>
-          </div>
+            <div className="text-center py-16">
+              <div className="flex flex-col items-center space-y-6">
+                <FileText className="h-16 w-16 text-muted-foreground" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-foreground">No Checklists Found</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    {searchQuery || filterCategory !== 'all' 
+                      ? 'No checklists match your current filters. Try adjusting your search criteria.'
+                      : 'Create your first PSSR checklist to get started with safety reviews.'
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button 
+                    variant="outline"
+                    className="fluent-button hover:bg-secondary/80"
+                    onClick={() => setShowItemsManagement(true)}
+                  >
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Browse Checklist Items
+                  </Button>
+                  <Button 
+                    className="fluent-button bg-primary hover:bg-primary-hover"
+                    onClick={() => setShowCreateForm(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Checklist
+                  </Button>
+                </div>
+              </div>
+            </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredAndSortedChecklists.map((checklist, index) => (
