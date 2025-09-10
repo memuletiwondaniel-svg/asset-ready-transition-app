@@ -32,6 +32,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [showItemSuccess, setShowItemSuccess] = useState(false);
   const [newCreatedItem, setNewCreatedItem] = useState<DBChecklistItem | null>(null);
   const [customChecklistItems, setCustomChecklistItems] = useState<DBChecklistItem[]>([]);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: availableCategories = [] } = useChecklistCategories();
@@ -149,6 +150,18 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         ? prev.selected_items.filter(id => id !== itemId)
         : [...prev.selected_items, itemId]
     }));
+  };
+
+  const toggleItemExpansion = (itemId: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
   };
 
   const handleNext = () => {
@@ -481,37 +494,69 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       searchQuery === '' || 
                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
-                    ).map((item) => (
-                      <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
-                        customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
-                      }`}>
-                        <Checkbox
-                          checked={formData.selected_items.includes(item.id)}
-                          onCheckedChange={() => handleItemToggle(item.id)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-sm">{item.id}</h4>
-                              {customChecklistItems.some(custom => custom.id === item.id) && (
-                                <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
-                                  New
-                                </Badge>
-                              )}
+                     ).map((item) => {
+                        const isExpanded = expandedItems.has(item.id);
+                        return (
+                          <div key={item.id} className={`border rounded-lg transition-colors ${
+                            customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : 'hover:bg-muted/20'
+                          }`}>
+                            <div 
+                              className="flex items-start space-x-4 p-3 cursor-pointer"
+                              onClick={() => toggleItemExpansion(item.id)}
+                            >
+                              <Checkbox
+                                checked={formData.selected_items.includes(item.id)}
+                                onCheckedChange={() => handleItemToggle(item.id)}
+                                className="mt-1"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <h4 className="font-medium text-sm">{item.id}</h4>
+                                    {customChecklistItems.some(custom => custom.id === item.id) && (
+                                      <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                        New
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.category}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-foreground mt-1 line-clamp-2">{item.description}</p>
+                              </div>
                             </div>
-                            <Badge variant="outline" className="text-xs">
-                              {item.category}
-                            </Badge>
+                            
+                            {isExpanded && (
+                              <div className="px-3 pb-3 border-t bg-muted/10">
+                                <div className="pt-3 space-y-2">
+                                  <div>
+                                    <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
+                                    <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs font-medium text-muted-foreground">Approving Authority:</span>
+                                    <p className="text-xs text-foreground mt-1">{item.approving_authority || 'Not specified'}</p>
+                                  </div>
+                                  {item.responsible_party && (
+                                    <div>
+                                      <span className="text-xs font-medium text-muted-foreground">Responsible Party:</span>
+                                      <p className="text-xs text-foreground mt-1">{item.responsible_party}</p>
+                                    </div>
+                                  )}
+                                  {item.topic && (
+                                    <div>
+                                      <span className="text-xs font-medium text-muted-foreground">Topic:</span>
+                                      <p className="text-xs text-foreground mt-1">{item.topic}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <p className="text-sm text-foreground">{item.description}</p>
-                          <p className="text-xs text-muted-foreground">{item.supporting_evidence}</p>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Authority: {item.approving_authority}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
                   </div>
                 </ScrollArea>
               </CardContent>
@@ -573,34 +618,64 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   <CardContent>
                     <ScrollArea className="h-96">
                       <div className="space-y-4">
-                        {items.map((item) => (
-                          <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
-                            customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
-                          }`}>
-                            <Checkbox
-                              checked={formData.selected_items.includes(item.id)}
-                              onCheckedChange={() => handleItemToggle(item.id)}
-                              className="mt-1"
-                            />
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center space-x-2">
-                                <h4 className="font-medium text-sm">{item.id}</h4>
-                                {customChecklistItems.some(custom => custom.id === item.id) && (
-                                  <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
-                                    New
-                                  </Badge>
+                         {items.map((item) => {
+                            const isExpanded = expandedItems.has(item.id);
+                            return (
+                              <div key={item.id} className={`border rounded-lg transition-colors ${
+                                customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : 'hover:bg-muted/20'
+                              }`}>
+                                <div 
+                                  className="flex items-start space-x-4 p-3 cursor-pointer"
+                                  onClick={() => toggleItemExpansion(item.id)}
+                                >
+                                  <Checkbox
+                                    checked={formData.selected_items.includes(item.id)}
+                                    onCheckedChange={() => handleItemToggle(item.id)}
+                                    className="mt-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <h4 className="font-medium text-sm">{item.id}</h4>
+                                      {customChecklistItems.some(custom => custom.id === item.id) && (
+                                        <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                          New
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-foreground line-clamp-2">{item.description}</p>
+                                  </div>
+                                </div>
+                                
+                                {isExpanded && (
+                                  <div className="px-3 pb-3 border-t bg-muted/10">
+                                    <div className="pt-3 space-y-2">
+                                      <div>
+                                        <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
+                                        <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs font-medium text-muted-foreground">Approving Authority:</span>
+                                        <p className="text-xs text-foreground mt-1">{item.approving_authority || 'Not specified'}</p>
+                                      </div>
+                                      {item.responsible_party && (
+                                        <div>
+                                          <span className="text-xs font-medium text-muted-foreground">Responsible Party:</span>
+                                          <p className="text-xs text-foreground mt-1">{item.responsible_party}</p>
+                                        </div>
+                                      )}
+                                      {item.topic && (
+                                        <div>
+                                          <span className="text-xs font-medium text-muted-foreground">Topic:</span>
+                                          <p className="text-xs text-foreground mt-1">{item.topic}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                              <p className="text-sm text-foreground">{item.description}</p>
-                              <p className="text-xs text-muted-foreground font-medium">
-                                Evidence: {item.supporting_evidence}
-                              </p>
-                              <div className="text-xs text-muted-foreground">
-                                Approving Authority: {item.approving_authority}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                            );
+                          })}
                         {items.length === 0 && (
                           <div className="text-center py-8 text-muted-foreground">
                             No items found matching your search criteria.
@@ -629,25 +704,50 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
               <CardContent>
                 <ScrollArea className="h-96">
                   <div className="space-y-4">
-                    {unselectedItems.map((item) => (
-                      <div key={item.id} className="flex items-start space-x-4 p-4 border rounded-lg bg-muted/10 opacity-60">
-                        <Checkbox
-                          checked={false}
-                          onCheckedChange={() => handleItemToggle(item.id)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <h4 className="font-medium text-sm">{item.id}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {item.category}
-                            </Badge>
+                     {unselectedItems.map((item) => {
+                        const isExpanded = expandedItems.has(item.id);
+                        return (
+                          <div key={item.id} className="border rounded-lg bg-muted/10 opacity-60">
+                            <div 
+                              className="flex items-start space-x-4 p-3 cursor-pointer"
+                              onClick={() => toggleItemExpansion(item.id)}
+                            >
+                              <Checkbox
+                                checked={false}
+                                onCheckedChange={() => handleItemToggle(item.id)}
+                                className="mt-1"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium text-sm">{item.id}</h4>
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.category}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm mt-1 line-clamp-2">{item.description}</p>
+                              </div>
+                            </div>
+                            
+                            {isExpanded && (
+                              <div className="px-3 pb-3 border-t">
+                                <div className="pt-3 space-y-2">
+                                  <div>
+                                    <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
+                                    <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
+                                  </div>
+                                  {item.approving_authority && (
+                                    <div>
+                                      <span className="text-xs font-medium text-muted-foreground">Approving Authority:</span>
+                                      <p className="text-xs text-foreground mt-1">{item.approving_authority}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <p className="text-sm">{item.description}</p>
-                          <p className="text-xs text-muted-foreground">{item.supporting_evidence}</p>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
                     {unselectedItems.length === 0 && (
                       <div className="text-center py-8">
                         <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
