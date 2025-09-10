@@ -315,7 +315,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         )}
         
         <div className="relative p-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             {/* Checkbox */}
             <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <Checkbox
