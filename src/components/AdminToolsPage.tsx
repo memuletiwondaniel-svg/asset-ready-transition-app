@@ -34,8 +34,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     },
     {
       id: 'checklist',
-      title: 'Checklist Management',
-      description: 'Upload and manage PSSR checklist items from Excel files with version control and audit tracking',
+      description: 'Browse and manage PSSR checklist items by category with intuitive organization',
       icon: Upload,
       gradient: 'from-green-500/20 via-green-500/10 to-green-500/5',
       iconBg: 'bg-gradient-to-br from-green-500 to-green-600',

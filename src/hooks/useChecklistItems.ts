@@ -4,14 +4,6 @@ import { Tables } from '@/integrations/supabase/types';
 
 export type ChecklistItem = Tables<'checklist_items'>;
 
-export interface ChecklistUploadResult {
-  processed: number;
-  added: number;
-  updated: number;
-  failed: number;
-  errors: string[];
-}
-
 export const useChecklistItems = () => {
   return useQuery({
     queryKey: ['checklist-items'],
@@ -42,56 +34,6 @@ export const useChecklistCategories = () => {
       
       const categories = [...new Set(data.map(item => item.category))];
       return categories.sort();
-    },
-  });
-};
-
-export const useUploadChecklist = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (file: File): Promise<ChecklistUploadResult> => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('User not authenticated');
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await supabase.functions.invoke('process-checklist-excel', {
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      return response.data;
-    },
-    onSuccess: () => {
-      // Invalidate and refetch checklist data
-      queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
-      queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
-    },
-  });
-};
-
-export const useChecklistUploads = () => {
-  return useQuery({
-    queryKey: ['checklist-uploads'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('checklist_uploads')
-        .select('*')
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
     },
   });
 };

@@ -18,114 +18,23 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, Upload, Download, AlertCircle, CheckCircle, XCircle, ChevronDown, ChevronRight, FileText, Users, Shield, Cog, GripVertical } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { useChecklistItems, useUploadChecklist, useChecklistUploads } from '@/hooks/useChecklistItems';
-import { toast } from 'sonner';
+import { useChecklistItems } from '@/hooks/useChecklistItems';
 
 interface ChecklistManagementPageProps {
   onBack: () => void;
 }
 
 const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBack }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
-  const { data: uploads, isLoading: uploadsLoading } = useChecklistUploads();
-  const uploadMutation = useUploadChecklist();
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const validTypes = [
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/csv',
-        'text/tab-separated-values'
-      ];
-      
-      if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv') && !file.name.endsWith('.tsv')) {
-        toast.error('Please select a valid Excel, CSV, or TSV file');
-        return;
-      }
-
-      setSelectedFile(file);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    try {
-      setUploadProgress(20);
-      
-      const result = await uploadMutation.mutateAsync(selectedFile);
-      
-      setUploadProgress(100);
-      
-      toast.success(
-        `Upload completed: ${result.added} added, ${result.updated} updated, ${result.failed} failed`
-      );
-      
-      setSelectedFile(null);
-      setUploadProgress(0);
-      
-      // Reset file input
-      const input = document.getElementById('file-input') as HTMLInputElement;
-      if (input) input.value = '';
-      
-    } catch (error) {
-      setUploadProgress(0);
-      console.error('Upload error:', error);
-      toast.error(error instanceof Error ? error.message : 'Upload failed');
-    }
-  };
-
-  const downloadTemplate = () => {
-    const headers = ['ID', 'Description', 'Category', 'Topic', 'Supporting Evidence', 'Responsible Party', 'Approving Authority'];
-    const sampleData = [
-      'X01\tHave all Priority 1 actions from the PSSR walkdown been closed out?\tGeneral\tPSSR Walkdown\t\tProject Engr\tTA2, ORA, Dep Plant Dir.',
-      'A01\tHave all Safety Critical Elements (SCEs) been identified?\tHardware Integrity\tSCE\tTIV report\tCommissioning Lead\tTA2'
-    ];
-    
-    const content = [headers.join('\t'), ...sampleData].join('\n');
-    const blob = new Blob([content], { type: 'text/tab-separated-values' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'checklist-template.tsv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Completed</Badge>;
-      case 'COMPLETED_WITH_ERRORS':
-        return <Badge className="bg-yellow-100 text-yellow-800"><AlertCircle className="w-3 h-3 mr-1" />With Errors</Badge>;
-      case 'FAILED':
-        return <Badge className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Failed</Badge>;
-      default:
-        return <Badge className="bg-blue-100 text-blue-800">Pending</Badge>;
-    }
-  };
 
   const categoryStats = checklistItems?.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1;
@@ -391,246 +300,103 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
     );
   };
 
+  if (itemsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 font-medium">Loading checklist items...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
-        <h1 className="text-3xl font-bold">Checklist Management</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Microsoft Fluent Design Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-white/90 via-white/80 to-white/90 backdrop-blur-xl border-b border-gray-200/60 shadow-lg">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmMGY5ZmYiIGZpbGwtb3BhY2l0eT0iMC40Ij48cGF0aCBkPSJtMzYgMzRjMC0yLjIwOTEzOSAxLjc5MDg2MS00IDQtNCBoMTZjMi4yMDkxMzkgMCA0IDEuNzkwODYxIDQgNHYxNmMwIDIuMjA5MTM5LTEuNzkwODYxIDQtNCA0aC0xNmMtMi4yMDkxMzktNGUtMy00LTEuNzkwODYxLTQtNHptMC0zNmMwLTIuMjA5MTM5IDEuNzkwODYxLTQgNC00aDE2YzIuMjA5MTM5IDAgNCAxLjc5MDg2MSA0IDR2MTZjMCAyLjIwOTEzOS0xLjc5MDg2MSA0LTQgNGgtMTZjLTIuMjA5MTM5LTRlLTMtNC0xLjc5MDg2MS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <Button 
+                variant="ghost" 
+                onClick={onBack}
+                className="flex items-center gap-2 hover:bg-white/80 text-gray-700 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">
+                  Checklist Management
+                </h1>
+                <p className="text-gray-600">Browse and organize PSSR checklist items by category</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="upload" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="upload">Upload Excel</TabsTrigger>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">Upload History</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="upload" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Upload Checklist Excel File
-              </CardTitle>
-              <CardDescription>
-                Upload an Excel file to update the PSSR checklist items. The file should contain columns for ID, Description, Category, Topic, Supporting Evidence, Responsible Party, and Approving Authority.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  variant="outline"
-                  onClick={downloadTemplate}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Download Template
-                </Button>
-              </div>
-
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>File Format Requirements:</strong>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Excel (.xlsx, .xls), CSV, or TSV file format</li>
-                    <li>First row must contain headers</li>
-                    <li>Required columns: ID, Description, Category</li>
-                    <li>Optional columns: Topic, Supporting Evidence, Responsible Party, Approving Authority</li>
-                    <li>Use tab-separated values for best compatibility</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              <div className="space-y-2">
-                <Label htmlFor="file-input">Select File</Label>
-                <Input
-                  id="file-input"
-                  type="file"
-                  accept=".xlsx,.xls,.csv,.tsv"
-                  onChange={handleFileSelect}
-                />
-              </div>
-
-              {selectedFile && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm"><strong>Selected:</strong> {selectedFile.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Size: {(selectedFile.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-              )}
-
-              {uploadProgress > 0 && (
-                <div className="space-y-2">
-                  <Label>Upload Progress</Label>
-                  <Progress value={uploadProgress} />
-                </div>
-              )}
-
-              <Button
-                onClick={handleUpload}
-                disabled={!selectedFile || uploadMutation.isPending}
-                className="w-full"
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        {!categoryStats || Object.keys(categoryStats).length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-lg">
+              <FileText className="w-12 h-12 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Checklist Items</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              No checklist items are currently available. Items will appear here once they are created.
+            </p>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={categoryOrder} strategy={verticalListSortingStrategy}>
+              <Accordion 
+                type="multiple" 
+                value={expandedCategories} 
+                onValueChange={setExpandedCategories}
+                className="space-y-6"
               >
-                {uploadMutation.isPending ? 'Uploading...' : 'Upload File'}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                {categoryOrder.map((category) => (
+                  <DraggableCategory 
+                    key={category} 
+                    category={category} 
+                    count={categoryStats[category] || 0} 
+                  />
+                ))}
+              </Accordion>
+            </SortableContext>
 
-        <TabsContent value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Checklist Overview</CardTitle>
-              <CardDescription>
-                Current checklist items in the database
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {itemsLoading ? (
-                <p>Loading...</p>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card className="p-4">
-                      <div className="text-2xl font-bold">{checklistItems?.length || 0}</div>
-                      <div className="text-sm text-muted-foreground">Total Items</div>
-                    </Card>
-                    <Card className="p-4">
-                      <div className="text-2xl font-bold">{Object.keys(categoryStats || {}).length}</div>
-                      <div className="text-sm text-muted-foreground">Categories</div>
-                    </Card>
-                  </div>
-
-                  {categoryStats && categoryOrder.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900">Categories & Items</h3>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <GripVertical className="w-4 h-4" />
-                          <span>Drag to reorder categories</span>
-                        </div>
+            <DragOverlay>
+              {activeDragId ? (
+                <div className="rounded-xl bg-white shadow-xl border border-gray-200 opacity-90">
+                  <div className="px-6 py-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl flex items-center justify-center border border-blue-200/50">
+                        {getCategoryIcon(activeDragId)}
                       </div>
-                      
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <SortableContext
-                          items={categoryOrder}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <Accordion type="multiple" className="w-full space-y-4">
-                            {categoryOrder.map((category) => {
-                              const count = categoryStats[category] || 0;
-                              return (
-                                <DraggableCategory 
-                                  key={category} 
-                                  category={category} 
-                                  count={count} 
-                                />
-                              );
-                            })}
-                          </Accordion>
-                        </SortableContext>
-                        
-                        <DragOverlay>
-                          {activeDragId ? (
-                            <div className="opacity-90 rotate-3 scale-105">
-                              <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white via-white to-slate-50/50 border border-blue-300 shadow-xl">
-                                <div className="px-6 py-5">
-                                  <div className="flex items-center space-x-4">
-                                    <GripVertical className="w-4 h-4 text-blue-600" />
-                                    <div className="relative">
-                                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center border border-blue-300">
-                                        {getCategoryIcon(activeDragId)}
-                                      </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                      <h4 className="font-semibold text-gray-900">
-                                        {activeDragId}
-                                      </h4>
-                                      <p className="text-sm text-gray-500">
-                                        {categoryStats[activeDragId]} checklist items
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ) : null}
-                        </DragOverlay>
-                      </DndContext>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{activeDragId}</h4>
+                        <p className="text-sm text-gray-500">
+                          {categoryStats[activeDragId] || 0} checklist items
+                        </p>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload History</CardTitle>
-              <CardDescription>
-                Previous checklist file uploads and their results
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {uploadsLoading ? (
-                <p>Loading...</p>
-              ) : uploads?.length === 0 ? (
-                <p className="text-muted-foreground">No uploads yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {uploads?.map((upload) => (
-                    <Card key={upload.id} className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <div className="font-medium">{upload.filename}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(upload.uploaded_at).toLocaleString()}
-                          </div>
-                          <div className="flex gap-4 text-sm">
-                            <span>Processed: {upload.items_processed}</span>
-                            <span className="text-green-600">Added: {upload.items_added}</span>
-                            <span className="text-blue-600">Updated: {upload.items_updated}</span>
-                            {upload.items_failed > 0 && (
-                              <span className="text-red-600">Failed: {upload.items_failed}</span>
-                            )}
-                          </div>
-                          {upload.error_log && (
-                            <details className="mt-2">
-                              <summary className="text-sm text-red-600 cursor-pointer">View Errors</summary>
-                              <pre className="text-xs bg-red-50 p-2 rounded mt-1 whitespace-pre-wrap">
-                                {upload.error_log}
-                              </pre>
-                            </details>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          {getStatusBadge(upload.upload_status)}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+      </div>
     </div>
   );
 };
