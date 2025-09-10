@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
@@ -253,12 +254,30 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <div className="space-y-2">
                     {profileData.phoneNumbers.map((phone, index) => (
                       <div key={index} className="flex gap-2">
-                        <Input
+                        <Select
                           value={phone.countryCode}
-                          onChange={(e) => updatePhoneNumber(index, 'countryCode', e.target.value)}
-                          className="w-24"
-                          placeholder="+964"
-                        />
+                          onValueChange={(value) => updatePhoneNumber(index, 'countryCode', value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="+964" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              { code: '+964', country: 'Iraq', flag: '🇮🇶' },
+                              { code: '+965', country: 'Kuwait', flag: '🇰🇼' },
+                              { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+                              { code: '+971', country: 'UAE', flag: '🇦🇪' },
+                              { code: '+1', country: 'US/Canada', flag: '🇺🇸' },
+                              { code: '+44', country: 'UK', flag: '🇬🇧' },
+                              { code: '+33', country: 'France', flag: '🇫🇷' },
+                              { code: '+49', country: 'Germany', flag: '🇩🇪' }
+                            ].map(({ code, country, flag }) => (
+                              <SelectItem key={code} value={code}>
+                                {flag} {code} - {country}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Input
                           value={phone.number}
                           onChange={(e) => updatePhoneNumber(index, 'number', e.target.value)}

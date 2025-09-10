@@ -17,6 +17,20 @@ import {
 import { CheckCircle, XCircle, User, Mail, Phone, Building } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+const getCountryFlag = (countryCode: string): string => {
+  const flags: Record<string, string> = {
+    '+964': '🇮🇶',
+    '+965': '🇰🇼',
+    '+966': '🇸🇦',
+    '+971': '🇦🇪',
+    '+1': '🇺🇸',
+    '+44': '🇬🇧',
+    '+33': '🇫🇷',
+    '+49': '🇩🇪'
+  };
+  return flags[countryCode] || '🏳️';
+};
+
 interface User {
   id: string;
   firstName: string;
@@ -203,8 +217,8 @@ const AuthenticatorApprovalModal: React.FC<AuthenticatorApprovalModalProps> = ({
             {editedUser.phoneNumbers?.map((phone, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <Input
-                  value={phone.countryCode}
-                  className="w-20"
+                  value={`${getCountryFlag(phone.countryCode)} ${phone.countryCode}`}
+                  className="w-24"
                   readOnly
                 />
                 <Input

@@ -73,12 +73,14 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const [emailError, setEmailError] = useState('');
 
   const countryCodes = [
-    { code: '+964', country: 'Iraq' },
-    { code: '+44', country: 'UK' },
-    { code: '+1', country: 'US' },
-    { code: '+971', country: 'UAE' },
-    { code: '+966', country: 'Saudi Arabia' },
-    { code: '+965', country: 'Kuwait' },
+    { code: '+964', country: 'Iraq', flag: '🇮🇶' },
+    { code: '+44', country: 'UK', flag: '🇬🇧' },
+    { code: '+1', country: 'US/Canada', flag: '🇺🇸' },
+    { code: '+971', country: 'UAE', flag: '🇦🇪' },
+    { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+    { code: '+965', country: 'Kuwait', flag: '🇰🇼' },
+    { code: '+33', country: 'France', flag: '🇫🇷' },
+    { code: '+49', country: 'Germany', flag: '🇩🇪' },
   ];
 
   const companies = ['BGC', 'Kent', 'Others'];
@@ -349,9 +351,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {countryCodes.map(({ code, country }) => (
+                  {countryCodes.map(({ code, country, flag }) => (
                     <SelectItem key={code} value={code}>
-                      {code} {country}
+                      {flag} {code} - {country}
                     </SelectItem>
                   ))}
                 </SelectContent>
