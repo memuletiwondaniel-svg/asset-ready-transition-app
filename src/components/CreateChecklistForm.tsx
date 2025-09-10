@@ -509,7 +509,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             
             <div className="text-center">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                Create Checklist Items
+                Create New Checklist
               </h1>
             </div>
             
