@@ -148,7 +148,7 @@ export type Database = {
       checklists: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           custom_reason: string | null
           id: string
           name: string
@@ -159,7 +159,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           custom_reason?: string | null
           id?: string
           name: string
@@ -170,7 +170,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           custom_reason?: string | null
           id?: string
           name?: string
