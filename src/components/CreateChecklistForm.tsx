@@ -579,7 +579,13 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                              {filteredCategoryItems.map((item) => (
                                <div
                                  key={item.id}
-                                 className="group relative overflow-hidden rounded-xl border border-border/20 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
+                                 className="group relative overflow-hidden rounded-xl border border-border/20 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:scale-[1.01]"
+                                 onClick={(e) => {
+                                   // Prevent clicking on the card from triggering when clicking buttons
+                                   if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'P') {
+                                     handleItemToggle(item.id);
+                                   }
+                                 }}
                                >
                                  {/* Selection Indicator */}
                                  {formData.selected_items.includes(item.id) && (
@@ -592,7 +598,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                                      <div className="flex-shrink-0">
                                        <Checkbox
                                          checked={formData.selected_items.includes(item.id)}
-                                         onChange={() => handleItemToggle(item.id)}
+                                         onCheckedChange={() => handleItemToggle(item.id)}
                                          className="w-5 h-5 rounded-md border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                        />
                                      </div>
@@ -609,7 +615,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                                      
                                      {/* Description */}
                                      <div className="flex-1 min-w-0">
-                                       <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-1">
+                                       <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-1 cursor-pointer">
                                          {item.description}
                                        </p>
                                      </div>
@@ -635,35 +641,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                                        </Button>
                                      </div>
                                    </div>
-                                   
-                                   {/* Supporting Evidence (Collapsible) */}
-                                   {item.supporting_evidence && expandedItems.has(item.id) && (
-                                     <div className="mt-3 pt-3 border-t border-border/20">
-                                       <div className="p-3 bg-muted/30 rounded-lg border border-border/20">
-                                         <p className="text-sm text-muted-foreground font-medium mb-1">Supporting Evidence:</p>
-                                         <p className="text-sm text-foreground leading-relaxed">
-                                           {item.supporting_evidence}
-                                         </p>
-                                       </div>
-                                     </div>
-                                   )}
-                                   
-                                   {/* Show More/Less Button */}
-                                   {item.supporting_evidence && (
-                                     <div className="mt-2 flex justify-end">
-                                       <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           toggleItemExpansion(item.id);
-                                         }}
-                                         className="h-6 px-2 text-xs hover:bg-primary/10 text-muted-foreground hover:text-primary"
-                                       >
-                                         {expandedItems.has(item.id) ? 'Show Less' : 'Show More'}
-                                       </Button>
-                                     </div>
-                                   )}
                                  </div>
                                </div>
                             ))}
@@ -706,7 +683,13 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                          {filteredItems(category.items).map((item) => (
                            <div
                              key={item.id}
-                             className="group relative overflow-hidden rounded-xl border border-border/20 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
+                             className="group relative overflow-hidden rounded-xl border border-border/20 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:scale-[1.01]"
+                             onClick={(e) => {
+                               // Prevent clicking on the card from triggering when clicking buttons
+                               if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'P') {
+                                 handleItemToggle(item.id);
+                               }
+                             }}
                            >
                              {/* Selection Indicator */}
                              {formData.selected_items.includes(item.id) && (
@@ -719,7 +702,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                                  <div className="flex-shrink-0">
                                    <Checkbox
                                      checked={formData.selected_items.includes(item.id)}
-                                     onChange={() => handleItemToggle(item.id)}
+                                     onCheckedChange={() => handleItemToggle(item.id)}
                                      className="w-5 h-5 rounded-md border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                    />
                                  </div>
@@ -736,7 +719,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                                  
                                  {/* Description */}
                                  <div className="flex-1 min-w-0">
-                                   <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-1">
+                                   <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-1 cursor-pointer">
                                      {item.description}
                                    </p>
                                  </div>
@@ -762,35 +745,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                                    </Button>
                                  </div>
                                </div>
-                               
-                               {/* Supporting Evidence (Collapsible) */}
-                               {item.supporting_evidence && expandedItems.has(item.id) && (
-                                 <div className="mt-3 pt-3 border-t border-border/20">
-                                   <div className="p-3 bg-muted/30 rounded-lg border border-border/20">
-                                     <p className="text-sm text-muted-foreground font-medium mb-1">Supporting Evidence:</p>
-                                     <p className="text-sm text-foreground leading-relaxed">
-                                       {item.supporting_evidence}
-                                     </p>
-                                   </div>
-                                 </div>
-                               )}
-                               
-                               {/* Show More/Less Button */}
-                               {item.supporting_evidence && (
-                                 <div className="mt-2 flex justify-end">
-                                   <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       toggleItemExpansion(item.id);
-                                     }}
-                                     className="h-6 px-2 text-xs hover:bg-primary/10 text-muted-foreground hover:text-primary"
-                                   >
-                                     {expandedItems.has(item.id) ? 'Show Less' : 'Show More'}
-                                   </Button>
-                                 </div>
-                               )}
                              </div>
                            </div>
                         ))}
