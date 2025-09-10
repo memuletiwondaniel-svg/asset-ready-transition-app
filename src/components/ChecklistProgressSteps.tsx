@@ -17,14 +17,14 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
             <div className="flex items-center">
-               <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 aspect-square ${
+               <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 aspect-square ${
                  currentStep >= step.number 
-                   ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-xl ring-4 ring-emerald-400/30 shadow-emerald-500/40' 
-                   : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-500 border-2 border-gray-200/60 shadow-sm'
+                   ? 'bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 text-white shadow-2xl ring-4 ring-blue-400/40 shadow-blue-500/50 hover-scale animate-fade-in' 
+                   : 'bg-gradient-to-br from-neutral-100 to-neutral-200 text-neutral-400 border-2 border-neutral-200/70 shadow-sm'
                }`}>
                 <span className="font-semibold text-sm">{step.number}</span>
                  {currentStep >= step.number && (
-                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-300/40 to-teal-400/40 animate-pulse"></div>
+                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/50 to-purple-500/50 animate-pulse"></div>
                  )}
               </div>
               <div className="ml-4 text-left">
@@ -42,10 +42,10 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
             </div>
             
             {index < steps.length - 1 && (
-               <div className={`flex-1 h-1 mx-8 rounded-full transition-all duration-500 min-w-[120px] ${
+               <div className={`flex-1 h-1.5 mx-8 rounded-full transition-all duration-700 min-w-[120px] ${
                  currentStep > step.number 
-                   ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-sm' 
-                   : 'bg-gradient-to-r from-gray-150 to-gray-200'
+                   ? 'bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 shadow-lg shadow-blue-500/30 animate-fade-in' 
+                   : 'bg-gradient-to-r from-neutral-200 to-neutral-300'
                }`}></div>
             )}
           </React.Fragment>
