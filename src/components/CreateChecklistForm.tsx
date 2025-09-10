@@ -265,12 +265,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       className="h-12 w-auto animate-float" 
                     />
                   </div>
-                  <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                      Create New Checklist
-                    </h1>
-                    <p className="text-sm text-muted-foreground font-medium">Step 1 of 2 • Basic Information</p>
-                  </div>
+                   <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                     <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                       Create New Checklist
+                     </h1>
+                   </div>
                 </div>
                 <Button 
                   variant="outline" 
