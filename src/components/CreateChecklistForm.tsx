@@ -501,10 +501,13 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep(1)}
-              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+              className="group relative overflow-hidden bg-gradient-to-r from-background to-background/95 hover:from-secondary/50 hover:to-secondary/30 border-border/40 hover:border-primary/30 text-muted-foreground hover:text-primary transition-all duration-300 px-6 py-2.5 rounded-xl font-medium shadow-sm hover:shadow-md hover:shadow-primary/10 hover:scale-105"
             >
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              Back to Information
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative flex items-center">
+                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+                <span className="group-hover:font-semibold transition-all duration-300">Back to Information</span>
+              </div>
             </Button>
             
             <div className="text-center">
