@@ -103,6 +103,17 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                     <X className="h-4 w-4" />
                     Cancel
                   </Button>
+                  {onDelete && item.id.startsWith('CUST-') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     onClick={handleSave}

@@ -193,12 +193,36 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const handleItemDelete = (itemId: string) => {
     // Remove item from custom items if it's a custom item
     if (itemId.startsWith('CUST-')) {
-      setCustomChecklistItems(prev => prev.filter(item => item.id !== itemId));
-      // Also remove from selected items if it was selected
-      setFormData(prev => ({
-        ...prev,
-        selected_items: prev.selected_items.filter(id => id !== itemId)
-      }));
+      setCustomChecklistItems(prev => {
+        const filteredItems = prev.filter(item => item.id !== itemId);
+        // Re-number the remaining custom items
+        const renumberedItems = filteredItems.map((item, index) => ({
+          ...item,
+          id: `CUST-${String(index + 1).padStart(3, '0')}`
+        }));
+        return renumberedItems;
+      });
+      
+      // Also remove from selected items and update any references to renumbered items
+      setFormData(prev => {
+        const filteredSelected = prev.selected_items.filter(id => id !== itemId);
+        // Update references to renumbered items
+        const updatedSelected = filteredSelected.map(id => {
+          if (id.startsWith('CUST-')) {
+            const oldIndex = parseInt(id.split('-')[1]);
+            const deletedIndex = parseInt(itemId.split('-')[1]);
+            if (oldIndex > deletedIndex) {
+              return `CUST-${String(oldIndex - 1).padStart(3, '0')}`;
+            }
+          }
+          return id;
+        });
+        
+        return {
+          ...prev,
+          selected_items: updatedSelected
+        };
+      });
     }
     // Note: For database items, you would typically make an API call here
   };
