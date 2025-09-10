@@ -114,6 +114,11 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
     setEditingItem(null);
   };
 
+  const handleSaveComplete = () => {
+    // Navigate back to checklist categories view
+    onBack();
+  };
+
   const handleDeleteItem = (item: ChecklistItem) => {
     setDeletingItem(item);
     setShowDeleteModal(true);
@@ -501,6 +506,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           isOpen={showEditModal}
           onClose={handleCloseEditModal}
           item={editingItem}
+          onSaveComplete={handleSaveComplete}
         />
       )}
 

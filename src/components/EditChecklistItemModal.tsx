@@ -17,6 +17,7 @@ interface EditChecklistItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: ChecklistItem;
+  onSaveComplete?: () => void; // New callback for after successful save
 }
 
 interface CustomPerson {
@@ -29,6 +30,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
   isOpen,
   onClose,
   item,
+  onSaveComplete,
 }) => {
   const [formData, setFormData] = useState<UpdateChecklistItemData>({});
   const [selectedResponsibleParty, setSelectedResponsibleParty] = useState<string>('');
@@ -147,6 +149,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
             description: "Checklist item updated successfully.",
           });
           onClose();
+          onSaveComplete?.(); // Navigate back to category view
         },
         onError: (error) => {
           console.error('Failed to update checklist item:', error);
