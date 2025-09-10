@@ -285,30 +285,15 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         rejection_reason: formData.comments
       };
 
-      // Insert user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert(userData)
-        .select()
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Send email notification to authenticator if not admin-created
-      if (!isAdminCreated) {
-        const { error: emailError } = await supabase.functions.invoke('send-user-approval-request', {
-          body: {
-            authenticatorId: formData.authenticatorId,
-            userData: userData,
-            requestId: profileData.user_id
-          }
-        });
-
-        if (emailError) {
-          console.error('Email error:', emailError);
-          // Don't fail the whole process if email fails
+      // Submit registration via secure edge function (handles RLS bypass and email)
+      const { data: submitData, error: submitError } = await supabase.functions.invoke('submit-registration-request', {
+        body: {
+          authenticatorId: formData.authenticatorId,
+          userData
         }
-      }
+      });
+
+      if (submitError) throw submitError;
 
       // Show success modal instead of just closing
       setSubmittedUserEmail(formData.email);
