@@ -545,8 +545,8 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           {/* Search Section */}
           <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md mb-6">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between space-x-4">
-                <div className="flex items-center space-x-4 flex-1">
+              <div className="flex items-center justify-between space-x-6">
+                <div className="flex items-center space-x-6 flex-1">
                   <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
@@ -558,10 +558,14 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   </div>
                   <Button 
                     onClick={() => setShowCreateItem(true)}
-                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0 px-6 py-2.5 rounded-xl font-medium"
+                    variant="outline"
+                    className="group relative overflow-hidden border-2 border-dashed border-muted-foreground/30 bg-transparent hover:border-primary hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all duration-300 px-6 py-2.5 rounded-xl font-medium hover:shadow-lg hover:shadow-primary/20 hover:scale-105"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Item
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center">
+                      <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+                      <span className="group-hover:font-semibold transition-all duration-300">Create Item</span>
+                    </div>
                   </Button>
                 </div>
                 <div className="text-sm text-muted-foreground font-medium">
@@ -680,7 +684,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <ScrollArea className={category.name === "General" ? "h-80" : "h-96"}>
+                        <ScrollArea className={category.name === "General" ? "h-64" : "h-96"}>
                           <div className="grid gap-3">
                             {filteredCategoryItems.map((item) => (
                               <ChecklistItemCard key={item.id} item={item} />
