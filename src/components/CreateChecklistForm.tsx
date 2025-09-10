@@ -508,11 +508,29 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
               </div>
               <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Create New Checklist
+                  Select Checklist Items
                 </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Choose items for: {formData.name}
+                </p>
               </div>
             </div>
             <div className="flex space-x-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep(1)}
+                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+                Back to Information
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={onBack}
+                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
         </div>
