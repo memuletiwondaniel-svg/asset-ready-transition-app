@@ -70,7 +70,8 @@ export const useUpdateChecklistItem = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedItem) => {
+      console.log('Update successful, invalidating queries...', updatedItem);
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
     },
