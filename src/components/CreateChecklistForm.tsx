@@ -243,10 +243,9 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           }
         }}
       >
-        {/* Enhanced Selection Indicator */}
+        {/* Enhanced Selection Indicator - removed top taper */}
         {isSelected && (
           <>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-hover to-primary"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none"></div>
             {/* Glow effect */}
             <div className="absolute inset-0 rounded-xl ring-1 ring-primary/20 pointer-events-none"></div>
@@ -313,17 +312,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 </Badge>
               </div>
             )}
-            
-            {/* Click to view indicator */}
-            <div className="flex-shrink-0">
-              <div className={`text-xs px-2 py-1 rounded-md transition-all duration-300 ${
-                isSelected 
-                  ? 'text-primary/70 bg-primary/10' 
-                  : 'text-muted-foreground/0 group-hover:text-muted-foreground bg-muted/0 group-hover:bg-muted/50'
-              }`}>
-                Click to view
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -603,11 +591,12 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             </CardContent>
           </Card>
 
-          {/* Checklist Items */}
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <TabsList className="grid grid-cols-auto gap-2 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm">
+          {/* Category Filters - Two Rows Layout */}
+          <div className="mb-6">
+            <div className="grid grid-cols-7 gap-2">
+              {/* First Row */}
+              <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="col-span-7">
+                <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full">
                   <TabsTrigger
                     value="all"
                     className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
@@ -615,10 +604,22 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-center h-full">
-                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">All Categories</span>
+                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">All</span>
                     </div>
                   </TabsTrigger>
-                  {categories.map((category) => {
+                  
+                  <TabsTrigger
+                    value="not_selected"
+                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-center h-full">
+                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">Not Selected</span>
+                    </div>
+                  </TabsTrigger>
+
+                  {categories.slice(0, 5).map((category) => {
                     return (
                       <TabsTrigger
                         key={category.id}
@@ -634,8 +635,37 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     );
                   })}
                 </TabsList>
-              </div>
+                
+                {/* Second Row */}
+                {categories.length > 5 && (
+                  <TabsList className="grid grid-cols-7 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm w-full mt-2">
+                    {categories.slice(5).map((category, index) => {
+                      return (
+                        <TabsTrigger
+                          key={category.id}
+                          value={category.id}
+                          className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="relative z-10 flex items-center justify-center h-full">
+                            <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">{category.name}</span>
+                          </div>
+                        </TabsTrigger>
+                      );
+                    })}
+                    {/* Fill remaining slots with empty space */}
+                    {Array.from({ length: 7 - categories.slice(5).length }).map((_, index) => (
+                      <div key={`empty-${index}`} className="h-10"></div>
+                    ))}
+                  </TabsList>
+                )}
+              </Tabs>
             </div>
+          </div>
+
+          {/* Checklist Items */}
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
 
             {/* All Categories Tab Content */}
             <TabsContent value="all" className="mt-0">
@@ -682,6 +712,41 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   );
                 })}
               </div>
+            </TabsContent>
+
+            {/* Not Selected Tab Content */}
+            <TabsContent value="not_selected" className="mt-0">
+              <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <CardTitle className="text-2xl font-bold">Not Selected Items</CardTitle>
+                        <CardDescription>
+                          Items that are not currently selected for your checklist
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-muted-foreground">
+                        {unselectedItems.length}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        items remaining
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-96">
+                    <div className="grid gap-3">
+                      {filteredItems(unselectedItems).map((item) => (
+                        <ChecklistItemCard key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Individual Category Tab Contents */}
