@@ -373,16 +373,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="max-w-7xl mx-auto px-8 mb-8">
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Progress</span>
-            <span className="text-muted-foreground">{getStepProgress()}%</span>
-          </div>
-          <Progress value={getStepProgress()} className="h-2" />
-        </div>
-      </div>
 
       {/* Search and Summary */}
       <div className="max-w-7xl mx-auto px-8 mb-6">
