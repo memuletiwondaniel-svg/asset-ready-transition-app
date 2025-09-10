@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus } from 'lucide-react';
-import { pssrChecklistData, ChecklistItem } from '@/data/pssrChecklistData';
+import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories } from '@/hooks/useChecklistItems';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 
@@ -30,8 +30,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [currentStep, setCurrentStep] = useState(1);
   const [showCreateItem, setShowCreateItem] = useState(false);
   const [showItemSuccess, setShowItemSuccess] = useState(false);
-  const [newCreatedItem, setNewCreatedItem] = useState<ChecklistItem | null>(null);
-  const [customChecklistItems, setCustomChecklistItems] = useState<ChecklistItem[]>([]);
+  const [newCreatedItem, setNewCreatedItem] = useState<DBChecklistItem | null>(null);
+  const [customChecklistItems, setCustomChecklistItems] = useState<DBChecklistItem[]>([]);
+  
+  const { data: checklistItems = [], isLoading } = useChecklistItems();
+  const { data: availableCategories = [] } = useChecklistCategories();
   
   const [formData, setFormData] = useState<NewChecklistData>({
     name: '',
@@ -42,8 +45,8 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Combine original and custom items
-  const allChecklistItems = [...pssrChecklistData, ...customChecklistItems];
+  // Combine database items and custom items
+  const allChecklistItems = [...checklistItems, ...customChecklistItems];
 
   // Checklist reasons
   const checklistReasons = [
@@ -54,62 +57,66 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     'Others'
   ];
 
-  // Categories with icons and colors - use dynamic data
-  const categories = [
-    { 
-      id: 'Plant Integrity', 
-      name: 'Plant Integrity', 
-      icon: Shield, 
-      color: 'text-blue-600 bg-blue-100 border-blue-200',
-      items: allChecklistItems.filter(item => item.category === 'Technical Integrity')
-    },
-    { 
-      id: 'Process Safety', 
-      name: 'Process Safety', 
-      icon: AlertTriangle, 
-      color: 'text-orange-600 bg-orange-100 border-orange-200',
-      items: allChecklistItems.filter(item => item.category === 'Health & Safety')
-    },
-    { 
-      id: 'People', 
-      name: 'People', 
-      icon: Users, 
-      color: 'text-green-600 bg-green-100 border-green-200',
-      items: allChecklistItems.filter(item => item.category === 'Start-Up Readiness')
-    },
-    { 
-      id: 'Documentation', 
-      name: 'Documentation', 
-      icon: FileText, 
-      color: 'text-purple-600 bg-purple-100 border-purple-200',
-      items: allChecklistItems.filter(item => item.category === 'General')
-    },
-    { 
-      id: 'Health & Safety', 
-      name: 'Health & Safety', 
-      icon: Heart, 
-      color: 'text-red-600 bg-red-100 border-red-200',
-      items: allChecklistItems.filter(item => item.category === 'Health & Safety')
-    },
-    { 
-      id: 'PSSR Walkdown', 
-      name: 'PSSR Walkdown', 
-      icon: ClipboardCheck, 
-      color: 'text-teal-600 bg-teal-100 border-teal-200',
-      items: allChecklistItems.filter(item => item.category === 'Technical Integrity')
-    }
-  ];
+  // Create categories dynamically from database items
+  const categories = React.useMemo(() => {
+    const categoryMap = new Map();
+    
+    // Group items by category
+    allChecklistItems.forEach(item => {
+      if (!categoryMap.has(item.category)) {
+        categoryMap.set(item.category, []);
+      }
+      categoryMap.get(item.category).push(item);
+    });
+
+    // Create category objects with appropriate icons and colors
+    const categoryConfigs = [
+      { name: 'Civil', icon: Shield, color: 'text-blue-600 bg-blue-100 border-blue-200' },
+      { name: 'Documentation', icon: FileText, color: 'text-purple-600 bg-purple-100 border-purple-200' },
+      { name: 'Electrical', icon: AlertTriangle, color: 'text-yellow-600 bg-yellow-100 border-yellow-200' },
+      { name: 'Emergency Response', icon: Heart, color: 'text-red-600 bg-red-100 border-red-200' },
+      { name: 'General', icon: ClipboardCheck, color: 'text-gray-600 bg-gray-100 border-gray-200' },
+      { name: 'Hardware Integrity', icon: Shield, color: 'text-green-600 bg-green-100 border-green-200' },
+      { name: 'Health & Safety', icon: Heart, color: 'text-pink-600 bg-pink-100 border-pink-200' },
+      { name: 'Process Safety', icon: AlertTriangle, color: 'text-orange-600 bg-orange-100 border-orange-200' },
+      { name: 'Technical Integrity', icon: Users, color: 'text-teal-600 bg-teal-100 border-teal-200' },
+    ];
+
+    return Array.from(categoryMap.entries()).map(([categoryName, items]) => {
+      const config = categoryConfigs.find(c => c.name === categoryName) || 
+                    { name: categoryName, icon: FileText, color: 'text-gray-600 bg-gray-100 border-gray-200' };
+      
+      return {
+        id: categoryName,
+        name: categoryName,
+        icon: config.icon,
+        color: config.color,
+        items: items
+      };
+    });
+  }, [allChecklistItems]);
 
   // Get unselected items
   const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
 
-  const handleCreateNewItem = (newItemData: Omit<ChecklistItem, 'id'>) => {
+  const handleCreateNewItem = (newItemData: any) => {
     // Generate a new ID
     const newId = `CUST-${String(customChecklistItems.length + 1).padStart(3, '0')}`;
     
-    const newItem: ChecklistItem = {
+    const newItem: DBChecklistItem = {
       id: newId,
-      ...newItemData
+      description: newItemData.description,
+      category: newItemData.category,
+      topic: newItemData.topic || null,
+      supporting_evidence: newItemData.supportingEvidence || null,
+      responsible_party: newItemData.responsibleParty || null,
+      approving_authority: newItemData.approvingAuthority || null,
+      is_active: true,
+      version: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: null,
+      updated_by: null,
     };
 
     // Add to custom items and automatically select it
@@ -162,16 +169,17 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     return currentStep === 1 ? 50 : 100;
   };
 
-  const filteredItems = (categoryItems: ChecklistItem[]) => {
+  const filteredItems = (categoryItems: DBChecklistItem[]) => {
     return categoryItems.filter(item => {
       const matchesSearch = searchQuery === '' || 
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.supportingEvidence.toLowerCase().includes(searchQuery.toLowerCase());
+        (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.topic && item.topic.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesSearch;
     });
   };
 
-  const getCategoryStats = (categoryItems: ChecklistItem[]) => {
+  const getCategoryStats = (categoryItems: DBChecklistItem[]) => {
     const total = categoryItems.length;
     const selected = categoryItems.filter(item => formData.selected_items.includes(item.id)).length;
     return { total, selected, percentage: total > 0 ? Math.round((selected / total) * 100) : 0 };
@@ -183,7 +191,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       <CreateChecklistItemForm 
         onBack={() => setShowCreateItem(false)}
         onComplete={handleCreateNewItem}
-        existingCategories={[...new Set(allChecklistItems.map(item => item.category))]}
+        existingCategories={availableCategories}
       />
     );
   }
@@ -196,6 +204,18 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         onBackToChecklist={handleItemSuccessBack}
         onCreateAnother={handleCreateAnother}
       />
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground font-medium">Loading checklist items...</p>
+        </div>
+      </div>
     );
   }
 
@@ -476,7 +496,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     {allChecklistItems.filter(item => 
                       searchQuery === '' || 
                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      item.supportingEvidence.toLowerCase().includes(searchQuery.toLowerCase())
+                      (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
                     ).map((item) => (
                       <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
                         customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
@@ -501,9 +521,9 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                             </Badge>
                           </div>
                           <p className="text-sm text-foreground">{item.description}</p>
-                          <p className="text-xs text-muted-foreground">{item.supportingEvidence}</p>
+                          <p className="text-xs text-muted-foreground">{item.supporting_evidence}</p>
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Authority: {item.approvingAuthority}</span>
+                            <span>Authority: {item.approving_authority}</span>
                           </div>
                         </div>
                       </div>
@@ -589,10 +609,10 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                               </div>
                               <p className="text-sm text-foreground">{item.description}</p>
                               <p className="text-xs text-muted-foreground font-medium">
-                                Evidence: {item.supportingEvidence}
+                                Evidence: {item.supporting_evidence}
                               </p>
                               <div className="text-xs text-muted-foreground">
-                                Approving Authority: {item.approvingAuthority}
+                                Approving Authority: {item.approving_authority}
                               </div>
                             </div>
                           </div>
@@ -640,7 +660,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                             </Badge>
                           </div>
                           <p className="text-sm">{item.description}</p>
-                          <p className="text-xs text-muted-foreground">{item.supportingEvidence}</p>
+                          <p className="text-xs text-muted-foreground">{item.supporting_evidence}</p>
                         </div>
                       </div>
                     ))}
