@@ -134,7 +134,20 @@ export const useDeleteChecklistItem = () => {
       if (error) throw error;
       return itemId;
     },
-    onSuccess: () => {
+    onMutate: async (itemId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['checklist-items'] });
+      const previousItems = queryClient.getQueryData<ChecklistItem[]>(['checklist-items']);
+      if (previousItems) {
+        queryClient.setQueryData<ChecklistItem[]>(['checklist-items'], previousItems.filter(i => i.id !== itemId));
+      }
+      return { previousItems };
+    },
+    onError: (_err, _itemId, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(['checklist-items'], context.previousItems);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
     },

@@ -130,7 +130,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   };
 
   // Draggable Category Component
-  const DraggableCategory = ({ category, count }: { category: string; count: number }) => {
+  const DraggableCategory = ({ category, count, isOpen }: { category: string; count: number; isOpen: boolean }) => {
     const {
       attributes,
       listeners,
@@ -155,7 +155,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         {...attributes}
       >
         <AccordionItem value={category} className="border-0 mb-6">
-          <div className="group relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-white/20 shadow-2xl hover:shadow-4xl transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2">
+          <div className={`group relative overflow-hidden rounded-3xl backdrop-blur-xl border shadow-2xl transition-all duration-500 hover:shadow-4xl hover:scale-[1.03] hover:-translate-y-2 ${isOpen ? 'bg-primary/5 border-primary/30 ring-2 ring-primary/30' : 'bg-white/70 border-white/20'}`}>
             {/* Microsoft Fluent Design Acrylic Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-white/60 to-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             {/* Animated mesh gradient background */}
@@ -170,7 +170,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
             </div>
 
             {/* Category Header */}
-            <AccordionTrigger className="hover:no-underline px-8 py-7 relative z-10 group-hover:bg-white/20 transition-all duration-500">
+            <AccordionTrigger className={`hover:no-underline px-8 py-7 relative z-10 transition-all duration-500 ${isOpen ? 'bg-primary/5' : 'group-hover:bg-white/20'}`}>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center space-x-6">
                   {/* Drag Handle */}
@@ -193,7 +193,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:via-purple-700 group-hover:to-blue-700 transition-all duration-500">
+                    <h4 className={`text-xl font-bold bg-gradient-to-r bg-clip-text text-transparent transition-all duration-500 ${isOpen ? 'from-blue-700 via-purple-700 to-blue-700' : 'from-gray-900 via-blue-900 to-gray-900 group-hover:from-blue-700 group-hover:via-purple-700 group-hover:to-blue-700'}`}>
                       {category}
                     </h4>
                     <p className="text-sm font-medium text-gray-600 group-hover:text-blue-700 transition-all duration-300">
@@ -465,7 +465,8 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                   <DraggableCategory 
                     key={category} 
                     category={category} 
-                    count={categoryStats[category] || 0} 
+                    count={categoryStats[category] || 0}
+                    isOpen={expandedCategories.includes(category)} 
                   />
                 ))}
               </Accordion>
