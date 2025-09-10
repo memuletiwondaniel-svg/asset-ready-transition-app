@@ -446,86 +446,96 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           {/* Form Content */}
           <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-32">
             <div className="w-full max-w-4xl">
-              {/* Remove the Card wrapper but keep the content structure */}
-              <div className="space-y-6 px-8 py-6">
-                {/* Checklist Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-base font-semibold">
-                    Checklist Name <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter a descriptive name for your checklist"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="h-12"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Choose a clear, descriptive name that identifies the purpose of this checklist
-                  </p>
-                </div>
-
-                {/* Reason for Checklist */}
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">
-                    Reason for Checklist <span className="text-destructive">*</span>
-                  </Label>
-                  <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Select the primary reason for creating this checklist" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                      {checklistReasons.map((reason) => (
-                        <SelectItem key={reason} value={reason} className="cursor-pointer">
-                          {reason}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {/* Custom Reason Input */}
-                  {formData.reason === 'Others' && (
-                    <div className="mt-4 space-y-2">
-                      <Label htmlFor="customReason" className="text-sm font-medium">
-                        Please specify the reason
+              <Card className="border border-white/30 bg-white/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 fluent-card">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-lg"></div>
+                <div className="relative z-10">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Checklist Information</CardTitle>
+                    <CardDescription>
+                      Provide basic information about your new PSSR checklist
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Checklist Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-base font-semibold">
+                        Checklist Name <span className="text-destructive">*</span>
                       </Label>
                       <Input
-                        id="customReason"
-                        placeholder="Enter your custom reason"
-                        value={customReason}
-                        onChange={(e) => setCustomReason(e.target.value)}
-                        className="h-10"
+                        id="name"
+                        placeholder="Enter a descriptive name for your checklist"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="h-12"
                       />
+                      <p className="text-sm text-muted-foreground">
+                        Choose a clear, descriptive name that identifies the purpose of this checklist
+                      </p>
                     </div>
-                  )}
-                </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-between items-center pt-6 border-t border-border/20">
-                  <Button 
-                    onClick={onBack}
-                    variant="outline"
-                    className="group relative overflow-hidden bg-gradient-to-r from-muted/80 to-muted/60 border-2 border-border/30 hover:border-destructive/40 px-6 py-3 rounded-xl font-medium text-muted-foreground hover:text-destructive transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg hover:shadow-destructive/10"
-                  >
-                    {/* Background gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 via-destructive/10 to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                    
-                    <div className="relative flex items-center">
-                      <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-all duration-300 ease-out" />
-                      <span className="font-semibold">Cancel</span>
+                    {/* Reason for Checklist */}
+                    <div className="space-y-2">
+                      <Label className="text-base font-semibold">
+                        Reason for Checklist <span className="text-destructive">*</span>
+                      </Label>
+                      <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select the primary reason for creating this checklist" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                          {checklistReasons.map((reason) => (
+                            <SelectItem key={reason} value={reason} className="cursor-pointer">
+                              {reason}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {/* Custom Reason Input */}
+                      {formData.reason === 'Others' && (
+                        <div className="mt-4 space-y-2">
+                          <Label htmlFor="customReason" className="text-sm font-medium">
+                            Please specify the reason
+                          </Label>
+                          <Input
+                            id="customReason"
+                            placeholder="Enter your custom reason"
+                            value={customReason}
+                            onChange={(e) => setCustomReason(e.target.value)}
+                            className="h-10"
+                          />
+                        </div>
+                      )}
                     </div>
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleNext}
-                    disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
-                    className="fluent-button bg-primary hover:bg-primary-hover px-8"
-                  >
-                    Next: Select Items
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-between items-center pt-6 border-t border-border/20">
+                      <Button 
+                        onClick={onBack}
+                        variant="outline"
+                        className="group relative overflow-hidden bg-gradient-to-r from-muted/80 to-muted/60 border-2 border-border/30 hover:border-destructive/40 px-6 py-3 rounded-xl font-medium text-muted-foreground hover:text-destructive transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg hover:shadow-destructive/10"
+                      >
+                        {/* Background gradient overlay on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 via-destructive/10 to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                        
+                        <div className="relative flex items-center">
+                          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-all duration-300 ease-out" />
+                          <span className="font-semibold">Cancel</span>
+                        </div>
+                      </Button>
+                      
+                      <Button 
+                        onClick={handleNext}
+                        disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
+                        className="fluent-button bg-primary hover:bg-primary-hover px-8"
+                      >
+                        Next: Select Items
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </CardContent>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </div>
