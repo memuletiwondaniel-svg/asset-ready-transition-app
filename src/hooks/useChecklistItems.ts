@@ -71,7 +71,11 @@ export const useUpdateChecklistItem = () => {
       return data;
     },
     onSuccess: (updatedItem) => {
-      console.log('Update successful, invalidating queries...', updatedItem);
+      console.log('Update successful, updating cache and invalidating queries...', updatedItem);
+      queryClient.setQueryData<ChecklistItem[] | undefined>(['checklist-items'], (prev) => {
+        if (!prev) return prev;
+        return prev.map((item) => (item.id === updatedItem.id ? (updatedItem as ChecklistItem) : item));
+      });
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
     },
