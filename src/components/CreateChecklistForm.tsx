@@ -59,7 +59,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     'Others'
   ];
 
-  // Create categories dynamically from database items
+  // Create categories with fixed order
   const categories = React.useMemo(() => {
     const categoryMap = new Map();
     
@@ -71,31 +71,31 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       categoryMap.get(item.category).push(item);
     });
 
-    // Create category objects with appropriate icons and colors
-    const categoryConfigs = [
-      { name: 'Civil', icon: Shield, color: 'text-blue-600 bg-blue-100 border-blue-200' },
-      { name: 'Documentation', icon: FileText, color: 'text-purple-600 bg-purple-100 border-purple-200' },
-      { name: 'Electrical', icon: AlertTriangle, color: 'text-yellow-600 bg-yellow-100 border-yellow-200' },
-      { name: 'Emergency Response', icon: Heart, color: 'text-red-600 bg-red-100 border-red-200' },
-      { name: 'General', icon: ClipboardCheck, color: 'text-gray-600 bg-gray-100 border-gray-200' },
-      { name: 'Hardware Integrity', icon: Shield, color: 'text-green-600 bg-green-100 border-green-200' },
-      { name: 'Health & Safety', icon: Heart, color: 'text-pink-600 bg-pink-100 border-pink-200' },
-      { name: 'Process Safety', icon: AlertTriangle, color: 'text-orange-600 bg-orange-100 border-orange-200' },
-      { name: 'Technical Integrity', icon: Users, color: 'text-teal-600 bg-teal-100 border-teal-200' },
+    // Fixed order as requested
+    const orderedCategoryNames = [
+      'General',
+      'Hardware Integrity', 
+      'Process Safety',
+      'Documentation',
+      'Organization',
+      'Health & Safety',
+      'Emergency Response',
+      'HSE',
+      'Electrical',
+      'Mechanical',
+      'Instrumentation',
+      'Civil',
+      'Rotating'
     ];
 
-    return Array.from(categoryMap.entries()).map(([categoryName, items]) => {
-      const config = categoryConfigs.find(c => c.name === categoryName) || 
-                    { name: categoryName, icon: FileText, color: 'text-gray-600 bg-gray-100 border-gray-200' };
-      
-      return {
+    // Create category objects in the specified order
+    return orderedCategoryNames
+      .filter(categoryName => categoryMap.has(categoryName))
+      .map(categoryName => ({
         id: categoryName,
         name: categoryName,
-        icon: config.icon,
-        color: config.color,
-        items: items
-      };
-    });
+        items: categoryMap.get(categoryName) || []
+      }));
   }, [allChecklistItems]);
 
   // Get unselected items
@@ -492,7 +492,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             <div className="fluent-glassmorphism border border-border/30 backdrop-blur-md rounded-2xl p-6 mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-2xl pointer-events-none"></div>
               <div className="relative z-10">
-                <TabsList className="w-full h-auto p-1 grid grid-cols-2 lg:grid-cols-5 gap-1 bg-transparent">
+                <TabsList className="w-full h-auto p-1 grid grid-cols-7 lg:grid-cols-7 gap-1 bg-transparent">
                   <TabsTrigger
                     value="all"
                     className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
@@ -531,24 +531,20 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   if (filteredCategoryItems.length === 0) return null;
 
                   const stats = getCategoryStats(category.items);
-                  const Icon = category.icon;
 
                   return (
                     <Card key={category.id} className="fluent-glassmorphism border-border/30 backdrop-blur-md">
                       <CardHeader className="pb-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10">
-                              <Icon className="h-6 w-6 text-primary" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-xl font-bold">{category.name}</CardTitle>
-                              <CardDescription className="text-sm">
-                                {stats.selected} of {stats.total} items selected
-                                {stats.selected > 0 && ` (${stats.percentage}%)`}
-                              </CardDescription>
-                            </div>
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <CardTitle className="text-xl font-bold">{category.name}</CardTitle>
+                            <CardDescription className="text-sm">
+                              {stats.selected} of {stats.total} items selected
+                              {stats.selected > 0 && ` (${stats.percentage}%)`}
+                            </CardDescription>
                           </div>
+                        </div>
                           {stats.selected > 0 && (
                             <div className="flex items-center space-x-2">
                               <Progress value={stats.percentage} className="w-20 h-2" />
@@ -634,9 +630,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10">
-                          <category.icon className="h-8 w-8 text-primary" />
-                        </div>
                         <div>
                           <CardTitle className="text-2xl font-bold">{category.name}</CardTitle>
                           <CardDescription>
