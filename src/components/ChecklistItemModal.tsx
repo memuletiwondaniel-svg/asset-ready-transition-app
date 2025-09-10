@@ -290,98 +290,149 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
-            {item.id} - {response} Response
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="font-semibold mb-2 text-gray-900">Checklist Item</h4>
-            <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
+      <DialogContent className="max-w-5xl max-h-[92vh] border-0 p-0 overflow-hidden bg-transparent">
+        {/* Microsoft Fluent Background Layer */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-card/85 backdrop-blur-2xl"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-secondary/5"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-primary/5"></div>
+        
+        {/* Acrylic noise texture */}
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}></div>
+        
+        {/* Glass layer */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/10 via-white/5 to-transparent rounded-xl"></div>
+        
+        {/* Content Layer */}
+        <div className="relative z-10 flex flex-col h-full">
+          {/* Header */}
+          <div className="flex-shrink-0 p-8 pb-6 border-b border-border/20 bg-gradient-to-r from-card/20 to-card/10 backdrop-blur-sm">
+            <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+              {item.id} - {response} Response
+            </DialogTitle>
           </div>
 
-          {renderContent()}
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full px-8 py-6 overflow-y-auto">
+              <div className="space-y-8">
+                <div className="relative p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/20 backdrop-blur-sm overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+                  <h4 className="font-bold mb-3 text-foreground text-lg relative z-10">Checklist Item</h4>
+                  <p className="text-sm text-foreground leading-relaxed relative z-10">{item.description}</p>
+                </div>
 
-          {/* Enhanced File Upload Section */}
-          <div className="bg-white rounded-lg border p-4">
-            <Label className="text-sm font-semibold text-gray-700 mb-3 block">Supporting Documents</Label>
-            <div className="border-2 border-dashed border-blue-200 rounded-xl p-6 text-center bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
-              <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto mb-3">
-                <Upload className="h-6 w-6 text-blue-600" />
-              </div>
-              <p className="text-gray-600 text-sm mb-2">
-                {response === 'YES' ? getDocumentGuidance(item) : 'Upload supporting documents'}
-              </p>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload-checklist"
-              />
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                onClick={() => document.getElementById('file-upload-checklist')?.click()}
-              >
-                Choose Files
-              </Button>
-            </div>
-            
-            {formData.files.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <h5 className="text-sm font-medium text-gray-700">Uploaded Files</h5>
-                {formData.files.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 rounded">
-                        <Upload className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                {renderContent()}
+
+                {/* Enhanced File Upload Section */}
+                <div className="relative bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 p-6 backdrop-blur-sm overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent"></div>
+                  <div className="relative z-10">
+                    <Label className="text-lg font-semibold text-foreground mb-4 block">Supporting Documents</Label>
+                    <div className="relative border-2 border-dashed border-primary/30 rounded-xl p-8 text-center bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 transition-all duration-300 backdrop-blur-sm overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        <div className="p-4 bg-primary/20 rounded-full w-fit mx-auto mb-4 backdrop-blur-sm">
+                          <Upload className="h-8 w-8 text-primary" />
+                        </div>
+                        <p className="text-foreground text-sm mb-3 font-medium">
+                          {response === 'YES' ? getDocumentGuidance(item) : 'Upload supporting documents'}
+                        </p>
+                        <input
+                          type="file"
+                          multiple
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          id="file-upload-checklist"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="relative overflow-hidden border-2 border-primary/30 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-300 backdrop-blur-sm group"
+                          onClick={() => document.getElementById('file-upload-checklist')?.click()}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <span className="relative z-10">Choose Files</span>
+                        </Button>
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    
+                    {formData.files.length > 0 && (
+                      <div className="mt-6 space-y-3">
+                        <h5 className="text-sm font-semibold text-foreground">Uploaded Files</h5>
+                        {formData.files.map((file, index) => (
+                          <div key={index} className="relative flex items-center justify-between p-4 bg-gradient-to-r from-card/60 to-card/40 rounded-lg border border-border/20 backdrop-blur-sm overflow-hidden group hover:from-card/80 hover:to-card/60 transition-all duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div className="relative z-10 flex items-center space-x-4">
+                              <div className="p-2 bg-primary/20 rounded-lg backdrop-blur-sm">
+                                <Upload className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">{file.name}</p>
+                                <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                              className="relative z-10 text-destructive hover:text-white hover:bg-destructive/90 transition-all duration-300"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
-            )}
+            </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-6 border-t">
-            <Button variant="outline" onClick={onClose} className="px-6">
-              Cancel
-            </Button>
-            <Button variant="outline" onClick={handleSave} className="px-6">
-              Save Draft
-            </Button>
-            {response === 'YES' && (
-              <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 text-white px-6">
-                Submit for Review
+          {/* Footer Actions */}
+          <div className="flex-shrink-0 p-8 pt-6 border-t border-border/20 bg-gradient-to-r from-card/10 to-card/5 backdrop-blur-sm">
+            <div className="flex justify-end space-x-4">
+              <Button 
+                variant="outline" 
+                onClick={onClose} 
+                className="relative overflow-hidden px-6 border-2 border-border/30 hover:border-muted-foreground/40 transition-all duration-300 backdrop-blur-sm"
+              >
+                Cancel
               </Button>
-            )}
-            {response === 'NO' && (
-              <Button variant="destructive" onClick={handleSubmit} className="px-6">
-                Submit Deviation Request
+              <Button 
+                variant="outline" 
+                onClick={handleSave} 
+                className="relative overflow-hidden px-6 border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all duration-300 backdrop-blur-sm"
+              >
+                Save Draft
               </Button>
-            )}
-            {response === 'N/A' && (
-              <Button onClick={handleSubmit} className="bg-gray-600 hover:bg-gray-700 text-white px-6">
-                Mark as N/A
-              </Button>
-            )}
+              {response === 'YES' && (
+                <Button 
+                  onClick={handleSubmit} 
+                  className="relative overflow-hidden px-6 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/20 transition-all duration-300"
+                >
+                  Submit for Review
+                </Button>
+              )}
+              {response === 'NO' && (
+                <Button 
+                  onClick={handleSubmit} 
+                  className="relative overflow-hidden px-6 bg-gradient-to-r from-destructive to-destructive/80 hover:from-destructive/90 hover:to-destructive shadow-lg shadow-destructive/20 transition-all duration-300"
+                >
+                  Submit Deviation Request
+                </Button>
+              )}
+              {response === 'N/A' && (
+                <Button 
+                  onClick={handleSubmit} 
+                  className="relative overflow-hidden px-6 bg-gradient-to-r from-muted-foreground to-muted-foreground/80 hover:from-muted-foreground/90 hover:to-muted-foreground text-white shadow-lg shadow-muted-foreground/20 transition-all duration-300"
+                >
+                  Mark as N/A
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

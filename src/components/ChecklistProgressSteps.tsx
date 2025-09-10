@@ -20,7 +20,7 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 aspect-square ${
                  currentStep >= step.number 
                    ? 'bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 text-white shadow-2xl ring-4 ring-blue-400/40 shadow-blue-500/50 hover-scale animate-fade-in' 
-                   : 'bg-gradient-to-br from-neutral-100 to-neutral-200 text-neutral-400 border-2 border-neutral-200/70 shadow-sm'
+                   : 'bg-gradient-to-br from-card/60 to-card/40 text-muted-foreground border-2 border-border/30 shadow-sm backdrop-blur-sm'
                }`}>
                 <span className="font-semibold text-sm">{step.number}</span>
                  {currentStep >= step.number && (
@@ -45,7 +45,7 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
                <div className={`flex-1 h-1.5 mx-8 rounded-full transition-all duration-700 min-w-[120px] ${
                  currentStep > step.number 
                    ? 'bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 shadow-lg shadow-blue-500/30 animate-fade-in' 
-                   : 'bg-gradient-to-r from-neutral-200 to-neutral-300'
+                   : 'bg-gradient-to-r from-border/40 to-border/20 backdrop-blur-sm'
                }`}></div>
             )}
           </div>
