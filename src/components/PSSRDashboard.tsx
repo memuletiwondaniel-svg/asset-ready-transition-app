@@ -27,9 +27,10 @@ import {
 interface PSSRDashboardProps {
   pssrId: string;
   onBack: () => void;
+  onNavigateToCategory?: (categoryName: string) => void;
 }
 
-const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack }) => {
+const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack, onNavigateToCategory }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Mock comprehensive PSSR data
@@ -394,7 +395,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack }) => {
                   {Object.entries(pssrData.categoryProgress).map(([category, progress]) => {
                     const IconComponent = getCategoryIcon(category);
                     return (
-                      <Card key={category} className="border-l-4 border-l-blue-500">
+                      <Card 
+                        key={category} 
+                        className="border-l-4 border-l-blue-500 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                        onClick={() => onNavigateToCategory?.(formatCategoryName(category))}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-2">
@@ -411,6 +416,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack }) => {
                               <span className="text-xs font-bold">{progress.percentage}%</span>
                             </div>
                             <Progress value={progress.percentage} className="w-full h-2" />
+                          </div>
+                          <div className="mt-3 text-right">
+                            <span className="text-xs text-blue-600 font-medium hover:text-blue-800">
+                              View Items →
+                            </span>
                           </div>
                         </CardContent>
                       </Card>

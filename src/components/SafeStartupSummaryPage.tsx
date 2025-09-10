@@ -43,6 +43,7 @@ import DraggablePSSRCard from './DraggablePSSRCard';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
+import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
 
 interface SafeStartupSummaryPageProps {
@@ -74,10 +75,11 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'manage-checklist'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
   const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -300,6 +302,11 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     setActiveView('details');
   };
 
+  const handleNavigateToCategory = (categoryName: string) => {
+    setSelectedCategory(categoryName);
+    setActiveView('category-items');
+  };
+
   const handleTogglePin = (pssrId: string) => {
     setPinnedPSSRs(prev => 
       prev.includes(pssrId) 
@@ -359,6 +366,17 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       <PSSRDashboard 
         pssrId={selectedPSSR} 
         onBack={() => setActiveView('list')} 
+        onNavigateToCategory={handleNavigateToCategory}
+      />
+    );
+  }
+
+  if (activeView === 'category-items' && selectedCategory && selectedPSSR) {
+    return (
+      <PSSRCategoryItemsPage 
+        categoryName={selectedCategory}
+        pssrId={selectedPSSR}
+        onBack={() => setActiveView('details')}
       />
     );
   }
