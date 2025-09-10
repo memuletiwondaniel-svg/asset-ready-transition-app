@@ -492,14 +492,15 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             <div className="fluent-glassmorphism border border-border/30 backdrop-blur-md rounded-2xl p-6 mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-2xl pointer-events-none"></div>
               <div className="relative z-10">
-                <TabsList className="w-full h-auto p-2 grid grid-cols-2 lg:grid-cols-5 gap-2 bg-transparent">
+                <TabsList className="w-full h-auto p-1 grid grid-cols-2 lg:grid-cols-5 gap-1 bg-transparent">
                   <TabsTrigger
                     value="all"
-                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-12"
+                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 fluent-reveal"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-center h-full">
-                      <span className="font-semibold text-sm">All Categories</span>
+                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">All Categories</span>
                     </div>
                   </TabsTrigger>
                   
@@ -508,11 +509,12 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
-                        className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-12"
+                        className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 fluent-reveal"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <div className="relative z-10 flex items-center justify-center h-full">
-                          <span className="font-semibold text-sm">{category.name}</span>
+                          <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">{category.name}</span>
                         </div>
                       </TabsTrigger>
                     );
