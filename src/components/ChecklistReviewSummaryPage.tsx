@@ -221,7 +221,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                     className="w-full fluent-button bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Confirm & Create Checklist
+                    Create Checklist
                   </Button>
                   <Button 
                     variant="outline" 
