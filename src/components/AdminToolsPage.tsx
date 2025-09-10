@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, BarChart3, Settings, ArrowLeft, ArrowRight, Upload } from 'lucide-react';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
-import ChecklistManagementPage from "./ChecklistManagementPage";
+import ManageChecklistPage from "./ManageChecklistPage";
 
 interface AdminToolsPageProps {
   onBack: () => void;
@@ -18,7 +18,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
   }
 
   if (activeView === 'checklist') {
-    return <ChecklistManagementPage onBack={() => setActiveView('dashboard')} />;
+    return <ManageChecklistPage onBack={() => setActiveView('dashboard')} />;
   }
 
   const adminTools = [
@@ -34,8 +34,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     },
     {
       id: 'checklist',
-      title: 'Checklist Management',
-      description: 'Browse and manage PSSR checklist items by category with intuitive organization',
+      title: 'Manage Checklists',
+      description: 'Create, edit, and manage PSSR checklists with comprehensive item selection and configuration',
       icon: Upload,
       gradient: 'from-green-500/20 via-green-500/10 to-green-500/5',
       iconBg: 'bg-gradient-to-br from-green-500 to-green-600',
