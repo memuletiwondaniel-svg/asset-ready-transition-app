@@ -180,7 +180,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       case 'active':
         return <Badge variant="default">Active</Badge>;
       case 'pending_approval':
-        return <Badge variant="secondary">Pending</Badge>;
+        return <Badge variant="secondary">Awaiting Authentication</Badge>;
       case 'suspended':
         return <Badge variant="destructive">Suspended</Badge>;
       case 'inactive':
@@ -293,7 +293,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending Approval</p>
+                  <p className="text-sm text-muted-foreground">Awaiting Authentication</p>
                   <p className="text-2xl font-bold">
                     {users.filter(u => u.status === 'pending_approval').length}
                   </p>
@@ -341,7 +341,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending_approval">Pending</SelectItem>
+                  <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
                   <SelectItem value="suspended">Suspended</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>

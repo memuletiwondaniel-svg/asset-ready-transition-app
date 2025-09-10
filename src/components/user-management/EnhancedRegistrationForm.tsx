@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import RegistrationSuccessModal from './RegistrationSuccessModal';
 
 interface RegistrationFormProps {
   isOpen: boolean;
@@ -47,6 +48,8 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submittedUserEmail, setSubmittedUserEmail] = useState('');
   const [authenticators, setAuthenticators] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -278,7 +281,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         job_title: formData.userRole === 'Others (specify)' ? formData.otherRole : formData.userRole,
         ta2_discipline: (formData.ta2Discipline || null) as any,
         ta2_commission: (formData.ta2Commission || null) as any,
-        status: 'pending_approval' as any,
+        status: 'pending_approval' as any, // This will show as "awaiting Authentication" in the UI
         created_by_admin: isAdminCreated,
         rejection_reason: formData.comments
       };
@@ -308,14 +311,22 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         }
       }
 
-      toast.success('User registration request submitted successfully!');
+      // Show success modal instead of just closing
+      setSubmittedUserEmail(formData.email);
+      setShowSuccessModal(true);
+      
+      // Call onSuccess callback for parent component
       onSuccess();
-      onClose();
     } catch (error: any) {
       toast.error(error.message || 'Error submitting registration request');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    onClose(); // Close the registration form after success modal is closed
   };
 
   const filteredRoles = userRoles.filter(role =>
@@ -801,6 +812,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
   );
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -870,6 +882,15 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Success Modal */}
+    <RegistrationSuccessModal
+      isOpen={showSuccessModal}
+      onClose={handleSuccessModalClose}
+      userEmail={submittedUserEmail}
+      isAdminCreated={isAdminCreated}
+    />
+    </>
   );
 };
 

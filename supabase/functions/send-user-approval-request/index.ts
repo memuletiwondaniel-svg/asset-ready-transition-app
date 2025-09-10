@@ -44,25 +44,18 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
     
-    const { data: approveToken } = await supabase.rpc('create_authentication_token', {
-      request_id: requestId,
-      auth_id: authenticatorId,
-      action: 'approve'
-    });
-    
-    const { data: rejectToken } = await supabase.rpc('create_authentication_token', {
-      request_id: requestId,
-      auth_id: authenticatorId,
-      action: 'reject'
-    });
+    // Create approval/rejection URLs pointing to the authentication page
+    const approveUrl = `https://kgnrjqjbonuvpxxfvfjq.lovable.app/auth?action=review&requestId=${requestId}&type=approve`;
+    const rejectUrl = `https://kgnrjqjbonuvpxxfvfjq.lovable.app/auth?action=review&requestId=${requestId}&type=reject`;
 
     // Get authenticator email from the database
-    const authenticatorEmail = "daniel.memuletiwon@bgc.com"; // Default for now
+    const { data: authenticatorData } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('user_id', authenticatorId)
+      .single();
     
-    // Create approval/rejection URLs with tokens
-    const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('/auth/v1', '') || "https://your-project.supabase.co";
-    const approveUrl = `${baseUrl}/auth?token=${approveToken}&action=approve`;
-    const rejectUrl = `${baseUrl}/auth?token=${rejectToken}&action=reject`;
+    const authenticatorEmail = authenticatorData?.email || "daniel.memuletiwon@bgc.com"; // Fallback to default
 
     const emailHtml = `
       <!DOCTYPE html>
