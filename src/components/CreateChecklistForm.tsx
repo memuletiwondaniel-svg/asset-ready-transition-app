@@ -9,11 +9,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories } from '@/hooks/useChecklistItems';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
+import ChecklistItemDetailModal from './ChecklistItemDetailModal';
 
 interface CreateChecklistFormProps {
   onBack: () => void;
@@ -34,6 +35,8 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [newCreatedItem, setNewCreatedItem] = useState<DBChecklistItem | null>(null);
   const [customChecklistItems, setCustomChecklistItems] = useState<DBChecklistItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: availableCategories = [] } = useChecklistCategories();
@@ -163,6 +166,28 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       }
       return newSet;
     });
+  };
+
+  const handleItemClick = (item: DBChecklistItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedDetailItem(item);
+    setShowDetailModal(true);
+  };
+
+  const handleDetailModalClose = () => {
+    setShowDetailModal(false);
+    setSelectedDetailItem(null);
+  };
+
+  const handleItemSave = (updatedItem: DBChecklistItem) => {
+    // Update the item in customChecklistItems if it's a custom item
+    if (updatedItem.id.startsWith('CUST-')) {
+      setCustomChecklistItems(prev =>
+        prev.map(item => item.id === updatedItem.id ? updatedItem : item)
+      );
+    }
+    // Note: For database items, you would typically make an API call here
+    setSelectedDetailItem(updatedItem);
   };
 
   const handleNext = () => {
@@ -550,62 +575,93 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       </CardHeader>
                       <CardContent>
                         <ScrollArea className="h-96">
-                          <div className="grid gap-3">
-                            {filteredCategoryItems.map((item) => (
-                              <div
-                                key={item.id}
-                                className="fluent-item-card group border border-border/30 rounded-xl p-4 bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
-                                onClick={() => handleItemToggle(item.id)}
-                              >
-                                <div className="flex items-start space-x-4">
-                                  <Checkbox
-                                    checked={formData.selected_items.includes(item.id)}
-                                    onChange={() => handleItemToggle(item.id)}
-                                    className="mt-1 fluent-checkbox"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                      <Badge variant="outline" className="text-xs font-mono px-2 py-1 bg-primary/5 border-primary/20">
-                                        {item.id}
-                                      </Badge>
-                                      <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-200">
-                                        {item.description}
-                                      </h4>
-                                    </div>
-                                    
-                                    {(item.supporting_evidence || item.topic) && (
-                                      <div className="space-y-2 text-xs text-muted-foreground">
-                                        {item.topic && (
-                                          <div className="flex items-center space-x-2">
-                                            <span className="font-medium">Topic:</span>
-                                            <span>{item.topic}</span>
-                                          </div>
-                                        )}
-                                        {item.supporting_evidence && expandedItems.has(item.id) && (
-                                          <div className="space-y-1">
-                                            <span className="font-medium">Supporting Evidence:</span>
-                                            <p className="text-xs leading-relaxed">{item.supporting_evidence}</p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                    
-                                    {item.supporting_evidence && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleItemExpansion(item.id);
-                                        }}
-                                        className="mt-2 h-6 px-2 text-xs hover:bg-primary/10"
-                                      >
-                                        {expandedItems.has(item.id) ? 'Show Less' : 'Show More'}
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
+                           <div className="grid gap-4">
+                             {filteredCategoryItems.map((item) => (
+                               <div
+                                 key={item.id}
+                                 className="group relative overflow-hidden rounded-2xl border border-border/20 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:scale-[1.02] cursor-pointer"
+                               >
+                                 {/* Gradient Overlay */}
+                                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                 
+                                 {/* Selection Indicator */}
+                                 {formData.selected_items.includes(item.id) && (
+                                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
+                                 )}
+                                 
+                                 <div className="relative p-6">
+                                   <div className="flex items-start space-x-4">
+                                     <div className="flex-shrink-0 mt-1">
+                                       <Checkbox
+                                         checked={formData.selected_items.includes(item.id)}
+                                         onChange={() => handleItemToggle(item.id)}
+                                         className="w-5 h-5 rounded-lg border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                       />
+                                     </div>
+                                     
+                                     <div className="flex-1 min-w-0">
+                                       {/* Header */}
+                                       <div className="flex items-center justify-between mb-3">
+                                         <div className="flex items-center space-x-3">
+                                           <Badge 
+                                             variant="outline" 
+                                             className="font-mono text-xs px-3 py-1 bg-primary/10 border-primary/30 text-primary font-medium"
+                                           >
+                                             {item.id}
+                                           </Badge>
+                                           <Badge variant="secondary" className="text-xs">
+                                             {item.category}
+                                           </Badge>
+                                         </div>
+                                         <Button
+                                           variant="ghost"
+                                           size="sm"
+                                           onClick={(e) => handleItemClick(item, e)}
+                                           className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 px-3 text-xs hover:bg-primary/10 hover:text-primary"
+                                         >
+                                           View Details
+                                         </Button>
+                                       </div>
+                                       
+                                       {/* Description */}
+                                       <h4 className="font-semibold text-base text-foreground mb-3 leading-relaxed group-hover:text-primary transition-colors duration-300">
+                                         {item.description}
+                                       </h4>
+                                       
+                                       {/* Supporting Evidence Preview */}
+                                       {item.supporting_evidence && (
+                                         <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-border/20">
+                                           <p className="text-sm text-muted-foreground font-medium mb-1">Supporting Evidence:</p>
+                                           <p className="text-sm text-foreground leading-relaxed line-clamp-2">
+                                             {item.supporting_evidence}
+                                           </p>
+                                         </div>
+                                       )}
+                                       
+                                       {/* Metadata */}
+                                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/20">
+                                         <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                           {item.responsible_party && (
+                                             <span className="flex items-center space-x-1">
+                                               <User className="h-3 w-3" />
+                                               <span>{item.responsible_party}</span>
+                                             </span>
+                                           )}
+                                           {item.approving_authority && (
+                                             <span className="flex items-center space-x-1">
+                                               <Shield className="h-3 w-3" />
+                                               <span>{item.approving_authority}</span>
+                                             </span>
+                                           )}
+                                         </div>
+                                         <Badge variant="outline" className="text-xs">
+                                           v{item.version}
+                                         </Badge>
+                                       </div>
+                                     </div>
+                                   </div>
+                                 </div>
+                               </div>
                             ))}
                           </div>
                         </ScrollArea>
@@ -641,63 +697,94 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <ScrollArea className="h-96">
-                      <div className="grid gap-3">
-                        {filteredItems(category.items).map((item) => (
-                          <div
-                            key={item.id}
-                            className="fluent-item-card group border border-border/30 rounded-xl p-4 bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
-                            onClick={() => handleItemToggle(item.id)}
-                          >
-                            <div className="flex items-start space-x-4">
-                              <Checkbox
-                                checked={formData.selected_items.includes(item.id)}
-                                onChange={() => handleItemToggle(item.id)}
-                                className="mt-1 fluent-checkbox"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <Badge variant="outline" className="text-xs font-mono px-2 py-1 bg-primary/5 border-primary/20">
-                                    {item.id}
-                                  </Badge>
-                                  <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-200">
-                                    {item.description}
-                                  </h4>
-                                </div>
-                                
-                                {(item.supporting_evidence || item.topic) && (
-                                  <div className="space-y-2 text-xs text-muted-foreground">
-                                    {item.topic && (
-                                      <div className="flex items-center space-x-2">
-                                        <span className="font-medium">Topic:</span>
-                                        <span>{item.topic}</span>
-                                      </div>
-                                    )}
-                                    {item.supporting_evidence && expandedItems.has(item.id) && (
-                                      <div className="space-y-1">
-                                        <span className="font-medium">Supporting Evidence:</span>
-                                        <p className="text-xs leading-relaxed">{item.supporting_evidence}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {item.supporting_evidence && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleItemExpansion(item.id);
-                                    }}
-                                    className="mt-2 h-6 px-2 text-xs hover:bg-primary/10"
-                                  >
-                                    {expandedItems.has(item.id) ? 'Show Less' : 'Show More'}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                     <ScrollArea className="h-96">
+                       <div className="grid gap-4">
+                         {filteredItems(category.items).map((item) => (
+                           <div
+                             key={item.id}
+                             className="group relative overflow-hidden rounded-2xl border border-border/20 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:scale-[1.02] cursor-pointer"
+                           >
+                             {/* Gradient Overlay */}
+                             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                             
+                             {/* Selection Indicator */}
+                             {formData.selected_items.includes(item.id) && (
+                               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
+                             )}
+                             
+                             <div className="relative p-6">
+                               <div className="flex items-start space-x-4">
+                                 <div className="flex-shrink-0 mt-1">
+                                   <Checkbox
+                                     checked={formData.selected_items.includes(item.id)}
+                                     onChange={() => handleItemToggle(item.id)}
+                                     className="w-5 h-5 rounded-lg border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                   />
+                                 </div>
+                                 
+                                 <div className="flex-1 min-w-0">
+                                   {/* Header */}
+                                   <div className="flex items-center justify-between mb-3">
+                                     <div className="flex items-center space-x-3">
+                                       <Badge 
+                                         variant="outline" 
+                                         className="font-mono text-xs px-3 py-1 bg-primary/10 border-primary/30 text-primary font-medium"
+                                       >
+                                         {item.id}
+                                       </Badge>
+                                       <Badge variant="secondary" className="text-xs">
+                                         {item.category}
+                                       </Badge>
+                                     </div>
+                                     <Button
+                                       variant="ghost"
+                                       size="sm"
+                                       onClick={(e) => handleItemClick(item, e)}
+                                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 px-3 text-xs hover:bg-primary/10 hover:text-primary"
+                                     >
+                                       View Details
+                                     </Button>
+                                   </div>
+                                   
+                                   {/* Description */}
+                                   <h4 className="font-semibold text-base text-foreground mb-3 leading-relaxed group-hover:text-primary transition-colors duration-300">
+                                     {item.description}
+                                   </h4>
+                                   
+                                   {/* Supporting Evidence Preview */}
+                                   {item.supporting_evidence && (
+                                     <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-border/20">
+                                       <p className="text-sm text-muted-foreground font-medium mb-1">Supporting Evidence:</p>
+                                       <p className="text-sm text-foreground leading-relaxed line-clamp-2">
+                                         {item.supporting_evidence}
+                                       </p>
+                                     </div>
+                                   )}
+                                   
+                                   {/* Metadata */}
+                                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/20">
+                                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                       {item.responsible_party && (
+                                         <span className="flex items-center space-x-1">
+                                           <User className="h-3 w-3" />
+                                           <span>{item.responsible_party}</span>
+                                         </span>
+                                       )}
+                                       {item.approving_authority && (
+                                         <span className="flex items-center space-x-1">
+                                           <Shield className="h-3 w-3" />
+                                           <span>{item.approving_authority}</span>
+                                         </span>
+                                       )}
+                                     </div>
+                                     <Badge variant="outline" className="text-xs">
+                                       v{item.version}
+                                     </Badge>
+                                   </div>
+                                 </div>
+                               </div>
+                             </div>
+                           </div>
                         ))}
                       </div>
                     </ScrollArea>
@@ -708,6 +795,17 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           </Tabs>
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {selectedDetailItem && (
+        <ChecklistItemDetailModal
+          item={selectedDetailItem}
+          isOpen={showDetailModal}
+          onClose={handleDetailModalClose}
+          onSave={handleItemSave}
+          availableCategories={availableCategories}
+        />
+      )}
     </div>
   );
 };
