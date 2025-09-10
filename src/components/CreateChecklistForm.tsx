@@ -22,8 +22,8 @@ interface CreateChecklistFormProps {
 interface NewChecklistData {
   name: string;
   reason: string;
-  selectedItems: string[];
-  customReason?: string;
+  selected_items: string[];
+  custom_reason?: string;
 }
 
 const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onComplete }) => {
@@ -36,7 +36,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const [formData, setFormData] = useState<NewChecklistData>({
     name: '',
     reason: '',
-    selectedItems: [],
+    selected_items: [],
   });
   const [customReason, setCustomReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,7 +101,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   ];
 
   // Get unselected items
-  const unselectedItems = allChecklistItems.filter(item => !formData.selectedItems.includes(item.id));
+  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
 
   const handleCreateNewItem = (newItemData: Omit<ChecklistItem, 'id'>) => {
     // Generate a new ID
@@ -116,7 +116,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     setCustomChecklistItems(prev => [...prev, newItem]);
     setFormData(prev => ({
       ...prev,
-      selectedItems: [...prev.selectedItems, newId]
+      selected_items: [...prev.selected_items, newId]
     }));
     
     setNewCreatedItem(newItem);
@@ -138,9 +138,9 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const handleItemToggle = (itemId: string) => {
     setFormData(prev => ({
       ...prev,
-      selectedItems: prev.selectedItems.includes(itemId)
-        ? prev.selectedItems.filter(id => id !== itemId)
-        : [...prev.selectedItems, itemId]
+      selected_items: prev.selected_items.includes(itemId)
+        ? prev.selected_items.filter(id => id !== itemId)
+        : [...prev.selected_items, itemId]
     }));
   };
 
@@ -153,7 +153,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   const handleComplete = () => {
     const finalData = {
       ...formData,
-      customReason: formData.reason === 'Others' ? customReason : undefined
+      custom_reason: formData.reason === 'Others' ? customReason : undefined
     };
     onComplete(finalData);
   };
@@ -173,7 +173,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
 
   const getCategoryStats = (categoryItems: ChecklistItem[]) => {
     const total = categoryItems.length;
-    const selected = categoryItems.filter(item => formData.selectedItems.includes(item.id)).length;
+    const selected = categoryItems.filter(item => formData.selected_items.includes(item.id)).length;
     return { total, selected, percentage: total > 0 ? Math.round((selected / total) * 100) : 0 };
   };
 
@@ -394,7 +394,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             </div>
             <div className="flex items-center space-x-4 text-sm">
               <Badge variant="outline" className="px-3 py-1">
-                {formData.selectedItems.length} items selected
+                {formData.selected_items.length} items selected
               </Badge>
               <Badge variant="outline" className="px-3 py-1">
                 {allChecklistItems.length} total items
@@ -482,7 +482,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                         customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
                       }`}>
                         <Checkbox
-                          checked={formData.selectedItems.includes(item.id)}
+                          checked={formData.selected_items.includes(item.id)}
                           onCheckedChange={() => handleItemToggle(item.id)}
                           className="mt-1"
                         />
@@ -544,7 +544,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                             const categoryItemIds = category.items.map(item => item.id);
                             setFormData(prev => ({
                               ...prev,
-                              selectedItems: [...new Set([...prev.selectedItems, ...categoryItemIds])]
+                              selected_items: [...new Set([...prev.selected_items, ...categoryItemIds])]
                             }));
                           }}
                         >
@@ -557,7 +557,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                             const categoryItemIds = category.items.map(item => item.id);
                             setFormData(prev => ({
                               ...prev,
-                              selectedItems: prev.selectedItems.filter(id => !categoryItemIds.includes(id))
+                              selected_items: prev.selected_items.filter(id => !categoryItemIds.includes(id))
                             }));
                           }}
                         >
@@ -574,7 +574,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                             customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
                           }`}>
                             <Checkbox
-                              checked={formData.selectedItems.includes(item.id)}
+                              checked={formData.selected_items.includes(item.id)}
                               onCheckedChange={() => handleItemToggle(item.id)}
                               className="mt-1"
                             />

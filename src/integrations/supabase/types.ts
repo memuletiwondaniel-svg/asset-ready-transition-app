@@ -145,6 +145,63 @@ export type Database = {
         }
         Relationships: []
       }
+      checklists: {
+        Row: {
+          created_at: string
+          created_by: string
+          custom_reason: string | null
+          id: string
+          name: string
+          reason: string
+          selected_items: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          custom_reason?: string | null
+          id?: string
+          name: string
+          reason: string
+          selected_items?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          custom_reason?: string | null
+          id?: string
+          name?: string
+          reason?: string
+          selected_items?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_reasons: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          reason_text: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          reason_text: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason_text?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           checklist_item_id: string | null

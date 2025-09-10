@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2 } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
-import ChecklistSuccessPage from './ChecklistSuccessPage';
-import { useChecklists, Checklist } from '@/hooks/useChecklists';
+import { ChecklistSuccessPage } from './ChecklistSuccessPage';
+import { useChecklists, useCreateChecklist, Checklist } from '@/hooks/useChecklists';
 import { useToast } from '@/hooks/use-toast';
 
 // Use the Checklist type from the hook
@@ -20,32 +20,44 @@ interface ManageChecklistPageProps {
 interface NewChecklistData {
   name: string;
   reason: string;
-  selectedItems: string[];
-  customReason?: string;
+  selected_items: string[];
+  custom_reason?: string;
 }
 
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => {
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
-  const [newChecklistData, setNewChecklistData] = useState<NewChecklistData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [createdChecklistName, setCreatedChecklistName] = useState('');
   
   const { toast } = useToast();
   const { data: checklists = [], isLoading, error } = useChecklists();
+  const { mutate: createChecklist } = useCreateChecklist();
 
   const handleCreateComplete = (checklistData: NewChecklistData) => {
-    setNewChecklistData(checklistData);
-    setShowCreateForm(false);
-    setShowSuccessPage(true);
+    createChecklist(checklistData, {
+      onSuccess: (newChecklist) => {
+        setCreatedChecklistName(newChecklist.name);
+        setShowCreateForm(false);
+        setShowSuccessPage(true);
+      },
+      onError: (error) => {
+        console.error('Failed to create checklist:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create checklist. Please try again.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleBackToChecklists = () => {
     setShowSuccessPage(false);
     setShowCreateForm(false);
-    setNewChecklistData(null);
   };
 
   const handleBackToDashboard = () => {
@@ -67,8 +79,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
     let filtered = checklists.filter(checklist => {
       const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = filterCategory === 'all' || checklist.category === filterCategory;
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     });
 
     return [...filtered].sort((a, b) => {
@@ -107,14 +118,15 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
     );
   }
 
-  if (showSuccessPage && newChecklistData) {
+  if (showSuccessPage) {
     return (
       <ChecklistSuccessPage 
-        checklistName={newChecklistData.name}
-        reason={newChecklistData.customReason || newChecklistData.reason}
-        selectedItemsCount={newChecklistData.selectedItems.length}
-        onBackToChecklists={handleBackToChecklists}
-        onBackToDashboard={handleBackToDashboard}
+        checklistName={createdChecklistName}
+        onViewChecklists={handleBackToChecklists}
+        onCreateAnother={() => {
+          setShowSuccessPage(false);
+          setShowCreateForm(true);
+        }}
       />
     );
   }
@@ -293,10 +305,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                           <Calendar className="h-3 w-3" />
                           <span>{new Date(checklist.created_at).toLocaleDateString()}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <User className="h-3 w-3" />
-                          <span>{checklist.created_by}</span>
-                        </div>
+                         <div className="flex items-center space-x-1">
+                           <User className="h-3 w-3" />
+                           <span>{checklist.created_by_email}</span>
+                         </div>
                       </div>
                     </div>
                 </CardContent>
