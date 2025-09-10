@@ -546,8 +546,8 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md mb-6">
             <CardContent className="p-6">
               <div className="flex items-center justify-between space-x-4">
-                <div className="flex-1 max-w-md">
-                  <div className="relative">
+                <div className="flex items-center space-x-4 flex-1">
+                  <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
                       placeholder="Search checklist items..."
@@ -556,6 +556,13 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       className="pl-10"
                     />
                   </div>
+                  <Button 
+                    onClick={() => setShowCreateItem(true)}
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0 px-6 py-2.5 rounded-xl font-medium"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Item
+                  </Button>
                 </div>
                 <div className="text-sm text-muted-foreground font-medium">
                   {formData.selected_items.length} items selected
@@ -635,17 +642,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 )}
               </Tabs>
             </div>
-          </div>
-
-          {/* Create Checklist Item Button */}
-          <div className="text-center mb-6">
-            <Button 
-              onClick={() => setShowCreateItem(true)}
-              className="fluent-button bg-primary hover:bg-primary/80 px-6 py-2"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Checklist Item
-            </Button>
           </div>
 
           {/* Checklist Items */}
