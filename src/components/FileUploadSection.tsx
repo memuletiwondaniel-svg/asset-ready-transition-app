@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText, X } from 'lucide-react';
@@ -15,6 +15,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   onFileUpload,
   onRemoveFile
 }) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   return (
     <div className="space-y-4">
       <Label className="text-sm font-semibold text-gray-700">Supporting Documents</Label>
@@ -29,16 +30,17 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           PDF, DOC, XLS files up to 10MB each
         </p>
         <input
+          ref={inputRef}
           type="file"
           multiple
+          accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
           onChange={onFileUpload}
           className="hidden"
-          id="file-upload"
         />
         <Button 
           variant="outline" 
           className="border-blue-200 text-blue-700 hover:bg-blue-50"
-          onClick={() => document.getElementById('file-upload')?.click()}
+          onClick={() => inputRef.current?.click()}
         >
           Choose Files
         </Button>

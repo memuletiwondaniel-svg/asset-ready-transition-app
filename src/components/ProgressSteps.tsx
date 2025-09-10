@@ -5,43 +5,46 @@ interface ProgressStepsProps {
   currentStep: number;
 }
 
+// Fluent-inspired horizontal stepper
 const ProgressSteps: React.FC<ProgressStepsProps> = ({ currentStep }) => {
   if (currentStep > 2) return null;
 
+  const steps = [
+    { id: 1, title: 'PSSR Information' },
+    { id: 2, title: 'Confirmation' },
+  ];
+
+  const progressPercent = ((Math.min(currentStep, steps.length) - 1) / (steps.length - 1)) * 100;
+
   return (
-    <div className="mb-12">
-      <div className="flex items-center justify-center">
-        <div className="flex items-center">
-          <div className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-            currentStep >= 1 ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600'
-          }`}>
-            <span className="font-bold">1</span>
-            {currentStep >= 1 && (
-              <div className="absolute inset-0 rounded-full bg-blue-600 animate-pulse opacity-30"></div>
-            )}
-          </div>
-          <div className="ml-4 text-left">
-            <span className="block text-sm font-medium text-gray-900">Step 1</span>
-            <span className="block text-xs text-gray-500">PSSR Information</span>
-          </div>
-        </div>
-        <div className={`flex-1 h-2 mx-8 rounded-full transition-all duration-500 ${
-          currentStep >= 2 ? 'bg-gradient-to-r from-blue-600 to-green-500' : 'bg-gray-300'
-        }`}></div>
-        <div className="flex items-center">
-          <div className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-            currentStep >= 2 ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600'
-          }`}>
-            <span className="font-bold">2</span>
-            {currentStep >= 2 && (
-              <div className="absolute inset-0 rounded-full bg-green-600 animate-pulse opacity-30"></div>
-            )}
-          </div>
-          <div className="ml-4 text-left">
-            <span className="block text-sm font-medium text-gray-900">Step 2</span>
-            <span className="block text-xs text-gray-500">Confirmation</span>
-          </div>
-        </div>
+    <div className="mb-10">
+      <div className="relative max-w-3xl mx-auto">
+        {/* Track */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 h-[6px] rounded-full bg-gray-200" aria-hidden />
+        {/* Progress */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 left-4 h-[6px] rounded-full bg-blue-600 transition-all"
+          style={{ width: `calc(${progressPercent}% - 0.5rem)` }}
+          aria-hidden
+        />
+        <ol className="relative flex justify-between">
+          {steps.map((step) => {
+            const active = currentStep >= step.id;
+            return (
+              <li key={step.id} className="flex flex-col items-center text-center">
+                <div
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors shadow-sm ${
+                    active ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-300 text-gray-600'
+                  }`}
+                  aria-current={currentStep === step.id ? 'step' : undefined}
+                >
+                  {step.id}
+                </div>
+                <span className="mt-2 text-xs font-medium text-gray-800">{step.title}</span>
+              </li>
+            );
+          })}
+        </ol>
       </div>
     </div>
   );

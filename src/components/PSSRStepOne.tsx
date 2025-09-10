@@ -106,22 +106,12 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50">
-                  <SelectItem value="Start-up or Commissioning of a new Asset" className="py-3">
-                    Start-up or Commissioning of a new Asset
-                  </SelectItem>
-                  <SelectItem value="Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy" className="py-3">
-                    Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy
-                  </SelectItem>
-                  <SelectItem value="Restart following a process safety incident" className="py-3">
-                    Restart following a process safety incident
-                  </SelectItem>
-                  <SelectItem value="Restart following a Turn Around (TAR) Event or Major Maintenance Activity" className="py-3">
-                    Restart following a Turn Around (TAR) Event or Major Maintenance Activity
-                  </SelectItem>
-                  <SelectItem value="Others (Specify)" className="py-3">
-                    Others (Specify)
-                  </SelectItem>
+                <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md">
+                  {reasons.map((r) => (
+                    <SelectItem key={r} value={r} className="py-3">
+                      {r}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -136,49 +126,27 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                   <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="Choose a plant" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
-                    <SelectItem value="Umm Qasr (UQ)" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        Umm Qasr (UQ)
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="KAZ" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        KAZ
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="NRNGL" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        NRNGL
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="BNGL" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        BNGL
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="Compression Station (CS)" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        Compression Station (CS)
-                      </div>
-                    </SelectItem>
+                  <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md">
+                    {assets.map((asset) => (
+                      <SelectItem key={asset} value={asset} className="py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          {asset}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 
                 {/* CS Section Selection */}
-                {formData.asset === 'Compression Station (CS)' && (
+                {/(Compression|Compressor) Station/.test(formData.asset) && (
                   <div className="mt-4 space-y-3">
                     <Label className="text-sm font-semibold text-gray-700">CS Section *</Label>
                     <Select onValueChange={(value) => setFormData(prev => ({...prev, asset: `Compression Station (${value})`}))}>
                       <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                         <SelectValue placeholder="Select CS section" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
+                      <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md">
                         <SelectItem value="Zubair" className="py-3">Zubair</SelectItem>
                         <SelectItem value="West Qurna (WQ)" className="py-3">West Qurna (WQ)</SelectItem>
                         <SelectItem value="North Rumaila (NR)" className="py-3">North Rumaila (NR)</SelectItem>
