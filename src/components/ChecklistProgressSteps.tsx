@@ -17,11 +17,11 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
             <div className="flex items-center">
-              <div className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                currentStep >= step.number 
-                  ? 'bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/20' 
-                  : 'bg-muted text-muted-foreground border-2 border-border'
-              }`}>
+               <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 aspect-square ${
+                 currentStep >= step.number 
+                   ? 'bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/20 shadow-primary/30' 
+                   : 'bg-muted text-muted-foreground border-4 border-border shadow-md'
+               }`}>
                 <span className="font-semibold text-sm">{step.number}</span>
                 {currentStep >= step.number && (
                   <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
