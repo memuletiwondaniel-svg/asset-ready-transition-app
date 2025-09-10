@@ -110,6 +110,68 @@ export const useCreateChecklist = () => {
   });
 };
 
+export const useUpdateChecklist = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ checklistId, checklistData }: { checklistId: string; checklistData: Partial<CreateChecklistData> }): Promise<Checklist> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
+      // If reason is "Others" and custom_reason is provided, save it as a custom reason
+      if (checklistData.reason === 'Others' && checklistData.custom_reason) {
+        const { error: customReasonError } = await supabase
+          .from('custom_reasons')
+          .upsert({
+            reason_text: checklistData.custom_reason,
+            created_by: session.user.id,
+          }, {
+            onConflict: 'reason_text',
+            ignoreDuplicates: true
+          });
+        
+        if (customReasonError) {
+          console.warn('Failed to save custom reason:', customReasonError);
+        }
+      }
+
+      const updateData: any = {};
+      if (checklistData.name) updateData.name = checklistData.name;
+      if (checklistData.reason) {
+        updateData.reason = checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason;
+        updateData.custom_reason = checklistData.reason === 'Others' ? checklistData.custom_reason : null;
+      }
+      if (checklistData.selected_items) updateData.selected_items = checklistData.selected_items;
+
+      const { data, error } = await supabase
+        .from('checklists')
+        .update(updateData)
+        .eq('id', checklistId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Get creator email
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('user_id', data.created_by)
+        .single();
+
+      return {
+        ...data,
+        items_count: data.selected_items?.length || 0,
+        active_pssr_count: 0, // This would need to be calculated if needed
+        created_by_email: profile?.email || 'Unknown',
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+    },
+  });
+};
+
 export const useCustomReasons = () => {
   return useQuery({
     queryKey: ['custom-reasons'],

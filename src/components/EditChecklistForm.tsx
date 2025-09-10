@@ -8,32 +8,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Save, Plus, Search, AlertTriangle, CheckCircle } from 'lucide-react';
-import { pssrChecklistData, ChecklistItem, checklistCategories } from '@/data/pssrChecklistData';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
+import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
+import { useCustomReasons, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
+import { useToast } from '@/hooks/use-toast';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
-import { Checklist } from '@/hooks/useChecklists';
 
 interface EditChecklistFormProps {
   checklist: Checklist;
   onBack: () => void;
-  onSave: (updatedChecklist: Checklist, selectedItems: string[]) => void;
-  initialSelectedItems?: string[];
+  onSave: () => void;
 }
 
 const EditChecklistForm: React.FC<EditChecklistFormProps> = ({ 
   checklist, 
   onBack, 
-  onSave,
-  initialSelectedItems = []
+  onSave
 }) => {
   const [formData, setFormData] = useState({
     name: checklist.name,
     reason: checklist.reason,
-    selectedItems: initialSelectedItems
+    selected_items: checklist.selected_items || [],
+    custom_reason: checklist.custom_reason || ''
   });
   
-  const [customReason, setCustomReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showCreateItem, setShowCreateItem] = useState(false);
@@ -41,56 +41,76 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   const [newCreatedItem, setNewCreatedItem] = useState<ChecklistItem | null>(null);
   const [customChecklistItems, setCustomChecklistItems] = useState<ChecklistItem[]>([]);
 
-  // Checklist reasons
-  const checklistReasons = [
-    'Start-up or Commissioning of a new Asset',
-    'Restart following modification to existing Hardware, Safeguarding or Operating Philosophy',
-    'Restart following a process safety incident',
-    'Restart following a Turn Around (TAR) Event or Major Maintenance Activity',
-    'Others'
+  const { toast } = useToast();
+  const { data: checklistItems = [], isLoading } = useChecklistItems();
+  const { data: customReasons = [] } = useCustomReasons();
+  const { mutate: updateChecklist, isPending } = useUpdateChecklist();
+
+  // All available reasons (predefined + custom)
+  const allReasons = [
+    "Start-up or Commissioning of a new Asset",
+    "Restart following modification to existing Hardware, Safeguarding or Operating Philosophy", 
+    "Restart following a process safety incident",
+    "Restart following a Turn Around (TAR) Event or Major Maintenance Activity",
+    ...customReasons,
+    "Others"
   ];
 
-  // Combine original and custom items
-  const allChecklistItems = [...pssrChecklistData, ...customChecklistItems];
+  const allChecklistItems = [...checklistItems, ...customChecklistItems];
 
   const handleItemToggle = (itemId: string) => {
     setFormData(prev => ({
       ...prev,
-      selectedItems: prev.selectedItems.includes(itemId)
-        ? prev.selectedItems.filter(id => id !== itemId)
-        : [...prev.selectedItems, itemId]
+      selected_items: prev.selected_items.includes(itemId)
+        ? prev.selected_items.filter(id => id !== itemId)
+        : [...prev.selected_items, itemId]
     }));
   };
 
   const handleSave = () => {
-    const updatedChecklist: Checklist = {
-      ...checklist,
-      name: formData.name,
-      reason: formData.reason === 'Others' ? customReason : formData.reason,
-      items_count: formData.selectedItems.length
-    };
-    onSave(updatedChecklist, formData.selectedItems);
+    updateChecklist({
+      checklistId: checklist.id,
+      checklistData: {
+        name: formData.name,
+        reason: formData.reason,
+        selected_items: formData.selected_items,
+        custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined
+      }
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Checklist updated successfully.",
+        });
+        onSave();
+      },
+      onError: (error) => {
+        console.error('Failed to update checklist:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update checklist. Please try again.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleCreateNewItem = (newItemData: Omit<ChecklistItem, 'id'>) => {
-    // Generate a new ID
-    const newId = `CUST-${String(customChecklistItems.length + 1).padStart(3, '0')}`;
-    
     const newItem: ChecklistItem = {
-      id: newId,
-      ...newItemData
+      ...newItemData,
+      id: `custom-${Date.now()}`,
     };
-
-    // Add to custom items and automatically select it
-    setCustomChecklistItems(prev => [...prev, newItem]);
-    setFormData(prev => ({
-      ...prev,
-      selectedItems: [...prev.selectedItems, newId]
-    }));
     
+    setCustomChecklistItems(prev => [...prev, newItem]);
     setNewCreatedItem(newItem);
     setShowCreateItem(false);
     setShowItemSuccess(true);
+    
+    // Auto-select the newly created item
+    setFormData(prev => ({
+      ...prev,
+      selected_items: [...prev.selected_items, newItem.id]
+    }));
   };
 
   const handleItemSuccessBack = () => {
@@ -104,37 +124,49 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     setShowCreateItem(true);
   };
 
+  // Filter items based on search and category
   const filteredItems = allChecklistItems.filter(item => {
-    const matchesSearch = searchQuery === '' || 
-      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.supportingEvidence.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+    const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
+  // Group filtered items by category
+  const groupedItems = filteredItems.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, ChecklistItem[]>);
+
+  const categories = Object.keys(groupedItems).sort();
+  const allCategories = [...new Set(allChecklistItems.map(item => item.category))].sort();
+
+  // Calculate stats
+  const totalItems = allChecklistItems.length;
+  const selectedCount = formData.selected_items.length;
+  const notSelectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
+
   const getCategoryStats = (category: string) => {
-    const categoryItems = category === 'all' 
-      ? allChecklistItems 
-      : allChecklistItems.filter(item => item.category === category);
-    const selectedCount = categoryItems.filter(item => formData.selectedItems.includes(item.id)).length;
-    return { total: categoryItems.length, selected: selectedCount };
+    const categoryItems = allChecklistItems.filter(item => item.category === category);
+    const selectedInCategory = categoryItems.filter(item => formData.selected_items.includes(item.id)).length;
+    return { total: categoryItems.length, selected: selectedInCategory };
   };
 
-  // Show create item form
   if (showCreateItem) {
     return (
       <CreateChecklistItemForm 
         onBack={() => setShowCreateItem(false)}
         onComplete={handleCreateNewItem}
-        existingCategories={[...new Set(allChecklistItems.map(item => item.category))]}
       />
     );
   }
 
-  // Show item success page
   if (showItemSuccess && newCreatedItem) {
     return (
-      <ChecklistItemSuccessPage 
+      <ChecklistItemSuccessPage
         newItem={newCreatedItem}
         onBackToChecklist={handleItemSuccessBack}
         onCreateAnother={handleCreateAnother}
@@ -174,11 +206,11 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
               </Button>
               <Button 
                 onClick={handleSave}
-                disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
+                disabled={isPending || !formData.name || !formData.reason || (formData.reason === 'Others' && !formData.custom_reason)}
                 className="fluent-button bg-primary hover:bg-primary-hover"
               >
                 <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                {isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>
@@ -191,192 +223,367 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
           <CardHeader>
             <CardTitle>Checklist Information</CardTitle>
             <CardDescription>
-              Update the basic details of your checklist
+              Update the basic information for this checklist
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Checklist Name */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-base font-semibold">
-                Checklist Name <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="name">Checklist Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="h-12"
+                placeholder="Enter checklist name"
               />
             </div>
 
-            {/* Reason for Checklist */}
             <div className="space-y-2">
-              <Label className="text-base font-semibold">
-                Reason for Checklist <span className="text-destructive">*</span>
-              </Label>
-              <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
+              <Label htmlFor="reason">Reason for Checklist *</Label>
+              <Select
+                value={formData.reason}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                  {checklistReasons.map((reason) => (
-                    <SelectItem key={reason} value={reason} className="cursor-pointer">
+                <SelectContent>
+                  {allReasons.map((reason) => (
+                    <SelectItem key={reason} value={reason}>
                       {reason}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              
-              {/* Custom Reason Input */}
-              {formData.reason === 'Others' && (
-                <div className="mt-4 space-y-2">
-                  <Label htmlFor="customReason" className="text-sm font-medium">
-                    Please specify the reason
-                  </Label>
-                  <Input
-                    id="customReason"
-                    placeholder="Enter your custom reason"
-                    value={customReason}
-                    onChange={(e) => setCustomReason(e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-              )}
             </div>
+
+            {formData.reason === "Others" && (
+              <div className="space-y-2">
+                <Label htmlFor="customReason">Custom Reason *</Label>
+                <Textarea
+                  id="customReason"
+                  value={formData.custom_reason}
+                  onChange={(e) => setFormData(prev => ({ ...prev, custom_reason: e.target.value }))}
+                  placeholder="Enter custom reason"
+                  rows={3}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Search and Summary */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search checklist items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center space-x-4 text-sm">
-              <Badge variant="outline" className="px-3 py-1">
-                {formData.selectedItems.length} items selected
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1">
-                {allChecklistItems.length} total items
-              </Badge>
-              <Button 
-                variant="outline"
-                onClick={() => setShowCreateItem(true)}
-                className="fluent-button bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Item
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Checklist Items Selection */}
+        {/* Select Checklist Items */}
         <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Select Checklist Items</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Select Checklist Items</span>
+              <div className="flex items-center space-x-2">
+                <Badge variant="secondary">{selectedCount} selected</Badge>
+                <Badge variant="outline">{totalItems} total items</Badge>
+              </div>
+            </CardTitle>
             <CardDescription>
               Choose which items to include in this checklist
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-6">
-              <TabsList className="grid grid-cols-4 lg:grid-cols-6 h-auto p-1">
-                <TabsTrigger value="all" className="text-xs p-3">
-                  All ({getCategoryStats('all').selected}/{getCategoryStats('all').total})
-                </TabsTrigger>
-                {checklistCategories.map((category) => {
-                  const stats = getCategoryStats(category);
-                  return (
-                    <TabsTrigger key={category} value={category} className="text-xs p-3">
-                      {category} ({stats.selected}/{stats.total})
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
+            {isLoading ? (
+              <div className="text-center py-8">Loading checklist items...</div>
+            ) : (
+              <div className="space-y-6">
+                {/* Controls */}
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateItem(true)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create New Item</span>
+                  </Button>
+                </div>
 
-              {/* All Items Tab */}
-              <TabsContent value="all">
-                <ScrollArea className="h-96">
-                  <div className="space-y-4">
-                    {filteredItems.map((item) => (
-                      <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
-                        customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
-                      }`}>
-                        <Checkbox
-                          checked={formData.selectedItems.includes(item.id)}
-                          onCheckedChange={() => handleItemToggle(item.id)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-sm">{item.id}</h4>
-                              {customChecklistItems.some(custom => custom.id === item.id) && (
-                                <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
-                                  New
-                                </Badge>
-                              )}
-                            </div>
-                            <Badge variant="outline" className="text-xs">
-                              {item.category}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-foreground">{item.description}</p>
-                          <p className="text-xs text-muted-foreground">{item.supportingEvidence}</p>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Authority: {item.approvingAuthority}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                {/* Search and Filter */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      placeholder="Search checklist items..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                </ScrollArea>
-              </TabsContent>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {allCategories.map((category) => {
+                        const stats = getCategoryStats(category);
+                        return (
+                          <SelectItem key={category} value={category}>
+                            {category} ({stats.selected}/{stats.total})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Category Tabs */}
-              {checklistCategories.map((category) => (
-                <TabsContent key={category} value={category}>
-                  <ScrollArea className="h-96">
+                {/* Summary */}
+                <div className="grid grid-cols-3 gap-4">
+                  <Card className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{selectedCount}</div>
+                      <div className="text-sm text-muted-foreground">Selected</div>
+                    </div>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{totalItems - selectedCount}</div>
+                      <div className="text-sm text-muted-foreground">Available</div>
+                    </div>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-600">{totalItems}</div>
+                      <div className="text-sm text-muted-foreground">Total Items</div>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Items by Category */}
+                <Tabs value={selectedCategory === "all" ? categories[0] || "selected" : selectedCategory} 
+                      onValueChange={setSelectedCategory} className="w-full">
+                  <TabsList className="grid w-full grid-cols-6">
+                    <TabsTrigger value="selected">
+                      Selected ({selectedCount})
+                    </TabsTrigger>
+                    {allCategories.slice(0, 4).map((category) => {
+                      const stats = getCategoryStats(category);
+                      return (
+                        <TabsTrigger key={category} value={category} className="text-xs">
+                          {category} ({stats.selected}/{stats.total})
+                        </TabsTrigger>
+                      );
+                    })}
+                    <TabsTrigger value="not-selected">
+                      Not Selected ({totalItems - selectedCount})
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Selected Items Tab */}
+                  <TabsContent value="selected" className="mt-4">
                     <div className="space-y-4">
-                      {filteredItems.filter(item => item.category === category).map((item) => (
-                        <div key={item.id} className={`flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/20 transition-colors ${
-                          customChecklistItems.some(custom => custom.id === item.id) ? 'bg-green-50 border-green-200' : ''
-                        }`}>
-                          <Checkbox
-                            checked={formData.selectedItems.includes(item.id)}
-                            onCheckedChange={() => handleItemToggle(item.id)}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-sm">{item.id}</h4>
-                              {customChecklistItems.some(custom => custom.id === item.id) && (
-                                <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200">
-                                  New
-                                </Badge>
-                              )}
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Selected Items</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, selected_items: [] }))}
+                          disabled={selectedCount === 0}
+                        >
+                          Clear All
+                        </Button>
+                      </div>
+                      <ScrollArea className="h-96">
+                        <div className="space-y-3">
+                          {allChecklistItems
+                            .filter(item => formData.selected_items.includes(item.id))
+                            .map((item) => (
+                              <Card key={item.id} className="p-4 border-green-200 bg-green-50 dark:bg-green-900/20">
+                                <div className="flex items-start space-x-3">
+                                  <Checkbox
+                                    checked={true}
+                                    onCheckedChange={() => handleItemToggle(item.id)}
+                                  />
+                                  <div className="flex-1 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="font-medium">{item.description}</h4>
+                                      <div className="flex items-center space-x-2">
+                                        <Badge variant="outline">{item.category}</Badge>
+                                        {item.id.startsWith('custom-') && (
+                                          <Badge variant="secondary">New</Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {item.supporting_evidence && (
+                                      <p className="text-sm text-muted-foreground">
+                                        <strong>Evidence:</strong> {item.supporting_evidence}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                      {item.responsible_party && (
+                                        <span><strong>Responsible:</strong> {item.responsible_party}</span>
+                                      )}
+                                      {item.approving_authority && (
+                                        <span><strong>Approver:</strong> {item.approving_authority}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          {selectedCount === 0 && (
+                            <div className="text-center py-8 text-muted-foreground">
+                              No items selected yet. Browse categories to select items.
                             </div>
-                            <p className="text-sm text-foreground">{item.description}</p>
-                            <p className="text-xs text-muted-foreground font-medium">
-                              Evidence: {item.supportingEvidence}
-                            </p>
-                            <div className="text-xs text-muted-foreground">
-                              Approving Authority: {item.approvingAuthority}
-                            </div>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  </TabsContent>
+
+                  {/* Category Tabs */}
+                  {categories.map((category) => (
+                    <TabsContent key={category} value={category} className="mt-4">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold">{category}</h3>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const categoryItems = groupedItems[category] || [];
+                                const allSelected = categoryItems.every(item => formData.selected_items.includes(item.id));
+                                
+                                if (allSelected) {
+                                  // Deselect all in category
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selected_items: prev.selected_items.filter(id => 
+                                      !categoryItems.some(item => item.id === id)
+                                    )
+                                  }));
+                                } else {
+                                  // Select all in category
+                                  const newSelections = categoryItems
+                                    .filter(item => !formData.selected_items.includes(item.id))
+                                    .map(item => item.id);
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selected_items: [...prev.selected_items, ...newSelections]
+                                  }));
+                                }
+                              }}
+                            >
+                              {groupedItems[category]?.every(item => formData.selected_items.includes(item.id)) 
+                                ? 'Deselect All' 
+                                : 'Select All'
+                              }
+                            </Button>
                           </div>
                         </div>
-                      ))}
+
+                        <ScrollArea className="h-96">
+                          <div className="space-y-3">
+                            {(groupedItems[category] || []).map((item) => {
+                              const isSelected = formData.selected_items.includes(item.id);
+                              return (
+                                <Card key={item.id} className={`p-4 ${isSelected ? 'border-green-200 bg-green-50 dark:bg-green-900/20' : ''}`}>
+                                  <div className="flex items-start space-x-3">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => handleItemToggle(item.id)}
+                                    />
+                                    <div className="flex-1 space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">{item.description}</h4>
+                                        {item.id.startsWith('custom-') && (
+                                          <Badge variant="secondary">New</Badge>
+                                        )}
+                                      </div>
+                                      {item.supporting_evidence && (
+                                        <p className="text-sm text-muted-foreground">
+                                          <strong>Evidence:</strong> {item.supporting_evidence}
+                                        </p>
+                                      )}
+                                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                        {item.responsible_party && (
+                                          <span><strong>Responsible:</strong> {item.responsible_party}</span>
+                                        )}
+                                        {item.approving_authority && (
+                                          <span><strong>Approver:</strong> {item.approving_authority}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    </TabsContent>
+                  ))}
+
+                  {/* Not Selected Tab */}
+                  <TabsContent value="not-selected" className="mt-4">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Not Selected</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ 
+                            ...prev, 
+                            selected_items: allChecklistItems.map(item => item.id)
+                          }))}
+                          disabled={selectedCount === totalItems}
+                        >
+                          Select All
+                        </Button>
+                      </div>
+                      <ScrollArea className="h-96">
+                        <div className="space-y-3">
+                          {notSelectedItems.map((item) => (
+                            <Card key={item.id} className="p-4 opacity-60">
+                              <div className="flex items-start space-x-3">
+                                <Checkbox
+                                  checked={false}
+                                  onCheckedChange={() => handleItemToggle(item.id)}
+                                />
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-medium">{item.description}</h4>
+                                    <div className="flex items-center space-x-2">
+                                      <Badge variant="outline">{item.category}</Badge>
+                                      {item.id.startsWith('custom-') && (
+                                        <Badge variant="secondary">New</Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {item.supporting_evidence && (
+                                    <p className="text-sm text-muted-foreground">
+                                      <strong>Evidence:</strong> {item.supporting_evidence}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                    {item.responsible_party && (
+                                      <span><strong>Responsible:</strong> {item.responsible_party}</span>
+                                    )}
+                                    {item.approving_authority && (
+                                      <span><strong>Approver:</strong> {item.approving_authority}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                          {notSelectedItems.length === 0 && (
+                            <div className="text-center py-8 text-muted-foreground">
+                              All items are selected!
+                            </div>
+                          )}
+                        </div>
+                      </ScrollArea>
                     </div>
-                  </ScrollArea>
-                </TabsContent>
-              ))}
-            </Tabs>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -139,8 +139,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
       <EditChecklistForm 
         checklist={checklist}
         onBack={() => setShowEditChecklist(false)}
-        onSave={handleSaveChecklist}
-        initialSelectedItems={selectedItems}
+        onSave={() => setShowEditChecklist(false)}
       />
     );
   }

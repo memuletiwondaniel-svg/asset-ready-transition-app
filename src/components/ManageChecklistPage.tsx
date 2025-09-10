@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen, Edit3 } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
+import EditChecklistForm from './EditChecklistForm';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
-import { useChecklists, useCreateChecklist, Checklist } from '@/hooks/useChecklists';
+import { useChecklists, useCreateChecklist, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
 import { useToast } from '@/hooks/use-toast';
 
 // Use the Checklist type from the hook
@@ -28,6 +29,8 @@ interface NewChecklistData {
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => {
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
   const [showItemsManagement, setShowItemsManagement] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,6 +41,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
   const { toast } = useToast();
   const { data: checklists = [], isLoading, error } = useChecklists();
   const { mutate: createChecklist } = useCreateChecklist();
+  const { mutate: updateChecklist } = useUpdateChecklist();
 
   const handleCreateComplete = (checklistData: NewChecklistData) => {
     createChecklist(checklistData, {
@@ -60,10 +64,22 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
   const handleBackToChecklists = () => {
     setShowSuccessPage(false);
     setShowCreateForm(false);
+    setShowEditForm(false);
+    setEditingChecklist(null);
   };
 
-  const handleBackToDashboard = () => {
-    onBack();
+  const handleEditChecklist = (checklist: Checklist) => {
+    setEditingChecklist(checklist);
+    setShowEditForm(true);
+  };
+
+  const handleEditComplete = () => {
+    setShowEditForm(false);
+    setEditingChecklist(null);
+    toast({
+      title: "Success",
+      description: "Checklist updated successfully.",
+    });
   };
 
   // Show error toast if there's an error
@@ -116,6 +132,19 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
       <CreateChecklistForm 
         onBack={() => setShowCreateForm(false)}
         onComplete={handleCreateComplete}
+      />
+    );
+  }
+
+  if (showEditForm && editingChecklist) {
+    return (
+      <EditChecklistForm 
+        checklist={editingChecklist}
+        onBack={() => {
+          setShowEditForm(false);
+          setEditingChecklist(null);
+        }}
+        onSave={handleEditComplete}
       />
     );
   }
@@ -268,85 +297,99 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
           <>
             {/* Checklists Grid */}
             {filteredAndSortedChecklists.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="flex flex-col items-center space-y-6">
-                <FileText className="h-16 w-16 text-muted-foreground" />
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-foreground">No Checklists Found</h3>
-                  <p className="text-muted-foreground max-w-md">
-                    {searchQuery || filterCategory !== 'all' 
-                      ? 'No checklists match your current filters. Try adjusting your search criteria.'
-                      : 'Create your first PSSR checklist to get started with safety reviews.'
-                    }
-                  </p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Button 
-                    variant="outline"
-                    className="fluent-button hover:bg-secondary/80"
-                    onClick={() => setShowItemsManagement(true)}
-                  >
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                    Browse Checklist Items
-                  </Button>
-                  <Button 
-                    className="fluent-button bg-primary hover:bg-primary-hover"
-                    onClick={() => setShowCreateForm(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Checklist
-                  </Button>
+              <div className="text-center py-16">
+                <div className="flex flex-col items-center space-y-6">
+                  <FileText className="h-16 w-16 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-foreground">No Checklists Found</h3>
+                    <p className="text-muted-foreground max-w-md">
+                      {searchQuery || filterCategory !== 'all' 
+                        ? 'No checklists match your current filters. Try adjusting your search criteria.'
+                        : 'Create your first PSSR checklist to get started with safety reviews.'
+                      }
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Button 
+                      variant="outline"
+                      className="fluent-button hover:bg-secondary/80"
+                      onClick={() => setShowItemsManagement(true)}
+                    >
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Browse Checklist Items
+                    </Button>
+                    <Button 
+                      className="fluent-button bg-primary hover:bg-primary-hover"
+                      onClick={() => setShowCreateForm(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create First Checklist
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredAndSortedChecklists.map((checklist, index) => (
-              <Card
-                key={checklist.id}
-                className="group cursor-pointer hover:shadow-fluent-lg transition-all duration-300 border border-border/20 bg-card/90 backdrop-blur-sm hover:-translate-y-1 animate-fade-in-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-                onClick={() => setSelectedChecklist(checklist)}
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
-                        {checklist.name}
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {checklist.reason}
-                      </CardDescription>
-                    </div>
-                    {getStatusBadge(checklist.status)}
-                  </div>
-                </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center space-x-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{checklist.items_count} items</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{checklist.active_pssr_count} active PSSR</span>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-2 border-t border-border/10">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{new Date(checklist.created_at).toLocaleDateString()}</span>
+                  <Card
+                    key={checklist.id}
+                    className="group cursor-pointer hover:shadow-fluent-lg transition-all duration-300 border border-border/20 bg-card/90 backdrop-blur-sm hover:-translate-y-1 animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                    onClick={() => setSelectedChecklist(checklist)}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
+                            {checklist.name}
+                          </CardTitle>
+                          <CardDescription className="mt-2">
+                            {checklist.reason}
+                          </CardDescription>
                         </div>
-                         <div className="flex items-center space-x-1">
-                           <User className="h-3 w-3" />
-                           <span>{checklist.created_by_email}</span>
-                         </div>
+                        <div className="flex items-center space-x-2">
+                          {getStatusBadge(checklist.status)}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditChecklist(checklist);
+                            }}
+                            title="Edit checklist"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                </CardContent>
-              </Card>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{checklist.items_count} items</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Activity className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{checklist.active_pssr_count} active PSSR</span>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2 border-t border-border/10">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{new Date(checklist.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <User className="h-3 w-3" />
+                            <span>{checklist.created_by_email}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
