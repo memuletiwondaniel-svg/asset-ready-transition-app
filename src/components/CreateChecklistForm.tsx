@@ -274,7 +274,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         </div>
 
         {/* Form Content */}
-        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-10">
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-24">
           <div className="w-full max-w-4xl">
           <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
             <CardHeader>
