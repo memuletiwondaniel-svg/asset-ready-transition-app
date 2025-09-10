@@ -28,13 +28,17 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
                  )}
               </div>
               <div className="ml-4 text-left">
-                <span className={`block text-sm font-medium ${
-                  currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground'
+                <span className={`block text-sm font-bold tracking-wide ${
+                  currentStep >= step.number 
+                    ? 'text-foreground drop-shadow-sm' 
+                    : 'text-muted-foreground/90'
                 }`}>
                   {step.title}
                 </span>
-                <span className={`block text-xs ${
-                  currentStep >= step.number ? 'text-muted-foreground' : 'text-muted-foreground/70'
+                <span className={`block text-xs font-medium mt-0.5 ${
+                  currentStep >= step.number 
+                    ? 'text-foreground/80 drop-shadow-sm' 
+                    : 'text-muted-foreground/70'
                 }`}>
                   {step.subtitle}
                 </span>
