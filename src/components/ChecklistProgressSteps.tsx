@@ -7,7 +7,7 @@ interface ChecklistProgressStepsProps {
 const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ currentStep }) => {
   const steps = [
     { number: 1, title: "Step 1", subtitle: "Enter Checklist Information" },
-    { number: 2, title: "Step 2", subtitle: "Create Checklist Items" },
+    { number: 2, title: "Step 2", subtitle: "Select Checklist Items" },
     { number: 3, title: "Step 3", subtitle: "Review Checklist & Submit" }
   ];
 
