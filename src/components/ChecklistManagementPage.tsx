@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -117,6 +117,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const handleSaveComplete = () => {
     // Navigate back to checklist categories view
     onBack();
+  };
+
+  const handleSaveItem = (item: ChecklistItem) => {
+    // Quick save functionality - could show a toast or update indicator
+    console.log('Quick saving item:', item.id);
+    // In a real app, this would trigger an immediate save without opening the modal
   };
 
   const handleDeleteItem = (item: ChecklistItem) => {
@@ -281,6 +287,18 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                 </Badge>
                               </div>
                               <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="opacity-0 group-hover/item:opacity-100 transition-all duration-300 hover:bg-green-50 hover:text-green-700 rounded-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSaveItem(item);
+                                  }}
+                                  title="Quick save checklist item"
+                                >
+                                  <Save className="h-4 w-4" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
