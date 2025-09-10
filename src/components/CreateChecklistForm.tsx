@@ -369,14 +369,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             </div>
             <div className="flex space-x-3">
               <Button 
-                variant="outline"
-                onClick={() => setShowCreateItem(true)}
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Item
-              </Button>
-              <Button 
                 onClick={handleComplete}
                 className="fluent-button bg-primary hover:bg-primary-hover"
               >
