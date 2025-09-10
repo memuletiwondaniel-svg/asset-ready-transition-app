@@ -680,7 +680,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
                     <TabsTrigger
                       value="all"
-                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
+                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                     >
                       All
                     </TabsTrigger>
@@ -696,7 +696,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
-                        className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
+                        className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                       >
                         {category.name}
                       </TabsTrigger>
@@ -710,7 +710,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                         <TabsTrigger
                           key={category.id}
                           value={category.id}
-                          className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
+                          className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
                         >
                           {category.name}
                         </TabsTrigger>
