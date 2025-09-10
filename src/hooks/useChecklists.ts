@@ -38,17 +38,21 @@ export const useChecklists = () => {
             .eq('status', 'DRAFT');
 
           // Get creator email
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('user_id', checklist.created_by)
-            .single();
+          let profile = null;
+          if (checklist.created_by) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('user_id', checklist.created_by)
+              .single();
+            profile = profileData;
+          }
 
           return {
             ...checklist,
             items_count,
             active_pssr_count: active_pssr_count || 0,
-            created_by_email: profile?.email || 'Unknown',
+            created_by_email: profile?.email || 'Anonymous',
           };
         })
       );
@@ -116,15 +120,15 @@ export const useUpdateChecklist = () => {
   return useMutation({
     mutationFn: async ({ checklistId, checklistData }: { checklistId: string; checklistData: Partial<CreateChecklistData> }): Promise<Checklist> => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session?.user?.id || null;
 
-      // If reason is "Others" and custom_reason is provided, save it as a custom reason
-      if (checklistData.reason === 'Others' && checklistData.custom_reason) {
+      // If reason is "Others" and custom_reason is provided, save it as a custom reason (only if authenticated)
+      if (checklistData.reason === 'Others' && checklistData.custom_reason && userId) {
         const { error: customReasonError } = await supabase
           .from('custom_reasons')
           .upsert({
             reason_text: checklistData.custom_reason,
-            created_by: session.user.id,
+            created_by: userId,
           }, {
             onConflict: 'reason_text',
             ignoreDuplicates: true
@@ -153,17 +157,21 @@ export const useUpdateChecklist = () => {
       if (error) throw error;
 
       // Get creator email
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('user_id', data.created_by)
-        .single();
+      let profile = null;
+      if (data.created_by) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('user_id', data.created_by)
+          .single();
+        profile = profileData;
+      }
 
       return {
         ...data,
         items_count: data.selected_items?.length || 0,
         active_pssr_count: 0, // This would need to be calculated if needed
-        created_by_email: profile?.email || 'Unknown',
+        created_by_email: profile?.email || 'Anonymous',
       };
     },
     onSuccess: () => {
