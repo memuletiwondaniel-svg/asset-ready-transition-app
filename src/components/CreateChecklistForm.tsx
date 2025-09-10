@@ -225,6 +225,111 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
     return { total, selected, percentage: total > 0 ? Math.round((selected / total) * 100) : 0 };
   };
 
+  // Component to render individual checklist items
+  const ChecklistItemCard = ({ item }: { item: DBChecklistItem }) => {
+    const isSelected = formData.selected_items.includes(item.id);
+    return (
+      <div
+        key={item.id}
+        className={`group relative overflow-hidden rounded-xl border transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
+          isSelected 
+            ? 'border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 shadow-lg shadow-primary/20' 
+            : 'border-border/20 bg-gradient-to-r from-card/80 to-card/60 hover:shadow-lg hover:shadow-primary/5'
+        }`}
+        onClick={(e) => {
+          // Only open details if not clicking on checkbox
+          if (!(e.target as HTMLElement).closest('[role="checkbox"]')) {
+            handleItemClick(item, e);
+          }
+        }}
+      >
+        {/* Enhanced Selection Indicator */}
+        {isSelected && (
+          <>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-hover to-primary"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none"></div>
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-xl ring-1 ring-primary/20 pointer-events-none"></div>
+          </>
+        )}
+        
+        {/* Hover overlay for non-selected items */}
+        {!isSelected && (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-secondary/3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        )}
+        
+        <div className="relative p-4">
+          <div className="flex items-center space-x-4">
+            {/* Checkbox */}
+            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => handleItemToggle(item.id)}
+                className={`w-5 h-5 rounded-md border-2 transition-all duration-200 ${
+                  isSelected 
+                    ? 'border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary shadow-md' 
+                    : 'border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary'
+                }`}
+              />
+            </div>
+            
+            {/* ID Badge */}
+            <div className="flex-shrink-0">
+              <Badge 
+                variant="outline" 
+                className={`font-mono text-xs px-2 py-1 font-medium transition-all duration-200 ${
+                  isSelected 
+                    ? 'bg-primary/20 border-primary/50 text-primary shadow-sm' 
+                    : 'bg-primary/10 border-primary/30 text-primary'
+                }`}
+              >
+                {item.id}
+              </Badge>
+            </div>
+            
+            {/* Description */}
+            <div className="flex-1 min-w-0">
+              <p className={`font-semibold text-sm transition-colors duration-300 line-clamp-1 ${
+                isSelected 
+                  ? 'text-primary' 
+                  : 'text-foreground group-hover:text-primary'
+              }`}>
+                {item.description}
+              </p>
+            </div>
+            
+            {/* Topic */}
+            {item.topic && (
+              <div className="flex-shrink-0">
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs max-w-32 truncate transition-all duration-200 ${
+                    isSelected 
+                      ? 'bg-secondary/80 text-secondary-foreground shadow-sm' 
+                      : 'bg-secondary text-secondary-foreground'
+                  }`}
+                >
+                  {item.topic}
+                </Badge>
+              </div>
+            )}
+            
+            {/* Click to view indicator */}
+            <div className="flex-shrink-0">
+              <div className={`text-xs px-2 py-1 rounded-md transition-all duration-300 ${
+                isSelected 
+                  ? 'text-primary/70 bg-primary/10' 
+                  : 'text-muted-foreground/0 group-hover:text-muted-foreground bg-muted/0 group-hover:bg-muted/50'
+              }`}>
+                Click to view
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Show create item form
   if (showCreateItem) {
     return (
@@ -290,11 +395,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       className="h-12 w-auto animate-float" 
                     />
                   </div>
-                   <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                     <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                       Create New Checklist
-                     </h1>
-                   </div>
+                  <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                      Create New Checklist
+                    </h1>
+                  </div>
                 </div>
                 <Button 
                   variant="outline" 
@@ -413,11 +518,11 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                   className="h-12 w-auto animate-float" 
                 />
               </div>
-               <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                 <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                   Create New Checklist
-                 </h1>
-               </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                  Create New Checklist
+                </h1>
+              </div>
             </div>
             <div className="flex space-x-3">
             </div>
@@ -433,84 +538,76 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       <div className="absolute inset-0 opacity-[0.015]" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}></div>
-      
-      {/* Floating Geometric Elements */}
-      <div className="absolute top-32 right-20 w-40 h-40 bg-gradient-to-br from-blue-200/15 to-indigo-300/15 rounded-full blur-2xl animate-pulse"></div>
-      <div className="absolute bottom-20 left-20 w-28 h-28 bg-gradient-to-br from-purple-200/10 to-pink-300/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-      <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-gradient-to-br from-cyan-200/20 to-blue-300/20 rounded-full blur-lg animate-pulse" style={{ animationDelay: '3s' }}></div>
-      
+
       {/* Content Layer with Fluent Acrylic */}
-      <div className="relative z-10">
-        {/* Progress Steps */}
-        <div className="max-w-7xl mx-auto px-8 pt-6">
-          <ChecklistProgressSteps currentStep={currentStep} />
-        </div>
-
-
-        {/* Back and Action Buttons */}
-        <div className="max-w-7xl mx-auto px-8 mb-6">
-          <div className="flex justify-between items-center">
-            <Button 
-              variant="outline" 
-              onClick={() => setCurrentStep(1)}
-              className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Step 1
-            </Button>
-            <div className="flex space-x-3">
-              <Button 
-                variant="outline"
-                onClick={() => setShowCreateItem(true)}
-                className="fluent-button bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add new checklist item
-              </Button>
-              <Button 
-                onClick={handleComplete}
-                className="fluent-button bg-primary hover:bg-primary-hover"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Create Checklist
-              </Button>
-            </div>
+      <div className="relative z-10 p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Summary Section */}
+          <div className="mb-8">
+            <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-bold">{formData.name}</CardTitle>
+                    <CardDescription>
+                      Select checklist items for your PSSR workflow
+                    </CardDescription>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-primary">
+                      {formData.selected_items.length}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      items selected
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
           </div>
-        </div>
 
-        {/* Categories Tabs */}
-        <div className="max-w-7xl mx-auto px-8 pb-8">
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <div className="fluent-glassmorphism border border-border/30 backdrop-blur-md rounded-2xl p-6 mb-6">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-2xl pointer-events-none"></div>
-              <div className="relative z-10">
-                {/* Search and Summary */}
-                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between mb-6">
-                  <div className="flex-1 relative max-w-md">
+          {/* Search and Filter Controls */}
+          <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md mb-6">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between space-x-4">
+                <div className="flex-1 max-w-md">
+                  <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Search checklist items by ID or description..."
+                      placeholder="Search checklist items..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
                     />
                   </div>
-                  <div className="flex items-center space-x-4 text-sm">
-                    <Badge variant="outline" className="px-3 py-1">
-                      {formData.selected_items.length} items selected
-                    </Badge>
-                    <Badge variant="outline" className="px-3 py-1">
-                      {allChecklistItems.length} total items
-                    </Badge>
-                    {customChecklistItems.length > 0 && (
-                      <Badge variant="default" className="px-3 py-1 bg-green-100 text-green-700 border-green-200">
-                        {customChecklistItems.length} custom items
-                      </Badge>
-                    )}
-                  </div>
                 </div>
-                
-                <TabsList className="w-full h-auto p-1 grid grid-cols-7 lg:grid-cols-7 gap-1 bg-transparent">
+                <div className="flex space-x-3">
+                  <Button 
+                    onClick={() => setShowCreateItem(true)}
+                    size="sm"
+                    className="fluent-button bg-primary hover:bg-primary-hover"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Custom Item
+                  </Button>
+                  <Button 
+                    onClick={handleComplete}
+                    disabled={formData.selected_items.length === 0}
+                    className="fluent-button bg-primary hover:bg-primary-hover"
+                  >
+                    Complete Checklist
+                    <CheckCircle className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Checklist Items */}
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <TabsList className="grid grid-cols-auto gap-2 h-auto p-2 bg-card/30 border border-border/20 backdrop-blur-sm">
                   <TabsTrigger
                     value="all"
                     className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden h-10 bg-card/30 border border-border/20 hover:bg-card/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
@@ -521,7 +618,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">All Categories</span>
                     </div>
                   </TabsTrigger>
-                  
                   {categories.map((category) => {
                     return (
                       <TabsTrigger
@@ -575,74 +671,9 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       </CardHeader>
                       <CardContent>
                         <ScrollArea className="h-96">
-                           <div className="grid gap-3">
-                             {filteredCategoryItems.map((item) => (
-                               <div
-                                 key={item.id}
-                                 className="group relative overflow-hidden rounded-xl border border-border/20 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:scale-[1.01]"
-                                 onClick={(e) => {
-                                   // Prevent clicking on the card from triggering when clicking buttons
-                                   if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'P') {
-                                     handleItemToggle(item.id);
-                                   }
-                                 }}
-                               >
-                                 {/* Selection Indicator */}
-                                 {formData.selected_items.includes(item.id) && (
-                                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
-                                 )}
-                                 
-                                 <div className="relative p-4">
-                                   <div className="flex items-center space-x-4">
-                                     {/* Checkbox */}
-                                     <div className="flex-shrink-0">
-                                       <Checkbox
-                                         checked={formData.selected_items.includes(item.id)}
-                                         onCheckedChange={() => handleItemToggle(item.id)}
-                                         className="w-5 h-5 rounded-md border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                       />
-                                     </div>
-                                     
-                                     {/* ID Badge */}
-                                     <div className="flex-shrink-0">
-                                       <Badge 
-                                         variant="outline" 
-                                         className="font-mono text-xs px-2 py-1 bg-primary/10 border-primary/30 text-primary font-medium"
-                                       >
-                                         {item.id}
-                                       </Badge>
-                                     </div>
-                                     
-                                     {/* Description */}
-                                     <div className="flex-1 min-w-0">
-                                       <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-1 cursor-pointer">
-                                         {item.description}
-                                       </p>
-                                     </div>
-                                     
-                                     {/* Topic */}
-                                     {item.topic && (
-                                       <div className="flex-shrink-0">
-                                         <Badge variant="secondary" className="text-xs max-w-32 truncate">
-                                           {item.topic}
-                                         </Badge>
-                                       </div>
-                                     )}
-                                     
-                                     {/* View Details Button */}
-                                     <div className="flex-shrink-0">
-                                       <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         onClick={(e) => handleItemClick(item, e)}
-                                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 px-3 text-xs hover:bg-primary/10 hover:text-primary"
-                                       >
-                                         View Details
-                                       </Button>
-                                     </div>
-                                   </div>
-                                 </div>
-                               </div>
+                          <div className="grid gap-3">
+                            {filteredCategoryItems.map((item) => (
+                              <ChecklistItemCard key={item.id} item={item} />
                             ))}
                           </div>
                         </ScrollArea>
@@ -678,75 +709,10 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     </div>
                   </CardHeader>
                   <CardContent>
-                     <ScrollArea className="h-96">
-                       <div className="grid gap-3">
-                         {filteredItems(category.items).map((item) => (
-                           <div
-                             key={item.id}
-                             className="group relative overflow-hidden rounded-xl border border-border/20 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:scale-[1.01]"
-                             onClick={(e) => {
-                               // Prevent clicking on the card from triggering when clicking buttons
-                               if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'P') {
-                                 handleItemToggle(item.id);
-                               }
-                             }}
-                           >
-                             {/* Selection Indicator */}
-                             {formData.selected_items.includes(item.id) && (
-                               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
-                             )}
-                             
-                             <div className="relative p-4">
-                               <div className="flex items-center space-x-4">
-                                 {/* Checkbox */}
-                                 <div className="flex-shrink-0">
-                                   <Checkbox
-                                     checked={formData.selected_items.includes(item.id)}
-                                     onCheckedChange={() => handleItemToggle(item.id)}
-                                     className="w-5 h-5 rounded-md border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                   />
-                                 </div>
-                                 
-                                 {/* ID Badge */}
-                                 <div className="flex-shrink-0">
-                                   <Badge 
-                                     variant="outline" 
-                                     className="font-mono text-xs px-2 py-1 bg-primary/10 border-primary/30 text-primary font-medium"
-                                   >
-                                     {item.id}
-                                   </Badge>
-                                 </div>
-                                 
-                                 {/* Description */}
-                                 <div className="flex-1 min-w-0">
-                                   <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-1 cursor-pointer">
-                                     {item.description}
-                                   </p>
-                                 </div>
-                                 
-                                 {/* Topic */}
-                                 {item.topic && (
-                                   <div className="flex-shrink-0">
-                                     <Badge variant="secondary" className="text-xs max-w-32 truncate">
-                                       {item.topic}
-                                     </Badge>
-                                   </div>
-                                 )}
-                                 
-                                 {/* View Details Button */}
-                                 <div className="flex-shrink-0">
-                                   <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     onClick={(e) => handleItemClick(item, e)}
-                                     className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 px-3 text-xs hover:bg-primary/10 hover:text-primary"
-                                   >
-                                     View Details
-                                   </Button>
-                                 </div>
-                               </div>
-                             </div>
-                           </div>
+                    <ScrollArea className="h-96">
+                      <div className="grid gap-3">
+                        {filteredItems(category.items).map((item) => (
+                          <ChecklistItemCard key={item.id} item={item} />
                         ))}
                       </div>
                     </ScrollArea>
