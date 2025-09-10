@@ -188,7 +188,8 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
       const matchesSearch = searchQuery === '' || 
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.topic && item.topic.toLowerCase().includes(searchQuery.toLowerCase()));
+        (item.topic && item.topic.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        item.id.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   };
@@ -235,10 +236,171 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
 
   if (currentStep === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-        {/* Navigation Bar */}
-        <div className="fluent-navigation sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-8 py-6">
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Microsoft Fluent Background with Acrylic Material */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/40"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-purple-50/10"></div>
+        
+        {/* Fluent Design Noise Texture */}
+        <div className="absolute inset-0 opacity-[0.015]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}></div>
+        
+        {/* Floating Geometric Elements */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-indigo-300/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-br from-purple-200/15 to-pink-300/15 rounded-full blur-lg animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-32 left-40 w-20 h-20 bg-gradient-to-br from-cyan-200/20 to-blue-300/20 rounded-full blur-md animate-pulse" style={{ animationDelay: '2s' }}></div>
+        
+        {/* Content Layer with Fluent Acrylic */}
+        <div className="relative z-10">
+          {/* Navigation Bar with Acrylic Effect */}
+          <div className="fluent-navigation sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg">
+            <div className="max-w-4xl mx-auto px-8 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="fluent-reveal">
+                    <img 
+                      src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                      alt="BGC Logo" 
+                      className="h-12 w-auto animate-float" 
+                    />
+                  </div>
+                  <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                      Create New Checklist
+                    </h1>
+                    <p className="text-sm text-muted-foreground font-medium">Step 1 of 2 • Basic Information</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={onBack}
+                  className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="max-w-4xl mx-auto px-8">
+            <ChecklistProgressSteps currentStep={currentStep} />
+          </div>
+
+          {/* Form Content */}
+          <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-32">
+            <div className="w-full max-w-4xl">
+              <Card className="border border-white/30 bg-white/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 fluent-card">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-lg"></div>
+                <div className="relative z-10">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Checklist Information</CardTitle>
+                    <CardDescription>
+                      Provide basic information about your new PSSR checklist
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Checklist Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-base font-semibold">
+                        Checklist Name <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="name"
+                        placeholder="Enter a descriptive name for your checklist"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="h-12"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Choose a clear, descriptive name that identifies the purpose of this checklist
+                      </p>
+                    </div>
+
+                    {/* Reason for Checklist */}
+                    <div className="space-y-2">
+                      <Label className="text-base font-semibold">
+                        Reason for Checklist <span className="text-destructive">*</span>
+                      </Label>
+                      <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select the primary reason for creating this checklist" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                          {checklistReasons.map((reason) => (
+                            <SelectItem key={reason} value={reason} className="cursor-pointer">
+                              {reason}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {/* Custom Reason Input */}
+                      {formData.reason === 'Others' && (
+                        <div className="mt-4 space-y-2">
+                          <Label htmlFor="customReason" className="text-sm font-medium">
+                            Please specify the reason
+                          </Label>
+                          <Input
+                            id="customReason"
+                            placeholder="Enter your custom reason"
+                            value={customReason}
+                            onChange={(e) => setCustomReason(e.target.value)}
+                            className="h-10"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end pt-6 border-t border-border/20">
+                      <Button 
+                        onClick={handleNext}
+                        disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
+                        className="fluent-button bg-primary hover:bg-primary-hover px-8"
+                      >
+                        Next: Select Items
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Microsoft Fluent Background with Acrylic Material */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/40"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-100/20 via-transparent to-blue-50/10"></div>
+      
+      {/* Fluent Design Noise Texture */}
+      <div className="absolute inset-0 opacity-[0.015]" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      }}></div>
+      
+      {/* Floating Geometric Elements */}
+      <div className="absolute top-32 right-20 w-40 h-40 bg-gradient-to-br from-blue-200/15 to-indigo-300/15 rounded-full blur-2xl animate-pulse"></div>
+      <div className="absolute bottom-20 left-20 w-28 h-28 bg-gradient-to-br from-purple-200/10 to-pink-300/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+      <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-gradient-to-br from-cyan-200/20 to-blue-300/20 rounded-full blur-lg animate-pulse" style={{ animationDelay: '3s' }}></div>
+      
+      {/* Content Layer with Fluent Acrylic */}
+      <div className="relative z-10">
+        {/* Progress Steps */}
+        <div className="max-w-7xl mx-auto px-8 pt-6">
+          <ChecklistProgressSteps currentStep={currentStep} />
+        </div>
+
+        {/* Navigation Bar with Acrylic Effect */}
+        <div className="fluent-navigation sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg">
+          <div className="max-w-7xl mx-auto px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-6">
                 <div className="fluent-reveal">
@@ -250,662 +412,338 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                 </div>
                 <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                    Create New Checklist
+                    Select Checklist Items
                   </h1>
-                  <p className="text-sm text-muted-foreground font-medium">Step 1 of 2 • Basic Information</p>
+                  <p className="text-sm text-muted-foreground font-medium">
+                    Step 2 of 2 • {formData.name}
+                  </p>
                 </div>
               </div>
+              <div className="flex space-x-3">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Summary */}
+        <div className="max-w-7xl mx-auto px-8 mb-6">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+              <div className="flex-1 relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search checklist items by ID or description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex items-center space-x-4 text-sm">
+                <Badge variant="outline" className="px-3 py-1">
+                  {formData.selected_items.length} items selected
+                </Badge>
+                <Badge variant="outline" className="px-3 py-1">
+                  {allChecklistItems.length} total items
+                </Badge>
+                {customChecklistItems.length > 0 && (
+                  <Badge variant="default" className="px-3 py-1 bg-green-100 text-green-700 border-green-200">
+                    {customChecklistItems.length} custom items
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Back and Action Buttons */}
+        <div className="max-w-7xl mx-auto px-8 mb-6">
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentStep(1)}
+              className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Step 1
+            </Button>
+            <div className="flex space-x-3">
               <Button 
-                variant="outline" 
-                onClick={onBack}
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+                variant="outline"
+                onClick={() => setShowCreateItem(true)}
+                className="fluent-button bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
               >
-                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-                Cancel
+                <Plus className="h-4 w-4 mr-2" />
+                Add new checklist item
+              </Button>
+              <Button 
+                onClick={handleComplete}
+                className="fluent-button bg-primary hover:bg-primary-hover"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Create Checklist
               </Button>
             </div>
           </div>
         </div>
 
-
-        {/* Progress Steps */}
-        <div className="max-w-4xl mx-auto px-8">
-          <ChecklistProgressSteps currentStep={currentStep} />
-        </div>
-
-        {/* Form Content */}
-        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-32">
-          <div className="w-full max-w-4xl">
-          <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl">Checklist Information</CardTitle>
-              <CardDescription>
-                Provide basic information about your new PSSR checklist
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Checklist Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-base font-semibold">
-                  Checklist Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="Enter a descriptive name for your checklist"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="h-12"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Choose a clear, descriptive name that identifies the purpose of this checklist
-                </p>
-              </div>
-
-              {/* Reason for Checklist */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">
-                  Reason for Checklist <span className="text-destructive">*</span>
-                </Label>
-                <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Select the primary reason for creating this checklist" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                    {checklistReasons.map((reason) => (
-                      <SelectItem key={reason} value={reason} className="cursor-pointer">
-                        {reason}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {/* Custom Reason Input */}
-                {formData.reason === 'Others' && (
-                  <div className="mt-4 space-y-2">
-                    <Label htmlFor="customReason" className="text-sm font-medium">
-                      Please specify the reason
-                    </Label>
-                    <Input
-                      id="customReason"
-                      placeholder="Enter your custom reason"
-                      value={customReason}
-                      onChange={(e) => setCustomReason(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end pt-6 border-t border-border/20">
-                <Button 
-                  onClick={handleNext}
-                  disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
-                  className="fluent-button bg-primary hover:bg-primary-hover px-8"
-                >
-                  Next: Select Items
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      {/* Progress Steps */}
-      <div className="max-w-7xl mx-auto px-8 pt-6">
-        <ChecklistProgressSteps currentStep={currentStep} />
-      </div>
-
-      {/* Navigation Bar */}
-      <div className="fluent-navigation sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="fluent-reveal">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-12 w-auto animate-float" 
-                />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Select Checklist Items
-                </h1>
-                <p className="text-sm text-muted-foreground font-medium">
-                  Step 2 of 2 • {formData.name}
-                </p>
-              </div>
-            </div>
-            <div className="flex space-x-3">
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Search and Summary */}
-      <div className="max-w-7xl mx-auto px-8 mb-6">
-        <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search checklist items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center space-x-4 text-sm">
-              <Badge variant="outline" className="px-3 py-1">
-                {formData.selected_items.length} items selected
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1">
-                {allChecklistItems.length} total items
-              </Badge>
-              {customChecklistItems.length > 0 && (
-                <Badge variant="default" className="px-3 py-1 bg-green-100 text-green-700 border-green-200">
-                  {customChecklistItems.length} custom items
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Back and Action Buttons */}
-      <div className="max-w-7xl mx-auto px-8 mb-6">
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="outline" 
-            onClick={() => setCurrentStep(1)}
-            className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Step 1
-          </Button>
-          <div className="flex space-x-3">
-            <Button 
-              variant="outline"
-              onClick={() => setShowCreateItem(true)}
-              className="fluent-button bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add new checklist item
-            </Button>
-            <Button 
-              onClick={handleComplete}
-              className="fluent-button bg-primary hover:bg-primary-hover"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Create Checklist
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Categories Tabs */}
-      <div className="max-w-7xl mx-auto px-8 pb-8">
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-6">
-          <TabsList className="relative grid grid-cols-4 lg:grid-cols-7 h-auto p-2 bg-gradient-to-r from-white/90 via-white/80 to-white/90 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl overflow-hidden">
-            {/* Microsoft Fluent Design Background Pattern */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmMGY5ZmYiIGZpbGwtb3BhY2l0eT0iMC4zIj48cGF0aCBkPSJtMzYgMzRjMC0yLjIwOTEzOSAxLjc5MDg2MS00IDQtNCBoMTZjMi4yMDkxMzkgMCA0IDEuNzkwODYxIDQgNHYxNmMwIDIuMjA5MTM5LTEuNzkwODYxIDQtNCA0aC0xNmMtMi4yMDkxMzktNGUtMy00LTEuNzkwODYxLTQtNHptMC0zNmMwLTIuMjA5MTM5IDEuNzkwODYxLTQgNC00aDE2YzIuMjA5MTM5IDAgNCAxLjc5MDg2MSA0IDR2MTZjMCAyLjIwOTEzOS0xLjc5MDg2MSA0LTQgNGgtMTZjLTIuMjA5MTM5LTRlLTMtNC0xLjc5MDg2MS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
-            
-            <TabsTrigger 
-              value="all" 
-              className="relative text-xs p-4 rounded-xl font-medium transition-all duration-500 hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-2xl hover:bg-white/80 hover:backdrop-blur-sm hover:border-blue-200/50 group"
-            >
-              {/* Hover glow effect */}
-              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">All Items</div>
-            </TabsTrigger>
-            
-            {categories.map((category) => {
-              const IconComponent = category.icon;
-              const stats = getCategoryStats(category.items);
-              return (
-                <TabsTrigger 
-                  key={category.id} 
-                  value={category.id} 
-                  className="relative text-xs p-4 rounded-xl font-medium transition-all duration-500 hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-2xl hover:bg-white/80 hover:backdrop-blur-sm hover:border-blue-200/50 group"
-                >
-                  {/* Hover glow effect */}
-                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  
-                  <div className="relative z-10 space-y-1">
-                    <div className="flex items-center justify-center space-x-1">
-                      <div className="relative">
-                        {/* Icon glow on hover */}
-                        <div className="absolute -inset-1 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <IconComponent className="relative h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+        {/* Categories Tabs */}
+        <div className="max-w-7xl mx-auto px-8 pb-8">
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+            <div className="fluent-glassmorphism border border-border/30 backdrop-blur-md rounded-2xl p-6 mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-2xl pointer-events-none"></div>
+              <div className="relative z-10">
+                <TabsList className="w-full h-auto p-2 grid grid-cols-2 lg:grid-cols-5 gap-2 bg-transparent">
+                  <TabsTrigger
+                    value="all"
+                    className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 fluent-reveal"></div>
+                    <div className="relative z-10 flex flex-col items-center space-y-2 py-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 transition-all duration-300 fluent-lift">
+                        <ClipboardCheck className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                       </div>
-                      <span className="hidden sm:inline font-medium group-hover:font-semibold transition-all duration-300">{category.name}</span>
+                      <div className="text-center">
+                        <span className="block font-semibold text-sm">All Categories</span>
+                        <span className="block text-xs text-muted-foreground mt-1">
+                          {allChecklistItems.length} items
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-xs opacity-70 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="inline-flex items-center space-x-1">
-                        <span className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></span>
-                        <span>{stats.selected}/{stats.total}</span>
-                      </span>
-                    </div>
-                  </div>
-                </TabsTrigger>
-              );
-            })}
-            
-            <TabsTrigger 
-              value="not-selected" 
-              className="relative text-xs p-4 rounded-xl font-medium transition-all duration-500 hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-2xl hover:bg-white/80 hover:backdrop-blur-sm hover:border-blue-200/50 group"
-            >
-              {/* Hover glow effect */}
-              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              
-              <div className="relative z-10 space-y-1">
-                <div className="font-medium group-hover:font-semibold transition-all duration-300">Not Selected</div>
-                <Badge 
-                  variant="secondary" 
-                  className="ml-auto text-xs bg-white/80 text-gray-700 border-gray-200/60 group-hover:bg-white group-hover:shadow-md transition-all duration-300 backdrop-blur-sm"
-                >
-                  {unselectedItems.length}
-                </Badge>
+                  </TabsTrigger>
+                  
+                  {categories.map((category) => {
+                    const stats = getCategoryStats(category.items);
+                    const Icon = category.icon;
+                    return (
+                      <TabsTrigger
+                        key={category.id}
+                        value={category.id}
+                        className="fluent-tab-trigger data-[state=active]:fluent-tab-active group relative overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 fluent-reveal"></div>
+                        <div className="relative z-10 flex flex-col items-center space-y-2 py-4">
+                          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 transition-all duration-300 fluent-lift">
+                            <Icon className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                          </div>
+                          <div className="text-center">
+                            <span className="block font-semibold text-sm">{category.name}</span>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className="text-xs text-muted-foreground">
+                                {stats.selected}/{stats.total}
+                              </span>
+                              {stats.selected > 0 && (
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5">
+                                  {stats.percentage}%
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
               </div>
-            </TabsTrigger>
-          </TabsList>
+            </div>
 
-          {/* All Items Tab */}
-          <TabsContent value="all" className="space-y-4">
-            <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>All Checklist Items</CardTitle>
-                <CardDescription>
-                  Select the items you want to include in your checklist
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-96">
-                  <div className="space-y-4">
-                     {allChecklistItems.filter(item => 
-                       searchQuery === '' || 
-                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
-                      ).map((item) => {
-                        const isExpanded = expandedItems.has(item.id);
-                        return (
-                          <div key={item.id} className={`group relative border rounded-xl transition-all duration-300 ${
-                            customChecklistItems.some(custom => custom.id === item.id) 
-                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100' 
-                              : 'hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 hover:border-blue-200/60 hover:shadow-lg hover:scale-[1.02]'
-                          }`}>
-                            {/* Microsoft Fluent hover glow effect */}
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            
-                            {/* Reveal effect on hover */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 rounded-xl"></div>
-                            
-                            <div 
-                              className="relative flex items-start space-x-4 p-4 cursor-pointer group-hover:backdrop-blur-sm transition-all duration-300"
-                              onClick={() => toggleItemExpansion(item.id)}
-                            >
-                              <Checkbox
-                                checked={formData.selected_items.includes(item.id)}
-                                onCheckedChange={() => handleItemToggle(item.id)}
-                                className="mt-1 group-hover:scale-110 transition-transform duration-200"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center space-x-2">
-                                    {/* Item ID and Description on same line */}
-                                    <h4 className="font-semibold text-sm text-blue-700 group-hover:text-blue-800 transition-colors duration-200">
-                                      {item.id}
-                                    </h4>
-                                    <span className="text-gray-400">•</span>
-                                    <p className="text-sm text-foreground font-medium group-hover:text-gray-800 transition-colors duration-200 line-clamp-2 flex-1">
-                                      {item.description}
-                                    </p>
-                                    {customChecklistItems.some(custom => custom.id === item.id) && (
-                                      <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200 animate-pulse">
-                                        New
+            {/* All Categories Tab Content */}
+            <TabsContent value="all" className="mt-0">
+              <div className="space-y-6">
+                {categories.map((category) => {
+                  const filteredCategoryItems = filteredItems(category.items);
+                  if (filteredCategoryItems.length === 0) return null;
+
+                  const stats = getCategoryStats(category.items);
+                  const Icon = category.icon;
+
+                  return (
+                    <Card key={category.id} className="fluent-glassmorphism border-border/30 backdrop-blur-md">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10">
+                              <Icon className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-xl font-bold">{category.name}</CardTitle>
+                              <CardDescription className="text-sm">
+                                {stats.selected} of {stats.total} items selected
+                                {stats.selected > 0 && ` (${stats.percentage}%)`}
+                              </CardDescription>
+                            </div>
+                          </div>
+                          {stats.selected > 0 && (
+                            <div className="flex items-center space-x-2">
+                              <Progress value={stats.percentage} className="w-20 h-2" />
+                              <Badge variant="secondary" className="text-xs">
+                                {stats.percentage}%
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="h-96">
+                          <div className="grid gap-3">
+                            {filteredCategoryItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className="fluent-item-card group border border-border/30 rounded-xl p-4 bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+                                onClick={() => handleItemToggle(item.id)}
+                              >
+                                <div className="flex items-start space-x-4">
+                                  <Checkbox
+                                    checked={formData.selected_items.includes(item.id)}
+                                    onChange={() => handleItemToggle(item.id)}
+                                    className="mt-1 fluent-checkbox"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                      <Badge variant="outline" className="text-xs font-mono px-2 py-1 bg-primary/5 border-primary/20">
+                                        {item.id}
                                       </Badge>
+                                      <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-200">
+                                        {item.description}
+                                      </h4>
+                                    </div>
+                                    
+                                    {(item.supporting_evidence || item.topic) && (
+                                      <div className="space-y-2 text-xs text-muted-foreground">
+                                        {item.topic && (
+                                          <div className="flex items-center space-x-2">
+                                            <span className="font-medium">Topic:</span>
+                                            <span>{item.topic}</span>
+                                          </div>
+                                        )}
+                                        {item.supporting_evidence && expandedItems.has(item.id) && (
+                                          <div className="space-y-1">
+                                            <span className="font-medium">Supporting Evidence:</span>
+                                            <p className="text-xs leading-relaxed">{item.supporting_evidence}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {item.supporting_evidence && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleItemExpansion(item.id);
+                                        }}
+                                        className="mt-2 h-6 px-2 text-xs hover:bg-primary/10"
+                                      >
+                                        {expandedItems.has(item.id) ? 'Show Less' : 'Show More'}
+                                      </Button>
                                     )}
                                   </div>
-                                  <Badge variant="outline" className="text-xs group-hover:bg-white group-hover:shadow-sm transition-all duration-200">
-                                    {item.category}
-                                  </Badge>
                                 </div>
                               </div>
-                            </div>
-                            
-                            {isExpanded && (
-                              <div className="relative px-4 pb-4 border-t bg-gradient-to-r from-muted/10 to-muted/5 animate-fade-in">
-                                <div className="pt-3 space-y-3">
-                                  <div>
-                                    <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
-                                    <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-medium text-muted-foreground">Approving Authority:</span>
-                                    <p className="text-xs text-foreground mt-1">{item.approving_authority || 'Not specified'}</p>
-                                  </div>
-                                  {item.responsible_party && (
-                                    <div>
-                                      <span className="text-xs font-medium text-muted-foreground">Responsible Party:</span>
-                                      <p className="text-xs text-foreground mt-1">{item.responsible_party}</p>
-                                    </div>
-                                  )}
-                                  {item.topic && (
-                                    <div>
-                                      <span className="text-xs font-medium text-muted-foreground">Topic:</span>
-                                      <p className="text-xs text-foreground mt-1">{item.topic}</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                            ))}
                           </div>
-                        );
-                      })}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
 
-          {/* Category Tabs */}
-          {categories.map((category) => {
-            const IconComponent = category.icon;
-            const stats = getCategoryStats(category.items);
-            const items = filteredItems(category.items);
-            
-            return (
-              <TabsContent key={category.id} value={category.id} className="space-y-4">
-                <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
+            {/* Individual Category Tab Contents */}
+            {categories.map((category) => (
+              <TabsContent key={category.id} value={category.id} className="mt-0">
+                <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${category.color}`}>
-                          <IconComponent className="h-5 w-5" />
+                      <div className="flex items-center space-x-4">
+                        <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10">
+                          <category.icon className="h-8 w-8 text-primary" />
                         </div>
                         <div>
-                          <CardTitle>{category.name}</CardTitle>
+                          <CardTitle className="text-2xl font-bold">{category.name}</CardTitle>
                           <CardDescription>
-                            {stats.selected} of {stats.total} items selected ({stats.percentage}%)
+                            Select the {category.name.toLowerCase()} items you need for your checklist
                           </CardDescription>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            const categoryItemIds = category.items.map(item => item.id);
-                            setFormData(prev => ({
-                              ...prev,
-                              selected_items: [...new Set([...prev.selected_items, ...categoryItemIds])]
-                            }));
-                          }}
-                        >
-                          Select All
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            const categoryItemIds = category.items.map(item => item.id);
-                            setFormData(prev => ({
-                              ...prev,
-                              selected_items: prev.selected_items.filter(id => !categoryItemIds.includes(id))
-                            }));
-                          }}
-                        >
-                          Deselect All
-                        </Button>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">
+                          {getCategoryStats(category.items).selected}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          of {category.items.length} selected
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <ScrollArea className="h-96">
-                       <div className="space-y-4">
-                          {items.filter(item => 
-                            searchQuery === '' || 
-                            item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
-                          ).map((item) => {
-                            const isExpanded = expandedItems.has(item.id);
-                            return (
-                              <div key={item.id} className={`group relative border rounded-xl transition-all duration-300 ${
-                                customChecklistItems.some(custom => custom.id === item.id) 
-                                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100' 
-                                  : 'hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 hover:border-blue-200/60 hover:shadow-lg hover:scale-[1.02]'
-                              }`}>
-                                {/* Microsoft Fluent hover glow effect */}
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                
-                                {/* Reveal effect on hover */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 rounded-xl"></div>
-                                
-                                <div 
-                                  className="relative flex items-start space-x-4 p-4 cursor-pointer group-hover:backdrop-blur-sm transition-all duration-300"
-                                  onClick={() => toggleItemExpansion(item.id)}
-                                >
-                                  <Checkbox
-                                    checked={formData.selected_items.includes(item.id)}
-                                    onCheckedChange={() => handleItemToggle(item.id)}
-                                    className="mt-1 group-hover:scale-110 transition-transform duration-200"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center space-x-2">
-                                      {/* Item ID and Description on same line */}
-                                      <h4 className="font-semibold text-sm text-blue-700 group-hover:text-blue-800 transition-colors duration-200">
-                                        {item.id}
-                                      </h4>
-                                      <span className="text-gray-400">•</span>
-                                      <p className="text-sm text-foreground font-medium group-hover:text-gray-800 transition-colors duration-200 line-clamp-2 flex-1">
-                                        {item.description}
-                                      </p>
-                                      {customChecklistItems.some(custom => custom.id === item.id) && (
-                                        <Badge variant="default" className="text-xs bg-green-100 text-green-700 border-green-200 animate-pulse">
-                                          New
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
+                      <div className="grid gap-3">
+                        {filteredItems(category.items).map((item) => (
+                          <div
+                            key={item.id}
+                            className="fluent-item-card group border border-border/30 rounded-xl p-4 bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+                            onClick={() => handleItemToggle(item.id)}
+                          >
+                            <div className="flex items-start space-x-4">
+                              <Checkbox
+                                checked={formData.selected_items.includes(item.id)}
+                                onChange={() => handleItemToggle(item.id)}
+                                className="mt-1 fluent-checkbox"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <Badge variant="outline" className="text-xs font-mono px-2 py-1 bg-primary/5 border-primary/20">
+                                    {item.id}
+                                  </Badge>
+                                  <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors duration-200">
+                                    {item.description}
+                                  </h4>
                                 </div>
                                 
-                                {isExpanded && (
-                                  <div className="px-3 pb-3 border-t bg-muted/10">
-                                    <div className="pt-3 space-y-2">
-                                      <div>
-                                        <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
-                                        <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
+                                {(item.supporting_evidence || item.topic) && (
+                                  <div className="space-y-2 text-xs text-muted-foreground">
+                                    {item.topic && (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="font-medium">Topic:</span>
+                                        <span>{item.topic}</span>
                                       </div>
-                                      <div>
-                                        <span className="text-xs font-medium text-muted-foreground">Approving Authority:</span>
-                                        <p className="text-xs text-foreground mt-1">{item.approving_authority || 'Not specified'}</p>
+                                    )}
+                                    {item.supporting_evidence && expandedItems.has(item.id) && (
+                                      <div className="space-y-1">
+                                        <span className="font-medium">Supporting Evidence:</span>
+                                        <p className="text-xs leading-relaxed">{item.supporting_evidence}</p>
                                       </div>
-                                      {item.responsible_party && (
-                                        <div>
-                                          <span className="text-xs font-medium text-muted-foreground">Responsible Party:</span>
-                                          <p className="text-xs text-foreground mt-1">{item.responsible_party}</p>
-                                        </div>
-                                      )}
-                                      {item.topic && (
-                                        <div>
-                                          <span className="text-xs font-medium text-muted-foreground">Topic:</span>
-                                          <p className="text-xs text-foreground mt-1">{item.topic}</p>
-                                        </div>
-                                      )}
-                                    </div>
+                                    )}
                                   </div>
                                 )}
+                                
+                                {item.supporting_evidence && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleItemExpansion(item.id);
+                                    }}
+                                    className="mt-2 h-6 px-2 text-xs hover:bg-primary/10"
+                                  >
+                                    {expandedItems.has(item.id) ? 'Show Less' : 'Show More'}
+                                  </Button>
+                                )}
                               </div>
-                            );
-                          })}
-                        {items.length === 0 && (
-                          <div className="text-center py-8 text-muted-foreground">
-                            No items found matching your search criteria.
+                            </div>
                           </div>
-                        )}
+                        ))}
                       </div>
                     </ScrollArea>
                   </CardContent>
                 </Card>
               </TabsContent>
-            );
-          })}
-
-          {/* Not Selected Tab */}
-          <TabsContent value="not-selected" className="space-y-4">
-            <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                  <span>Not Selected Items</span>
-                </CardTitle>
-                <CardDescription>
-                  These items are not included in your checklist ({unselectedItems.length} items)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-96">
-                  <div className="space-y-4">
-                     {unselectedItems.filter(item => 
-                       searchQuery === '' || 
-                       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase()))
-                     ).map((item) => {
-                        const isExpanded = expandedItems.has(item.id);
-                        return (
-                          <div key={item.id} className="group relative border rounded-xl bg-muted/10 opacity-60 hover:opacity-80 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
-                            {/* Hover glow effect */}
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-400/20 to-gray-600/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            
-                            <div 
-                              className="relative flex items-start space-x-4 p-4 cursor-pointer"
-                              onClick={() => toggleItemExpansion(item.id)}
-                            >
-                              <Checkbox
-                                checked={false}
-                                onCheckedChange={() => handleItemToggle(item.id)}
-                                className="mt-1 group-hover:scale-110 transition-transform duration-200"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    {/* Item ID and Description on same line */}
-                                    <h4 className="font-semibold text-sm text-gray-600 group-hover:text-gray-700 transition-colors duration-200">
-                                      {item.id}
-                                    </h4>
-                                    <span className="text-gray-400">•</span>
-                                    <p className="text-sm font-medium group-hover:text-gray-700 transition-colors duration-200 line-clamp-2 flex-1">
-                                      {item.description}
-                                    </p>
-                                  </div>
-                                  <Badge variant="outline" className="text-xs group-hover:bg-white/50 group-hover:shadow-sm transition-all duration-200">
-                                    {item.category}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {isExpanded && (
-                              <div className="relative px-4 pb-4 border-t animate-fade-in">
-                                <div className="pt-3 space-y-3">
-                                  <div>
-                                    <span className="text-xs font-medium text-muted-foreground">Supporting Evidence:</span>
-                                    <p className="text-xs text-foreground mt-1">{item.supporting_evidence || 'Not provided'}</p>
-                                  </div>
-                                  {item.approving_authority && (
-                                    <div>
-                                      <span className="text-xs font-medium text-muted-foreground">Approving Authority:</span>
-                                      <p className="text-xs text-foreground mt-1">{item.approving_authority}</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    {unselectedItems.length === 0 && (
-                      <div className="text-center py-8">
-                        <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-green-600 mb-2">All Items Selected!</h3>
-                        <p className="text-muted-foreground">
-                          You have selected all available checklist items.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Selected Items Summary - Modern Floating Panel */}
-        {formData.selected_items.length > 0 && (
-          <div className="fixed bottom-8 right-8 z-50 animate-scale-in">
-            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl rounded-2xl w-80 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
-                <h4 className="font-semibold text-white flex items-center space-x-2">
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Selected Items</span>
-                  <Badge className="bg-white/20 text-white border-white/30">
-                    {formData.selected_items.length}
-                  </Badge>
-                </h4>
-              </div>
-              <CardContent className="p-4 max-h-60 overflow-y-auto">
-                <div className="space-y-2">
-                  {formData.selected_items.slice(0, 5).map((itemId) => {
-                    const item = allChecklistItems.find(i => i.id === itemId);
-                    if (!item) return null;
-                    return (
-                      <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors group">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <span className="text-xs font-bold text-blue-600">{item.id}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-gray-700 truncate">{item.description}</p>
-                            <Badge variant="outline" className="text-xs mt-1">
-                              {item.category}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleItemToggle(item.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-red-100"
-                        >
-                          <X className="w-3 h-3 text-red-500" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                  {formData.selected_items.length > 5 && (
-                    <div className="text-center py-2 text-xs text-gray-500">
-                      ... and {formData.selected_items.length - 5} more items
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            ))}
+          </Tabs>
+        </div>
       </div>
     </div>
   );
