@@ -425,35 +425,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
           </div>
         </div>
 
-        {/* Search and Summary */}
-        <div className="max-w-7xl mx-auto px-8 mb-6">
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-              <div className="flex-1 relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search checklist items by ID or description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex items-center space-x-4 text-sm">
-                <Badge variant="outline" className="px-3 py-1">
-                  {formData.selected_items.length} items selected
-                </Badge>
-                <Badge variant="outline" className="px-3 py-1">
-                  {allChecklistItems.length} total items
-                </Badge>
-                {customChecklistItems.length > 0 && (
-                  <Badge variant="default" className="px-3 py-1 bg-green-100 text-green-700 border-green-200">
-                    {customChecklistItems.length} custom items
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Back and Action Buttons */}
         <div className="max-w-7xl mx-auto px-8 mb-6">
@@ -492,6 +463,32 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             <div className="fluent-glassmorphism border border-border/30 backdrop-blur-md rounded-2xl p-6 mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-2xl pointer-events-none"></div>
               <div className="relative z-10">
+                {/* Search and Summary */}
+                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between mb-6">
+                  <div className="flex-1 relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search checklist items by ID or description..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <Badge variant="outline" className="px-3 py-1">
+                      {formData.selected_items.length} items selected
+                    </Badge>
+                    <Badge variant="outline" className="px-3 py-1">
+                      {allChecklistItems.length} total items
+                    </Badge>
+                    {customChecklistItems.length > 0 && (
+                      <Badge variant="default" className="px-3 py-1 bg-green-100 text-green-700 border-green-200">
+                        {customChecklistItems.length} custom items
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
                 <TabsList className="w-full h-auto p-1 grid grid-cols-7 lg:grid-cols-7 gap-1 bg-transparent">
                   <TabsTrigger
                     value="all"
