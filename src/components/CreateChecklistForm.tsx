@@ -377,6 +377,33 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Navigation Bar with Acrylic Effect - Moved to Top */}
+      <div className="fluent-navigation sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg">
+        <div className="max-w-7xl mx-auto px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="fluent-reveal">
+                <img 
+                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                  alt="BGC Logo" 
+                  className="h-12 w-auto animate-float" 
+                />
+              </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                  Create New Checklist
+                </h1>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Step 2 of 2 • {formData.name}
+                </p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Microsoft Fluent Background with Acrylic Material */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/40"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-100/20 via-transparent to-blue-50/10"></div>
@@ -396,33 +423,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
         {/* Progress Steps */}
         <div className="max-w-7xl mx-auto px-8 pt-6">
           <ChecklistProgressSteps currentStep={currentStep} />
-        </div>
-
-        {/* Navigation Bar with Acrylic Effect */}
-        <div className="fluent-navigation sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg">
-          <div className="max-w-7xl mx-auto px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <div className="fluent-reveal">
-                  <img 
-                    src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                    alt="BGC Logo" 
-                    className="h-12 w-auto animate-float" 
-                  />
-                </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                    Select Checklist Items
-                  </h1>
-                  <p className="text-sm text-muted-foreground font-medium">
-                    Step 2 of 2 • {formData.name}
-                  </p>
-                </div>
-              </div>
-              <div className="flex space-x-3">
-              </div>
-            </div>
-          </div>
         </div>
 
 
