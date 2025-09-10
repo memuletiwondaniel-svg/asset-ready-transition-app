@@ -362,7 +362,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BGC">Basrah Gas Company (BGC)</SelectItem>
+                      <SelectItem value="BGC">
+                        <div className="flex items-center gap-2">
+                          <img src="/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png" alt="BGC" className="w-4 h-4" />
+                          Basrah Gas Company (BGC)
+                        </div>
+                      </SelectItem>
                       <SelectItem value="KENT">Kent Engineering</SelectItem>
                       <SelectItem value="CONTRACTOR">Contractor</SelectItem>
                       <SelectItem value="OTHER">Other</SelectItem>

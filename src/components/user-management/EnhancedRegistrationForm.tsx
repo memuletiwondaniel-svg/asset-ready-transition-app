@@ -83,7 +83,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
   ];
 
   const companies = [
-    { value: 'BGC', label: 'Basrah Gas Company (BGC)' },
+    { value: 'BGC', label: 'Basrah Gas Company (BGC)', logo: '/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png' },
     { value: 'KENT', label: 'Kent Engineering' },
     { value: 'OTHER', label: 'Others (specify)' }
   ];
@@ -497,7 +497,10 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
               <SelectContent>
                 {companies.map((company) => (
                   <SelectItem key={company.value} value={company.value}>
-                    {company.label}
+                    <div className="flex items-center gap-2">
+                      {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
+                      {company.label}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

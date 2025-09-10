@@ -83,7 +83,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     { code: '+49', country: 'Germany', flag: '🇩🇪' },
   ];
 
-  const companies = ['BGC', 'Kent', 'Others'];
+  const companies = [
+    { value: 'BGC', label: 'BGC', logo: '/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png' },
+    { value: 'Kent', label: 'Kent' },
+    { value: 'Others', label: 'Others' }
+  ];
 
   const roles = [
     'Project Manager',
@@ -397,7 +401,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {companies.map(company => (
-                  <SelectItem key={company} value={company}>{company}</SelectItem>
+                  <SelectItem key={company.value} value={company.value}>
+                    <div className="flex items-center gap-2">
+                      {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
+                      {company.label}
+                    </div>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
