@@ -501,10 +501,18 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep(1)}
-              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+              className="group relative overflow-hidden bg-gradient-to-r from-card/90 to-card/70 border-2 border-border/30 hover:border-primary/40 px-6 py-3 rounded-xl font-medium text-foreground hover:text-primary transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl hover:shadow-primary/10 backdrop-blur-sm"
             >
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              Back to Information
+              {/* Background gradient overlay on hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+              
+              {/* Subtle shimmer effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 translate-x-[-100%] group-hover:translate-x-[100%] transition-all duration-700 ease-out"></div>
+              
+              <div className="relative flex items-center">
+                <ArrowLeft className="h-4 w-4 mr-3 group-hover:-translate-x-2 transition-all duration-300 ease-out" />
+                <span className="font-semibold">Back to Information</span>
+              </div>
             </Button>
             
             <div className="text-center">
