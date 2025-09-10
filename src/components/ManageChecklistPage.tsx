@@ -12,7 +12,8 @@ import EditChecklistForm from './EditChecklistForm';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
 import { useChecklists, useCreateChecklist, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
 import { useToast } from '@/hooks/use-toast';
-
+import EnhancedAuthModal from '@/components/enhanced-auth/EnhancedAuthModal';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 // Use the Checklist type from the hook
 
 interface ManageChecklistPageProps {
@@ -37,21 +38,24 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [createdChecklistName, setCreatedChecklistName] = useState('');
-  const {
-    toast
-  } = useToast();
-  const {
-    data: checklists = [],
-    isLoading,
-    error
-  } = useChecklists();
-  const {
-    mutate: createChecklist
-  } = useCreateChecklist();
-  const {
-    mutate: updateChecklist
-  } = useUpdateChecklist();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingChecklistData, setPendingChecklistData] = useState<NewChecklistData | null>(null);
+  
+  const { data: checklists = [], isLoading, error } = useChecklists();
+  const { mutate: createChecklist } = useCreateChecklist();
+  const { mutate: updateChecklist } = useUpdateChecklist();
+
   const handleCreateComplete = (checklistData: NewChecklistData) => {
+    // Require authentication before creating a checklist
+    if (!user) {
+      setPendingChecklistData(checklistData);
+      setShowAuthModal(true);
+      toast({ title: 'Sign in required', description: 'Please sign in to create a checklist.' });
+      return;
+    }
+
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
         setCreatedChecklistName(newChecklist.name);
@@ -61,9 +65,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       onError: error => {
         console.error('Failed to create checklist:', error);
         toast({
-          title: "Error",
-          description: "Failed to create checklist. Please try again.",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to create checklist. Please try again.',
+          variant: 'destructive'
         });
       }
     });
@@ -128,7 +132,32 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     }
   };
   if (showCreateForm) {
-    return <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} />;
+    return (
+      <>
+        <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} />
+        <EnhancedAuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthenticated={() => {
+            setShowAuthModal(false);
+            if (pendingChecklistData) {
+              createChecklist(pendingChecklistData, {
+                onSuccess: newChecklist => {
+                  setCreatedChecklistName(newChecklist.name);
+                  setShowCreateForm(false);
+                  setShowSuccessPage(true);
+                },
+                onError: error => {
+                  console.error('Failed to create checklist after auth:', error);
+                  toast({ title: 'Error', description: 'Failed to create checklist. Please try again.', variant: 'destructive' });
+                }
+              });
+              setPendingChecklistData(null);
+            }
+          }}
+        />
+      </>
+    );
   }
   if (showEditForm && editingChecklist) {
     return <EditChecklistForm checklist={editingChecklist} onBack={() => {
