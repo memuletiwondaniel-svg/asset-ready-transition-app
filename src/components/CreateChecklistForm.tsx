@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X } from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories } from '@/hooks/useChecklistItems';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
@@ -679,6 +679,59 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Selected Items Summary - Modern Floating Panel */}
+        {formData.selected_items.length > 0 && (
+          <div className="fixed bottom-8 right-8 z-50 animate-scale-in">
+            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl rounded-2xl w-80 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
+                <h4 className="font-semibold text-white flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5" />
+                  <span>Selected Items</span>
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    {formData.selected_items.length}
+                  </Badge>
+                </h4>
+              </div>
+              <CardContent className="p-4 max-h-60 overflow-y-auto">
+                <div className="space-y-2">
+                  {formData.selected_items.slice(0, 5).map((itemId) => {
+                    const item = allChecklistItems.find(i => i.id === itemId);
+                    if (!item) return null;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors group">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-xs font-bold text-blue-600">{item.id}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-700 truncate">{item.description}</p>
+                            <Badge variant="outline" className="text-xs mt-1">
+                              {item.category}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleItemToggle(item.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-red-100"
+                        >
+                          <X className="w-3 h-3 text-red-500" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {formData.selected_items.length > 5 && (
+                    <div className="text-center py-2 text-xs text-gray-500">
+                      ... and {formData.selected_items.length - 5} more items
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
