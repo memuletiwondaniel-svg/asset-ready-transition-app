@@ -220,10 +220,6 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                 <div className="pt-4 space-y-3">
                   <Button 
                     onClick={() => {
-                      toast({
-                        title: "Checklist Created",
-                        description: "Your new checklist has been successfully created!",
-                      });
                       onConfirm(checklistData);
                     }}
                     className="w-full fluent-button bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl"

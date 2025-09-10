@@ -12,6 +12,7 @@ import EditChecklistForm from './EditChecklistForm';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
 import { useChecklists, useCreateChecklist, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Use the Checklist type from the hook
 
@@ -51,7 +52,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const {
     mutate: updateChecklist
   } = useUpdateChecklist();
-  const handleCreateComplete = (checklistData: NewChecklistData) => {
+  const handleCreateComplete = async (checklistData: NewChecklistData) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to create a checklist.",
+        variant: "destructive",
+      });
+      return;
+    }
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
         setCreatedChecklistName(newChecklist.name);
@@ -61,14 +71,19 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         
         // Navigate back to checklist summary page (not success page)
         setShowCreateForm(false);
+        
+        toast({
+          title: "Checklist created",
+          description: `"${newChecklist.name}" is now available in your list.`,
+        });
         // Don't set setShowSuccessPage(true) since we want to go back to main list
       },
-      onError: error => {
+      onError: (error) => {
         console.error('Failed to create checklist:', error);
         toast({
-          title: "Error",
-          description: "Failed to create checklist. Please try again.",
-          variant: "destructive"
+          title: "Failed to create checklist",
+          description: error?.message || "Please try again.",
+          variant: "destructive",
         });
       }
     });
