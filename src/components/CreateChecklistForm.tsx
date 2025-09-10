@@ -236,7 +236,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
   };
 
   const handleNext = () => {
-    if (currentStep === 1 && formData.name && formData.reason) {
+    if (currentStep === 1 && formData.reason) {
       setCurrentStep(2);
     }
   };
@@ -482,22 +482,6 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Checklist Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-base font-semibold">
-                        Checklist Name <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="name"
-                        placeholder="Enter a descriptive name for your checklist"
-                        value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="h-12"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Choose a clear, descriptive name that identifies the purpose of this checklist
-                      </p>
-                    </div>
 
                     {/* Reason for Checklist */}
                     <div className="space-y-2">
@@ -552,7 +536,7 @@ const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onCom
                       
                       <Button 
                         onClick={handleNext}
-                        disabled={!formData.name || !formData.reason || (formData.reason === 'Others' && !customReason)}
+                        disabled={!formData.reason || (formData.reason === 'Others' && !customReason)}
                         className="fluent-button bg-primary hover:bg-primary-hover px-8"
                       >
                         Next: Select Items
