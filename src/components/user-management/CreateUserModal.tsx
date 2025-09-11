@@ -39,6 +39,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     email: "",
     isFunctionalEmail: false,
     personalEmail: "",
+    functionalEmail: "",
     phone: "",
     countryCode: "+964", // Default to Iraq
     company: "",
@@ -333,10 +334,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     }
     
     // Additional validation for functional email setup
-    if (formData.isFunctionalEmail && !formData.personalEmail) {
+    if (formData.isFunctionalEmail && !formData.functionalEmail) {
       toast({
         title: "Validation Error",
-        description: "Personal email is required when using functional email",
+        description: "Functional email is required when 'Add a functional email' is checked",
         variant: "destructive"
       });
       return;
@@ -363,6 +364,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           role: formData.role,
           phone: formData.countryCode + formData.phone,
           personalEmail: formData.personalEmail || null,
+          functionalEmail: formData.functionalEmail || null,
           isFunctionalEmail: formData.isFunctionalEmail,
           discipline: formData.discipline || null,
           commission: formData.commission || null,
@@ -427,6 +429,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         email: "",
         isFunctionalEmail: false,
         personalEmail: "",
+        functionalEmail: "",
         phone: "",
         countryCode: "+964",
         company: "",
@@ -590,34 +593,40 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     checked={formData.isFunctionalEmail}
                     onCheckedChange={(checked) => handleInputChange("isFunctionalEmail", checked)}
                   />
-                  <Label htmlFor="functionalEmail">Mark as Functional Email</Label>
+                  <Label htmlFor="functionalEmail">Add a functional email</Label>
                 </div>
-                {formData.isFunctionalEmail && (
-                  <div className="text-xs text-muted-foreground mt-2 p-2 bg-blue-50 rounded-md">
-                    <p className="font-medium">Functional Email Setup:</p>
-                    <p>• Multiple users can share the same functional email address</p>
-                    <p>• Each user must have a unique personal email for login</p>
-                    <p>• Users will login using their personal email, not the functional email</p>
-                  </div>
-                )}
               </div>
 
               {formData.isFunctionalEmail && (
                 <div>
-                  <Label htmlFor="personalEmail">Personal Email *</Label>
+                  <Label htmlFor="functionalEmail">Functional Email *</Label>
                   <Input
-                    id="personalEmail"
+                    id="functionalEmail"
                     type="email"
-                    value={formData.personalEmail}
-                    onChange={(e) => handleInputChange("personalEmail", e.target.value)}
+                    value={formData.functionalEmail}
+                    onChange={(e) => handleInputChange("functionalEmail", e.target.value)}
                     required
-                    placeholder="user.personal@email.com"
+                    placeholder="functional.email@bgc.com"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    This email will be used for authentication and login
+                    Shared functional email address for operational purposes
                   </p>
                 </div>
               )}
+
+              <div>
+                <Label htmlFor="personalEmail">Personal Email</Label>
+                <Input
+                  id="personalEmail"
+                  type="email"
+                  value={formData.personalEmail}
+                  onChange={(e) => handleInputChange("personalEmail", e.target.value)}
+                  placeholder="user.personal@email.com"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optional: Personal email for notifications
+                </p>
+              </div>
 
               <div>
                 <Label htmlFor="phone">Phone</Label>

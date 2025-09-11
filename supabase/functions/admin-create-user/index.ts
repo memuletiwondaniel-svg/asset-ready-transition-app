@@ -15,6 +15,7 @@ interface CreateUserRequest {
   role?: string | null;
   phone?: string | null;
   personalEmail?: string | null;
+  functionalEmail?: string | null;
   isFunctionalEmail?: boolean;
   discipline?: string | null;
   commission?: string | null;
