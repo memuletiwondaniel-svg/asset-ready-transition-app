@@ -409,7 +409,6 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
       <CreateChecklistItemForm 
         onBack={() => setShowCreateItem(false)}
         onComplete={handleCreateNewItem}
-        existingCategories={availableCategories}
       />
     );
   }

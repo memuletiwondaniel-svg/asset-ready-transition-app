@@ -5,131 +5,139 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, CheckCircle, AlertCircle } from 'lucide-react';
-import { ChecklistItem } from '@/data/pssrChecklistData';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search } from 'lucide-react';
+import { useCreateChecklistItem } from '@/hooks/useChecklistItems';
+import { useUsers } from '@/hooks/useUsers';
+import { toast } from '@/hooks/use-toast';
 
 interface CreateChecklistItemFormProps {
   onBack: () => void;
-  onComplete: (item: Omit<ChecklistItem, 'id'>) => void;
-  existingCategories?: string[];
+  onComplete: (item: any) => void;
 }
 
 interface NewChecklistItemData {
   description: string;
-  supportingEvidence: string;
+  evidenceGuidance: string;
   category: string;
-  approvingAuthority: string;
-  responsibleParty: string;
-  customCategory: string;
+  approvers: string[];
+  responsible: string;
+  topic: string;
 }
 
 const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({ 
   onBack, 
-  onComplete,
-  existingCategories = []
+  onComplete
 }) => {
   const [formData, setFormData] = useState<NewChecklistItemData>({
     description: '',
-    supportingEvidence: '',
+    evidenceGuidance: '',
     category: '',
-    approvingAuthority: '',
-    responsibleParty: '',
-    customCategory: ''
+    approvers: [],
+    responsible: '',
+    topic: ''
   });
 
   const [errors, setErrors] = useState<Partial<NewChecklistItemData>>({});
+  const [showPreview, setShowPreview] = useState(false);
+  const [approverSearch, setApproverSearch] = useState('');
+  const [responsibleSearch, setResponsibleSearch] = useState('');
 
-  // Predefined categories
-  const defaultCategories = [
+  const createChecklistItemMutation = useCreateChecklistItem();
+  const { users } = useUsers();
+
+  // Microsoft Fluent Design categories
+  const categories = [
     'General',
-    'Technical Integrity', 
-    'Health & Safety',
-    'Start-Up Readiness',
-    'Plant Integrity',
     'Process Safety',
-    'People',
+    'Organization',
     'Documentation',
-    'PSSR Walkdown'
+    'Health & Safety',
+    'Emergency Response',
+    'Elect',
+    'Static',
+    'Rotating',
+    'PACO',
+    'Civil'
   ];
 
-  // Combine default and existing categories, remove duplicates
-  const allCategories = [...new Set([...defaultCategories, ...existingCategories])];
-
-  // Common approving authorities
-  const approvingAuthorities = [
-    'PSSR Lead',
-    'Operations Manager',
-    'Engineering Manager', 
-    'Safety Manager',
-    'Plant Manager',
-    'Technical Authority',
-    'Process Engineer',
-    'Mechanical Engineer',
-    'Electrical Engineer',
-    'HSE Coordinator',
-    'Maintenance Supervisor',
-    'Quality Assurance Manager'
-  ];
-
-  // Common responsible parties
-  const responsibleParties = [
-    'Operations Team',
-    'Engineering Team',
-    'Maintenance Team',
-    'HSE Team',
-    'Project Team',
-    'Quality Team',
-    'Technical Team',
-    'Safety Team',
-    'Process Team',
-    'Mechanical Team',
-    'Electrical Team',
-    'Instrumentation Team'
-  ];
+  // Get unique roles from users for approvers and responsible parties
+  const userRoles = [...new Set(users.map(user => user.role).filter(Boolean))];
+  
+  const filteredApproverRoles = userRoles.filter(role => 
+    role.toLowerCase().includes(approverSearch.toLowerCase())
+  );
+  
+  const filteredResponsibleRoles = userRoles.filter(role => 
+    role.toLowerCase().includes(responsibleSearch.toLowerCase())
+  );
 
   const validateForm = (): boolean => {
     const newErrors: Partial<NewChecklistItemData> = {};
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Question/Description is required';
+      newErrors.description = 'Checklist question is required';
     }
 
-    if (!formData.supportingEvidence.trim()) {
-      newErrors.supportingEvidence = 'Evidence guidance is required';
+    if (!formData.evidenceGuidance.trim()) {
+      newErrors.evidenceGuidance = 'Evidence guidance is required';
     }
 
-    if (!formData.category && !formData.customCategory.trim()) {
+    if (!formData.category) {
       newErrors.category = 'Category is required';
     }
 
-    if (!formData.approvingAuthority.trim()) {
-      newErrors.approvingAuthority = 'Approving authority is required';
+    if (formData.approvers.length === 0) {
+      newErrors.approvers = 'At least one approver is required' as any;
     }
 
-    if (!formData.responsibleParty.trim()) {
-      newErrors.responsibleParty = 'Responsible party is required';
+    if (!formData.responsible) {
+      newErrors.responsible = 'Responsible party is required';
+    }
+
+    if (!formData.topic.trim()) {
+      newErrors.topic = 'Topic is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
-      const finalCategory = formData.category === 'custom' ? formData.customCategory : formData.category;
-      
-      const newItem: Omit<ChecklistItem, 'id'> = {
-        description: formData.description.trim(),
-        supportingEvidence: formData.supportingEvidence.trim(),
-        category: finalCategory,
-        approvingAuthority: formData.approvingAuthority.trim()
-      };
+      try {
+        // Generate auto-assigned ID (simplified for demo)
+        const autoId = `CHK-${Date.now().toString().slice(-6)}`;
+        
+        const newItem = {
+          id: autoId,
+          description: formData.description.trim(),
+          supporting_evidence: formData.evidenceGuidance.trim(),
+          category: formData.category,
+          approving_authority: formData.approvers.join(', '),
+          responsible_party: formData.responsible,
+          topic: formData.topic.trim()
+        };
 
-      onComplete(newItem);
+        await createChecklistItemMutation.mutateAsync(newItem);
+        
+        toast({
+          title: "Success",
+          description: "Checklist item created successfully",
+        });
+        
+        onComplete(newItem);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create checklist item",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const updateFormData = (field: keyof NewChecklistItemData, value: string) => {
+  const updateFormData = (field: keyof NewChecklistItemData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -137,242 +145,347 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      {/* Navigation Bar */}
-      <div className="fluent-navigation sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="fluent-reveal">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-12 w-auto animate-float" 
-                />
+  const addApprover = (role: string) => {
+    if (!formData.approvers.includes(role)) {
+      updateFormData('approvers', [...formData.approvers, role]);
+    }
+    setApproverSearch('');
+  };
+
+  const removeApprover = (role: string) => {
+    updateFormData('approvers', formData.approvers.filter(a => a !== role));
+  };
+
+  if (showPreview) {
+    return (
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto fluent-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-semibold">Preview Checklist Item</CardTitle>
+                <CardDescription>Review the details before creating</CardDescription>
               </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Create New Checklist Item
-                </h1>
-                <p className="text-sm text-muted-foreground font-medium">Add a custom item to the PSSR checklist library</p>
+              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  Auto-assigned ID: CHK-{Date.now().toString().slice(-6)}
+                </Badge>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Question</Label>
+                <p className="mt-1 text-sm">{formData.description}</p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Evidence Guidance</Label>
+                <p className="mt-1 text-sm">{formData.evidenceGuidance}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Category</Label>
+                  <p className="mt-1 text-sm">{formData.category}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Topic</Label>
+                  <p className="mt-1 text-sm">{formData.topic}</p>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Approvers</Label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {formData.approvers.map((approver) => (
+                    <Badge key={approver} variant="outline">
+                      {approver}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Responsible Party</Label>
+                <p className="mt-1 text-sm">{formData.responsible}</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={onBack}
-              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              Cancel
-            </Button>
+            
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowPreview(false)}>
+                Edit
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                disabled={createChecklistItemMutation.isPending}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {createChecklistItemMutation.isPending ? (
+                  <>Creating...</>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Create Item
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
+      {/* Microsoft Fluent Design Header */}
+      <div className="sticky top-0 bg-background/95 backdrop-blur-lg border-b z-10">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={onBack}
+                className="fluent-button hover:bg-secondary/50"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <div>
+                <h1 className="text-2xl font-semibold">Create Checklist Item</h1>
+                <p className="text-sm text-muted-foreground">Add a new item to the PSSR checklist library</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="max-w-4xl mx-auto px-8 pb-8">
-        <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <Card className="fluent-card">
           <CardHeader>
-            <CardTitle className="text-2xl">Checklist Item Details</CardTitle>
+            <CardTitle>Checklist Item Details</CardTitle>
             <CardDescription>
-              Define the attributes for your new checklist item. The Reference ID will be automatically assigned.
+              Fill in the information for your new checklist item. An ID will be auto-assigned.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Question/Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-base font-semibold">
-                Question/Description <span className="text-destructive">*</span>
+            {/* Checklist Question */}
+            <div className="space-y-3">
+              <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
+                Checklist Question <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="description"
-                placeholder="Enter the checklist question or requirement description..."
+                placeholder="Enter the checklist question or requirement..."
                 value={formData.description}
                 onChange={(e) => updateFormData('description', e.target.value)}
-                className="min-h-[100px] resize-none"
+                className="min-h-[100px] resize-none fluent-input"
                 rows={4}
               />
               {errors.description && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
                   {errors.description}
                 </p>
               )}
-              <p className="text-sm text-muted-foreground">
-                Clearly describe what needs to be verified or checked during the PSSR process
-              </p>
             </div>
 
             {/* Evidence Guidance */}
-            <div className="space-y-2">
-              <Label htmlFor="supportingEvidence" className="text-base font-semibold">
+            <div className="space-y-3">
+              <Label htmlFor="evidenceGuidance" className="text-sm font-medium flex items-center gap-2">
                 Evidence Guidance <span className="text-destructive">*</span>
               </Label>
               <Textarea
-                id="supportingEvidence"
+                id="evidenceGuidance"
                 placeholder="Describe what evidence or documentation is required..."
-                value={formData.supportingEvidence}
-                onChange={(e) => updateFormData('supportingEvidence', e.target.value)}
-                className="min-h-[80px] resize-none"
+                value={formData.evidenceGuidance}
+                onChange={(e) => updateFormData('evidenceGuidance', e.target.value)}
+                className="min-h-[80px] resize-none fluent-input"
                 rows={3}
               />
-              {errors.supportingEvidence && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.supportingEvidence}
+              {errors.evidenceGuidance && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.evidenceGuidance}
                 </p>
               )}
-              <p className="text-sm text-muted-foreground">
-                Specify what documentation, certificates, or evidence should be provided to satisfy this requirement
+              <p className="text-xs text-muted-foreground">
+                Help future users understand what documentation or evidence is needed
               </p>
             </div>
 
-            {/* Category */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">
-                Category <span className="text-destructive">*</span>
-              </Label>
-              <Select value={formData.category} onValueChange={(value) => updateFormData('category', value)}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select a category for this checklist item" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border shadow-lg z-50 max-h-60">
-                  {allCategories.map((category) => (
-                    <SelectItem key={category} value={category} className="cursor-pointer">
-                      {category}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom" className="cursor-pointer font-medium">
-                    + Create New Category
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {/* Custom Category Input */}
-              {formData.category === 'custom' && (
-                <div className="mt-3 space-y-2">
-                  <Label htmlFor="customCategory" className="text-sm font-medium">
-                    New Category Name
-                  </Label>
-                  <Input
-                    id="customCategory"
-                    placeholder="Enter new category name"
-                    value={formData.customCategory}
-                    onChange={(e) => updateFormData('customCategory', e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-              )}
-              
-              {errors.category && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.category}
-                </p>
-              )}
-            </div>
-
-            {/* Two-column layout for Responsible Party and Approving Authority */}
+            {/* Category and Topic */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Responsible Party */}
-              <div className="space-y-2">
-                <Label htmlFor="responsibleParty" className="text-base font-semibold">
-                  Responsible Party <span className="text-destructive">*</span>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  Category <span className="text-destructive">*</span>
                 </Label>
-                <Select value={formData.responsibleParty} onValueChange={(value) => updateFormData('responsibleParty', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select responsible party" />
+                <Select value={formData.category} onValueChange={(value) => updateFormData('category', value)}>
+                  <SelectTrigger className="fluent-input">
+                    <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                    {responsibleParties.map((party) => (
-                      <SelectItem key={party} value={party} className="cursor-pointer">
-                        {party}
+                  <SelectContent className="bg-popover border shadow-lg z-50">
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category} className="cursor-pointer">
+                        {category}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.responsibleParty && (
-                  <p className="text-sm text-destructive flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.responsibleParty}
+                {errors.category && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.category}
                   </p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  Team responsible for completing this requirement
-                </p>
               </div>
 
-              {/* Approving Authority */}
-              <div className="space-y-2">
-                <Label htmlFor="approvingAuthority" className="text-base font-semibold">
-                  Approving Authority <span className="text-destructive">*</span>
+              <div className="space-y-3">
+                <Label htmlFor="topic" className="text-sm font-medium flex items-center gap-2">
+                  Topic <span className="text-destructive">*</span>
                 </Label>
-                <Select value={formData.approvingAuthority} onValueChange={(value) => updateFormData('approvingAuthority', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select approving authority" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                    {approvingAuthorities.map((authority) => (
-                      <SelectItem key={authority} value={authority} className="cursor-pointer">
-                        {authority}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.approvingAuthority && (
-                  <p className="text-sm text-destructive flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.approvingAuthority}
+                <Input
+                  id="topic"
+                  placeholder="Enter topic (e.g., Electrical Safety)"
+                  value={formData.topic}
+                  onChange={(e) => updateFormData('topic', e.target.value)}
+                  className="fluent-input"
+                />
+                {errors.topic && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.topic}
                   </p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  Authority who will approve this requirement
-                </p>
               </div>
             </div>
 
-            {/* Preview Section */}
-            <div className="bg-muted/20 rounded-lg p-6 space-y-4">
-              <h3 className="font-semibold text-lg">Preview</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="font-medium text-muted-foreground">Reference ID:</span>
-                  <span className="ml-2 text-green-600 font-medium">[Auto-assigned]</span>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Question:</span>
-                  <p className="mt-1">{formData.description || 'Not specified'}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Evidence Guidance:</span>
-                  <p className="mt-1">{formData.supportingEvidence || 'Not specified'}</p>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  <div>
-                    <span className="font-medium text-muted-foreground">Category:</span>
-                    <span className="ml-2">{formData.category === 'custom' ? formData.customCategory : formData.category || 'Not selected'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Responsible Party:</span>
-                    <span className="ml-2">{formData.responsibleParty || 'Not selected'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Approving Authority:</span>
-                    <span className="ml-2">{formData.approvingAuthority || 'Not selected'}</span>
-                  </div>
-                </div>
+            {/* Approvers */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                Approvers <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  placeholder="Search for approver roles..."
+                  value={approverSearch}
+                  onChange={(e) => setApproverSearch(e.target.value)}
+                  className="fluent-input"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
+              
+              {approverSearch && filteredApproverRoles.length > 0 && (
+                <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
+                  {filteredApproverRoles.map((role) => (
+                    <Button
+                      key={role}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-left"
+                      onClick={() => addApprover(role)}
+                      disabled={formData.approvers.includes(role)}
+                    >
+                      {role}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              
+              {formData.approvers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.approvers.map((approver) => (
+                    <Badge key={approver} variant="secondary" className="gap-1">
+                      {approver}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => removeApprover(approver)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              {errors.approvers && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.approvers}
+                </p>
+              )}
+            </div>
+
+            {/* Responsible */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                Responsible <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  placeholder="Search for responsible party..."
+                  value={responsibleSearch}
+                  onChange={(e) => setResponsibleSearch(e.target.value)}
+                  className="fluent-input"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </div>
+              
+              {responsibleSearch && filteredResponsibleRoles.length > 0 && (
+                <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
+                  {filteredResponsibleRoles.map((role) => (
+                    <Button
+                      key={role}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-left"
+                      onClick={() => {
+                        updateFormData('responsible', role);
+                        setResponsibleSearch('');
+                      }}
+                    >
+                      {role}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              
+              {formData.responsible && (
+                <Badge variant="outline">{formData.responsible}</Badge>
+              )}
+              
+              {errors.responsible && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.responsible}
+                </p>
+              )}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end pt-6 border-t border-border/20">
+            <div className="flex justify-end gap-3 pt-6 border-t">
+              <Button variant="outline" onClick={onBack}>
+                Cancel
+              </Button>
               <Button 
-                onClick={handleSubmit}
-                className="fluent-button bg-primary hover:bg-primary-hover px-8"
+                onClick={() => {
+                  if (validateForm()) {
+                    setShowPreview(true);
+                  }
+                }}
+                className="bg-primary hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Checklist Item
+                Preview & Create
               </Button>
             </div>
           </CardContent>

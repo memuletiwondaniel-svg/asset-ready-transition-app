@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
+import CreateChecklistItemForm from './CreateChecklistItemForm';
 
 interface ChecklistManagementPageProps {
   onBack: () => void;
@@ -39,6 +40,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [showEditModal, setShowEditModal] = useState(false);
   const [deletingItem, setDeletingItem] = useState<ChecklistItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
 
@@ -161,6 +163,21 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const handleItemDeleted = (deletedItemId: string) => {
     // The item will be automatically removed from the list due to the query invalidation
     // in the useDeleteChecklistItem hook
+  };
+
+  const handleCreateItem = () => {
+    setShowCreateForm(true);
+  };
+
+  const handleCreateComplete = (newItem: any) => {
+    // Handle successful creation
+    setShowCreateForm(false);
+    // The item will be automatically added to the list due to the query invalidation
+    // in the useCreateChecklistItem hook
+  };
+
+  const handleCreateCancel = () => {
+    setShowCreateForm(false);
   };
 
   // Draggable Category Component
@@ -462,21 +479,30 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         
         <div className="relative z-10 max-w-7xl mx-auto px-8 py-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <Button 
-                variant="ghost" 
-                onClick={onBack}
-                className="flex items-center gap-2 hover:bg-white/80 text-gray-700 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-md"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-              <div className="space-y-1">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">
-                  Checklist Management
-                </h1>
-                <p className="text-gray-600">Browse and organize PSSR checklist items by category</p>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center space-x-6">
+                <Button 
+                  variant="ghost" 
+                  onClick={onBack}
+                  className="flex items-center gap-2 hover:bg-white/80 text-gray-700 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-md"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </Button>
+                <div className="space-y-1">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">
+                    Browse Items & Categories
+                  </h1>
+                  <p className="text-gray-600">Browse and organize PSSR checklist items by category</p>
+                </div>
               </div>
+              <Button 
+                onClick={handleCreateItem}
+                className="fluent-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Checklist Item
+              </Button>
             </div>
           </div>
         </div>
@@ -560,6 +586,30 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           onDeleted={handleItemDeleted}
         />
       )}
+
+      {/* Create Checklist Item Form */}
+      {showCreateForm && (
+        <CreateChecklistItemForm
+          onBack={handleCreateCancel}
+          onComplete={handleCreateComplete}
+        />
+      )}
+    </div>
+  );
+
+  // If showing create form, render it instead
+  if (showCreateForm) {
+    return (
+      <CreateChecklistItemForm
+        onBack={handleCreateCancel}
+        onComplete={handleCreateComplete}
+      />
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* ... keep existing code */}
     </div>
   );
 };
