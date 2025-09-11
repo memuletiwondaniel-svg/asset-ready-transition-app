@@ -78,7 +78,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     { code: "+61", country: "Australia", flag: "🇦🇺", shortName: "AU" },
     { code: "+973", country: "Bahrain", flag: "🇧🇭", shortName: "BH" },
     { code: "+55", country: "Brazil", flag: "🇧🇷", shortName: "BR" },
-    { code: "+1-CA", country: "Canada", flag: "🇨🇦", shortName: "CA" },
+    { code: "+1", country: "Canada", flag: "🇨🇦", shortName: "CA" },
     { code: "+86", country: "China", flag: "🇨🇳", shortName: "CN" },
     { code: "+20", country: "Egypt", flag: "🇪🇬", shortName: "EG" },
     { code: "+33", country: "France", flag: "🇫🇷", shortName: "FR" },
@@ -108,7 +108,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     { code: "+90", country: "Turkey", flag: "🇹🇷", shortName: "TR" },
     { code: "+971", country: "United Arab Emirates", flag: "🇦🇪", shortName: "AE" },
     { code: "+44", country: "United Kingdom", flag: "🇬🇧", shortName: "GB" },
-    { code: "+1-US", country: "United States", flag: "🇺🇸", shortName: "US" },
+    { code: "+1", country: "United States", flag: "🇺🇸", shortName: "US" },
   ];
 
   // Base roles that are always available
@@ -248,7 +248,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       };
 
       // Create user first (don't let email failure block user creation)
-      onCreateUser(userData);
+      onCreateUser?.(userData);
       
       // Try to send welcome email (non-blocking)
       try {
@@ -407,7 +407,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                     </SelectTrigger>
                     <SelectContent className="max-h-60 overflow-y-auto bg-popover border shadow-lg z-50">
                       {countryCodes.map((country) => (
-                        <SelectItem key={country.code} value={country.code} className="cursor-pointer py-2 hover:bg-accent">
+                        <SelectItem key={`${country.code}-${country.shortName}`} value={country.code} className="cursor-pointer py-2 hover:bg-accent">
                           <div className="flex items-center gap-3 w-full">
                             <div 
                               className="flex items-center justify-center min-w-[28px] h-[20px] text-center border border-border/20 rounded-sm bg-muted/30"
