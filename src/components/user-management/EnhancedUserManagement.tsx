@@ -10,6 +10,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   Search, 
   Filter, 
@@ -29,7 +33,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  MoreHorizontal
+  MoreHorizontal,
+  GripVertical
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -73,6 +78,81 @@ interface User {
   functional_email_address?: string;
 }
 
+interface ColumnConfig {
+  id: string;
+  label: string;
+  width: number;
+  minWidth: number;
+}
+
+interface SortableTableHeaderProps {
+  column: ColumnConfig;
+  onResize: (id: string, width: number) => void;
+}
+
+const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onResize }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    width: column.width,
+    minWidth: column.minWidth,
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = column.width;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(column.minWidth, startWidth + diff);
+      onResize(column.id, newWidth);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  return (
+    <TableHead 
+      ref={setNodeRef} 
+      style={style}
+      className={`relative select-none ${isDragging ? 'opacity-50' : ''}`}
+      {...attributes}
+    >
+      <div className="flex items-center justify-between">
+        <span className="flex-1">{column.label}</span>
+        <div className="flex items-center">
+          <div 
+            {...listeners}
+            className="cursor-grab hover:cursor-grabbing p-1"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div
+            className="cursor-col-resize w-1 h-4 bg-border hover:bg-primary transition-colors ml-1"
+            onMouseDown={handleMouseDown}
+          />
+        </div>
+      </div>
+    </TableHead>
+  );
+};
+
 const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack }) => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -86,8 +166,200 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateUser, setShowCreateUser] = useState(false);
+  const [columns, setColumns] = useState<ColumnConfig[]>([
+    { id: 'user', label: 'User', width: 250, minWidth: 200 },
+    { id: 'company', label: 'Company', width: 200, minWidth: 150 },
+    { id: 'role', label: 'Role', width: 180, minWidth: 120 },
+    { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120 },
+    { id: 'status', label: 'Status', width: 140, minWidth: 100 },
+    { id: 'lastActivity', label: 'Last Activity', width: 150, minWidth: 120 },
+    { id: 'actions', label: 'Actions', width: 100, minWidth: 80 }
+  ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleColumnResize = (id: string, width: number) => {
+    setColumns(cols => cols.map(col => 
+      col.id === id ? { ...col, width } : col
+    ));
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setColumns((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const renderCellContent = (columnId: string, user: User) => {
+    switch (columnId) {
+      case 'user':
+        return (
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-11 w-11 ring-2 ring-border/10 shadow-sm hover:shadow-md transition-all duration-200 hover:ring-primary/20">
+              {user.avatar_url ? (
+                <AvatarImage 
+                  src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                  alt={user.full_name || 'User'} 
+                  className="object-cover"
+                  onError={(e) => {
+                    console.log('Avatar load error for user:', user.email, 'URL:', e.currentTarget.src);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : null}
+              <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary font-semibold text-sm border border-border/20">
+                {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{user.full_name || 'Unknown'}</div>
+              <div className="text-sm text-muted-foreground flex items-center whitespace-nowrap overflow-hidden">
+                <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">
+                  {user.functional_email_address || user.email}
+                </span>
+              </div>
+              {user.phone_number && (
+                <div className="text-sm text-muted-foreground flex items-center">
+                  <Phone className="h-3 w-3 mr-1" />
+                  {user.phone_number}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 'company':
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center text-sm whitespace-nowrap">
+              {user.company === 'BGC' ? (
+                <>
+                  <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
+                  <span className="truncate">Basrah Gas Company (BGC)</span>
+                </>
+              ) : (
+                <>
+                  <Building className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">{user.company || 'No Company'}</span>
+                </>
+              )}
+            </div>
+            {user.job_title && (
+              <div className="text-xs text-muted-foreground truncate">{user.job_title}</div>
+            )}
+          </div>
+        );
+      case 'role':
+        return (
+          <div className="space-y-1">
+            {user.role && (
+              <div className="text-sm font-medium">
+                {user.role}
+                {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {user.ta2_discipline && <span>{user.ta2_discipline}</span>}
+                    {user.ta2_discipline && user.ta2_commission && <span> • </span>}
+                    {user.ta2_commission && <span>{user.ta2_commission}</span>}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      case 'systemRole':
+        return (
+          <div className="flex flex-wrap gap-1">
+            {user.roles && user.roles.length > 0 && user.roles[0] !== null && (
+              user.roles.slice(0, 1).map(role => (
+                <Badge key={role} variant="outline" className="text-xs">
+                  {role}
+                </Badge>
+              ))
+            )}
+            {user.roles && user.roles.length > 1 && (
+              <Badge variant="outline" className="text-xs">
+                +{user.roles.length - 1}
+              </Badge>
+            )}
+          </div>
+        );
+      case 'status':
+        return (
+          <div className="space-y-1">
+            {getStatusBadge(user.status, user.account_status)}
+            {user.sso_enabled && (
+              <Badge variant="outline" className="text-xs">SSO</Badge>
+            )}
+            {user.two_factor_enabled && (
+              <Badge variant="outline" className="text-xs">2FA</Badge>
+            )}
+            {user.password_change_required && (
+              <Badge variant="destructive" className="text-xs">Password Reset Required</Badge>
+            )}
+          </div>
+        );
+      case 'lastActivity':
+        return (
+          <div className="text-sm">
+            <div>{getLastActivityText(user.last_activity, user.last_login_at)}</div>
+            {user.login_attempts > 0 && (
+              <div className="text-xs text-red-600">
+                {user.login_attempts} failed attempts
+              </div>
+            )}
+          </div>
+        );
+      case 'actions':
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover border shadow-lg z-50">
+              <DropdownMenuItem 
+                onClick={() => setSelectedUser(user)}
+                className="cursor-pointer"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setSelectedUser(user)}
+                className="cursor-pointer"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Details
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => handleDeleteUser(user)}
+                className="cursor-pointer text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete User
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -430,175 +702,38 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
         {/* Users Table */}
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>System Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Activity</TableHead>
-                  <TableHead className="w-[50px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
+                      {columns.map((column) => (
+                        <SortableTableHeader
+                          key={column.id}
+                          column={column}
+                          onResize={handleColumnResize}
+                        />
+                      ))}
+                    </SortableContext>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.user_id}>
-                    <TableCell>
-                       <div className="flex items-center space-x-4">
-                          <Avatar className="h-11 w-11 ring-2 ring-border/10 shadow-sm hover:shadow-md transition-all duration-200 hover:ring-primary/20">
-                            {user.avatar_url ? (
-                              <AvatarImage 
-                                src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
-                                alt={user.full_name || 'User'} 
-                                className="object-cover"
-                                onError={(e) => {
-                                  console.log('Avatar load error for user:', user.email, 'URL:', e.currentTarget.src);
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            ) : null}
-                            <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary font-semibold text-sm border border-border/20">
-                              {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                            </AvatarFallback>
-                         </Avatar>
-                        <div>
-                          <div className="font-medium">{user.full_name || 'Unknown'}</div>
-                          <div className="text-sm text-muted-foreground flex items-center whitespace-nowrap overflow-hidden">
-                            <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">
-                              {user.functional_email_address || user.email}
-                            </span>
-                          </div>
-                          {user.phone_number && (
-                            <div className="text-sm text-muted-foreground flex items-center">
-                              <Phone className="h-3 w-3 mr-1" />
-                              {user.phone_number}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    
-                     <TableCell>
-                       <div className="space-y-1">
-                         <div className="flex items-center text-sm whitespace-nowrap">
-                           {user.company === 'BGC' ? (
-                             <>
-                               <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
-                               <span className="truncate">Basrah Gas Company (BGC)</span>
-                             </>
-                           ) : (
-                             <>
-                               <Building className="h-3 w-3 mr-1 flex-shrink-0" />
-                               <span className="truncate">{user.company || 'No Company'}</span>
-                             </>
-                           )}
-                         </div>
-                         {user.job_title && (
-                           <div className="text-xs text-muted-foreground truncate">{user.job_title}</div>
-                         )}
-                       </div>
-                     </TableCell>
-                    
-                    <TableCell>
-                      <div className="space-y-1">
-                        {user.role && (
-                          <div className="text-sm font-medium">
-                            {user.role}
-                            {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {user.ta2_discipline && <span>{user.ta2_discipline}</span>}
-                                {user.ta2_discipline && user.ta2_commission && <span> • </span>}
-                                {user.ta2_commission && <span>{user.ta2_commission}</span>}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles && user.roles.length > 0 && user.roles[0] !== null && (
-                          user.roles.slice(0, 1).map(role => (
-                            <Badge key={role} variant="outline" className="text-xs">
-                              {role}
-                            </Badge>
-                          ))
-                        )}
-                        {user.roles && user.roles.length > 1 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{user.roles.length - 1}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    
-                    
-                    <TableCell>
-                      <div className="space-y-1">
-                        {getStatusBadge(user.status, user.account_status)}
-                        {user.sso_enabled && (
-                          <Badge variant="outline" className="text-xs">SSO</Badge>
-                        )}
-                        {user.two_factor_enabled && (
-                          <Badge variant="outline" className="text-xs">2FA</Badge>
-                        )}
-                        {user.password_change_required && (
-                          <Badge variant="destructive" className="text-xs">Password Reset Required</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="text-sm">
-                        {getLastActivityText(user.last_activity, user.last_login_at)}
-                      </div>
-                      {user.login_attempts > 0 && (
-                        <div className="text-xs text-red-600">
-                          {user.login_attempts} failed attempts
-                        </div>
-                      )}
-                    </TableCell>
-                    
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border shadow-lg z-50">
-                          <DropdownMenuItem 
-                            onClick={() => setSelectedUser(user)}
-                            className="cursor-pointer"
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => setSelectedUser(user)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteUser(user)}
-                            className="cursor-pointer text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                    {columns.map((column) => (
+                      <TableCell key={column.id} style={{ width: column.width, minWidth: column.minWidth }}>
+                        {renderCellContent(column.id, user)}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            </DndContext>
           </CardContent>
         </Card>
       </div>
