@@ -22,6 +22,7 @@ import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, Che
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
@@ -404,33 +405,24 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
               </div>
               <div className="flex items-center space-x-4">
                 {/* View Mode Toggle */}
-                <div className="flex items-center bg-gradient-to-r from-emerald-50/80 to-teal-50/80 backdrop-blur-sm rounded-xl border border-emerald-200/60 p-1.5 shadow-md">
-                  <Button
-                    variant={viewMode === 'card' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('card')}
-                    className={`h-9 px-4 rounded-lg transition-all duration-300 font-medium ${
-                      viewMode === 'card' 
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 scale-105' 
-                        : 'text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/60'
-                    }`}
-                  >
-                    <Grid3X3 className="w-4 h-4 mr-2" />
-                    Cards
-                  </Button>
-                  <Button
-                    variant={viewMode === 'table' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('table')}
-                    className={`h-9 px-4 rounded-lg transition-all duration-300 font-medium ${
-                      viewMode === 'table' 
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 scale-105' 
-                        : 'text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/60'
-                    }`}
-                  >
-                    <Table className="w-4 h-4 mr-2" />
-                    Table
-                  </Button>
+                <div className="relative flex items-center bg-gradient-to-r from-card/90 to-muted/80 backdrop-blur-lg rounded-2xl border border-border/50 p-1 shadow-fluent hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-center gap-3 px-3 py-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Grid3X3 className="w-4 h-4" />
+                      <span>Cards</span>
+                    </div>
+                    <Switch
+                      checked={viewMode === 'table'}
+                      onCheckedChange={(checked) => setViewMode(checked ? 'table' : 'card')}
+                      className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-secondary/30 border-2 border-border/20 shadow-inner"
+                    />
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Table className="w-4 h-4" />
+                      <span>Table</span>
+                    </div>
+                  </div>
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 via-secondary/10 to-primary/5 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                 </div>
                 
                 <Button 
