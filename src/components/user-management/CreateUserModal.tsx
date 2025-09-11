@@ -50,6 +50,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
 
   const [roleSearch, setRoleSearch] = useState("");
   const [showNewRoleInput, setShowNewRoleInput] = useState(false);
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   
   // Load custom roles from localStorage
   const getCustomRoles = () => {
@@ -150,9 +151,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     "Edit or Create New PSSR Master Checklist",
   ];
 
-  const filteredRoles = allRoles.filter(role =>
-    role.toLowerCase().includes(roleSearch.toLowerCase())
-  );
+  // Filter roles based on search term, show all if no search term
+  const filteredRoles = roleSearch 
+    ? allRoles.filter(role => role.toLowerCase().includes(roleSearch.toLowerCase()))
+    : allRoles;
 
   // Function to save custom roles to localStorage
   const saveCustomRoles = (roles: string[]) => {
@@ -172,6 +174,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       handleInputChange("role", formData.newRole.trim());
       handleInputChange("newRole", "");
       setShowNewRoleInput(false);
+      setShowRoleDropdown(false);
       setRoleSearch("");
       
       toast({
@@ -255,6 +258,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     });
     setRoleSearch("");
     setShowNewRoleInput(false);
+    setShowRoleDropdown(false);
   };
 
   return (
@@ -442,45 +446,52 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                       placeholder="Search roles..."
                       value={roleSearch}
                       onChange={(e) => setRoleSearch(e.target.value)}
+                      onFocus={() => setShowRoleDropdown(true)}
+                      onBlur={() => {
+                        // Delay hiding to allow clicking on dropdown items
+                        setTimeout(() => setShowRoleDropdown(false), 150);
+                      }}
                       className="pl-10"
                     />
                   </div>
                   
-                  {roleSearch && filteredRoles.length > 0 && (
-                    <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
-                      {filteredRoles.map((role) => (
-                        <Button
-                          key={role}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-left"
-                          onClick={() => {
-                            handleInputChange("role", role);
-                            setRoleSearch("");
-                          }}
-                        >
-                          {role}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {roleSearch && filteredRoles.length === 0 && !showNewRoleInput && (
-                    <div className="border rounded-lg bg-popover p-3 text-center">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        No roles found matching "{roleSearch}"
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setShowNewRoleInput(true);
-                          handleInputChange("newRole", roleSearch);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add "{roleSearch}" as new role
-                      </Button>
+                  {showRoleDropdown && (
+                    <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
+                      {filteredRoles.length > 0 ? (
+                        filteredRoles.map((role) => (
+                          <Button
+                            key={role}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-left hover:bg-accent"
+                            onClick={() => {
+                              handleInputChange("role", role);
+                              setRoleSearch("");
+                              setShowRoleDropdown(false);
+                            }}
+                          >
+                            {role}
+                          </Button>
+                        ))
+                      ) : roleSearch ? (
+                        <div className="p-2 text-center">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            No roles found matching "{roleSearch}"
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setShowNewRoleInput(true);
+                              setShowRoleDropdown(false);
+                              handleInputChange("newRole", roleSearch);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add "{roleSearch}" as new role
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                   
