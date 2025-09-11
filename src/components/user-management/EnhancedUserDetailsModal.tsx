@@ -93,11 +93,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     phone_number: user.phone_number || '',
     job_title: user.job_title || '',
     department: user.department || '',
+    employee_id: user.employee_id || '',
+    role: (user as any).role || '',
     company: (user.company as any) || 'BGC',
     status: (user.status as any) || 'active',
     sso_enabled: user.sso_enabled || false,
     two_factor_enabled: user.two_factor_enabled || false,
-    password_change_required: user.password_change_required || false
+    password_change_required: user.password_change_required || false,
+    functional_email: false,
+    personal_email: ''
   });
 
   useEffect(() => {
@@ -161,11 +165,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           phone_number: editedUser.phone_number,
           job_title: editedUser.job_title,
           department: editedUser.department,
+          employee_id: editedUser.employee_id,
+          role: editedUser.role,
           company: editedUser.company,
           status: editedUser.status,
           sso_enabled: editedUser.sso_enabled,
           two_factor_enabled: editedUser.two_factor_enabled,
-          password_change_required: editedUser.password_change_required
+          password_change_required: editedUser.password_change_required,
+          functional_email: editedUser.functional_email,
+          personal_email: editedUser.personal_email
         })
         .eq('user_id', user.user_id);
 
@@ -408,15 +416,43 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </div>
                 </div>
                 
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={editedUser.email}
-                    onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
-                    disabled={!editMode}
-                  />
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="functional_email"
+                      checked={editedUser.functional_email}
+                      onChange={(e) => setEditedUser({ ...editedUser, functional_email: e.target.checked })}
+                      disabled={!editMode}
+                      className="rounded border-gray-300"
+                    />
+                    <Label htmlFor="functional_email">This is a functional email</Label>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="email">{editedUser.functional_email ? 'Functional Email' : 'Email'}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={editedUser.email}
+                      onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
+                      disabled={!editMode}
+                    />
+                  </div>
+                  
+                  {editedUser.functional_email && (
+                    <div>
+                      <Label htmlFor="personal_email">Personal Email</Label>
+                      <Input
+                        id="personal_email"
+                        type="email"
+                        value={editedUser.personal_email}
+                        onChange={(e) => setEditedUser({ ...editedUser, personal_email: e.target.value })}
+                        disabled={!editMode}
+                        placeholder="Enter personal email address"
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -487,8 +523,25 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 </div>
                 
                 <div>
-                  <Label>Employee ID</Label>
-                  <Input value={user.employee_id || 'Not set'} disabled />
+                  <Label htmlFor="employee_id">Employee ID</Label>
+                  <Input
+                    id="employee_id"
+                    value={editedUser.employee_id}
+                    onChange={(e) => setEditedUser({ ...editedUser, employee_id: e.target.value })}
+                    disabled={!editMode}
+                    placeholder="Enter employee ID"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="role">Role</Label>
+                  <Input
+                    id="role"
+                    value={editedUser.role}
+                    onChange={(e) => setEditedUser({ ...editedUser, role: e.target.value })}
+                    disabled={!editMode}
+                    placeholder="Enter role/position"
+                  />
                 </div>
               </CardContent>
             </Card>
