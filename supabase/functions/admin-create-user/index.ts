@@ -86,10 +86,10 @@ serve(async (req) => {
     // Normalize company to enum if supported (only set when known)
     const normalizedCompany = company === 'BGC' || company === 'Kent' ? company : null;
 
-    // 2) Insert profile
+    // 2) Upsert profile (handle case where a row may already exist)
     const { error: profileErr } = await admin
       .from('profiles')
-      .insert({
+      .upsert({
         user_id: userId,
         email,
         first_name: firstName,
@@ -104,7 +104,7 @@ serve(async (req) => {
         ta2_discipline: discipline ?? null,
         ta2_commission: commission ?? null,
         account_status: 'active',
-      });
+      }, { onConflict: 'user_id' });
 
     if (profileErr) {
       console.error("insert profile error:", profileErr);
