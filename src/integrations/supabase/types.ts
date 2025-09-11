@@ -963,6 +963,7 @@ export type Database = {
           employee_id: string
           first_name: string
           full_name: string
+          functional_email_address: string
           job_title: string
           last_activity: string
           last_login_at: string

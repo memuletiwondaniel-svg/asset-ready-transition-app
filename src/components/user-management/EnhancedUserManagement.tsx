@@ -70,6 +70,7 @@ interface User {
   last_activity: string;
   ta2_discipline?: string;
   ta2_commission?: string;
+  functional_email_address?: string;
 }
 
 const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack }) => {
@@ -430,6 +431,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <TableHead>Company</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>System Role</TableHead>
+                  <TableHead>Functional Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Activity</TableHead>
                   <TableHead className="w-[50px]">Actions</TableHead>
@@ -523,6 +525,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                           <Badge variant="outline" className="text-xs">
                             +{user.roles.length - 1}
                           </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="text-sm">
+                        {user.functional_email_address ? (
+                          <div className="font-medium text-blue-700">
+                            {user.functional_email_address}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>
