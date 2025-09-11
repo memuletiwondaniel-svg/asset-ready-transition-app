@@ -44,7 +44,7 @@ const PSSRChecklist: React.FC = () => {
   const filteredItems = checklistItems.filter(item => {
     const matchesCategory = item.category === selectedCategory;
     const matchesSearch = item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.id.toLowerCase().includes(searchTerm.toLowerCase());
+                         item.unique_id.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -111,7 +111,7 @@ const PSSRChecklist: React.FC = () => {
     const categoryItems = checklistItems.filter(item => item.category === category);
     const total = categoryItems.length;
     const completed = categoryItems.filter(item => {
-      const status = getItemStatus(item.id);
+      const status = getItemStatus(item.unique_id);
       return status?.status === 'APPROVED' || status?.status === 'NOT APPLICABLE';
     }).length;
     
@@ -197,95 +197,8 @@ const PSSRChecklist: React.FC = () => {
 
         {categories.map((category) => (
           <TabsContent key={category} value={category} className="mt-6">
-            <div className="space-y-4">
-              {filteredItems.map((item) => {
-                const status = getItemStatus(item.id);
-                return (
-                  <Card key={item.id} className={`transition-all duration-200 hover:shadow-lg border-l-4 ${
-                    status?.status === 'NOT APPLICABLE' ? 'opacity-60 border-l-gray-400' :
-                    status?.status === 'APPROVED' ? 'border-l-green-500' :
-                    status?.status === 'UNDER REVIEW' ? 'border-l-blue-500' :
-                    status?.status === 'DRAFT' ? 'border-l-orange-500' :
-                    'border-l-gray-300'
-                  }`}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4 flex-1">
-                          <div className="mt-1">
-                            {getStatusIcon(status)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-3">
-                              <CardTitle className="text-lg font-bold text-gray-900">{item.id}</CardTitle>
-                              {getStatusBadge(status)}
-                            </div>
-                            <p className="text-gray-700 leading-relaxed mb-4">{item.description}</p>
-                            
-                            {item.topic && (
-                              <div className="text-sm text-muted-foreground mb-2">
-                                <strong>Topic:</strong> {item.topic}
-                              </div>
-                            )}
-                            
-                            <div className="text-sm text-muted-foreground mb-2">
-                              <strong>Supporting Evidence:</strong> {item.supporting_evidence || "Not specified"}
-                            </div>
-                            
-                            {item.responsible_party && (
-                              <div className="text-sm text-muted-foreground mb-2">
-                                <strong>Responsible Party:</strong> {item.responsible_party}
-                              </div>
-                            )}
-                            
-                            <div className="flex items-center space-x-4 text-sm">
-                              <div className="flex items-center space-x-2">
-                                <Users className="h-4 w-4 text-blue-600" />
-                                <span className="text-gray-600 font-medium">Approvers:</span>
-                                <span className="text-gray-700">{item.approving_authority || "Not specified"}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    
-                    {status?.status !== 'NOT APPLICABLE' && status?.status !== 'APPROVED' && (
-                      <CardContent>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select Response
-                          </label>
-                          <Select onValueChange={(value) => handleResponseSelect(item, value)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Choose your response..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="N/A">
-                                <div className="flex items-center space-x-2">
-                                  <MinusCircle className="h-4 w-4 text-gray-600" />
-                                  <span>N/A - Not Applicable</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="YES">
-                                <div className="flex items-center space-x-2">
-                                  <CheckCircle className="h-4 w-4 text-green-600" />
-                                  <span>YES - Compliant</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="NO">
-                                <div className="flex items-center space-x-2">
-                                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                                  <span>NO - Request Deviation</span>
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              })}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">{filteredItems.length} items found</p>
             </div>
           </TabsContent>
         ))}
