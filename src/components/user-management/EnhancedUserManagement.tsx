@@ -464,6 +464,12 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                             <Mail className="h-3 w-3 mr-1" />
                             {user.email}
                           </div>
+                          {user.functional_email_address && (
+                            <div className="text-sm text-muted-foreground flex items-center">
+                              <Mail className="h-3 w-3 mr-1" />
+                              <span className="text-blue-600 font-medium">Functional: {user.functional_email_address}</span>
+                            </div>
+                          )}
                           {user.phone_number && (
                             <div className="text-sm text-muted-foreground flex items-center">
                               <Phone className="h-3 w-3 mr-1" />
