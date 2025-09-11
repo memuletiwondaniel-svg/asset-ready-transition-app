@@ -384,13 +384,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         
         // Update the user profile with avatar URL
         if (avatarUrl) {
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ avatar_url: avatarUrl })
-            .eq('user_id', createResp.user_id);
-            
-          if (updateError) {
-            console.error('Failed to update avatar URL:', updateError);
+          const { data: avatarUpdateResp, error: avatarUpdateErr } = await supabase.functions.invoke('update-user-avatar', {
+            body: { userId: createResp.user_id, avatarPath: avatarUrl }
+          });
+          
+          if (avatarUpdateErr) {
+            console.error('Failed to update avatar URL:', avatarUpdateErr);
           }
         }
       }

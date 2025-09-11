@@ -94,14 +94,9 @@ verify_jwt = false
 [functions.use-auth-token]
 verify_jwt = false
 
-[functions.send-user-approval-request]
-verify_jwt = false
-
-[functions.process-user-approval]
-verify_jwt = false
-
-[functions.send-welcome-email]
-verify_jwt = false
-
 [functions.submit-registration-request]
+verify_jwt = false
+
+# New function to update profile avatar via service role
+[functions.update-user-avatar]
 verify_jwt = false
