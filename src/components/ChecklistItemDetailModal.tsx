@@ -33,17 +33,17 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedItem, setEditedItem] = useState<DBChecklistItem>(item);
   const [selectedApprovers, setSelectedApprovers] = useState<string[]>(
-    item.Approver ? item.Approver.split(', ') : []
+    item.approving_authority ? item.approving_authority.split(', ') : []
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const isCustom = item.unique_id?.startsWith('CUST-');
+  const isCustom = item.id.startsWith('CUST-');
   
   const { users } = useUsers();
 
   // Sync internal state when item prop changes or modal reopens
   useEffect(() => {
     setEditedItem(item);
-    setSelectedApprovers(item.Approver ? item.Approver.split(', ') : []);
+    setSelectedApprovers(item.approving_authority ? item.approving_authority.split(', ') : []);
     setIsEditing(false);
   }, [item, isOpen]);
 
@@ -99,7 +99,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
     // Update the edited item with selected approvers
     const updatedItem = {
       ...editedItem,
-      Approver: selectedApprovers.join(', ') || null
+      approving_authority: selectedApprovers.join(', ') || null
     };
     onSave?.(updatedItem);
     setIsEditing(false);
@@ -110,7 +110,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   };
 
   const clearResponsibleParty = () => {
-    setEditedItem(prev => ({ ...prev, responsible: null }));
+    setEditedItem(prev => ({ ...prev, responsible_party: null }));
   };
 
   const handleCancel = () => {
@@ -119,7 +119,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   };
 
   const handleDelete = () => {
-    onDelete?.(item.unique_id);
+    onDelete?.(item.id);
     setShowDeleteConfirm(false);
     onClose();
   };
@@ -150,7 +150,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <Badge variant="outline" className="font-mono text-base px-4 py-2 bg-primary/10 border-primary/30 text-primary font-semibold backdrop-blur-sm shadow-md">
-                        {item.unique_id}
+                        {item.id}
                       </Badge>
                       <div className="absolute inset-0 bg-primary/5 rounded-md blur-sm"></div>
                     </div>
@@ -170,7 +170,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                   </div>
                 </div>
                 <div className="flex space-x-3">
-                  {!isEditing && onDelete && item.unique_id?.startsWith('CUST-') && (
+                  {!isEditing && onDelete && item.id.startsWith('CUST-') && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -308,8 +308,8 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                       {isEditing ? (
                         <div className="relative">
                           <Textarea
-                            value={editedItem.required_evidence || ''}
-                            onChange={(e) => setEditedItem(prev => ({ ...prev, required_evidence: e.target.value }))}
+                            value={editedItem.supporting_evidence || ''}
+                            onChange={(e) => setEditedItem(prev => ({ ...prev, supporting_evidence: e.target.value }))}
                             placeholder="Evidence requirements"
                             className="h-24 border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50 transition-all duration-300 text-base p-3"
                           />
@@ -319,7 +319,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent rounded-xl"></div>
                           <p className="text-foreground leading-relaxed whitespace-pre-wrap relative z-10 text-base">
-                            {item.required_evidence || 'No supporting evidence specified'}
+                            {item.supporting_evidence || 'No supporting evidence specified'}
                           </p>
                         </div>
                       )}
@@ -343,15 +343,15 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                           <div className="relative">
                             <Combobox
                               options={responsiblePartyOptions}
-                              value={editedItem.responsible || ''}
-                              onValueChange={(value) => setEditedItem(prev => ({ ...prev, responsible: value }))}
+                              value={editedItem.responsible_party || ''}
+                              onValueChange={(value) => setEditedItem(prev => ({ ...prev, responsible_party: value }))}
                               placeholder="Search and select responsible party..."
                               searchPlaceholder="Type to search roles or users..."
                               className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50"
                             />
                             <div className="absolute inset-0 rounded-md bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
                           </div>
-                          {editedItem.responsible && (
+                          {editedItem.responsible_party && (
                             <div className="mt-2 space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Selected Responsible Party:</p>
                               <div className="relative group inline-block">
@@ -359,7 +359,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                                   variant="secondary" 
                                   className="text-xs px-3 py-1 pr-8 bg-blue-100/80 text-blue-800 border border-blue-200/50 backdrop-blur-sm hover:bg-blue-200/80 transition-colors duration-200"
                                 >
-                                  <span className="truncate max-w-[250px]">{editedItem.responsible}</span>
+                                  <span className="truncate max-w-[250px]">{editedItem.responsible_party}</span>
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -375,7 +375,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                               </div>
                             </div>
                           )}
-                          {!editedItem.responsible && (
+                          {!editedItem.responsible_party && (
                             <p className="text-xs text-amber-600 bg-amber-50/50 border border-amber-200/50 rounded-md p-2">
                               💡 Tip: You can search through engineering roles or select an active user. Click the × button to remove your selection.
                             </p>
@@ -385,7 +385,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-xl"></div>
                           <p className="text-foreground relative z-10 text-base">
-                            {item.responsible || 'Not specified'}
+                            {item.responsible_party || 'Not specified'}
                           </p>
                         </div>
                       )}
@@ -466,17 +466,17 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent rounded-xl"></div>
                           <div className="relative z-10">
-                            {item.Approver ? (
+                            {item.approving_authority ? (
                               <div className="space-y-2">
                                 <div className="flex flex-wrap gap-2">
-                                  {item.Approver.split(', ').map((approver, index) => (
+                                  {item.approving_authority.split(', ').map((approver, index) => (
                                     <Badge key={index} variant="outline" className="text-xs px-2 py-1 bg-green-50/80 text-green-800 border-green-200">
                                       {approver}
                                     </Badge>
                                   ))}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                  {item.Approver.split(', ').length} approver{item.Approver.split(', ').length !== 1 ? 's' : ''} assigned
+                                  {item.approving_authority.split(', ').length} approver{item.approving_authority.split(', ').length !== 1 ? 's' : ''} assigned
                                 </p>
                               </div>
                             ) : (

@@ -146,7 +146,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
 
   const handleSaveItem = (item: ChecklistItem) => {
     // Quick save functionality - could show a toast or update indicator
-    console.log('Quick saving item:', item.description);
+    console.log('Quick saving item:', item.id);
     // In a real app, this would trigger an immediate save without opening the modal
   };
 
@@ -295,11 +295,11 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                 ) : (
                   <div className="grid gap-6">
                     {categoryItems.map((item, index) => (
-                       <div
-                         key={item.description}
-                         className="group/item relative overflow-hidden bg-white/80 backdrop-blur-sm border border-white/30 hover:border-blue-200/60 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] animate-fade-in rounded-2xl"
-                         style={{ animationDelay: `${index * 100}ms` }}
-                       >
+                      <div
+                        key={item.id}
+                        className="group/item relative overflow-hidden bg-white/80 backdrop-blur-sm border border-white/30 hover:border-blue-200/60 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] animate-fade-in rounded-2xl"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
                         <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-white/70 to-blue-50/30 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/30 to-transparent -translate-x-[100%] group-hover/item:translate-x-[100%] transition-transform duration-1000"></div>
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 via-blue-500 to-purple-600 group-hover/item:w-2 transition-all duration-500 shadow-lg"></div>
@@ -311,7 +311,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                 <div className="relative">
                                   <div className="absolute -inset-1 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-xl blur opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
                                   <div className="relative w-12 h-12 bg-gradient-to-br from-blue-100/90 to-purple-100/90 backdrop-blur-sm rounded-xl flex items-center justify-center border border-blue-200/60 group-hover/item:border-blue-300/80 group-hover/item:shadow-lg transition-all duration-300">
-                                    <span className="text-sm font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">{item.description.substring(0, 3)}</span>
+                                    <span className="text-sm font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">{item.id}</span>
                                   </div>
                                 </div>
                                 <Badge
@@ -384,41 +384,41 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                   </div>
                                 )}
 
-                                 {item.required_evidence && (
-                                   <div className="flex items-start space-x-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100/50 group-hover/item:bg-purple-100/50 group-hover/item:border-purple-200/70 transition-all duration-300">
-                                     <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center shadow-sm">
-                                       <FileText className="w-4 h-4 text-purple-600" />
-                                     </div>
-                                     <div className="flex-1 min-w-0">
-                                       <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Evidence</span>
-                                       <p className="text-sm text-gray-700 font-medium mt-1 line-clamp-2">{item.required_evidence}</p>
-                                     </div>
-                                   </div>
-                                 )}
+                                {item.supporting_evidence && (
+                                  <div className="flex items-start space-x-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100/50 group-hover/item:bg-purple-100/50 group-hover/item:border-purple-200/70 transition-all duration-300">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center shadow-sm">
+                                      <FileText className="w-4 h-4 text-purple-600" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Evidence</span>
+                                      <p className="text-sm text-gray-700 font-medium mt-1 line-clamp-2">{item.supporting_evidence}</p>
+                                    </div>
+                                  </div>
+                                )}
 
-                                 {item.responsible && (
-                                   <div className="flex items-start space-x-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50 group-hover/item:bg-orange-100/50 group-hover/item:border-orange-200/70 transition-all duration-300">
-                                     <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center shadow-sm">
-                                       <Users className="w-4 h-4 text-orange-600" />
-                                     </div>
-                                     <div className="flex-1 min-w-0">
-                                       <span className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Responsible</span>
-                                       <p className="text-sm text-gray-700 font-medium mt-1">{item.responsible}</p>
-                                     </div>
-                                   </div>
-                                 )}
+                                {item.responsible_party && (
+                                  <div className="flex items-start space-x-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50 group-hover/item:bg-orange-100/50 group-hover/item:border-orange-200/70 transition-all duration-300">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center shadow-sm">
+                                      <Users className="w-4 h-4 text-orange-600" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Responsible</span>
+                                      <p className="text-sm text-gray-700 font-medium mt-1">{item.responsible_party}</p>
+                                    </div>
+                                  </div>
+                                )}
 
-                                 {item.Approver && (
-                                   <div className="flex items-start space-x-3 p-3 bg-green-50/50 rounded-xl border border-green-100/50 group-hover/item:bg-green-100/50 group-hover/item:border-green-200/70 transition-all duration-300">
-                                     <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center shadow-sm">
-                                       <CheckCircle className="w-4 h-4 text-green-600" />
-                                     </div>
-                                     <div className="flex-1 min-w-0">
-                                       <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Approvers</span>
-                                       <p className="text-sm text-gray-700 font-medium mt-1">{item.Approver}</p>
-                                     </div>
-                                   </div>
-                                 )}
+                                {item.approving_authority && (
+                                  <div className="flex items-start space-x-3 p-3 bg-green-50/50 rounded-xl border border-green-100/50 group-hover/item:bg-green-100/50 group-hover/item:border-green-200/70 transition-all duration-300">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center shadow-sm">
+                                      <CheckCircle className="w-4 h-4 text-green-600" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Approvers</span>
+                                      <p className="text-sm text-gray-700 font-medium mt-1">{item.approving_authority}</p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
 

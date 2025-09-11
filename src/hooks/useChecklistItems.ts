@@ -13,7 +13,7 @@ export const useChecklistItems = () => {
         .select('*')
         .eq('is_active', true)
         .order('category', { ascending: true })
-        .order('sequence_number', { ascending: true });
+        .order('id', { ascending: true });
 
       if (error) throw error;
       return data;
@@ -42,9 +42,9 @@ export interface UpdateChecklistItemData {
   description?: string;
   category?: string;
   topic?: string;
-  required_evidence?: string;
-  responsible?: string;
-  Approver?: string;
+  supporting_evidence?: string;
+  responsible_party?: string;
+  approving_authority?: string;
   is_active?: boolean;
 }
 
@@ -52,7 +52,7 @@ export const useUpdateChecklistItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ uniqueId, updateData }: { uniqueId: string; updateData: UpdateChecklistItemData }) => {
+    mutationFn: async ({ itemId, updateData }: { itemId: string; updateData: UpdateChecklistItemData }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Not authenticated');
 
@@ -63,7 +63,7 @@ export const useUpdateChecklistItem = () => {
           updated_by: session.user.id,
           updated_at: new Date().toISOString(),
         })
-        .eq('unique_id', uniqueId)
+        .eq('id', itemId)
         .select()
         .single();
 
@@ -74,7 +74,7 @@ export const useUpdateChecklistItem = () => {
       console.log('Update successful, updating cache and invalidating queries...', updatedItem);
       queryClient.setQueryData<ChecklistItem[] | undefined>(['checklist-items'], (prev) => {
         if (!prev) return prev;
-        return prev.map((item) => (item.unique_id === updatedItem.unique_id ? (updatedItem as ChecklistItem) : item));
+        return prev.map((item) => (item.id === updatedItem.id ? (updatedItem as ChecklistItem) : item));
       });
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
@@ -83,12 +83,13 @@ export const useUpdateChecklistItem = () => {
 };
 
 export interface CreateChecklistItemData {
+  id: string;
   description: string;
   category: string;
   topic?: string;
-  required_evidence?: string;
-  responsible?: string;
-  Approver?: string;
+  supporting_evidence?: string;
+  responsible_party?: string;
+  approving_authority?: string;
 }
 
 export const useCreateChecklistItem = () => {
@@ -122,7 +123,7 @@ export const useDeleteChecklistItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (uniqueId: string) => {
+    mutationFn: async (itemId: string) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Not authenticated');
 
@@ -133,45 +134,25 @@ export const useDeleteChecklistItem = () => {
           updated_by: session.user.id,
           updated_at: new Date().toISOString(),
         })
-        .eq('unique_id', uniqueId);
+        .eq('id', itemId);
 
       if (error) throw error;
-      return uniqueId;
+      return itemId;
     },
-    onMutate: async (uniqueId: string) => {
+    onMutate: async (itemId: string) => {
       await queryClient.cancelQueries({ queryKey: ['checklist-items'] });
       const previousItems = queryClient.getQueryData<ChecklistItem[]>(['checklist-items']);
       if (previousItems) {
-        queryClient.setQueryData<ChecklistItem[]>(['checklist-items'], previousItems.filter(i => i.unique_id !== uniqueId));
+        queryClient.setQueryData<ChecklistItem[]>(['checklist-items'], previousItems.filter(i => i.id !== itemId));
       }
       return { previousItems };
     },
-    onError: (_err, _uniqueId, context) => {
+    onError: (_err, _itemId, context) => {
       if (context?.previousItems) {
         queryClient.setQueryData(['checklist-items'], context.previousItems);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
-      queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
-    },
-  });
-};
-
-export const useReorderChecklistItem = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ uniqueId, newPosition }: { uniqueId: string; newPosition: number }) => {
-      const { error } = await supabase.rpc('reorder_checklist_item', {
-        item_unique_id: uniqueId,
-        new_position: newPosition
-      });
-
-      if (error) throw error;
-      return { uniqueId, newPosition };
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
     },

@@ -45,7 +45,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
   
   // Get selected items
   const selectedItems = allChecklistItems.filter(item => 
-    checklistData.selected_items.includes(item.unique_id)
+    checklistData.selected_items.includes(item.id)
   );
 
   // Group selected items by category
@@ -265,13 +265,13 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                         <div className="grid gap-3">
                           {items.map((item, index) => (
                             <div
-                              key={item.unique_id}
+                              key={item.id}
                               className="group p-4 bg-white/50 border border-border/20 rounded-lg hover:shadow-md transition-all duration-200 hover:bg-white/80"
                             >
                               <div className="flex items-start space-x-4">
                                 <div className="flex-shrink-0">
                                   <div className="w-10 h-10 bg-gradient-to-br from-muted to-muted/60 rounded-lg flex items-center justify-center border border-border/30">
-                                    <span className="text-xs font-bold text-muted-foreground">{item.unique_id}</span>
+                                    <span className="text-xs font-bold text-muted-foreground">{item.id}</span>
                                   </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -279,25 +279,25 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                                     {item.description}
                                   </p>
                                   
-                                  {item.required_evidence && (
+                                  {item.supporting_evidence && (
                                     <div className="mt-2 p-2 bg-blue-50/50 rounded border border-blue-100/50">
                                       <p className="text-xs text-blue-700 font-medium">Evidence Required:</p>
-                                      <p className="text-xs text-blue-600 mt-1 line-clamp-1">{item.required_evidence}</p>
+                                      <p className="text-xs text-blue-600 mt-1 line-clamp-1">{item.supporting_evidence}</p>
                                     </div>
                                   )}
                                   
                                   <div className="flex items-center justify-between mt-3">
                                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                      {item.responsible && (
+                                      {item.responsible_party && (
                                         <div className="flex items-center space-x-1">
                                           <Users className="h-3 w-3" />
-                                          <span>{item.responsible}</span>
+                                          <span>{item.responsible_party}</span>
                                         </div>
                                       )}
-                                      {item.Approver && (
+                                      {item.approving_authority && (
                                         <div className="flex items-center space-x-1">
                                           <CheckCircle className="h-3 w-3" />
-                                          <span>{item.Approver}</span>
+                                          <span>{item.approving_authority}</span>
                                         </div>
                                       )}
                                     </div>

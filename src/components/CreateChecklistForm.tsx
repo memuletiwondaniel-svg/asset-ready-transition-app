@@ -105,22 +105,20 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   }, [allChecklistItems]);
 
   // Get unselected items
-  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.unique_id));
+  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
 
   const handleCreateNewItem = (newItemData: any) => {
     // Generate a new ID
     const newId = `CUST-${String(customChecklistItems.length + 1).padStart(3, '0')}`;
     
     const newItem: DBChecklistItem = {
-      unique_id: newId,
+      id: newId,
       description: newItemData.description,
       category: newItemData.category,
       topic: newItemData.topic || null,
-      required_evidence: newItemData.supportingEvidence || null,
-      responsible: newItemData.responsibleParty || null,
-      Approver: newItemData.approvingAuthority || null,
-      category_ref_id: null,
-      sequence_number: null,
+      supporting_evidence: newItemData.supportingEvidence || null,
+      responsible_party: newItemData.responsibleParty || null,
+      approving_authority: newItemData.approvingAuthority || null,
       is_active: true,
       version: 1,
       created_at: new Date().toISOString(),
@@ -186,9 +184,9 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
 
 const handleItemSave = (updatedItem: DBChecklistItem) => {
     // Update the item in customChecklistItems if it's a custom item
-    if (updatedItem.unique_id?.startsWith('CUST-')) {
+    if (updatedItem.id.startsWith('CUST-')) {
       setCustomChecklistItems(prev =>
-        prev.map(item => item.unique_id === updatedItem.unique_id ? updatedItem : item)
+        prev.map(item => item.id === updatedItem.id ? updatedItem : item)
       );
       setSelectedDetailItem(updatedItem);
       setShowDetailModal(false);
@@ -196,14 +194,14 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
       // Persist changes for database-backed items
       updateChecklistItem(
         {
-          uniqueId: updatedItem.unique_id,
+          itemId: updatedItem.id,
           updateData: {
             description: updatedItem.description,
             category: updatedItem.category,
             topic: updatedItem.topic || undefined,
-            required_evidence: updatedItem.required_evidence || undefined,
-            responsible: updatedItem.responsible || undefined,
-            Approver: updatedItem.Approver || undefined,
+            supporting_evidence: updatedItem.supporting_evidence || undefined,
+            responsible_party: updatedItem.responsible_party || undefined,
+            approving_authority: updatedItem.approving_authority || undefined,
           }
         },
         {
@@ -225,11 +223,11 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
     // Remove item from custom items if it's a custom item
     if (itemId.startsWith('CUST-')) {
       setCustomChecklistItems(prev => {
-        const filteredItems = prev.filter(item => item.unique_id !== itemId);
+        const filteredItems = prev.filter(item => item.id !== itemId);
         // Re-number the remaining custom items
         const renumberedItems = filteredItems.map((item, index) => ({
           ...item,
-          unique_id: `CUST-${String(index + 1).padStart(3, '0')}`
+          id: `CUST-${String(index + 1).padStart(3, '0')}`
         }));
         return renumberedItems;
       });
@@ -299,25 +297,25 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
     return categoryItems.filter(item => {
       const matchesSearch = searchQuery === '' || 
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.required_evidence && item.required_evidence.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.topic && item.topic.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        item.unique_id.toLowerCase().includes(searchQuery.toLowerCase());
+        item.id.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   };
 
   const getCategoryStats = (categoryItems: DBChecklistItem[]) => {
     const total = categoryItems.length;
-    const selected = categoryItems.filter(item => formData.selected_items.includes(item.unique_id)).length;
+    const selected = categoryItems.filter(item => formData.selected_items.includes(item.id)).length;
     return { total, selected, percentage: total > 0 ? Math.round((selected / total) * 100) : 0 };
   };
 
   // Component to render individual checklist items
   const ChecklistItemCard = ({ item }: { item: DBChecklistItem }) => {
-    const isSelected = formData.selected_items.includes(item.unique_id);
+    const isSelected = formData.selected_items.includes(item.id);
     return (
       <div
-        key={item.unique_id}
+        key={item.id}
         className={`group relative overflow-hidden rounded-xl border transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
           isSelected 
             ? 'border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 shadow-lg shadow-primary/20' 
@@ -350,7 +348,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
             <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 checked={isSelected}
-                onCheckedChange={() => handleItemToggle(item.unique_id)}
+                onCheckedChange={() => handleItemToggle(item.id)}
                 className={`w-5 h-5 rounded-md border-2 transition-all duration-200 ${
                   isSelected 
                     ? 'border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary shadow-md' 
@@ -369,7 +367,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                     : 'bg-primary/10 border-primary/30 text-primary'
                 }`}
               >
-                {item.unique_id}
+                {item.id}
               </Badge>
             </div>
             
@@ -767,9 +765,9 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                       <CardContent>
                         <ScrollArea className={category.name === "General" ? "h-64" : "h-96"}>
                           <div className="grid gap-3">
-                               {filteredCategoryItems.map((item) => (
-                                  <ChecklistItemCard key={item.unique_id} item={item} />
-                                ))}
+                            {filteredCategoryItems.map((item) => (
+                              <ChecklistItemCard key={item.id} item={item} />
+                            ))}
                           </div>
                         </ScrollArea>
                       </CardContent>
@@ -805,9 +803,9 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                 <CardContent>
                   <ScrollArea className="h-96">
                     <div className="grid gap-3">
-                       {filteredItems(unselectedItems).map((item) => (
-                          <ChecklistItemCard key={item.unique_id} item={item} />
-                        ))}
+                      {filteredItems(unselectedItems).map((item) => (
+                        <ChecklistItemCard key={item.id} item={item} />
+                      ))}
                     </div>
                   </ScrollArea>
                 </CardContent>
@@ -841,9 +839,9 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                   <CardContent>
                     <ScrollArea className="h-96">
                       <div className="grid gap-3">
-                         {filteredItems(category.items).map((item) => (
-                            <ChecklistItemCard key={item.unique_id} item={item} />
-                          ))}
+                        {filteredItems(category.items).map((item) => (
+                          <ChecklistItemCard key={item.id} item={item} />
+                        ))}
                       </div>
                     </ScrollArea>
                   </CardContent>
