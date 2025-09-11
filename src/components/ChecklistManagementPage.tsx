@@ -384,38 +384,38 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                   </div>
                                 )}
 
-                                 {item.supporting_evidence && (
+                                 {item.required_evidence && (
                                    <div className="flex items-start space-x-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100/50 group-hover/item:bg-purple-100/50 group-hover/item:border-purple-200/70 transition-all duration-300">
                                      <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center shadow-sm">
                                        <FileText className="w-4 h-4 text-purple-600" />
                                      </div>
                                      <div className="flex-1 min-w-0">
                                        <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Evidence</span>
-                                       <p className="text-sm text-gray-700 font-medium mt-1 line-clamp-2">{item.supporting_evidence}</p>
+                                       <p className="text-sm text-gray-700 font-medium mt-1 line-clamp-2">{item.required_evidence}</p>
                                      </div>
                                    </div>
                                  )}
 
-                                 {item.responsible_party && (
+                                 {item.responsible && (
                                    <div className="flex items-start space-x-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50 group-hover/item:bg-orange-100/50 group-hover/item:border-orange-200/70 transition-all duration-300">
                                      <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center shadow-sm">
                                        <Users className="w-4 h-4 text-orange-600" />
                                      </div>
                                      <div className="flex-1 min-w-0">
                                        <span className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Responsible</span>
-                                       <p className="text-sm text-gray-700 font-medium mt-1">{item.responsible_party}</p>
+                                       <p className="text-sm text-gray-700 font-medium mt-1">{item.responsible}</p>
                                      </div>
                                    </div>
                                  )}
 
-                                 {item.approving_authority && (
+                                 {item.Approver && (
                                    <div className="flex items-start space-x-3 p-3 bg-green-50/50 rounded-xl border border-green-100/50 group-hover/item:bg-green-100/50 group-hover/item:border-green-200/70 transition-all duration-300">
                                      <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center shadow-sm">
                                        <CheckCircle className="w-4 h-4 text-green-600" />
                                      </div>
                                      <div className="flex-1 min-w-0">
                                        <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Approvers</span>
-                                       <p className="text-sm text-gray-700 font-medium mt-1">{item.approving_authority}</p>
+                                       <p className="text-sm text-gray-700 font-medium mt-1">{item.Approver}</p>
                                      </div>
                                    </div>
                                  )}

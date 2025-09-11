@@ -105,20 +105,20 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   }, [allChecklistItems]);
 
   // Get unselected items
-  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
+  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.unique_id));
 
   const handleCreateNewItem = (newItemData: any) => {
     // Generate a new ID
     const newId = `CUST-${String(customChecklistItems.length + 1).padStart(3, '0')}`;
     
     const newItem: DBChecklistItem = {
-      id: newId,
+      unique_id: newId,
       description: newItemData.description,
       category: newItemData.category,
       topic: newItemData.topic || null,
-      supporting_evidence: newItemData.supportingEvidence || null,
-      responsible_party: newItemData.responsibleParty || null,
-      approving_authority: newItemData.approvingAuthority || null,
+      required_evidence: newItemData.supportingEvidence || null,
+      responsible: newItemData.responsibleParty || null,
+      Approver: newItemData.approvingAuthority || null,
       is_active: true,
       version: 1,
       created_at: new Date().toISOString(),

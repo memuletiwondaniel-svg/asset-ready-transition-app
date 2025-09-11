@@ -308,8 +308,8 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                       {isEditing ? (
                         <div className="relative">
                           <Textarea
-                            value={editedItem.supporting_evidence || ''}
-                            onChange={(e) => setEditedItem(prev => ({ ...prev, supporting_evidence: e.target.value }))}
+                            value={editedItem.required_evidence || ''}
+                            onChange={(e) => setEditedItem(prev => ({ ...prev, required_evidence: e.target.value }))}
                             placeholder="Evidence requirements"
                             className="h-24 border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50 transition-all duration-300 text-base p-3"
                           />
@@ -319,7 +319,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent rounded-xl"></div>
                           <p className="text-foreground leading-relaxed whitespace-pre-wrap relative z-10 text-base">
-                            {item.supporting_evidence || 'No supporting evidence specified'}
+                            {item.required_evidence || 'No supporting evidence specified'}
                           </p>
                         </div>
                       )}
@@ -343,15 +343,15 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                           <div className="relative">
                             <Combobox
                               options={responsiblePartyOptions}
-                              value={editedItem.responsible_party || ''}
-                              onValueChange={(value) => setEditedItem(prev => ({ ...prev, responsible_party: value }))}
+                              value={editedItem.responsible || ''}
+                              onValueChange={(value) => setEditedItem(prev => ({ ...prev, responsible: value }))}
                               placeholder="Search and select responsible party..."
                               searchPlaceholder="Type to search roles or users..."
                               className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50"
                             />
                             <div className="absolute inset-0 rounded-md bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
                           </div>
-                          {editedItem.responsible_party && (
+                          {editedItem.responsible && (
                             <div className="mt-2 space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Selected Responsible Party:</p>
                               <div className="relative group inline-block">
@@ -359,7 +359,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                                   variant="secondary" 
                                   className="text-xs px-3 py-1 pr-8 bg-blue-100/80 text-blue-800 border border-blue-200/50 backdrop-blur-sm hover:bg-blue-200/80 transition-colors duration-200"
                                 >
-                                  <span className="truncate max-w-[250px]">{editedItem.responsible_party}</span>
+                                  <span className="truncate max-w-[250px]">{editedItem.responsible}</span>
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -466,17 +466,17 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent rounded-xl"></div>
                           <div className="relative z-10">
-                            {item.approving_authority ? (
+                            {item.Approver ? (
                               <div className="space-y-2">
                                 <div className="flex flex-wrap gap-2">
-                                  {item.approving_authority.split(', ').map((approver, index) => (
+                                  {item.Approver.split(', ').map((approver, index) => (
                                     <Badge key={index} variant="outline" className="text-xs px-2 py-1 bg-green-50/80 text-green-800 border-green-200">
                                       {approver}
                                     </Badge>
                                   ))}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                  {item.approving_authority.split(', ').length} approver{item.approving_authority.split(', ').length !== 1 ? 's' : ''} assigned
+                                  {item.Approver.split(', ').length} approver{item.Approver.split(', ').length !== 1 ? 's' : ''} assigned
                                 </p>
                               </div>
                             ) : (

@@ -42,9 +42,9 @@ export interface UpdateChecklistItemData {
   description?: string;
   category?: string;
   topic?: string;
-  supporting_evidence?: string;
-  responsible_party?: string;
-  approving_authority?: string;
+  required_evidence?: string;
+  responsible?: string;
+  Approver?: string;
   is_active?: boolean;
 }
 
@@ -86,9 +86,9 @@ export interface CreateChecklistItemData {
   description: string;
   category: string;
   topic?: string;
-  supporting_evidence?: string;
-  responsible_party?: string;
-  approving_authority?: string;
+  required_evidence?: string;
+  responsible?: string;
+  Approver?: string;
 }
 
 export const useCreateChecklistItem = () => {
