@@ -527,19 +527,22 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                         className="hidden"
                         id="profile-image-upload"
                         disabled={uploadingImage}
+                        ref={(input) => {
+                          if (input) {
+                            input.onclick = () => input.click();
+                          }
+                        }}
                       />
-                      <label htmlFor="profile-image-upload">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="cursor-pointer"
-                          disabled={uploadingImage}
-                        >
-                          <Camera className="h-4 w-4 mr-2" />
-                          Choose Image
-                        </Button>
-                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('profile-image-upload')?.click()}
+                        disabled={uploadingImage}
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Choose Image
+                      </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Supported formats: JPG, PNG, GIF. Max size: 5MB
