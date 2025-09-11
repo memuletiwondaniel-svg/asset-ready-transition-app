@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { UserPlus, Search, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateUserModalProps {
@@ -41,13 +42,26 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     company: "",
     otherCompany: "",
     role: "",
-    otherRole: "",
+    newRole: "",
     discipline: "",
     commission: "",
     privileges: [] as string[],
   });
 
   const [roleSearch, setRoleSearch] = useState("");
+  const [showNewRoleInput, setShowNewRoleInput] = useState(false);
+  
+  // Load custom roles from localStorage
+  const getCustomRoles = () => {
+    try {
+      const stored = localStorage.getItem('customRoles');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [customRoles, setCustomRoles] = useState<string[]>(getCustomRoles);
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
@@ -92,7 +106,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     { code: "+1", country: "United States", flag: "🇺🇸", shortName: "US" },
   ];
 
-  const roles = [
+  // Base roles that are always available
+  const baseRoles = [
     "Project Manager",
     "Commissioning Lead",
     "Construction Lead", 
@@ -108,8 +123,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     "Production Director",
     "HSE Director",
     "P&E Director",
-    "Others (specify)"
   ];
+
+  // Combine base roles with custom roles
+  const allRoles = [...baseRoles, ...customRoles].sort();
 
   const disciplines = [
     { value: "Civil", label: "Civil" },
@@ -125,6 +142,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
   ];
 
   const availablePrivileges = [
+    "Administrator",
     "Complete assigned tasks or delegate",
     "Edit PSSR Checklist item Default approvers and PSSR Approvers",
     "Edit or Create New User",
@@ -132,9 +150,36 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     "Edit or Create New PSSR Master Checklist",
   ];
 
-  const filteredRoles = roles.filter(role =>
+  const filteredRoles = allRoles.filter(role =>
     role.toLowerCase().includes(roleSearch.toLowerCase())
   );
+
+  // Function to save custom roles to localStorage
+  const saveCustomRoles = (roles: string[]) => {
+    try {
+      localStorage.setItem('customRoles', JSON.stringify(roles));
+      setCustomRoles(roles);
+    } catch (error) {
+      console.error('Failed to save custom roles:', error);
+    }
+  };
+
+  // Function to add a new role
+  const addNewRole = () => {
+    if (formData.newRole.trim() && !allRoles.includes(formData.newRole.trim())) {
+      const newCustomRoles = [...customRoles, formData.newRole.trim()];
+      saveCustomRoles(newCustomRoles);
+      handleInputChange("role", formData.newRole.trim());
+      handleInputChange("newRole", "");
+      setShowNewRoleInput(false);
+      setRoleSearch("");
+      
+      toast({
+        title: "Role Added",
+        description: `"${formData.newRole.trim()}" has been added to the available roles.`,
+      });
+    }
+  };
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -174,7 +219,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       personalEmail: formData.personalEmail,
       phone: formData.countryCode + formData.phone,
       company: formData.company === "Others" ? formData.otherCompany : formData.company,
-      role: formData.role === "Others (specify)" ? formData.otherRole : formData.role,
+      role: formData.role,
       discipline: formData.discipline,
       commission: formData.commission,
       privileges: formData.privileges,
@@ -203,12 +248,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       company: "",
       otherCompany: "",
       role: "",
-      otherRole: "",
+      newRole: "",
       discipline: "",
       commission: "",
       privileges: [],
     });
     setRoleSearch("");
+    setShowNewRoleInput(false);
   };
 
   return (
@@ -389,40 +435,103 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
 
               <div>
                 <Label htmlFor="role">Role *</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search roles..."
-                    value={roleSearch}
-                    onChange={(e) => setRoleSearch(e.target.value)}
-                    className="pl-10 mb-2"
-                  />
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search roles..."
+                      value={roleSearch}
+                      onChange={(e) => setRoleSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  {roleSearch && filteredRoles.length > 0 && (
+                    <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
+                      {filteredRoles.map((role) => (
+                        <Button
+                          key={role}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-left"
+                          onClick={() => {
+                            handleInputChange("role", role);
+                            setRoleSearch("");
+                          }}
+                        >
+                          {role}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {roleSearch && filteredRoles.length === 0 && !showNewRoleInput && (
+                    <div className="border rounded-lg bg-popover p-3 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        No roles found matching "{roleSearch}"
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowNewRoleInput(true);
+                          handleInputChange("newRole", roleSearch);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add "{roleSearch}" as new role
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {showNewRoleInput && (
+                    <div className="border rounded-lg bg-popover p-3 space-y-2">
+                      <Label htmlFor="newRole">New Role Name</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="newRole"
+                          value={formData.newRole}
+                          onChange={(e) => handleInputChange("newRole", e.target.value)}
+                          placeholder="Enter new role name"
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={addNewRole}
+                          disabled={!formData.newRole.trim()}
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowNewRoleInput(false);
+                            handleInputChange("newRole", "");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {formData.role && (
+                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                      <span className="text-sm font-medium">Selected Role:</span>
+                      <Badge variant="secondary">{formData.role}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleInputChange("role", "")}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <Select onValueChange={(value) => handleInputChange("role", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
-
-              {formData.role === "Others (specify)" && (
-                <div>
-                  <Label htmlFor="otherRole">Specify Role</Label>
-                  <Input
-                    id="otherRole"
-                    value={formData.otherRole}
-                    onChange={(e) => handleInputChange("otherRole", e.target.value)}
-                    placeholder="Enter role"
-                  />
-                </div>
-              )}
 
               {formData.role === "Technical Authority (TA2)" && (
                 <div className="grid grid-cols-2 gap-4">
