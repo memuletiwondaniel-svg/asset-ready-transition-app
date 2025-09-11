@@ -59,13 +59,16 @@ export type Database = {
         Row: {
           Approver: string | null
           category: string
+          category_ref_id: string | null
           created_at: string
           created_by: string | null
           description: string
           is_active: boolean
           required_evidence: string | null
           responsible: string | null
+          sequence_number: number | null
           topic: string | null
+          unique_id: string | null
           updated_at: string
           updated_by: string | null
           version: number
@@ -73,13 +76,16 @@ export type Database = {
         Insert: {
           Approver?: string | null
           category: string
+          category_ref_id?: string | null
           created_at?: string
           created_by?: string | null
           description: string
           is_active?: boolean
           required_evidence?: string | null
           responsible?: string | null
+          sequence_number?: number | null
           topic?: string | null
+          unique_id?: string | null
           updated_at?: string
           updated_by?: string | null
           version?: number
@@ -87,13 +93,16 @@ export type Database = {
         Update: {
           Approver?: string | null
           category?: string
+          category_ref_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string
           is_active?: boolean
           required_evidence?: string | null
           responsible?: string | null
+          sequence_number?: number | null
           topic?: string | null
+          unique_id?: string | null
           updated_at?: string
           updated_by?: string | null
           version?: number
@@ -948,6 +957,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_category_ref_id: {
+        Args: { category_name: string }
+        Returns: string
+      }
       get_enhanced_user_management_data: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1016,12 +1029,20 @@ export type Database = {
         Args: { user_email: string }
         Returns: string
       }
+      reorder_checklist_item: {
+        Args: { item_unique_id: string; new_position: number }
+        Returns: undefined
+      }
       track_failed_login: {
         Args: { ip_addr?: unknown; user_uuid: string }
         Returns: undefined
       }
       track_user_login: {
         Args: { session_data?: Json; user_uuid: string }
+        Returns: undefined
+      }
+      update_checklist_sequence_numbers: {
+        Args: { target_category: string }
         Returns: undefined
       }
       user_has_privilege: {
