@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save, Plus, MoreVertical, Eye } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save, Plus, MoreVertical, Eye, Grid3X3, Table } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,7 @@ import EditChecklistItemModal from './EditChecklistItemModal';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
 import ChecklistItemDetailModal from './ChecklistItemDetailModal';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
+import ChecklistItemsTableView from './ChecklistItemsTableView';
 
 interface ChecklistManagementPageProps {
   onBack: () => void;
@@ -46,6 +47,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
 
@@ -412,13 +414,45 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                   <p className="text-gray-600">Browse and organize PSSR checklist items by category</p>
                 </div>
               </div>
-              <Button 
-                onClick={handleCreateItem}
-                className="fluent-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Checklist Item
-              </Button>
+              <div className="flex items-center space-x-4">
+                {/* View Mode Toggle */}
+                <div className="flex items-center bg-white/60 backdrop-blur-sm rounded-lg border border-gray-200/60 p-1 shadow-sm">
+                  <Button
+                    variant={viewMode === 'card' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('card')}
+                    className={`h-8 px-3 rounded-md transition-all duration-200 ${
+                      viewMode === 'card' 
+                        ? 'bg-primary text-primary-foreground shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60'
+                    }`}
+                  >
+                    <Grid3X3 className="w-4 h-4 mr-1" />
+                    Cards
+                  </Button>
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('table')}
+                    className={`h-8 px-3 rounded-md transition-all duration-200 ${
+                      viewMode === 'table' 
+                        ? 'bg-primary text-primary-foreground shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60'
+                    }`}
+                  >
+                    <Table className="w-4 h-4 mr-1" />
+                    Table
+                  </Button>
+                </div>
+                
+                <Button 
+                  onClick={handleCreateItem}
+                  className="fluent-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Checklist Item
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -435,6 +469,13 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
               No checklist items are currently available. Items will appear here once they are created.
             </p>
           </div>
+        ) : viewMode === 'table' ? (
+          <ChecklistItemsTableView
+            items={checklistItems || []}
+            onViewItem={handleViewItem}
+            onEditItem={handleEditItem}
+            onDeleteItem={handleDeleteItem}
+          />
         ) : (
           <DndContext
             sensors={sensors}
