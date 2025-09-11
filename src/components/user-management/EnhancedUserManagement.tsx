@@ -56,7 +56,7 @@ interface User {
   created_at: string;
   sso_enabled: boolean;
   two_factor_enabled: boolean;
-  role: string;
+  role?: string; // Make role optional for now
   roles: string[];
   projects: string[];
   manager_name: string;
