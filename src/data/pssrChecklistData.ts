@@ -456,7 +456,15 @@ export const pssrChecklistData: ChecklistItem[] = [
 
 export const checklistCategories = [
   "General",
-  "Technical Integrity", 
-  "Start-Up Readiness",
-  "Health & Safety"
+  "Hardware Integrity", 
+  "Process Safety",
+  "Documentation",
+  "Organization",
+  "Health & Safety",
+  "HSE",
+  "Emergency Response",
+  "Electrical",
+  "Instrumentation",
+  "Mechanical",
+  "Civil"
 ];
