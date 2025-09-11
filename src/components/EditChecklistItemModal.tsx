@@ -181,145 +181,174 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] border-0 p-0 overflow-hidden bg-background shadow-2xl">
-        {/* Modern Fluent Design Header */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10"></div>
-          <DialogHeader className="relative px-6 py-6 border-b border-border/10">
-            <div className="flex items-start gap-4">
+      <DialogContent className="max-w-5xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-sm shadow-2xl">
+        {/* Fluent Design Header */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/4 to-secondary/6"></div>
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+          
+          <DialogHeader className="relative px-8 py-8 border-b border-border/5">
+            <div className="flex items-start gap-6">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Edit3 className="h-6 w-6 text-primary" />
+                <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center backdrop-blur-sm border border-primary/10">
+                  <Edit3 className="h-7 w-7 text-primary" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent"></div>
                 </div>
               </div>
-              <div className="flex-grow space-y-1">
-                <DialogTitle className="text-xl font-semibold text-foreground">
+              <div className="flex-grow space-y-2">
+                <DialogTitle className="text-2xl font-semibold text-foreground tracking-tight">
                   Edit Checklist Item
                 </DialogTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FileText className="h-4 w-4" />
-                  <span>Item ID: {item?.id}</span>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
+                    <FileText className="h-3.5 w-3.5" />
+                    <span className="font-medium">ID: {item?.id}</span>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Update item details, assignments, and approval requirements
+                <p className="text-sm text-muted-foreground/80 leading-relaxed">
+                  Modify item specifications, assign responsibilities, and configure approval workflows
                 </p>
               </div>
             </div>
           </DialogHeader>
         </div>
 
-        <ScrollArea className="flex-1 px-6 py-6">
-          <div className="space-y-8 pr-4">
+        <ScrollArea className="flex-1 px-8 py-6">
+          <div className="space-y-10 pr-6">
             {/* Item Details Section */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 pb-2 border-b border-border/20">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-primary" />
+              <div className="relative">
+                <div className="flex items-center gap-4 pb-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground tracking-tight">Item Specification</h3>
+                    <p className="text-sm text-muted-foreground">Define the core requirements and details</p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">Item Details</h3>
+                <div className="absolute left-5 top-14 bottom-0 w-px bg-gradient-to-b from-border/40 to-transparent"></div>
               </div>
               
               {/* Description */}
-              <div className="space-y-3">
-                <Label htmlFor="description" className="text-sm font-medium text-foreground">
-                  Description <span className="text-destructive">*</span>
-                </Label>
+              <div className="space-y-4 ml-14">
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    Description <span className="text-destructive text-xs">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground">Clear description of what needs to be completed</p>
+                </div>
                 <Textarea
                   id="description"
                   value={formData.description || ''}
                   onChange={(e) => updateFormData('description', e.target.value)}
                   placeholder="Describe what needs to be completed for this checklist item..."
-                  rows={3}
-                  className={`resize-none ${errors.description ? 'border-destructive focus:border-destructive' : ''}`}
+                  rows={4}
+                  className={`resize-none transition-all duration-200 ${errors.description ? 'border-destructive focus:border-destructive ring-destructive/20' : 'focus:ring-primary/20'} rounded-lg border-border/50 focus:border-primary`}
                 />
                 {errors.description && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
-                    {errors.description}
-                  </p>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                    <X className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <p className="text-sm text-destructive">{errors.description}</p>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Classification Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="category" className="text-sm font-medium text-foreground">
-                  Category <span className="text-destructive">*</span>
-                </Label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 ml-14">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    Category <span className="text-destructive text-xs">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground">Primary classification for this item</p>
+                </div>
                 <Select 
                   value={formData.category || ''} 
                   onValueChange={(value) => updateFormData('category', value)}
                 >
-                  <SelectTrigger className={errors.category ? 'border-destructive focus:border-destructive' : ''}>
+                  <SelectTrigger className={`h-11 transition-all duration-200 ${errors.category ? 'border-destructive focus:border-destructive ring-destructive/20' : 'focus:ring-primary/20'} rounded-lg border-border/50 focus:border-primary`}>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-lg border-border/50">
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
+                      <SelectItem key={category} value={category} className="rounded-md">
                         {category}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {errors.category && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <X className="h-3 w-3" />
-                    {errors.category}
-                  </p>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                    <X className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <p className="text-sm text-destructive">{errors.category}</p>
+                  </div>
                 )}
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="topic" className="text-sm font-medium text-foreground">
-                  Topic
-                </Label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="topic" className="text-sm font-semibold text-foreground">
+                    Topic
+                  </Label>
+                  <p className="text-xs text-muted-foreground">Specific area or subject matter</p>
+                </div>
                 <Input
                   id="topic"
                   value={formData.topic || ''}
                   onChange={(e) => updateFormData('topic', e.target.value)}
                   placeholder="Enter specific topic or area"
+                  className="h-11 transition-all duration-200 rounded-lg border-border/50 focus:border-primary focus:ring-primary/20"
                 />
               </div>
             </div>
 
             {/* Supporting Evidence Section */}
-            <div className="space-y-3">
-              <Label htmlFor="supporting_evidence" className="text-sm font-medium text-foreground">
-                Supporting Evidence
-              </Label>
+            <div className="space-y-4 ml-14">
+              <div className="space-y-2">
+                <Label htmlFor="supporting_evidence" className="text-sm font-semibold text-foreground">
+                  Supporting Evidence
+                </Label>
+                <p className="text-xs text-muted-foreground">Documentation and proof required for verification</p>
+              </div>
               <Textarea
                 id="supporting_evidence"
                 value={formData.supporting_evidence || ''}
                 onChange={(e) => updateFormData('supporting_evidence', e.target.value)}
                 placeholder="Describe what evidence or documentation is required..."
                 rows={3}
-                className="resize-none"
+                className="resize-none transition-all duration-200 rounded-lg border-border/50 focus:border-primary focus:ring-primary/20"
               />
-              <p className="text-xs text-muted-foreground">
-                Specify any documentation, approvals, or evidence needed to verify completion
-              </p>
             </div>
 
             {/* Assignments Section */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3 pb-2 border-b border-border/20">
-                <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-secondary-foreground" />
+              <div className="relative">
+                <div className="flex items-center gap-4 pb-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-secondary/15 to-secondary/5 border border-secondary/10">
+                    <Users className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground tracking-tight">Role Assignments</h3>
+                    <p className="text-sm text-muted-foreground">Configure responsibilities and approvals</p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">Assignments</h3>
+                <div className="absolute left-5 top-14 bottom-0 w-px bg-gradient-to-b from-border/40 to-transparent"></div>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 ml-14">
                 {/* Responsible Party */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <User className="h-4 w-4" />
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-md bg-accent/20 flex items-center justify-center">
+                        <User className="h-3 w-3 text-accent-foreground" />
+                      </div>
                       Responsible Party
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Who will complete this item
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Individual or role accountable for completing this item
                     </p>
                   </div>
                   
@@ -332,36 +361,38 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   />
                   
                   {selectedResponsibleParty && (
-                    <div className="p-3 bg-muted/50 rounded-lg border">
+                    <div className="p-4 bg-gradient-to-r from-accent/5 to-accent/10 rounded-xl border border-accent/20">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-sm font-medium">Selected</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                          <span className="text-sm font-medium text-accent-foreground">Assignment Active</span>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={clearResponsibleParty}
-                          className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                          className="h-7 w-7 p-0 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                      <p className="text-sm text-foreground mt-1 truncate">{selectedResponsibleParty}</p>
+                      <p className="text-sm text-foreground mt-2 font-medium truncate">{selectedResponsibleParty}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Approving Authority */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-md bg-primary/20 flex items-center justify-center">
+                        <Shield className="h-3 w-3 text-primary" />
+                      </div>
                       Approving Authority
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Who must approve this item (multiple allowed)
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Authorities required to approve completion (multiple selections allowed)
                     </p>
                   </div>
                   
@@ -374,34 +405,37 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   />
                   
                   {selectedApprovers.length > 0 && (
-                    <div className="space-y-3 mt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {selectedApprovers.length} approver{selectedApprovers.length !== 1 ? 's' : ''} selected
-                        </span>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium text-foreground">
+                            {selectedApprovers.length} approver{selectedApprovers.length !== 1 ? 's' : ''} configured
+                          </span>
+                        </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedApprovers([])}
-                          className="h-6 text-xs text-muted-foreground hover:text-destructive"
+                          className="h-7 text-xs text-muted-foreground hover:text-destructive transition-colors"
                         >
                           Clear all
                         </Button>
                       </div>
                       
-                      <div className="space-y-2 max-h-24 overflow-y-auto">
+                      <div className="space-y-2 max-h-28 overflow-y-auto scrollbar-thin">
                         {selectedApprovers.map((approver, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded border">
-                            <span className="text-sm truncate flex-1">{approver}</span>
+                          <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/10">
+                            <span className="text-sm text-foreground font-medium truncate flex-1">{approver}</span>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               onClick={() => removeApprover(approver)}
-                              className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground ml-2"
+                              className="h-7 w-7 p-0 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors ml-3"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         ))}
@@ -414,37 +448,41 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Footer */}
-        <DialogFooter className="p-6 border-t bg-muted/20">
-          <div className="flex gap-3 w-full sm:w-auto">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={onClose}
-              className="flex-1 sm:flex-none"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="button"
-              onClick={handleSave} 
-              disabled={isPending}
-              className="flex-1 sm:flex-none"
-            >
-              {isPending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogFooter>
+        {/* Enhanced Footer */}
+        <div className="relative border-t border-border/10 bg-gradient-to-r from-muted/20 via-muted/10 to-muted/20">
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-border/30 to-transparent"></div>
+          
+          <DialogFooter className="p-8">
+            <div className="flex gap-4 w-full justify-end">
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={onClose}
+                className="h-11 px-6 rounded-lg border-border/50 hover:bg-muted/50 transition-all duration-200"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button"
+                onClick={handleSave} 
+                disabled={isPending}
+                className="h-11 px-8 rounded-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 transition-all duration-200"
+              >
+                {isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-3"></div>
+                    <span>Saving Changes...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-3" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
