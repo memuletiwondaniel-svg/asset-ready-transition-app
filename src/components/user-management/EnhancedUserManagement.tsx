@@ -460,16 +460,12 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                          </Avatar>
                         <div>
                           <div className="font-medium">{user.full_name || 'Unknown'}</div>
-                          <div className="text-sm text-muted-foreground flex items-center">
-                            <Mail className="h-3 w-3 mr-1" />
-                            {user.email}
+                          <div className="text-sm text-muted-foreground flex items-center whitespace-nowrap overflow-hidden">
+                            <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">
+                              {user.functional_email_address || user.email}
+                            </span>
                           </div>
-                          {user.functional_email_address && (
-                            <div className="text-sm text-muted-foreground flex items-center">
-                              <Mail className="h-3 w-3 mr-1" />
-                              <span className="text-blue-600 font-medium">Functional: {user.functional_email_address}</span>
-                            </div>
-                          )}
                           {user.phone_number && (
                             <div className="text-sm text-muted-foreground flex items-center">
                               <Phone className="h-3 w-3 mr-1" />
@@ -535,17 +531,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                       </div>
                     </TableCell>
                     
-                    <TableCell>
-                      <div className="text-sm">
-                        {user.functional_email_address ? (
-                          <div className="font-medium text-blue-700">
-                            {user.functional_email_address}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </TableCell>
                     
                     <TableCell>
                       <div className="space-y-1">
