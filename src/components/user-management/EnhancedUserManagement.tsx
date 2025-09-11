@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -80,6 +82,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateUser, setShowCreateUser] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -224,6 +228,31 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     } else {
       setSortBy(column);
       setSortOrder('asc');
+    }
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      // Note: This would typically require admin privileges and proper backend logic
+      // For now, we'll show a toast that this action would be performed
+      toast.success(`User ${userToDelete.full_name} would be deleted (admin action required)`);
+      
+      // In a real implementation, you would call:
+      // await supabase.rpc('delete_user', { user_id: userToDelete.user_id });
+      // fetchUsers(); // Refresh the list
+      
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete user');
+      console.error('Error deleting user:', error);
     }
   };
 
@@ -524,9 +553,29 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     </TableCell>
                     
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            onClick={() => setSelectedUser(user)}
+                            className="cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteUser(user)}
+                            className="cursor-pointer text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -554,6 +603,30 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
           setShowCreateUser(false);
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{userToDelete?.full_name}</strong>? 
+              This action cannot be undone and will permanently remove the user's account and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
