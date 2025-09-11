@@ -528,16 +528,22 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                   )}
                   
                   {formData.role && (
-                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                      <span className="text-sm font-medium">Selected Role:</span>
-                      <Badge variant="secondary">{formData.role}</Badge>
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Selected Role</span>
+                          <span className="text-sm font-semibold text-foreground">{formData.role}</span>
+                        </div>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleInputChange("role", "")}
-                        className="h-6 w-6 p-0"
+                        className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
+                        title="Remove selected role"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
