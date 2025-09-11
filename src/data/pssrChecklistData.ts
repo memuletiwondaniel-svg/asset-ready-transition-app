@@ -461,10 +461,10 @@ export const checklistCategories = [
   "Documentation",
   "Organization",
   "Health & Safety",
-  "HSE",
   "Emergency Response",
   "Electrical",
-  "Instrumentation",
-  "Mechanical",
+  "PACO",
+  "Static",
+  "Rotating",
   "Civil"
 ];

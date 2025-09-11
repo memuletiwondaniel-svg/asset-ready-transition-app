@@ -58,11 +58,11 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         "Documentation",
         "Organization",
         "Health & Safety",
-        "HSE",
         "Emergency Response",
         "Electrical",
-        "Instrumentation",
-        "Mechanical",
+        "PACO",
+        "Static",
+        "Rotating",
         "Civil"
       ];
       
