@@ -952,6 +952,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           account_status: string
+          avatar_url: string
           company: Database["public"]["Enums"]["user_company"]
           created_at: string
           department: string

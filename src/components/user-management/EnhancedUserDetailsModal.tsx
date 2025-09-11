@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +47,7 @@ interface User {
   created_at: string;
   sso_enabled: boolean;
   two_factor_enabled: boolean;
+  avatar_url?: string;
   roles: string[];
   projects: string[];
   manager_name: string;
@@ -80,6 +81,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [userSessions, setUserSessions] = useState<any[]>([]);
   
@@ -247,17 +249,101 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return new Date(dateString).toLocaleString();
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.user_id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('user-avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        toast.error('Failed to upload image');
+        console.error('Upload error:', uploadError);
+        return;
+      }
+
+      // Update user profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: fileName })
+        .eq('user_id', user.user_id);
+
+      if (updateError) {
+        toast.error('Failed to update profile');
+        console.error('Update error:', updateError);
+        return;
+      }
+
+      toast.success('Profile picture updated successfully');
+      onUserUpdated(); // Refresh the user data
+    } catch (error) {
+      toast.error('An error occurred while uploading');
+      console.error('Avatar upload error:', error);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback>
-                  {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-12 w-12">
+                  {user.avatar_url && (
+                    <AvatarImage 
+                      src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                      alt={user.full_name || 'User'} 
+                    />
+                  )}
+                  <AvatarFallback>
+                    {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                {editMode && (
+                  <div className="absolute -bottom-1 -right-1">
+                    <label htmlFor="avatar-upload" className="cursor-pointer">
+                      <div className="bg-primary text-primary-foreground rounded-full p-1 hover:bg-primary/90">
+                        <Edit className="h-3 w-3" />
+                      </div>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
               <div>
                 <h2 className="text-xl font-semibold">{user.full_name || 'Unknown User'}</h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
