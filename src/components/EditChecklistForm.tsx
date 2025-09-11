@@ -94,10 +94,10 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     });
   };
 
-  const handleCreateNewItem = (newItemData: Omit<ChecklistItem, 'id'>) => {
+  const handleCreateNewItem = (newItemData: Omit<ChecklistItem, 'unique_id'>) => {
     const newItem: ChecklistItem = {
       ...newItemData,
-      id: `custom-${Date.now()}`,
+      unique_id: `custom-${Date.now()}`,
     };
     
     setCustomChecklistItems(prev => [...prev, newItem]);
@@ -108,7 +108,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     // Auto-select the newly created item
     setFormData(prev => ({
       ...prev,
-      selected_items: [...prev.selected_items, newItem.id]
+      selected_items: [...prev.selected_items, newItem.unique_id]
     }));
   };
 
@@ -146,11 +146,11 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   // Calculate stats
   const totalItems = allChecklistItems.length;
   const selectedCount = formData.selected_items.length;
-  const notSelectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
+  const notSelectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.unique_id));
 
   const getCategoryStats = (category: string) => {
     const categoryItems = allChecklistItems.filter(item => item.category === category);
-    const selectedInCategory = categoryItems.filter(item => formData.selected_items.includes(item.id)).length;
+    const selectedInCategory = categoryItems.filter(item => formData.selected_items.includes(item.unique_id)).length;
     return { total: categoryItems.length, selected: selectedInCategory };
   };
 
@@ -380,35 +380,35 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                       <ScrollArea className="h-96">
                         <div className="space-y-3">
                           {allChecklistItems
-                            .filter(item => formData.selected_items.includes(item.id))
+                            .filter(item => formData.selected_items.includes(item.unique_id))
                             .map((item) => (
-                              <Card key={item.id} className="p-4 border-green-200 bg-green-50 dark:bg-green-900/20">
+                              <Card key={item.unique_id} className="p-4 border-green-200 bg-green-50 dark:bg-green-900/20">
                                 <div className="flex items-start space-x-3">
                                   <Checkbox
                                     checked={true}
-                                    onCheckedChange={() => handleItemToggle(item.id)}
+                                    onCheckedChange={() => handleItemToggle(item.unique_id)}
                                   />
                                   <div className="flex-1 space-y-2">
                                     <div className="flex items-center justify-between">
                                       <h4 className="font-medium">{item.description}</h4>
                                       <div className="flex items-center space-x-2">
                                         <Badge variant="outline">{item.category}</Badge>
-                                        {item.id.startsWith('custom-') && (
+                                       {item.unique_id.startsWith('custom-') && (
                                           <Badge variant="secondary">New</Badge>
                                         )}
                                       </div>
                                     </div>
-                                    {item.supporting_evidence && (
+                                    {item.required_evidence && (
                                       <p className="text-sm text-muted-foreground">
-                                        <strong>Evidence:</strong> {item.supporting_evidence}
+                                        <strong>Evidence:</strong> {item.required_evidence}
                                       </p>
                                     )}
                                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                      {item.responsible_party && (
-                                        <span><strong>Responsible:</strong> {item.responsible_party}</span>
+                                      {item.responsible && (
+                                        <span><strong>Responsible:</strong> {item.responsible}</span>
                                       )}
-                                      {item.approving_authority && (
-                                        <span><strong>Approver:</strong> {item.approving_authority}</span>
+                                      {item.Approver && (
+                                        <span><strong>Approver:</strong> {item.Approver}</span>
                                       )}
                                     </div>
                                   </div>
@@ -437,21 +437,21 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                               size="sm"
                               onClick={() => {
                                 const categoryItems = groupedItems[category] || [];
-                                const allSelected = categoryItems.every(item => formData.selected_items.includes(item.id));
+                                const allSelected = categoryItems.every(item => formData.selected_items.includes(item.unique_id));
                                 
                                 if (allSelected) {
                                   // Deselect all in category
                                   setFormData(prev => ({
                                     ...prev,
                                     selected_items: prev.selected_items.filter(id => 
-                                      !categoryItems.some(item => item.id === id)
+                                      !categoryItems.some(item => item.unique_id === id)
                                     )
                                   }));
                                 } else {
                                   // Select all in category
                                   const newSelections = categoryItems
-                                    .filter(item => !formData.selected_items.includes(item.id))
-                                    .map(item => item.id);
+                                    .filter(item => !formData.selected_items.includes(item.unique_id))
+                                    .map(item => item.unique_id);
                                   setFormData(prev => ({
                                     ...prev,
                                     selected_items: [...prev.selected_items, ...newSelections]
@@ -459,7 +459,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                                 }
                               }}
                             >
-                              {groupedItems[category]?.every(item => formData.selected_items.includes(item.id)) 
+                              {groupedItems[category]?.every(item => formData.selected_items.includes(item.unique_id)) 
                                 ? 'Deselect All' 
                                 : 'Select All'
                               }
@@ -470,32 +470,32 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                         <ScrollArea className="h-96">
                           <div className="space-y-3">
                             {(groupedItems[category] || []).map((item) => {
-                              const isSelected = formData.selected_items.includes(item.id);
+                              const isSelected = formData.selected_items.includes(item.unique_id);
                               return (
-                                <Card key={item.id} className={`p-4 ${isSelected ? 'border-green-200 bg-green-50 dark:bg-green-900/20' : ''}`}>
+                                <Card key={item.unique_id} className={`p-4 ${isSelected ? 'border-green-200 bg-green-50 dark:bg-green-900/20' : ''}`}>
                                   <div className="flex items-start space-x-3">
                                     <Checkbox
                                       checked={isSelected}
-                                      onCheckedChange={() => handleItemToggle(item.id)}
+                                      onCheckedChange={() => handleItemToggle(item.unique_id)}
                                     />
                                     <div className="flex-1 space-y-2">
                                       <div className="flex items-center justify-between">
                                         <h4 className="font-medium">{item.description}</h4>
-                                        {item.id.startsWith('custom-') && (
+                                        {item.unique_id.startsWith('custom-') && (
                                           <Badge variant="secondary">New</Badge>
                                         )}
                                       </div>
-                                      {item.supporting_evidence && (
+                                      {item.required_evidence && (
                                         <p className="text-sm text-muted-foreground">
-                                          <strong>Evidence:</strong> {item.supporting_evidence}
+                                          <strong>Evidence:</strong> {item.required_evidence}
                                         </p>
                                       )}
                                       <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                        {item.responsible_party && (
-                                          <span><strong>Responsible:</strong> {item.responsible_party}</span>
+                                        {item.responsible && (
+                                          <span><strong>Responsible:</strong> {item.responsible}</span>
                                         )}
-                                        {item.approving_authority && (
-                                          <span><strong>Approver:</strong> {item.approving_authority}</span>
+                                        {item.Approver && (
+                                          <span><strong>Approver:</strong> {item.Approver}</span>
                                         )}
                                       </div>
                                     </div>
@@ -519,7 +519,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                           size="sm"
                           onClick={() => setFormData(prev => ({ 
                             ...prev, 
-                            selected_items: allChecklistItems.map(item => item.id)
+                            selected_items: allChecklistItems.map(item => item.unique_id)
                           }))}
                           disabled={selectedCount === totalItems}
                         >
@@ -529,33 +529,33 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                       <ScrollArea className="h-96">
                         <div className="space-y-3">
                           {notSelectedItems.map((item) => (
-                            <Card key={item.id} className="p-4 opacity-60">
+                            <Card key={item.unique_id} className="p-4 opacity-60">
                               <div className="flex items-start space-x-3">
                                 <Checkbox
                                   checked={false}
-                                  onCheckedChange={() => handleItemToggle(item.id)}
+                                  onCheckedChange={() => handleItemToggle(item.unique_id)}
                                 />
                                 <div className="flex-1 space-y-2">
                                   <div className="flex items-center justify-between">
                                     <h4 className="font-medium">{item.description}</h4>
                                     <div className="flex items-center space-x-2">
                                       <Badge variant="outline">{item.category}</Badge>
-                                      {item.id.startsWith('custom-') && (
+                                      {item.unique_id.startsWith('custom-') && (
                                         <Badge variant="secondary">New</Badge>
                                       )}
                                     </div>
                                   </div>
-                                  {item.supporting_evidence && (
+                                  {item.required_evidence && (
                                     <p className="text-sm text-muted-foreground">
-                                      <strong>Evidence:</strong> {item.supporting_evidence}
+                                      <strong>Evidence:</strong> {item.required_evidence}
                                     </p>
                                   )}
                                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                    {item.responsible_party && (
-                                      <span><strong>Responsible:</strong> {item.responsible_party}</span>
+                                    {item.responsible && (
+                                      <span><strong>Responsible:</strong> {item.responsible}</span>
                                     )}
-                                    {item.approving_authority && (
-                                      <span><strong>Approver:</strong> {item.approving_authority}</span>
+                                    {item.Approver && (
+                                      <span><strong>Approver:</strong> {item.Approver}</span>
                                     )}
                                   </div>
                                 </div>

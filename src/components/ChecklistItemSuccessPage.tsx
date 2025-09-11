@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, FileText, ArrowRight, Plus } from 'lucide-react';
-import { ChecklistItem } from '@/data/pssrChecklistData';
+import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface ChecklistItemSuccessPageProps {
   newItem: ChecklistItem;
@@ -43,7 +43,7 @@ const ChecklistItemSuccessPage: React.FC<ChecklistItemSuccessPageProps> = ({
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Reference ID</label>
-                  <p className="text-lg font-semibold text-green-600">{newItem.id}</p>
+                  <p className="text-lg font-semibold text-green-600">{newItem.unique_id}</p>
                 </div>
                 
                 <div>
@@ -53,7 +53,7 @@ const ChecklistItemSuccessPage: React.FC<ChecklistItemSuccessPageProps> = ({
                 
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Evidence Guidance</label>
-                  <p className="text-sm text-muted-foreground">{newItem.supportingEvidence}</p>
+                  <p className="text-sm text-muted-foreground">{newItem.required_evidence}</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -66,7 +66,7 @@ const ChecklistItemSuccessPage: React.FC<ChecklistItemSuccessPageProps> = ({
                   
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Approving Authority</label>
-                    <p className="text-sm font-medium">{newItem.approvingAuthority}</p>
+                    <p className="text-sm font-medium">{newItem.Approver}</p>
                   </div>
                 </div>
               </div>
