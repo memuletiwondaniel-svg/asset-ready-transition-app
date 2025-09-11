@@ -74,6 +74,81 @@ serve(async (req) => {
     });
 
     if (createErr || !created.user) {
+      // Handle case where user already exists by email
+      if (createErr?.message && createErr.message.includes('already been registered')) {
+        // Try to locate existing profile to obtain user_id
+        const { data: existingProfile } = await admin
+          .from('profiles')
+          .select('user_id')
+          .eq('email', email)
+          .maybeSingle();
+
+        let existingUserId = existingProfile?.user_id as string | undefined;
+
+        // If no profile row, attempt to find auth user by listing (best-effort)
+        if (!existingUserId) {
+          try {
+            const { data: usersList } = await admin.auth.admin.listUsers();
+            const found = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+            existingUserId = found?.id;
+          } catch (_) {
+            // ignore list failures
+          }
+        }
+
+        if (existingUserId) {
+          // Update password and confirm email
+          try {
+            await admin.auth.admin.updateUserById(existingUserId, {
+              password,
+              email_confirm: true,
+            });
+          } catch (e) {
+            console.warn('updateUserById failed', e);
+          }
+
+          const normalizedCompany = company === 'BGC' || company === 'Kent' ? company : null;
+
+          const { error: upsertErr } = await admin
+            .from('profiles')
+            .upsert({
+              user_id: existingUserId,
+              email,
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`,
+              company: normalizedCompany as any,
+              phone_number: phone ?? null,
+              personal_email: personalEmail ?? null,
+              functional_email: !!isFunctionalEmail,
+              status: 'active',
+              role: role || 'user',
+              ta2_discipline: discipline ?? null,
+              ta2_commission: commission ?? null,
+              account_status: 'active',
+            }, { onConflict: 'user_id' });
+
+          if (upsertErr) {
+            console.error('upsert existing profile error:', upsertErr);
+            return new Response(JSON.stringify({ error: upsertErr.message }), {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          }
+
+          return new Response(JSON.stringify({ success: true, user_id: existingUserId, existing_user: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
+        // Could not resolve existing user id
+        return new Response(JSON.stringify({ error: createErr.message }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       console.error("createUser error:", createErr);
       return new Response(JSON.stringify({ error: createErr?.message || "Failed to create auth user" }), {
         status: 400,
