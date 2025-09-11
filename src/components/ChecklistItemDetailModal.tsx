@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Combobox } from '@/components/ui/combobox';
 import { ChecklistItem, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
 import { useToast } from '@/hooks/use-toast';
-import { Save, X } from 'lucide-react';
+import { useRoles, useCommissions, useDisciplines, useTA2Options } from '@/hooks/useRoleData';
+import { Save, X, Plus } from 'lucide-react';
 
 interface ChecklistItemDetailModalProps {
   isOpen: boolean;
@@ -30,9 +33,19 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
     responsible: '',
     Approver: ''
   });
+  
+  const [selectedApprovers, setSelectedApprovers] = useState<string[]>([]);
+  const [ta2Selections, setTA2Selections] = useState<{[key: string]: {commission: string, discipline: string}}>({});
+  const [showTA2Fields, setShowTA2Fields] = useState<{[key: string]: boolean}>({});
 
   const { toast } = useToast();
   const updateMutation = useUpdateChecklistItem();
+  
+  // Fetch role data
+  const { data: roles = [] } = useRoles();
+  const { data: commissions = [] } = useCommissions();
+  const { data: disciplines = [] } = useDisciplines();
+  const { data: ta2Options = [] } = useTA2Options();
 
   useEffect(() => {
     if (item) {
@@ -44,6 +57,31 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
         responsible: item.responsible || '',
         Approver: item.Approver || ''
       });
+      
+      // Parse existing approvers
+      const approvers = item.Approver ? item.Approver.split(',').map(a => a.trim()).filter(Boolean) : [];
+      setSelectedApprovers(approvers);
+      
+      // Initialize TA2 fields state
+      const newTA2Selections: {[key: string]: {commission: string, discipline: string}} = {};
+      const newShowTA2Fields: {[key: string]: boolean} = {};
+      
+      approvers.forEach(approver => {
+        if (approver.includes('TA2')) {
+          newShowTA2Fields[approver] = true;
+          // Try to parse existing TA2 format
+          const match = approver.match(/TA2\s+(\w+)\s+\(([^)]+)\)/);
+          if (match) {
+            newTA2Selections[approver] = {
+              discipline: match[1],
+              commission: match[2]
+            };
+          }
+        }
+      });
+      
+      setTA2Selections(newTA2Selections);
+      setShowTA2Fields(newShowTA2Fields);
     }
   }, [item]);
 
@@ -55,9 +93,23 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
 
   const handleSave = async () => {
     try {
+      // Prepare approvers string
+      const approversString = selectedApprovers.map(approver => {
+        if (approver === 'technical_authority' && ta2Selections[approver]) {
+          const { discipline, commission } = ta2Selections[approver];
+          return `TA2 ${discipline} (${commission})`;
+        }
+        return approver;
+      }).join(', ');
+
+      const updateData = {
+        ...formData,
+        Approver: approversString
+      };
+
       await updateMutation.mutateAsync({
         itemId: item.unique_id,
-        updateData: formData
+        updateData
       });
       
       toast({
@@ -88,6 +140,11 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
         responsible: item.responsible || '',
         Approver: item.Approver || ''
       });
+      
+      // Reset approvers
+      const approvers = item?.Approver ? item.Approver.split(',').map(a => a.trim()).filter(Boolean) : [];
+      setSelectedApprovers(approvers);
+      
       setMode('view');
     } else {
       onClose();
@@ -99,6 +156,47 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleApproverAdd = (approver: string) => {
+    if (!selectedApprovers.includes(approver)) {
+      const newApprovers = [...selectedApprovers, approver];
+      setSelectedApprovers(newApprovers);
+      
+      if (approver === 'technical_authority') {
+        setShowTA2Fields(prev => ({ ...prev, [approver]: true }));
+      }
+    }
+  };
+
+  const handleApproverRemove = (approver: string) => {
+    setSelectedApprovers(prev => prev.filter(a => a !== approver));
+    setShowTA2Fields(prev => ({ ...prev, [approver]: false }));
+    setTA2Selections(prev => {
+      const newSelections = { ...prev };
+      delete newSelections[approver];
+      return newSelections;
+    });
+  };
+
+  const handleTA2Change = (approver: string, field: 'commission' | 'discipline', value: string) => {
+    setTA2Selections(prev => ({
+      ...prev,
+      [approver]: {
+        ...prev[approver],
+        [field]: value
+      }
+    }));
+  };
+
+  const formatApproverDisplay = (approver: string) => {
+    if (approver === 'technical_authority' && ta2Selections[approver]) {
+      const { discipline, commission } = ta2Selections[approver];
+      if (discipline && commission) {
+        return `TA2 ${discipline} (${commission})`;
+      }
+    }
+    return roles.find(r => r.value === approver)?.label || approver;
   };
 
   return (
@@ -224,34 +322,116 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
               Responsible
             </Label>
             {mode === 'edit' ? (
-              <Input
-                id="responsible"
+              <Combobox
+                options={roles}
                 value={formData.responsible}
-                onChange={(e) => handleInputChange('responsible', e.target.value)}
-                placeholder="Enter responsible party"
+                onValueChange={(value) => handleInputChange('responsible', value)}
+                placeholder="Select responsible role..."
+                searchPlaceholder="Search roles..."
+                emptyText="No role found."
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">
-                {item.responsible || 'No responsible party specified'}
+                {roles.find(r => r.value === formData.responsible)?.label || formData.responsible || 'No responsible party specified'}
               </div>
             )}
           </div>
 
-          {/* Approver */}
-          <div className="space-y-2">
-            <Label htmlFor="Approver" className="text-sm font-medium text-gray-700">
-              Approver
+          {/* Approvers */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-gray-700">
+              Approvers
             </Label>
+            
             {mode === 'edit' ? (
-              <Input
-                id="Approver"
-                value={formData.Approver}
-                onChange={(e) => handleInputChange('Approver', e.target.value)}
-                placeholder="Enter approver"
-              />
+              <div className="space-y-4">
+                {/* Selected Approvers */}
+                {selectedApprovers.length > 0 && (
+                  <div className="space-y-3">
+                    {selectedApprovers.map((approver, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <Badge variant="secondary" className="text-sm">
+                            {formatApproverDisplay(approver)}
+                          </Badge>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleApproverRemove(approver)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* TA2 Fields */}
+                        {approver === 'technical_authority' && showTA2Fields[approver] && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs font-medium text-gray-600">Commission</Label>
+                              <Combobox
+                                options={commissions}
+                                value={ta2Selections[approver]?.commission || ''}
+                                onValueChange={(value) => handleTA2Change(approver, 'commission', value)}
+                                placeholder="Select commission..."
+                                searchPlaceholder="Search commissions..."
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs font-medium text-gray-600">Discipline</Label>
+                              <Combobox
+                                options={disciplines}
+                                value={ta2Selections[approver]?.discipline || ''}
+                                onValueChange={(value) => handleTA2Change(approver, 'discipline', value)}
+                                placeholder="Select discipline..."
+                                searchPlaceholder="Search disciplines..."
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Add New Approver */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <Combobox
+                      options={roles.filter(role => !selectedApprovers.includes(role.value))}
+                      value=""
+                      onValueChange={handleApproverAdd}
+                      placeholder="Add approver role..."
+                      searchPlaceholder="Search roles..."
+                      emptyText="No available roles."
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="px-3"
+                      disabled={roles.filter(role => !selectedApprovers.includes(role.value)).length === 0}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">
-                {item.Approver || 'No approver specified'}
+                {selectedApprovers.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedApprovers.map((approver, index) => (
+                      <Badge key={index} variant="secondary" className="mr-2">
+                        {formatApproverDisplay(approver)}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  'No approvers specified'
+                )}
               </div>
             )}
           </div>
