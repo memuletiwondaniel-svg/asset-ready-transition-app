@@ -21,7 +21,7 @@ import {
   FileCheck,
   HourglassIcon
 } from 'lucide-react';
-import { pssrChecklistData as checklistData } from '@/data/pssrChecklistData';
+import { useChecklistItems } from '@/hooks/useChecklistItems';
 
 interface PSSRStepFiveProps {
   data: any;
@@ -54,14 +54,22 @@ const PSSRStepFive: React.FC<PSSRStepFiveProps> = ({
   onBack, 
   onSave 
 }) => {
-  const [checklistResponses, setChecklistResponses] = useState<ChecklistResponse[]>(() => 
-    checklistData.map(item => ({
-      id: item.id,
-      response: null,
-      status: 'NOT_SUBMITTED',
-      approvers: []
-    }))
-  );
+  const { data: checklistData = [], isLoading } = useChecklistItems();
+  const [checklistResponses, setChecklistResponses] = useState<ChecklistResponse[]>([]);
+
+  // Initialize responses when checklist data loads
+  React.useEffect(() => {
+    if (checklistData.length > 0) {
+      setChecklistResponses(
+        checklistData.map(item => ({
+          id: item.id,
+          response: null,
+          status: 'NOT_SUBMITTED',
+          approvers: []
+        }))
+      );
+    }
+  }, [checklistData]);
   
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [responseModalOpen, setResponseModalOpen] = useState(false);

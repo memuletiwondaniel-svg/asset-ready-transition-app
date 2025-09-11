@@ -30,7 +30,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { pssrChecklistData, ChecklistItem } from '@/data/pssrChecklistData';
+import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface FormData {
   asset: string;
@@ -48,6 +48,9 @@ interface FormData {
 }
 
 interface ChecklistItemWithStatus extends ChecklistItem {
+  id: string; // Override id for compatibility
+  supportingEvidence?: string; // Override for compatibility
+  approvingAuthority?: string; // Override for compatibility
   status: 'draft' | 'selected' | 'not_applicable';
   naJustification?: string;
   naDocuments?: File[];
@@ -68,6 +71,7 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
   const [showSelected, setShowSelected] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [checklistItems, setChecklistItems] = useState<ChecklistItemWithStatus[]>([]);
+  const { data: allChecklistItems = [], isLoading } = useChecklistItems();
   const [showNAModal, setShowNAModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentItem, setCurrentItem] = useState<ChecklistItemWithStatus | null>(null);
@@ -99,20 +103,25 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
         includedCategories = ['General', 'Technical Integrity', 'Health & Safety'];
     }
 
-    return pssrChecklistData
+    return allChecklistItems
       .filter(item => includedCategories.includes(item.category))
       .map(item => ({
         ...item,
+        id: item.id, // Use database id
+        supportingEvidence: item.supporting_evidence || '',
+        approvingAuthority: item.approving_authority || '',
         status: 'draft' as const,
-        customApprovers: item.approvingAuthority.split(', ')
+        customApprovers: (item.approving_authority || '').split(', ').filter(Boolean)
       }));
   };
 
   // Initialize checklist items on component mount
   React.useEffect(() => {
-    const assignedItems = getAssignedChecklist();
-    setChecklistItems(assignedItems);
-  }, [formData.reason]);
+    if (allChecklistItems.length > 0) {
+      const assignedItems = getAssignedChecklist();
+      setChecklistItems(assignedItems);
+    }
+  }, [formData.reason, allChecklistItems]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -208,7 +217,7 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
   // Handle Edit Item
   const handleEditItem = (item: ChecklistItemWithStatus) => {
     setCurrentItem(item);
-    setCustomApprovers(item.customApprovers || item.approvingAuthority.split(', '));
+    setCustomApprovers(item.customApprovers || (item.approvingAuthority || item.approving_authority || '').split(', '));
     setShowEditModal(true);
   };
 
@@ -404,13 +413,13 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
                               {item.status === 'not_applicable' && <Badge className="bg-gray-100 text-gray-800">Not Applicable</Badge>}
                             </div>
                             <p className="text-sm text-gray-700 mb-2">{item.description}</p>
-                            {item.supportingEvidence && (
+                            {(item.supportingEvidence || item.supporting_evidence) && (
                               <p className="text-xs text-gray-500">
-                                <strong>Supporting Evidence:</strong> {item.supportingEvidence}
+                                <strong>Supporting Evidence:</strong> {item.supportingEvidence || item.supporting_evidence}
                               </p>
                             )}
                             <p className="text-xs text-gray-500 mt-1">
-                              <strong>Approvers:</strong> {item.customApprovers?.join(', ') || item.approvingAuthority}
+                              <strong>Approvers:</strong> {item.customApprovers?.join(', ') || item.approvingAuthority || item.approving_authority || ''}
                             </p>
                             {item.status === 'not_applicable' && item.naJustification && (
                               <div className="mt-2 p-2 bg-gray-100 rounded text-xs">

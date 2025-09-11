@@ -7,11 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings } from 'lucide-react';
-import { pssrChecklistData, checklistCategories, ChecklistItem } from '@/data/pssrChecklistData';
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemForm from './EditChecklistItemForm';
-
 import { Checklist } from '@/hooks/useChecklists';
+import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface ChecklistDetailsPageProps {
   checklist: Checklist;
@@ -25,10 +24,14 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showEditChecklist, setShowEditChecklist] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
-  const [checklistItems, setChecklistItems] = useState(pssrChecklistData);
+  const { data: allChecklistItems = [], isLoading } = useChecklistItems();
   const [selectedItems, setSelectedItems] = useState<string[]>(
-    // Mock selected items - in real app this would come from the checklist data
-    pssrChecklistData.slice(0, Math.floor(pssrChecklistData.length * 0.7)).map(item => item.id)
+    checklist.selected_items || []
+  );
+
+  // Filter checklist items to show only the ones selected for this checklist
+  const checklistItems = allChecklistItems.filter(item => 
+    selectedItems.includes(item.id)
   );
 
   // Mock active PSSR data
@@ -41,11 +44,8 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
   // Filter and sort checklist items
   const filteredItems = useMemo(() => {
     let items = checklistItems.filter(item => {
-      // Only show selected items for this checklist
-      if (!selectedItems.includes(item.id)) return false;
-      
       const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           item.supportingEvidence.toLowerCase().includes(searchQuery.toLowerCase());
+                           (item.supporting_evidence || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -54,7 +54,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
       let comparison = 0;
       switch (sortBy) {
         case 'id':
-          comparison = a.id.localeCompare(b.id);
+          comparison = (a.id || '').localeCompare(b.id || '');
           break;
         case 'description':
           comparison = a.description.localeCompare(b.description);
@@ -63,7 +63,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
           comparison = a.category.localeCompare(b.category);
           break;
         case 'authority':
-          comparison = a.approvingAuthority.localeCompare(b.approvingAuthority);
+          comparison = (a.approving_authority || '').localeCompare(b.approving_authority || '');
           break;
         default:
           comparison = 0;
@@ -90,23 +90,20 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
   };
 
   const handleSaveItem = (updatedItem: ChecklistItem) => {
-    setChecklistItems(prev => 
-      prev.map(item => item.id === updatedItem.id ? updatedItem : item)
-    );
+    // This would trigger a refetch from the server
     setEditingItem(null);
   };
 
   const handleDeleteItem = (itemId: string) => {
-    setChecklistItems(prev => prev.filter(item => item.id !== itemId));
     setSelectedItems(prev => prev.filter(id => id !== itemId));
     setEditingItem(null);
   };
 
   const getCategoryStats = (category: string) => {
     const categoryItems = category === 'all' 
-      ? selectedItems
-      : checklistItems.filter(item => selectedItems.includes(item.id) && item.category === category);
-    return Array.isArray(categoryItems) ? categoryItems.length : 0;
+      ? checklistItems
+      : checklistItems.filter(item => item.category === category);
+    return categoryItems.length;
   };
 
   const getStatusBadge = (status: string) => {
@@ -265,7 +262,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories ({getCategoryStats('all')})</SelectItem>
-                      {checklistCategories.map(category => (
+                      {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => (
                         <SelectItem key={category} value={category}>
                           {category} ({getCategoryStats(category)})
                         </SelectItem>
@@ -329,7 +326,13 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredItems.map((item) => (
+                      {isLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            Loading checklist items...
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredItems.map((item) => (
                         <TableRow key={item.id} className="hover:bg-muted/20">
                           <TableCell className="font-medium">{item.id}</TableCell>
                           <TableCell className="max-w-md">
@@ -340,10 +343,10 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                           </TableCell>
                           <TableCell className="max-w-xs">
                             <div className="line-clamp-2 text-sm text-muted-foreground">
-                              {item.supportingEvidence}
+                              {item.supporting_evidence || '-'}
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm">{item.approvingAuthority}</TableCell>
+                          <TableCell className="text-sm">{item.approving_authority || '-'}</TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button 
