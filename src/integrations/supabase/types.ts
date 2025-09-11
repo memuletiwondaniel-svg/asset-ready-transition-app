@@ -57,45 +57,42 @@ export type Database = {
       }
       checklist_items: {
         Row: {
-          approving_authority: string | null
+          Approver: string | null
           category: string
           created_at: string
           created_by: string | null
           description: string
-          id: string
           is_active: boolean
-          responsible_party: string | null
-          supporting_evidence: string | null
+          required_evidence: string | null
+          responsible: string | null
           topic: string | null
           updated_at: string
           updated_by: string | null
           version: number
         }
         Insert: {
-          approving_authority?: string | null
+          Approver?: string | null
           category: string
           created_at?: string
           created_by?: string | null
           description: string
-          id: string
           is_active?: boolean
-          responsible_party?: string | null
-          supporting_evidence?: string | null
+          required_evidence?: string | null
+          responsible?: string | null
           topic?: string | null
           updated_at?: string
           updated_by?: string | null
           version?: number
         }
         Update: {
-          approving_authority?: string | null
+          Approver?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
           description?: string
-          id?: string
           is_active?: boolean
-          responsible_party?: string | null
-          supporting_evidence?: string | null
+          required_evidence?: string | null
+          responsible?: string | null
           topic?: string | null
           updated_at?: string
           updated_by?: string | null
