@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, Search, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -51,6 +52,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
   const [roleSearch, setRoleSearch] = useState("");
   const [showNewRoleInput, setShowNewRoleInput] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
   
   // Load custom roles from localStorage
   const getCustomRoles = () => {
@@ -213,52 +217,96 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       return;
     }
 
-    const userData = {
-      id: Date.now().toString(),
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      isFunctionalEmail: formData.isFunctionalEmail,
-      personalEmail: formData.personalEmail,
-      phone: formData.countryCode + formData.phone,
-      company: formData.company === "Others" ? formData.otherCompany : formData.company,
-      role: formData.role,
-      discipline: formData.discipline,
-      commission: formData.commission,
-      privileges: formData.privileges,
-      status: formData.company === "BGC" || formData.company === "Kent" ? "active" : "pending",
-      associatedProjects: [],
-      pendingActions: 0,
-      createdAt: new Date().toISOString(),
-    };
+    // Generate password and show confirmation
+    const password = `${formData.firstName.toLowerCase()}0000`;
+    setGeneratedPassword(password);
+    setShowConfirmation(true);
+  };
 
-    onCreateUser(userData);
+  const handleConfirmCreate = async () => {
+    setIsCreating(true);
     
-    toast({
-      title: "User Created",
-      description: `${userData.firstName} ${userData.lastName} has been successfully created.`,
-    });
+    try {
+      const userData = {
+        id: Date.now().toString(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        isFunctionalEmail: formData.isFunctionalEmail,
+        personalEmail: formData.personalEmail,
+        phone: formData.countryCode + formData.phone,
+        company: formData.company === "Others" ? formData.otherCompany : formData.company,
+        role: formData.role,
+        discipline: formData.discipline,
+        commission: formData.commission,
+        privileges: formData.privileges,
+        status: "active",
+        associatedProjects: [],
+        pendingActions: 0,
+        createdAt: new Date().toISOString(),
+        password: generatedPassword,
+      };
 
-    // Reset form
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      isFunctionalEmail: false,
-      personalEmail: "",
-      phone: "",
-      countryCode: "+964",
-      company: "",
-      otherCompany: "",
-      role: "",
-      newRole: "",
-      discipline: "",
-      commission: "",
-      privileges: [],
-    });
-    setRoleSearch("");
-    setShowNewRoleInput(false);
-    setShowRoleDropdown(false);
+      // Send welcome email
+      try {
+        await supabase.functions.invoke('send-welcome-email', {
+          body: {
+            userEmail: formData.email,
+            userName: `${formData.firstName} ${formData.lastName}`,
+            temporaryPassword: generatedPassword,
+            loginUrl: `${window.location.origin}/auth`
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        toast({
+          title: "Email Warning",
+          description: "User created but welcome email could not be sent.",
+          variant: "destructive"
+        });
+      }
+
+      onCreateUser(userData);
+      
+      toast({
+        title: "User Created Successfully",
+        description: `${userData.firstName} ${userData.lastName} has been created and will receive login credentials via email.`,
+      });
+
+      // Reset form and close modal
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        isFunctionalEmail: false,
+        personalEmail: "",
+        phone: "",
+        countryCode: "+964",
+        company: "",
+        otherCompany: "",
+        role: "",
+        newRole: "",
+        discipline: "",
+        commission: "",
+        privileges: [],
+      });
+      setRoleSearch("");
+      setShowNewRoleInput(false);
+      setShowRoleDropdown(false);
+      setShowConfirmation(false);
+      setGeneratedPassword("");
+      onClose();
+      
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -617,6 +665,69 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
             </Button>
           </div>
         </form>
+
+        {/* Confirmation Dialog */}
+        {showConfirmation && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Confirm User Creation</h3>
+              <div className="space-y-3 mb-6">
+                <div>
+                  <span className="text-sm font-medium">Name:</span>
+                  <span className="ml-2">{formData.firstName} {formData.lastName}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium">Email:</span>
+                  <span className="ml-2">{formData.email}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium">Company:</span>
+                  <span className="ml-2">{formData.company === "Others" ? formData.otherCompany : formData.company}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium">Role:</span>
+                  <span className="ml-2">{formData.role}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium">Temporary Password:</span>
+                  <span className="ml-2 font-mono bg-muted px-2 py-1 rounded">{generatedPassword}</span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium">Privileges:</span>
+                  <div className="ml-2 mt-1">
+                    {formData.privileges.length > 0 ? (
+                      <ul className="text-sm space-y-1">
+                        {formData.privileges.map((privilege, index) => (
+                          <li key={index}>• {privilege}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-muted-foreground">No privileges assigned</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                The user will receive an email with their login credentials and will be automatically activated.
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowConfirmation(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleConfirmCreate}
+                  disabled={isCreating}
+                >
+                  {isCreating ? "Creating..." : "Confirm & Create User"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
