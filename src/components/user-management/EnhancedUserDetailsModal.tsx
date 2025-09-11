@@ -118,8 +118,28 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     if (isOpen) {
       fetchActivityLogs();
       fetchUserSessions();
+      // Sync editable state with the latest user data when modal opens
+      setEditedUser({
+        full_name: user.full_name || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        phone_number: user.phone_number || '',
+        job_title: user.job_title || '',
+        department: user.department || '',
+        employee_id: user.employee_id || '',
+        role: (user as any).role || '',
+        company: (user.company as any) || 'BGC',
+        status: (user.status as any) || 'active',
+        sso_enabled: user.sso_enabled || false,
+        two_factor_enabled: user.two_factor_enabled || false,
+        password_change_required: user.password_change_required || false,
+        functional_email: false,
+        personal_email: '',
+        system_role: user.roles?.[0] || 'user'
+      });
     }
-  }, [isOpen, user.user_id]);
+  }, [isOpen, user]);
 
   const fetchActivityLogs = async () => {
     try {
@@ -165,6 +185,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     try {
       setLoading(true);
 
+      // Normalize company to enum or null
+      const normalizeCompany = (val?: string) => {
+        const v = (val || '').trim().toUpperCase();
+        if (v === 'BGC') return 'BGC';
+        if (v === 'KENT' || v === 'KENT ENGINEERING') return 'KENT';
+        return null; // unset for unsupported values
+      };
+      const normalizedCompany = normalizeCompany(editedUser.company);
+
       // Update the profile
       const { error: profileError } = await supabase
         .from('profiles')
@@ -178,7 +207,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           department: editedUser.department,
           employee_id: editedUser.employee_id,
           role: editedUser.role,
-          company: editedUser.company,
+          company: normalizedCompany as any,
           status: editedUser.status,
           sso_enabled: editedUser.sso_enabled,
           two_factor_enabled: editedUser.two_factor_enabled,
@@ -333,15 +362,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return;
       }
 
-      // Update user profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: fileName })
-        .eq('user_id', user.user_id);
+      // Update user profile with new avatar URL via edge function (avoids RLS issues)
+      const { data: avatarUpdateResp, error: avatarUpdateErr } = await supabase.functions.invoke('update-user-avatar', {
+        body: { userId: user.user_id, avatarPath: fileName }
+      });
 
-      if (updateError) {
+      if (avatarUpdateErr) {
         toast.error('Failed to update profile');
-        console.error('Update error:', updateError);
+        console.error('Update error:', avatarUpdateErr);
         return;
       }
 
