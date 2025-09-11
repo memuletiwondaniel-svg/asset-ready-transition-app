@@ -20,8 +20,7 @@ export const useRoles = () => {
         .from('profiles')
         .select('role')
         .not('role', 'is', null)
-        .eq('is_active', true)
-        .order('role');
+        .eq('is_active', true);
 
       if (error) {
         console.error('Error fetching roles:', error);
@@ -33,16 +32,12 @@ export const useRoles = () => {
       // Get unique roles and format them
       const uniqueRoles = [...new Set(data.map(item => item.role))];
       
-      const roleOptions: RoleOption[] = uniqueRoles.map(role => ({
-        value: role,
-        label: role
-      }));
-
-      // Add Technical Authority (TA2) as a special role option
-      roleOptions.push({
-        value: 'Technical Authority (TA2)',
-        label: 'Technical Authority (TA2)'
-      });
+      const roleOptions: RoleOption[] = uniqueRoles
+        .sort()
+        .map(role => ({
+          value: role,
+          label: role
+        }));
 
       console.log('Formatted role options:', roleOptions);
       return roleOptions;
