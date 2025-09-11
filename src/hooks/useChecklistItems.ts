@@ -1,8 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Tables } from '@/integrations/supabase/types';
 
-export type ChecklistItem = Tables<'checklist_items'>;
+// Define the ChecklistItem type to match the actual database structure
+export interface ChecklistItem {
+  unique_id: string;
+  description: string;
+  category: string;
+  topic?: string;
+  required_evidence?: string;
+  responsible?: string;
+  Approver?: string;
+  is_active: boolean;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+  category_ref_id?: string;
+  sequence_number?: number;
+}
 
 export const useChecklistItems = () => {
   return useQuery({
@@ -13,10 +29,10 @@ export const useChecklistItems = () => {
         .select('*')
         .eq('is_active', true)
         .order('category', { ascending: true })
-        .order('id', { ascending: true });
+        .order('sequence_number', { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as ChecklistItem[];
     },
   });
 };
@@ -42,9 +58,9 @@ export interface UpdateChecklistItemData {
   description?: string;
   category?: string;
   topic?: string;
-  supporting_evidence?: string;
-  responsible_party?: string;
-  approving_authority?: string;
+  required_evidence?: string;
+  responsible?: string;
+  Approver?: string;
   is_active?: boolean;
 }
 
@@ -63,7 +79,7 @@ export const useUpdateChecklistItem = () => {
           updated_by: session.user.id,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', itemId)
+        .eq('unique_id', itemId)
         .select()
         .single();
 
@@ -74,7 +90,7 @@ export const useUpdateChecklistItem = () => {
       console.log('Update successful, updating cache and invalidating queries...', updatedItem);
       queryClient.setQueryData<ChecklistItem[] | undefined>(['checklist-items'], (prev) => {
         if (!prev) return prev;
-        return prev.map((item) => (item.id === updatedItem.id ? (updatedItem as ChecklistItem) : item));
+        return prev.map((item) => (item.unique_id === updatedItem.unique_id ? (updatedItem as ChecklistItem) : item));
       });
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
@@ -83,13 +99,12 @@ export const useUpdateChecklistItem = () => {
 };
 
 export interface CreateChecklistItemData {
-  id: string;
   description: string;
   category: string;
   topic?: string;
-  supporting_evidence?: string;
-  responsible_party?: string;
-  approving_authority?: string;
+  required_evidence?: string;
+  responsible?: string;
+  Approver?: string;
 }
 
 export const useCreateChecklistItem = () => {
@@ -134,7 +149,7 @@ export const useDeleteChecklistItem = () => {
           updated_by: session.user.id,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', itemId);
+        .eq('unique_id', itemId);
 
       if (error) throw error;
       return itemId;
@@ -143,7 +158,7 @@ export const useDeleteChecklistItem = () => {
       await queryClient.cancelQueries({ queryKey: ['checklist-items'] });
       const previousItems = queryClient.getQueryData<ChecklistItem[]>(['checklist-items']);
       if (previousItems) {
-        queryClient.setQueryData<ChecklistItem[]>(['checklist-items'], previousItems.filter(i => i.id !== itemId));
+        queryClient.setQueryData<ChecklistItem[]>(['checklist-items'], previousItems.filter(i => i.unique_id !== itemId));
       }
       return { previousItems };
     },

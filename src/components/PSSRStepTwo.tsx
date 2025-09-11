@@ -107,11 +107,11 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
       .filter(item => includedCategories.includes(item.category))
       .map(item => ({
         ...item,
-        id: item.id, // Use database id
-        supportingEvidence: item.supporting_evidence || '',
-        approvingAuthority: item.approving_authority || '',
+        id: item.unique_id, // Use unique_id as id for compatibility
+        supportingEvidence: item.required_evidence || '',
+        approvingAuthority: item.Approver || '',
         status: 'draft' as const,
-        customApprovers: (item.approving_authority || '').split(', ').filter(Boolean)
+        customApprovers: (item.Approver || '').split(', ').filter(Boolean)
       }));
   };
 

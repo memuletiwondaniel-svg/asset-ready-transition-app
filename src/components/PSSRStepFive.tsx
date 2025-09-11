@@ -62,7 +62,7 @@ const PSSRStepFive: React.FC<PSSRStepFiveProps> = ({
     if (checklistData.length > 0) {
       setChecklistResponses(
         checklistData.map(item => ({
-          id: item.id,
+          id: item.unique_id,
           response: null,
           status: 'NOT_SUBMITTED',
           approvers: []

@@ -31,7 +31,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
 
   // Filter checklist items to show only the ones selected for this checklist
   const checklistItems = allChecklistItems.filter(item => 
-    selectedItems.includes(item.id)
+    selectedItems.includes(item.unique_id)
   );
 
   // Mock active PSSR data
@@ -45,7 +45,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
   const filteredItems = useMemo(() => {
     let items = checklistItems.filter(item => {
       const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (item.supporting_evidence || '').toLowerCase().includes(searchQuery.toLowerCase());
+                           (item.required_evidence || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -54,7 +54,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
       let comparison = 0;
       switch (sortBy) {
         case 'id':
-          comparison = (a.id || '').localeCompare(b.id || '');
+          comparison = (a.unique_id || '').localeCompare(b.unique_id || '');
           break;
         case 'description':
           comparison = a.description.localeCompare(b.description);
@@ -63,7 +63,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
           comparison = a.category.localeCompare(b.category);
           break;
         case 'authority':
-          comparison = (a.approving_authority || '').localeCompare(b.approving_authority || '');
+          comparison = (a.Approver || '').localeCompare(b.Approver || '');
           break;
         default:
           comparison = 0;
@@ -333,8 +333,8 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                           </TableCell>
                         </TableRow>
                       ) : filteredItems.map((item) => (
-                        <TableRow key={item.id} className="hover:bg-muted/20">
-                          <TableCell className="font-medium">{item.id}</TableCell>
+                        <TableRow key={item.unique_id} className="hover:bg-muted/20">
+                          <TableCell className="font-medium">{item.unique_id}</TableCell>
                           <TableCell className="max-w-md">
                             <div className="line-clamp-3">{item.description}</div>
                           </TableCell>
@@ -343,10 +343,10 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                           </TableCell>
                           <TableCell className="max-w-xs">
                             <div className="line-clamp-2 text-sm text-muted-foreground">
-                              {item.supporting_evidence || '-'}
+                              {item.required_evidence || '-'}
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm">{item.approving_authority || '-'}</TableCell>
+                          <TableCell className="text-sm">{item.Approver || '-'}</TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button 
@@ -359,7 +359,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => handleDeleteItem(item.id)}
+                                onClick={() => handleDeleteItem(item.unique_id)}
                                 className="text-destructive hover:bg-destructive/10"
                               >
                                 <Trash2 className="h-4 w-4" />

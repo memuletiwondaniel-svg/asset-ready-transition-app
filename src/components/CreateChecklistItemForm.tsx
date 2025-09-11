@@ -102,12 +102,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
         const autoId = `CHK-${Date.now().toString().slice(-6)}`;
         
         const newItem = {
-          id: autoId,
           description: formData.description.trim(),
-          supporting_evidence: formData.evidenceGuidance.trim(),
+          required_evidence: formData.evidenceGuidance.trim(),
           category: formData.category,
-          approving_authority: formData.approvers.join(', '),
-          responsible_party: formData.responsible,
+          Approver: formData.approvers.join(', '),
+          responsible: formData.responsible,
           topic: formData.topic.trim()
         };
 
