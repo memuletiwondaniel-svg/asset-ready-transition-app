@@ -56,6 +56,7 @@ interface User {
   created_at: string;
   sso_enabled: boolean;
   two_factor_enabled: boolean;
+  role: string;
   roles: string[];
   projects: string[];
   manager_name: string;
@@ -453,14 +454,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex flex-wrap gap-1">
-                          {user.roles && user.roles.length > 0 ? (
+                          {user.roles && user.roles.length > 0 && user.roles[0] !== null ? (
                             user.roles.map(role => (
                               <Badge key={role} variant="outline" className="text-xs">
                                 {role}
                               </Badge>
                             ))
                           ) : (
-                            <span className="text-sm text-muted-foreground">No Role</span>
+                            <span className="text-sm">No Role</span>
                           )}
                         </div>
                       </div>
