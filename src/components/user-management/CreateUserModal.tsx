@@ -614,19 +614,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="personalEmail">Personal Email</Label>
-                <Input
-                  id="personalEmail"
-                  type="email"
-                  value={formData.personalEmail}
-                  onChange={(e) => handleInputChange("personalEmail", e.target.value)}
-                  placeholder="user.personal@email.com"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Optional: Personal email for notifications
-                </p>
-              </div>
 
               <div>
                 <Label htmlFor="phone">Phone</Label>
