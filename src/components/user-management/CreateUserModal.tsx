@@ -51,7 +51,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
-    { value: "Kent", label: "Kent" },
+    { value: "Kent", label: "Kent Engineering", logo: "/lovable-uploads/ce220599-66e9-4a0a-8a13-da52ebf6ca14.png" },
     { value: "Others", label: "Others (specify)" },
   ];
 
