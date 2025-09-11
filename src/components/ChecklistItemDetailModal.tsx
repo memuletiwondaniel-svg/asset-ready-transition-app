@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { ChecklistItem, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
 import { useToast } from '@/hooks/use-toast';
-import { useRoles, useCommissions, useDisciplines, useTA2Options } from '@/hooks/useRoleData';
+import { useRoles, useCommissions, useDisciplines, useTA2Options, useTopics } from '@/hooks/useRoleData';
 import { Save, X, Plus } from 'lucide-react';
 
 interface ChecklistItemDetailModalProps {
@@ -45,6 +45,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const { data: roles = [], isLoading: rolesLoading, error: rolesError } = useRoles();
   const { data: commissions = [], isLoading: commissionsLoading, error: commissionsError } = useCommissions();
   const { data: disciplines = [], isLoading: disciplinesLoading, error: disciplinesError } = useDisciplines();
+  const { data: topics = [] } = useTopics();
   const { data: ta2Options = [] } = useTA2Options();
 
   // Debug logging
@@ -288,11 +289,12 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
               Topic
             </Label>
             {mode === 'edit' ? (
-              <Input
-                id="topic"
+              <Combobox
+                options={topics || []}
                 value={formData.topic}
-                onChange={(e) => handleInputChange('topic', e.target.value)}
-                placeholder="Enter topic"
+                onValueChange={(value) => handleInputChange('topic', value)}
+                placeholder="Select or enter topic..."
+                searchPlaceholder="Search topics..."
               />
             ) : (
               <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">

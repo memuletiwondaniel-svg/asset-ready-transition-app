@@ -11,7 +11,7 @@ import { Combobox, MultiSelectCombobox, ComboboxOption } from '@/components/ui/c
 import { Users, Shield, Save, User, Edit3, FileText, X, Plus, Award } from 'lucide-react';
 import { ChecklistItem, useUpdateChecklistItem, UpdateChecklistItemData } from '@/hooks/useChecklistItems';
 import { useUsers } from '@/hooks/useUsers';
-import { useCommissions, useDisciplines } from '@/hooks/useRoleData';
+import { useCommissions, useDisciplines, useTopics } from '@/hooks/useRoleData';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditChecklistItemModalProps {
@@ -49,6 +49,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
   const { users } = useUsers();
   const { data: commissions } = useCommissions();
   const { data: disciplines } = useDisciplines();
+  const { data: topics } = useTopics();
   const { mutate: updateChecklistItem, isPending } = useUpdateChecklistItem();
 
   // Categories with enhanced styling
@@ -370,12 +371,12 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   </Label>
                   <p className="text-xs text-muted-foreground pl-3">Specific subject area</p>
                 </div>
-                <Input
-                  id="topic"
+                <Combobox
+                  options={topics || []}
                   value={formData.topic || ''}
-                  onChange={(e) => updateFormData('topic', e.target.value)}
-                  placeholder="Enter topic or area"
-                  className="h-10 transition-all duration-200 rounded-lg border-border/50 focus:border-green-500 focus:ring-green-500/20 bg-gradient-to-br from-green-50/30 to-transparent"
+                  onValueChange={(value) => updateFormData('topic', value)}
+                  placeholder="Select or enter topic..."
+                  searchPlaceholder="Search topics..."
                 />
               </div>
             </div>

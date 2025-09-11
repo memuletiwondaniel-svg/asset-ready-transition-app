@@ -957,6 +957,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_active_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          value: string
+        }[]
+      }
+      get_active_ta2_commissions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          value: string
+        }[]
+      }
+      get_active_ta2_disciplines: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          value: string
+        }[]
+      }
       get_category_ref_id: {
         Args: { category_name: string }
         Returns: string
@@ -1005,6 +1023,12 @@ export type Database = {
           job_title: string
           last_name: string
           user_id: string
+        }[]
+      }
+      get_unique_topics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          topic: string
         }[]
       }
       get_user_management_data: {

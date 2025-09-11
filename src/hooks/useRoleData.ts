@@ -109,3 +109,27 @@ export const useTA2Options = () => {
     enabled: !!commissions && !!disciplines,
   });
 };
+
+export const useTopics = () => {
+  return useQuery({
+    queryKey: ['topics'],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)('get_unique_topics');
+
+      if (error) {
+        console.error('Error fetching topics via RPC:', error);
+        throw error;
+      }
+
+      console.log('Raw topics data (RPC):', data);
+
+      const topicOptions = (data || []).map((item: { topic: string }) => ({
+        value: item.topic,
+        label: item.topic
+      }));
+
+      console.log('Formatted topic options:', topicOptions);
+      return topicOptions;
+    },
+  });
+};
