@@ -44,7 +44,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import EnhancedUserDetailsModal from './EnhancedUserDetailsModal';
-import CreateUserModal from './CreateUserModal';
+import CreateUserModal from './CreateUserModal'; // Uses edge function to create users
 
 interface EnhancedUserManagementProps {
   onBack: () => void;

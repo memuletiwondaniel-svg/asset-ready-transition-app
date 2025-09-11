@@ -1,23 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the ChecklistItem type to match the actual database structure
+// Define the ChecklistItem type to match the actual database structure but also keep
+// backward-compatible aliases used across the app
 export interface ChecklistItem {
+  // DB columns
   unique_id: string;
   description: string;
   category: string;
-  topic?: string;
-  required_evidence?: string;
-  responsible?: string;
-  Approver?: string;
+  topic?: string | null;
+  required_evidence?: string | null;
+  responsible?: string | null;
+  Approver?: string | null;
   is_active: boolean;
   version: number;
   created_at: string;
   updated_at: string;
-  created_by?: string;
-  updated_by?: string;
-  category_ref_id?: string;
-  sequence_number?: number;
+  created_by?: string | null;
+  updated_by?: string | null;
+  category_ref_id?: string | null;
+  sequence_number?: number | null;
+  // Aliases used by UI components
+  id: string; // alias of unique_id
+  supporting_evidence?: string | null; // alias of required_evidence
+  responsible_party?: string | null; // alias of responsible
+  approving_authority?: string | null; // alias of Approver
 }
 
 export const useChecklistItems = () => {
@@ -32,7 +39,15 @@ export const useChecklistItems = () => {
         .order('sequence_number', { ascending: true });
 
       if (error) throw error;
-      return data as ChecklistItem[];
+
+      // Map DB rows to include backward-compatible aliases
+      return (data || []).map((row: any) => ({
+        ...row,
+        id: row.unique_id,
+        supporting_evidence: row.required_evidence ?? null,
+        responsible_party: row.responsible ?? null,
+        approving_authority: row.Approver ?? null,
+      })) as ChecklistItem[];
     },
   });
 };
@@ -72,12 +87,16 @@ export const useChecklistTopics = () => {
 };
 
 export interface UpdateChecklistItemData {
+  // Accept either new DB field names or old alias names
   description?: string;
   category?: string;
-  topic?: string;
-  required_evidence?: string;
-  responsible?: string;
-  Approver?: string;
+  topic?: string | null;
+  required_evidence?: string | null;
+  responsible?: string | null;
+  Approver?: string | null;
+  supporting_evidence?: string | null; // alias
+  responsible_party?: string | null;   // alias
+  approving_authority?: string | null; // alias
   is_active?: boolean;
 }
 
@@ -89,10 +108,19 @@ export const useUpdateChecklistItem = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Not authenticated');
 
+      // Map alias fields to DB column names
+      const dbUpdate: any = { ...updateData };
+      if (updateData.supporting_evidence !== undefined) dbUpdate.required_evidence = updateData.supporting_evidence;
+      if (updateData.responsible_party !== undefined) dbUpdate.responsible = updateData.responsible_party;
+      if (updateData.approving_authority !== undefined) dbUpdate.Approver = updateData.approving_authority;
+      delete dbUpdate.supporting_evidence;
+      delete dbUpdate.responsible_party;
+      delete dbUpdate.approving_authority;
+
       const { data, error } = await supabase
         .from('checklist_items')
         .update({
-          ...updateData,
+          ...dbUpdate,
           updated_by: session.user.id,
           updated_at: new Date().toISOString(),
         })
@@ -101,7 +129,14 @@ export const useUpdateChecklistItem = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      // Return mapped item to keep aliases consistent in UI
+      return {
+        ...data,
+        id: data.unique_id,
+        supporting_evidence: data.required_evidence ?? null,
+        responsible_party: data.responsible ?? null,
+        approving_authority: data.Approver ?? null,
+      } as ChecklistItem;
     },
     onSuccess: (updatedItem) => {
       console.log('Update successful, updating cache and invalidating queries...', updatedItem);
@@ -118,10 +153,13 @@ export const useUpdateChecklistItem = () => {
 export interface CreateChecklistItemData {
   description: string;
   category: string;
-  topic?: string;
-  required_evidence?: string;
-  responsible?: string;
-  Approver?: string;
+  topic?: string | null;
+  required_evidence?: string | null;
+  responsible?: string | null;
+  Approver?: string | null;
+  supporting_evidence?: string | null; // alias
+  responsible_party?: string | null;   // alias
+  approving_authority?: string | null; // alias
 }
 
 export const useCreateChecklistItem = () => {
@@ -132,17 +170,33 @@ export const useCreateChecklistItem = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Not authenticated');
 
+      // Map aliases to DB columns
+      const dbInsert: any = { ...itemData };
+      if (itemData.supporting_evidence !== undefined) dbInsert.required_evidence = itemData.supporting_evidence;
+      if (itemData.responsible_party !== undefined) dbInsert.responsible = itemData.responsible_party;
+      if (itemData.approving_authority !== undefined) dbInsert.Approver = itemData.approving_authority;
+      delete dbInsert.supporting_evidence;
+      delete dbInsert.responsible_party;
+      delete dbInsert.approving_authority;
+
       const { data, error } = await supabase
         .from('checklist_items')
         .insert({
-          ...itemData,
+          ...dbInsert,
           created_by: session.user.id,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      // Return mapped item
+      return {
+        ...data,
+        id: data.unique_id,
+        supporting_evidence: data.required_evidence ?? null,
+        responsible_party: data.responsible ?? null,
+        approving_authority: data.Approver ?? null,
+      } as ChecklistItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });

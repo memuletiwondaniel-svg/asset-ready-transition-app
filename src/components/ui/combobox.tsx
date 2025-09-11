@@ -20,7 +20,9 @@ import {
 interface ComboboxProps {
   value?: string
   onValueChange?: (value: string) => void
-  items: string[]
+  items?: string[]
+  // Also support option objects used elsewhere in the app
+  options?: ComboboxOption[]
   placeholder?: string
   searchPlaceholder?: string
   emptyText?: string
@@ -28,6 +30,9 @@ interface ComboboxProps {
   onAddCustom?: (value: string) => void
   className?: string
 }
+
+// Option type used by some components
+export interface ComboboxOption { value: string; label: string }
 
 export function Combobox({
   value,
@@ -43,15 +48,22 @@ export function Combobox({
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState("")
 
-  const filteredItems = items.filter(item =>
+  const sourceItems = React.useMemo(() => {
+    if (options && options.length) return options.map(o => o.label)
+    return items || []
+  }, [items, options])
+
+  const filteredItems = sourceItems.filter(item =>
     item.toLowerCase().includes(searchValue.toLowerCase())
   )
 
-  const handleSelect = (selectedValue: string) => {
-    if (selectedValue === value) {
+  const handleSelect = (selectedLabel: string) => {
+    // If options provided, resolve the value from the label
+    const resolvedValue = options?.find(o => o.label === selectedLabel)?.value || selectedLabel
+    if (resolvedValue === value) {
       onValueChange?.("")
     } else {
-      onValueChange?.(selectedValue)
+      onValueChange?.(resolvedValue)
     }
     setOpen(false)
     setSearchValue("")
@@ -80,7 +92,9 @@ export function Combobox({
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
         >
-          {value || placeholder}
+          {options && value
+            ? (options.find(o => o.value === value)?.label || placeholder)
+            : (value || placeholder)}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -109,20 +123,20 @@ export function Combobox({
               )}
             </CommandEmpty>
             <CommandGroup>
-              {filteredItems.map((item) => (
+              {filteredItems.map((label) => (
                 <CommandItem
-                  key={item}
-                  value={item}
-                  onSelect={() => handleSelect(item)}
+                  key={label}
+                  value={label}
+                  onSelect={() => handleSelect(label)}
                   className="cursor-pointer"
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === item ? "opacity-100" : "opacity-0"
+                      (options ? options.find(o => o.value === value)?.label === label : value === label) ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {item}
+                  {label}
                 </CommandItem>
               ))}
               {showAddCustomOption && filteredItems.length > 0 && (
@@ -134,6 +148,58 @@ export function Combobox({
                   Add "{searchValue}"
                 </CommandItem>
               )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// Multi-select combobox used by some modals
+interface MultiSelectProps {
+  value: string[]
+  onValueChange: (values: string[]) => void
+  options: ComboboxOption[]
+  placeholder?: string
+  searchPlaceholder?: string
+  className?: string
+}
+
+export function MultiSelectCombobox({ value, onValueChange, options, placeholder = "Select...", searchPlaceholder = "Search...", className }: MultiSelectProps) {
+  const [open, setOpen] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+
+  const filtered = options.filter(o =>
+    o.label.toLowerCase().includes(search.toLowerCase()) ||
+    o.value.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const toggle = (v: string) => {
+    if (value.includes(v)) onValueChange(value.filter(x => x !== v))
+    else onValueChange([...value, v])
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} className={cn("w-full justify-between", className)}>
+          {value.length ? `${value.length} selected` : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50 bg-popover border shadow-lg">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder={searchPlaceholder} value={search} onValueChange={setSearch} />
+          <CommandList>
+            <CommandEmpty>No results.</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((opt) => (
+                <CommandItem key={opt.value} value={opt.value} onSelect={() => toggle(opt.value)} className="cursor-pointer">
+                  <Check className={cn("mr-2 h-4 w-4", value.includes(opt.value) ? "opacity-100" : "opacity-0")} />
+                  {opt.label}
+                </CommandItem>
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>

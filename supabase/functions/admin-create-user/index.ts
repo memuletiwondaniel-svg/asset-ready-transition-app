@@ -115,7 +115,15 @@ serve(async (req) => {
             console.warn('updateUserById failed', e);
           }
 
-          const normalizedCompany = company === 'BGC' || company === 'Kent' ? company : null;
+          // Normalize incoming company names to enum values
+          const normalizeCompany = (val?: string | null) => {
+            const v = (val || '').trim().toUpperCase();
+            if (v === 'BGC') return 'BGC';
+            if (v === 'KENT' || v === 'KENT ENGINEERING') return 'KENT';
+            return null; // store null for unsupported/others
+          };
+
+          const normalizedCompany = normalizeCompany(company);
 
           const { error: upsertErr } = await admin
             .from('profiles')
@@ -183,7 +191,13 @@ serve(async (req) => {
     const userId = created.user.id;
 
     // Normalize company to enum if supported (only set when known)
-    const normalizedCompany = company === 'BGC' || company === 'Kent' ? company : null;
+    const normalizeCompany = (val?: string | null) => {
+      const v = (val || '').trim().toUpperCase();
+      if (v === 'BGC') return 'BGC';
+      if (v === 'KENT' || v === 'KENT ENGINEERING') return 'KENT';
+      return null;
+    };
+    const normalizedCompany = normalizeCompany(company);
 
     // 2) Upsert profile (handle case where a row may already exist)
     const { error: profileErr } = await admin
