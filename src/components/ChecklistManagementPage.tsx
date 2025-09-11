@@ -224,8 +224,8 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         className={`${isDragging ? 'opacity-50 scale-105 z-50' : ''} transition-all duration-200`}
         {...attributes}
       >
-        <AccordionItem value={category} className="border-0 mb-6">
-          <div className={`group relative overflow-hidden rounded-3xl backdrop-blur-xl border shadow-2xl transition-all duration-500 hover:shadow-4xl hover:scale-[1.03] hover:-translate-y-2 ${isOpen ? 'bg-primary/5 border-primary/30 ring-2 ring-primary/30' : 'bg-white/70 border-white/20'}`}>
+        <AccordionItem value={category} className="border-0 mb-4">
+          <div className={`group relative overflow-hidden rounded-2xl backdrop-blur-xl border shadow-lg transition-all duration-500 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 ${isOpen ? 'bg-primary/5 border-primary/30 ring-2 ring-primary/30' : 'bg-white/70 border-white/20'}`}>
             {/* Microsoft Fluent Design Acrylic Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-white/60 to-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             {/* Animated mesh gradient background */}
@@ -240,7 +240,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
             </div>
 
             {/* Category Header */}
-            <AccordionTrigger className={`hover:no-underline px-8 py-7 relative z-10 transition-all duration-500 ${isOpen ? 'bg-primary/5' : 'group-hover:bg-white/20'}`}>
+            <AccordionTrigger className={`hover:no-underline px-8 py-5 relative z-10 transition-all duration-500 ${isOpen ? 'bg-primary/5' : 'group-hover:bg-white/20'}`}>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center space-x-6">
                   {/* Drag Handle */}
@@ -266,24 +266,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                     <h4 className={`text-xl font-bold bg-gradient-to-r bg-clip-text text-transparent transition-all duration-500 ${isOpen ? 'from-blue-700 via-purple-700 to-blue-700' : 'from-gray-900 via-blue-900 to-gray-900 group-hover:from-blue-700 group-hover:via-purple-700 group-hover:to-blue-700'}`}>
                       {category}
                     </h4>
-                    <p className="text-sm font-medium text-gray-600 group-hover:text-blue-700 transition-all duration-300">
-                      {count} professional checklist items
-                    </p>
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ animationDelay: '0.2s' }}>
-                      <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-1000 group-hover:w-full" style={{ width: '60%' }}></div>
-                      </div>
-                      <span className="text-xs text-blue-600 font-medium">Ready</span>
-                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
                   <Badge className="bg-gradient-to-r from-blue-50/90 to-purple-50/90 text-blue-700 border border-blue-200/60 group-hover:from-blue-100/90 group-hover:to-purple-100/90 group-hover:border-blue-300/80 group-hover:shadow-lg transition-all duration-500 backdrop-blur-sm px-4 py-2 text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full group-hover:animate-pulse"></div>
-                      <span>{count} items</span>
-                    </div>
+                    <span>{count} items</span>
                   </Badge>
                   <div className="relative w-8 h-8 flex items-center justify-center">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-100/0 to-purple-100/0 group-hover:from-blue-100/80 group-hover:to-purple-100/80 rounded-xl transition-all duration-300"></div>
@@ -416,31 +404,31 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
               </div>
               <div className="flex items-center space-x-4">
                 {/* View Mode Toggle */}
-                <div className="flex items-center bg-white/60 backdrop-blur-sm rounded-lg border border-gray-200/60 p-1 shadow-sm">
+                <div className="flex items-center bg-gradient-to-r from-emerald-50/80 to-teal-50/80 backdrop-blur-sm rounded-xl border border-emerald-200/60 p-1.5 shadow-md">
                   <Button
                     variant={viewMode === 'card' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('card')}
-                    className={`h-8 px-3 rounded-md transition-all duration-200 ${
+                    className={`h-9 px-4 rounded-lg transition-all duration-300 font-medium ${
                       viewMode === 'card' 
-                        ? 'bg-primary text-primary-foreground shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 scale-105' 
+                        : 'text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/60'
                     }`}
                   >
-                    <Grid3X3 className="w-4 h-4 mr-1" />
+                    <Grid3X3 className="w-4 h-4 mr-2" />
                     Cards
                   </Button>
                   <Button
                     variant={viewMode === 'table' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('table')}
-                    className={`h-8 px-3 rounded-md transition-all duration-200 ${
+                    className={`h-9 px-4 rounded-lg transition-all duration-300 font-medium ${
                       viewMode === 'table' 
-                        ? 'bg-primary text-primary-foreground shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/60'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 scale-105' 
+                        : 'text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/60'
                     }`}
                   >
-                    <Table className="w-4 h-4 mr-1" />
+                    <Table className="w-4 h-4 mr-2" />
                     Table
                   </Button>
                 </div>
