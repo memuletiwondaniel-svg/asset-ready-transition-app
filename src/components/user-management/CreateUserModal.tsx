@@ -78,7 +78,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     { code: "+61", country: "Australia", flag: "🇦🇺", shortName: "AU" },
     { code: "+973", country: "Bahrain", flag: "🇧🇭", shortName: "BH" },
     { code: "+55", country: "Brazil", flag: "🇧🇷", shortName: "BR" },
-    { code: "+1", country: "Canada", flag: "🇨🇦", shortName: "CA" },
+    { code: "+1-CA", country: "Canada", flag: "🇨🇦", shortName: "CA" },
     { code: "+86", country: "China", flag: "🇨🇳", shortName: "CN" },
     { code: "+20", country: "Egypt", flag: "🇪🇬", shortName: "EG" },
     { code: "+33", country: "France", flag: "🇫🇷", shortName: "FR" },
@@ -108,7 +108,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     { code: "+90", country: "Turkey", flag: "🇹🇷", shortName: "TR" },
     { code: "+971", country: "United Arab Emirates", flag: "🇦🇪", shortName: "AE" },
     { code: "+44", country: "United Kingdom", flag: "🇬🇧", shortName: "GB" },
-    { code: "+1", country: "United States", flag: "🇺🇸", shortName: "US" },
+    { code: "+1-US", country: "United States", flag: "🇺🇸", shortName: "US" },
   ];
 
   // Base roles that are always available
@@ -247,7 +247,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
         password: generatedPassword,
       };
 
-      // Send welcome email
+      // Create user first (don't let email failure block user creation)
+      onCreateUser(userData);
+      
+      // Try to send welcome email (non-blocking)
       try {
         await supabase.functions.invoke('send-welcome-email', {
           body: {
@@ -257,21 +260,19 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
             loginUrl: `${window.location.origin}/auth`
           }
         });
+        
+        toast({
+          title: "User Created Successfully",
+          description: `${userData.firstName} ${userData.lastName} has been created and will receive login credentials via email.`,
+        });
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
         toast({
-          title: "Email Warning",
-          description: "User created but welcome email could not be sent.",
+          title: "User Created (Email Warning)",
+          description: `${userData.firstName} ${userData.lastName} has been created but welcome email could not be sent. Please manually share credentials: ${formData.email} / ${generatedPassword}`,
           variant: "destructive"
         });
       }
-
-      onCreateUser(userData);
-      
-      toast({
-        title: "User Created Successfully",
-        description: `${userData.firstName} ${userData.lastName} has been created and will receive login credentials via email.`,
-      });
 
       // Reset form and close modal
       setFormData({
