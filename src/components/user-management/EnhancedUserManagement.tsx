@@ -34,7 +34,11 @@ import {
   CheckCircle,
   XCircle,
   MoreHorizontal,
-  GripVertical
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  EyeOff,
+  Columns
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -83,14 +87,18 @@ interface ColumnConfig {
   label: string;
   width: number;
   minWidth: number;
+  visible: boolean;
+  sortable: boolean;
 }
 
 interface SortableTableHeaderProps {
   column: ColumnConfig;
   onResize: (id: string, width: number) => void;
+  sortDirection: 'asc' | 'desc' | null;
+  onSort: (columnId: string) => void;
 }
 
-const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onResize }) => {
+const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onResize, sortDirection, onSort }) => {
   const {
     attributes,
     listeners,
@@ -135,7 +143,23 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
       {...attributes}
     >
       <div className="flex items-center justify-between">
-        <span className="flex-1">{column.label}</span>
+        <div className="flex items-center flex-1">
+          <span 
+            className={`flex-1 ${column.sortable ? 'cursor-pointer hover:text-primary' : ''}`}
+            onClick={() => column.sortable && onSort(column.id)}
+          >
+            {column.label}
+          </span>
+          {column.sortable && sortDirection && (
+            <div className="ml-1">
+              {sortDirection === 'asc' ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </div>
+          )}
+        </div>
         <div className="flex items-center">
           <div 
             {...listeners}
@@ -167,13 +191,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: 'user', label: 'User', width: 250, minWidth: 200 },
-    { id: 'company', label: 'Company', width: 200, minWidth: 150 },
-    { id: 'role', label: 'Role', width: 180, minWidth: 120 },
-    { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120 },
-    { id: 'status', label: 'Status', width: 140, minWidth: 100 },
-    { id: 'actions', label: 'Actions', width: 100, minWidth: 80 }
+    { id: 'user', label: 'User', width: 250, minWidth: 200, visible: true, sortable: true },
+    { id: 'company', label: 'Company', width: 200, minWidth: 150, visible: true, sortable: true },
+    { id: 'role', label: 'Role', width: 180, minWidth: 120, visible: true, sortable: true },
+    { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120, visible: true, sortable: false },
+    { id: 'status', label: 'Status', width: 140, minWidth: 100, visible: true, sortable: true },
+    { id: 'actions', label: 'Actions', width: 100, minWidth: 80, visible: true, sortable: false }
   ]);
+  const [columnSort, setColumnSort] = useState<{ [key: string]: 'asc' | 'desc' | null }>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
@@ -187,6 +212,29 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const handleColumnResize = (id: string, width: number) => {
     setColumns(cols => cols.map(col => 
       col.id === id ? { ...col, width } : col
+    ));
+  };
+
+  const handleColumnSort = (columnId: string) => {
+    setColumnSort(prev => {
+      const currentSort = prev[columnId];
+      let newSort: 'asc' | 'desc' | null;
+      
+      if (currentSort === null || currentSort === undefined) {
+        newSort = 'asc';
+      } else if (currentSort === 'asc') {
+        newSort = 'desc';
+      } else {
+        newSort = null;
+      }
+      
+      return { ...prev, [columnId]: newSort };
+    });
+  };
+
+  const toggleColumnVisibility = (columnId: string) => {
+    setColumns(cols => cols.map(col => 
+      col.id === columnId ? { ...col, visible: !col.visible } : col
     ));
   };
 
@@ -366,7 +414,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
 
   useEffect(() => {
     filterAndSortUsers();
-  }, [users, searchQuery, statusFilter, companyFilter, roleFilter, sortBy, sortOrder]);
+  }, [users, searchQuery, statusFilter, companyFilter, roleFilter, columnSort]);
 
   const fetchUsers = async () => {
     try {
@@ -409,50 +457,46 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       return matchesSearch && matchesStatus && matchesCompany && matchesRole;
     });
 
-    // Sort users
-    filtered.sort((a, b) => {
-      let aValue, bValue;
+    // Apply column-based sorting
+    const activeSort = Object.entries(columnSort).find(([_, direction]) => direction !== null);
+    
+    if (activeSort) {
+      const [columnId, direction] = activeSort;
       
-      switch (sortBy) {
-        case 'name':
-          aValue = a.full_name || '';
-          bValue = b.full_name || '';
-          break;
-        case 'company':
-          aValue = a.company || '';
-          bValue = b.company || '';
-          break;
-        case 'role':
-          aValue = a.roles?.[0] || '';
-          bValue = b.roles?.[0] || '';
-          break;
-        case 'last_login':
-          aValue = new Date(a.last_login_at || 0).getTime();
-          bValue = new Date(b.last_login_at || 0).getTime();
-          break;
-        case 'created_at':
-          aValue = new Date(a.created_at || 0).getTime();
-          bValue = new Date(b.created_at || 0).getTime();
-          break;
-        default:
-          aValue = '';
-          bValue = '';
-      }
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (columnId) {
+          case 'user':
+            aValue = a.full_name || '';
+            bValue = b.full_name || '';
+            break;
+          case 'company':
+            aValue = a.company || '';
+            bValue = b.company || '';
+            break;
+          case 'role':
+            aValue = a.role || '';
+            bValue = b.role || '';
+            break;
+          case 'status':
+            aValue = a.status || '';
+            bValue = b.status || '';
+            break;
+          default:
+            aValue = '';
+            bValue = '';
+        }
 
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortOrder === 'asc' 
-          ? aValue - bValue
-          : bValue - aValue;
-      }
-
-      return 0;
-    });
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return direction === 'asc' 
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        
+        return 0;
+      });
+    }
 
     setFilteredUsers(filtered);
   };
@@ -566,10 +610,37 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             </div>
           </div>
           
-          <Button onClick={() => setShowCreateUser(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Columns className="h-4 w-4 mr-2" />
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
+                <div className="p-2">
+                  <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
+                  {columns.map((column) => (
+                    <div key={column.id} className="flex items-center space-x-2 py-1">
+                      <input
+                        type="checkbox"
+                        checked={column.visible}
+                        onChange={() => toggleColumnVisibility(column.id)}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{column.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button onClick={() => setShowCreateUser(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -709,12 +780,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
-                      {columns.map((column) => (
+                    <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
+                      {columns.filter(col => col.visible).map((column) => (
                         <SortableTableHeader
                           key={column.id}
                           column={column}
                           onResize={handleColumnResize}
+                          sortDirection={columnSort[column.id] || null}
+                          onSort={handleColumnSort}
                         />
                       ))}
                     </SortableContext>
@@ -723,7 +796,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.user_id}>
-                    {columns.map((column) => (
+                    {columns.filter(col => col.visible).map((column) => (
                       <TableCell key={column.id} style={{ width: column.width, minWidth: column.minWidth }}>
                         {renderCellContent(column.id, user)}
                       </TableCell>
