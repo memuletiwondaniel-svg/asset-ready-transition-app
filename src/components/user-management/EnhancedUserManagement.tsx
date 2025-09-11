@@ -439,16 +439,20 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <TableRow key={user.user_id}>
                     <TableCell>
                       <div className="flex items-center space-x-5">
-                        <Avatar className="h-12 w-12">
-                          {user.avatar_url && (
-                            <AvatarImage 
-                              src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
-                              alt={user.full_name || 'User'} 
-                            />
-                          )}
-                          <AvatarFallback>
-                            {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                          </AvatarFallback>
+                         <Avatar className="h-12 w-12">
+                           {user.avatar_url ? (
+                             <AvatarImage 
+                               src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                               alt={user.full_name || 'User'} 
+                               onError={(e) => {
+                                 console.log('Avatar load error for user:', user.email, 'URL:', e.currentTarget.src);
+                                 e.currentTarget.style.display = 'none';
+                               }}
+                             />
+                           ) : null}
+                           <AvatarFallback>
+                             {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">{user.full_name || 'Unknown'}</div>
