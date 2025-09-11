@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN functional_email_address TEXT;

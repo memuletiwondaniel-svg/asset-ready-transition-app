@@ -305,6 +305,7 @@ export type Database = {
           first_name: string | null
           full_name: string | null
           functional_email: boolean | null
+          functional_email_address: string | null
           id: string
           is_active: boolean
           job_title: string | null
@@ -349,6 +350,7 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           functional_email?: boolean | null
+          functional_email_address?: string | null
           id?: string
           is_active?: boolean
           job_title?: string | null
@@ -393,6 +395,7 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           functional_email?: boolean | null
+          functional_email_address?: string | null
           id?: string
           is_active?: boolean
           job_title?: string | null
