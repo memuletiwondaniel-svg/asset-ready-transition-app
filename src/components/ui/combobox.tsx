@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,108 +17,59 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export interface ComboboxOption {
-  value: string
-  label: string
-}
-
 interface ComboboxProps {
-  options: ComboboxOption[]
   value?: string
+  onValueChange?: (value: string) => void
+  items: string[]
   placeholder?: string
   searchPlaceholder?: string
-  onValueChange?: (value: string) => void
-  disabled?: boolean
+  emptyText?: string
+  allowCustom?: boolean
+  onAddCustom?: (value: string) => void
   className?: string
 }
 
 export function Combobox({
-  options,
   value,
-  placeholder = "Select option...",
-  searchPlaceholder = "Search...",
   onValueChange,
-  disabled = false,
+  items,
+  placeholder = "Select item...",
+  searchPlaceholder = "Search items...",
+  emptyText = "No items found.",
+  allowCustom = false,
+  onAddCustom,
   className,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const [searchValue, setSearchValue] = React.useState("")
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-          disabled={disabled}
-        >
-          <span className="truncate">
-            {value
-              ? options.find((option) => option.value === value)?.label
-              : placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} className="h-9" />
-          <CommandList>
-            <CommandEmpty>No option found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={(currentValue) => {
-                    onValueChange?.(currentValue === value ? "" : currentValue)
-                    setOpen(false)
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <span className="truncate">{option.label}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+  const filteredItems = items.filter(item =>
+    item.toLowerCase().includes(searchValue.toLowerCase())
   )
-}
 
-interface MultiSelectComboboxProps {
-  options: ComboboxOption[]
-  values?: string[]
-  placeholder?: string
-  searchPlaceholder?: string
-  onValuesChange?: (values: string[]) => void
-  disabled?: boolean
-  className?: string
-}
+  const handleSelect = (selectedValue: string) => {
+    if (selectedValue === value) {
+      onValueChange?.("")
+    } else {
+      onValueChange?.(selectedValue)
+    }
+    setOpen(false)
+    setSearchValue("")
+  }
 
-export function MultiSelectCombobox({
-  options,
-  values = [],
-  placeholder = "Select options...",
-  searchPlaceholder = "Search...",
-  onValuesChange,
-  disabled = false,
-  className,
-}: MultiSelectComboboxProps) {
-  const [open, setOpen] = React.useState(false)
+  const handleAddCustom = () => {
+    if (searchValue.trim() && !items.includes(searchValue.trim())) {
+      onAddCustom?.(searchValue.trim())
+      onValueChange?.(searchValue.trim())
+      setOpen(false)
+      setSearchValue("")
+    }
+  }
 
-  const selectedLabels = values
-    .map(value => options.find(opt => opt.value === value)?.label)
-    .filter(Boolean)
-    .join(", ")
+  const showAddCustomOption = allowCustom && 
+    searchValue.trim() && 
+    !items.some(item => item.toLowerCase() === searchValue.toLowerCase()) &&
+    onAddCustom
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -128,42 +79,61 @@ export function MultiSelectCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
-          disabled={disabled}
         >
-          <span className="truncate">
-            {selectedLabels || placeholder}
-          </span>
+          {value || placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} className="h-9" />
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50 bg-popover border shadow-lg">
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder={searchPlaceholder} 
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
-            <CommandEmpty>No option found.</CommandEmpty>
+            <CommandEmpty>
+              {showAddCustomOption ? (
+                <div className="p-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-left"
+                    onClick={handleAddCustom}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add "{searchValue}"
+                  </Button>
+                </div>
+              ) : (
+                emptyText
+              )}
+            </CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              {filteredItems.map((item) => (
                 <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={(currentValue) => {
-                    const isSelected = values.includes(currentValue)
-                    const newValues = isSelected
-                      ? values.filter(v => v !== currentValue)
-                      : [...values, currentValue]
-                    onValuesChange?.(newValues)
-                  }}
+                  key={item}
+                  value={item}
+                  onSelect={() => handleSelect(item)}
                   className="cursor-pointer"
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      values.includes(option.value) ? "opacity-100" : "opacity-0"
+                      value === item ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <span className="truncate">{option.label}</span>
+                  {item}
                 </CommandItem>
               ))}
+              {showAddCustomOption && filteredItems.length > 0 && (
+                <CommandItem
+                  onSelect={handleAddCustom}
+                  className="cursor-pointer border-t mt-1 pt-2"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add "{searchValue}"
+                </CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>

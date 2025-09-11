@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Combobox } from '@/components/ui/combobox';
 import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search } from 'lucide-react';
-import { useCreateChecklistItem } from '@/hooks/useChecklistItems';
+import { useCreateChecklistItem, useChecklistTopics } from '@/hooks/useChecklistItems';
 import { useUsers } from '@/hooks/useUsers';
 import { toast } from '@/hooks/use-toast';
 
@@ -45,6 +46,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
   const createChecklistItemMutation = useCreateChecklistItem();
   const { users } = useUsers();
+  const { data: existingTopics = [], refetch: refetchTopics } = useChecklistTopics();
 
   // Microsoft Fluent Design categories
   const categories = [
@@ -60,6 +62,14 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     'PACO',
     'Civil'
   ];
+
+  // State for managing topics
+  const [topicOptions, setTopicOptions] = React.useState<string[]>(existingTopics);
+
+  // Update topic options when existingTopics changes
+  React.useEffect(() => {
+    setTopicOptions(existingTopics);
+  }, [existingTopics]);
 
   // Get unique roles from users for approvers and responsible parties
   const userRoles = [...new Set(users.map(user => user.role).filter(Boolean))];
@@ -145,6 +155,14 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
   const removeApprover = (role: string) => {
     updateFormData('approvers', formData.approvers.filter(a => a !== role));
+  };
+
+  const handleAddTopic = (newTopic: string) => {
+    if (!topicOptions.includes(newTopic)) {
+      setTopicOptions(prev => [...prev, newTopic]);
+      // Refetch topics to include the new one from database
+      refetchTopics();
+    }
   };
 
   if (showPreview) {
@@ -342,11 +360,15 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 <Label htmlFor="topic" className="text-sm font-medium flex items-center gap-2">
                   Topic
                 </Label>
-                <Input
-                  id="topic"
-                  placeholder="Enter topic (e.g., Electrical Safety) - Optional"
+                <Combobox
                   value={formData.topic}
-                  onChange={(e) => updateFormData('topic', e.target.value)}
+                  onValueChange={(value) => updateFormData('topic', value)}
+                  items={topicOptions}
+                  placeholder="Select or add a topic..."
+                  searchPlaceholder="Search topics..."
+                  emptyText="No topics found."
+                  allowCustom={true}
+                  onAddCustom={handleAddTopic}
                   className="fluent-input"
                 />
                 {errors.topic && (
@@ -355,6 +377,9 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {errors.topic}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground">
+                  Choose an existing topic or type to add a new one
+                </p>
               </div>
             </div>
 

@@ -54,6 +54,23 @@ export const useChecklistCategories = () => {
   });
 };
 
+export const useChecklistTopics = () => {
+  return useQuery({
+    queryKey: ['checklist-topics'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('checklist_items')
+        .select('topic')
+        .eq('is_active', true);
+
+      if (error) throw error;
+      
+      const uniqueTopics = [...new Set(data?.map(item => item.topic).filter(Boolean))];
+      return uniqueTopics.sort();
+    },
+  });
+};
+
 export interface UpdateChecklistItemData {
   description?: string;
   category?: string;
