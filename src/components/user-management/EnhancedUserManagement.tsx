@@ -751,18 +751,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 </SelectContent>
               </Select>
               
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="company">Company</SelectItem>
-                  <SelectItem value="role">Role</SelectItem>
-                  <SelectItem value="last_login">Last Login</SelectItem>
-                  <SelectItem value="created_at">Created</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
