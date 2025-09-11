@@ -431,8 +431,17 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center text-sm">
-                          <Building className="h-3 w-3 mr-1" />
-                          {user.company || 'No Company'}
+                          {user.company === 'BGC' ? (
+                            <>
+                              <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1" />
+                              Basrah Gas Company (BGC)
+                            </>
+                          ) : (
+                            <>
+                              <Building className="h-3 w-3 mr-1" />
+                              {user.company || 'No Company'}
+                            </>
+                          )}
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {user.roles?.map(role => (
