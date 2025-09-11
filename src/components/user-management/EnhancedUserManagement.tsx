@@ -392,13 +392,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 View Details
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setSelectedUser(user)}
-                className="cursor-pointer"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Details
-              </DropdownMenuItem>
-              <DropdownMenuItem 
                 onClick={() => handleDeleteUser(user)}
                 className="cursor-pointer text-destructive hover:text-destructive"
               >
