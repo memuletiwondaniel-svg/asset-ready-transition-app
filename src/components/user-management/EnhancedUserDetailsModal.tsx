@@ -101,9 +101,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    full_name: '',
     email: '',
-    personal_email: '',
     functional_email_address: '',
     phone_number: '',
     primary_phone: '',
@@ -111,7 +109,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     country_code: '',
     job_title: '',
     department: '',
-    employee_id: '',
     role: '',
     company: 'BGC' as 'BGC' | 'KENT' | null,
     status: 'active' as 'active' | 'inactive' | 'pending_approval' | 'suspended',
@@ -121,8 +118,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     password_change_required: false,
     functional_email: false,
     ta2_discipline: '',
-    ta2_commission: '',
-    position: ''
+    ta2_commission: ''
   });
 
   const [systemRole, setSystemRole] = useState('user');
@@ -168,9 +164,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
-        full_name: user.full_name || '',
         email: user.email || '',
-        personal_email: user.personal_email || '',
         functional_email_address: user.functional_email_address || '',
         phone_number: user.phone_number || '',
         primary_phone: user.primary_phone || '',
@@ -178,7 +172,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         country_code: user.country_code || '+964',
         job_title: user.job_title || '',
         department: user.department || '',
-        employee_id: user.employee_id || '',
         role: user.role || '',
         company: user.company || 'BGC',
         status: user.status || 'active',
@@ -188,30 +181,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         password_change_required: user.password_change_required || false,
         functional_email: user.functional_email || false,
         ta2_discipline: user.ta2_discipline || '',
-        ta2_commission: user.ta2_commission || '',
-        position: user.position || ''
+        ta2_commission: user.ta2_commission || ''
       });
       
       setSystemRole(user.roles?.[0] || 'user');
-      
-      // Update full_name when first/last name changes
-      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-      if (fullName) {
-        setFormData(prev => ({ ...prev, full_name: fullName }));
-      }
       
       fetchActivityLogs();
       fetchUserSessions();
     }
   }, [isOpen, user]);
 
-  // Auto-update full_name when first_name or last_name changes
-  useEffect(() => {
-    const fullName = `${formData.first_name} ${formData.last_name}`.trim();
-    if (fullName && fullName !== formData.full_name) {
-      setFormData(prev => ({ ...prev, full_name: fullName }));
-    }
-  }, [formData.first_name, formData.last_name]);
 
   const fetchActivityLogs = async () => {
     if (!user?.user_id) return;
@@ -268,9 +247,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       const updatePayload = {
         first_name: formData.first_name || null,
         last_name: formData.last_name || null,
-        full_name: formData.full_name || null,
+        full_name: `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
         email: formData.email,
-        personal_email: formData.personal_email || null,
         functional_email_address: formData.functional_email_address || null,
         phone_number: formData.phone_number || null,
         primary_phone: formData.primary_phone || null,
@@ -278,7 +256,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         country_code: formData.country_code || null,
         job_title: formData.job_title || null,
         department: formData.department || null,
-        employee_id: formData.employee_id || null,
         role: formData.role,
         company: formData.company,
         status: formData.status,
@@ -289,7 +266,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         functional_email: formData.functional_email,
         ta2_discipline: formData.ta2_discipline || null,
         ta2_commission: formData.ta2_commission || null,
-        position: formData.position || null,
         updated_at: new Date().toISOString()
       };
 
@@ -492,9 +468,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="work">Work</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -530,50 +505,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </div>
                 </div>
                 
-                <div>
-                  <Label htmlFor="full_name">Full Name</Label>
-                  <Input
-                    id="full_name"
-                    value={formData.full_name}
-                    onChange={(e) => handleInputChange('full_name', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                    placeholder="Will auto-generate from first and last name"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="employee_id">Employee ID</Label>
-                  <Input
-                    id="employee_id"
-                    value={formData.employee_id}
-                    onChange={(e) => handleInputChange('employee_id', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    value={formData.position}
-                    onChange={(e) => handleInputChange('position', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Work Information Tab */}
-          <TabsContent value="work" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Work Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="company">Company *</Label>
                   <Select
@@ -699,6 +630,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
             </Card>
           </TabsContent>
 
+
           {/* Contact Information Tab */}
           <TabsContent value="contact" className="space-y-6">
             <Card>
@@ -718,17 +650,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="personal_email">Personal Email</Label>
-                  <Input
-                    id="personal_email"
-                    type="email"
-                    value={formData.personal_email}
-                    onChange={(e) => handleInputChange('personal_email', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                  />
-                </div>
 
                 <div>
                   <Label htmlFor="functional_email_address">Functional Email</Label>
