@@ -16,28 +16,18 @@ export const useRoles = () => {
   return useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .not('role', 'is', null)
-        .eq('is_active', true);
+      const { data, error } = await (supabase.rpc as any)('get_active_roles');
 
       if (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error fetching roles via RPC:', error);
         throw error;
       }
 
-      console.log('Raw roles data:', data);
+      console.log('Raw roles data (RPC):', data);
 
-      // Get unique roles and format them
-      const uniqueRoles = [...new Set(data.map(item => item.role))];
-      
-      const roleOptions: RoleOption[] = uniqueRoles
-        .sort()
-        .map(role => ({
-          value: role,
-          label: role
-        }));
+      const roleOptions: RoleOption[] = (data || [])
+        .map((item: { value: string }) => ({ value: item.value, label: item.value }))
+        .sort((a, b) => a.label.localeCompare(b.label));
 
       console.log('Formatted role options:', roleOptions);
       return roleOptions;
@@ -49,26 +39,18 @@ export const useCommissions = () => {
   return useQuery({
     queryKey: ['commissions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('ta2_commission')
-        .not('ta2_commission', 'is', null)
-        .eq('is_active', true)
-        .order('ta2_commission');
+      const { data, error } = await (supabase.rpc as any)('get_active_ta2_commissions');
 
       if (error) {
-        console.error('Error fetching commissions:', error);
+        console.error('Error fetching commissions via RPC:', error);
         throw error;
       }
 
-      console.log('Raw commissions data:', data);
+      console.log('Raw commissions data (RPC):', data);
 
-      // Get unique commissions and format them
-      const uniqueCommissions = [...new Set(data.map(item => item.ta2_commission))];
-      
-      const commissionOptions = uniqueCommissions.map(commission => ({
-        value: commission,
-        label: commission
+      const commissionOptions = (data || []).map((item: { value: string }) => ({
+        value: item.value,
+        label: item.value
       }));
 
       console.log('Formatted commission options:', commissionOptions);
@@ -81,26 +63,18 @@ export const useDisciplines = () => {
   return useQuery({
     queryKey: ['disciplines'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('ta2_discipline')
-        .not('ta2_discipline', 'is', null)
-        .eq('is_active', true)
-        .order('ta2_discipline');
+      const { data, error } = await (supabase.rpc as any)('get_active_ta2_disciplines');
 
       if (error) {
-        console.error('Error fetching disciplines:', error);
+        console.error('Error fetching disciplines via RPC:', error);
         throw error;
       }
 
-      console.log('Raw disciplines data:', data);
+      console.log('Raw disciplines data (RPC):', data);
 
-      // Get unique disciplines and format them
-      const uniqueDisciplines = [...new Set(data.map(item => item.ta2_discipline))];
-      
-      const disciplineOptions = uniqueDisciplines.map(discipline => ({
-        value: discipline,
-        label: discipline
+      const disciplineOptions = (data || []).map((item: { value: string }) => ({
+        value: item.value,
+        label: item.value
       }));
 
       console.log('Formatted discipline options:', disciplineOptions);
