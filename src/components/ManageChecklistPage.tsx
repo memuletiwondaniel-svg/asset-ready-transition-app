@@ -314,7 +314,73 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   </div>
                 </div>
               </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredAndSortedChecklists.map((checklist, index) => {})}
+                {filteredAndSortedChecklists.map((checklist, index) => (
+                  <Card key={checklist.id} className="fluent-card group hover:shadow-fluent-lg transition-all duration-300 cursor-pointer animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}} onClick={() => handleChecklistClick(checklist)}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {checklist.name}
+                            </CardTitle>
+                            {isNewChecklist(checklist.id) && (
+                              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse">New</Badge>
+                            )}
+                          </div>
+                          <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                            {checklist.reason}
+                          </CardDescription>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditChecklist(checklist);
+                            }}>
+                              <Edit3 className="h-4 w-4 mr-2" />
+                              Edit Checklist
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteChecklist(checklist);
+                            }}>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Checklist
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          {getStatusBadge(checklist.status)}
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 mr-1" />
+                              {checklist.items_count} items
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(checklist.created_at).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center">
+                            <User className="h-3 w-3 mr-1" />
+                            {checklist.created_by || 'System'}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>}
           </>}
       </div>
