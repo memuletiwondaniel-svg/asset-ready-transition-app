@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -58,6 +58,7 @@ interface User {
   created_at: string;
   sso_enabled: boolean;
   two_factor_enabled: boolean;
+  avatar_url?: string;
   role?: string; // Make role optional for now
   roles: string[];
   projects: string[];
@@ -437,8 +438,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 {filteredUsers.map((user) => (
                   <TableRow key={user.user_id}>
                     <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
+                      <div className="flex items-center space-x-5">
+                        <Avatar className="h-12 w-12">
+                          {user.avatar_url && (
+                            <AvatarImage 
+                              src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                              alt={user.full_name || 'User'} 
+                            />
+                          )}
                           <AvatarFallback>
                             {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                           </AvatarFallback>
