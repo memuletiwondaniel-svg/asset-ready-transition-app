@@ -172,7 +172,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     { id: 'role', label: 'Role', width: 180, minWidth: 120 },
     { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120 },
     { id: 'status', label: 'Status', width: 140, minWidth: 100 },
-    { id: 'lastActivity', label: 'Last Activity', width: 150, minWidth: 120 },
     { id: 'actions', label: 'Actions', width: 100, minWidth: 80 }
   ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
