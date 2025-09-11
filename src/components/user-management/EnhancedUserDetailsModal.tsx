@@ -25,37 +25,49 @@ import {
   XCircle,
   Edit,
   Save,
-  X
+  X,
+  Camera
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface User {
+// Type definitions matching the database schema exactly
+interface DatabaseUser {
   user_id: string;
   email: string;
-  full_name: string;
-  first_name: string;
-  last_name: string;
-  company: string;
-  employee_id: string;
-  job_title: string;
-  department: string;
-  phone_number: string;
-  account_status: string;
-  status: string;
-  last_login_at: string;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  company: 'BGC' | 'KENT' | null;
+  employee_id: string | null;
+  job_title: string | null;
+  department: string | null;
+  phone_number: string | null;
+  account_status: string | null;
+  status: 'active' | 'inactive' | 'pending_approval' | 'suspended' | null;
+  last_login_at: string | null;
   created_at: string;
-  sso_enabled: boolean;
-  two_factor_enabled: boolean;
-  avatar_url?: string;
+  sso_enabled: boolean | null;
+  two_factor_enabled: boolean | null;
+  avatar_url: string | null;
+  role: string;
   roles: string[];
   projects: string[];
-  manager_name: string;
+  manager_name: string | null;
   pending_actions: number;
-  login_attempts: number;
-  locked_until: string;
-  password_change_required: boolean;
-  last_activity: string;
+  login_attempts: number | null;
+  locked_until: string | null;
+  password_change_required: boolean | null;
+  last_activity: string | null;
+  ta2_discipline: string | null;
+  ta2_commission: string | null;
+  functional_email_address: string | null;
+  personal_email: string | null;
+  functional_email: boolean | null;
+  primary_phone: string | null;
+  secondary_phone: string | null;
+  country_code: string | null;
+  position: string | null;
 }
 
 interface ActivityLog {
@@ -67,7 +79,7 @@ interface ActivityLog {
 }
 
 interface EnhancedUserDetailsModalProps {
-  user: User;
+  user: DatabaseUser;
   isOpen: boolean;
   onClose: () => void;
   onUserUpdated: () => void;
@@ -85,25 +97,35 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [userSessions, setUserSessions] = useState<any[]>([]);
   
-  const [editedUser, setEditedUser] = useState({
-    full_name: user.full_name || '',
-    first_name: user.first_name || '',
-    last_name: user.last_name || '',
-    email: user.email || '',
-    phone_number: user.phone_number || '',
-    job_title: user.job_title || '',
-    department: user.department || '',
-    employee_id: user.employee_id || '',
-    role: (user as any).role || '',
-    company: (user.company as any) || 'BGC',
-    status: (user.status as any) || 'active',
-    sso_enabled: user.sso_enabled || false,
-    two_factor_enabled: user.two_factor_enabled || false,
-    password_change_required: user.password_change_required || false,
-    functional_email: false,
+  // Form state matching database fields exactly
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    full_name: '',
+    email: '',
     personal_email: '',
-    system_role: user.roles?.[0] || 'user'
+    functional_email_address: '',
+    phone_number: '',
+    primary_phone: '',
+    secondary_phone: '',
+    country_code: '',
+    job_title: '',
+    department: '',
+    employee_id: '',
+    role: '',
+    company: 'BGC' as 'BGC' | 'KENT' | null,
+    status: 'active' as 'active' | 'inactive' | 'pending_approval' | 'suspended',
+    account_status: '',
+    sso_enabled: false,
+    two_factor_enabled: false,
+    password_change_required: false,
+    functional_email: false,
+    ta2_discipline: '',
+    ta2_commission: '',
+    position: ''
   });
+
+  const [systemRole, setSystemRole] = useState('user');
 
   const systemRoles = [
     { value: "user", label: "User" },
@@ -114,34 +136,86 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     { value: "technical_authority", label: "Technical Authority" },
   ];
 
+  const companies = [
+    { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" },
+    { value: "KENT", label: "Kent Engineering", logo: "/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" }
+  ];
+
+  const statusOptions = [
+    { value: "active", label: "Active", color: "text-green-600" },
+    { value: "inactive", label: "Inactive", color: "text-gray-600" },
+    { value: "pending_approval", label: "Pending Approval", color: "text-yellow-600" },
+    { value: "suspended", label: "Suspended", color: "text-red-600" }
+  ];
+
+  const ta2Disciplines = [
+    { value: "Process", label: "Process" },
+    { value: "Technical Safety", label: "Technical Safety" },
+    { value: "Mechanical", label: "Mechanical" },
+    { value: "Electrical", label: "Electrical" },
+    { value: "Instrumentation", label: "Instrumentation" }
+  ];
+
+  const ta2Commissions = [
+    { value: "Project and Engineering", label: "Project and Engineering" },
+    { value: "Operations", label: "Operations" },
+    { value: "Maintenance", label: "Maintenance" }
+  ];
+
+  // Initialize form data when modal opens or user changes
   useEffect(() => {
-    if (isOpen) {
-      fetchActivityLogs();
-      fetchUserSessions();
-      // Sync editable state with the latest user data when modal opens
-      setEditedUser({
-        full_name: user.full_name || '',
+    if (isOpen && user) {
+      setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
+        full_name: user.full_name || '',
         email: user.email || '',
+        personal_email: user.personal_email || '',
+        functional_email_address: user.functional_email_address || '',
         phone_number: user.phone_number || '',
+        primary_phone: user.primary_phone || '',
+        secondary_phone: user.secondary_phone || '',
+        country_code: user.country_code || '+964',
         job_title: user.job_title || '',
         department: user.department || '',
         employee_id: user.employee_id || '',
-        role: (user as any).role || '',
-        company: (user.company as any) || 'BGC',
-        status: (user.status as any) || 'active',
+        role: user.role || '',
+        company: user.company || 'BGC',
+        status: user.status || 'active',
+        account_status: user.account_status || 'active',
         sso_enabled: user.sso_enabled || false,
         two_factor_enabled: user.two_factor_enabled || false,
         password_change_required: user.password_change_required || false,
-        functional_email: false,
-        personal_email: '',
-        system_role: user.roles?.[0] || 'user'
+        functional_email: user.functional_email || false,
+        ta2_discipline: user.ta2_discipline || '',
+        ta2_commission: user.ta2_commission || '',
+        position: user.position || ''
       });
+      
+      setSystemRole(user.roles?.[0] || 'user');
+      
+      // Update full_name when first/last name changes
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+      if (fullName) {
+        setFormData(prev => ({ ...prev, full_name: fullName }));
+      }
+      
+      fetchActivityLogs();
+      fetchUserSessions();
     }
   }, [isOpen, user]);
 
+  // Auto-update full_name when first_name or last_name changes
+  useEffect(() => {
+    const fullName = `${formData.first_name} ${formData.last_name}`.trim();
+    if (fullName && fullName !== formData.full_name) {
+      setFormData(prev => ({ ...prev, full_name: fullName }));
+    }
+  }, [formData.first_name, formData.last_name]);
+
   const fetchActivityLogs = async () => {
+    if (!user?.user_id) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_activity_logs')
@@ -162,6 +236,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   };
 
   const fetchUserSessions = async () => {
+    if (!user?.user_id) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_sessions')
@@ -182,50 +258,64 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   };
 
   const handleSave = async () => {
+    if (!user?.user_id) return;
+    
     try {
       setLoading(true);
+      console.log('Saving user data:', formData);
 
-      // Normalize company to enum or null
-      const normalizeCompany = (val?: string) => {
-        const v = (val || '').trim().toUpperCase();
-        if (v === 'BGC') return 'BGC';
-        if (v === 'KENT' || v === 'KENT ENGINEERING') return 'KENT';
-        return null; // unset for unsupported values
+      // Prepare update payload with proper field mapping
+      const updatePayload = {
+        first_name: formData.first_name || null,
+        last_name: formData.last_name || null,
+        full_name: formData.full_name || null,
+        email: formData.email,
+        personal_email: formData.personal_email || null,
+        functional_email_address: formData.functional_email_address || null,
+        phone_number: formData.phone_number || null,
+        primary_phone: formData.primary_phone || null,
+        secondary_phone: formData.secondary_phone || null,
+        country_code: formData.country_code || null,
+        job_title: formData.job_title || null,
+        department: formData.department || null,
+        employee_id: formData.employee_id || null,
+        role: formData.role,
+        company: formData.company,
+        status: formData.status,
+        account_status: formData.account_status || 'active',
+        sso_enabled: formData.sso_enabled,
+        two_factor_enabled: formData.two_factor_enabled,
+        password_change_required: formData.password_change_required,
+        functional_email: formData.functional_email,
+        ta2_discipline: formData.ta2_discipline || null,
+        ta2_commission: formData.ta2_commission || null,
+        position: formData.position || null,
+        updated_at: new Date().toISOString()
       };
-      const normalizedCompany = normalizeCompany(editedUser.company);
 
-      // Update the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: editedUser.full_name,
-          first_name: editedUser.first_name,
-          last_name: editedUser.last_name,
-          email: editedUser.email,
-          phone_number: editedUser.phone_number,
-          job_title: editedUser.job_title,
-          department: editedUser.department,
-          employee_id: editedUser.employee_id,
-          role: editedUser.role,
-          company: normalizedCompany as any,
-          status: editedUser.status,
-          sso_enabled: editedUser.sso_enabled,
-          two_factor_enabled: editedUser.two_factor_enabled,
-          password_change_required: editedUser.password_change_required,
-          functional_email: editedUser.functional_email,
-          personal_email: editedUser.personal_email
-        })
-        .eq('user_id', user.user_id);
+      console.log('Update payload:', updatePayload);
+
+      // Update the profile using service role via edge function for better RLS handling
+      const { data: updateResponse, error: profileError } = await supabase.functions.invoke('update-user-profile', {
+        body: {
+          userId: user.user_id,
+          profileData: updatePayload
+        }
+      });
 
       if (profileError) {
-        toast.error('Failed to update user');
-        console.error('Error updating user:', profileError);
+        console.error('Profile update error:', profileError);
+        toast.error(`Failed to update user: ${profileError.message}`);
         return;
       }
 
+      console.log('Profile update response:', updateResponse);
+
       // Update system role if it changed
-      if (editedUser.system_role !== (user.roles?.[0] || 'user')) {
-        // First, delete existing roles
+      if (systemRole !== (user.roles?.[0] || 'user')) {
+        console.log('Updating system role from', user.roles?.[0], 'to', systemRole);
+        
+        // Delete existing roles
         const { error: deleteError } = await supabase
           .from('user_roles')
           .delete()
@@ -235,99 +325,36 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           console.error('Error deleting existing roles:', deleteError);
         }
 
-        // Then insert new role
+        // Insert new role
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: user.user_id,
-            role: editedUser.system_role as any,
+            role: systemRole as any,
             granted_by: user.user_id
           });
 
         if (roleError) {
-          toast.error('Failed to update system role');
           console.error('Error updating system role:', roleError);
+          toast.error(`Failed to update system role: ${roleError.message}`);
           return;
         }
       }
 
       toast.success('User updated successfully');
       setEditMode(false);
-      onUserUpdated();
-    } catch (error) {
-      toast.error('An error occurred while updating user');
-      console.error('Error:', error);
+      onUserUpdated(); // Refresh the parent list
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast.error(`An error occurred while updating user: ${error.message}`);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleUnlockUser = async () => {
-    try {
-      setLoading(true);
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          login_attempts: 0,
-          locked_until: null,
-          account_status: 'active'
-        })
-        .eq('user_id', user.user_id);
-
-      if (error) {
-        toast.error('Failed to unlock user');
-        return;
-      }
-
-      toast.success('User unlocked successfully');
-      onUserUpdated();
-    } catch (error) {
-      toast.error('An error occurred while unlocking user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    try {
-      setLoading(true);
-
-      const { error } = await supabase.rpc('initiate_password_reset', {
-        user_email: user.email
-      });
-
-      if (error) {
-        toast.error('Failed to initiate password reset');
-        return;
-      }
-
-      toast.success('Password reset email sent');
-    } catch (error) {
-      toast.error('An error occurred while resetting password');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'text-green-600';
-      case 'pending_approval': return 'text-yellow-600';
-      case 'suspended': return 'text-red-600';
-      case 'inactive': return 'text-gray-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
   };
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user?.user_id) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -362,7 +389,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return;
       }
 
-      // Update user profile with new avatar URL via edge function (avoids RLS issues)
+      // Update user profile with new avatar URL via edge function
       const { data: avatarUpdateResp, error: avatarUpdateErr } = await supabase.functions.invoke('update-user-avatar', {
         body: { userId: user.user_id, avatarPath: fileName }
       });
@@ -383,29 +410,43 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     }
   };
 
+  const getStatusColor = (status: string) => {
+    const option = statusOptions.find(opt => opt.value === status);
+    return option?.color || 'text-gray-600';
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString();
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-14 w-14 ring-2 ring-border">
                   {user.avatar_url && (
                     <AvatarImage 
                       src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
                       alt={user.full_name || 'User'} 
                     />
                   )}
-                  <AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary font-semibold">
                     {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                   </AvatarFallback>
                 </Avatar>
                 {editMode && (
                   <div className="absolute -bottom-1 -right-1">
                     <label htmlFor="avatar-upload" className="cursor-pointer">
-                      <div className="bg-primary text-primary-foreground rounded-full p-1 hover:bg-primary/90">
-                        <Edit className="h-3 w-3" />
+                      <div className="bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 shadow-sm">
+                        <Camera className="h-3 w-3" />
                       </div>
                       <input
                         id="avatar-upload"
@@ -422,6 +463,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
               <div>
                 <h2 className="text-xl font-semibold">{user.full_name || 'Unknown User'}</h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
+                <Badge variant="outline" className={getStatusColor(user.status || 'inactive')}>
+                  {user.status || 'inactive'}
+                </Badge>
               </div>
             </div>
             
@@ -429,7 +473,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
               {!editMode ? (
                 <Button variant="outline" onClick={() => setEditMode(true)}>
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit
+                  Edit Details
                 </Button>
               ) : (
                 <>
@@ -439,7 +483,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </Button>
                   <Button onClick={handleSave} disabled={loading}>
                     <Save className="h-4 w-4 mr-2" />
-                    Save
+                    {loading ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </>
               )}
@@ -447,149 +491,157 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="details">Details</TabsTrigger>
+        <Tabs defaultValue="personal" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="personal">Personal</TabsTrigger>
+            <TabsTrigger value="work">Work</TabsTrigger>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="space-y-6">
-            {/* Basic Information */}
+          {/* Personal Information Tab */}
+          <TabsContent value="personal" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
+                <CardTitle>Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="first_name">First Name</Label>
+                    <Label htmlFor="first_name">First Name *</Label>
                     <Input
                       id="first_name"
-                      value={editedUser.first_name}
-                      onChange={(e) => setEditedUser({ ...editedUser, first_name: e.target.value })}
+                      value={formData.first_name}
+                      onChange={(e) => handleInputChange('first_name', e.target.value)}
                       disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="last_name">Last Name</Label>
+                    <Label htmlFor="last_name">Last Name *</Label>
                     <Input
                       id="last_name"
-                      value={editedUser.last_name}
-                      onChange={(e) => setEditedUser({ ...editedUser, last_name: e.target.value })}
+                      value={formData.last_name}
+                      onChange={(e) => handleInputChange('last_name', e.target.value)}
                       disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
                     />
                   </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="functional_email"
-                      checked={editedUser.functional_email}
-                      onChange={(e) => setEditedUser({ ...editedUser, functional_email: e.target.checked })}
-                      disabled={!editMode}
-                      className="rounded border-gray-300"
-                    />
-                    <Label htmlFor="functional_email">This is a functional email</Label>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="email">{editedUser.functional_email ? 'Functional Email' : 'Email'}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={editedUser.email}
-                      onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
-                      disabled={!editMode}
-                    />
-                  </div>
-                  
-                  {editedUser.functional_email && (
-                    <div>
-                      <Label htmlFor="personal_email">Personal Email</Label>
-                      <Input
-                        id="personal_email"
-                        type="email"
-                        value={editedUser.personal_email}
-                        onChange={(e) => setEditedUser({ ...editedUser, personal_email: e.target.value })}
-                        disabled={!editMode}
-                        placeholder="Enter personal email address"
-                      />
-                    </div>
-                  )}
                 </div>
                 
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="full_name">Full Name</Label>
                   <Input
-                    id="phone"
-                    value={editedUser.phone_number}
-                    onChange={(e) => setEditedUser({ ...editedUser, phone_number: e.target.value })}
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
                     disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
+                    placeholder="Will auto-generate from first and last name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="employee_id">Employee ID</Label>
+                  <Input
+                    id="employee_id"
+                    value={formData.employee_id}
+                    onChange={(e) => handleInputChange('employee_id', e.target.value)}
+                    disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) => handleInputChange('position', e.target.value)}
+                    disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
                   />
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* Work Information */}
+          {/* Work Information Tab */}
+          <TabsContent value="work" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Work Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="company">Company</Label>
+                  <Label htmlFor="company">Company *</Label>
                   <Select
-                    value={editedUser.company}
-                    onValueChange={(value) => setEditedUser({ ...editedUser, company: value })}
+                    value={formData.company || ''}
+                    onValueChange={(value) => handleInputChange('company', value as 'BGC' | 'KENT')}
                     disabled={!editMode}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                      <SelectValue placeholder="Select company" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BGC">
-                        <div className="flex items-center gap-2">
-                          <img src="/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png" alt="BGC" className="w-4 h-4" />
-                          Basrah Gas Company (BGC)
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="KENT">
-                        <div className="flex items-center gap-2">
-                          <img src="/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" alt="KENT" className="w-4 h-4" />
-                          Kent Engineering
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="CONTRACTOR">Contractor</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
+                      {companies.map((company) => (
+                        <SelectItem key={company.value} value={company.value}>
+                          <div className="flex items-center gap-2">
+                            <img src={company.logo} alt={company.value} className="w-4 h-4" />
+                            {company.label}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="job_title">Job Title</Label>
+                    <Input
+                      id="job_title"
+                      value={formData.job_title}
+                      onChange={(e) => handleInputChange('job_title', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="department">Department</Label>
+                    <Input
+                      id="department"
+                      value={formData.department}
+                      onChange={(e) => handleInputChange('department', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="job_title">Job Title</Label>
+                  <Label htmlFor="role">Role</Label>
                   <Input
-                    id="job_title"
-                    value={editedUser.job_title}
-                    onChange={(e) => setEditedUser({ ...editedUser, job_title: e.target.value })}
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) => handleInputChange('role', e.target.value)}
                     disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="system_role">System Role</Label>
                   <Select
-                    value={editedUser.system_role}
-                    onValueChange={(value) => setEditedUser({ ...editedUser, system_role: value })}
+                    value={systemRole}
+                    onValueChange={setSystemRole}
                     disabled={!editMode}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-popover border shadow-lg z-50">
+                    <SelectContent>
                       {systemRoles.map((role) => (
                         <SelectItem key={role.value} value={role.value}>
                           {role.label}
@@ -598,290 +650,307 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div>
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    value={editedUser.department}
-                    onChange={(e) => setEditedUser({ ...editedUser, department: e.target.value })}
-                    disabled={!editMode}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="employee_id">Employee ID</Label>
-                  <Input
-                    id="employee_id"
-                    value={editedUser.employee_id}
-                    onChange={(e) => setEditedUser({ ...editedUser, employee_id: e.target.value })}
-                    disabled={!editMode}
-                    placeholder="Enter employee ID"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Input
-                    id="role"
-                    value={editedUser.role}
-                    onChange={(e) => setEditedUser({ ...editedUser, role: e.target.value })}
-                    disabled={!editMode}
-                    placeholder="Enter role/position"
-                  />
-                </div>
+
+                {/* TA2 Fields - only show if relevant */}
+                {formData.role?.toLowerCase().includes('technical authority') && (
+                  <>
+                    <div>
+                      <Label htmlFor="ta2_discipline">TA2 Discipline</Label>
+                      <Select
+                        value={formData.ta2_discipline}
+                        onValueChange={(value) => handleInputChange('ta2_discipline', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select discipline" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ta2Disciplines.map((discipline) => (
+                            <SelectItem key={discipline.value} value={discipline.value}>
+                              {discipline.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ta2_commission">TA2 Commission</Label>
+                      <Select
+                        value={formData.ta2_commission}
+                        onValueChange={(value) => handleInputChange('ta2_commission', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select commission" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ta2Commissions.map((commission) => (
+                            <SelectItem key={commission.value} value={commission.value}>
+                              {commission.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* Roles and Projects */}
+          {/* Contact Information Tab */}
+          <TabsContent value="contact" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Roles and Projects</CardTitle>
+                <CardTitle>Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Roles</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {user.roles?.map(role => (
-                      <Badge key={role} variant="secondary">{role}</Badge>
-                    ))}
-                  </div>
+                  <Label htmlFor="email">Work Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
+                  />
                 </div>
-                
-                <div>
-                  <Label>Projects</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {user.projects?.map(project => (
-                      <Badge key={project} variant="outline">{project}</Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <Label>Manager</Label>
-                  <Input value={user.manager_name || 'No manager assigned'} disabled />
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Account Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={editedUser.status}
-                    onValueChange={(value) => setEditedUser({ ...editedUser, status: value })}
+                  <Label htmlFor="personal_email">Personal Email</Label>
+                  <Input
+                    id="personal_email"
+                    type="email"
+                    value={formData.personal_email}
+                    onChange={(e) => handleInputChange('personal_email', e.target.value)}
                     disabled={!editMode}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="pending_approval">Pending Approval</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label>SSO Enabled</Label>
-                  <Switch
-                    checked={editedUser.sso_enabled}
-                    onCheckedChange={(checked) => setEditedUser({ ...editedUser, sso_enabled: checked })}
-                    disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
                   />
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label>Two-Factor Authentication</Label>
-                  <Switch
-                    checked={editedUser.two_factor_enabled}
-                    onCheckedChange={(checked) => setEditedUser({ ...editedUser, two_factor_enabled: checked })}
+
+                <div>
+                  <Label htmlFor="functional_email_address">Functional Email</Label>
+                  <Input
+                    id="functional_email_address"
+                    type="email"
+                    value={formData.functional_email_address}
+                    onChange={(e) => handleInputChange('functional_email_address', e.target.value)}
                     disabled={!editMode}
+                    className={!editMode ? 'bg-muted' : ''}
                   />
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label>Password Change Required</Label>
-                  <Switch
-                    checked={editedUser.password_change_required}
-                    onCheckedChange={(checked) => setEditedUser({ ...editedUser, password_change_required: checked })}
-                    disabled={!editMode}
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="country_code">Country Code</Label>
+                    <Select
+                      value={formData.country_code}
+                      onValueChange={(value) => handleInputChange('country_code', value)}
+                      disabled={!editMode}
+                    >
+                      <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+964">+964 (Iraq)</SelectItem>
+                        <SelectItem value="+1">+1 (US/Canada)</SelectItem>
+                        <SelectItem value="+44">+44 (UK)</SelectItem>
+                        <SelectItem value="+31">+31 (Netherlands)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="phone_number">Primary Phone</Label>
+                    <Input
+                      id="phone_number"
+                      value={formData.phone_number}
+                      onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="primary_phone">Alternative Phone 1</Label>
+                    <Input
+                      id="primary_phone"
+                      value={formData.primary_phone}
+                      onChange={(e) => handleInputChange('primary_phone', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="secondary_phone">Alternative Phone 2</Label>
+                    <Input
+                      id="secondary_phone"
+                      value={formData.secondary_phone}
+                      onChange={(e) => handleInputChange('secondary_phone', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Security Information</CardTitle>
+                <CardTitle>Security Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="status">Account Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => handleInputChange('status', value)}
+                    disabled={!editMode}
+                  >
+                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          <span className={status.color}>{status.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="sso_enabled">SSO Enabled</Label>
+                      <p className="text-sm text-muted-foreground">Enable single sign-on for this user</p>
+                    </div>
+                    <Switch
+                      id="sso_enabled"
+                      checked={formData.sso_enabled}
+                      onCheckedChange={(checked) => handleInputChange('sso_enabled', checked)}
+                      disabled={!editMode}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="two_factor_enabled">Two-Factor Authentication</Label>
+                      <p className="text-sm text-muted-foreground">Require 2FA for login</p>
+                    </div>
+                    <Switch
+                      id="two_factor_enabled"
+                      checked={formData.two_factor_enabled}
+                      onCheckedChange={(checked) => handleInputChange('two_factor_enabled', checked)}
+                      disabled={!editMode}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="password_change_required">Password Change Required</Label>
+                      <p className="text-sm text-muted-foreground">Force password change on next login</p>
+                    </div>
+                    <Switch
+                      id="password_change_required"
+                      checked={formData.password_change_required}
+                      onCheckedChange={(checked) => handleInputChange('password_change_required', checked)}
+                      disabled={!editMode}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="functional_email">Has Functional Email</Label>
+                      <p className="text-sm text-muted-foreground">User has a functional email setup</p>
+                    </div>
+                    <Switch
+                      id="functional_email"
+                      checked={formData.functional_email}
+                      onCheckedChange={(checked) => handleInputChange('functional_email', checked)}
+                      disabled={!editMode}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label>Last Login</Label>
+                    <p className="text-muted-foreground">{formatDate(user.last_login_at)}</p>
+                  </div>
                   <div>
                     <Label>Login Attempts</Label>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={user.login_attempts > 3 ? "destructive" : "secondary"}>
-                        {user.login_attempts} attempts
-                      </Badge>
-                      {user.login_attempts > 0 && (
-                        <Button variant="outline" size="sm" onClick={handleUnlockUser} disabled={loading}>
-                          Reset
-                        </Button>
-                      )}
-                    </div>
+                    <p className="text-muted-foreground">{user.login_attempts || 0}</p>
                   </div>
-                  
                   <div>
-                    <Label>Account Lock Status</Label>
-                    <div>
-                      {user.locked_until ? (
-                        <Badge variant="destructive">
-                          Locked until {formatDate(user.locked_until)}
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Not locked</Badge>
-                      )}
-                    </div>
+                    <Label>Locked Until</Label>
+                    <p className="text-muted-foreground">{formatDate(user.locked_until)}</p>
                   </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <Label>Password Management</Label>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" onClick={handleResetPassword} disabled={loading}>
-                      Send Password Reset
-                    </Button>
+                  <div>
+                    <Label>Last Activity</Label>
+                    <p className="text-muted-foreground">{formatDate(user.last_activity)}</p>
                   </div>
-                  {user.password_change_required && (
-                    <p className="text-sm text-orange-600">
-                      User is required to change password on next login
-                    </p>
-                  )}
-                </div>
-                
-                <Separator />
-                
-                <div>
-                  <Label>Account Creation</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Created on {formatDate(user.created_at)}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label>Last Login</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(user.last_login_at)}
-                  </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Activity Tab */}
           <TabsContent value="activity" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {activityLogs.length > 0 ? (
-                    activityLogs.map((log) => (
+                {activityLogs.length > 0 ? (
+                  <div className="space-y-3">
+                    {activityLogs.map((log) => (
                       <div key={log.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                        <div className="flex-shrink-0">
-                          {log.activity_type === 'login' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                          {log.activity_type === 'failed_login' && <XCircle className="h-5 w-5 text-red-500" />}
-                          {log.activity_type === 'password_reset_requested' && <AlertTriangle className="h-5 w-5 text-yellow-500" />}
-                          {log.activity_type === 'status_changed' && <Settings className="h-5 w-5 text-blue-500" />}
-                        </div>
+                        <Activity className="h-4 w-4 mt-1 text-muted-foreground" />
                         <div className="flex-1">
-                          <p className="text-sm font-medium">{log.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(log.created_at)}
-                          </p>
-                          {log.metadata && (
-                            <pre className="text-xs text-muted-foreground mt-1 bg-muted p-2 rounded">
-                              {JSON.stringify(log.metadata, null, 2)}
-                            </pre>
-                          )}
+                          <p className="text-sm font-medium">{log.activity_type}</p>
+                          <p className="text-sm text-muted-foreground">{log.description}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(log.created_at)}</p>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">No activity logs found</p>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">No activity logs found</p>
+                )}
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="sessions" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Active Sessions</CardTitle>
               </CardHeader>
               <CardContent>
                 {userSessions.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Session</TableHead>
-                        <TableHead>Last Activity</TableHead>
-                        <TableHead>SSO Provider</TableHead>
-                        <TableHead>IP Address</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {userSessions.map((session) => (
-                        <TableRow key={session.id}>
-                          <TableCell>
-                            <div>
-                              <p className="text-sm font-medium">
-                                Session {session.id.slice(0, 8)}...
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Created {formatDate(session.created_at)}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {formatDate(session.last_activity)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {session.sso_provider ? (
-                              <Badge variant="outline">{session.sso_provider}</Badge>
-                            ) : (
-                              <span className="text-muted-foreground">Email/Password</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <code className="text-xs">{session.ip_address}</code>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">
-                              Revoke
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <div className="space-y-3">
+                    {userSessions.map((session) => (
+                      <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">Session {session.id.slice(0, 8)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            IP: {session.ip_address} • Last active: {formatDate(session.last_activity)}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-green-600">Active</Badge>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-muted-foreground">No active sessions found</p>
+                  <p className="text-center text-muted-foreground py-8">No active sessions</p>
                 )}
               </CardContent>
             </Card>

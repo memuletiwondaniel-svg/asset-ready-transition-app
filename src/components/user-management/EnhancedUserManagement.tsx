@@ -56,7 +56,7 @@ interface User {
   full_name: string;
   first_name: string;
   last_name: string;
-  company: string;
+  company: 'BGC' | 'KENT' | string;
   employee_id: string;
   job_title: string;
   department: string;
@@ -80,6 +80,12 @@ interface User {
   ta2_discipline?: string;
   ta2_commission?: string;
   functional_email_address?: string;
+  personal_email?: string;
+  functional_email?: boolean;
+  primary_phone?: string;
+  secondary_phone?: string;
+  country_code?: string;
+  position?: string;
 }
 
 interface ColumnConfig {
@@ -385,7 +391,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover border shadow-lg z-50">
               <DropdownMenuItem 
-                onClick={() => setSelectedUser(user)}
+                onClick={() => setSelectedUser(user as any)}
                 className="cursor-pointer"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -799,7 +805,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       {/* Modals */}
       {selectedUser && (
         <EnhancedUserDetailsModal
-          user={selectedUser}
+          user={selectedUser as any}
           isOpen={!!selectedUser}
           onClose={() => setSelectedUser(null)}
           onUserUpdated={fetchUsers}

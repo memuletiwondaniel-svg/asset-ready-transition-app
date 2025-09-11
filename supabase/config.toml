@@ -100,3 +100,7 @@ verify_jwt = false
 # New function to update profile avatar via service role
 [functions.update-user-avatar]
 verify_jwt = false
+
+# New function to update user profile via service role
+[functions.update-user-profile]
+verify_jwt = false
