@@ -394,7 +394,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Company & Role</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Projects</TableHead>
                   <TableHead>Last Activity</TableHead>
@@ -443,16 +444,25 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                             </>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-1">
-                          {user.roles?.map(role => (
-                            <Badge key={role} variant="outline" className="text-xs">
-                              {role}
-                            </Badge>
-                          ))}
-                        </div>
                         {user.job_title && (
                           <div className="text-xs text-muted-foreground">{user.job_title}</div>
                         )}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles && user.roles.length > 0 ? (
+                            user.roles.map(role => (
+                              <Badge key={role} variant="outline" className="text-xs">
+                                {role}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No Role</span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     
