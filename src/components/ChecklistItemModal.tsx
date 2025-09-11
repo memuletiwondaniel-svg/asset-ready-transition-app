@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload, X, Users, Plus, Trash2, UserCheck } from 'lucide-react';
-import { ChecklistItem } from '@/data/pssrChecklistData';
+import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface ChecklistItemModalProps {
   isOpen: boolean;

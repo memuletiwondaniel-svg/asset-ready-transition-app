@@ -107,12 +107,12 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
         description: item.description,
         category: item.category,
         topic: item.topic || '',
-        supporting_evidence: item.supporting_evidence || '',
+        required_evidence: item.required_evidence || '',
         is_active: item.is_active,
       });
       
-      setSelectedResponsibleParty(item.responsible_party || '');
-      setSelectedApprovers(item.approving_authority ? item.approving_authority.split(', ') : []);
+      setSelectedResponsibleParty(item.responsible || '');
+      setSelectedApprovers(item.Approver ? item.Approver.split(', ') : []);
     }
   }, [item]);
 
@@ -136,12 +136,12 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
 
     const updateData: UpdateChecklistItemData = {
       ...formData,
-      responsible_party: selectedResponsibleParty || null,
-      approving_authority: selectedApprovers.join(', ') || null,
+      responsible: selectedResponsibleParty || null,
+      Approver: selectedApprovers.join(', ') || null,
     };
 
     updateChecklistItem(
-      { itemId: item.id, updateData },
+      { uniqueId: item.unique_id, updateData },
       {
         onSuccess: () => {
           toast({
@@ -196,7 +196,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
             <DialogTitle className="flex items-center space-x-3">
               <div className="relative">
                 <Badge variant="outline" className="font-mono text-base px-3 py-2 bg-primary/10 border-primary/30 text-primary font-semibold backdrop-blur-sm shadow-md">
-                  {item?.id}
+                  {item?.unique_id}
                 </Badge>
                 <div className="absolute inset-0 bg-primary/5 rounded-md blur-sm"></div>
               </div>
@@ -286,23 +286,23 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
 
             {/* Supporting Evidence */}
             <div className="space-y-4">
-              <Label htmlFor="supporting_evidence" className="text-xl font-semibold flex items-center gap-3">
-                <div className="p-3 bg-blue-100/50 rounded-lg backdrop-blur-sm shadow-md">
-                  <Shield className="h-6 w-6 text-blue-600" />
+                <Label htmlFor="required_evidence" className="text-xl font-semibold flex items-center gap-3">
+                  <div className="p-3 bg-blue-100/50 rounded-lg backdrop-blur-sm shadow-md">
+                    <Shield className="h-6 w-6 text-blue-600" />
+                  </div>
+                  Evidence Guidance
+                </Label>
+                <div className="relative">
+                  <Textarea
+                    id="required_evidence"
+                    value={formData.required_evidence || ''}
+                    onChange={(e) => updateFormData('required_evidence', e.target.value)}
+                    placeholder="Enter evidence requirements..."
+                    rows={3}
+                    className="border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50 transition-all duration-300 text-lg p-4"
+                  />
+                  <div className="absolute inset-0 rounded-md bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
                 </div>
-                Supporting Evidence
-              </Label>
-              <div className="relative">
-                <Textarea
-                  id="supporting_evidence"
-                  value={formData.supporting_evidence || ''}
-                  onChange={(e) => updateFormData('supporting_evidence', e.target.value)}
-                  placeholder="Enter supporting evidence requirements..."
-                  rows={3}
-                  className="border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50 transition-all duration-300 text-lg p-4"
-                />
-                <div className="absolute inset-0 rounded-md bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
-              </div>
             </div>
 
             {/* User Assignment Grid */}

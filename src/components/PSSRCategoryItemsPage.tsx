@@ -19,8 +19,7 @@ import {
   Cog,
   Filter
 } from 'lucide-react';
-import { ChecklistItem } from '@/data/pssrChecklistData';
-import { useChecklistItems } from '@/hooks/useChecklistItems';
+import { ChecklistItem, useChecklistItems } from '@/hooks/useChecklistItems';
 import ChecklistItemModal from './ChecklistItemModal';
 
 interface ChecklistItemStatus {
@@ -54,11 +53,11 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
   const filteredItems = checklistItems.filter(item => {
     const matchesCategory = item.category === categoryName;
     const matchesSearch = item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.id.toLowerCase().includes(searchTerm.toLowerCase());
+                         item.unique_id.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesFilter = true;
     if (filterStatus !== 'all') {
-      const status = getItemStatus(item.id);
+      const status = getItemStatus(item.unique_id);
       if (filterStatus === 'pending') {
         matchesFilter = !status || status.status === 'DRAFT';
       } else if (filterStatus === 'review') {
@@ -151,7 +150,7 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
     const categoryItems = checklistItems.filter(item => item.category === categoryName);
     const total = categoryItems.length;
     const completed = categoryItems.filter(item => {
-      const status = getItemStatus(item.id);
+      const status = getItemStatus(item.unique_id);
       return status?.status === 'APPROVED' || status?.status === 'NOT APPLICABLE';
     }).length;
     
@@ -245,9 +244,9 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
             </Card>
           ) : (
             filteredItems.map((item) => {
-              const status = getItemStatus(item.id);
+              const status = getItemStatus(item.unique_id);
               return (
-                <Card key={item.id} className={`transition-all duration-200 hover:shadow-lg border-l-4 ${
+                <Card key={item.unique_id} className={`transition-all duration-200 hover:shadow-lg border-l-4 ${
                   status?.status === 'NOT APPLICABLE' ? 'opacity-60 border-l-gray-400' :
                   status?.status === 'APPROVED' ? 'border-l-green-500' :
                   status?.status === 'UNDER REVIEW' ? 'border-l-blue-500' :
@@ -262,7 +261,7 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-3">
-                            <CardTitle className="text-lg font-bold text-gray-900">{item.id}</CardTitle>
+                            <CardTitle className="text-lg font-bold text-gray-900">{item.unique_id}</CardTitle>
                             {getStatusBadge(status)}
                           </div>
                           <p className="text-gray-700 leading-relaxed mb-4">{item.description}</p>
@@ -273,21 +272,21 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
                             </div>
                           )}
                           
-                          <div className="text-sm text-muted-foreground mb-2">
-                            <strong>Supporting Evidence:</strong> {item.supporting_evidence || "Not specified"}
-                          </div>
-                          
-                          {item.responsible_party && (
-                            <div className="text-sm text-muted-foreground mb-2">
-                              <strong>Responsible Party:</strong> {item.responsible_party}
-                            </div>
-                          )}
+              <div className="text-sm text-muted-foreground mb-2">
+                <strong>Evidence Guidance:</strong> {item.required_evidence || "Not specified"}
+              </div>
+              
+              {item.responsible && (
+                <div className="text-sm text-muted-foreground mb-2">
+                  <strong>Responsible:</strong> {item.responsible}
+                </div>
+              )}
                           
                           <div className="flex items-center space-x-4 text-sm">
                             <div className="flex items-center space-x-2">
                               <Users className="h-4 w-4 text-blue-600" />
-                              <span className="text-gray-600 font-medium">Approvers:</span>
-                              <span className="text-gray-700">{item.approving_authority || "Not specified"}</span>
+                <span className="text-gray-600 font-medium">Approvers:</span>
+                <span className="text-gray-700">{item.Approver || "Not specified"}</span>
                             </div>
                           </div>
                         </div>

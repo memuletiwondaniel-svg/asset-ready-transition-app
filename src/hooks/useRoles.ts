@@ -54,7 +54,8 @@ export const useTA2Disciplines = (commission?: string) => {
         .eq('is_active', true);
       
       if (commission) {
-        query = query.eq('ta2_commission', commission);
+        // Use filter to avoid TS enum narrowing issues
+        query = query.filter('ta2_commission', 'eq', commission as any);
       }
       
       const { data, error } = await query;
