@@ -79,10 +79,6 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       newErrors.description = 'Checklist question is required';
     }
 
-    if (!formData.evidenceGuidance.trim()) {
-      newErrors.evidenceGuidance = 'Evidence guidance is required';
-    }
-
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
@@ -93,10 +89,6 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
     if (!formData.responsible) {
       newErrors.responsible = 'Responsible party is required';
-    }
-
-    if (!formData.topic.trim()) {
-      newErrors.topic = 'Topic is required';
     }
 
     setErrors(newErrors);
@@ -300,11 +292,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
             {/* Evidence Guidance */}
             <div className="space-y-3">
               <Label htmlFor="evidenceGuidance" className="text-sm font-medium flex items-center gap-2">
-                Evidence Guidance <span className="text-destructive">*</span>
+                Evidence Guidance
               </Label>
               <Textarea
                 id="evidenceGuidance"
-                placeholder="Describe what evidence or documentation is required..."
+                placeholder="Describe what evidence or documentation is required (optional)..."
                 value={formData.evidenceGuidance}
                 onChange={(e) => updateFormData('evidenceGuidance', e.target.value)}
                 className="min-h-[80px] resize-none fluent-input"
@@ -349,11 +341,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
               <div className="space-y-3">
                 <Label htmlFor="topic" className="text-sm font-medium flex items-center gap-2">
-                  Topic <span className="text-destructive">*</span>
+                  Topic
                 </Label>
                 <Input
                   id="topic"
-                  placeholder="Enter topic (e.g., Electrical Safety)"
+                  placeholder="Enter topic (e.g., Electrical Safety) - Optional"
                   value={formData.topic}
                   onChange={(e) => updateFormData('topic', e.target.value)}
                   className="fluent-input"
