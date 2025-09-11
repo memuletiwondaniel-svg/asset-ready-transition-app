@@ -529,12 +529,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                   
                   {formData.role && (
                     <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm">
-                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-normal text-muted-foreground/70 uppercase tracking-wider">Selected Role</span>
-                          <span className="text-sm font-semibold text-foreground">{formData.role}</span>
-                        </div>
+                        <span className="text-sm font-semibold text-foreground">{formData.role}</span>
                       </div>
                       <Button
                         variant="ghost"
