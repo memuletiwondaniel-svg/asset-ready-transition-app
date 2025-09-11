@@ -428,10 +428,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <TableHead>Company</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Projects</TableHead>
                   <TableHead>Last Activity</TableHead>
-                  <TableHead>Actions</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -472,38 +469,43 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="flex items-center text-sm">
+                        <div className="flex items-center text-sm whitespace-nowrap truncate max-w-[200px]">
                           {user.company === 'BGC' ? (
                             <>
-                              <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1" />
-                              Basrah Gas Company (BGC)
+                              <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">Basrah Gas Company (BGC)</span>
                             </>
                           ) : (
                             <>
-                              <Building className="h-3 w-3 mr-1" />
-                              {user.company || 'No Company'}
+                              <Building className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{user.company || 'No Company'}</span>
                             </>
                           )}
                         </div>
                         {user.job_title && (
-                          <div className="text-xs text-muted-foreground">{user.job_title}</div>
+                          <div className="text-xs text-muted-foreground truncate max-w-[200px]">{user.job_title}</div>
                         )}
                       </div>
                     </TableCell>
                     
                     <TableCell>
-                      <div className="space-y-1">
+                      <div className="space-y-1 max-w-[180px]">
                         <div className="space-y-1">
                           {user.role && (
-                            <div className="text-sm font-medium">{user.role}</div>
+                            <div className="text-sm font-medium whitespace-nowrap truncate">{user.role}</div>
                           )}
                           <div className="flex flex-wrap gap-1">
                             {user.roles && user.roles.length > 0 && user.roles[0] !== null && (
-                              user.roles.map(role => (
-                                <Badge key={role} variant="outline" className="text-xs">
+                              user.roles.slice(0, 1).map(role => (
+                                <Badge key={role} variant="outline" className="text-xs whitespace-nowrap">
                                   System: {role}
                                 </Badge>
                               ))
+                            )}
+                            {user.roles && user.roles.length > 1 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{user.roles.length - 1}
+                              </Badge>
                             )}
                           </div>
                         </div>
@@ -526,22 +528,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     </TableCell>
                     
                     <TableCell>
-                      <div className="space-y-1">
-                        {user.projects?.slice(0, 2).map(project => (
-                          <Badge key={project} variant="secondary" className="text-xs block w-fit">
-                            {project}
-                          </Badge>
-                        ))}
-                        {user.projects?.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{user.projects.length - 2} more
-                          </Badge>
-                        )}
-                        {getPendingActionsBadge(user.pending_actions)}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
                       <div className="text-sm">
                         {getLastActivityText(user.last_activity, user.last_login_at)}
                       </div>
@@ -550,43 +536,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                           {user.login_attempts} failed attempts
                         </div>
                       )}
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedUser(user)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem 
-                            onClick={() => setSelectedUser(user)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteUser(user)}
-                            className="cursor-pointer text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
