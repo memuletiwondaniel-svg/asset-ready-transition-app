@@ -283,31 +283,46 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                     value={formData.countryCode}
                     onValueChange={(value) => handleInputChange("countryCode", value)}
                   >
-                    <SelectTrigger className="w-36">
+                    <SelectTrigger className="w-40">
                       <SelectValue>
                         <div className="flex items-center gap-2">
-                          <span className="text-base font-emoji">
-                            {countryCodes.find(c => c.code === formData.countryCode)?.flag || "🌍"}
-                          </span>
-                          <span className="text-sm font-mono">{formData.countryCode}</span>
+                          <div 
+                            className="flex items-center justify-center w-[24px] h-[16px] text-center border border-border/20 rounded-sm bg-muted/30"
+                            style={{ 
+                              fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji", "EmojiOne", sans-serif',
+                              fontSize: '14px',
+                              lineHeight: '16px'
+                            }}
+                          >
+                            <span className="block leading-none">
+                              {countryCodes.find(c => c.code === formData.countryCode)?.flag || "🌍"}
+                            </span>
+                          </div>
+                          <span className="text-sm font-mono font-semibold">{formData.countryCode}</span>
                         </div>
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="max-h-60 overflow-y-auto bg-popover border shadow-lg z-50">
                       {countryCodes.map((country) => (
-                        <SelectItem key={country.code} value={country.code} className="cursor-pointer py-2">
+                        <SelectItem key={country.code} value={country.code} className="cursor-pointer py-2 hover:bg-accent">
                           <div className="flex items-center gap-3 w-full">
-                            <span 
-                              className="text-lg font-emoji min-w-[24px] text-center leading-none"
+                            <div 
+                              className="flex items-center justify-center min-w-[28px] h-[20px] text-center border border-border/20 rounded-sm bg-muted/30"
                               style={{ 
-                                fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne", sans-serif',
-                                fontSize: '18px'
+                                fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji", "EmojiOne", sans-serif',
+                                fontSize: '16px',
+                                lineHeight: '20px'
                               }}
+                              title={`${country.country} flag`}
                             >
-                              {country.flag}
+                              <span className="block leading-none">{country.flag}</span>
+                            </div>
+                            <span className="text-sm font-mono font-semibold min-w-[60px] text-foreground">
+                              {country.code}
                             </span>
-                            <span className="text-sm font-mono font-medium min-w-[60px]">{country.code}</span>
-                            <span className="text-sm text-muted-foreground truncate flex-1">{country.country}</span>
+                            <span className="text-sm text-muted-foreground truncate flex-1">
+                              {country.country}
+                            </span>
                           </div>
                         </SelectItem>
                       ))}
