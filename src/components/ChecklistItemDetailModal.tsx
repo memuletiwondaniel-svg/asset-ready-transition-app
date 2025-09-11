@@ -95,7 +95,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
     try {
       // Prepare approvers string
       const approversString = selectedApprovers.map(approver => {
-        if (approver === 'technical_authority' && ta2Selections[approver]) {
+        if (approver === 'Technical Authority (TA2)' && ta2Selections[approver]) {
           const { discipline, commission } = ta2Selections[approver];
           return `TA2 ${discipline} (${commission})`;
         }
@@ -163,7 +163,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
       const newApprovers = [...selectedApprovers, approver];
       setSelectedApprovers(newApprovers);
       
-      if (approver === 'technical_authority') {
+      if (approver === 'Technical Authority (TA2)') {
         setShowTA2Fields(prev => ({ ...prev, [approver]: true }));
       }
     }
@@ -366,7 +366,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         </div>
                         
                         {/* TA2 Fields */}
-                        {approver === 'technical_authority' && showTA2Fields[approver] && (
+                        {approver === 'Technical Authority (TA2)' && showTA2Fields[approver] && (
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                               <Label className="text-xs font-medium text-gray-600">Commission</Label>

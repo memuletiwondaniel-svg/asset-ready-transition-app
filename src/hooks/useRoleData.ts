@@ -17,20 +17,20 @@ export const useRoles = () => {
     queryKey: ['roles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_enhanced_user_management_data')
+        .from('profiles')
         .select('role')
-        .limit(100);
+        .not('role', 'is', null)
+        .eq('is_active', true)
+        .order('role');
 
       if (error) throw error;
 
       // Get unique roles and format them
-      const roles = ['admin', 'manager', 'engineer', 'safety_officer', 'technical_authority', 'user'];
+      const uniqueRoles = [...new Set(data.map(item => item.role))];
       
-      const roleOptions: RoleOption[] = roles.map(role => ({
+      const roleOptions: RoleOption[] = uniqueRoles.map(role => ({
         value: role,
-        label: role.split('_').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ')
+        label: role
       }));
 
       return roleOptions;
@@ -42,10 +42,22 @@ export const useCommissions = () => {
   return useQuery({
     queryKey: ['commissions'],
     queryFn: async () => {
-      return [
-        { value: 'Asset', label: 'Asset' },
-        { value: 'Project and Engineering', label: 'Project and Engineering' }
-      ];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('ta2_commission')
+        .not('ta2_commission', 'is', null)
+        .eq('is_active', true)
+        .order('ta2_commission');
+
+      if (error) throw error;
+
+      // Get unique commissions and format them
+      const uniqueCommissions = [...new Set(data.map(item => item.ta2_commission))];
+      
+      return uniqueCommissions.map(commission => ({
+        value: commission,
+        label: commission
+      }));
     },
   });
 };
@@ -54,13 +66,22 @@ export const useDisciplines = () => {
   return useQuery({
     queryKey: ['disciplines'],
     queryFn: async () => {
-      return [
-        { value: 'Civil', label: 'Civil' },
-        { value: 'Static', label: 'Static' },
-        { value: 'PACO', label: 'PACO' },
-        { value: 'Process', label: 'Process' },
-        { value: 'Technical Safety', label: 'Technical Safety' }
-      ];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('ta2_discipline')
+        .not('ta2_discipline', 'is', null)
+        .eq('is_active', true)
+        .order('ta2_discipline');
+
+      if (error) throw error;
+
+      // Get unique disciplines and format them
+      const uniqueDisciplines = [...new Set(data.map(item => item.ta2_discipline))];
+      
+      return uniqueDisciplines.map(discipline => ({
+        value: discipline,
+        label: discipline
+      }));
     },
   });
 };
