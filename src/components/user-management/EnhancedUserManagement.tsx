@@ -133,7 +133,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
 
       const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
       const matchesCompany = companyFilter === 'all' || user.company === companyFilter;
-      const matchesRole = roleFilter === 'all' || user.roles?.includes(roleFilter);
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
 
       return matchesSearch && matchesStatus && matchesCompany && matchesRole;
     });
@@ -267,7 +267,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   };
 
   const companies = Array.from(new Set(users.map(user => user.company).filter(Boolean)));
-  const roles = Array.from(new Set(users.flatMap(user => user.roles || [])));
+  const roles = Array.from(new Set(users.map(user => user.role).filter(Boolean)));
 
   if (loading) {
     return (
