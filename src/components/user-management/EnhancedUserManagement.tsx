@@ -429,6 +429,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Activity</TableHead>
+                  <TableHead className="w-[50px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -469,21 +470,21 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="flex items-center text-sm whitespace-nowrap truncate max-w-[200px]">
+                        <div className="flex items-center text-sm">
                           {user.company === 'BGC' ? (
                             <>
                               <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
-                              <span className="truncate">Basrah Gas Company (BGC)</span>
+                              <span>Basrah Gas Company (BGC)</span>
                             </>
                           ) : (
                             <>
                               <Building className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="truncate">{user.company || 'No Company'}</span>
+                              <span>{user.company || 'No Company'}</span>
                             </>
                           )}
                         </div>
                         {user.job_title && (
-                          <div className="text-xs text-muted-foreground truncate max-w-[200px]">{user.job_title}</div>
+                          <div className="text-xs text-muted-foreground">{user.job_title}</div>
                         )}
                       </div>
                     </TableCell>
@@ -536,6 +537,39 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                           {user.login_attempts} failed attempts
                         </div>
                       )}
+                    </TableCell>
+                    
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover border shadow-lg z-50">
+                          <DropdownMenuItem 
+                            onClick={() => setSelectedUser(user)}
+                            className="cursor-pointer"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => setSelectedUser(user)}
+                            className="cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteUser(user)}
+                            className="cursor-pointer text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
