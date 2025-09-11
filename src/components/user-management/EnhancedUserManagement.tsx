@@ -121,7 +121,13 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     let filtered = users.filter(user => {
       const matchesSearch = !searchQuery || 
         user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.functional_email_address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.phone_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.projects?.some(project => project.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -431,7 +437,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <TableHead>Company</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>System Role</TableHead>
-                  <TableHead>Functional Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Activity</TableHead>
                   <TableHead className="w-[50px]">Actions</TableHead>
@@ -476,26 +481,26 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                       </div>
                     </TableCell>
                     
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center text-sm">
-                          {user.company === 'BGC' ? (
-                            <>
-                              <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
-                              <span>Basrah Gas Company (BGC)</span>
-                            </>
-                          ) : (
-                            <>
-                              <Building className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span>{user.company || 'No Company'}</span>
-                            </>
-                          )}
-                        </div>
-                        {user.job_title && (
-                          <div className="text-xs text-muted-foreground">{user.job_title}</div>
-                        )}
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="space-y-1">
+                         <div className="flex items-center text-sm whitespace-nowrap">
+                           {user.company === 'BGC' ? (
+                             <>
+                               <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
+                               <span className="truncate">Basrah Gas Company (BGC)</span>
+                             </>
+                           ) : (
+                             <>
+                               <Building className="h-3 w-3 mr-1 flex-shrink-0" />
+                               <span className="truncate">{user.company || 'No Company'}</span>
+                             </>
+                           )}
+                         </div>
+                         {user.job_title && (
+                           <div className="text-xs text-muted-foreground truncate">{user.job_title}</div>
+                         )}
+                       </div>
+                     </TableCell>
                     
                     <TableCell>
                       <div className="space-y-1">
