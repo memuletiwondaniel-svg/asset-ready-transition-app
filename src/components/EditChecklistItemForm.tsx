@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, AlertCircle, Plus, Trash2, X } from 'lucide-react';
-import { ChecklistItem } from '@/data/pssrChecklistData';
+import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface EditChecklistItemFormProps {
   item: ChecklistItem;

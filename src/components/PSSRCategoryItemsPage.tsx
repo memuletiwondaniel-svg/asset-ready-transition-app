@@ -19,7 +19,7 @@ import {
   Cog,
   Filter
 } from 'lucide-react';
-import { ChecklistItem } from '@/data/pssrChecklistData';
+import { ChecklistItem } from '@/hooks/useChecklistItems';
 import { useChecklistItems } from '@/hooks/useChecklistItems';
 import ChecklistItemModal from './ChecklistItemModal';
 
