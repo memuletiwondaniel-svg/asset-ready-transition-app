@@ -13,7 +13,7 @@ export const useChecklistItems = () => {
         .select('*')
         .eq('is_active', true)
         .order('category', { ascending: true })
-        .order('id', { ascending: true });
+        .order('description', { ascending: true });
 
       if (error) throw error;
       return data;
