@@ -136,6 +136,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     "Production Director",
     "HSE Director",
     "P&E Director",
+    "Engr. Manager (P&E)",
+    "Engr. Manager (Asset)",
   ];
 
   // Combine base roles with custom roles
@@ -722,21 +724,40 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   {showRoleDropdown && (
                     <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
                       {filteredRoles.length > 0 ? (
-                        filteredRoles.map((role) => (
-                          <Button
-                            key={role}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start text-left hover:bg-accent"
-                            onClick={() => {
-                              handleInputChange("role", role);
-                              setRoleSearch("");
-                              setShowRoleDropdown(false);
-                            }}
-                          >
-                            {role}
-                          </Button>
-                        ))
+                        <>
+                          {filteredRoles.map((role) => (
+                            <Button
+                              key={role}
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start text-left hover:bg-accent"
+                              onClick={() => {
+                                handleInputChange("role", role);
+                                setRoleSearch("");
+                                setShowRoleDropdown(false);
+                              }}
+                            >
+                              {role}
+                            </Button>
+                          ))}
+                          {roleSearch && !filteredRoles.some(role => role.toLowerCase() === roleSearch.toLowerCase()) && (
+                            <div className="border-t mt-2 pt-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => {
+                                  setShowNewRoleInput(true);
+                                  setShowRoleDropdown(false);
+                                  handleInputChange("newRole", roleSearch);
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add "{roleSearch}" as new role
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       ) : roleSearch ? (
                         <div className="p-2 text-center">
                           <p className="text-sm text-muted-foreground mb-2">
@@ -755,7 +776,22 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             Add "{roleSearch}" as new role
                           </Button>
                         </div>
-                      ) : null}
+                      ) : (
+                        <div className="p-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setShowNewRoleInput(true);
+                              setShowRoleDropdown(false);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Custom Role
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                   
