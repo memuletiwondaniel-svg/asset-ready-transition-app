@@ -23,7 +23,12 @@ export const useRoles = () => {
         .eq('is_active', true)
         .order('role');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching roles:', error);
+        throw error;
+      }
+
+      console.log('Raw roles data:', data);
 
       // Get unique roles and format them
       const uniqueRoles = [...new Set(data.map(item => item.role))];
@@ -33,6 +38,13 @@ export const useRoles = () => {
         label: role
       }));
 
+      // Add Technical Authority (TA2) as a special role option
+      roleOptions.push({
+        value: 'Technical Authority (TA2)',
+        label: 'Technical Authority (TA2)'
+      });
+
+      console.log('Formatted role options:', roleOptions);
       return roleOptions;
     },
   });
@@ -49,15 +61,23 @@ export const useCommissions = () => {
         .eq('is_active', true)
         .order('ta2_commission');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching commissions:', error);
+        throw error;
+      }
+
+      console.log('Raw commissions data:', data);
 
       // Get unique commissions and format them
       const uniqueCommissions = [...new Set(data.map(item => item.ta2_commission))];
       
-      return uniqueCommissions.map(commission => ({
+      const commissionOptions = uniqueCommissions.map(commission => ({
         value: commission,
         label: commission
       }));
+
+      console.log('Formatted commission options:', commissionOptions);
+      return commissionOptions;
     },
   });
 };
@@ -73,15 +93,23 @@ export const useDisciplines = () => {
         .eq('is_active', true)
         .order('ta2_discipline');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching disciplines:', error);
+        throw error;
+      }
+
+      console.log('Raw disciplines data:', data);
 
       // Get unique disciplines and format them
       const uniqueDisciplines = [...new Set(data.map(item => item.ta2_discipline))];
       
-      return uniqueDisciplines.map(discipline => ({
+      const disciplineOptions = uniqueDisciplines.map(discipline => ({
         value: discipline,
         label: discipline
       }));
+
+      console.log('Formatted discipline options:', disciplineOptions);
+      return disciplineOptions;
     },
   });
 };

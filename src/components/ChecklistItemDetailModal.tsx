@@ -42,10 +42,15 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const updateMutation = useUpdateChecklistItem();
   
   // Fetch role data
-  const { data: roles = [] } = useRoles();
-  const { data: commissions = [] } = useCommissions();
-  const { data: disciplines = [] } = useDisciplines();
+  const { data: roles = [], isLoading: rolesLoading, error: rolesError } = useRoles();
+  const { data: commissions = [], isLoading: commissionsLoading, error: commissionsError } = useCommissions();
+  const { data: disciplines = [], isLoading: disciplinesLoading, error: disciplinesError } = useDisciplines();
   const { data: ta2Options = [] } = useTA2Options();
+
+  // Debug logging
+  console.log('Roles data:', roles, 'Loading:', rolesLoading, 'Error:', rolesError);
+  console.log('Commissions data:', commissions, 'Loading:', commissionsLoading, 'Error:', commissionsError);
+  console.log('Disciplines data:', disciplines, 'Loading:', disciplinesLoading, 'Error:', disciplinesError);
 
   useEffect(() => {
     if (item) {
