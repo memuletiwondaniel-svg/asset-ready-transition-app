@@ -298,6 +298,11 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <img src="/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" alt="BGC Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
                   <span className="truncate">Basrah Gas Company (BGC)</span>
                 </>
+              ) : user.company === 'KENT' ? (
+                <>
+                  <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-4 w-4 mr-1 flex-shrink-0" />
+                  <span className="truncate">Kent Engineering</span>
+                </>
               ) : (
                 <>
                   <Building className="h-3 w-3 mr-1 flex-shrink-0" />
