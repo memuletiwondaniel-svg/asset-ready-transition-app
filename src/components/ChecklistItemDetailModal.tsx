@@ -375,7 +375,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                               </div>
                             </div>
                           )}
-                          {!editedItem.responsible_party && (
+                          {!editedItem.responsible && (
                             <p className="text-xs text-amber-600 bg-amber-50/50 border border-amber-200/50 rounded-md p-2">
                               💡 Tip: You can search through engineering roles or select an active user. Click the × button to remove your selection.
                             </p>
@@ -385,7 +385,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                         <div className="relative p-4 bg-gradient-to-br from-card/60 to-card/40 rounded-xl border border-border/20 backdrop-blur-sm shadow-lg">
                           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-xl"></div>
                           <p className="text-foreground relative z-10 text-base">
-                            {item.responsible_party || 'Not specified'}
+                            {item.responsible || 'Not specified'}
                           </p>
                         </div>
                       )}
