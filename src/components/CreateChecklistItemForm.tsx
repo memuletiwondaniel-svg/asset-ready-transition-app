@@ -383,6 +383,52 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               </div>
             </div>
 
+            {/* Responsible */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                Responsible <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  placeholder="Search for responsible party..."
+                  value={responsibleSearch}
+                  onChange={(e) => setResponsibleSearch(e.target.value)}
+                  className="fluent-input"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </div>
+              
+              {responsibleSearch && filteredResponsibleRoles.length > 0 && (
+                <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
+                  {filteredResponsibleRoles.map((role) => (
+                    <Button
+                      key={role}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-left"
+                      onClick={() => {
+                        updateFormData('responsible', role);
+                        setResponsibleSearch('');
+                      }}
+                    >
+                      {role}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              
+              {formData.responsible && (
+                <Badge variant="outline">{formData.responsible}</Badge>
+              )}
+              
+              {errors.responsible && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.responsible}
+                </p>
+              )}
+            </div>
+
             {/* Approvers */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
@@ -437,52 +483,6 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
                   {errors.approvers}
-                </p>
-              )}
-            </div>
-
-            {/* Responsible */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                Responsible <span className="text-destructive">*</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  placeholder="Search for responsible party..."
-                  value={responsibleSearch}
-                  onChange={(e) => setResponsibleSearch(e.target.value)}
-                  className="fluent-input"
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-              
-              {responsibleSearch && filteredResponsibleRoles.length > 0 && (
-                <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
-                  {filteredResponsibleRoles.map((role) => (
-                    <Button
-                      key={role}
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-left"
-                      onClick={() => {
-                        updateFormData('responsible', role);
-                        setResponsibleSearch('');
-                      }}
-                    >
-                      {role}
-                    </Button>
-                  ))}
-                </div>
-              )}
-              
-              {formData.responsible && (
-                <Badge variant="outline">{formData.responsible}</Badge>
-              )}
-              
-              {errors.responsible && (
-                <p className="text-sm text-destructive flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
-                  {errors.responsible}
                 </p>
               )}
             </div>
