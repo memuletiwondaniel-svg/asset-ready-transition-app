@@ -65,7 +65,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
       'G.5': 'Upload supporting documents such as Training Records and Competency Matrix'
     };
     
-    return guidanceMap[item.id] || `Upload supporting documents such as ${item.supportingEvidence || 'relevant documentation'}`;
+    return guidanceMap[item.unique_id] || `Upload supporting documents such as ${item.supporting_evidence || 'relevant documentation'}`;
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,12 +84,12 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
   };
 
   const handleSave = () => {
-    onSave(item.id, response, formData);
+    onSave(item.unique_id, response, formData);
     onClose();
   };
 
   const handleSubmit = () => {
-    onSave(item.id, response, { ...formData, submitted: true });
+    onSave(item.unique_id, response, { ...formData, submitted: true });
     onClose();
   };
 
@@ -123,7 +123,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
         );
 
       case 'YES':
-        const defaultApprovers = item.approvingAuthority.split(', ').map(name => getApproverData(name.trim()));
+        const defaultApprovers = item.approving_authority?.split(', ').map(name => getApproverData(name.trim())) || [];
         
         return (
           <div className="space-y-6">
@@ -209,7 +209,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
         );
 
       case 'NO':
-        const deviationApprovers = item.approvingAuthority.split(', ').map(name => getApproverData(name.trim()));
+        const deviationApprovers = item.approving_authority?.split(', ').map(name => getApproverData(name.trim())) || [];
         
         return (
           <div className="space-y-6">
@@ -309,7 +309,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
           {/* Header */}
           <div className="flex-shrink-0 p-8 pb-6 border-b border-border/20 bg-gradient-to-r from-card/20 to-card/10 backdrop-blur-sm">
             <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-              {item.id} - {response} Response
+              {item.unique_id} - {response} Response
             </DialogTitle>
           </div>
 

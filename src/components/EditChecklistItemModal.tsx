@@ -376,9 +376,9 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   </p>
                   <div className="relative">
                     <MultiSelectCombobox
+                      value={selectedApprovers}
+                      onValueChange={setSelectedApprovers}
                       options={approverOptions}
-                      values={selectedApprovers}
-                      onValuesChange={setSelectedApprovers}
                       placeholder="Search and select approving authorities..."
                       searchPlaceholder="Type to search authorities or users..."
                       className="h-12 text-base border-2 border-border/30 bg-card/40 backdrop-blur-sm focus:border-primary/50"

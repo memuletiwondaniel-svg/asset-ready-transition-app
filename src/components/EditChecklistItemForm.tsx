@@ -32,9 +32,9 @@ const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     description: item.description,
-    supportingEvidence: item.supportingEvidence,
+    supportingEvidence: item.supporting_evidence || '',
     category: item.category,
-    approvingAuthority: item.approvingAuthority
+    approvingAuthority: item.approving_authority || ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -118,9 +118,9 @@ const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
       const updatedItem: ChecklistItem = {
         ...item,
         description: formData.description.trim(),
-        supportingEvidence: formData.supportingEvidence.trim(),
+        supporting_evidence: formData.supportingEvidence.trim(),
         category: formData.category,
-        approvingAuthority: formData.approvingAuthority.trim()
+        approving_authority: formData.approvingAuthority.trim()
       };
       onSave(updatedItem);
     }

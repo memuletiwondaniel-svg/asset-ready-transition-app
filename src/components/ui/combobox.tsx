@@ -17,6 +17,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+// Option type used by some components
+export interface ComboboxOption { 
+  value: string; 
+  label: string 
+}
+
 interface ComboboxProps {
   value?: string
   onValueChange?: (value: string) => void
@@ -31,13 +37,11 @@ interface ComboboxProps {
   className?: string
 }
 
-// Option type used by some components
-export interface ComboboxOption { value: string; label: string }
-
 export function Combobox({
   value,
   onValueChange,
   items,
+  options,
   placeholder = "Select item...",
   searchPlaceholder = "Search items...",
   emptyText = "No items found.",
@@ -70,7 +74,7 @@ export function Combobox({
   }
 
   const handleAddCustom = () => {
-    if (searchValue.trim() && !items.includes(searchValue.trim())) {
+    if (searchValue.trim() && !sourceItems.includes(searchValue.trim())) {
       onAddCustom?.(searchValue.trim())
       onValueChange?.(searchValue.trim())
       setOpen(false)
@@ -80,7 +84,7 @@ export function Combobox({
 
   const showAddCustomOption = allowCustom && 
     searchValue.trim() && 
-    !items.some(item => item.toLowerCase() === searchValue.toLowerCase()) &&
+    !sourceItems.some(item => item.toLowerCase() === searchValue.toLowerCase()) &&
     onAddCustom
 
   return (
@@ -166,7 +170,14 @@ interface MultiSelectProps {
   className?: string
 }
 
-export function MultiSelectCombobox({ value, onValueChange, options, placeholder = "Select...", searchPlaceholder = "Search...", className }: MultiSelectProps) {
+export function MultiSelectCombobox({ 
+  value, 
+  onValueChange, 
+  options, 
+  placeholder = "Select...", 
+  searchPlaceholder = "Search...", 
+  className 
+}: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
 

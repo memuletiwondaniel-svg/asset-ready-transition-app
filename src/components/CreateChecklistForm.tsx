@@ -105,13 +105,14 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   }, [allChecklistItems]);
 
   // Get unselected items
-  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.id));
+  const unselectedItems = allChecklistItems.filter(item => !formData.selected_items.includes(item.unique_id));
 
   const handleCreateNewItem = (newItemData: any) => {
     // Generate a new ID
     const newId = `CUST-${String(customChecklistItems.length + 1).padStart(3, '0')}`;
     
     const newItem: DBChecklistItem = {
+      unique_id: newId,
       id: newId,
       description: newItemData.description,
       category: newItemData.category,
@@ -119,6 +120,9 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
       supporting_evidence: newItemData.supportingEvidence || null,
       responsible_party: newItemData.responsibleParty || null,
       approving_authority: newItemData.approvingAuthority || null,
+      required_evidence: newItemData.supportingEvidence || null,
+      responsible: newItemData.responsibleParty || null,
+      Approver: newItemData.approvingAuthority || null,
       is_active: true,
       version: 1,
       created_at: new Date().toISOString(),
@@ -184,9 +188,9 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
 
 const handleItemSave = (updatedItem: DBChecklistItem) => {
     // Update the item in customChecklistItems if it's a custom item
-    if (updatedItem.id.startsWith('CUST-')) {
+    if (updatedItem.unique_id.startsWith('CUST-')) {
       setCustomChecklistItems(prev =>
-        prev.map(item => item.id === updatedItem.id ? updatedItem : item)
+        prev.map(item => item.unique_id === updatedItem.unique_id ? updatedItem : item)
       );
       setSelectedDetailItem(updatedItem);
       setShowDetailModal(false);
@@ -194,7 +198,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
       // Persist changes for database-backed items
       updateChecklistItem(
         {
-          itemId: updatedItem.id,
+          itemId: updatedItem.unique_id,
           updateData: {
             description: updatedItem.description,
             category: updatedItem.category,
@@ -299,23 +303,23 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.supporting_evidence && item.supporting_evidence.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.topic && item.topic.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        item.id.toLowerCase().includes(searchQuery.toLowerCase());
+        item.unique_id.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   };
 
   const getCategoryStats = (categoryItems: DBChecklistItem[]) => {
     const total = categoryItems.length;
-    const selected = categoryItems.filter(item => formData.selected_items.includes(item.id)).length;
+    const selected = categoryItems.filter(item => formData.selected_items.includes(item.unique_id)).length;
     return { total, selected, percentage: total > 0 ? Math.round((selected / total) * 100) : 0 };
   };
 
   // Component to render individual checklist items
   const ChecklistItemCard = ({ item }: { item: DBChecklistItem }) => {
-    const isSelected = formData.selected_items.includes(item.id);
+    const isSelected = formData.selected_items.includes(item.unique_id);
     return (
       <div
-        key={item.id}
+        key={item.unique_id}
         className={`group relative overflow-hidden rounded-xl border transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
           isSelected 
             ? 'border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 shadow-lg shadow-primary/20' 
@@ -348,7 +352,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
             <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 checked={isSelected}
-                onCheckedChange={() => handleItemToggle(item.id)}
+                onCheckedChange={() => handleItemToggle(item.unique_id)}
                 className={`w-5 h-5 rounded-md border-2 transition-all duration-200 ${
                   isSelected 
                     ? 'border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary shadow-md' 
@@ -367,7 +371,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                     : 'bg-primary/10 border-primary/30 text-primary'
                 }`}
               >
-                {item.id}
+                {item.unique_id}
               </Badge>
             </div>
             
