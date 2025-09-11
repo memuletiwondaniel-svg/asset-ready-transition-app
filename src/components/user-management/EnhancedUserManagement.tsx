@@ -453,20 +453,19 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="flex flex-wrap gap-1">
-                          {user.role ? (
-                            <Badge variant="default" className="text-xs">
-                              {user.role}
-                            </Badge>
-                          ) : user.roles && user.roles.length > 0 && user.roles[0] !== null ? (
-                            user.roles.map(role => (
-                              <Badge key={role} variant="outline" className="text-xs">
-                                {role}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-sm">No Role</span>
+                        <div className="space-y-1">
+                          {user.role && (
+                            <div className="text-sm font-medium">{user.role}</div>
                           )}
+                          <div className="flex flex-wrap gap-1">
+                            {user.roles && user.roles.length > 0 && user.roles[0] !== null && (
+                              user.roles.map(role => (
+                                <Badge key={role} variant="outline" className="text-xs">
+                                  System: {role}
+                                </Badge>
+                              ))
+                            )}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
