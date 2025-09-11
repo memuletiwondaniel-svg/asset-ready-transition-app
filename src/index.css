@@ -19,6 +19,13 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+/* Font for emoji flags */
+.font-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols", sans-serif;
+  font-feature-settings: "liga" off;
+}
+}
 @tailwind components;
 @tailwind utilities;
 

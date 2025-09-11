@@ -56,36 +56,36 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
   ];
 
   const countryCodes = [
-    { code: "+964", country: "Iraq", flag: "🇮🇶" },
-    { code: "+1", country: "United States", flag: "🇺🇸" },
-    { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
-    { code: "+971", country: "United Arab Emirates", flag: "🇦🇪" },
-    { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
-    { code: "+965", country: "Kuwait", flag: "🇰🇼" },
-    { code: "+974", country: "Qatar", flag: "🇶🇦" },
-    { code: "+968", country: "Oman", flag: "🇴🇲" },
-    { code: "+973", country: "Bahrain", flag: "🇧🇭" },
-    { code: "+962", country: "Jordan", flag: "🇯🇴" },
-    { code: "+961", country: "Lebanon", flag: "🇱🇧" },
-    { code: "+20", country: "Egypt", flag: "🇪🇬" },
-    { code: "+90", country: "Turkey", flag: "🇹🇷" },
-    { code: "+98", country: "Iran", flag: "🇮🇷" },
-    { code: "+91", country: "India", flag: "🇮🇳" },
-    { code: "+92", country: "Pakistan", flag: "🇵🇰" },
-    { code: "+49", country: "Germany", flag: "🇩🇪" },
-    { code: "+33", country: "France", flag: "🇫🇷" },
-    { code: "+39", country: "Italy", flag: "🇮🇹" },
-    { code: "+31", country: "Netherlands", flag: "🇳🇱" },
-    { code: "+86", country: "China", flag: "🇨🇳" },
-    { code: "+81", country: "Japan", flag: "🇯🇵" },
-    { code: "+82", country: "South Korea", flag: "🇰🇷" },
-    { code: "+65", country: "Singapore", flag: "🇸🇬" },
-    { code: "+60", country: "Malaysia", flag: "🇲🇾" },
-    { code: "+61", country: "Australia", flag: "🇦🇺" },
-    { code: "+7", country: "Russia", flag: "🇷🇺" },
-    { code: "+55", country: "Brazil", flag: "🇧🇷" },
-    { code: "+52", country: "Mexico", flag: "🇲🇽" },
-    { code: "+27", country: "South Africa", flag: "🇿🇦" },
+    { code: "+964", country: "Iraq", flag: "🇮🇶", shortName: "IQ" },
+    { code: "+1", country: "United States", flag: "🇺🇸", shortName: "US" },
+    { code: "+44", country: "United Kingdom", flag: "🇬🇧", shortName: "GB" },
+    { code: "+971", country: "United Arab Emirates", flag: "🇦🇪", shortName: "AE" },
+    { code: "+966", country: "Saudi Arabia", flag: "🇸🇦", shortName: "SA" },
+    { code: "+965", country: "Kuwait", flag: "🇰🇼", shortName: "KW" },
+    { code: "+974", country: "Qatar", flag: "🇶🇦", shortName: "QA" },
+    { code: "+968", country: "Oman", flag: "🇴🇲", shortName: "OM" },
+    { code: "+973", country: "Bahrain", flag: "🇧🇭", shortName: "BH" },
+    { code: "+962", country: "Jordan", flag: "🇯🇴", shortName: "JO" },
+    { code: "+961", country: "Lebanon", flag: "🇱🇧", shortName: "LB" },
+    { code: "+20", country: "Egypt", flag: "🇪🇬", shortName: "EG" },
+    { code: "+90", country: "Turkey", flag: "🇹🇷", shortName: "TR" },
+    { code: "+98", country: "Iran", flag: "🇮🇷", shortName: "IR" },
+    { code: "+91", country: "India", flag: "🇮🇳", shortName: "IN" },
+    { code: "+92", country: "Pakistan", flag: "🇵🇰", shortName: "PK" },
+    { code: "+49", country: "Germany", flag: "🇩🇪", shortName: "DE" },
+    { code: "+33", country: "France", flag: "🇫🇷", shortName: "FR" },
+    { code: "+39", country: "Italy", flag: "🇮🇹", shortName: "IT" },
+    { code: "+31", country: "Netherlands", flag: "🇳🇱", shortName: "NL" },
+    { code: "+86", country: "China", flag: "🇨🇳", shortName: "CN" },
+    { code: "+81", country: "Japan", flag: "🇯🇵", shortName: "JP" },
+    { code: "+82", country: "South Korea", flag: "🇰🇷", shortName: "KR" },
+    { code: "+65", country: "Singapore", flag: "🇸🇬", shortName: "SG" },
+    { code: "+60", country: "Malaysia", flag: "🇲🇾", shortName: "MY" },
+    { code: "+61", country: "Australia", flag: "🇦🇺", shortName: "AU" },
+    { code: "+7", country: "Russia", flag: "🇷🇺", shortName: "RU" },
+    { code: "+55", country: "Brazil", flag: "🇧🇷", shortName: "BR" },
+    { code: "+52", country: "Mexico", flag: "🇲🇽", shortName: "MX" },
+    { code: "+27", country: "South Africa", flag: "🇿🇦", shortName: "ZA" },
   ];
 
   const roles = [
@@ -283,15 +283,31 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                     value={formData.countryCode}
                     onValueChange={(value) => handleInputChange("countryCode", value)}
                   >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
+                    <SelectTrigger className="w-36">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-emoji">
+                            {countryCodes.find(c => c.code === formData.countryCode)?.flag || "🌍"}
+                          </span>
+                          <span className="text-sm font-mono">{formData.countryCode}</span>
+                        </div>
+                      </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="max-h-60 overflow-y-auto">
+                    <SelectContent className="max-h-60 overflow-y-auto bg-popover border shadow-lg z-50">
                       {countryCodes.map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{country.flag}</span>
-                            <span className="text-sm">{country.code}</span>
+                        <SelectItem key={country.code} value={country.code} className="cursor-pointer py-2">
+                          <div className="flex items-center gap-3 w-full">
+                            <span 
+                              className="text-lg font-emoji min-w-[24px] text-center leading-none"
+                              style={{ 
+                                fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne", sans-serif',
+                                fontSize: '18px'
+                              }}
+                            >
+                              {country.flag}
+                            </span>
+                            <span className="text-sm font-mono font-medium min-w-[60px]">{country.code}</span>
+                            <span className="text-sm text-muted-foreground truncate flex-1">{country.country}</span>
                           </div>
                         </SelectItem>
                       ))}
