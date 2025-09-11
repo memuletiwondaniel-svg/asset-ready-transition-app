@@ -63,9 +63,13 @@ serve(async (req) => {
       });
     }
 
+    // Determine which email to use for authentication
+    // If this is a functional email setup, use personal email for auth
+    const authEmail = (isFunctionalEmail && personalEmail) ? personalEmail : email;
+    
     // 1) Create auth user (email confirmed)
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email,
+      email: authEmail,
       password,
       email_confirm: true,
       user_metadata: {
@@ -82,7 +86,7 @@ serve(async (req) => {
         const { data: existingProfile } = await admin
           .from('profiles')
           .select('user_id')
-          .eq('email', email)
+          .eq('email', authEmail)
           .maybeSingle();
 
         let existingUserId = existingProfile?.user_id as string | undefined;
@@ -91,7 +95,7 @@ serve(async (req) => {
         if (!existingUserId) {
           try {
             const { data: usersList } = await admin.auth.admin.listUsers();
-            const found = usersList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+            const found = usersList?.users?.find(u => u.email?.toLowerCase() === authEmail.toLowerCase());
             existingUserId = found?.id;
           } catch (_) {
             // ignore list failures

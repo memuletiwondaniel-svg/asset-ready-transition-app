@@ -429,6 +429,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                   <TableHead>User</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>System Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Activity</TableHead>
                   <TableHead className="w-[50px]">Actions</TableHead>
@@ -494,34 +495,35 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                     
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="space-y-1">
-                          {user.role && (
-                            <div className="text-sm font-medium">
-                              {user.role}
-                              {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {user.ta2_discipline && <span>{user.ta2_discipline}</span>}
-                                  {user.ta2_discipline && user.ta2_commission && <span> • </span>}
-                                  {user.ta2_commission && <span>{user.ta2_commission}</span>}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          <div className="flex flex-wrap gap-1">
-                            {user.roles && user.roles.length > 0 && user.roles[0] !== null && (
-                              user.roles.slice(0, 1).map(role => (
-                                <Badge key={role} variant="outline" className="text-xs">
-                                  System: {role}
-                                </Badge>
-                              ))
-                            )}
-                            {user.roles && user.roles.length > 1 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{user.roles.length - 1}
-                              </Badge>
+                        {user.role && (
+                          <div className="text-sm font-medium">
+                            {user.role}
+                            {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {user.ta2_discipline && <span>{user.ta2_discipline}</span>}
+                                {user.ta2_discipline && user.ta2_commission && <span> • </span>}
+                                {user.ta2_commission && <span>{user.ta2_commission}</span>}
+                              </div>
                             )}
                           </div>
-                        </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {user.roles && user.roles.length > 0 && user.roles[0] !== null && (
+                          user.roles.slice(0, 1).map(role => (
+                            <Badge key={role} variant="outline" className="text-xs">
+                              {role}
+                            </Badge>
+                          ))
+                        )}
+                        {user.roles && user.roles.length > 1 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{user.roles.length - 1}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     

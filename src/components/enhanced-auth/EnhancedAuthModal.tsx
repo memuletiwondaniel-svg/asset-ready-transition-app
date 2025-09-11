@@ -218,6 +218,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                           required
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        If you have a functional email, use your personal email to sign in
+                      </p>
                     </div>
 
                     <div className="space-y-2">

@@ -331,6 +331,16 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       });
       return;
     }
+    
+    // Additional validation for functional email setup
+    if (formData.isFunctionalEmail && !formData.personalEmail) {
+      toast({
+        title: "Validation Error",
+        description: "Personal email is required when using functional email",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Generate password and show confirmation
     const password = `${formData.firstName.toLowerCase()}0000`;
@@ -582,17 +592,30 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   />
                   <Label htmlFor="functionalEmail">Mark as Functional Email</Label>
                 </div>
+                {formData.isFunctionalEmail && (
+                  <div className="text-xs text-muted-foreground mt-2 p-2 bg-blue-50 rounded-md">
+                    <p className="font-medium">Functional Email Setup:</p>
+                    <p>• Multiple users can share the same functional email address</p>
+                    <p>• Each user must have a unique personal email for login</p>
+                    <p>• Users will login using their personal email, not the functional email</p>
+                  </div>
+                )}
               </div>
 
               {formData.isFunctionalEmail && (
                 <div>
-                  <Label htmlFor="personalEmail">Personal Email</Label>
+                  <Label htmlFor="personalEmail">Personal Email *</Label>
                   <Input
                     id="personalEmail"
                     type="email"
                     value={formData.personalEmail}
                     onChange={(e) => handleInputChange("personalEmail", e.target.value)}
+                    required
+                    placeholder="user.personal@email.com"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This email will be used for authentication and login
+                  </p>
                 </div>
               )}
 
