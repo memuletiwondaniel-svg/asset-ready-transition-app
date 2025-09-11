@@ -18,8 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, Plus, X } from "lucide-react";
+import { UserPlus, Search, Plus, X, Upload, Camera, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,6 +56,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  
+  // Profile picture upload state
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   // Load custom roles from localStorage
   const getCustomRoles = () => {
@@ -204,6 +211,102 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     }));
   };
 
+  // Image upload handlers
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageFile(file);
+    }
+  };
+
+  const handleImageFile = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "File size must be less than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setProfileImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setProfileImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleImageFile(files[0]);
+    }
+  };
+
+  const clearImage = () => {
+    setProfileImage(null);
+    setProfileImagePreview(null);
+  };
+
+  const uploadProfileImage = async (userId: string): Promise<string | null> => {
+    if (!profileImage) return null;
+
+    try {
+      setUploadingImage(true);
+      
+      // Create unique filename
+      const fileExt = profileImage.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('user-avatars')
+        .upload(fileName, profileImage, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        return null;
+      }
+
+      return fileName;
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -227,27 +330,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     setIsCreating(true);
     
     try {
-      const userData = {
-        id: Date.now().toString(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        isFunctionalEmail: formData.isFunctionalEmail,
-        personalEmail: formData.personalEmail,
-        phone: formData.countryCode + formData.phone,
-        company: formData.company === "Others" ? formData.otherCompany : formData.company,
-        role: formData.role,
-        discipline: formData.discipline,
-        commission: formData.commission,
-        privileges: formData.privileges,
-        status: "active",
-        associatedProjects: [],
-        pendingActions: 0,
-        createdAt: new Date().toISOString(),
-        password: generatedPassword,
-      };
-
-      // Create user in backend via Edge Function
+      // First, create the user to get the user ID
       const { data: createResp, error: createErr } = await supabase.functions.invoke('admin-create-user', {
         body: {
           email: formData.email,
@@ -267,6 +350,24 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
       if (createErr) {
         throw createErr;
+      }
+
+      // If user created successfully and there's a profile image, upload it
+      let avatarUrl = null;
+      if (profileImage && createResp?.user_id) {
+        avatarUrl = await uploadProfileImage(createResp.user_id);
+        
+        // Update the user profile with avatar URL
+        if (avatarUrl) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ avatar_url: avatarUrl })
+            .eq('user_id', createResp.user_id);
+            
+          if (updateError) {
+            console.error('Failed to update avatar URL:', updateError);
+          }
+        }
       }
 
       // Try to send welcome email (non-blocking)
@@ -313,6 +414,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         commission: "",
         privileges: [],
       });
+      
+      // Reset profile image
+      clearImage();
       setRoleSearch("");
       setShowNewRoleInput(false);
       setShowRoleDropdown(false);
@@ -367,6 +471,80 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     onChange={(e) => handleInputChange("lastName", e.target.value)}
                     required
                   />
+                </div>
+              </div>
+
+              {/* Profile Picture Upload */}
+              <div className="space-y-2">
+                <Label>Profile Picture</Label>
+                <div className="flex items-start gap-4">
+                  {/* Avatar Preview */}
+                  <div className="flex flex-col items-center gap-2">
+                    <Avatar className="h-20 w-20">
+                      {profileImagePreview ? (
+                        <AvatarImage src={profileImagePreview} alt="Profile preview" />
+                      ) : (
+                        <AvatarFallback>
+                          <User className="h-8 w-8" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    {profileImage && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={clearImage}
+                        className="text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Upload Area */}
+                  <div className="flex-1 space-y-2">
+                    {/* Drag & Drop Area */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                        isDragOver 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-muted-foreground/25 hover:border-primary/50'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Drag and drop an image here, or click to browse
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                        id="profile-image-upload"
+                        disabled={uploadingImage}
+                      />
+                      <label htmlFor="profile-image-upload">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                          disabled={uploadingImage}
+                        >
+                          <Camera className="h-4 w-4 mr-2" />
+                          Choose Image
+                        </Button>
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Supported formats: JPG, PNG, GIF. Max size: 5MB
+                    </p>
+                  </div>
                 </div>
               </div>
 
