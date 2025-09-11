@@ -62,25 +62,24 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
         setCreatedChecklistName(newChecklist.name);
-        
+
         // Mark this checklist as newly created for badge display
         sessionStorage.setItem(`new-checklist-${newChecklist.id}`, 'true');
-        
+
         // Navigate back to checklist summary page (not success page)
         setShowCreateForm(false);
-        
         toast({
           title: "Checklist created",
-          description: `"${newChecklist.name}" is now available in your list.`,
+          description: `"${newChecklist.name}" is now available in your list.`
         });
         // Don't set setShowSuccessPage(true) since we want to go back to main list
       },
-      onError: (error) => {
+      onError: error => {
         console.error('Failed to create checklist:', error);
         toast({
           title: "Failed to create checklist",
           description: error?.message || "Please try again.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     });
@@ -103,35 +102,31 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       description: "Checklist updated successfully."
     });
   };
-
   const handleDeleteChecklist = (checklist: Checklist) => {
     setChecklistToDelete(checklist);
     setShowDeleteDialog(true);
   };
-
   const confirmDeleteChecklist = () => {
     if (!checklistToDelete) return;
-    
     deleteChecklist(checklistToDelete.id, {
       onSuccess: () => {
         toast({
           title: "Checklist deleted",
-          description: `"${checklistToDelete.name}" has been permanently removed.`,
+          description: `"${checklistToDelete.name}" has been permanently removed.`
         });
         setShowDeleteDialog(false);
         setChecklistToDelete(null);
       },
-      onError: (error) => {
+      onError: error => {
         console.error('Failed to delete checklist:', error);
         toast({
           title: "Failed to delete checklist",
           description: error?.message || "Please try again.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     });
   };
-
   const cancelDeleteChecklist = () => {
     setShowDeleteDialog(false);
     setChecklistToDelete(null);
@@ -177,11 +172,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
-
   const isNewChecklist = (checklistId: string) => {
     return sessionStorage.getItem(`new-checklist-${checklistId}`) === 'true';
   };
-
   const handleChecklistClick = (checklist: Checklist) => {
     // Remove the "new" badge when clicked
     sessionStorage.removeItem(`new-checklist-${checklist.id}`);
@@ -321,86 +314,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   </div>
                 </div>
               </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredAndSortedChecklists.map((checklist, index) => <Card key={checklist.id} className="group cursor-pointer hover:shadow-fluent-lg transition-all duration-300 border border-border/20 bg-card/90 backdrop-blur-sm hover:-translate-y-1 animate-fade-in-up" style={{
-            animationDelay: `${index * 0.1}s`
-          }} onClick={() => handleChecklistClick(checklist)}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
-                            {checklist.name}
-                          </CardTitle>
-                          <CardDescription className="mt-2">
-                            {checklist.reason}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {isNewChecklist(checklist.id) && (
-                            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white animate-pulse shadow-lg">
-                              NEW
-                            </Badge>
-                          )}
-                          {getStatusBadge(checklist.status)}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditChecklist(checklist);
-                              }}>
-                                <Edit3 className="h-4 w-4 mr-2" />
-                                Edit Checklist
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteChecklist(checklist);
-                                }}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Checklist
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{checklist.items_count} items</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Activity className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{checklist.active_pssr_count} active PSSR</span>
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2 border-t border-border/10">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{new Date(checklist.created_at).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <User className="h-3 w-3" />
-                            <span>{checklist.created_by_email}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>)}
+                {filteredAndSortedChecklists.map((checklist, index) => {})}
               </div>}
           </>}
       </div>
@@ -431,10 +345,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <AlertDialogCancel onClick={cancelDeleteChecklist}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDeleteChecklist}
-              className="bg-destructive hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={confirmDeleteChecklist} className="bg-destructive hover:bg-destructive/90">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Checklist
             </AlertDialogAction>
