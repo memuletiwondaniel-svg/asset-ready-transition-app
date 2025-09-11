@@ -50,7 +50,30 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   // Initialize category order when data loads
   React.useEffect(() => {
     if (categoryStats && categoryOrder.length === 0) {
-      setCategoryOrder(Object.keys(categoryStats));
+      // Set categories in the specified default order
+      const defaultOrder = [
+        "General",
+        "Hardware Integrity", 
+        "Process Safety",
+        "Documentation",
+        "Organization",
+        "Health & Safety",
+        "HSE",
+        "Emergency Response",
+        "Electrical",
+        "Instrumentation",
+        "Mechanical",
+        "Civil"
+      ];
+      
+      // Only include categories that actually exist in the data
+      const existingCategories = Object.keys(categoryStats);
+      const orderedExistingCategories = defaultOrder.filter(cat => existingCategories.includes(cat));
+      
+      // Add any categories that exist in data but not in our default order
+      const remainingCategories = existingCategories.filter(cat => !defaultOrder.includes(cat));
+      
+      setCategoryOrder([...orderedExistingCategories, ...remainingCategories]);
     }
   }, [categoryStats, categoryOrder.length]);
 
