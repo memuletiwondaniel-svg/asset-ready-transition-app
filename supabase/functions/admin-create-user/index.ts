@@ -18,6 +18,7 @@ interface CreateUserRequest {
   isFunctionalEmail?: boolean;
   discipline?: string | null;
   commission?: string | null;
+  systemRole?: string;
   privileges?: string[];
 }
 
@@ -52,6 +53,7 @@ serve(async (req) => {
       isFunctionalEmail,
       discipline,
       commission,
+      systemRole,
     } = body;
 
     if (!email || !firstName || !lastName || !password) {
@@ -136,6 +138,21 @@ serve(async (req) => {
             });
           }
 
+          // Assign system role if provided for existing user
+          if (systemRole) {
+            const { error: roleErr } = await admin
+              .from('user_roles')
+              .upsert({
+                user_id: existingUserId,
+                role: systemRole as any,
+                granted_by: existingUserId,
+              }, { onConflict: 'user_id,role' });
+
+            if (roleErr) {
+              console.error("assign system role error for existing user:", roleErr);
+            }
+          }
+
           return new Response(JSON.stringify({ success: true, user_id: existingUserId, existing_user: true }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -189,7 +206,23 @@ serve(async (req) => {
       });
     }
 
-    // We intentionally skip assigning privileges/roles here to avoid enum mismatch.
+    // 3) Assign system role if provided
+    if (systemRole) {
+      const { error: roleErr } = await admin
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: systemRole as any,
+          granted_by: userId,
+        }, { onConflict: 'user_id,role' });
+
+      if (roleErr) {
+        console.error("assign system role error:", roleErr);
+        // Don't fail the whole operation for role assignment issues
+      }
+    }
+
+    // We intentionally skip assigning privileges here to avoid complexity.
 
     return new Response(JSON.stringify({ success: true, user_id: userId }), {
       status: 200,

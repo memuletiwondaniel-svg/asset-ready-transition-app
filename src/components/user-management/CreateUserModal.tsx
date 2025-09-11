@@ -47,6 +47,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     newRole: "",
     discipline: "",
     commission: "",
+    systemRole: "user", // Default system role
     privileges: [] as string[],
   });
 
@@ -155,11 +156,20 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
   const availablePrivileges = [
     "Administrator",
-    "Complete assigned tasks or delegate",
+    "Complete assigned tasks or delegate", 
     "Edit PSSR Checklist item Default approvers and PSSR Approvers",
     "Edit or Create New User",
     "Edit or Create New Project",
     "Edit or Create New PSSR Master Checklist",
+  ];
+
+  const systemRoles = [
+    { value: "user", label: "User" },
+    { value: "admin", label: "Administrator" },
+    { value: "manager", label: "Manager" },
+    { value: "engineer", label: "Engineer" },
+    { value: "safety_officer", label: "Safety Officer" },
+    { value: "technical_authority", label: "Technical Authority" },
   ];
 
   // Filter roles based on search term, show all if no search term
@@ -344,6 +354,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           isFunctionalEmail: formData.isFunctionalEmail,
           discipline: formData.discipline || null,
           commission: formData.commission || null,
+          systemRole: formData.systemRole,
           privileges: formData.privileges,
         }
       });
@@ -412,6 +423,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         newRole: "",
         discipline: "",
         commission: "",
+        systemRole: "user",
         privileges: [],
       });
       
@@ -833,6 +845,25 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   </div>
                 </div>
               )}
+
+              <div>
+                <Label htmlFor="systemRole">System Role *</Label>
+                <Select 
+                  value={formData.systemRole} 
+                  onValueChange={(value) => handleInputChange("systemRole", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select system role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-lg z-50">
+                    {systemRoles.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
 

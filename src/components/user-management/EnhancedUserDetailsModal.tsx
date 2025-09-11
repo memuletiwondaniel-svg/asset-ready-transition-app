@@ -101,8 +101,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     two_factor_enabled: user.two_factor_enabled || false,
     password_change_required: user.password_change_required || false,
     functional_email: false,
-    personal_email: ''
+    personal_email: '',
+    system_role: user.roles?.[0] || 'user'
   });
+
+  const systemRoles = [
+    { value: "user", label: "User" },
+    { value: "admin", label: "Administrator" },
+    { value: "manager", label: "Manager" },
+    { value: "engineer", label: "Engineer" },
+    { value: "safety_officer", label: "Safety Officer" },
+    { value: "technical_authority", label: "Technical Authority" },
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -155,7 +165,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      // Update the profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: editedUser.full_name,
@@ -177,10 +188,38 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         })
         .eq('user_id', user.user_id);
 
-      if (error) {
+      if (profileError) {
         toast.error('Failed to update user');
-        console.error('Error updating user:', error);
+        console.error('Error updating user:', profileError);
         return;
+      }
+
+      // Update system role if it changed
+      if (editedUser.system_role !== (user.roles?.[0] || 'user')) {
+        // First, delete existing roles
+        const { error: deleteError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', user.user_id);
+
+        if (deleteError) {
+          console.error('Error deleting existing roles:', deleteError);
+        }
+
+        // Then insert new role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.user_id,
+            role: editedUser.system_role as any,
+            granted_by: user.user_id
+          });
+
+        if (roleError) {
+          toast.error('Failed to update system role');
+          console.error('Error updating system role:', roleError);
+          return;
+        }
       }
 
       toast.success('User updated successfully');
@@ -510,6 +549,26 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     onChange={(e) => setEditedUser({ ...editedUser, job_title: e.target.value })}
                     disabled={!editMode}
                   />
+                </div>
+                
+                <div>
+                  <Label htmlFor="system_role">System Role</Label>
+                  <Select
+                    value={editedUser.system_role}
+                    onValueChange={(value) => setEditedUser({ ...editedUser, system_role: value })}
+                    disabled={!editMode}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-50">
+                      {systemRoles.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div>
