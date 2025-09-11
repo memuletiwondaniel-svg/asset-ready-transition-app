@@ -94,6 +94,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [userSessions, setUserSessions] = useState<any[]>([]);
   
@@ -185,6 +186,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       });
       
       setSystemRole(user.roles?.[0] || 'user');
+      setLocalAvatarUrl(user.avatar_url ? `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}` : null);
       
       fetchActivityLogs();
       fetchUserSessions();
@@ -351,32 +353,40 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.user_id}/${Date.now()}.${fileExt}`;
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('user-avatars')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) {
-        toast.error('Failed to upload image');
-        console.error('Upload error:', uploadError);
-        return;
-      }
-
-      // Update user profile with new avatar URL via edge function
-      const { data: avatarUpdateResp, error: avatarUpdateErr } = await supabase.functions.invoke('update-user-avatar', {
-        body: { userId: user.user_id, avatarPath: fileName }
+      // Read file as base64
+      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string));
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
 
-      if (avatarUpdateErr) {
-        toast.error('Failed to update profile');
-        console.error('Update error:', avatarUpdateErr);
+      const dataUrl = await toBase64(file);
+      const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+      // Upload via edge function (service role) which also updates the profile
+      const { data: uploadResp, error: uploadFnErr } = await supabase.functions.invoke('upload-user-avatar', {
+        body: {
+          userId: user.user_id,
+          fileExt: fileExt || 'png',
+          contentType: file.type,
+          base64
+        }
+      });
+
+      if (uploadFnErr) {
+        toast.error('Failed to upload image');
+        console.error('Upload function error:', uploadFnErr);
         return;
       }
 
-      console.log('Avatar update response:', avatarUpdateResp);
+      // Update local preview immediately
+      if ((uploadResp as any)?.publicUrl) {
+        setLocalAvatarUrl((uploadResp as any).publicUrl);
+      }
+
+
+      console.log('Avatar upload response:', uploadResp);
       toast.success('Profile picture updated successfully');
       
       // Force refresh the user data in the parent component
@@ -411,9 +421,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <Avatar className="h-14 w-14 ring-2 ring-border">
-                  {user.avatar_url && (
+                  {(localAvatarUrl || user.avatar_url) && (
                     <AvatarImage 
-                      src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                      src={localAvatarUrl ?? `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`}
                       alt={user.full_name || 'User'} 
                     />
                   )}

@@ -293,25 +293,34 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
     try {
       setUploadingImage(true);
-      
-      // Create unique filename
-      const fileExt = profileImage.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('user-avatars')
-        .upload(fileName, profileImage, {
-          cacheControl: '3600',
-          upsert: true
-        });
+      // Prepare base64 payload
+      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
+      const dataUrl = await toBase64(profileImage);
+      const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+      const fileExt = profileImage.name.split('.').pop() || 'png';
+
+      const { data, error } = await supabase.functions.invoke('upload-user-avatar', {
+        body: {
+          userId,
+          fileExt,
+          contentType: profileImage.type,
+          base64,
+        }
+      });
+
+      if (error) {
+        console.error('Upload function error:', error);
         return null;
       }
 
-      return fileName;
+      return (data as any)?.path || null;
     } catch (error) {
       console.error('Avatar upload error:', error);
       return null;
@@ -378,20 +387,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       }
 
       // If user created successfully and there's a profile image, upload it
-      let avatarUrl = null;
       if (profileImage && createResp?.user_id) {
-        avatarUrl = await uploadProfileImage(createResp.user_id);
-        
-        // Update the user profile with avatar URL
-        if (avatarUrl) {
-          const { data: avatarUpdateResp, error: avatarUpdateErr } = await supabase.functions.invoke('update-user-avatar', {
-            body: { userId: createResp.user_id, avatarPath: avatarUrl }
-          });
-          
-          if (avatarUpdateErr) {
-            console.error('Failed to update avatar URL:', avatarUpdateErr);
-          }
-        }
+        await uploadProfileImage(createResp.user_id);
       }
 
       // Try to send welcome email (non-blocking)

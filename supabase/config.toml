@@ -104,3 +104,8 @@ verify_jwt = false
 # New function to update user profile via service role
 [functions.update-user-profile]
 verify_jwt = false
+
+# Function to upload user avatar and update profile atomically
+[functions.upload-user-avatar]
+verify_jwt = false
+
