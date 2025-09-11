@@ -37,6 +37,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
     isFunctionalEmail: false,
     personalEmail: "",
     phone: "",
+    countryCode: "+964", // Default to Iraq
     company: "",
     otherCompany: "",
     role: "",
@@ -49,9 +50,42 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
   const [roleSearch, setRoleSearch] = useState("");
 
   const companies = [
-    { value: "BGC", label: "BGC" },
+    { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
     { value: "Kent", label: "Kent" },
     { value: "Others", label: "Others (specify)" },
+  ];
+
+  const countryCodes = [
+    { code: "+964", country: "Iraq", flag: "🇮🇶" },
+    { code: "+1", country: "United States", flag: "🇺🇸" },
+    { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
+    { code: "+971", country: "United Arab Emirates", flag: "🇦🇪" },
+    { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
+    { code: "+965", country: "Kuwait", flag: "🇰🇼" },
+    { code: "+974", country: "Qatar", flag: "🇶🇦" },
+    { code: "+968", country: "Oman", flag: "🇴🇲" },
+    { code: "+973", country: "Bahrain", flag: "🇧🇭" },
+    { code: "+962", country: "Jordan", flag: "🇯🇴" },
+    { code: "+961", country: "Lebanon", flag: "🇱🇧" },
+    { code: "+20", country: "Egypt", flag: "🇪🇬" },
+    { code: "+90", country: "Turkey", flag: "🇹🇷" },
+    { code: "+98", country: "Iran", flag: "🇮🇷" },
+    { code: "+91", country: "India", flag: "🇮🇳" },
+    { code: "+92", country: "Pakistan", flag: "🇵🇰" },
+    { code: "+49", country: "Germany", flag: "🇩🇪" },
+    { code: "+33", country: "France", flag: "🇫🇷" },
+    { code: "+39", country: "Italy", flag: "🇮🇹" },
+    { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+    { code: "+86", country: "China", flag: "🇨🇳" },
+    { code: "+81", country: "Japan", flag: "🇯🇵" },
+    { code: "+82", country: "South Korea", flag: "🇰🇷" },
+    { code: "+65", country: "Singapore", flag: "🇸🇬" },
+    { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+    { code: "+61", country: "Australia", flag: "🇦🇺" },
+    { code: "+7", country: "Russia", flag: "🇷🇺" },
+    { code: "+55", country: "Brazil", flag: "🇧🇷" },
+    { code: "+52", country: "Mexico", flag: "🇲🇽" },
+    { code: "+27", country: "South Africa", flag: "🇿🇦" },
   ];
 
   const roles = [
@@ -134,7 +168,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       email: formData.email,
       isFunctionalEmail: formData.isFunctionalEmail,
       personalEmail: formData.personalEmail,
-      phone: formData.phone,
+      phone: formData.countryCode + formData.phone,
       company: formData.company === "Others" ? formData.otherCompany : formData.company,
       role: formData.role === "Others (specify)" ? formData.otherRole : formData.role,
       discipline: formData.discipline,
@@ -161,6 +195,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
       isFunctionalEmail: false,
       personalEmail: "",
       phone: "",
+      countryCode: "+964",
       company: "",
       otherCompany: "",
       role: "",
@@ -243,11 +278,33 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
 
               <div>
                 <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Select 
+                    value={formData.countryCode}
+                    onValueChange={(value) => handleInputChange("countryCode", value)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                      {countryCodes.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{country.flag}</span>
+                            <span className="text-sm">{country.code}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    placeholder="Enter phone number"
+                    className="flex-1"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -267,7 +324,16 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                   <SelectContent>
                     {companies.map((company) => (
                       <SelectItem key={company.value} value={company.value}>
-                        {company.label}
+                        <div className="flex items-center gap-2">
+                          {company.logo && (
+                            <img 
+                              src={company.logo} 
+                              alt={`${company.label} logo`} 
+                              className="w-5 h-5 object-contain"
+                            />
+                          )}
+                          <span>{company.label}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
