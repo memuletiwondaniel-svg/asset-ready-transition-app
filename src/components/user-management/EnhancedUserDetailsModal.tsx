@@ -376,8 +376,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return;
       }
 
+      console.log('Avatar update response:', avatarUpdateResp);
       toast.success('Profile picture updated successfully');
-      onUserUpdated(); // Refresh the user data
+      
+      // Force refresh the user data in the parent component
+      onUserUpdated();
     } catch (error) {
       toast.error('An error occurred while uploading');
       console.error('Avatar upload error:', error);
