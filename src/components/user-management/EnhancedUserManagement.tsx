@@ -436,22 +436,23 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 {filteredUsers.map((user) => (
                   <TableRow key={user.user_id}>
                     <TableCell>
-                      <div className="flex items-center space-x-5">
-                         <Avatar className="h-12 w-12">
-                           {user.avatar_url ? (
-                             <AvatarImage 
-                               src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
-                               alt={user.full_name || 'User'} 
-                               onError={(e) => {
-                                 console.log('Avatar load error for user:', user.email, 'URL:', e.currentTarget.src);
-                                 e.currentTarget.style.display = 'none';
-                               }}
-                             />
-                           ) : null}
-                           <AvatarFallback>
-                             {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                           </AvatarFallback>
-                        </Avatar>
+                       <div className="flex items-center space-x-4">
+                          <Avatar className="h-11 w-11 ring-2 ring-border/10 shadow-sm hover:shadow-md transition-all duration-200 hover:ring-primary/20">
+                            {user.avatar_url ? (
+                              <AvatarImage 
+                                src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                                alt={user.full_name || 'User'} 
+                                className="object-cover"
+                                onError={(e) => {
+                                  console.log('Avatar load error for user:', user.email, 'URL:', e.currentTarget.src);
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : null}
+                            <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary font-semibold text-sm border border-border/20">
+                              {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                            </AvatarFallback>
+                         </Avatar>
                         <div>
                           <div className="font-medium">{user.full_name || 'Unknown'}</div>
                           <div className="text-sm text-muted-foreground flex items-center">
