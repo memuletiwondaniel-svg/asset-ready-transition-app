@@ -863,9 +863,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
           item={selectedDetailItem}
           isOpen={showDetailModal}
           onClose={handleDetailModalClose}
-          onSave={handleItemSave}
-          onDelete={handleItemDelete}
-          availableCategories={availableCategories}
+          mode="view"
         />
       )}
     </div>

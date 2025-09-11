@@ -18,14 +18,16 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save, Plus } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save, Plus, MoreVertical, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
+import ChecklistItemDetailModal from './ChecklistItemDetailModal';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 
 interface ChecklistManagementPageProps {
@@ -40,6 +42,9 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [showEditModal, setShowEditModal] = useState(false);
   const [deletingItem, setDeletingItem] = useState<ChecklistItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [viewingItem, setViewingItem] = useState<ChecklistItem | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view');
   const [showCreateForm, setShowCreateForm] = useState(false);
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
@@ -129,9 +134,21 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
     return checklistItems?.filter(item => item.category === category) || [];
   };
 
+  const handleViewItem = (item: ChecklistItem) => {
+    setViewingItem(item);
+    setDetailModalMode('view');
+    setShowDetailModal(true);
+  };
+
   const handleEditItem = (item: ChecklistItem) => {
-    setEditingItem(item);
-    setShowEditModal(true);
+    setViewingItem(item);
+    setDetailModalMode('edit');
+    setShowDetailModal(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setViewingItem(null);
   };
 
   const handleCloseEditModal = () => {
@@ -287,8 +304,67 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">{categoryItems.length} items in this category</p>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 mb-4">{categoryItems.length} items in this category</p>
+                    <div className="space-y-3">
+                      {categoryItems.map((item) => (
+                        <div
+                          key={item.unique_id}
+                          className="group relative p-4 bg-white/70 backdrop-blur-sm border border-gray-200/60 rounded-2xl hover:bg-white/90 hover:border-blue-300/60 hover:shadow-lg transition-all duration-300"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center space-x-3">
+                                <div className="px-3 py-1 bg-blue-100/80 text-blue-700 text-xs font-medium rounded-full border border-blue-200/60">
+                                  {item.unique_id}
+                                </div>
+                                <div className="text-sm font-medium text-gray-600">
+                                  {item.topic && (
+                                    <span className="text-purple-600">{item.topic}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-800 line-clamp-2">
+                                {item.description}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full"
+                                  >
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => handleViewItem(item)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                    <Edit3 className="mr-2 h-4 w-4" />
+                                    Edit Item
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDeleteItem(item)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Item
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -407,6 +483,16 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         )}
       </div>
       
+      {/* Detail Modal */}
+      {showDetailModal && viewingItem && (
+        <ChecklistItemDetailModal
+          isOpen={showDetailModal}
+          onClose={handleCloseDetailModal}
+          item={viewingItem}
+          mode={detailModalMode}
+        />
+      )}
+
       {/* Edit Checklist Item Modal */}
       {editingItem && (
         <EditChecklistItemModal
@@ -434,22 +520,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           onComplete={handleCreateComplete}
         />
       )}
-    </div>
-  );
-
-  // If showing create form, render it instead
-  if (showCreateForm) {
-    return (
-      <CreateChecklistItemForm
-        onBack={handleCreateCancel}
-        onComplete={handleCreateComplete}
-      />
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* ... keep existing code */}
     </div>
   );
 };
