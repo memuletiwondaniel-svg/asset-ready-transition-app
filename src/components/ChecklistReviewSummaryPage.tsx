@@ -25,7 +25,6 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ChecklistReviewSummaryPageProps {
   checklistData: {
-    name: string;
     reason: string;
     selected_items: string[];
     custom_reason?: string;
@@ -162,14 +161,6 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                     <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div className="flex-1">
                       <Label className="text-sm font-medium text-muted-foreground">Checklist Name</Label>
-                      <p className="text-sm font-semibold mt-1">{checklistData.name}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium text-muted-foreground">Reason</Label>
                       <p className="text-sm font-semibold mt-1">
                         {checklistData.reason === 'Others' 
                           ? checklistData.custom_reason 

@@ -28,7 +28,6 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   onSave
 }) => {
   const [formData, setFormData] = useState({
-    name: checklist.name,
     reason: checklist.reason,
     selected_items: checklist.selected_items || [],
     custom_reason: checklist.custom_reason || ''
@@ -71,7 +70,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     updateChecklist({
       checklistId: checklist.id,
       checklistData: {
-        name: formData.name,
+        name: formData.reason, // Set name as reason
         reason: formData.reason,
         selected_items: formData.selected_items,
         custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined
@@ -206,7 +205,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
               </Button>
               <Button 
                 onClick={handleSave}
-                disabled={isPending || !formData.name || !formData.reason || (formData.reason === 'Others' && !formData.custom_reason)}
+                disabled={isPending || !formData.reason || (formData.reason === 'Others' && !formData.custom_reason)}
                 className="fluent-button bg-primary hover:bg-primary-hover"
               >
                 <Save className="h-4 w-4 mr-2" />
@@ -227,15 +226,6 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Checklist Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter checklist name"
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="reason">Reason for Checklist *</Label>

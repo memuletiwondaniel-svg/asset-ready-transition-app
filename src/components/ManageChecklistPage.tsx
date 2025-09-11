@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen, Edit3 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen, Edit3, MoreVertical, Trash2 } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
 import EditChecklistForm from './EditChecklistForm';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
-import { useChecklists, useCreateChecklist, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
+import { useChecklists, useCreateChecklist, useUpdateChecklist, useDeleteChecklist, Checklist } from '@/hooks/useChecklists';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 // Use the Checklist type from the hook
 
@@ -20,7 +22,6 @@ interface ManageChecklistPageProps {
   onBack: () => void;
 }
 interface NewChecklistData {
-  name: string;
   reason: string;
   selected_items: string[];
   custom_reason?: string;
@@ -38,6 +39,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [createdChecklistName, setCreatedChecklistName] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [checklistToDelete, setChecklistToDelete] = useState<Checklist | null>(null);
   const {
     toast
   } = useToast();
@@ -52,6 +55,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const {
     mutate: updateChecklist
   } = useUpdateChecklist();
+  const {
+    mutate: deleteChecklist
+  } = useDeleteChecklist();
   const handleCreateComplete = (checklistData: NewChecklistData) => {
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
@@ -96,6 +102,39 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       title: "Success",
       description: "Checklist updated successfully."
     });
+  };
+
+  const handleDeleteChecklist = (checklist: Checklist) => {
+    setChecklistToDelete(checklist);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteChecklist = () => {
+    if (!checklistToDelete) return;
+    
+    deleteChecklist(checklistToDelete.id, {
+      onSuccess: () => {
+        toast({
+          title: "Checklist deleted",
+          description: `"${checklistToDelete.name}" has been permanently removed.`,
+        });
+        setShowDeleteDialog(false);
+        setChecklistToDelete(null);
+      },
+      onError: (error) => {
+        console.error('Failed to delete checklist:', error);
+        toast({
+          title: "Failed to delete checklist",
+          description: error?.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const cancelDeleteChecklist = () => {
+    setShowDeleteDialog(false);
+    setChecklistToDelete(null);
   };
 
   // Show error toast if there's an error
@@ -302,12 +341,37 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                             </Badge>
                           )}
                           {getStatusBadge(checklist.status)}
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10" onClick={e => {
-                    e.stopPropagation();
-                    handleEditChecklist(checklist);
-                  }} title="Edit checklist">
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-primary/10"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditChecklist(checklist);
+                              }}>
+                                <Edit3 className="h-4 w-4 mr-2" />
+                                Edit Checklist
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteChecklist(checklist);
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Checklist
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </CardHeader>
@@ -340,6 +404,43 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </div>}
           </>}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete Checklist
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to delete the checklist <strong>"{checklistToDelete?.name}"</strong>?
+              </p>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mt-3">
+                <p className="text-sm text-destructive font-medium">⚠️ Warning:</p>
+                <ul className="text-sm text-destructive mt-1 space-y-1">
+                  <li>• This action cannot be undone</li>
+                  <li>• All checklist items and configurations will be permanently removed</li>
+                  <li>• Any active PSSRs using this checklist may be affected</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteChecklist}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteChecklist}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Checklist
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 };
 export default ManageChecklistPage;

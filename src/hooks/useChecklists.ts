@@ -9,7 +9,7 @@ export type Checklist = Tables<'checklists'> & {
 };
 
 export interface CreateChecklistData {
-  name: string;
+  name?: string;
   reason: string;
   custom_reason?: string;
   selected_items: string[];
@@ -87,10 +87,12 @@ export const useCreateChecklist = () => {
         }
       }
 
+      const checklistName = checklistData.name || (checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason);
+      
       const { data, error } = await supabase
         .from('checklists')
         .insert({
-          name: checklistData.name,
+          name: checklistName,
           reason: checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason,
           custom_reason: checklistData.reason === 'Others' ? checklistData.custom_reason : null,
           selected_items: checklistData.selected_items,
@@ -142,6 +144,7 @@ export const useUpdateChecklist = () => {
       const updateData: any = {};
       if (checklistData.name) updateData.name = checklistData.name;
       if (checklistData.reason) {
+        updateData.name = checklistData.name || (checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason);
         updateData.reason = checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason;
         updateData.custom_reason = checklistData.reason === 'Others' ? checklistData.custom_reason : null;
       }
@@ -173,6 +176,27 @@ export const useUpdateChecklist = () => {
         active_pssr_count: 0, // This would need to be calculated if needed
         created_by_email: profile?.email || 'Anonymous',
       };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+    },
+  });
+};
+
+export const useDeleteChecklist = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (checklistId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('checklists')
+        .delete()
+        .eq('id', checklistId);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklists'] });

@@ -24,7 +24,6 @@ interface CreateChecklistFormProps {
 }
 
 interface NewChecklistData {
-  name: string;
   reason: string;
   selected_items: string[];
   custom_reason?: string;
@@ -47,7 +46,6 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const { data: availableCategories = [] } = useChecklistCategories();
   
   const [formData, setFormData] = useState<NewChecklistData>({
-    name: '',
     reason: '',
     selected_items: [],
   });
@@ -277,6 +275,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
   const handleConfirmChecklist = (checklistData: any) => {
     const finalData = {
       ...formData,
+      name: formData.reason, // Set name as reason
       custom_reason: formData.reason === 'Others' ? customReason : undefined
     };
     onComplete(finalData);
