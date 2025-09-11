@@ -532,7 +532,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser }: CreateUserModalProps
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Selected Role</span>
+                          <span className="text-xs font-normal text-muted-foreground/70 uppercase tracking-wider">Selected Role</span>
                           <span className="text-sm font-semibold text-foreground">{formData.role}</span>
                         </div>
                       </div>
