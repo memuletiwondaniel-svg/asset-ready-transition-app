@@ -33,17 +33,17 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedItem, setEditedItem] = useState<DBChecklistItem>(item);
   const [selectedApprovers, setSelectedApprovers] = useState<string[]>(
-    item.approving_authority ? item.approving_authority.split(', ') : []
+    item.Approver ? item.Approver.split(', ') : []
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const isCustom = item.id.startsWith('CUST-');
+  const isCustom = item.unique_id?.startsWith('CUST-');
   
   const { users } = useUsers();
 
   // Sync internal state when item prop changes or modal reopens
   useEffect(() => {
     setEditedItem(item);
-    setSelectedApprovers(item.approving_authority ? item.approving_authority.split(', ') : []);
+    setSelectedApprovers(item.Approver ? item.Approver.split(', ') : []);
     setIsEditing(false);
   }, [item, isOpen]);
 
@@ -99,7 +99,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
     // Update the edited item with selected approvers
     const updatedItem = {
       ...editedItem,
-      approving_authority: selectedApprovers.join(', ') || null
+      Approver: selectedApprovers.join(', ') || null
     };
     onSave?.(updatedItem);
     setIsEditing(false);
@@ -110,7 +110,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   };
 
   const clearResponsibleParty = () => {
-    setEditedItem(prev => ({ ...prev, responsible_party: null }));
+    setEditedItem(prev => ({ ...prev, responsible: null }));
   };
 
   const handleCancel = () => {
@@ -119,7 +119,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
   };
 
   const handleDelete = () => {
-    onDelete?.(item.id);
+    onDelete?.(item.unique_id);
     setShowDeleteConfirm(false);
     onClose();
   };
@@ -150,7 +150,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <Badge variant="outline" className="font-mono text-base px-4 py-2 bg-primary/10 border-primary/30 text-primary font-semibold backdrop-blur-sm shadow-md">
-                        {item.id}
+                        {item.unique_id}
                       </Badge>
                       <div className="absolute inset-0 bg-primary/5 rounded-md blur-sm"></div>
                     </div>
@@ -170,7 +170,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                   </div>
                 </div>
                 <div className="flex space-x-3">
-                  {!isEditing && onDelete && item.id.startsWith('CUST-') && (
+                  {!isEditing && onDelete && item.unique_id?.startsWith('CUST-') && (
                     <Button
                       variant="outline"
                       size="sm"

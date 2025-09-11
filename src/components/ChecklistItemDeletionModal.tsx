@@ -24,14 +24,14 @@ const ChecklistItemDeletionModal: React.FC<ChecklistItemDeletionModalProps> = ({
 
   const handleDelete = () => {
     setIsDeleting(true);
-    deleteChecklistItem(item.id, {
+    deleteChecklistItem(item.unique_id, {
       onSuccess: () => {
         toast({
           title: "Item Deleted Successfully",
-          description: `Checklist item ${item.id} has been removed and numbering has been updated.`,
+          description: `Checklist item ${item.unique_id} has been removed and numbering has been updated.`,
           variant: "default"
         });
-        onDeleted(item.id);
+        onDeleted(item.unique_id);
         onClose();
       },
       onError: (error) => {
@@ -73,7 +73,7 @@ const ChecklistItemDeletionModal: React.FC<ChecklistItemDeletionModalProps> = ({
             <div className="bg-muted/30 rounded-lg p-4 space-y-2">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-muted-foreground">Item ID:</span>
-                <span className="text-sm font-bold">{item.id}</span>
+                <span className="text-sm font-bold">{item.unique_id}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-muted-foreground">Category:</span>
