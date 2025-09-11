@@ -274,10 +274,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                   <Badge className="bg-gradient-to-r from-blue-50/90 to-purple-50/90 text-blue-700 border border-blue-200/60 group-hover:from-blue-100/90 group-hover:to-purple-100/90 group-hover:border-blue-300/80 group-hover:shadow-lg transition-all duration-500 backdrop-blur-sm px-4 py-2 text-sm font-medium">
                     <span>{count} items</span>
                   </Badge>
-                  <div className="relative w-8 h-8 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-100/0 to-purple-100/0 group-hover:from-blue-100/80 group-hover:to-purple-100/80 rounded-xl transition-all duration-300"></div>
-                    <ChevronDown className="w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-all duration-300 data-[state=open]:rotate-180 group-hover:scale-110" />
-                  </div>
+                  {/* Chevron icon removed */}
                 </div>
               </div>
             </AccordionTrigger>
