@@ -970,6 +970,7 @@ export type Database = {
           pending_actions: number
           phone_number: string
           projects: string[]
+          role: string
           roles: string[]
           sso_enabled: boolean
           status: Database["public"]["Enums"]["user_status"]
