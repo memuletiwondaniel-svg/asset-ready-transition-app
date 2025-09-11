@@ -68,6 +68,8 @@ interface User {
   locked_until: string;
   password_change_required: boolean;
   last_activity: string;
+  ta2_discipline?: string;
+  ta2_commission?: string;
 }
 
 const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack }) => {
@@ -494,7 +496,16 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                       <div className="space-y-1">
                         <div className="space-y-1">
                           {user.role && (
-                            <div className="text-sm font-medium">{user.role}</div>
+                            <div className="text-sm font-medium">
+                              {user.role}
+                              {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {user.ta2_discipline && <span>{user.ta2_discipline}</span>}
+                                  {user.ta2_discipline && user.ta2_commission && <span> • </span>}
+                                  {user.ta2_commission && <span>{user.ta2_commission}</span>}
+                                </div>
+                              )}
+                            </div>
                           )}
                           <div className="flex flex-wrap gap-1">
                             {user.roles && user.roles.length > 0 && user.roles[0] !== null && (

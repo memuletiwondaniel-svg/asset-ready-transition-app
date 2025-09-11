@@ -975,6 +975,8 @@ export type Database = {
           roles: string[]
           sso_enabled: boolean
           status: Database["public"]["Enums"]["user_status"]
+          ta2_commission: Database["public"]["Enums"]["ta2_commission"]
+          ta2_discipline: Database["public"]["Enums"]["ta2_discipline"]
           two_factor_enabled: boolean
           user_id: string
         }[]
