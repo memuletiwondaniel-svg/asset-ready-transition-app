@@ -197,17 +197,43 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return false;
     }
     
-    // TA2 needs discipline and commission (if not Tech Safety or Civil)
-    if (role === "TA2" && !formData.discipline) {
-      return false;
-    }
-    if (role === "TA2" && formData.discipline && 
-        formData.discipline !== "Tech Safety" && formData.discipline !== "Civil" && 
-        !formData.commission) {
-      return false;
-    }
-    
     return true;
+  };
+
+  // Helper function to generate position title based on role and conditional fields
+  const generatePositionTitle = () => {
+    const role = formData.role;
+    
+    if (!role) return '';
+    
+    switch (role) {
+      case 'Director':
+        return formData.commission ? `${formData.commission} Director` : '';
+      
+      case 'Plant Director':
+        return formData.plant ? `${formData.plant} Plant Director` : '';
+      
+      case 'Dep. Plant Director':
+        return formData.plant ? `${formData.plant} Dep. Plant Director` : '';
+      
+      case 'Site Engineer':
+        return formData.station ? `Site Engr – ${formData.station}` : '';
+      
+      case 'Ops Coach':
+        return formData.field ? `Ops Coach – ${formData.field}` : '';
+      
+      case 'Ops Team Lead':
+        return formData.field ? `Ops Team Lead – ${formData.field}` : '';
+      
+      case 'Engr. Manager':
+        return formData.commission ? `Engr. Manager – ${formData.commission}` : '';
+      
+      case 'HSE Lead':
+        return formData.commission ? `HSE Lead – ${formData.commission}` : '';
+      
+      default:
+        return '';
+    }
   };
 
   // Helper function to get the final combined role
@@ -433,6 +459,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     setIsCreating(true);
     
     try {
+      // Generate position title based on role and conditional fields
+      const positionTitle = generatePositionTitle();
+      
       // First, create the user to get the user ID
       const { data: createResp, error: createErr } = await supabase.functions.invoke("admin-create-user", {
         body: {
@@ -442,6 +471,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           password: generatedPassword,
           company: formData.company === "Others" ? null : formData.company,
           role: formData.role,
+          position: positionTitle || null,
           phone: formData.countryCode + formData.phone,
           personalEmail: formData.personalEmail || null,
           functionalEmail: formData.functionalEmail || null,
@@ -449,8 +479,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           discipline: formData.discipline || null,
           commission: formData.commission || null,
           plant: formData.plant || null,
+          station: formData.station || null,
+          field: formData.field || null,
           systemRole: formData.systemRole,
-          
         }
       });
 
@@ -1061,6 +1092,19 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                       </div>
                     </div>
                   )}
+
+                  {/* Position Display */}
+                  {areAllConditionalFieldsFilled() && generatePositionTitle() && (
+                    <div className="mt-4">
+                      <Label>Position</Label>
+                      <div className="p-3 bg-muted rounded-md border">
+                        <span className="font-medium text-primary">{generatePositionTitle()}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        This position is automatically generated based on your role and selections above.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
               <div>
@@ -1115,9 +1159,15 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   <span className="ml-2">{formData.company === "Others" ? formData.otherCompany : formData.company}</span>
                 </div>
                 <div>
-                  <span className="text-sm font-medium">Final Role:</span>
+                  <span className="text-sm font-medium">Role:</span>
                   <span className="ml-2">{formData.role}</span>
                 </div>
+                {generatePositionTitle() && (
+                  <div>
+                    <span className="text-sm font-medium">Position:</span>
+                    <span className="ml-2 font-medium text-primary">{generatePositionTitle()}</span>
+                  </div>
+                )}
                 {formData.commission && (
                   <div>
                     <span className="text-sm font-medium">Commission:</span>
