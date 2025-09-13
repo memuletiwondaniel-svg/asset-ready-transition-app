@@ -417,9 +417,7 @@ export type Database = {
           department: string | null
           discipline_id: string | null
           email: string
-          employee_id: string | null
           field_id: string | null
-          final_role: string | null
           first_name: string | null
           full_name: string | null
           functional_email: boolean | null
@@ -444,6 +442,7 @@ export type Database = {
           preferences: Json | null
           primary_phone: string | null
           rejection_reason: string | null
+          role: string | null
           secondary_phone: string | null
           sso_enabled: boolean | null
           station_id: string | null
@@ -465,9 +464,7 @@ export type Database = {
           department?: string | null
           discipline_id?: string | null
           email: string
-          employee_id?: string | null
           field_id?: string | null
-          final_role?: string | null
           first_name?: string | null
           full_name?: string | null
           functional_email?: boolean | null
@@ -492,6 +489,7 @@ export type Database = {
           preferences?: Json | null
           primary_phone?: string | null
           rejection_reason?: string | null
+          role?: string | null
           secondary_phone?: string | null
           sso_enabled?: boolean | null
           station_id?: string | null
@@ -513,9 +511,7 @@ export type Database = {
           department?: string | null
           discipline_id?: string | null
           email?: string
-          employee_id?: string | null
           field_id?: string | null
-          final_role?: string | null
           first_name?: string | null
           full_name?: string | null
           functional_email?: boolean | null
@@ -540,6 +536,7 @@ export type Database = {
           preferences?: Json | null
           primary_phone?: string | null
           rejection_reason?: string | null
+          role?: string | null
           secondary_phone?: string | null
           sso_enabled?: boolean | null
           station_id?: string | null
