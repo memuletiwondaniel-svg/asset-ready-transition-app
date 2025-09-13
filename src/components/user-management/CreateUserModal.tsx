@@ -842,7 +842,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
               <div>
                 <div className="space-y-4">
                   {/* Role Selection Row - All fields aligned horizontally */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-end">
                     {/* Primary Role Field */}
                     <div className="flex flex-col">
                       <Label htmlFor="role" className="mb-2">Role *</Label>
