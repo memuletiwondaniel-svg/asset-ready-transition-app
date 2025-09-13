@@ -444,7 +444,6 @@ export type Database = {
           preferences: Json | null
           primary_phone: string | null
           rejection_reason: string | null
-          role: string
           secondary_phone: string | null
           sso_enabled: boolean | null
           station_id: string | null
@@ -493,7 +492,6 @@ export type Database = {
           preferences?: Json | null
           primary_phone?: string | null
           rejection_reason?: string | null
-          role?: string
           secondary_phone?: string | null
           sso_enabled?: boolean | null
           station_id?: string | null
@@ -542,7 +540,6 @@ export type Database = {
           preferences?: Json | null
           primary_phone?: string | null
           rejection_reason?: string | null
-          role?: string
           secondary_phone?: string | null
           sso_enabled?: boolean | null
           station_id?: string | null
