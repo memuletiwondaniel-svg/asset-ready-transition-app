@@ -39,16 +39,17 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200/60 bg-gradient-to-r from-gray-50/80 to-gray-100/80">
-              <TableHead className="font-semibold text-gray-700 px-6 py-4">
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-16">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-32">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  ID & Description
+                  ID
                 </div>
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4">Topic</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center">Status</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4">Description</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Category</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Topic</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-24">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,47 +60,6 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                   index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'
                 }`}
               >
-                <TableCell className="px-6 py-4 max-w-md">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="outline" 
-                        className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-xs font-medium"
-                      >
-                        {item.unique_id}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-800 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  <Badge 
-                    variant="secondary" 
-                    className="bg-gradient-to-r from-gray-100/80 to-gray-200/80 text-gray-700 border border-gray-300/60"
-                  >
-                    {item.category}
-                  </Badge>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  {item.topic ? (
-                    <span className="text-sm text-purple-600 font-medium">{item.topic}</span>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">No topic</span>
-                  )}
-                </TableCell>
-                <TableCell className="px-6 py-4 text-center">
-                  <Badge 
-                    variant={item.is_active ? "default" : "secondary"}
-                    className={item.is_active 
-                      ? "bg-green-100/80 text-green-700 border-green-200/60" 
-                      : "bg-gray-100/80 text-gray-600 border-gray-200/60"
-                    }
-                  >
-                    {item.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </TableCell>
                 <TableCell className="px-6 py-4 text-center">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -131,6 +91,45 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Badge 
+                    variant="outline" 
+                    className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-xs font-medium"
+                  >
+                    {item.unique_id}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-6 py-4 max-w-lg">
+                  <p className="text-sm text-gray-800 line-clamp-2 leading-relaxed">
+                    {item.description}
+                  </p>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Badge 
+                    variant="secondary" 
+                    className="bg-gradient-to-r from-gray-100/80 to-gray-200/80 text-gray-700 border border-gray-300/60"
+                  >
+                    {item.category}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  {item.topic ? (
+                    <span className="text-sm text-purple-600 font-medium">{item.topic}</span>
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">No topic</span>
+                  )}
+                </TableCell>
+                <TableCell className="px-6 py-4 text-center">
+                  <Badge 
+                    variant={item.is_active ? "default" : "secondary"}
+                    className={item.is_active 
+                      ? "bg-green-100/80 text-green-700 border-green-200/60" 
+                      : "bg-gray-100/80 text-gray-600 border-gray-200/60"
+                    }
+                  >
+                    {item.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 </TableCell>
               </TableRow>
             ))}
