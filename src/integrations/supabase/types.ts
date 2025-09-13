@@ -1191,7 +1191,6 @@ export type Database = {
           created_at: string
           department: string
           email: string
-          employee_id: string
           first_name: string
           full_name: string
           functional_email_address: string
