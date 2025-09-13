@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/useRoles";
 import { useCommissions } from "@/hooks/useCommissions";
 import { usePlants } from "@/hooks/usePlants";
+import { useStations } from "@/hooks/useStations";
 import { useDisciplines } from "@/hooks/useRoleData";
 
 interface CreateUserModalProps {
@@ -40,6 +41,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const { roles, isLoading: rolesLoading, addRole } = useRoles();
   const { commissions, isLoading: commissionsLoading, addCommission } = useCommissions();
   const { plants, isLoading: plantsLoading, addPlant } = usePlants();
+  const { stations, isLoading: stationsLoading, addStation } = useStations();
   const { data: disciplinesData, isLoading: disciplinesLoading } = useDisciplines();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -57,6 +59,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     discipline: "",
     commission: "",
     plant: "",
+    station: "",
     systemRole: "user", // Default system role
     privileges: [] as string[],
   });
@@ -82,6 +85,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   
   // Get plant names from the database  
   const plantNames = plants.map(plant => plant.name);
+  
+  // Get station names from the database
+  const stationNames = stations.map(station => station.name);
   
   // Get discipline names from the database
   const disciplineNames = disciplinesData?.map(discipline => discipline.value) || [];
@@ -198,6 +204,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       else if (field === "role" && value === "Engr. Manager" && prev.commission) {
         newData.role = `${prev.commission} Engr. Manager`;
       }
+      // Handle Site Engr role combinations with station
+      else if (field === "station" && prev.role === "Site Engr" && value) {
+        newData.role = `${value} Site Engr`;
+      }
+      else if (field === "role" && value === "Site Engr" && prev.station) {
+        newData.role = `${prev.station} Site Engr`;
+      }
       // Handle Plant Director role combinations
       else if (field === "plant" && (prev.role === "Plant Director" || prev.role === "Dep. Plant Director") && value) {
         if (prev.role === "Plant Director") {
@@ -232,6 +245,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         if ((prev.role.includes("Plant Director") || prev.role.includes("Dep Plant Dir")) && 
             value !== "Plant Director" && value !== "Dep. Plant Director") {
           newData.plant = "";
+        }
+        if (prev.role.includes("Site Engr") && value !== "Site Engr") {
+          newData.station = "";
         }
         if (prev.role.includes("TA2") && value !== "TA2") {
           newData.commission = "";
@@ -464,6 +480,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         discipline: "",
         commission: "",
         plant: "",
+        station: "",
         systemRole: "user",
         privileges: [],
       });
@@ -778,6 +795,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                   if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
                                     handleInputChange("plant", "");
                                   }
+                                  // Reset station when selecting non-Site Engr roles
+                                  if (selectedRole !== "Site Engr") {
+                                    handleInputChange("station", "");
+                                  }
                                   // Reset TA2 fields when selecting non-TA2 roles
                                   if (selectedRole !== "TA2") {
                                     handleInputChange("discipline", "");
@@ -931,6 +952,34 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             ))
                           ) : (
                             <SelectItem value="" disabled>No plants available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Station Field for Site Engr roles */}
+                  {(formData.role === "Site Engr" || formData.role.includes("Site Engr")) && (
+                    <div>
+                      <Label htmlFor="station">Station *</Label>
+                      <Select 
+                        value={formData.station}
+                        onValueChange={(value) => handleInputChange("station", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select station" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border shadow-lg z-50">
+                          {stationsLoading ? (
+                            <SelectItem value="" disabled>Loading stations...</SelectItem>
+                          ) : stationNames.length > 0 ? (
+                            stationNames.map((stationName) => (
+                              <SelectItem key={stationName} value={stationName}>
+                                {stationName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No stations available</SelectItem>
                           )}
                         </SelectContent>
                       </Select>
