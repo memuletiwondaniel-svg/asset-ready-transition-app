@@ -99,6 +99,9 @@ serve(async (req) => {
     // Ensure we don't send non-existent columns
     delete updateData.final_role;
     delete updateData.employee_id;
+    
+    // Position is now a text field, so we can keep it as-is
+    // No need to delete it unless it's null/undefined
 
     // Update the profile atomically using service role
     const { data, error: updateErr } = await admin

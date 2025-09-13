@@ -29,6 +29,7 @@ import { usePlants } from "@/hooks/usePlants";
 import { useStations } from "@/hooks/useStations";
 import { useFields } from "@/hooks/useFields";
 import { useDisciplines } from "@/hooks/useDisciplines";
+import { useHubs } from "@/hooks/useHubs";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const { stations, isLoading: stationsLoading, addStation } = useStations();
   const { fields, isLoading: fieldsLoading, addField } = useFields();
   const { disciplines, isLoading: disciplinesLoading } = useDisciplines();
+  const { data: hubs } = useHubs();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -63,6 +65,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     plant: "",
     station: "",
     field: "",
+    hub: "",
     systemRole: "user", // Default system role
   });
 
@@ -241,6 +244,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       
       case 'HSE Lead':
         return formData.commission ? `HSE Lead – ${formData.commission}` : '';
+      
+      case 'ORA Engineer':
+        return formData.hub ? `ORA Engineer – ${formData.hub}` : '';
+      
+      case 'ER Lead':
+        return 'ER Lead';
       
       case 'TA2':
         if (formData.discipline) {
@@ -564,6 +573,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         plant: "",
         station: "",
         field: "",
+        hub: "",
         systemRole: "user",
         
       });

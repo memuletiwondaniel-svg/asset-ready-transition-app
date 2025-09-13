@@ -137,7 +137,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     if (!role) return '';
     
     // Handle hub-based roles first
-    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role) && hub) {
+    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role) && hub) {
       switch (role) {
         case 'Proj Manager':
           return `Proj Manager – ${hub}`;
@@ -147,6 +147,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           return `Commissioning Lead – ${hub}`;
         case 'Construction Lead':
           return `Construction Lead – ${hub}`;
+        case 'ORA Engineer':
+          return `ORA Engineer – ${hub}`;
       }
     }
     
@@ -176,6 +178,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'HSE Lead':
         return commission ? `HSE Lead – ${commission}` : '';
       
+      case 'ER Lead':
+        return 'ER Lead';
+      
       default:
         return '';
     }
@@ -188,7 +193,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     if (!role) return false;
     
     // Hub-based roles
-    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role)) {
+    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role)) {
       return !!hub;
     }
     
@@ -205,6 +210,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Ops Coach':
       case 'Ops Team Lead':
         return !!field;
+      case 'ER Lead':
+        return true; // ER Lead doesn't need additional fields
       default:
         return false;
     }
@@ -485,7 +492,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         plant: plantId,
         station: stationId,
         field: fieldId,
-        // Do not send position to backend (DB expects UUID for this column in some environments)
+        position: generatedPosition || null, // Now include position as it's a text field
         company: formData.company,
         status: formData.status,
         account_status: formData.account_status || 'active',
