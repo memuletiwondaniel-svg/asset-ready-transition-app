@@ -485,7 +485,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         plant: plantId,
         station: stationId,
         field: fieldId,
-        position: generatedPosition || null,
+        // Do not send position to backend (DB expects UUID for this column in some environments)
         company: formData.company,
         status: formData.status,
         account_status: formData.account_status || 'active',
