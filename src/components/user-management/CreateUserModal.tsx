@@ -248,9 +248,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           if (formData.discipline === "Tech Safety" || formData.discipline === "Civil") {
             return `TA2 ${formData.discipline}`;
           }
-          // For other disciplines, include commission if provided
+          // For other disciplines, include commission with dash format if provided
           if (formData.commission) {
-            return `TA2 ${formData.discipline} (${formData.commission})`;
+            return `TA2 ${formData.discipline} - ${formData.commission}`;
           }
         }
         return '';
