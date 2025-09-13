@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -119,6 +120,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   });
 
   const [systemRole, setSystemRole] = useState('user');
+  const [databaseRoles, setDatabaseRoles] = useState<Array<{value: string, label: string}>>([]);
+  const [commissions, setCommissions] = useState<Array<{value: string, label: string}>>([]);
+  const [disciplines, setDisciplines] = useState<Array<{value: string, label: string}>>([]);
+  const [plants, setPlants] = useState<Array<{value: string, label: string}>>([]);
+  const [stations, setStations] = useState<Array<{value: string, label: string}>>([]);
+  const [fields, setFields] = useState<Array<{value: string, label: string}>>([]);
 
   const systemRoles = [
     { value: "user", label: "User" },
@@ -133,25 +140,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     { value: "BGC", label: "BGC", logo: "/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png" },
     { value: "KENT", label: "Kent", logo: "/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" },
     { value: "Others", label: "Others" }
-  ];
-
-  const roles = [
-    'Project Manager',
-    'Commissioning Lead',
-    'Construction Lead',
-    'Technical Authority (TA2)',
-    'Plant Director',
-    'Deputy Plant Director',
-    'Operations Coach',
-    'Operation Readiness & Assurance Engineer',
-    'Site Engineer',
-    'Ops HSE Lead',
-    'Project HSE Lead',
-    'ER Lead',
-    'Production Director',
-    'HSE Director',
-    'P&E Director',
-    'Others'
   ];
 
   const countryCodes = [
@@ -185,6 +173,67 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     { value: "Project and Engineering", label: "Project and Engineering" }
   ];
 
+  // Fetch database options
+  const fetchDatabaseOptions = async () => {
+    try {
+      // Fetch roles
+      const { data: rolesData } = await supabase
+        .from('roles')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setDatabaseRoles(rolesData?.map(r => ({ value: r.name, label: r.name })) || []);
+
+      // Fetch commissions
+      const { data: commissionsData } = await supabase
+        .from('commission')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setCommissions(commissionsData?.map(c => ({ value: c.name, label: c.name })) || []);
+
+      // Fetch disciplines
+      const { data: disciplinesData } = await supabase
+        .from('discipline')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setDisciplines(disciplinesData?.map(d => ({ value: d.name, label: d.name })) || []);
+
+      // Fetch plants
+      const { data: plantsData } = await supabase
+        .from('plant')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setPlants(plantsData?.map(p => ({ value: p.name, label: p.name })) || []);
+
+      // Fetch stations
+      const { data: stationsData } = await supabase
+        .from('station')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setStations(stationsData?.map(s => ({ value: s.name, label: s.name })) || []);
+
+      // Fetch fields
+      const { data: fieldsData } = await supabase
+        .from('field')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setFields(fieldsData?.map(f => ({ value: f.name, label: f.name })) || []);
+    } catch (error) {
+      console.error('Error fetching database options:', error);
+    }
+  };
+
   // Initialize form data when modal opens or user changes
   useEffect(() => {
     if (isOpen && user) {
@@ -212,6 +261,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       setSystemRole(user.roles?.[0] || 'user');
       setLocalAvatarUrl(user.avatar_url ? `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}` : null);
       
+      fetchDatabaseOptions();
       fetchActivityLogs();
       fetchUserSessions();
     }
@@ -671,26 +721,42 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
                 <div>
                   <Label>Role *</Label>
-                  <Select
+                  <Combobox
                     value={formData.role}
                     onValueChange={(value) => handleInputChange('role', value)}
-                    disabled={!editMode}
-                  >
-                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={databaseRoles}
+                    placeholder="Select role"
+                    searchPlaceholder="Search roles..."
+                    emptyText="No roles found"
+                    className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                  />
                 </div>
+
+                {/* Conditional fields based on role */}
+                {formData.role === 'Director' && (
+                  <div>
+                    <Label>Commission</Label>
+                    <Select
+                      value={formData.ta2_commission}
+                      onValueChange={(value) => handleInputChange('ta2_commission', value)}
+                      disabled={!editMode}
+                    >
+                      <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                        <SelectValue placeholder="Select commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {commissions.map(commission => (
+                          <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {formData.role === 'Technical Authority (TA2)' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="ta2_discipline">Discipline</Label>
+                      <Label>Discipline</Label>
                       <Select
                         value={formData.ta2_discipline}
                         onValueChange={(value) => handleInputChange('ta2_discipline', value)}
@@ -700,17 +766,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           <SelectValue placeholder="Select discipline" />
                         </SelectTrigger>
                         <SelectContent>
-                          {ta2Disciplines.map((discipline) => (
-                            <SelectItem key={discipline.value} value={discipline.value}>
-                              {discipline.label}
-                            </SelectItem>
+                          {disciplines.map(discipline => (
+                            <SelectItem key={discipline.value} value={discipline.value}>{discipline.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div>
-                      <Label htmlFor="ta2_commission">TA2 Commission</Label>
+                      <Label>Commission</Label>
                       <Select
                         value={formData.ta2_commission}
                         onValueChange={(value) => handleInputChange('ta2_commission', value)}
@@ -720,14 +783,71 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           <SelectValue placeholder="Select commission" />
                         </SelectTrigger>
                         <SelectContent>
-                          {ta2Commissions.map((commission) => (
-                            <SelectItem key={commission.value} value={commission.value}>
-                              {commission.label}
-                            </SelectItem>
+                          {commissions.map(commission => (
+                            <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                     </div>
+                    </div>
+                  </div>
+                )}
+
+                {(formData.role === 'Plant Manager' || formData.role === 'Operations Manager') && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Plant</Label>
+                      <Select
+                        value={formData.ta2_discipline}
+                        onValueChange={(value) => handleInputChange('ta2_discipline', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select plant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {plants.map(plant => (
+                            <SelectItem key={plant.value} value={plant.value}>{plant.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Station</Label>
+                      <Select
+                        value={formData.ta2_commission}
+                        onValueChange={(value) => handleInputChange('ta2_commission', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select station" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stations.map(station => (
+                            <SelectItem key={station.value} value={station.value}>{station.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {formData.role === 'Field Engineer' && (
+                  <div>
+                    <Label>Field</Label>
+                    <Select
+                      value={formData.ta2_discipline}
+                      onValueChange={(value) => handleInputChange('ta2_discipline', value)}
+                      disabled={!editMode}
+                    >
+                      <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                        <SelectValue placeholder="Select field" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fields.map(field => (
+                          <SelectItem key={field.value} value={field.value}>{field.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </CardContent>
