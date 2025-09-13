@@ -410,21 +410,20 @@ export type Database = {
           authenticator_id: string | null
           avatar_url: string | null
           backup_email: string | null
-          commission_id: string | null
+          commission: string | null
           company: Database["public"]["Enums"]["user_company"] | null
           country_code: string | null
           created_at: string
           department: string | null
-          discipline_id: string | null
+          discipline: string | null
           email: string
-          field_id: string | null
+          field: string | null
           first_name: string | null
           full_name: string | null
           functional_email: boolean | null
           functional_email_address: string | null
           id: string
           is_active: boolean
-          job_title: string | null
           last_login_at: string | null
           last_name: string | null
           last_password_reset: string | null
@@ -437,7 +436,7 @@ export type Database = {
           password_reset_required: boolean | null
           personal_email: string | null
           phone_number: string | null
-          plant_id: string | null
+          plant: string | null
           position: string | null
           preferences: Json | null
           primary_phone: string | null
@@ -445,7 +444,7 @@ export type Database = {
           role: string | null
           secondary_phone: string | null
           sso_enabled: boolean | null
-          station_id: string | null
+          station: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           temporary_password: string | null
           two_factor_enabled: boolean | null
@@ -457,21 +456,20 @@ export type Database = {
           authenticator_id?: string | null
           avatar_url?: string | null
           backup_email?: string | null
-          commission_id?: string | null
+          commission?: string | null
           company?: Database["public"]["Enums"]["user_company"] | null
           country_code?: string | null
           created_at?: string
           department?: string | null
-          discipline_id?: string | null
+          discipline?: string | null
           email: string
-          field_id?: string | null
+          field?: string | null
           first_name?: string | null
           full_name?: string | null
           functional_email?: boolean | null
           functional_email_address?: string | null
           id?: string
           is_active?: boolean
-          job_title?: string | null
           last_login_at?: string | null
           last_name?: string | null
           last_password_reset?: string | null
@@ -484,7 +482,7 @@ export type Database = {
           password_reset_required?: boolean | null
           personal_email?: string | null
           phone_number?: string | null
-          plant_id?: string | null
+          plant?: string | null
           position?: string | null
           preferences?: Json | null
           primary_phone?: string | null
@@ -492,7 +490,7 @@ export type Database = {
           role?: string | null
           secondary_phone?: string | null
           sso_enabled?: boolean | null
-          station_id?: string | null
+          station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           temporary_password?: string | null
           two_factor_enabled?: boolean | null
@@ -504,21 +502,20 @@ export type Database = {
           authenticator_id?: string | null
           avatar_url?: string | null
           backup_email?: string | null
-          commission_id?: string | null
+          commission?: string | null
           company?: Database["public"]["Enums"]["user_company"] | null
           country_code?: string | null
           created_at?: string
           department?: string | null
-          discipline_id?: string | null
+          discipline?: string | null
           email?: string
-          field_id?: string | null
+          field?: string | null
           first_name?: string | null
           full_name?: string | null
           functional_email?: boolean | null
           functional_email_address?: string | null
           id?: string
           is_active?: boolean
-          job_title?: string | null
           last_login_at?: string | null
           last_name?: string | null
           last_password_reset?: string | null
@@ -531,7 +528,7 @@ export type Database = {
           password_reset_required?: boolean | null
           personal_email?: string | null
           phone_number?: string | null
-          plant_id?: string | null
+          plant?: string | null
           position?: string | null
           preferences?: Json | null
           primary_phone?: string | null
@@ -539,7 +536,7 @@ export type Database = {
           role?: string | null
           secondary_phone?: string | null
           sso_enabled?: boolean | null
-          station_id?: string | null
+          station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           temporary_password?: string | null
           two_factor_enabled?: boolean | null
@@ -548,22 +545,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_commission_id_fkey"
-            columns: ["commission_id"]
+            foreignKeyName: "profiles_commission_fkey"
+            columns: ["commission"]
             isOneToOne: false
             referencedRelation: "commission"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "profiles_discipline_id_fkey"
-            columns: ["discipline_id"]
+            foreignKeyName: "profiles_discipline_fkey"
+            columns: ["discipline"]
             isOneToOne: false
             referencedRelation: "discipline"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "profiles_field_id_fkey"
-            columns: ["field_id"]
+            foreignKeyName: "profiles_field_fkey"
+            columns: ["field"]
             isOneToOne: false
             referencedRelation: "field"
             referencedColumns: ["id"]
@@ -576,15 +573,15 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "profiles_plant_id_fkey"
-            columns: ["plant_id"]
+            foreignKeyName: "profiles_plant_fkey"
+            columns: ["plant"]
             isOneToOne: false
             referencedRelation: "plant"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "profiles_station_id_fkey"
-            columns: ["station_id"]
+            foreignKeyName: "profiles_station_fkey"
+            columns: ["station"]
             isOneToOne: false
             referencedRelation: "station"
             referencedColumns: ["id"]
