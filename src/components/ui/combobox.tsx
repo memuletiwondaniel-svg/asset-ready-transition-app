@@ -109,7 +109,7 @@ export function Combobox({
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList>
+          <CommandList className="max-h-48 overflow-auto">
             <CommandEmpty>
               {showAddCustomOption ? (
                 <div className="p-2">
@@ -202,7 +202,7 @@ export function MultiSelectCombobox({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50 bg-popover border shadow-lg">
         <Command shouldFilter={false}>
           <CommandInput placeholder={searchPlaceholder} value={search} onValueChange={setSearch} />
-          <CommandList>
+          <CommandList className="max-h-48 overflow-auto">
             <CommandEmpty>No results.</CommandEmpty>
             <CommandGroup>
               {filtered.map((opt) => (
