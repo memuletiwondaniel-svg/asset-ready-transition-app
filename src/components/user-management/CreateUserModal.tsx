@@ -1083,16 +1083,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     )}
                   </div>
 
-                  {/* Final Role Display - Second Row */}
-                  {formData.role && areAllConditionalFieldsFilled() && (
-                    <div className="mt-4 p-4 bg-gradient-to-r from-success/10 to-success/5 border border-success/20 rounded-xl shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                        <p className="text-lg font-semibold text-foreground">{getFinalRole()}</p>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Position Display */}
                   {areAllConditionalFieldsFilled() && generatePositionTitle() && (
                     <div className="mt-4">
