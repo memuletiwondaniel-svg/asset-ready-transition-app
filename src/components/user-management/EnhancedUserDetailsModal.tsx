@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useHubs } from '@/hooks/useHubs';
 
 // Type definitions matching the database schema exactly
 interface DatabaseUser {
@@ -114,6 +115,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     plant: '',
     station: '',
     field: '',
+    hub: '',
     company: 'BGC' as 'BGC' | 'KENT' | null,
     status: 'active' as 'active' | 'inactive' | 'pending_approval' | 'suspended',
     account_status: '',
@@ -124,13 +126,29 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     position: ''
   });
 
+  const { data: hubs } = useHubs();
+
   // Function to generate dynamic title based on role and conditional fields
   const generateTitle = () => {
-    const { role, commission, plant, station, field } = formData;
+    const { role, commission, plant, station, field, hub } = formData;
     
     if (!role) return '';
     
-    // Handle different role combinations
+    // Handle hub-based roles first
+    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role) && hub) {
+      switch (role) {
+        case 'Proj Manager':
+          return `Proj Manager – ${hub}`;
+        case 'Proj Engr':
+          return `Proj Engr – ${hub}`;
+        case 'Commissioning Lead':
+          return `Commissioning Lead – ${hub}`;
+        case 'Construction Lead':
+          return `Construction Lead – ${hub}`;
+      }
+    }
+    
+    // Handle other role combinations
     switch (role) {
       case 'Director':
         return commission ? `${commission} Director` : '';
@@ -163,9 +181,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   // Check if all required fields for title generation are completed
   const isTitleReady = () => {
-    const { role, commission, plant, station, field } = formData;
+    const { role, commission, plant, station, field, hub } = formData;
     
     if (!role) return false;
+    
+    // Hub-based roles
+    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role)) {
+      return !!hub;
+    }
     
     switch (role) {
       case 'Director':
@@ -183,6 +206,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       default:
         return false;
     }
+  };
+
+  // Check if role requires hub selection
+  const requiresHub = (role: string) => {
+    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role);
   };
 
   const [systemRole, setSystemRole] = useState('user');
@@ -305,6 +333,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         plant: '',
         station: '',
         field: '',
+        hub: '',
         company: user.company || 'BGC',
         status: user.status || 'active',
         account_status: user.account_status || 'active',
@@ -1055,6 +1084,26 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                               onAddCustom={handleCommissionChange}
                               className={!editMode ? 'bg-muted pointer-events-none' : ''}
                             />
+                          </div>
+                        )}
+
+                        {requiresHub(formData.role) && (
+                          <div>
+                            <Label>Hub *</Label>
+                            <Select
+                              value={formData.hub}
+                              onValueChange={(value) => handleInputChange('hub', value)}
+                              disabled={!editMode}
+                            >
+                              <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                                <SelectValue placeholder="Select hub" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {hubs?.map(hub => (
+                                  <SelectItem key={hub.id} value={hub.name}>{hub.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         )}
                       </div>

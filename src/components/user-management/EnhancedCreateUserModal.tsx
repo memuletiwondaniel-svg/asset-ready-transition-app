@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useHubs } from '@/hooks/useHubs';
 
 interface PhoneNumber {
   countryCode: string;
@@ -35,6 +36,7 @@ interface UserFormData {
   customRole: string;
   discipline?: string;
   commission?: string;
+  hub: string;
   associatedProjects: string[];
   authenticator: string;
 }
@@ -66,9 +68,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     customRole: '',
     discipline: '',
     commission: '',
+    hub: '',
     associatedProjects: [],
     authenticator: 'Daniel Memuletiwon',
   });
+
+  const { data: hubs } = useHubs();
 
   const [emailError, setEmailError] = useState('');
 
@@ -90,7 +95,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   ];
 
   const roles = [
-    'Project Manager',
+    'Proj Manager',
+    'Proj Engr',
     'Commissioning Lead',
     'Construction Lead',
     'Technical Authority (TA2)',
@@ -171,6 +177,30 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     }));
   };
 
+  // Check if role requires hub selection
+  const requiresHub = (role: string) => {
+    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role);
+  };
+
+  // Generate position based on role and hub
+  const generatePosition = () => {
+    const { role, hub } = formData;
+    if (!role || !hub) return '';
+    
+    switch (role) {
+      case 'Proj Manager':
+        return `Proj Manager – ${hub}`;
+      case 'Proj Engr':
+        return `Proj Engr – ${hub}`;
+      case 'Commissioning Lead':
+        return `Commissioning Lead – ${hub}`;
+      case 'Construction Lead':
+        return `Construction Lead – ${hub}`;
+      default:
+        return '';
+    }
+  };
+
   const handleSubmit = () => {
     if (step === 'form') {
       // Validate required fields
@@ -207,6 +237,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         ...formData,
         company: formData.company === 'Others' ? formData.customCompany : formData.company,
         role: formData.role === 'Others' ? formData.customRole : formData.role,
+        position: generatePosition(),
         status: isAdminCreated ? 'new' : 'awaiting authentication',
         createdBy: isAdminCreated ? 'admin' : 'self',
         privileges: [], // Will be assigned by authenticator
@@ -246,6 +277,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       customRole: '',
       discipline: '',
       commission: '',
+      hub: '',
       associatedProjects: [],
       authenticator: 'Daniel Memuletiwon',
     });
@@ -444,6 +476,25 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               />
             )}
           </div>
+
+          {requiresHub(formData.role) && (
+            <div>
+              <Label>Hub *</Label>
+              <Select
+                value={formData.hub}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select hub" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hubs?.map(hub => (
+                    <SelectItem key={hub.id} value={hub.name}>{hub.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {formData.role === 'Technical Authority (TA2)' && (
             <div className="grid grid-cols-2 gap-4">
