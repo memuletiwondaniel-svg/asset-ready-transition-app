@@ -184,6 +184,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       else if (field === "role" && value === "Director" && prev.commission) {
         newData.role = `${prev.commission} Director`;
       }
+      // Handle HSE Lead role combinations with commission
+      else if (field === "commission" && prev.role === "HSE Lead" && value) {
+        newData.role = `${value} HSE Lead`;
+      }
+      else if (field === "role" && value === "HSE Lead" && prev.commission) {
+        newData.role = `${prev.commission} HSE Lead`;
+      }
       // Handle Plant Director role combinations
       else if (field === "plant" && (prev.role === "Plant Director" || prev.role === "Dep. Plant Director") && value) {
         if (prev.role === "Plant Director") {
@@ -211,7 +218,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       }
       // Reset fields when switching away from specific roles
       else if (field === "role") {
-        if (prev.role.includes("Director") && value !== "Director") {
+        if ((prev.role.includes("Director") || prev.role.includes("HSE Lead")) && value !== "Director" && value !== "HSE Lead") {
           newData.commission = "";
         }
         if ((prev.role.includes("Plant Director") || prev.role.includes("Dep Plant Dir")) && 
@@ -766,7 +773,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                   // Reset TA2 fields when selecting non-TA2 roles
                                   if (selectedRole !== "TA2") {
                                     handleInputChange("discipline", "");
-                                    if (selectedRole !== "Director") {
+                                    if (selectedRole !== "Director" && selectedRole !== "HSE Lead") {
                                       handleInputChange("commission", "");
                                     }
                                   }
@@ -922,9 +929,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     </div>
                   )}
 
-                  {/* Commission Field for Director roles */}
-                  {(formData.role === "Director" || (formData.role.includes("Director") && 
-                    !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir"))) && (
+                  {/* Commission Field for Director and HSE Lead roles */}
+                  {((formData.role === "Director" || formData.role === "HSE Lead") || 
+                    (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
+                    (formData.role.includes("HSE Lead"))) && (
                     <div>
                       <Label htmlFor="commission">Commission *</Label>
                       <Select 
