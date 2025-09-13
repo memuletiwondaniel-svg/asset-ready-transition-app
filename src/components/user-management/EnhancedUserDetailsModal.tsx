@@ -838,11 +838,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       </Select>
                     </div>
                   )}
-                </div>
 
-                {/* TA2 role with discipline and conditional commission */}
-                {formData.role === 'TA2' && (
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* TA2 discipline field */}
+                  {formData.role === 'TA2' && (
                     <div>
                       <Label>Discipline</Label>
                       <Select
@@ -860,25 +858,30 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         </SelectContent>
                       </Select>
                     </div>
-                    {formData.discipline && formData.discipline !== 'Tech Safety' && formData.discipline !== 'Civil' && (
-                      <div>
-                        <Label>Commission</Label>
-                        <Select
-                          value={formData.commission}
-                          onValueChange={(value) => handleInputChange('commission', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select commission" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {commissions.filter(c => c.value === 'P&E' || c.value === 'Asset').map(commission => (
-                              <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                  )}
+                </div>
+
+                {/* TA2 commission field on next row if discipline is selected and not Tech Safety or Civil */}
+                {formData.role === 'TA2' && formData.discipline && formData.discipline !== 'Tech Safety' && formData.discipline !== 'Civil' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div></div> {/* Empty div to align with role field above */}
+                    <div>
+                      <Label>Commission</Label>
+                      <Select
+                        value={formData.commission}
+                        onValueChange={(value) => handleInputChange('commission', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select commission" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {commissions.filter(c => c.value === 'P&E' || c.value === 'Asset').map(commission => (
+                            <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
               </CardContent>
