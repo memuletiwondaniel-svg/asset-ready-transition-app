@@ -181,6 +181,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'ER Lead':
         return 'ER Lead';
       
+      case 'TA2':
+        if (formData.discipline) {
+          if (formData.discipline === 'Tech Safety' || formData.discipline === 'Civil') {
+            return `TA2 ${formData.discipline}`;
+          } else if (commission) {
+            return `TA2 ${formData.discipline} - ${commission}`;
+          } else {
+            return `TA2 ${formData.discipline}`;
+          }
+        }
+        return '';
+      
       default:
         return '';
     }
@@ -212,6 +224,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return !!field;
       case 'ER Lead':
         return true; // ER Lead doesn't need additional fields
+      case 'TA2':
+        if (!formData.discipline) return false;
+        // For Tech Safety and Civil, only discipline is required
+        if (formData.discipline === 'Tech Safety' || formData.discipline === 'Civil') {
+          return true;
+        }
+        // For other disciplines, commission is also required
+        return !!commission;
       default:
         return false;
     }
@@ -1095,6 +1115,50 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                               value={formData.commission}
                               onValueChange={handleCommissionChange}
                               options={getCommissionOptions()}
+                              placeholder="Select commission (P&E or Asset only)"
+                              searchPlaceholder="Search commissions..."
+                              emptyText="No commissions found"
+                              allowCustom={editMode}
+                              onAddCustom={handleCommissionChange}
+                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                            />
+                          </div>
+                        )}
+
+                        {/* TA2 Role - Discipline Field */}
+                        {formData.role === 'TA2' && (
+                          <div>
+                            <Label>Discipline *</Label>
+                            <Combobox
+                              value={formData.discipline}
+                              onValueChange={(value) => {
+                                handleDisciplineChange(value);
+                                // Reset commission when changing discipline
+                                setFormData(prev => ({ ...prev, commission: '' }));
+                              }}
+                              options={disciplines}
+                              placeholder="Select discipline"
+                              searchPlaceholder="Search disciplines..."
+                              emptyText="No disciplines found"
+                              allowCustom={editMode}
+                              onAddCustom={handleDisciplineChange}
+                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                            />
+                          </div>
+                        )}
+
+                        {/* TA2 Role - Commission Field (only for non-Tech Safety and non-Civil disciplines) */}
+                        {formData.role === 'TA2' && formData.discipline && 
+                         formData.discipline !== 'Tech Safety' && formData.discipline !== 'Civil' && (
+                          <div>
+                            <Label>Commission *</Label>
+                            <Combobox
+                              value={formData.commission}
+                              onValueChange={handleCommissionChange}
+                              options={[
+                                { value: 'P&E', label: 'P&E' },
+                                { value: 'Asset', label: 'Asset' }
+                              ]}
                               placeholder="Select commission (P&E or Asset only)"
                               searchPlaceholder="Search commissions..."
                               emptyText="No commissions found"

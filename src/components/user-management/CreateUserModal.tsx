@@ -996,8 +996,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager") || 
                       (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
                       (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) ||
-                      // For TA2, show commission only if discipline is not Tech Safety or Civil
-                      ((formData.role === "TA2" || formData.role.includes("TA2")) && formData.discipline && 
+                       // For TA2, show commission only if discipline is not Tech Safety or Civil
+                       ((formData.role === "TA2" || formData.role.includes("TA2")) && formData.discipline &&
                        formData.discipline !== "Tech Safety" && formData.discipline !== "Civil")) && (
                       <div className="flex flex-col">
                         <Label htmlFor="commission" className="mb-2">Commission *</Label>
