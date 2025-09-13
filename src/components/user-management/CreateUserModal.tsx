@@ -218,8 +218,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const getFinalRole = () => {
     const role = formData.role;
     
-    if ((role === "Director" || role === "HSE Lead" || role === "Engr. Manager") && formData.commission) {
+    if ((role === "Director" || role === "HSE Lead") && formData.commission) {
       return `${formData.commission} ${role}`;
+    }
+    
+    if (role === "Engr. Manager" && formData.commission) {
+      return `Engr. Manager - ${formData.commission}`;
     }
     
     if ((role === "Plant Director" || role === "Dep. Plant Director") && formData.plant) {
