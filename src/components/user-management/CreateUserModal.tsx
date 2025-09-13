@@ -28,7 +28,7 @@ import { useCommissions } from "@/hooks/useCommissions";
 import { usePlants } from "@/hooks/usePlants";
 import { useStations } from "@/hooks/useStations";
 import { useFields } from "@/hooks/useFields";
-import { useDisciplines } from "@/hooks/useRoleData";
+import { useDisciplines } from "@/hooks/useDisciplines";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -44,7 +44,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const { plants, isLoading: plantsLoading, addPlant } = usePlants();
   const { stations, isLoading: stationsLoading, addStation } = useStations();
   const { fields, isLoading: fieldsLoading, addField } = useFields();
-  const { data: disciplinesData, isLoading: disciplinesLoading } = useDisciplines();
+  const { disciplines, isLoading: disciplinesLoading } = useDisciplines();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -96,7 +96,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const fieldNames = fields.map(field => field.name);
   
   // Get discipline names from the database
-  const disciplineNames = disciplinesData?.map(discipline => discipline.value) || [];
+  const disciplineNames = disciplines?.map(discipline => discipline.name) || [];
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
