@@ -66,12 +66,39 @@ serve(async (req) => {
 
     console.log('Updating profile for user:', userId, 'with data:', profileData);
 
-    // Map role to final_role since that's what the database expects
-    const updateData = { ...profileData };
-    if (updateData.role) {
-      updateData.final_role = updateData.role;
-      delete updateData.role;
+    // Prepare update payload and map role name -> roles.id (UUID)
+    const updateData: any = { ...profileData };
+
+    if (typeof profileData.role === 'string' && profileData.role.trim()) {
+      const roleInput = profileData.role.trim();
+      let roleId = roleInput;
+
+      // If the role isn't a UUID, treat it as a role name and look up its id
+      const isUuid = /^[0-9a-fA-F-]{36}$/.test(roleInput);
+      if (!isUuid) {
+        const { data: roleRow, error: roleLookupErr } = await admin
+          .from('roles')
+          .select('id')
+          .eq('name', roleInput)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (roleLookupErr || !roleRow?.id) {
+          console.error('update-user-profile: role lookup failed', roleLookupErr);
+          return new Response(
+            JSON.stringify({ error: `Role not found: ${roleInput}` }),
+            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        roleId = roleRow.id;
+      }
+
+      updateData.role = roleId;
     }
+
+    // Ensure we don't send non-existent columns
+    delete updateData.final_role;
+    delete updateData.employee_id;
 
     // Update the profile atomically using service role
     const { data, error: updateErr } = await admin
