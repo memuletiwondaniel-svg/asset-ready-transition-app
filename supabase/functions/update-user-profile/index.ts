@@ -66,10 +66,17 @@ serve(async (req) => {
 
     console.log('Updating profile for user:', userId, 'with data:', profileData);
 
+    // Map role to final_role since that's what the database expects
+    const updateData = { ...profileData };
+    if (updateData.role) {
+      updateData.final_role = updateData.role;
+      delete updateData.role;
+    }
+
     // Update the profile atomically using service role
     const { data, error: updateErr } = await admin
       .from('profiles')
-      .update(profileData)
+      .update(updateData)
       .eq('user_id', userId)
       .select()
       .single();
