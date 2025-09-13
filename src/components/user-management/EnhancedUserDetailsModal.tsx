@@ -706,7 +706,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   // Get filtered hubs for specific roles
   const getFilteredHubOptions = () => {
     if (formData.role === 'ORA Engineer') {
-      return hubs.filter(h => ['North', 'Central', 'South'].includes(h.name));
+      return hubs.filter(h => ['North', 'Central', 'South', 'Lead'].includes(h.name));
     }
     return hubs;
   };
@@ -1111,7 +1111,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                               value={formData.hub}
                               onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
                               options={getFilteredHubOptions().map(hub => ({ value: hub.name, label: hub.name }))}
-                              placeholder={formData.role === 'ORA Engineer' ? "Select hub (North, Central, or South)" : "Select hub"}
+                              placeholder="Select Hub"
                               searchPlaceholder="Search hubs..."
                               emptyText="No hubs found"
                               allowCustom={editMode}

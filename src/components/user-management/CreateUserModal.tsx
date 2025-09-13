@@ -1123,6 +1123,34 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                         </Select>
                       </div>
                     )}
+
+                    {/* Hub Field for ORA Engineer roles */}
+                    {(formData.role === "ORA Engineer" || formData.role.includes("ORA Engineer")) && (
+                      <div className="flex flex-col">
+                        <Label htmlFor="hub" className="mb-2">Hub *</Label>
+                        <Select 
+                          value={formData.hub}
+                          onValueChange={(value) => handleInputChange("hub", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Hub" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {hubs ? (
+                              hubs
+                                .filter((hub) => ['North', 'Central', 'South', 'Lead'].includes(hub.name))
+                                .map((hub) => (
+                                <SelectItem key={hub.id} value={hub.name}>
+                                  {hub.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-hubs" disabled>No hubs available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
 
                   {/* Position Display */}
