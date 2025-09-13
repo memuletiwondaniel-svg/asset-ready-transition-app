@@ -350,8 +350,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         two_factor_enabled: formData.two_factor_enabled,
         password_change_required: formData.password_change_required,
         functional_email: formData.functional_email,
-        ta2_discipline: formData.ta2_discipline || null,
-        ta2_commission: formData.ta2_commission || null,
         updated_at: new Date().toISOString()
       };
 

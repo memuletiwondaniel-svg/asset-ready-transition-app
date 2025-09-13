@@ -31,11 +31,6 @@ interface UpdateProfileRequest {
     two_factor_enabled?: boolean;
     password_change_required?: boolean;
     functional_email?: boolean;
-    discipline_id?: string | null;
-    commission_id?: string | null;
-    plant_id?: string | null;
-    station_id?: string | null;
-    field_id?: string | null;
     position?: string | null;
     updated_at?: string;
   };
