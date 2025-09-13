@@ -723,41 +723,125 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </Select>
                 </div>
 
-                <div>
-                  <Label>Role *</Label>
-                  <Combobox
-                    value={formData.role}
-                    onValueChange={(value) => handleInputChange('role', value)}
-                    options={databaseRoles}
-                    placeholder="Select role"
-                    searchPlaceholder="Search roles..."
-                    emptyText="No roles found"
-                    className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                  />
+                {/* Role and conditional fields on the same row */}
+                <div className="grid grid-cols-2 gap-4 items-end">
+                  <div>
+                    <Label>Role *</Label>
+                    <Combobox
+                      value={formData.role}
+                      onValueChange={(value) => handleInputChange('role', value)}
+                      options={databaseRoles}
+                      placeholder="Select role"
+                      searchPlaceholder="Search roles..."
+                      emptyText="No roles found"
+                      className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                    />
+                  </div>
+
+                  {/* Conditional fields based on role */}
+                  {formData.role === 'Director' && (
+                    <div>
+                      <Label>Commission</Label>
+                      <Select
+                        value={formData.commission}
+                        onValueChange={(value) => handleInputChange('commission', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select commission" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {commissions.map(commission => (
+                            <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
+                    <div>
+                      <Label>Plant</Label>
+                      <Select
+                        value={formData.plant}
+                        onValueChange={(value) => handleInputChange('plant', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select plant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {plants.map(plant => (
+                            <SelectItem key={plant.value} value={plant.value}>{plant.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {formData.role === 'Site Engineer' && (
+                    <div>
+                      <Label>Station</Label>
+                      <Select
+                        value={formData.station}
+                        onValueChange={(value) => handleInputChange('station', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select station" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stations.map(station => (
+                            <SelectItem key={station.value} value={station.value}>{station.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
+                    <div>
+                      <Label>Field</Label>
+                      <Select
+                        value={formData.field}
+                        onValueChange={(value) => handleInputChange('field', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select field" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fields.map(field => (
+                            <SelectItem key={field.value} value={field.value}>{field.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {formData.role === 'Engr. Manager' && (
+                    <div>
+                      <Label>Commission</Label>
+                      <Select
+                        value={formData.commission}
+                        onValueChange={(value) => handleInputChange('commission', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                          <SelectValue placeholder="Select commission" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {commissions.filter(c => c.value === 'P&E' || c.value === 'Asset').map(commission => (
+                            <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
-                {/* Conditional fields based on role - matching Create User Modal */}
-                {formData.role === 'Director' && (
-                  <div>
-                    <Label>Commission</Label>
-                    <Select
-                      value={formData.commission}
-                      onValueChange={(value) => handleInputChange('commission', value)}
-                      disabled={!editMode}
-                    >
-                      <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                        <SelectValue placeholder="Select commission" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {commissions.map(commission => (
-                          <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {formData.role === 'Technical Authority (TA2)' && (
+                {/* TA2 role with discipline and conditional commission */}
+                {formData.role === 'TA2' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Discipline</Label>
@@ -776,82 +860,25 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label>Commission</Label>
-                      <Select
-                        value={formData.commission}
-                        onValueChange={(value) => handleInputChange('commission', value)}
-                        disabled={!editMode}
-                      >
-                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                          <SelectValue placeholder="Select commission" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {commissions.map(commission => (
-                            <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-
-                {(formData.role === 'Plant Manager' || formData.role === 'Operations Manager') && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Plant</Label>
-                      <Select
-                        value={formData.plant}
-                        onValueChange={(value) => handleInputChange('plant', value)}
-                        disabled={!editMode}
-                      >
-                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                          <SelectValue placeholder="Select plant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {plants.map(plant => (
-                            <SelectItem key={plant.value} value={plant.value}>{plant.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Station</Label>
-                      <Select
-                        value={formData.station}
-                        onValueChange={(value) => handleInputChange('station', value)}
-                        disabled={!editMode}
-                      >
-                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                          <SelectValue placeholder="Select station" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {stations.map(station => (
-                            <SelectItem key={station.value} value={station.value}>{station.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-
-                {formData.role === 'Field Engineer' && (
-                  <div>
-                    <Label>Field</Label>
-                    <Select
-                      value={formData.field}
-                      onValueChange={(value) => handleInputChange('field', value)}
-                      disabled={!editMode}
-                    >
-                      <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                        <SelectValue placeholder="Select field" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fields.map(field => (
-                          <SelectItem key={field.value} value={field.value}>{field.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {formData.discipline && formData.discipline !== 'Tech Safety' && formData.discipline !== 'Civil' && (
+                      <div>
+                        <Label>Commission</Label>
+                        <Select
+                          value={formData.commission}
+                          onValueChange={(value) => handleInputChange('commission', value)}
+                          disabled={!editMode}
+                        >
+                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                            <SelectValue placeholder="Select commission" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {commissions.filter(c => c.value === 'P&E' || c.value === 'Asset').map(commission => (
+                              <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
