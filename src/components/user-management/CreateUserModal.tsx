@@ -27,6 +27,7 @@ import { useRoles } from "@/hooks/useRoles";
 import { useCommissions } from "@/hooks/useCommissions";
 import { usePlants } from "@/hooks/usePlants";
 import { useStations } from "@/hooks/useStations";
+import { useFields } from "@/hooks/useFields";
 import { useDisciplines } from "@/hooks/useRoleData";
 
 interface CreateUserModalProps {
@@ -42,6 +43,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const { commissions, isLoading: commissionsLoading, addCommission } = useCommissions();
   const { plants, isLoading: plantsLoading, addPlant } = usePlants();
   const { stations, isLoading: stationsLoading, addStation } = useStations();
+  const { fields, isLoading: fieldsLoading, addField } = useFields();
   const { data: disciplinesData, isLoading: disciplinesLoading } = useDisciplines();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -60,6 +62,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     commission: "",
     plant: "",
     station: "",
+    field: "",
     systemRole: "user", // Default system role
     privileges: [] as string[],
   });
@@ -88,6 +91,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   
   // Get station names from the database
   const stationNames = stations.map(station => station.name);
+  
+  // Get field names from the database
+  const fieldNames = fields.map(field => field.name);
   
   // Get discipline names from the database
   const disciplineNames = disciplinesData?.map(discipline => discipline.value) || [];
@@ -211,6 +217,20 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       else if (field === "role" && value === "Site Engr" && prev.station) {
         newData.role = `${prev.station} Site Engr`;
       }
+      // Handle Ops Coach role combinations with field
+      else if (field === "field" && prev.role === "Ops Coach" && value) {
+        newData.role = `${value} Ops Coach`;
+      }
+      else if (field === "role" && value === "Ops Coach" && prev.field) {
+        newData.role = `${prev.field} Ops Coach`;
+      }
+      // Handle Ops Team Lead role combinations with field
+      else if (field === "field" && prev.role === "Ops Team Lead" && value) {
+        newData.role = `${value} Ops Team Lead`;
+      }
+      else if (field === "role" && value === "Ops Team Lead" && prev.field) {
+        newData.role = `${prev.field} Ops Team Lead`;
+      }
       // Handle Plant Director role combinations
       else if (field === "plant" && (prev.role === "Plant Director" || prev.role === "Dep. Plant Director") && value) {
         if (prev.role === "Plant Director") {
@@ -248,6 +268,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         }
         if (prev.role.includes("Site Engr") && value !== "Site Engr") {
           newData.station = "";
+        }
+        if ((prev.role.includes("Ops Coach") || prev.role.includes("Ops Team Lead")) && 
+            value !== "Ops Coach" && value !== "Ops Team Lead") {
+          newData.field = "";
         }
         if (prev.role.includes("TA2") && value !== "TA2") {
           newData.commission = "";
@@ -481,6 +505,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         commission: "",
         plant: "",
         station: "",
+        field: "",
         systemRole: "user",
         privileges: [],
       });
@@ -799,6 +824,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                   if (selectedRole !== "Site Engr") {
                                     handleInputChange("station", "");
                                   }
+                                  // Reset field when selecting non-Ops roles
+                                  if (selectedRole !== "Ops Coach" && selectedRole !== "Ops Team Lead") {
+                                    handleInputChange("field", "");
+                                  }
                                   // Reset TA2 fields when selecting non-TA2 roles
                                   if (selectedRole !== "TA2") {
                                     handleInputChange("discipline", "");
@@ -980,6 +1009,35 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             ))
                           ) : (
                             <SelectItem value="" disabled>No stations available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Field Field for Ops Coach and Ops Team Lead roles */}
+                  {(formData.role === "Ops Coach" || formData.role === "Ops Team Lead" || 
+                    formData.role.includes("Ops Coach") || formData.role.includes("Ops Team Lead")) && (
+                    <div>
+                      <Label htmlFor="field">Field *</Label>
+                      <Select 
+                        value={formData.field}
+                        onValueChange={(value) => handleInputChange("field", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select field" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border shadow-lg z-50">
+                          {fieldsLoading ? (
+                            <SelectItem value="" disabled>Loading fields...</SelectItem>
+                          ) : fieldNames.length > 0 ? (
+                            fieldNames.map((fieldName) => (
+                              <SelectItem key={fieldName} value={fieldName}>
+                                {fieldName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No fields available</SelectItem>
                           )}
                         </SelectContent>
                       </Select>
