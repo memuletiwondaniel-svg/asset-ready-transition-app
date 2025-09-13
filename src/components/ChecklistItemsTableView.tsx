@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit3, Eye, MoreVertical, Trash2, Users, Shield, FileText } from 'lucide-react';
+import { Edit3, Eye, MoreVertical, Trash2, FileText } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface ChecklistItemsTableViewProps {
@@ -47,18 +47,6 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
               </TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4">Category</TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4">Topic</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Responsible Party
-                </div>
-              </TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Approvers
-                </div>
-              </TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center">Status</TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center">Actions</TableHead>
             </TableRow>
@@ -99,39 +87,6 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                     <span className="text-sm text-purple-600 font-medium">{item.topic}</span>
                   ) : (
                     <span className="text-sm text-gray-400 italic">No topic</span>
-                  )}
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  {item.responsible_party ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 font-medium">
-                        {item.responsible_party}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">Not assigned</span>
-                  )}
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  {item.approving_authority ? (
-                    <div className="space-y-1">
-                      {item.approving_authority.split(', ').slice(0, 2).map((approver, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                          <span className="text-xs text-gray-600 truncate max-w-32">
-                            {approver}
-                          </span>
-                        </div>
-                      ))}
-                      {item.approving_authority.split(', ').length > 2 && (
-                        <span className="text-xs text-gray-500 italic">
-                          +{item.approving_authority.split(', ').length - 2} more
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">No approvers</span>
                   )}
                 </TableCell>
                 <TableCell className="px-6 py-4 text-center">
