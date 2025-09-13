@@ -1228,6 +1228,7 @@ export type Database = {
           password_change_required: boolean
           pending_actions: number
           phone_number: string
+          position: string
           projects: string[]
           role: string
           roles: string[]
