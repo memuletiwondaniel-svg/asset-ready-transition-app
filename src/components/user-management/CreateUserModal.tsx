@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Search, Plus, X, Upload, Camera, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRoles } from "@/hooks/useRoles";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface CreateUserModalProps {
 
 const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: CreateUserModalProps) => {
   const { toast } = useToast();
+  const { roles, isLoading: rolesLoading, addRole } = useRoles();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -65,17 +67,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   
-  // Load custom roles from localStorage
-  const getCustomRoles = () => {
-    try {
-      const stored = localStorage.getItem('customRoles');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const [customRoles, setCustomRoles] = useState<string[]>(getCustomRoles);
+  // Get role names from the database
+  const roleNames = roles.map(role => role.name);
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
@@ -120,30 +113,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     { code: "+1", country: "United States", flag: "🇺🇸", shortName: "US" },
   ];
 
-  // Base roles that are always available
-  const baseRoles = [
-    "Project Manager",
-    "Commissioning Lead",
-    "Construction Lead", 
-    "Technical Authority (TA2)",
-    "Plant Director",
-    "Deputy Plant Director",
-    "Operations Coach",
-    "Operation Readiness & Assurance Engineer",
-    "Site Engineer",
-    "Ops HSE Lead",
-    "Project HSE Lead",
-    "ER Lead",
-    "Production Director",
-    "HSE Director",
-    "P&E Director",
-    "Engr. Manager (P&E)",
-    "Engr. Manager (Asset)",
-  ];
-
-  // Combine base roles with custom roles
-  const allRoles = [...baseRoles, ...customRoles].sort();
-
   const disciplines = [
     { value: "Civil", label: "Civil" },
     { value: "Static", label: "Static" },
@@ -177,34 +146,23 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
   // Filter roles based on search term, show all if no search term
   const filteredRoles = roleSearch 
-    ? allRoles.filter(role => role.toLowerCase().includes(roleSearch.toLowerCase()))
-    : allRoles;
-
-  // Function to save custom roles to localStorage
-  const saveCustomRoles = (roles: string[]) => {
-    try {
-      localStorage.setItem('customRoles', JSON.stringify(roles));
-      setCustomRoles(roles);
-    } catch (error) {
-      console.error('Failed to save custom roles:', error);
-    }
-  };
+    ? roleNames.filter(role => role.toLowerCase().includes(roleSearch.toLowerCase()))
+    : roleNames;
 
   // Function to add a new role
-  const addNewRole = () => {
-    if (formData.newRole.trim() && !allRoles.includes(formData.newRole.trim())) {
-      const newCustomRoles = [...customRoles, formData.newRole.trim()];
-      saveCustomRoles(newCustomRoles);
-      handleInputChange("role", formData.newRole.trim());
-      handleInputChange("newRole", "");
-      setShowNewRoleInput(false);
-      setShowRoleDropdown(false);
-      setRoleSearch("");
-      
-      toast({
-        title: "Role Added",
-        description: `"${formData.newRole.trim()}" has been added to the available roles.`,
-      });
+  const addNewRole = async () => {
+    if (formData.newRole.trim() && !roleNames.includes(formData.newRole.trim())) {
+      try {
+        await addRole(formData.newRole.trim());
+        handleInputChange("role", formData.newRole.trim());
+        handleInputChange("newRole", "");
+        setShowNewRoleInput(false);
+        setShowRoleDropdown(false);
+        setRoleSearch("");
+      } catch (error) {
+        // Error toast is handled in the hook
+        console.error('Failed to add role:', error);
+      }
     }
   };
 
