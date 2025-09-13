@@ -122,6 +122,68 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     functional_email: false
   });
 
+  // Function to generate dynamic title based on role and conditional fields
+  const generateTitle = () => {
+    const { role, commission, plant, station, field } = formData;
+    
+    if (!role) return '';
+    
+    // Handle different role combinations
+    switch (role) {
+      case 'Director':
+        return commission ? `${commission} Director` : '';
+      
+      case 'Plant Director':
+        return plant ? `${plant} Plant Director` : '';
+      
+      case 'Dep. Plant Director':
+        return plant ? `${plant} Dep. Plant Director` : '';
+      
+      case 'Site Engineer':
+        return station ? `Site Engr – ${station}` : '';
+      
+      case 'Ops Coach':
+        return field ? `Ops Coach – ${field}` : '';
+      
+      case 'Ops Team Lead':
+        return field ? `Ops Team Lead – ${field}` : '';
+      
+      case 'Engr. Manager':
+        return commission ? `Engr. Manager – ${commission}` : '';
+      
+      case 'HSE Lead':
+        return commission ? `HSE Lead – ${commission}` : '';
+      
+      default:
+        return '';
+    }
+  };
+
+  // Check if all required fields for title generation are completed
+  const isTitleReady = () => {
+    const { role, commission, plant, station, field } = formData;
+    
+    if (!role) return false;
+    
+    switch (role) {
+      case 'Director':
+        return !!commission;
+      case 'Plant Director':
+      case 'Dep. Plant Director':
+        return !!plant;
+      case 'Site Engineer':
+        return !!station;
+      case 'Ops Coach':
+      case 'Ops Team Lead':
+        return !!field;
+      case 'Engr. Manager':
+      case 'HSE Lead':
+        return !!commission;
+      default:
+        return false;
+    }
+  };
+
   const [systemRole, setSystemRole] = useState('user');
   const [databaseRoles, setDatabaseRoles] = useState<Array<{value: string, label: string}>>([]);
   const [commissions, setCommissions] = useState<Array<{value: string, label: string}>>([]);
@@ -552,6 +614,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     setFormData(prev => ({ ...prev, commission: value }));
   };
 
+  // Get filtered commissions for HSE Lead role
+  const getCommissionOptions = () => {
+    if (formData.role === 'HSE Lead') {
+      return commissions.filter(c => c.value === 'P&E' || c.value === 'Asset');
+    }
+    return commissions;
+  };
+
   const handlePlantChange = async (value: string) => {
     if (value && !plants.find(p => p.value === value)) {
       const newPlant = await addNewEntry('plant', value);
@@ -882,7 +952,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         <Combobox
                           value={formData.commission}
                           onValueChange={handleCommissionChange}
-                          options={commissions}
+                          options={getCommissionOptions()}
                           placeholder="Select commission"
                           searchPlaceholder="Search commissions..."
                           emptyText="No commissions found"
@@ -893,35 +963,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       </div>
                     )}
 
-                    {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
+                    {(formData.role === 'Engr. Manager' || formData.role === 'HSE Lead') && (
                       <div>
-                        <Label>Plant</Label>
+                        <Label>Commission</Label>
                         <Combobox
-                          value={formData.plant}
-                          onValueChange={handlePlantChange}
-                          options={plants}
-                          placeholder="Select plant"
-                          searchPlaceholder="Search plants..."
-                          emptyText="No plants found"
+                          value={formData.commission}
+                          onValueChange={handleCommissionChange}
+                          options={getCommissionOptions()}
+                          placeholder="Select commission"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
                           allowCustom={editMode}
-                          onAddCustom={handlePlantChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    )}
-
-                    {formData.role === 'Site Engineer' && (
-                      <div>
-                        <Label>Station</Label>
-                        <Combobox
-                          value={formData.station}
-                          onValueChange={handleStationChange}
-                          options={stations}
-                          placeholder="Select station"
-                          searchPlaceholder="Search stations..."
-                          emptyText="No stations found"
-                          allowCustom={editMode}
-                          onAddCustom={handleStationChange}
+                          onAddCustom={handleCommissionChange}
                           className={!editMode ? 'bg-muted pointer-events-none' : ''}
                         />
                       </div>
@@ -944,22 +997,51 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       </div>
                     )}
 
-                    {formData.role === 'Engr. Manager' && (
+                    {formData.role === 'Site Engineer' && (
                       <div>
-                        <Label>Commission</Label>
+                        <Label>Station</Label>
                         <Combobox
-                          value={formData.commission}
-                          onValueChange={handleCommissionChange}
-                          options={commissions.filter(c => c.value === 'P&E' || c.value === 'Asset')}
-                          placeholder="Select commission"
-                          searchPlaceholder="Search commissions..."
-                          emptyText="No commissions found"
+                          value={formData.station}
+                          onValueChange={handleStationChange}
+                          options={stations}
+                          placeholder="Select station"
+                          searchPlaceholder="Search stations..."
+                          emptyText="No stations found"
                           allowCustom={editMode}
-                          onAddCustom={handleCommissionChange}
+                          onAddCustom={handleStationChange}
                           className={!editMode ? 'bg-muted pointer-events-none' : ''}
                         />
                       </div>
                     )}
+
+                    {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
+                      <div>
+                        <Label>Plant</Label>
+                        <Combobox
+                          value={formData.plant}
+                          onValueChange={handlePlantChange}
+                          options={plants}
+                          placeholder="Select plant"
+                          searchPlaceholder="Search plants..."
+                          emptyText="No plants found"
+                          allowCustom={editMode}
+                          onAddCustom={handlePlantChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Dynamic Title Field */}
+                {isTitleReady() && (
+                  <div>
+                    <Label>Title</Label>
+                    <Input
+                      value={generateTitle()}
+                      disabled
+                      className="bg-muted font-medium text-primary"
+                    />
                   </div>
                 )}
               </CardContent>
