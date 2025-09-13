@@ -231,11 +231,11 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     }
     
     if ((role === "Site Engineer" || role === "Site Engr") && formData.station) {
-      return `${formData.station} Site Engr`;
+      return `Site Engr - ${formData.station}`;
     }
     
     if ((role === "Ops Coach" || role === "Ops Team Lead") && formData.field) {
-      return `${formData.field} ${role}`;
+      return `${role} - ${formData.field}`;
     }
     
     if (role === "TA2" && formData.commission && formData.discipline) {
