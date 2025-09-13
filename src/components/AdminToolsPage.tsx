@@ -210,7 +210,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
                 
                 <CardContent className="pt-0">
                   <CardTitle className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-primary transition-colors duration-300">
-                    {tool.title}
+                    Manage Users
                   </CardTitle>
                   
                   <CardDescription className="text-gray-600 leading-relaxed mb-4 text-sm">
