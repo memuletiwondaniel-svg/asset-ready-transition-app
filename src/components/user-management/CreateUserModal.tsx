@@ -978,7 +978,15 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             {commissionsLoading ? (
                               <SelectItem value="" disabled>Loading commissions...</SelectItem>
                             ) : commissionNames.length > 0 ? (
-                              commissionNames.map((commissionName) => (
+                              commissionNames
+                                .filter((commissionName) => {
+                                  // Filter commission options based on role
+                                  if (formData.role === "Engr. Manager" || formData.role.includes("Engr. Manager")) {
+                                    return commissionName === "P&E" || commissionName === "Asset";
+                                  }
+                                  return true; // Show all options for other roles
+                                })
+                                .map((commissionName) => (
                                 <SelectItem key={commissionName} value={commissionName}>
                                   {commissionName}
                                 </SelectItem>
