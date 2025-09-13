@@ -323,7 +323,11 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       case 'role':
         return (
           <div className="space-y-1">
-            {user.role && (
+            {user.position ? (
+              <div className="text-sm font-medium">
+                {user.position}
+              </div>
+            ) : user.role && (
               <div className="text-sm font-medium">
                 {user.role}
                 {user.role === "Technical Authority (TA2)" && (user.ta2_discipline || user.ta2_commission) && (

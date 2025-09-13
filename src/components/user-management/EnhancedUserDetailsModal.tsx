@@ -67,6 +67,7 @@ interface DatabaseUser {
   primary_phone: string | null;
   secondary_phone: string | null;
   country_code: string | null;
+  position?: string | null;
 }
 
 interface ActivityLog {
@@ -119,7 +120,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     sso_enabled: false,
     two_factor_enabled: false,
     password_change_required: false,
-    functional_email: false
+    functional_email: false,
+    position: ''
   });
 
   // Function to generate dynamic title based on role and conditional fields
@@ -167,6 +169,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     
     switch (role) {
       case 'Director':
+      case 'Engr. Manager':
+      case 'HSE Lead':
         return !!commission;
       case 'Plant Director':
       case 'Dep. Plant Director':
@@ -176,9 +180,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Ops Coach':
       case 'Ops Team Lead':
         return !!field;
-      case 'Engr. Manager':
-      case 'HSE Lead':
-        return !!commission;
       default:
         return false;
     }
@@ -223,19 +224,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     { value: "inactive", label: "Inactive", color: "text-gray-600" },
     { value: "pending_approval", label: "Pending Approval", color: "text-yellow-600" },
     { value: "suspended", label: "Suspended", color: "text-red-600" }
-  ];
-
-  const ta2Disciplines = [
-    { value: "Civil", label: "Civil" },
-    { value: "Static", label: "Static" },
-    { value: "PACO", label: "PACO" },
-    { value: "Process", label: "Process" },
-    { value: "Technical Safety", label: "Technical Safety" }
-  ];
-
-  const ta2Commissions = [
-    { value: "Asset", label: "Asset" },
-    { value: "Project and Engineering", label: "Project and Engineering" }
   ];
 
   // Fetch database options
@@ -323,7 +311,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         sso_enabled: user.sso_enabled || false,
         two_factor_enabled: user.two_factor_enabled || false,
         password_change_required: user.password_change_required || false,
-        functional_email: user.functional_email || false
+        functional_email: user.functional_email || false,
+        position: user.position || ''
       });
       
       setSystemRole(user.roles?.[0] || 'user');
@@ -334,7 +323,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       fetchUserSessions();
     }
   }, [isOpen, user]);
-
 
   const fetchActivityLogs = async () => {
     if (!user?.user_id) return;
@@ -387,17 +375,68 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       setLoading(true);
       console.log('Saving user data:', formData);
 
-      // Helper function to compute final role
-      const computeFinalRole = (role: string, discipline: string | null, commission: string | null): string => {
-        if (role === 'Technical Authority (TA2)' && discipline && commission) {
-          return `TA2 - ${discipline} - ${commission}`;
-        } else if (role === 'Technical Authority (TA2)' && discipline === "Technical Safety") {
-          return "TA2 - Technical Safety";
-        }
-        return role || 'user';
+      // Generate position based on role and conditional fields
+      const generatedPosition = generateTitle();
+
+      // Helper function to get the database ID for related entities
+      const getRoleId = async (roleName: string) => {
+        if (!roleName) return null;
+        const { data } = await supabase
+          .from('roles')
+          .select('id')
+          .eq('name', roleName)
+          .single();
+        return data?.id || null;
       };
-      
-      const finalRole = computeFinalRole(formData.role, formData.discipline, formData.commission);
+
+      const getCommissionId = async (commissionName: string) => {
+        if (!commissionName) return null;
+        const { data } = await supabase
+          .from('commission')
+          .select('id')
+          .eq('name', commissionName)
+          .single();
+        return data?.id || null;
+      };
+
+      const getPlantId = async (plantName: string) => {
+        if (!plantName) return null;
+        const { data } = await supabase
+          .from('plant')
+          .select('id')
+          .eq('name', plantName)
+          .single();
+        return data?.id || null;
+      };
+
+      const getStationId = async (stationName: string) => {
+        if (!stationName) return null;
+        const { data } = await supabase
+          .from('station')
+          .select('id')
+          .eq('name', stationName)
+          .single();
+        return data?.id || null;
+      };
+
+      const getFieldId = async (fieldName: string) => {
+        if (!fieldName) return null;
+        const { data } = await supabase
+          .from('field')
+          .select('id')
+          .eq('name', fieldName)
+          .single();
+        return data?.id || null;
+      };
+
+      // Get IDs for foreign key relationships
+      const [roleId, commissionId, plantId, stationId, fieldId] = await Promise.all([
+        getRoleId(formData.role),
+        getCommissionId(formData.commission),
+        getPlantId(formData.plant),
+        getStationId(formData.station),
+        getFieldId(formData.field)
+      ]);
 
       // Prepare update payload with proper field mapping
       const updatePayload = {
@@ -410,7 +449,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         primary_phone: formData.primary_phone || null,
         secondary_phone: formData.secondary_phone || null,
         country_code: formData.country_code || null,
-        role: finalRole,
+        role: roleId,
+        commission: commissionId,
+        plant: plantId,
+        station: stationId,
+        field: fieldId,
+        position: generatedPosition || null,
         company: formData.company,
         status: formData.status,
         account_status: formData.account_status || 'active',
@@ -534,7 +578,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       if ((uploadResp as any)?.publicUrl) {
         setLocalAvatarUrl((uploadResp as any).publicUrl);
       }
-
 
       console.log('Avatar upload response:', uploadResp);
       toast.success('Profile picture updated successfully');
@@ -878,177 +921,163 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </Select>
                 </div>
 
-                {/* Role and conditional fields on the same row */}
-                {formData.role === 'TA2' ? (
-                  <div className="grid grid-cols-3 gap-4 items-end">
-                    <div>
-                      <Label>Role *</Label>
-                      <Combobox
-                        value={formData.role}
-                        onValueChange={handleRoleChange}
-                        options={databaseRoles}
-                        placeholder="Select role"
-                        searchPlaceholder="Search roles..."
-                        emptyText="No roles found"
-                        allowCustom={editMode}
-                        onAddCustom={handleRoleChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                    <div>
-                      <Label>Discipline</Label>
-                      <Combobox
-                        value={formData.discipline}
-                        onValueChange={handleDisciplineChange}
-                        options={disciplines}
-                        placeholder="Select discipline"
-                        searchPlaceholder="Search disciplines..."
-                        emptyText="No disciplines found"
-                        allowCustom={editMode}
-                        onAddCustom={handleDisciplineChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                    {formData.discipline && formData.discipline !== 'Tech Safety' && formData.discipline !== 'Civil' ? (
-                      <div>
-                        <Label>Commission</Label>
-                        <Combobox
-                          value={formData.commission}
-                          onValueChange={handleCommissionChange}
-                          options={commissions.filter(c => c.value === 'P&E' || c.value === 'Asset')}
-                          placeholder="Select commission"
-                          searchPlaceholder="Search commissions..."
-                          emptyText="No commissions found"
-                          allowCustom={editMode}
-                          onAddCustom={handleCommissionChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    ) : (
-                      <div></div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4 items-end">
-                    <div>
-                      <Label>Role *</Label>
-                      <Combobox
-                        value={formData.role}
-                        onValueChange={handleRoleChange}
-                        options={databaseRoles}
-                        placeholder="Select role"
-                        searchPlaceholder="Search roles..."
-                        emptyText="No roles found"
-                        allowCustom={editMode}
-                        onAddCustom={handleRoleChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-
-                    {/* Conditional fields based on role */}
-                    {formData.role === 'Director' && (
-                      <div>
-                        <Label>Commission</Label>
-                        <Combobox
-                          value={formData.commission}
-                          onValueChange={handleCommissionChange}
-                          options={getCommissionOptions()}
-                          placeholder="Select commission"
-                          searchPlaceholder="Search commissions..."
-                          emptyText="No commissions found"
-                          allowCustom={editMode}
-                          onAddCustom={handleCommissionChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    )}
-
-                    {(formData.role === 'Engr. Manager' || formData.role === 'HSE Lead') && (
-                      <div>
-                        <Label>Commission</Label>
-                        <Combobox
-                          value={formData.commission}
-                          onValueChange={handleCommissionChange}
-                          options={getCommissionOptions()}
-                          placeholder="Select commission"
-                          searchPlaceholder="Search commissions..."
-                          emptyText="No commissions found"
-                          allowCustom={editMode}
-                          onAddCustom={handleCommissionChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    )}
-
-                    {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
-                      <div>
-                        <Label>Field</Label>
-                        <Combobox
-                          value={formData.field}
-                          onValueChange={handleFieldChange}
-                          options={fields}
-                          placeholder="Select field"
-                          searchPlaceholder="Search fields..."
-                          emptyText="No fields found"
-                          allowCustom={editMode}
-                          onAddCustom={handleFieldChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    )}
-
-                    {formData.role === 'Site Engineer' && (
-                      <div>
-                        <Label>Station</Label>
-                        <Combobox
-                          value={formData.station}
-                          onValueChange={handleStationChange}
-                          options={stations}
-                          placeholder="Select station"
-                          searchPlaceholder="Search stations..."
-                          emptyText="No stations found"
-                          allowCustom={editMode}
-                          onAddCustom={handleStationChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    )}
-
-                    {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
-                      <div>
-                        <Label>Plant</Label>
-                        <Combobox
-                          value={formData.plant}
-                          onValueChange={handlePlantChange}
-                          options={plants}
-                          placeholder="Select plant"
-                          searchPlaceholder="Search plants..."
-                          emptyText="No plants found"
-                          allowCustom={editMode}
-                          onAddCustom={handlePlantChange}
-                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Dynamic Title Field */}
-                {isTitleReady() && (
+                {/* Role and conditional fields */}
+                <div className="space-y-4">
                   <div>
-                    <Label>Position</Label>
-                    <Input
-                      value={generateTitle()}
-                      disabled
-                      className="bg-muted font-medium text-primary"
+                    <Label>Role *</Label>
+                    <Combobox
+                      value={formData.role}
+                      onValueChange={handleRoleChange}
+                      options={databaseRoles}
+                      placeholder="Select role"
+                      searchPlaceholder="Search roles..."
+                      emptyText="No roles found"
+                      allowCustom={editMode}
+                      onAddCustom={handleRoleChange}
+                      className={!editMode ? 'bg-muted pointer-events-none' : ''}
                     />
                   </div>
-                )}
+
+                  {/* Conditional fields based on role */}
+                  {formData.role === 'Director' && (
+                    <div>
+                      <Label>Commission *</Label>
+                      <Combobox
+                        value={formData.commission}
+                        onValueChange={handleCommissionChange}
+                        options={commissions}
+                        placeholder="Select commission"
+                        searchPlaceholder="Search commissions..."
+                        emptyText="No commissions found"
+                        allowCustom={editMode}
+                        onAddCustom={handleCommissionChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+                  )}
+
+                  {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
+                    <div>
+                      <Label>Plant *</Label>
+                      <Combobox
+                        value={formData.plant}
+                        onValueChange={handlePlantChange}
+                        options={plants}
+                        placeholder="Select plant"
+                        searchPlaceholder="Search plants..."
+                        emptyText="No plants found"
+                        allowCustom={editMode}
+                        onAddCustom={handlePlantChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+                  )}
+
+                  {formData.role === 'Site Engineer' && (
+                    <div>
+                      <Label>Station *</Label>
+                      <Combobox
+                        value={formData.station}
+                        onValueChange={handleStationChange}
+                        options={stations}
+                        placeholder="Select station"
+                        searchPlaceholder="Search stations..."
+                        emptyText="No stations found"
+                        allowCustom={editMode}
+                        onAddCustom={handleStationChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+                  )}
+
+                  {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
+                    <div>
+                      <Label>Field *</Label>
+                      <Combobox
+                        value={formData.field}
+                        onValueChange={handleFieldChange}
+                        options={fields}
+                        placeholder="Select field"
+                        searchPlaceholder="Search fields..."
+                        emptyText="No fields found"
+                        allowCustom={editMode}
+                        onAddCustom={handleFieldChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+                  )}
+
+                  {formData.role === 'Engr. Manager' && (
+                    <div>
+                      <Label>Commission *</Label>
+                      <Combobox
+                        value={formData.commission}
+                        onValueChange={handleCommissionChange}
+                        options={commissions}
+                        placeholder="Select commission"
+                        searchPlaceholder="Search commissions..."
+                        emptyText="No commissions found"
+                        allowCustom={editMode}
+                        onAddCustom={handleCommissionChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+                  )}
+
+                  {formData.role === 'HSE Lead' && (
+                    <div>
+                      <Label>Commission *</Label>
+                      <Combobox
+                        value={formData.commission}
+                        onValueChange={handleCommissionChange}
+                        options={getCommissionOptions()}
+                        placeholder="Select commission (P&E or Asset only)"
+                        searchPlaceholder="Search commissions..."
+                        emptyText="No commissions found"
+                        allowCustom={editMode}
+                        onAddCustom={handleCommissionChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+                  )}
+
+                  {/* Position Display */}
+                  {isTitleReady() && (
+                    <div>
+                      <Label>Position</Label>
+                      <div className="p-3 bg-muted rounded-md border">
+                        <span className="font-medium text-primary">{generateTitle()}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        This position is automatically generated based on your role and selections above.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* System Role */}
+                <div>
+                  <Label>System Role</Label>
+                  <Select
+                    value={systemRole}
+                    onValueChange={setSystemRole}
+                    disabled={!editMode}
+                  >
+                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                      <SelectValue placeholder="Select system role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {systemRoles.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
-
-
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
@@ -1057,14 +1086,17 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 <CardTitle>Security Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="status">Account Status</Label>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Account Status</Label>
+                    <p className="text-sm text-muted-foreground">Current status of the user account</p>
+                  </div>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => handleInputChange('status', value)}
                     disabled={!editMode}
                   >
-                    <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
+                    <SelectTrigger className={`w-48 ${!editMode ? 'bg-muted' : ''}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1077,79 +1109,40 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </Select>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="sso_enabled">SSO Enabled</Label>
-                      <p className="text-sm text-muted-foreground">Enable single sign-on for this user</p>
-                    </div>
-                    <Switch
-                      id="sso_enabled"
-                      checked={formData.sso_enabled}
-                      onCheckedChange={(checked) => handleInputChange('sso_enabled', checked)}
-                      disabled={!editMode}
-                    />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>SSO Authentication</Label>
+                    <p className="text-sm text-muted-foreground">Enable single sign-on authentication</p>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="two_factor_enabled">Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground">Require 2FA for login</p>
-                    </div>
-                    <Switch
-                      id="two_factor_enabled"
-                      checked={formData.two_factor_enabled}
-                      onCheckedChange={(checked) => handleInputChange('two_factor_enabled', checked)}
-                      disabled={!editMode}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="password_change_required">Password Change Required</Label>
-                      <p className="text-sm text-muted-foreground">Force password change on next login</p>
-                    </div>
-                    <Switch
-                      id="password_change_required"
-                      checked={formData.password_change_required}
-                      onCheckedChange={(checked) => handleInputChange('password_change_required', checked)}
-                      disabled={!editMode}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="functional_email">Has Functional Email</Label>
-                      <p className="text-sm text-muted-foreground">User has a functional email setup</p>
-                    </div>
-                    <Switch
-                      id="functional_email"
-                      checked={formData.functional_email}
-                      onCheckedChange={(checked) => handleInputChange('functional_email', checked)}
-                      disabled={!editMode}
-                    />
-                  </div>
+                  <Switch
+                    checked={formData.sso_enabled}
+                    onCheckedChange={(checked) => handleInputChange('sso_enabled', checked)}
+                    disabled={!editMode}
+                  />
                 </div>
 
-                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Two-Factor Authentication</Label>
+                    <p className="text-sm text-muted-foreground">Require 2FA for additional security</p>
+                  </div>
+                  <Switch
+                    checked={formData.two_factor_enabled}
+                    onCheckedChange={(checked) => handleInputChange('two_factor_enabled', checked)}
+                    disabled={!editMode}
+                  />
+                </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center justify-between">
                   <div>
-                    <Label>Last Login</Label>
-                    <p className="text-muted-foreground">{formatDate(user.last_login_at)}</p>
+                    <Label>Password Change Required</Label>
+                    <p className="text-sm text-muted-foreground">Force user to change password on next login</p>
                   </div>
-                  <div>
-                    <Label>Login Attempts</Label>
-                    <p className="text-muted-foreground">{user.login_attempts || 0}</p>
-                  </div>
-                  <div>
-                    <Label>Locked Until</Label>
-                    <p className="text-muted-foreground">{formatDate(user.locked_until)}</p>
-                  </div>
-                  <div>
-                    <Label>Last Activity</Label>
-                    <p className="text-muted-foreground">{formatDate(user.last_activity)}</p>
-                  </div>
+                  <Switch
+                    checked={formData.password_change_required}
+                    onCheckedChange={(checked) => handleInputChange('password_change_required', checked)}
+                    disabled={!editMode}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -1159,50 +1152,27 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           <TabsContent value="activity" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle>Activity Log</CardTitle>
               </CardHeader>
               <CardContent>
-                {activityLogs.length > 0 ? (
-                  <div className="space-y-3">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Activity</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {activityLogs.map((log) => (
-                      <div key={log.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                        <Activity className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{log.activity_type}</p>
-                          <p className="text-sm text-muted-foreground">{log.description}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(log.created_at)}</p>
-                        </div>
-                      </div>
+                      <TableRow key={log.id}>
+                        <TableCell>{log.activity_type}</TableCell>
+                        <TableCell>{log.description}</TableCell>
+                        <TableCell>{formatDate(log.created_at)}</TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">No activity logs found</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {userSessions.length > 0 ? (
-                  <div className="space-y-3">
-                    {userSessions.map((session) => (
-                      <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="text-sm font-medium">Session {session.id.slice(0, 8)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            IP: {session.ip_address} • Last active: {formatDate(session.last_activity)}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="text-green-600">Active</Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">No active sessions</p>
-                )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
