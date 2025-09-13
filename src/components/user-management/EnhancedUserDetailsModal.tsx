@@ -28,7 +28,9 @@ import {
   Edit,
   Save,
   X,
-  Camera
+  Camera,
+  UserCheck,
+  UserX
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -426,6 +428,64 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     }
   };
 
+  // Authentication functions
+  const handleApproveUser = async () => {
+    if (!user?.user_id) return;
+    
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.rpc('approve_user_account', {
+        target_user_id: user.user_id
+      });
+
+      if (error) {
+        console.error('Error approving user:', error);
+        toast.error('Failed to approve user');
+        return;
+      }
+
+      toast.success('User approved successfully');
+      onUserUpdated();
+      onClose();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to approve user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectUser = async () => {
+    if (!user?.user_id) return;
+    
+    const rejectionReason = prompt('Please provide a reason for rejection (optional):');
+    
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.rpc('reject_user_account', {
+        target_user_id: user.user_id,
+        rejection_reason_text: rejectionReason || null
+      });
+
+      if (error) {
+        console.error('Error rejecting user:', error);
+        toast.error('Failed to reject user');
+        return;
+      }
+
+      toast.success('User rejected successfully');
+      onUserUpdated();
+      onClose();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to reject user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user?.user_id) return;
     
@@ -812,6 +872,30 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
             </div>
             
             <div className="flex items-center space-x-2">
+              {/* Authentication buttons for pending approval users */}
+              {user.status === 'pending_approval' && !editMode && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleApproveUser}
+                    disabled={loading}
+                    className="text-green-600 border-green-600 hover:bg-green-50"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Approve User
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleRejectUser}
+                    disabled={loading}
+                    className="text-red-600 border-red-600 hover:bg-red-50"
+                  >
+                    <UserX className="h-4 w-4 mr-2" />
+                    Reject User
+                  </Button>
+                </>
+              )}
+              
               {!editMode ? (
                 <Button variant="outline" onClick={() => setEditMode(true)}>
                   <Edit className="h-4 w-4 mr-2" />

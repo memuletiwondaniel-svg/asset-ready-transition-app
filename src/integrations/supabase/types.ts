@@ -1184,6 +1184,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_user_account: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       get_active_roles: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1279,6 +1283,10 @@ export type Database = {
       initiate_password_reset: {
         Args: { user_email: string }
         Returns: string
+      }
+      reject_user_account: {
+        Args: { rejection_reason_text?: string; target_user_id: string }
+        Returns: boolean
       }
       reorder_checklist_item: {
         Args: { item_unique_id: string; new_position: number }
