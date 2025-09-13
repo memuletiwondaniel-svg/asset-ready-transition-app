@@ -99,6 +99,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     'Proj Engr',
     'Commissioning Lead',
     'Construction Lead',
+    'Engr. Manager',
     'Technical Authority (TA2)',
     'Plant Director',
     'Deputy Plant Director',
@@ -116,6 +117,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   const disciplines = ['Civil', 'Static', 'PACO', 'Process', 'Technical Safety'];
   const commissions = ['Asset', 'Project and Engineering'];
+
+  // Filter commissions for specific roles
+  const getFilteredCommissions = () => {
+    if (formData.role === 'Engr. Manager') {
+      return commissions.filter(c => c === 'Asset' || c === 'Project and Engineering');
+    }
+    if (formData.role === 'Technical Authority (TA2)') {
+      return commissions; // All commissions for TA2
+    }
+    return commissions;
+  };
 
   const projects = ['Project Alpha', 'Project Beta', 'Project Gamma', 'Project Delta'];
   const authenticators = [
@@ -496,6 +508,25 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
+          {formData.role === 'Engr. Manager' && (
+            <div>
+              <Label>Commission *</Label>
+              <Select
+                value={formData.commission}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, commission: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select commission (P&E or Asset only)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getFilteredCommissions().map(commission => (
+                    <SelectItem key={commission} value={commission}>{commission}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {formData.role === 'Technical Authority (TA2)' && (
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -524,7 +555,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                     <SelectValue placeholder="Select commission" />
                   </SelectTrigger>
                   <SelectContent>
-                    {commissions.map(commission => (
+                    {getFilteredCommissions().map(commission => (
                       <SelectItem key={commission} value={commission}>{commission}</SelectItem>
                     ))}
                   </SelectContent>

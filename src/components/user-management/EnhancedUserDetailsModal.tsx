@@ -686,9 +686,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     setFormData(prev => ({ ...prev, commission: value }));
   };
 
-  // Get filtered commissions for HSE Lead role
+  // Get filtered commissions for HSE Lead and Engr. Manager roles
   const getCommissionOptions = () => {
-    if (formData.role === 'HSE Lead') {
+    if (formData.role === 'HSE Lead' || formData.role === 'Engr. Manager') {
       return commissions.filter(c => c.value === 'P&E' || c.value === 'Asset');
     }
     return commissions;
@@ -1059,8 +1059,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                             <Combobox
                               value={formData.commission}
                               onValueChange={handleCommissionChange}
-                              options={commissions}
-                              placeholder="Select commission"
+                              options={getCommissionOptions()}
+                              placeholder="Select commission (P&E or Asset only)"
                               searchPlaceholder="Search commissions..."
                               emptyText="No commissions found"
                               allowCustom={editMode}
