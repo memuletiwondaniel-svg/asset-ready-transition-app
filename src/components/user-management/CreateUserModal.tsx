@@ -193,43 +193,67 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       if (field === "commission" && prev.role === "Director" && value) {
         newData.role = `${value} Director`;
       }
-      else if (field === "role" && value === "Director" && prev.commission) {
-        newData.role = `${prev.commission} Director`;
+      else if (field === "role" && value === "Director") {
+        // Keep base role until commission is selected
+        newData.commission = prev.commission;
+        if (prev.commission) {
+          newData.role = `${prev.commission} Director`;
+        }
       }
       // Handle HSE Lead role combinations with commission
       else if (field === "commission" && prev.role === "HSE Lead" && value) {
         newData.role = `${value} HSE Lead`;
       }
-      else if (field === "role" && value === "HSE Lead" && prev.commission) {
-        newData.role = `${prev.commission} HSE Lead`;
+      else if (field === "role" && value === "HSE Lead") {
+        // Keep base role until commission is selected
+        newData.commission = prev.commission;
+        if (prev.commission) {
+          newData.role = `${prev.commission} HSE Lead`;
+        }
       }
       // Handle Engr. Manager role combinations with commission
       else if (field === "commission" && prev.role === "Engr. Manager" && value) {
         newData.role = `${value} Engr. Manager`;
       }
-      else if (field === "role" && value === "Engr. Manager" && prev.commission) {
-        newData.role = `${prev.commission} Engr. Manager`;
+      else if (field === "role" && value === "Engr. Manager") {
+        // Keep base role until commission is selected
+        newData.commission = prev.commission;
+        if (prev.commission) {
+          newData.role = `${prev.commission} Engr. Manager`;
+        }
       }
       // Handle Site Engr role combinations with station
       else if (field === "station" && prev.role === "Site Engr" && value) {
         newData.role = `${value} Site Engr`;
       }
-      else if (field === "role" && value === "Site Engr" && prev.station) {
-        newData.role = `${prev.station} Site Engr`;
+      else if (field === "role" && value === "Site Engr") {
+        // Keep base role until station is selected
+        newData.station = prev.station;
+        if (prev.station) {
+          newData.role = `${prev.station} Site Engr`;
+        }
       }
       // Handle Ops Coach role combinations with field
       else if (field === "field" && prev.role === "Ops Coach" && value) {
         newData.role = `${value} Ops Coach`;
       }
-      else if (field === "role" && value === "Ops Coach" && prev.field) {
-        newData.role = `${prev.field} Ops Coach`;
+      else if (field === "role" && value === "Ops Coach") {
+        // Keep base role until field is selected
+        newData.field = prev.field;
+        if (prev.field) {
+          newData.role = `${prev.field} Ops Coach`;
+        }
       }
       // Handle Ops Team Lead role combinations with field
       else if (field === "field" && prev.role === "Ops Team Lead" && value) {
         newData.role = `${value} Ops Team Lead`;
       }
-      else if (field === "role" && value === "Ops Team Lead" && prev.field) {
-        newData.role = `${prev.field} Ops Team Lead`;
+      else if (field === "role" && value === "Ops Team Lead") {
+        // Keep base role until field is selected
+        newData.field = prev.field;
+        if (prev.field) {
+          newData.role = `${prev.field} Ops Team Lead`;
+        }
       }
       // Handle Plant Director role combinations
       else if (field === "plant" && (prev.role === "Plant Director" || prev.role === "Dep. Plant Director") && value) {
@@ -239,11 +263,15 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           newData.role = `${value} Dep Plant Dir`;
         }
       }
-      else if (field === "role" && (value === "Plant Director" || value === "Dep. Plant Director") && prev.plant) {
-        if (value === "Plant Director") {
-          newData.role = `${prev.plant} Plant Director`;
-        } else if (value === "Dep. Plant Director") {
-          newData.role = `${prev.plant} Dep Plant Dir`;
+      else if (field === "role" && (value === "Plant Director" || value === "Dep. Plant Director")) {
+        // Keep base role until plant is selected
+        newData.plant = prev.plant;
+        if (prev.plant) {
+          if (value === "Plant Director") {
+            newData.role = `${prev.plant} Plant Director`;
+          } else if (value === "Dep. Plant Director") {
+            newData.role = `${prev.plant} Dep Plant Dir`;
+          }
         }
       }
       // Handle TA2 role combinations
@@ -253,8 +281,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       else if (field === "discipline" && prev.role === "TA2" && value && prev.commission) {
         newData.role = `TA2 ${value} (${prev.commission})`;
       }
-      else if (field === "role" && value === "TA2" && prev.commission && prev.discipline) {
-        newData.role = `TA2 ${prev.discipline} (${prev.commission})`;
+      else if (field === "role" && value === "TA2") {
+        // Keep base role until both discipline and commission are selected
+        newData.commission = prev.commission;
+        newData.discipline = prev.discipline;
+        if (prev.commission && prev.discipline) {
+          newData.role = `TA2 ${prev.discipline} (${prev.commission})`;
+        }
       }
       // Reset fields when switching away from specific roles
       else if (field === "role") {
