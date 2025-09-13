@@ -809,117 +809,68 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     <div className="flex flex-col">
                       <Label htmlFor="role" className="mb-2">Role *</Label>
                       <div className="space-y-2">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            placeholder="Search roles..."
-                            value={roleSearch}
-                            onChange={(e) => setRoleSearch(e.target.value)}
-                            onFocus={() => setShowRoleDropdown(true)}
-                            onBlur={() => {
-                              setTimeout(() => setShowRoleDropdown(false), 150);
-                            }}
-                            className="pl-10"
-                          />
-                        </div>
-                        
-                        {showRoleDropdown && (
-                          <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
-                            {filteredRoles.length > 0 ? (
-                              <>
-                                {filteredRoles.map((role) => (
-                                  <Button
-                                    key={role}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full justify-start text-left hover:bg-accent"
-                                    onClick={() => {
-                                      const selectedRole = role;
-                                      // Reset commission when selecting a non-Director role
-                                      if (selectedRole !== "Director") {
-                                        handleInputChange("commission", "");
-                                      }
-                                      // Reset plant when selecting non-Plant Director roles
-                                      if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
-                                        handleInputChange("plant", "");
-                                      }
-                                      // Reset station when selecting non-Site Engr roles
-                                      if (selectedRole !== "Site Engr" && selectedRole !== "Site Engineer") {
-                                        handleInputChange("station", "");
-                                      }
-                                      // Reset field when selecting non-Ops roles
-                                      if (selectedRole !== "Ops Coach" && selectedRole !== "Ops Team Lead") {
-                                        handleInputChange("field", "");
-                                      }
-                                      // Reset TA2 fields when selecting non-TA2 roles
-                                      if (selectedRole !== "TA2") {
-                                        handleInputChange("discipline", "");
-                                        if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager") {
-                                          handleInputChange("commission", "");
-                                        }
-                                      }
-                                      handleInputChange("role", selectedRole);
-                                      setRoleSearch("");
-                                      setShowRoleDropdown(false);
-                                    }}
-                                  >
-                                    {role}
-                                  </Button>
-                                ))}
-                                {roleSearch && !filteredRoles.some(role => role.toLowerCase() === roleSearch.toLowerCase()) && (
-                                  <div className="border-t mt-2 pt-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full"
-                                      onClick={() => {
-                                        setShowNewRoleInput(true);
-                                        setShowRoleDropdown(false);
-                                        handleInputChange("newRole", roleSearch);
-                                      }}
-                                    >
-                                      <Plus className="h-4 w-4 mr-2" />
-                                      Add "{roleSearch}" as new role
-                                    </Button>
-                                  </div>
-                                )}
-                              </>
-                            ) : roleSearch ? (
-                              <div className="p-2 text-center">
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  No roles found matching "{roleSearch}"
-                                </p>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setShowNewRoleInput(true);
-                                    setShowRoleDropdown(false);
-                                    handleInputChange("newRole", roleSearch);
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add "{roleSearch}" as new role
-                                </Button>
-                              </div>
+                        <Select 
+                          value={formData.role}
+                          onValueChange={(value) => {
+                            if (value === "__add_custom__") {
+                              setShowNewRoleInput(true);
+                              return;
+                            }
+                            
+                            // Reset conditional fields based on role selection
+                            const selectedRole = value;
+                            
+                            // Reset commission if switching away from roles that need it
+                            if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager" && selectedRole !== "TA2") {
+                              handleInputChange("commission", "");
+                            }
+                            // Reset plant if switching away from plant roles
+                            if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
+                              handleInputChange("plant", "");
+                            }
+                            // Reset station if switching away from site roles
+                            if (selectedRole !== "Site Engineer" && selectedRole !== "Site Engr") {
+                              handleInputChange("station", "");
+                            }
+                            // Reset field if switching away from ops roles
+                            if (selectedRole !== "Ops Coach" && selectedRole !== "Ops Team Lead") {
+                              handleInputChange("field", "");
+                            }
+                            // Reset TA2 fields when selecting non-TA2 roles
+                            if (selectedRole !== "TA2") {
+                              handleInputChange("discipline", "");
+                              if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager") {
+                                handleInputChange("commission", "");
+                              }
+                            }
+                            
+                            handleInputChange("role", selectedRole);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {rolesLoading ? (
+                              <SelectItem value="" disabled>Loading roles...</SelectItem>
+                            ) : roleNames.length > 0 ? (
+                              roleNames.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {role}
+                                </SelectItem>
+                              ))
                             ) : (
-                              <div className="p-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full"
-                                  onClick={() => {
-                                    setShowNewRoleInput(true);
-                                    setShowRoleDropdown(false);
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add Custom Role
-                                </Button>
-                              </div>
+                              <SelectItem value="" disabled>No roles available</SelectItem>
                             )}
-                          </div>
-                        )}
+                            
+                            {/* Option to add custom role */}
+                            <div className="border-t mt-2 pt-2">
+                              <SelectItem value="__add_custom__" className="font-medium text-primary">
+                                + Add Custom Role
+                              </SelectItem>
+                            </div>
+                          </SelectContent>
+                        </Select>
                         
                         {showNewRoleInput && (
                           <div className="border rounded-lg bg-popover p-3 space-y-2">
@@ -953,23 +904,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </div>
                         )}
                         
-                        {formData.role && (
-                          <div className="flex items-center justify-between p-2 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-primary rounded-full"></div>
-                              <span className="text-sm font-medium">{formData.role}</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleInputChange("role", "")}
-                              className="h-6 w-6 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                              title="Remove selected role"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </div>
 
