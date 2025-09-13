@@ -108,15 +108,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     secondary_phone: '',
     country_code: '',
     role: '',
+    discipline: '',
+    commission: '',
+    plant: '',
+    station: '',
+    field: '',
     company: 'BGC' as 'BGC' | 'KENT' | null,
     status: 'active' as 'active' | 'inactive' | 'pending_approval' | 'suspended',
     account_status: '',
     sso_enabled: false,
     two_factor_enabled: false,
     password_change_required: false,
-    functional_email: false,
-    ta2_discipline: '',
-    ta2_commission: ''
+    functional_email: false
   });
 
   const [systemRole, setSystemRole] = useState('user');
@@ -247,15 +250,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         secondary_phone: user.secondary_phone || '',
         country_code: user.country_code || '+964',
         role: user.role || '',
+        discipline: user.ta2_discipline || '',
+        commission: user.ta2_commission || '',
+        plant: '',
+        station: '',
+        field: '',
         company: user.company || 'BGC',
         status: user.status || 'active',
         account_status: user.account_status || 'active',
         sso_enabled: user.sso_enabled || false,
         two_factor_enabled: user.two_factor_enabled || false,
         password_change_required: user.password_change_required || false,
-        functional_email: user.functional_email || false,
-        ta2_discipline: user.ta2_discipline || '',
-        ta2_commission: user.ta2_commission || ''
+        functional_email: user.functional_email || false
       });
       
       setSystemRole(user.roles?.[0] || 'user');
@@ -328,8 +334,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         }
         return role || 'user';
       };
-
-      const finalRole = computeFinalRole(formData.role, formData.ta2_discipline, formData.ta2_commission);
+      
+      const finalRole = computeFinalRole(formData.role, formData.discipline, formData.commission);
 
       // Prepare update payload with proper field mapping
       const updatePayload = {
@@ -730,13 +736,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   />
                 </div>
 
-                {/* Conditional fields based on role */}
+                {/* Conditional fields based on role - matching Create User Modal */}
                 {formData.role === 'Director' && (
                   <div>
                     <Label>Commission</Label>
                     <Select
-                      value={formData.ta2_commission}
-                      onValueChange={(value) => handleInputChange('ta2_commission', value)}
+                      value={formData.commission}
+                      onValueChange={(value) => handleInputChange('commission', value)}
                       disabled={!editMode}
                     >
                       <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
@@ -756,8 +762,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     <div>
                       <Label>Discipline</Label>
                       <Select
-                        value={formData.ta2_discipline}
-                        onValueChange={(value) => handleInputChange('ta2_discipline', value)}
+                        value={formData.discipline}
+                        onValueChange={(value) => handleInputChange('discipline', value)}
                         disabled={!editMode}
                       >
                         <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
@@ -773,8 +779,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     <div>
                       <Label>Commission</Label>
                       <Select
-                        value={formData.ta2_commission}
-                        onValueChange={(value) => handleInputChange('ta2_commission', value)}
+                        value={formData.commission}
+                        onValueChange={(value) => handleInputChange('commission', value)}
                         disabled={!editMode}
                       >
                         <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
@@ -795,8 +801,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     <div>
                       <Label>Plant</Label>
                       <Select
-                        value={formData.ta2_discipline}
-                        onValueChange={(value) => handleInputChange('ta2_discipline', value)}
+                        value={formData.plant}
+                        onValueChange={(value) => handleInputChange('plant', value)}
                         disabled={!editMode}
                       >
                         <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
@@ -812,8 +818,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     <div>
                       <Label>Station</Label>
                       <Select
-                        value={formData.ta2_commission}
-                        onValueChange={(value) => handleInputChange('ta2_commission', value)}
+                        value={formData.station}
+                        onValueChange={(value) => handleInputChange('station', value)}
                         disabled={!editMode}
                       >
                         <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
@@ -833,8 +839,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   <div>
                     <Label>Field</Label>
                     <Select
-                      value={formData.ta2_discipline}
-                      onValueChange={(value) => handleInputChange('ta2_discipline', value)}
+                      value={formData.field}
+                      onValueChange={(value) => handleInputChange('field', value)}
                       disabled={!editMode}
                     >
                       <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
