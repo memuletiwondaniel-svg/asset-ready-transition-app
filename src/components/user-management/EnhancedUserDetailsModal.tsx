@@ -923,125 +923,129 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
                 {/* Role and conditional fields */}
                 <div className="space-y-4">
-                  <div>
-                    <Label>Role *</Label>
-                    <Combobox
-                      value={formData.role}
-                      onValueChange={handleRoleChange}
-                      options={databaseRoles}
-                      placeholder="Select role"
-                      searchPlaceholder="Search roles..."
-                      emptyText="No roles found"
-                      allowCustom={editMode}
-                      onAddCustom={handleRoleChange}
-                      className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                    />
+                  {/* Role and conditional fields on same row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+                    {/* Primary Role Field */}
+                    <div>
+                      <Label>Role *</Label>
+                      <Combobox
+                        value={formData.role}
+                        onValueChange={handleRoleChange}
+                        options={databaseRoles}
+                        placeholder="Select role"
+                        searchPlaceholder="Search roles..."
+                        emptyText="No roles found"
+                        allowCustom={editMode}
+                        onAddCustom={handleRoleChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
+                    </div>
+
+                    {/* Conditional fields based on role */}
+                    {formData.role === 'Director' && (
+                      <div>
+                        <Label>Commission *</Label>
+                        <Combobox
+                          value={formData.commission}
+                          onValueChange={handleCommissionChange}
+                          options={commissions}
+                          placeholder="Select commission"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
+                          allowCustom={editMode}
+                          onAddCustom={handleCommissionChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
+
+                    {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
+                      <div>
+                        <Label>Plant *</Label>
+                        <Combobox
+                          value={formData.plant}
+                          onValueChange={handlePlantChange}
+                          options={plants}
+                          placeholder="Select plant"
+                          searchPlaceholder="Search plants..."
+                          emptyText="No plants found"
+                          allowCustom={editMode}
+                          onAddCustom={handlePlantChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
+
+                    {formData.role === 'Site Engineer' && (
+                      <div>
+                        <Label>Station *</Label>
+                        <Combobox
+                          value={formData.station}
+                          onValueChange={handleStationChange}
+                          options={stations}
+                          placeholder="Select station"
+                          searchPlaceholder="Search stations..."
+                          emptyText="No stations found"
+                          allowCustom={editMode}
+                          onAddCustom={handleStationChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
+
+                    {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
+                      <div>
+                        <Label>Field *</Label>
+                        <Combobox
+                          value={formData.field}
+                          onValueChange={handleFieldChange}
+                          options={fields}
+                          placeholder="Select field"
+                          searchPlaceholder="Search fields..."
+                          emptyText="No fields found"
+                          allowCustom={editMode}
+                          onAddCustom={handleFieldChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
+
+                    {formData.role === 'Engr. Manager' && (
+                      <div>
+                        <Label>Commission *</Label>
+                        <Combobox
+                          value={formData.commission}
+                          onValueChange={handleCommissionChange}
+                          options={commissions}
+                          placeholder="Select commission"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
+                          allowCustom={editMode}
+                          onAddCustom={handleCommissionChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
+
+                    {formData.role === 'HSE Lead' && (
+                      <div>
+                        <Label>Commission *</Label>
+                        <Combobox
+                          value={formData.commission}
+                          onValueChange={handleCommissionChange}
+                          options={getCommissionOptions()}
+                          placeholder="Select commission (P&E or Asset only)"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
+                          allowCustom={editMode}
+                          onAddCustom={handleCommissionChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Conditional fields based on role */}
-                  {formData.role === 'Director' && (
-                    <div>
-                      <Label>Commission *</Label>
-                      <Combobox
-                        value={formData.commission}
-                        onValueChange={handleCommissionChange}
-                        options={commissions}
-                        placeholder="Select commission"
-                        searchPlaceholder="Search commissions..."
-                        emptyText="No commissions found"
-                        allowCustom={editMode}
-                        onAddCustom={handleCommissionChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                  )}
-
-                  {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
-                    <div>
-                      <Label>Plant *</Label>
-                      <Combobox
-                        value={formData.plant}
-                        onValueChange={handlePlantChange}
-                        options={plants}
-                        placeholder="Select plant"
-                        searchPlaceholder="Search plants..."
-                        emptyText="No plants found"
-                        allowCustom={editMode}
-                        onAddCustom={handlePlantChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                  )}
-
-                  {formData.role === 'Site Engineer' && (
-                    <div>
-                      <Label>Station *</Label>
-                      <Combobox
-                        value={formData.station}
-                        onValueChange={handleStationChange}
-                        options={stations}
-                        placeholder="Select station"
-                        searchPlaceholder="Search stations..."
-                        emptyText="No stations found"
-                        allowCustom={editMode}
-                        onAddCustom={handleStationChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                  )}
-
-                  {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
-                    <div>
-                      <Label>Field *</Label>
-                      <Combobox
-                        value={formData.field}
-                        onValueChange={handleFieldChange}
-                        options={fields}
-                        placeholder="Select field"
-                        searchPlaceholder="Search fields..."
-                        emptyText="No fields found"
-                        allowCustom={editMode}
-                        onAddCustom={handleFieldChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                  )}
-
-                  {formData.role === 'Engr. Manager' && (
-                    <div>
-                      <Label>Commission *</Label>
-                      <Combobox
-                        value={formData.commission}
-                        onValueChange={handleCommissionChange}
-                        options={commissions}
-                        placeholder="Select commission"
-                        searchPlaceholder="Search commissions..."
-                        emptyText="No commissions found"
-                        allowCustom={editMode}
-                        onAddCustom={handleCommissionChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                  )}
-
-                  {formData.role === 'HSE Lead' && (
-                    <div>
-                      <Label>Commission *</Label>
-                      <Combobox
-                        value={formData.commission}
-                        onValueChange={handleCommissionChange}
-                        options={getCommissionOptions()}
-                        placeholder="Select commission (P&E or Asset only)"
-                        searchPlaceholder="Search commissions..."
-                        emptyText="No commissions found"
-                        allowCustom={editMode}
-                        onAddCustom={handleCommissionChange}
-                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
-                      />
-                    </div>
-                  )}
-
-                  {/* Position Display */}
+                  {/* Position Display - Separate row */}
                   {isTitleReady() && (
                     <div>
                       <Label>Position</Label>
