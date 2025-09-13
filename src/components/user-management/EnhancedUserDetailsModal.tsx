@@ -497,6 +497,91 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return new Date(dateString).toLocaleString();
   };
 
+  // Function to add new entries to database tables
+  const addNewEntry = async (table: 'roles' | 'discipline' | 'commission' | 'plant' | 'station' | 'field', name: string) => {
+    try {
+      const { data, error } = await supabase
+        .from(table)
+        .insert({ name })
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error adding new ${table}:`, error);
+        toast.error(`Failed to add new ${table}`);
+        return null;
+      }
+
+      toast.success(`New ${table} "${name}" added successfully`);
+      return data as { name: string };
+    } catch (error) {
+      console.error(`Error adding new ${table}:`, error);
+      toast.error(`Failed to add new ${table}`);
+      return null;
+    }
+  };
+
+  // Custom handlers for combobox changes with new entry creation
+  const handleRoleChange = async (value: string) => {
+    if (value && !databaseRoles.find(r => r.value === value)) {
+      const newRole = await addNewEntry('roles', value);
+      if (newRole) {
+        setDatabaseRoles(prev => [...prev, { value: newRole.name, label: newRole.name }]);
+      }
+    }
+    setFormData(prev => ({ ...prev, role: value }));
+  };
+
+  const handleDisciplineChange = async (value: string) => {
+    if (value && !disciplines.find(d => d.value === value)) {
+      const newDiscipline = await addNewEntry('discipline', value);
+      if (newDiscipline) {
+        setDisciplines(prev => [...prev, { value: newDiscipline.name, label: newDiscipline.name }]);
+      }
+    }
+    setFormData(prev => ({ ...prev, discipline: value }));
+  };
+
+  const handleCommissionChange = async (value: string) => {
+    if (value && !commissions.find(c => c.value === value)) {
+      const newCommission = await addNewEntry('commission', value);
+      if (newCommission) {
+        setCommissions(prev => [...prev, { value: newCommission.name, label: newCommission.name }]);
+      }
+    }
+    setFormData(prev => ({ ...prev, commission: value }));
+  };
+
+  const handlePlantChange = async (value: string) => {
+    if (value && !plants.find(p => p.value === value)) {
+      const newPlant = await addNewEntry('plant', value);
+      if (newPlant) {
+        setPlants(prev => [...prev, { value: newPlant.name, label: newPlant.name }]);
+      }
+    }
+    setFormData(prev => ({ ...prev, plant: value }));
+  };
+
+  const handleStationChange = async (value: string) => {
+    if (value && !stations.find(s => s.value === value)) {
+      const newStation = await addNewEntry('station', value);
+      if (newStation) {
+        setStations(prev => [...prev, { value: newStation.name, label: newStation.name }]);
+      }
+    }
+    setFormData(prev => ({ ...prev, station: value }));
+  };
+
+  const handleFieldChange = async (value: string) => {
+    if (value && !fields.find(f => f.value === value)) {
+      const newField = await addNewEntry('field', value);
+      if (newField) {
+        setFields(prev => [...prev, { value: newField.name, label: newField.name }]);
+      }
+    }
+    setFormData(prev => ({ ...prev, field: value }));
+  };
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -730,48 +815,44 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       <Label>Role *</Label>
                       <Combobox
                         value={formData.role}
-                        onValueChange={(value) => handleInputChange('role', value)}
+                        onValueChange={handleRoleChange}
                         options={databaseRoles}
                         placeholder="Select role"
                         searchPlaceholder="Search roles..."
                         emptyText="No roles found"
+                        allowCustom={editMode}
+                        onAddCustom={handleRoleChange}
                         className={!editMode ? 'bg-muted pointer-events-none' : ''}
                       />
                     </div>
                     <div>
                       <Label>Discipline</Label>
-                      <Select
+                      <Combobox
                         value={formData.discipline}
-                        onValueChange={(value) => handleInputChange('discipline', value)}
-                        disabled={!editMode}
-                      >
-                        <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                          <SelectValue placeholder="Select discipline" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {disciplines.map(discipline => (
-                            <SelectItem key={discipline.value} value={discipline.value}>{discipline.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onValueChange={handleDisciplineChange}
+                        options={disciplines}
+                        placeholder="Select discipline"
+                        searchPlaceholder="Search disciplines..."
+                        emptyText="No disciplines found"
+                        allowCustom={editMode}
+                        onAddCustom={handleDisciplineChange}
+                        className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                      />
                     </div>
                     {formData.discipline && formData.discipline !== 'Tech Safety' && formData.discipline !== 'Civil' ? (
                       <div>
                         <Label>Commission</Label>
-                        <Select
+                        <Combobox
                           value={formData.commission}
-                          onValueChange={(value) => handleInputChange('commission', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select commission" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {commissions.filter(c => c.value === 'P&E' || c.value === 'Asset').map(commission => (
-                              <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onValueChange={handleCommissionChange}
+                          options={commissions.filter(c => c.value === 'P&E' || c.value === 'Asset')}
+                          placeholder="Select commission"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
+                          allowCustom={editMode}
+                          onAddCustom={handleCommissionChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
                       </div>
                     ) : (
                       <div></div>
@@ -783,11 +864,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       <Label>Role *</Label>
                       <Combobox
                         value={formData.role}
-                        onValueChange={(value) => handleInputChange('role', value)}
+                        onValueChange={handleRoleChange}
                         options={databaseRoles}
                         placeholder="Select role"
                         searchPlaceholder="Search roles..."
                         emptyText="No roles found"
+                        allowCustom={editMode}
+                        onAddCustom={handleRoleChange}
                         className={!editMode ? 'bg-muted pointer-events-none' : ''}
                       />
                     </div>
@@ -796,100 +879,85 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     {formData.role === 'Director' && (
                       <div>
                         <Label>Commission</Label>
-                        <Select
+                        <Combobox
                           value={formData.commission}
-                          onValueChange={(value) => handleInputChange('commission', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select commission" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {commissions.map(commission => (
-                              <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onValueChange={handleCommissionChange}
+                          options={commissions}
+                          placeholder="Select commission"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
+                          allowCustom={editMode}
+                          onAddCustom={handleCommissionChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
                       </div>
                     )}
 
                     {(formData.role === 'Plant Director' || formData.role === 'Dep. Plant Director') && (
                       <div>
                         <Label>Plant</Label>
-                        <Select
+                        <Combobox
                           value={formData.plant}
-                          onValueChange={(value) => handleInputChange('plant', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select plant" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {plants.map(plant => (
-                              <SelectItem key={plant.value} value={plant.value}>{plant.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onValueChange={handlePlantChange}
+                          options={plants}
+                          placeholder="Select plant"
+                          searchPlaceholder="Search plants..."
+                          emptyText="No plants found"
+                          allowCustom={editMode}
+                          onAddCustom={handlePlantChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
                       </div>
                     )}
 
                     {formData.role === 'Site Engineer' && (
                       <div>
                         <Label>Station</Label>
-                        <Select
+                        <Combobox
                           value={formData.station}
-                          onValueChange={(value) => handleInputChange('station', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select station" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {stations.map(station => (
-                              <SelectItem key={station.value} value={station.value}>{station.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onValueChange={handleStationChange}
+                          options={stations}
+                          placeholder="Select station"
+                          searchPlaceholder="Search stations..."
+                          emptyText="No stations found"
+                          allowCustom={editMode}
+                          onAddCustom={handleStationChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
                       </div>
                     )}
 
                     {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
                       <div>
                         <Label>Field</Label>
-                        <Select
+                        <Combobox
                           value={formData.field}
-                          onValueChange={(value) => handleInputChange('field', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select field" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {fields.map(field => (
-                              <SelectItem key={field.value} value={field.value}>{field.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onValueChange={handleFieldChange}
+                          options={fields}
+                          placeholder="Select field"
+                          searchPlaceholder="Search fields..."
+                          emptyText="No fields found"
+                          allowCustom={editMode}
+                          onAddCustom={handleFieldChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
                       </div>
                     )}
 
                     {formData.role === 'Engr. Manager' && (
                       <div>
                         <Label>Commission</Label>
-                        <Select
+                        <Combobox
                           value={formData.commission}
-                          onValueChange={(value) => handleInputChange('commission', value)}
-                          disabled={!editMode}
-                        >
-                          <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                            <SelectValue placeholder="Select commission" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {commissions.filter(c => c.value === 'P&E' || c.value === 'Asset').map(commission => (
-                              <SelectItem key={commission.value} value={commission.value}>{commission.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onValueChange={handleCommissionChange}
+                          options={commissions.filter(c => c.value === 'P&E' || c.value === 'Asset')}
+                          placeholder="Select commission"
+                          searchPlaceholder="Search commissions..."
+                          emptyText="No commissions found"
+                          allowCustom={editMode}
+                          onAddCustom={handleCommissionChange}
+                          className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                        />
                       </div>
                     )}
                   </div>
