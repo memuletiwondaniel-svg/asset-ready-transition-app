@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/useRoles";
 import { useCommissions } from "@/hooks/useCommissions";
+import { usePlants } from "@/hooks/usePlants";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const { toast } = useToast();
   const { roles, isLoading: rolesLoading, addRole } = useRoles();
   const { commissions, isLoading: commissionsLoading, addCommission } = useCommissions();
+  const { plants, isLoading: plantsLoading, addPlant } = usePlants();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -52,6 +54,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     newRole: "",
     discipline: "",
     commission: "",
+    plant: "",
     systemRole: "user", // Default system role
     privileges: [] as string[],
   });
@@ -74,6 +77,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   
   // Get commission names from the database
   const commissionNames = commissions.map(commission => commission.name);
+  
+  // Get plant names from the database  
+  const plantNames = plants.map(plant => plant.name);
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
@@ -173,17 +179,37 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         [field]: value
       };
       
-      // If role is Director and commission is selected, combine them
+      // Handle Director role combinations with commission
       if (field === "commission" && prev.role === "Director" && value) {
         newData.role = `${value} Director`;
       }
-      // If role is changed to Director and commission exists, combine them
       else if (field === "role" && value === "Director" && prev.commission) {
         newData.role = `${prev.commission} Director`;
       }
-      // If role is changed from Director, reset commission
-      else if (field === "role" && prev.role.includes("Director") && value !== "Director") {
-        newData.commission = "";
+      // Handle Plant Director role combinations
+      else if (field === "plant" && (prev.role === "Plant Director" || prev.role === "Dep. Plant Director") && value) {
+        if (prev.role === "Plant Director") {
+          newData.role = `${value} Plant Director`;
+        } else if (prev.role === "Dep. Plant Director") {
+          newData.role = `${value} Dep Plant Dir`;
+        }
+      }
+      else if (field === "role" && (value === "Plant Director" || value === "Dep. Plant Director") && prev.plant) {
+        if (value === "Plant Director") {
+          newData.role = `${prev.plant} Plant Director`;
+        } else if (value === "Dep. Plant Director") {
+          newData.role = `${prev.plant} Dep Plant Dir`;
+        }
+      }
+      // Reset fields when switching away from specific roles
+      else if (field === "role") {
+        if (prev.role.includes("Director") && value !== "Director") {
+          newData.commission = "";
+        }
+        if ((prev.role.includes("Plant Director") || prev.role.includes("Dep Plant Dir")) && 
+            value !== "Plant Director" && value !== "Dep. Plant Director") {
+          newData.plant = "";
+        }
       }
       
       return newData;
@@ -352,6 +378,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           isFunctionalEmail: formData.isFunctionalEmail,
           discipline: formData.discipline || null,
           commission: formData.commission || null,
+          plant: formData.plant || null,
           systemRole: formData.systemRole,
           privileges: formData.privileges,
         }
@@ -409,6 +436,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         newRole: "",
         discipline: "",
         commission: "",
+        plant: "",
         systemRole: "user",
         privileges: [],
       });
@@ -718,6 +746,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 if (selectedRole !== "Director") {
                                   handleInputChange("commission", "");
                                 }
+                                // Reset plant when selecting non-Plant Director roles
+                                if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
+                                  handleInputChange("plant", "");
+                                }
                                 handleInputChange("role", selectedRole);
                                 setRoleSearch("");
                                 setShowRoleDropdown(false);
@@ -874,6 +906,34 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 </div>
               )}
 
+              {(formData.role === "Plant Director" || formData.role === "Dep. Plant Director" || 
+                formData.role.includes("Plant Director") || formData.role.includes("Dep Plant Dir")) && (
+                <div>
+                  <Label htmlFor="plant">Plant *</Label>
+                  <Select 
+                    value={formData.plant}
+                    onValueChange={(value) => handleInputChange("plant", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select plant" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-50">
+                      {plantsLoading ? (
+                        <SelectItem value="" disabled>Loading plants...</SelectItem>
+                      ) : plantNames.length > 0 ? (
+                        plantNames.map((plantName) => (
+                          <SelectItem key={plantName} value={plantName}>
+                            {plantName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>No plants available</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {(formData.role === "Director" || formData.role.includes("Director")) && (
                 <div>
                   <Label htmlFor="commission">Commission *</Label>
@@ -982,6 +1042,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   <div>
                     <span className="text-sm font-medium">Commission:</span>
                     <span className="ml-2">{formData.commission}</span>
+                  </div>
+                )}
+                {formData.plant && (
+                  <div>
+                    <span className="text-sm font-medium">Plant:</span>
+                    <span className="ml-2">{formData.plant}</span>
                   </div>
                 )}
                 <div>
