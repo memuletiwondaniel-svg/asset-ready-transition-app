@@ -23,6 +23,16 @@ interface CreateUserRequest {
   privileges?: string[];
 }
 
+// Helper function to compute final role
+const computeFinalRole = (role: string | null, discipline: string | null, commission: string | null): string => {
+  if (discipline === "TA2" && commission) {
+    return `TA2 - ${discipline} - ${commission}`;
+  } else if (discipline === "Tech Safety") {
+    return "TA2 - Tech Safety";
+  }
+  return role || 'user';
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -124,6 +134,7 @@ serve(async (req) => {
           };
 
           const normalizedCompany = normalizeCompany(company);
+          const finalRole = computeFinalRole(role, discipline, commission);
 
           const { error: upsertErr } = await admin
             .from('profiles')
@@ -139,7 +150,7 @@ serve(async (req) => {
               functional_email: !!isFunctionalEmail,
               functional_email_address: functionalEmail ?? null,
               status: 'active',
-              role: role || 'user',
+              role: finalRole,
               ta2_discipline: discipline ?? null,
               ta2_commission: commission ?? null,
               account_status: 'active',
@@ -198,6 +209,7 @@ serve(async (req) => {
       return null;
     };
     const normalizedCompany = normalizeCompany(company);
+    const finalRole = computeFinalRole(role, discipline, commission);
 
     // 2) Upsert profile (handle case where a row may already exist)
     const { error: profileErr } = await admin
@@ -213,7 +225,7 @@ serve(async (req) => {
         personal_email: personalEmail ?? null,
         functional_email: !!isFunctionalEmail,
         status: 'active',
-        role: role || 'user',
+        role: finalRole,
         ta2_discipline: discipline ?? null,
         ta2_commission: commission ?? null,
         account_status: 'active',

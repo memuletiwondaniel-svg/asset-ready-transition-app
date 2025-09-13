@@ -6,6 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper function to compute final role
+const computeFinalRole = (role: string | null, discipline: string | null, commission: string | null): string => {
+  if (discipline === "TA2" && commission) {
+    return `TA2 - ${discipline} - ${commission}`;
+  } else if (discipline === "Tech Safety") {
+    return "TA2 - Tech Safety";
+  }
+  return role || 'user';
+};
+
 interface RegistrationRequestBody {
   authenticatorId: string;
   userData: {
@@ -40,6 +50,9 @@ serve(async (req) => {
 
     // Generate a user_id if not provided
     const user_id = userData.user_id ?? crypto.randomUUID();
+    
+    // Compute final role based on discipline and commission
+    const finalRole = computeFinalRole(null, userData.ta2_discipline, userData.ta2_commission);
 
     // Insert pending profile using service role (bypasses RLS safely)
     const { data: inserted, error: insertError } = await supabase
@@ -55,6 +68,7 @@ serve(async (req) => {
         phone_number: userData.phone_number,
         company: userData.company as any,
         job_title: userData.job_title,
+        role: finalRole,
         ta2_discipline: (userData.ta2_discipline ?? null) as any,
         ta2_commission: (userData.ta2_commission ?? null) as any,
         status: 'pending_approval' as any,
