@@ -64,7 +64,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     station: "",
     field: "",
     systemRole: "user", // Default system role
-    privileges: [] as string[],
   });
 
   const [roleSearch, setRoleSearch] = useState("");
@@ -142,14 +141,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   ];
 
 
-  const availablePrivileges = [
-    "Administrator",
-    "Complete assigned tasks or delegate", 
-    "Edit PSSR Checklist item Default approvers and PSSR Approvers",
-    "Edit or Create New User",
-    "Edit or Create New Project",
-    "Edit or Create New PSSR Master Checklist",
-  ];
 
   const systemRoles = [
     { value: "user", label: "User" },
@@ -303,14 +294,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     });
   };
 
-  const handlePrivilegeToggle = (privilege: string) => {
-    setFormData(prev => ({
-      ...prev,
-      privileges: prev.privileges.includes(privilege)
-        ? prev.privileges.filter(p => p !== privilege)
-        : [...prev.privileges, privilege]
-    }));
-  };
 
   // Image upload handlers
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -467,7 +450,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           commission: formData.commission || null,
           plant: formData.plant || null,
           systemRole: formData.systemRole,
-          privileges: formData.privileges,
+          
         }
       });
 
@@ -527,7 +510,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         station: "",
         field: "",
         systemRole: "user",
-        privileges: [],
+        
       });
       
       // Reset profile image
@@ -1101,28 +1084,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
             </CardContent>
           </Card>
 
-          {/* Privileges */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Privileges</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {availablePrivileges.map((privilege) => (
-                  <div key={privilege} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={privilege}
-                      checked={formData.privileges.includes(privilege)}
-                      onCheckedChange={() => handlePrivilegeToggle(privilege)}
-                    />
-                    <Label htmlFor={privilege} className="text-sm">
-                      {privilege}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Submit Buttons */}
           <div className="flex justify-end gap-4">
@@ -1172,20 +1133,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 <div>
                   <span className="text-sm font-medium">Temporary Password:</span>
                   <span className="ml-2 font-mono bg-muted px-2 py-1 rounded">{generatedPassword}</span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium">Privileges:</span>
-                  <div className="ml-2 mt-1">
-                    {formData.privileges.length > 0 ? (
-                      <ul className="text-sm space-y-1">
-                        {formData.privileges.map((privilege, index) => (
-                          <li key={index}>• {privilege}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span className="text-muted-foreground">No privileges assigned</span>
-                    )}
-                  </div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
