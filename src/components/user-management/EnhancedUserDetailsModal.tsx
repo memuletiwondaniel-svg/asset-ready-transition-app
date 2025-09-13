@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Mail,
@@ -40,8 +41,6 @@ interface DatabaseUser {
   last_name: string | null;
   company: 'BGC' | 'KENT' | null;
   employee_id: string | null;
-  job_title: string | null;
-  department: string | null;
   phone_number: string | null;
   account_status: string | null;
   status: 'active' | 'inactive' | 'pending_approval' | 'suspended' | null;
@@ -67,7 +66,6 @@ interface DatabaseUser {
   primary_phone: string | null;
   secondary_phone: string | null;
   country_code: string | null;
-  position: string | null;
 }
 
 interface ActivityLog {
@@ -108,8 +106,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     primary_phone: '',
     secondary_phone: '',
     country_code: '',
-    job_title: '',
-    department: '',
     role: '',
     company: 'BGC' as 'BGC' | 'KENT' | null,
     status: 'active' as 'active' | 'inactive' | 'pending_approval' | 'suspended',
@@ -134,8 +130,39 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   ];
 
   const companies = [
-    { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/f5935f89-1889-4585-8c5c-60362063dcf7.png" },
-    { value: "KENT", label: "Kent Engineering", logo: "/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" }
+    { value: "BGC", label: "BGC", logo: "/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png" },
+    { value: "KENT", label: "Kent", logo: "/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" },
+    { value: "Others", label: "Others" }
+  ];
+
+  const roles = [
+    'Project Manager',
+    'Commissioning Lead',
+    'Construction Lead',
+    'Technical Authority (TA2)',
+    'Plant Director',
+    'Deputy Plant Director',
+    'Operations Coach',
+    'Operation Readiness & Assurance Engineer',
+    'Site Engineer',
+    'Ops HSE Lead',
+    'Project HSE Lead',
+    'ER Lead',
+    'Production Director',
+    'HSE Director',
+    'P&E Director',
+    'Others'
+  ];
+
+  const countryCodes = [
+    { code: '+964', country: 'Iraq', flag: '🇮🇶' },
+    { code: '+44', country: 'UK', flag: '🇬🇧' },
+    { code: '+1', country: 'US/Canada', flag: '🇺🇸' },
+    { code: '+971', country: 'UAE', flag: '🇦🇪' },
+    { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+    { code: '+965', country: 'Kuwait', flag: '🇰🇼' },
+    { code: '+33', country: 'France', flag: '🇫🇷' },
+    { code: '+49', country: 'Germany', flag: '🇩🇪' },
   ];
 
   const statusOptions = [
@@ -146,17 +173,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   ];
 
   const ta2Disciplines = [
+    { value: "Civil", label: "Civil" },
+    { value: "Static", label: "Static" },
+    { value: "PACO", label: "PACO" },
     { value: "Process", label: "Process" },
-    { value: "Technical Safety", label: "Technical Safety" },
-    { value: "Mechanical", label: "Mechanical" },
-    { value: "Electrical", label: "Electrical" },
-    { value: "Instrumentation", label: "Instrumentation" }
+    { value: "Technical Safety", label: "Technical Safety" }
   ];
 
   const ta2Commissions = [
-    { value: "Project and Engineering", label: "Project and Engineering" },
-    { value: "Operations", label: "Operations" },
-    { value: "Maintenance", label: "Maintenance" }
+    { value: "Asset", label: "Asset" },
+    { value: "Project and Engineering", label: "Project and Engineering" }
   ];
 
   // Initialize form data when modal opens or user changes
@@ -171,8 +197,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         primary_phone: user.primary_phone || '',
         secondary_phone: user.secondary_phone || '',
         country_code: user.country_code || '+964',
-        job_title: user.job_title || '',
-        department: user.department || '',
         role: user.role || '',
         company: user.company || 'BGC',
         status: user.status || 'active',
@@ -245,6 +269,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       setLoading(true);
       console.log('Saving user data:', formData);
 
+      // Helper function to compute final role
+      const computeFinalRole = (role: string, discipline: string | null, commission: string | null): string => {
+        if (role === 'Technical Authority (TA2)' && discipline && commission) {
+          return `TA2 - ${discipline} - ${commission}`;
+        } else if (role === 'Technical Authority (TA2)' && discipline === "Technical Safety") {
+          return "TA2 - Technical Safety";
+        }
+        return role || 'user';
+      };
+
+      const finalRole = computeFinalRole(formData.role, formData.ta2_discipline, formData.ta2_commission);
+
       // Prepare update payload with proper field mapping
       const updatePayload = {
         first_name: formData.first_name || null,
@@ -256,9 +292,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         primary_phone: formData.primary_phone || null,
         secondary_phone: formData.secondary_phone || null,
         country_code: formData.country_code || null,
-        job_title: formData.job_title || null,
-        department: formData.department || null,
-        role: formData.role,
+        role: finalRole,
         company: formData.company,
         status: formData.status,
         account_status: formData.account_status || 'active',
@@ -481,9 +515,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
@@ -519,7 +552,102 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 </div>
                 
                 <div>
-                  <Label htmlFor="company">Company *</Label>
+                  <Label htmlFor="email">Email Address *</Label>
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <Checkbox
+                      id="functional-email"
+                      checked={formData.functional_email}
+                      onCheckedChange={(checked) => handleInputChange('functional_email', checked)}
+                      disabled={!editMode}
+                    />
+                    <Label htmlFor="functional-email" className="text-sm">
+                      This is a functional email
+                    </Label>
+                  </div>
+                </div>
+
+                {formData.functional_email && (
+                  <div>
+                    <Label htmlFor="functional_email_address">Functional Email Address</Label>
+                    <Input
+                      id="functional_email_address"
+                      type="email"
+                      value={formData.functional_email_address}
+                      onChange={(e) => handleInputChange('functional_email_address', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                      placeholder="functional@company.com"
+                    />
+                  </div>
+                )}
+
+                {/* Contact Information */}
+                <Separator />
+                <h3 className="text-lg font-semibold">Contact Information</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="primary_phone">Primary Phone</Label>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <Select
+                        value={formData.country_code}
+                        onValueChange={(value) => handleInputChange('country_code', value)}
+                        disabled={!editMode}
+                      >
+                        <SelectTrigger className={`w-32 ${!editMode ? 'bg-muted' : ''}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countryCodes.map(({ code, country, flag }) => (
+                            <SelectItem key={code} value={code}>
+                              {flag} {code} - {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id="primary_phone"
+                        type="tel"
+                        value={formData.primary_phone}
+                        onChange={(e) => handleInputChange('primary_phone', e.target.value)}
+                        disabled={!editMode}
+                        className={`flex-1 ${!editMode ? 'bg-muted' : ''}`}
+                        placeholder="Phone number"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="secondary_phone">Secondary Phone</Label>
+                    <Input
+                      id="secondary_phone"
+                      type="tel"
+                      value={formData.secondary_phone}
+                      onChange={(e) => handleInputChange('secondary_phone', e.target.value)}
+                      disabled={!editMode}
+                      className={!editMode ? 'bg-muted' : ''}
+                      placeholder="Optional secondary phone"
+                    />
+                  </div>
+                </div>
+
+                {/* Company and Role */}
+                <Separator />
+                <h3 className="text-lg font-semibold">Company & Role Information</h3>
+                
+                <div>
+                  <Label>Company *</Label>
                   <Select
                     value={formData.company || ''}
                     onValueChange={(value) => handleInputChange('company', value as 'BGC' | 'KENT')}
@@ -532,7 +660,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       {companies.map((company) => (
                         <SelectItem key={company.value} value={company.value}>
                           <div className="flex items-center gap-2">
-                            <img src={company.logo} alt={company.value} className="w-4 h-4" />
+                            {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
                             {company.label}
                           </div>
                         </SelectItem>
@@ -541,65 +669,28 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="job_title">Job Title</Label>
-                    <Input
-                      id="job_title"
-                      value={formData.job_title}
-                      onChange={(e) => handleInputChange('job_title', e.target.value)}
-                      disabled={!editMode}
-                      className={!editMode ? 'bg-muted' : ''}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      value={formData.department}
-                      onChange={(e) => handleInputChange('department', e.target.value)}
-                      disabled={!editMode}
-                      className={!editMode ? 'bg-muted' : ''}
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Input
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => handleInputChange('role', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="system_role">System Role</Label>
+                  <Label>Role *</Label>
                   <Select
-                    value={systemRole}
-                    onValueChange={setSystemRole}
+                    value={formData.role}
+                    onValueChange={(value) => handleInputChange('role', value)}
                     disabled={!editMode}
                   >
                     <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                      <SelectValue />
+                      <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {systemRoles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
+                      {roles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* TA2 Fields - only show if relevant */}
-                {formData.role?.toLowerCase().includes('technical authority') && (
-                  <>
+                {formData.role === 'Technical Authority (TA2)' && (
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="ta2_discipline">TA2 Discipline</Label>
+                      <Label htmlFor="ta2_discipline">Discipline</Label>
                       <Select
                         value={formData.ta2_discipline}
                         onValueChange={(value) => handleInputChange('ta2_discipline', value)}
@@ -636,102 +727,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                  </>
+                     </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
 
-          {/* Contact Information Tab */}
-          <TabsContent value="contact" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Work Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                  />
-                </div>
-
-
-                <div>
-                  <Label htmlFor="functional_email_address">Functional Email</Label>
-                  <Input
-                    id="functional_email_address"
-                    type="email"
-                    value={formData.functional_email_address}
-                    onChange={(e) => handleInputChange('functional_email_address', e.target.value)}
-                    disabled={!editMode}
-                    className={!editMode ? 'bg-muted' : ''}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="country_code">Country Code</Label>
-                    <Select
-                      value={formData.country_code}
-                      onValueChange={(value) => handleInputChange('country_code', value)}
-                      disabled={!editMode}
-                    >
-                      <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="+964">+964 (Iraq)</SelectItem>
-                        <SelectItem value="+1">+1 (US/Canada)</SelectItem>
-                        <SelectItem value="+44">+44 (UK)</SelectItem>
-                        <SelectItem value="+31">+31 (Netherlands)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="phone_number">Primary Phone</Label>
-                    <Input
-                      id="phone_number"
-                      value={formData.phone_number}
-                      onChange={(e) => handleInputChange('phone_number', e.target.value)}
-                      disabled={!editMode}
-                      className={!editMode ? 'bg-muted' : ''}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="primary_phone">Alternative Phone 1</Label>
-                    <Input
-                      id="primary_phone"
-                      value={formData.primary_phone}
-                      onChange={(e) => handleInputChange('primary_phone', e.target.value)}
-                      disabled={!editMode}
-                      className={!editMode ? 'bg-muted' : ''}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="secondary_phone">Alternative Phone 2</Label>
-                    <Input
-                      id="secondary_phone"
-                      value={formData.secondary_phone}
-                      onChange={(e) => handleInputChange('secondary_phone', e.target.value)}
-                      disabled={!editMode}
-                      className={!editMode ? 'bg-muted' : ''}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">

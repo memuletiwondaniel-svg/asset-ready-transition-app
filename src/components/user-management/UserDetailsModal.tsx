@@ -178,14 +178,14 @@ const UserDetailsModal = ({ user, isOpen, onClose }: UserDetailsModalProps) => {
                   </div>
                 </div>
                 
-                {user.discipline && (
+                {user.role === 'Technical Authority (TA2)' && user.discipline && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Discipline</label>
                     <p className="text-sm">{user.discipline}</p>
                   </div>
                 )}
                 
-                {user.commission && (
+                {user.role === 'Technical Authority (TA2)' && user.commission && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Commission</label>
                     <p className="text-sm">{user.commission}</p>
