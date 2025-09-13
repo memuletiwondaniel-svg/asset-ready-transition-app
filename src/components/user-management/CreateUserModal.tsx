@@ -787,10 +787,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
               <div>
                 <div className="space-y-4">
                   {/* Role Selection Row - All fields aligned horizontally */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Primary Role Field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="role">Role *</Label>
+                    <div className="flex flex-col">
+                      <Label htmlFor="role" className="mb-2">Role *</Label>
                       <div className="space-y-2">
                         <div className="relative">
                           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -961,8 +961,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager" || formData.role === "TA2") || 
                       (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
                       (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) || (formData.role.includes("TA2"))) && (
-                      <div>
-                        <Label htmlFor="commission">Commission *</Label>
+                      <div className="flex flex-col">
+                        <Label htmlFor="commission" className="mb-2">Commission *</Label>
                         <Select 
                           value={formData.commission}
                           onValueChange={(value) => handleInputChange("commission", value)}
@@ -990,8 +990,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {/* Plant Field for Plant Director roles */}
                     {(formData.role === "Plant Director" || formData.role === "Dep. Plant Director" || 
                       formData.role.includes("Plant Director") || formData.role.includes("Dep Plant Dir")) && (
-                      <div>
-                        <Label htmlFor="plant">Plant *</Label>
+                      <div className="flex flex-col">
+                        <Label htmlFor="plant" className="mb-2">Plant *</Label>
                         <Select 
                           value={formData.plant}
                           onValueChange={(value) => handleInputChange("plant", value)}
@@ -1019,8 +1019,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {/* Station Field for Site Engineer roles */}
                     {(formData.role === "Site Engineer" || formData.role === "Site Engr" || 
                       formData.role.includes("Site Engineer") || formData.role.includes("Site Engr")) && (
-                      <div>
-                        <Label htmlFor="station">Station *</Label>
+                      <div className="flex flex-col">
+                        <Label htmlFor="station" className="mb-2">Station *</Label>
                         <Select 
                           value={formData.station}
                           onValueChange={(value) => handleInputChange("station", value)}
@@ -1048,8 +1048,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {/* Field Field for Ops Coach and Ops Team Lead roles */}
                     {(formData.role === "Ops Coach" || formData.role === "Ops Team Lead" || 
                       formData.role.includes("Ops Coach") || formData.role.includes("Ops Team Lead")) && (
-                      <div>
-                        <Label htmlFor="field">Field *</Label>
+                      <div className="flex flex-col">
+                        <Label htmlFor="field" className="mb-2">Field *</Label>
                         <Select 
                           value={formData.field}
                           onValueChange={(value) => handleInputChange("field", value)}
@@ -1076,8 +1076,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
                     {/* Discipline Field for TA2 */}
                     {(formData.role === "TA2" || formData.role.includes("TA2")) && (
-                      <div>
-                        <Label htmlFor="discipline">Discipline *</Label>
+                      <div className="flex flex-col">
+                        <Label htmlFor="discipline" className="mb-2">Discipline *</Label>
                         <Select 
                           value={formData.discipline}
                           onValueChange={(value) => handleInputChange("discipline", value)}
