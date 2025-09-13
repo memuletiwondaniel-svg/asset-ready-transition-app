@@ -24,6 +24,7 @@ import { UserPlus, Search, Plus, X, Upload, Camera, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/useRoles";
+import { useCommissions } from "@/hooks/useCommissions";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface CreateUserModalProps {
 const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: CreateUserModalProps) => {
   const { toast } = useToast();
   const { roles, isLoading: rolesLoading, addRole } = useRoles();
+  const { commissions, isLoading: commissionsLoading, addCommission } = useCommissions();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -69,6 +71,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   
   // Get role names from the database
   const roleNames = roles.map(role => role.name);
+  
+  // Get commission names from the database
+  const commissionNames = commissions.map(commission => commission.name);
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
@@ -119,11 +124,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     { value: "PACO", label: "PACO" },
     { value: "Process", label: "Process" },
     { value: "Technical Safety", label: "Technical Safety" },
-  ];
-
-  const commissions = [
-    { value: "Asset", label: "Asset" },
-    { value: "Project and Engineering", label: "Project and Engineering" },
   ];
 
   const availablePrivileges = [
@@ -844,14 +844,41 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                         <SelectValue placeholder="Select commission" />
                       </SelectTrigger>
                       <SelectContent>
-                        {commissions.map((commission) => (
-                          <SelectItem key={commission.value} value={commission.value}>
-                            {commission.label}
+                        {commissionNames.map((commissionName) => (
+                          <SelectItem key={commissionName} value={commissionName}>
+                            {commissionName}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+              )}
+
+              {formData.role === "Director" && (
+                <div>
+                  <Label htmlFor="commission">Commission *</Label>
+                  <Select 
+                    value={formData.commission}
+                    onValueChange={(value) => handleInputChange("commission", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select commission" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-50">
+                      {commissionsLoading ? (
+                        <SelectItem value="" disabled>Loading commissions...</SelectItem>
+                      ) : commissionNames.length > 0 ? (
+                        commissionNames.map((commissionName) => (
+                          <SelectItem key={commissionName} value={commissionName}>
+                            {commissionName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>No commissions available</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
