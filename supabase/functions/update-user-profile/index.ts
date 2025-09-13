@@ -23,6 +23,7 @@ interface UpdateProfileRequest {
     department?: string | null;
     employee_id?: string | null;
     role?: string;
+    final_role?: string;
     company?: 'BGC' | 'KENT' | null;
     status?: 'active' | 'inactive' | 'pending_approval' | 'suspended';
     account_status?: string;
@@ -30,8 +31,11 @@ interface UpdateProfileRequest {
     two_factor_enabled?: boolean;
     password_change_required?: boolean;
     functional_email?: boolean;
-    ta2_discipline?: string | null;
-    ta2_commission?: string | null;
+    discipline_id?: string | null;
+    commission_id?: string | null;
+    plant_id?: string | null;
+    station_id?: string | null;
+    field_id?: string | null;
     position?: string | null;
     updated_at?: string;
   };

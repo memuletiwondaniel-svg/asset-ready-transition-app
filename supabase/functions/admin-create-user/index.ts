@@ -25,10 +25,12 @@ interface CreateUserRequest {
 
 // Helper function to compute final role
 const computeFinalRole = (role: string | null, discipline: string | null, commission: string | null): string => {
-  if (discipline === "TA2" && commission) {
-    return `TA2 - ${discipline} - ${commission}`;
-  } else if (discipline === "Tech Safety") {
-    return "TA2 - Tech Safety";
+  if (role === 'Technical Authority (TA2)') {
+    if (discipline && commission) return `TA2 - ${discipline} - ${commission}`;
+    if (discipline === 'Technical Safety') return 'TA2 - Technical Safety';
+  }
+  if (role === 'Director' && commission) {
+    return `Director - ${commission}`;
   }
   return role || 'user';
 };
@@ -136,6 +138,18 @@ serve(async (req) => {
           const normalizedCompany = normalizeCompany(company);
           const finalRole = computeFinalRole(role, discipline, commission);
 
+          // Map names to IDs where applicable
+          let disciplineId: string | null = null;
+          let commissionId: string | null = null;
+          if (discipline) {
+            const { data: dRow } = await admin.from('discipline').select('id').eq('name', discipline).maybeSingle();
+            disciplineId = dRow?.id ?? null;
+          }
+          if (commission) {
+            const { data: cRow } = await admin.from('commission').select('id').eq('name', commission).maybeSingle();
+            commissionId = cRow?.id ?? null;
+          }
+
           const { error: upsertErr } = await admin
             .from('profiles')
             .upsert({
@@ -151,8 +165,9 @@ serve(async (req) => {
               functional_email_address: functionalEmail ?? null,
               status: 'active',
               role: finalRole,
-              ta2_discipline: discipline ?? null,
-              ta2_commission: commission ?? null,
+              final_role: finalRole,
+              discipline_id: disciplineId,
+              commission_id: commissionId,
               account_status: 'active',
             }, { onConflict: 'user_id' });
 
@@ -211,6 +226,18 @@ serve(async (req) => {
     const normalizedCompany = normalizeCompany(company);
     const finalRole = computeFinalRole(role, discipline, commission);
 
+    // Map names to IDs where applicable
+    let disciplineId: string | null = null;
+    let commissionId: string | null = null;
+    if (discipline) {
+      const { data: dRow } = await admin.from('discipline').select('id').eq('name', discipline).maybeSingle();
+      disciplineId = dRow?.id ?? null;
+    }
+    if (commission) {
+      const { data: cRow } = await admin.from('commission').select('id').eq('name', commission).maybeSingle();
+      commissionId = cRow?.id ?? null;
+    }
+
     // 2) Upsert profile (handle case where a row may already exist)
     const { error: profileErr } = await admin
       .from('profiles')
@@ -226,8 +253,9 @@ serve(async (req) => {
         functional_email: !!isFunctionalEmail,
         status: 'active',
         role: finalRole,
-        ta2_discipline: discipline ?? null,
-        ta2_commission: commission ?? null,
+        final_role: finalRole,
+        discipline_id: disciplineId,
+        commission_id: commissionId,
         account_status: 'active',
       }, { onConflict: 'user_id' });
 
