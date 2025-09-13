@@ -206,8 +206,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return false;
     }
     
-    // TA2 needs both commission and discipline
-    if (role === "TA2" && (!formData.commission || !formData.discipline)) {
+    // TA2 needs discipline and commission (if not Technical Safety or Civil)
+    if (role === "TA2" && !formData.discipline) {
+      return false;
+    }
+    if (role === "TA2" && formData.discipline && 
+        formData.discipline !== "Technical Safety" && formData.discipline !== "Civil" && 
+        !formData.commission) {
       return false;
     }
     
@@ -242,8 +247,16 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return `${role} - ${formData.field}`;
     }
     
-    if (role === "TA2" && formData.commission && formData.discipline) {
-      return `TA2 ${formData.discipline} (${formData.commission})`;
+    if (role === "TA2" && formData.discipline) {
+      // For Technical Safety and Civil, don't include commission
+      if (formData.discipline === "Technical Safety" || formData.discipline === "Civil") {
+        return `TA2 ${formData.discipline}`;
+      }
+      // For other disciplines, include commission if provided
+      if (formData.commission) {
+        return `TA2 ${formData.discipline} (${formData.commission})`;
+      }
+      return `TA2 ${formData.discipline}`;
     }
     
     return role; // Return base role if no conditional fields or not all filled
@@ -961,10 +974,41 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     </div>
 
                     {/* Conditional Fields */}
+                    {/* Discipline Field for TA2 - comes first */}
+                    {(formData.role === "TA2" || formData.role.includes("TA2")) && (
+                      <div className="flex flex-col">
+                        <Label htmlFor="discipline" className="mb-2">Discipline *</Label>
+                        <Select 
+                          value={formData.discipline}
+                          onValueChange={(value) => handleInputChange("discipline", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select discipline" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {disciplinesLoading ? (
+                              <SelectItem value="" disabled>Loading disciplines...</SelectItem>
+                            ) : disciplineNames.length > 0 ? (
+                              disciplineNames.map((disciplineName) => (
+                                <SelectItem key={disciplineName} value={disciplineName}>
+                                  {disciplineName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No disciplines available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     {/* Commission Field for Director, HSE Lead, Engr. Manager, and TA2 roles */}
-                    {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager" || formData.role === "TA2") || 
+                    {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager") || 
                       (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
-                      (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) || (formData.role.includes("TA2"))) && (
+                      (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) ||
+                      // For TA2, show commission only if discipline is not Technical Safety or Civil
+                      ((formData.role === "TA2" || formData.role.includes("TA2")) && formData.discipline && 
+                       formData.discipline !== "Technical Safety" && formData.discipline !== "Civil")) && (
                       <div className="flex flex-col">
                         <Label htmlFor="commission" className="mb-2">Commission *</Label>
                         <Select 
@@ -982,6 +1026,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 .filter((commissionName) => {
                                   // Filter commission options based on role
                                   if (formData.role === "Engr. Manager" || formData.role.includes("Engr. Manager")) {
+                                    return commissionName === "P&E" || commissionName === "Asset";
+                                  }
+                                  // For TA2, show only P&E and Asset
+                                  if (formData.role === "TA2" || formData.role.includes("TA2")) {
                                     return commissionName === "P&E" || commissionName === "Asset";
                                   }
                                   return true; // Show all options for other roles
@@ -1080,34 +1128,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                               ))
                             ) : (
                               <SelectItem value="" disabled>No fields available</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Discipline Field for TA2 */}
-                    {(formData.role === "TA2" || formData.role.includes("TA2")) && (
-                      <div className="flex flex-col">
-                        <Label htmlFor="discipline" className="mb-2">Discipline *</Label>
-                        <Select 
-                          value={formData.discipline}
-                          onValueChange={(value) => handleInputChange("discipline", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select discipline" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
-                            {disciplinesLoading ? (
-                              <SelectItem value="" disabled>Loading disciplines...</SelectItem>
-                            ) : disciplineNames.length > 0 ? (
-                              disciplineNames.map((disciplineName) => (
-                                <SelectItem key={disciplineName} value={disciplineName}>
-                                  {disciplineName}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="" disabled>No disciplines available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
