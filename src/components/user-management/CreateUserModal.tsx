@@ -206,12 +206,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return false;
     }
     
-    // TA2 needs discipline and commission (if not Technical Safety or Civil)
+    // TA2 needs discipline and commission (if not Tech Safety or Civil)
     if (role === "TA2" && !formData.discipline) {
       return false;
     }
     if (role === "TA2" && formData.discipline && 
-        formData.discipline !== "Technical Safety" && formData.discipline !== "Civil" && 
+        formData.discipline !== "Tech Safety" && formData.discipline !== "Civil" && 
         !formData.commission) {
       return false;
     }
@@ -248,8 +248,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     }
     
     if (role === "TA2" && formData.discipline) {
-      // For Technical Safety and Civil, don't include commission
-      if (formData.discipline === "Technical Safety" || formData.discipline === "Civil") {
+      // For Tech Safety and Civil, don't include commission
+      if (formData.discipline === "Tech Safety" || formData.discipline === "Civil") {
         return `TA2 ${formData.discipline}`;
       }
       // For other disciplines, include commission if provided
@@ -1006,9 +1006,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager") || 
                       (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
                       (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) ||
-                      // For TA2, show commission only if discipline is not Technical Safety or Civil
+                      // For TA2, show commission only if discipline is not Tech Safety or Civil
                       ((formData.role === "TA2" || formData.role.includes("TA2")) && formData.discipline && 
-                       formData.discipline !== "Technical Safety" && formData.discipline !== "Civil")) && (
+                       formData.discipline !== "Tech Safety" && formData.discipline !== "Civil")) && (
                       <div className="flex flex-col">
                         <Label htmlFor="commission" className="mb-2">Commission *</Label>
                         <Select 
