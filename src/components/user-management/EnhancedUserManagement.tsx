@@ -149,12 +149,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center flex-1">
-          <span 
-            className={`flex-1 ${column.sortable ? 'cursor-pointer hover:text-primary' : ''}`}
-            onClick={() => column.sortable && onSort(column.id)}
-          >
-            {column.label}
-          </span>
+          {column.label}
           {column.sortable && sortDirection && (
             <div className="ml-1">
               {sortDirection === 'asc' ? (
