@@ -866,7 +866,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </SelectTrigger>
                           <SelectContent className="bg-popover border shadow-lg z-50 max-h-96 overflow-auto">
                             {rolesLoading ? (
-                              <SelectItem value="" disabled>Loading roles...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading roles...</SelectItem>
                             ) : roleNames.length > 0 ? (
                               roleNames.map((role) => (
                                 <SelectItem key={role} value={role}>
@@ -874,7 +874,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No roles available</SelectItem>
+                              <SelectItem value="no-roles" disabled>No roles available</SelectItem>
                             )}
                             
                             {/* Option to add custom role */}
@@ -935,7 +935,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </SelectTrigger>
                           <SelectContent className="bg-popover border shadow-lg z-50">
                             {disciplinesLoading ? (
-                              <SelectItem value="" disabled>Loading disciplines...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading disciplines...</SelectItem>
                             ) : disciplineNames.length > 0 ? (
                               disciplineNames.map((disciplineName) => (
                                 <SelectItem key={disciplineName} value={disciplineName}>
@@ -943,7 +943,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No disciplines available</SelectItem>
+                              <SelectItem value="no-disciplines" disabled>No disciplines available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -968,7 +968,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </SelectTrigger>
                           <SelectContent className="bg-popover border shadow-lg z-50">
                             {commissionsLoading ? (
-                              <SelectItem value="" disabled>Loading commissions...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading commissions...</SelectItem>
                             ) : commissionNames.length > 0 ? (
                               commissionNames
                                 .filter((commissionName) => {
@@ -988,7 +988,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No commissions available</SelectItem>
+                              <SelectItem value="no-commissions" disabled>No commissions available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -1009,7 +1009,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </SelectTrigger>
                           <SelectContent className="bg-popover border shadow-lg z-50">
                             {plantsLoading ? (
-                              <SelectItem value="" disabled>Loading plants...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading plants...</SelectItem>
                             ) : plantNames.length > 0 ? (
                               plantNames.map((plantName) => (
                                 <SelectItem key={plantName} value={plantName}>
@@ -1017,7 +1017,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No plants available</SelectItem>
+                              <SelectItem value="no-plants" disabled>No plants available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -1038,7 +1038,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </SelectTrigger>
                           <SelectContent className="bg-popover border shadow-lg z-50">
                             {stationsLoading ? (
-                              <SelectItem value="" disabled>Loading stations...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading stations...</SelectItem>
                             ) : stationNames.length > 0 ? (
                               stationNames.map((stationName) => (
                                 <SelectItem key={stationName} value={stationName}>
@@ -1046,7 +1046,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No stations available</SelectItem>
+                              <SelectItem value="no-stations" disabled>No stations available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -1067,7 +1067,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           </SelectTrigger>
                           <SelectContent className="bg-popover border shadow-lg z-50">
                             {fieldsLoading ? (
-                              <SelectItem value="" disabled>Loading fields...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading fields...</SelectItem>
                             ) : fieldNames.length > 0 ? (
                               fieldNames.map((fieldName) => (
                                 <SelectItem key={fieldName} value={fieldName}>
@@ -1075,7 +1075,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="" disabled>No fields available</SelectItem>
+                              <SelectItem value="no-fields" disabled>No fields available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
