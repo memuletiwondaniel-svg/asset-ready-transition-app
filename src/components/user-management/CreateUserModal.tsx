@@ -182,6 +182,69 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     }
   };
 
+  // Helper function to check if all conditional fields are filled for the current role
+  const areAllConditionalFieldsFilled = () => {
+    const role = formData.role;
+    
+    // Director, HSE Lead, Engr. Manager need commission
+    if ((role === "Director" || role === "HSE Lead" || role === "Engr. Manager") && !formData.commission) {
+      return false;
+    }
+    
+    // Plant Director, Dep. Plant Director need plant
+    if ((role === "Plant Director" || role === "Dep. Plant Director") && !formData.plant) {
+      return false;
+    }
+    
+    // Site Engineer/Site Engr needs station
+    if ((role === "Site Engineer" || role === "Site Engr") && !formData.station) {
+      return false;
+    }
+    
+    // Ops Coach, Ops Team Lead need field
+    if ((role === "Ops Coach" || role === "Ops Team Lead") && !formData.field) {
+      return false;
+    }
+    
+    // TA2 needs both commission and discipline
+    if (role === "TA2" && (!formData.commission || !formData.discipline)) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Helper function to get the final combined role
+  const getFinalRole = () => {
+    const role = formData.role;
+    
+    if ((role === "Director" || role === "HSE Lead" || role === "Engr. Manager") && formData.commission) {
+      return `${formData.commission} ${role}`;
+    }
+    
+    if ((role === "Plant Director" || role === "Dep. Plant Director") && formData.plant) {
+      if (role === "Plant Director") {
+        return `${formData.plant} Plant Director`;
+      } else {
+        return `${formData.plant} Dep Plant Dir`;
+      }
+    }
+    
+    if ((role === "Site Engineer" || role === "Site Engr") && formData.station) {
+      return `${formData.station} Site Engr`;
+    }
+    
+    if ((role === "Ops Coach" || role === "Ops Team Lead") && formData.field) {
+      return `${formData.field} ${role}`;
+    }
+    
+    if (role === "TA2" && formData.commission && formData.discipline) {
+      return `TA2 ${formData.discipline} (${formData.commission})`;
+    }
+    
+    return role; // Return base role if no conditional fields or not all filled
+  };
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => {
       const newData = {
@@ -189,108 +252,15 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         [field]: value
       };
       
-      // Handle Director role combinations with commission
-      if (field === "commission" && prev.role === "Director" && value) {
-        newData.role = `${value} Director`;
-      }
-      else if (field === "role" && value === "Director") {
-        // Keep base role until commission is selected
-        newData.commission = prev.commission;
-        if (prev.commission) {
-          newData.role = `${prev.commission} Director`;
-        }
-      }
-      // Handle HSE Lead role combinations with commission
-      else if (field === "commission" && prev.role === "HSE Lead" && value) {
-        newData.role = `${value} HSE Lead`;
-      }
-      else if (field === "role" && value === "HSE Lead") {
-        // Keep base role until commission is selected
-        newData.commission = prev.commission;
-        if (prev.commission) {
-          newData.role = `${prev.commission} HSE Lead`;
-        }
-      }
-      // Handle Engr. Manager role combinations with commission
-      else if (field === "commission" && prev.role === "Engr. Manager" && value) {
-        newData.role = `${value} Engr. Manager`;
-      }
-      else if (field === "role" && value === "Engr. Manager") {
-        // Keep base role until commission is selected
-        newData.commission = prev.commission;
-        if (prev.commission) {
-          newData.role = `${prev.commission} Engr. Manager`;
-        }
-      }
-      // Handle Site Engr role combinations with station
-      else if (field === "station" && prev.role === "Site Engr" && value) {
-        newData.role = `${value} Site Engr`;
-      }
-      else if (field === "role" && value === "Site Engr") {
-        // Keep base role until station is selected
-        newData.station = prev.station;
-        if (prev.station) {
-          newData.role = `${prev.station} Site Engr`;
-        }
-      }
-      // Handle Ops Coach role combinations with field
-      else if (field === "field" && prev.role === "Ops Coach" && value) {
-        newData.role = `${value} Ops Coach`;
-      }
-      else if (field === "role" && value === "Ops Coach") {
-        // Keep base role until field is selected
-        newData.field = prev.field;
-        if (prev.field) {
-          newData.role = `${prev.field} Ops Coach`;
-        }
-      }
-      // Handle Ops Team Lead role combinations with field
-      else if (field === "field" && prev.role === "Ops Team Lead" && value) {
-        newData.role = `${value} Ops Team Lead`;
-      }
-      else if (field === "role" && value === "Ops Team Lead") {
-        // Keep base role until field is selected
-        newData.field = prev.field;
-        if (prev.field) {
-          newData.role = `${prev.field} Ops Team Lead`;
-        }
-      }
-      // Handle Plant Director role combinations
-      else if (field === "plant" && (prev.role === "Plant Director" || prev.role === "Dep. Plant Director") && value) {
-        if (prev.role === "Plant Director") {
-          newData.role = `${value} Plant Director`;
-        } else if (prev.role === "Dep. Plant Director") {
-          newData.role = `${value} Dep Plant Dir`;
-        }
-      }
-      else if (field === "role" && (value === "Plant Director" || value === "Dep. Plant Director")) {
-        // Keep base role until plant is selected
-        newData.plant = prev.plant;
-        if (prev.plant) {
-          if (value === "Plant Director") {
-            newData.role = `${prev.plant} Plant Director`;
-          } else if (value === "Dep. Plant Director") {
-            newData.role = `${prev.plant} Dep Plant Dir`;
-          }
-        }
-      }
-      // Handle TA2 role combinations
-      else if (field === "commission" && prev.role === "TA2" && value && prev.discipline) {
-        newData.role = `TA2 ${prev.discipline} (${value})`;
-      }
-      else if (field === "discipline" && prev.role === "TA2" && value && prev.commission) {
-        newData.role = `TA2 ${value} (${prev.commission})`;
-      }
-      else if (field === "role" && value === "TA2") {
-        // Keep base role until both discipline and commission are selected
-        newData.commission = prev.commission;
-        newData.discipline = prev.discipline;
-        if (prev.commission && prev.discipline) {
-          newData.role = `TA2 ${prev.discipline} (${prev.commission})`;
-        }
-      }
+      // Store conditional field values but don't auto-combine roles
+      // Only show combined role when all conditional fields are filled
+      
+      // Don't automatically combine roles - keep base role
+      // Conditional fields will be stored but role remains unchanged
+      // The final role display will handle showing the combined role
+      
       // Reset fields when switching away from specific roles
-      else if (field === "role") {
+      if (field === "role") {
         if ((prev.role.includes("Director") || prev.role.includes("HSE Lead") || prev.role.includes("Engr. Manager")) && 
             value !== "Director" && value !== "HSE Lead" && value !== "Engr. Manager") {
           newData.commission = "";
@@ -814,74 +784,97 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="role">Role *</Label>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Search roles..."
-                        value={roleSearch}
-                        onChange={(e) => setRoleSearch(e.target.value)}
-                        onFocus={() => setShowRoleDropdown(true)}
-                        onBlur={() => {
-                          // Delay hiding to allow clicking on dropdown items
-                          setTimeout(() => setShowRoleDropdown(false), 150);
-                        }}
-                        className="pl-10"
-                      />
-                    </div>
-                    
-                    {showRoleDropdown && (
-                      <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
-                        {filteredRoles.length > 0 ? (
-                          <>
-                            {filteredRoles.map((role) => (
-                              <Button
-                                key={role}
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-left hover:bg-accent"
-                                onClick={() => {
-                                  const selectedRole = role;
-                                  // Reset commission when selecting a non-Director role
-                                  if (selectedRole !== "Director") {
-                                    handleInputChange("commission", "");
-                                  }
-                                  // Reset plant when selecting non-Plant Director roles
-                                  if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
-                                    handleInputChange("plant", "");
-                                  }
-                                  // Reset station when selecting non-Site Engr roles
-                                  if (selectedRole !== "Site Engr") {
-                                    handleInputChange("station", "");
-                                  }
-                                  // Reset field when selecting non-Ops roles
-                                  if (selectedRole !== "Ops Coach" && selectedRole !== "Ops Team Lead") {
-                                    handleInputChange("field", "");
-                                  }
-                                  // Reset TA2 fields when selecting non-TA2 roles
-                                  if (selectedRole !== "TA2") {
-                                    handleInputChange("discipline", "");
-                                    if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager") {
-                                      handleInputChange("commission", "");
-                                    }
-                                  }
-                                  handleInputChange("role", selectedRole);
-                                  setRoleSearch("");
-                                  setShowRoleDropdown(false);
-                                }}
-                              >
-                                {role}
-                              </Button>
-                            ))}
-                            {roleSearch && !filteredRoles.some(role => role.toLowerCase() === roleSearch.toLowerCase()) && (
-                              <div className="border-t mt-2 pt-2">
+              <div>
+                <Label htmlFor="role">Role *</Label>
+                <div className="space-y-4">
+                  {/* Role Selection Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {/* Primary Role Field */}
+                    <div>
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search roles..."
+                            value={roleSearch}
+                            onChange={(e) => setRoleSearch(e.target.value)}
+                            onFocus={() => setShowRoleDropdown(true)}
+                            onBlur={() => {
+                              setTimeout(() => setShowRoleDropdown(false), 150);
+                            }}
+                            className="pl-10"
+                          />
+                        </div>
+                        
+                        {showRoleDropdown && (
+                          <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
+                            {filteredRoles.length > 0 ? (
+                              <>
+                                {filteredRoles.map((role) => (
+                                  <Button
+                                    key={role}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-left hover:bg-accent"
+                                    onClick={() => {
+                                      const selectedRole = role;
+                                      // Reset commission when selecting a non-Director role
+                                      if (selectedRole !== "Director") {
+                                        handleInputChange("commission", "");
+                                      }
+                                      // Reset plant when selecting non-Plant Director roles
+                                      if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
+                                        handleInputChange("plant", "");
+                                      }
+                                      // Reset station when selecting non-Site Engr roles
+                                      if (selectedRole !== "Site Engr" && selectedRole !== "Site Engineer") {
+                                        handleInputChange("station", "");
+                                      }
+                                      // Reset field when selecting non-Ops roles
+                                      if (selectedRole !== "Ops Coach" && selectedRole !== "Ops Team Lead") {
+                                        handleInputChange("field", "");
+                                      }
+                                      // Reset TA2 fields when selecting non-TA2 roles
+                                      if (selectedRole !== "TA2") {
+                                        handleInputChange("discipline", "");
+                                        if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager") {
+                                          handleInputChange("commission", "");
+                                        }
+                                      }
+                                      handleInputChange("role", selectedRole);
+                                      setRoleSearch("");
+                                      setShowRoleDropdown(false);
+                                    }}
+                                  >
+                                    {role}
+                                  </Button>
+                                ))}
+                                {roleSearch && !filteredRoles.some(role => role.toLowerCase() === roleSearch.toLowerCase()) && (
+                                  <div className="border-t mt-2 pt-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full"
+                                      onClick={() => {
+                                        setShowNewRoleInput(true);
+                                        setShowRoleDropdown(false);
+                                        handleInputChange("newRole", roleSearch);
+                                      }}
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Add "{roleSearch}" as new role
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
+                            ) : roleSearch ? (
+                              <div className="p-2 text-center">
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  No roles found matching "{roleSearch}"
+                                </p>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="w-full"
                                   onClick={() => {
                                     setShowNewRoleInput(true);
                                     setShowRoleDropdown(false);
@@ -892,274 +885,234 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                   Add "{roleSearch}" as new role
                                 </Button>
                               </div>
+                            ) : (
+                              <div className="p-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => {
+                                    setShowNewRoleInput(true);
+                                    setShowRoleDropdown(false);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Custom Role
+                                </Button>
+                              </div>
                             )}
-                          </>
-                        ) : roleSearch ? (
-                          <div className="p-2 text-center">
-                            <p className="text-sm text-muted-foreground mb-2">
-                              No roles found matching "{roleSearch}"
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setShowNewRoleInput(true);
-                                setShowRoleDropdown(false);
-                                handleInputChange("newRole", roleSearch);
-                              }}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add "{roleSearch}" as new role
-                            </Button>
                           </div>
-                        ) : (
-                          <div className="p-2">
+                        )}
+                        
+                        {showNewRoleInput && (
+                          <div className="border rounded-lg bg-popover p-3 space-y-2">
+                            <Label htmlFor="newRole">New Role Name</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                id="newRole"
+                                value={formData.newRole}
+                                onChange={(e) => handleInputChange("newRole", e.target.value)}
+                                placeholder="Enter new role name"
+                                className="flex-1"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={addNewRole}
+                                disabled={!formData.newRole.trim()}
+                              >
+                                Add
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setShowNewRoleInput(false);
+                                  handleInputChange("newRole", "");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {formData.role && (
+                          <div className="flex items-center justify-between p-2 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-primary rounded-full"></div>
+                              <span className="text-sm font-medium">{formData.role}</span>
+                            </div>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              className="w-full"
-                              onClick={() => {
-                                setShowNewRoleInput(true);
-                                setShowRoleDropdown(false);
-                              }}
+                              onClick={() => handleInputChange("role", "")}
+                              className="h-6 w-6 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                              title="Remove selected role"
                             >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Custom Role
+                              <X className="h-3 w-3" />
                             </Button>
                           </div>
                         )}
                       </div>
-                    )}
-                    
-                    {showNewRoleInput && (
-                      <div className="border rounded-lg bg-popover p-3 space-y-2">
-                        <Label htmlFor="newRole">New Role Name</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="newRole"
-                            value={formData.newRole}
-                            onChange={(e) => handleInputChange("newRole", e.target.value)}
-                            placeholder="Enter new role name"
-                            className="flex-1"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={addNewRole}
-                            disabled={!formData.newRole.trim()}
-                          >
-                            Add
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setShowNewRoleInput(false);
-                              handleInputChange("newRole", "");
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {formData.role && (
-                      <div className="mt-2 p-2 bg-muted rounded text-sm">
-                        <strong>Selected Role:</strong> {formData.role}
-                      </div>
-                    )}
-                    
-                    {formData.role && (
-                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm">
-                          <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                          <span className="text-sm font-semibold text-foreground">{formData.role}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleInputChange("role", "")}
-                          className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
-                          title="Remove selected role"
+                    </div>
+
+                    {/* Conditional Fields */}
+                    {/* Commission Field for Director, HSE Lead, Engr. Manager, and TA2 roles */}
+                    {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager" || formData.role === "TA2") || 
+                      (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
+                      (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager")) || (formData.role.includes("TA2"))) && (
+                      <div>
+                        <Label htmlFor="commission">Commission *</Label>
+                        <Select 
+                          value={formData.commission}
+                          onValueChange={(value) => handleInputChange("commission", value)}
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select commission" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {commissionsLoading ? (
+                              <SelectItem value="" disabled>Loading commissions...</SelectItem>
+                            ) : commissionNames.length > 0 ? (
+                              commissionNames.map((commissionName) => (
+                                <SelectItem key={commissionName} value={commissionName}>
+                                  {commissionName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No commissions available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Plant Field for Plant Director roles */}
+                    {(formData.role === "Plant Director" || formData.role === "Dep. Plant Director" || 
+                      formData.role.includes("Plant Director") || formData.role.includes("Dep Plant Dir")) && (
+                      <div>
+                        <Label htmlFor="plant">Plant *</Label>
+                        <Select 
+                          value={formData.plant}
+                          onValueChange={(value) => handleInputChange("plant", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select plant" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {plantsLoading ? (
+                              <SelectItem value="" disabled>Loading plants...</SelectItem>
+                            ) : plantNames.length > 0 ? (
+                              plantNames.map((plantName) => (
+                                <SelectItem key={plantName} value={plantName}>
+                                  {plantName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No plants available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Station Field for Site Engineer roles */}
+                    {(formData.role === "Site Engineer" || formData.role === "Site Engr" || 
+                      formData.role.includes("Site Engineer") || formData.role.includes("Site Engr")) && (
+                      <div>
+                        <Label htmlFor="station">Station *</Label>
+                        <Select 
+                          value={formData.station}
+                          onValueChange={(value) => handleInputChange("station", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select station" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {stationsLoading ? (
+                              <SelectItem value="" disabled>Loading stations...</SelectItem>
+                            ) : stationNames.length > 0 ? (
+                              stationNames.map((stationName) => (
+                                <SelectItem key={stationName} value={stationName}>
+                                  {stationName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No stations available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Field Field for Ops Coach and Ops Team Lead roles */}
+                    {(formData.role === "Ops Coach" || formData.role === "Ops Team Lead" || 
+                      formData.role.includes("Ops Coach") || formData.role.includes("Ops Team Lead")) && (
+                      <div>
+                        <Label htmlFor="field">Field *</Label>
+                        <Select 
+                          value={formData.field}
+                          onValueChange={(value) => handleInputChange("field", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select field" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {fieldsLoading ? (
+                              <SelectItem value="" disabled>Loading fields...</SelectItem>
+                            ) : fieldNames.length > 0 ? (
+                              fieldNames.map((fieldName) => (
+                                <SelectItem key={fieldName} value={fieldName}>
+                                  {fieldName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No fields available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Discipline Field for TA2 */}
+                    {(formData.role === "TA2" || formData.role.includes("TA2")) && (
+                      <div>
+                        <Label htmlFor="discipline">Discipline *</Label>
+                        <Select 
+                          value={formData.discipline}
+                          onValueChange={(value) => handleInputChange("discipline", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select discipline" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border shadow-lg z-50">
+                            {disciplinesLoading ? (
+                              <SelectItem value="" disabled>Loading disciplines...</SelectItem>
+                            ) : disciplineNames.length > 0 ? (
+                              disciplineNames.map((disciplineName) => (
+                                <SelectItem key={disciplineName} value={disciplineName}>
+                                  {disciplineName}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>No disciplines available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* Secondary Fields Column */}
-                <div className="space-y-4">
-                  {/* Plant Field for Plant Director roles */}
-                  {(formData.role === "Plant Director" || formData.role === "Dep. Plant Director" || 
-                    formData.role.includes("Plant Director") || formData.role.includes("Dep Plant Dir")) && (
-                    <div>
-                      <Label htmlFor="plant">Plant *</Label>
-                      <Select 
-                        value={formData.plant}
-                        onValueChange={(value) => handleInputChange("plant", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select plant" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border shadow-lg z-50">
-                          {plantsLoading ? (
-                            <SelectItem value="" disabled>Loading plants...</SelectItem>
-                          ) : plantNames.length > 0 ? (
-                            plantNames.map((plantName) => (
-                              <SelectItem key={plantName} value={plantName}>
-                                {plantName}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>No plants available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Station Field for Site Engr roles */}
-                  {(formData.role === "Site Engr" || formData.role.includes("Site Engr")) && (
-                    <div>
-                      <Label htmlFor="station">Station *</Label>
-                      <Select 
-                        value={formData.station}
-                        onValueChange={(value) => handleInputChange("station", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select station" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border shadow-lg z-50">
-                          {stationsLoading ? (
-                            <SelectItem value="" disabled>Loading stations...</SelectItem>
-                          ) : stationNames.length > 0 ? (
-                            stationNames.map((stationName) => (
-                              <SelectItem key={stationName} value={stationName}>
-                                {stationName}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>No stations available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Field Field for Ops Coach and Ops Team Lead roles */}
-                  {(formData.role === "Ops Coach" || formData.role === "Ops Team Lead" || 
-                    formData.role.includes("Ops Coach") || formData.role.includes("Ops Team Lead")) && (
-                    <div>
-                      <Label htmlFor="field">Field *</Label>
-                      <Select 
-                        value={formData.field}
-                        onValueChange={(value) => handleInputChange("field", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select field" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border shadow-lg z-50">
-                          {fieldsLoading ? (
-                            <SelectItem value="" disabled>Loading fields...</SelectItem>
-                          ) : fieldNames.length > 0 ? (
-                            fieldNames.map((fieldName) => (
-                              <SelectItem key={fieldName} value={fieldName}>
-                                {fieldName}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>No fields available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Commission Field for Director, HSE Lead, and Engr. Manager roles */}
-                  {((formData.role === "Director" || formData.role === "HSE Lead" || formData.role === "Engr. Manager") || 
-                    (formData.role.includes("Director") && !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir")) ||
-                    (formData.role.includes("HSE Lead")) || (formData.role.includes("Engr. Manager"))) && (
-                    <div>
-                      <Label htmlFor="commission">Commission *</Label>
-                      <Select 
-                        value={formData.commission}
-                        onValueChange={(value) => handleInputChange("commission", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select commission" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border shadow-lg z-50">
-                          {commissionsLoading ? (
-                            <SelectItem value="" disabled>Loading commissions...</SelectItem>
-                          ) : commissionNames.length > 0 ? (
-                            commissionNames.map((commissionName) => (
-                              <SelectItem key={commissionName} value={commissionName}>
-                                {commissionName}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>No commissions available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Discipline Field for TA2 */}
-                  {(formData.role === "TA2" || formData.role.includes("TA2")) && (
-                    <div>
-                      <Label htmlFor="discipline">Discipline *</Label>
-                      <Select 
-                        value={formData.discipline}
-                        onValueChange={(value) => handleInputChange("discipline", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select discipline" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border shadow-lg z-50">
-                          {disciplinesLoading ? (
-                            <SelectItem value="" disabled>Loading disciplines...</SelectItem>
-                          ) : disciplineNames.length > 0 ? (
-                            disciplineNames.map((disciplineName) => (
-                              <SelectItem key={disciplineName} value={disciplineName}>
-                                {disciplineName}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>No disciplines available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Commission Field for TA2 */}
-                  {(formData.role === "TA2" || formData.role.includes("TA2")) && (
-                    <div>
-                      <Label htmlFor="ta2Commission">Commission *</Label>
-                      <Select 
-                        value={formData.commission}
-                        onValueChange={(value) => handleInputChange("commission", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select commission" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border shadow-lg z-50">
-                          {commissionsLoading ? (
-                            <SelectItem value="" disabled>Loading commissions...</SelectItem>
-                          ) : commissionNames.length > 0 ? (
-                            commissionNames.map((commissionName) => (
-                              <SelectItem key={commissionName} value={commissionName}>
-                                {commissionName}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>No commissions available</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
+                  {/* Final Role Display - Second Row */}
+                  {formData.role && areAllConditionalFieldsFilled() && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-success/10 to-success/5 border border-success/20 rounded-xl shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                        <div>
+                          <span className="text-sm text-muted-foreground">Final Role:</span>
+                          <p className="text-lg font-semibold text-foreground">{getFinalRole()}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
