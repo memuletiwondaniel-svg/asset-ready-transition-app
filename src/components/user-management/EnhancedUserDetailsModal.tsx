@@ -554,6 +554,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       toast.success('User updated successfully');
       setEditMode(false);
       onUserUpdated(); // Refresh the parent list
+      onClose(); // Close the modal
     } catch (error: any) {
       console.error('Error updating user:', error);
       toast.error(`An error occurred while updating user: ${error.message}`);
