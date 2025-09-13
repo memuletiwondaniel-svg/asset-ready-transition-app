@@ -768,7 +768,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                         </div>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="max-h-60 overflow-y-auto bg-popover border shadow-lg z-50">
+                    <SelectContent>
                       {countryCodes.map((country) => (
                         <SelectItem key={`${country.code}-${country.shortName}`} value={country.code} className="cursor-pointer py-2 hover:bg-accent">
                           <div className="flex items-center gap-3 w-full">
@@ -902,7 +902,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50 max-h-96 overflow-auto">
+                          <SelectContent>
                             {rolesLoading ? (
                               <SelectItem value="loading" disabled>Loading roles...</SelectItem>
                             ) : roleNames.length > 0 ? (
@@ -975,7 +975,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select discipline" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent>
                             {disciplinesLoading ? (
                               <SelectItem value="loading" disabled>Loading disciplines...</SelectItem>
                             ) : disciplineNames.length > 0 ? (
@@ -1008,7 +1008,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select commission" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent>
                             {commissionsLoading ? (
                               <SelectItem value="loading" disabled>Loading commissions...</SelectItem>
                             ) : commissionNames.length > 0 ? (
@@ -1049,7 +1049,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select plant" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent>
                             {plantsLoading ? (
                               <SelectItem value="loading" disabled>Loading plants...</SelectItem>
                             ) : plantNames.length > 0 ? (
@@ -1078,7 +1078,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select station" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent>
                             {stationsLoading ? (
                               <SelectItem value="loading" disabled>Loading stations...</SelectItem>
                             ) : stationNames.length > 0 ? (
@@ -1107,7 +1107,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select field" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent>
                             {fieldsLoading ? (
                               <SelectItem value="loading" disabled>Loading fields...</SelectItem>
                             ) : fieldNames.length > 0 ? (
@@ -1135,7 +1135,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select Hub" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent>
                             {hubs ? (
                               hubs
                                 .filter((hub) => ['North', 'Central', 'South', 'Lead'].includes(hub.name))
@@ -1176,7 +1176,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   <SelectTrigger>
                     <SelectValue placeholder="Select system role" />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-lg z-50">
+                  <SelectContent>
                     {systemRoles.map((role) => (
                       <SelectItem key={role.value} value={role.value}>
                         {role.label}
