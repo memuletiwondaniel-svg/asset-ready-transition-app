@@ -103,12 +103,14 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     'Technical Authority (TA2)',
     'Plant Director',
     'Deputy Plant Director',
+    'HSE Lead',
+    'ORA Engineer',
+    'ER Lead',
     'Operations Coach',
     'Operation Readiness & Assurance Engineer',
     'Site Engineer',
     'Ops HSE Lead',
     'Project HSE Lead',
-    'ER Lead',
     'Production Director',
     'HSE Director',
     'P&E Director',
@@ -120,13 +122,21 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Filter commissions for specific roles
   const getFilteredCommissions = () => {
-    if (formData.role === 'Engr. Manager') {
+    if (formData.role === 'Engr. Manager' || formData.role === 'HSE Lead') {
       return commissions.filter(c => c === 'Asset' || c === 'Project and Engineering');
     }
     if (formData.role === 'Technical Authority (TA2)') {
       return commissions; // All commissions for TA2
     }
     return commissions;
+  };
+
+  // Filter hubs for specific roles
+  const getFilteredHubs = () => {
+    if (formData.role === 'ORA Engineer') {
+      return hubs?.filter(h => ['North', 'Central', 'South'].includes(h.name)) || [];
+    }
+    return hubs || [];
   };
 
   const projects = ['Project Alpha', 'Project Beta', 'Project Gamma', 'Project Delta'];
@@ -191,7 +201,23 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Check if role requires hub selection
   const requiresHub = (role: string) => {
-    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role);
+    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role);
+  };
+
+  const getPositionTitle = () => {
+    if (!formData.role) return '';
+    
+    const rolesThatRequireHub = ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'];
+    
+    if (rolesThatRequireHub.includes(formData.role) && formData.hub) {
+      return `${formData.role} – ${formData.hub}`;
+    }
+    
+    if (formData.role === 'HSE Lead' && formData.commission) {
+      return `HSE Lead - ${formData.commission}`;
+    }
+    
+    return formData.role;
   };
 
   // Generate position based on role and hub
@@ -497,10 +523,10 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select hub" />
+                  <SelectValue placeholder={formData.role === 'ORA Engineer' ? "Select hub (North, Central, or South)" : "Select hub"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {hubs?.map(hub => (
+                  {getFilteredHubs().map(hub => (
                     <SelectItem key={hub.id} value={hub.name}>{hub.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -508,7 +534,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {formData.role === 'Engr. Manager' && (
+          {['Engr. Manager', 'HSE Lead'].includes(formData.role) && (
             <div>
               <Label>Commission *</Label>
               <Select

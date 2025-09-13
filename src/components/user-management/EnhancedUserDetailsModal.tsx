@@ -210,7 +210,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   // Check if role requires hub selection
   const requiresHub = (role: string) => {
-    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead'].includes(role);
+    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role);
   };
 
   const [systemRole, setSystemRole] = useState('user');
@@ -694,6 +694,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return commissions;
   };
 
+  // Get filtered hubs for specific roles
+  const getFilteredHubOptions = () => {
+    if (formData.role === 'ORA Engineer') {
+      return hubs.filter(h => ['North', 'Central', 'South'].includes(h.name));
+    }
+    return hubs;
+  };
+
   const handlePlantChange = async (value: string) => {
     if (value && !plants.find(p => p.value === value)) {
       const newPlant = await addNewEntry('plant', value);
@@ -1090,20 +1098,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         {requiresHub(formData.role) && (
                           <div>
                             <Label>Hub *</Label>
-                            <Select
+                            <Combobox
                               value={formData.hub}
-                              onValueChange={(value) => handleInputChange('hub', value)}
-                              disabled={!editMode}
-                            >
-                              <SelectTrigger className={!editMode ? 'bg-muted' : ''}>
-                                <SelectValue placeholder="Select hub" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {hubs?.map(hub => (
-                                  <SelectItem key={hub.id} value={hub.name}>{hub.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
+                              options={getFilteredHubOptions().map(hub => ({ value: hub.name, label: hub.name }))}
+                              placeholder={formData.role === 'ORA Engineer' ? "Select hub (North, Central, or South)" : "Select hub"}
+                              searchPlaceholder="Search hubs..."
+                              emptyText="No hubs found"
+                              allowCustom={editMode}
+                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                            />
                           </div>
                         )}
                       </div>
