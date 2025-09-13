@@ -197,6 +197,17 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return false;
     }
     
+    // TA2 needs discipline
+    if (role === "TA2") {
+      if (!formData.discipline) {
+        return false;
+      }
+      // For disciplines other than Tech Safety and Civil, commission is required
+      if (formData.discipline !== "Tech Safety" && formData.discipline !== "Civil" && !formData.commission) {
+        return false;
+      }
+    }
+    
     return true;
   };
 
@@ -230,6 +241,19 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       
       case 'HSE Lead':
         return formData.commission ? `HSE Lead – ${formData.commission}` : '';
+      
+      case 'TA2':
+        if (formData.discipline) {
+          // For Tech Safety and Civil, don't include commission
+          if (formData.discipline === "Tech Safety" || formData.discipline === "Civil") {
+            return `TA2 ${formData.discipline}`;
+          }
+          // For other disciplines, include commission if provided
+          if (formData.commission) {
+            return `TA2 ${formData.discipline} (${formData.commission})`;
+          }
+        }
+        return '';
       
       default:
         return '';
@@ -850,12 +874,16 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             if (selectedRole !== "Ops Coach" && selectedRole !== "Ops Team Lead") {
                               handleInputChange("field", "");
                             }
-                            // Reset TA2 fields when selecting non-TA2 roles
+                             // Reset TA2 fields when selecting non-TA2 roles
                             if (selectedRole !== "TA2") {
                               handleInputChange("discipline", "");
                               if (selectedRole !== "Director" && selectedRole !== "HSE Lead" && selectedRole !== "Engr. Manager") {
                                 handleInputChange("commission", "");
                               }
+                            }
+                            // Reset commission when switching discipline for TA2
+                            if (selectedRole === "TA2") {
+                              handleInputChange("commission", "");
                             }
                             
                             handleInputChange("role", selectedRole);
@@ -928,7 +956,11 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                         <Label htmlFor="discipline" className="mb-2">Discipline *</Label>
                         <Select 
                           value={formData.discipline}
-                          onValueChange={(value) => handleInputChange("discipline", value)}
+                          onValueChange={(value) => {
+                            handleInputChange("discipline", value);
+                            // Reset commission when changing discipline
+                            handleInputChange("commission", "");
+                          }}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select discipline" />
