@@ -785,12 +785,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
               )}
 
               <div>
-                <Label htmlFor="role">Role *</Label>
                 <div className="space-y-4">
-                  {/* Role Selection Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Role Selection Row - All fields aligned horizontally */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                     {/* Primary Role Field */}
-                    <div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role *</Label>
                       <div className="space-y-2">
                         <div className="relative">
                           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -1108,10 +1108,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     <div className="mt-4 p-4 bg-gradient-to-r from-success/10 to-success/5 border border-success/20 rounded-xl shadow-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-                        <div>
-                          <span className="text-sm text-muted-foreground">Final Role:</span>
-                          <p className="text-lg font-semibold text-foreground">{getFinalRole()}</p>
-                        </div>
+                        <p className="text-lg font-semibold text-foreground">{getFinalRole()}</p>
                       </div>
                     </div>
                   )}
