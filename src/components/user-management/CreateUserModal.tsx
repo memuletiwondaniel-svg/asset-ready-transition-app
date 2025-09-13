@@ -833,7 +833,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
-                          <SelectContent className="bg-popover border shadow-lg z-50">
+                          <SelectContent className="bg-popover border shadow-lg z-50 max-h-96 overflow-auto">
                             {rolesLoading ? (
                               <SelectItem value="" disabled>Loading roles...</SelectItem>
                             ) : roleNames.length > 0 ? (

@@ -57,7 +57,6 @@ interface User {
   first_name: string;
   last_name: string;
   company: 'BGC' | 'KENT' | string;
-  employee_id: string;
   job_title: string;
   department: string;
   phone_number: string;
@@ -451,7 +450,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
         user.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.phone_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.projects?.some(project => project.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
