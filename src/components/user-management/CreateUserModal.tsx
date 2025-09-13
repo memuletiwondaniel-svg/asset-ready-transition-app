@@ -161,16 +161,33 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         setRoleSearch("");
       } catch (error) {
         // Error toast is handled in the hook
-        console.error('Failed to add role:', error);
+        console.error("Failed to add role:", error);
       }
     }
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // If role is Director and commission is selected, combine them
+      if (field === "commission" && prev.role === "Director" && value) {
+        newData.role = `${value} Director`;
+      }
+      // If role is changed to Director and commission exists, combine them
+      else if (field === "role" && value === "Director" && prev.commission) {
+        newData.role = `${prev.commission} Director`;
+      }
+      // If role is changed from Director, reset commission
+      else if (field === "role" && prev.role.includes("Director") && value !== "Director") {
+        newData.commission = "";
+      }
+      
+      return newData;
+    });
   };
 
   const handlePrivilegeToggle = (privilege: string) => {
@@ -192,7 +209,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
   const handleImageFile = (file: File) => {
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toast({
         title: "Invalid File Type",
         description: "Please select an image file",
@@ -261,10 +278,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       });
 
       const dataUrl = await toBase64(profileImage);
-      const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-      const fileExt = profileImage.name.split('.').pop() || 'png';
+      const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+      const fileExt = profileImage.name.split(".").pop() || "png";
 
-      const { data, error } = await supabase.functions.invoke('upload-user-avatar', {
+      const { data, error } = await supabase.functions.invoke("upload-user-avatar", {
         body: {
           userId,
           fileExt,
@@ -274,13 +291,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       });
 
       if (error) {
-        console.error('Upload function error:', error);
+        console.error("Upload function error:", error);
         return null;
       }
 
       return (data as any)?.path || null;
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      console.error("Avatar upload error:", error);
       return null;
     } finally {
       setUploadingImage(false);
@@ -321,7 +338,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     
     try {
       // First, create the user to get the user ID
-      const { data: createResp, error: createErr } = await supabase.functions.invoke('admin-create-user', {
+      const { data: createResp, error: createErr } = await supabase.functions.invoke("admin-create-user", {
         body: {
           email: formData.email,
           firstName: formData.firstName,
@@ -351,7 +368,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
       // Try to send welcome email (non-blocking)
       try {
-        await supabase.functions.invoke('send-welcome-email', {
+        await supabase.functions.invoke("send-welcome-email", {
           body: {
             userEmail: formData.email,
             userName: `${formData.firstName} ${formData.lastName}`,
@@ -360,7 +377,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           }
         });
       } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
+        console.error("Failed to send welcome email:", emailError);
         toast({
           title: "Email Warning",
           description: `Welcome email could not be sent. Share credentials: ${formData.email} / ${generatedPassword}`,
@@ -406,7 +423,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       onClose();
       
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("Error creating user:", error);
       toast({
         title: "Error",
         description: "Failed to create user. Please try again.",
@@ -456,78 +473,69 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
               </div>
 
               {/* Profile Picture Upload */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>Profile Picture</Label>
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col gap-4">
                   {/* Avatar Preview */}
-                  <div className="flex flex-col items-center gap-2">
-                    <Avatar className="h-20 w-20">
-                      {profileImagePreview ? (
+                  {profileImagePreview && (
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-24 w-24">
                         <AvatarImage src={profileImagePreview} alt="Profile preview" />
-                      ) : (
                         <AvatarFallback>
-                          <User className="h-8 w-8" />
+                          <User className="h-12 w-12" />
                         </AvatarFallback>
-                      )}
-                    </Avatar>
-                    {profileImage && (
+                      </Avatar>
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={clearImage}
-                        className="text-xs"
+                        className="flex items-center gap-2"
                       >
-                        <X className="h-3 w-3 mr-1" />
+                        <X className="h-4 w-4" />
                         Remove
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Upload Area */}
-                  <div className="flex-1 space-y-2">
+                  <div className="space-y-2">
                     {/* Drag & Drop Area */}
                     <div
                       className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                        isDragOver 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-muted-foreground/25 hover:border-primary/50'
+                        isDragOver ? "border-primary bg-primary/5" : "border-border"
                       }`}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                     >
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Drag and drop an image here, or click to browse
-                      </p>
                       <input
                         type="file"
+                        id="profile-image-upload"
                         accept="image/*"
                         onChange={handleImageChange}
                         className="hidden"
-                        id="profile-image-upload"
                         disabled={uploadingImage}
-                        ref={(input) => {
-                          if (input) {
-                            input.onclick = () => input.click();
-                          }
-                        }}
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('profile-image-upload')?.click()}
-                        disabled={uploadingImage}
-                      >
-                        <Camera className="h-4 w-4 mr-2" />
-                        Choose Image
-                      </Button>
+                      <div className="flex flex-col items-center gap-2">
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                        <div className="text-sm">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="p-0 h-auto font-medium text-primary hover:text-primary/80"
+                            onClick={() => document.getElementById("profile-image-upload")?.click()}
+                            disabled={uploadingImage}
+                          >
+                            Click to upload
+                          </Button>
+                          <span className="text-muted-foreground"> or drag and drop</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, GIF up to 5MB
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Supported formats: JPG, PNG, GIF. Max size: 5MB
-                    </p>
                   </div>
                 </div>
               </div>
@@ -541,14 +549,15 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   required
                 />
-                <div className="flex items-center space-x-2 mt-2">
-                  <Checkbox
-                    id="functionalEmail"
-                    checked={formData.isFunctionalEmail}
-                    onCheckedChange={(checked) => handleInputChange("isFunctionalEmail", checked)}
-                  />
-                  <Label htmlFor="functionalEmail">Add a functional email</Label>
-                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="functionalEmail"
+                  checked={formData.isFunctionalEmail}
+                  onCheckedChange={(checked) => handleInputChange("isFunctionalEmail", checked)}
+                />
+                <Label htmlFor="functionalEmail">Add a functional email</Label>
               </div>
 
               {formData.isFunctionalEmail && (
@@ -568,7 +577,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 </div>
               )}
 
-
               <div>
                 <Label htmlFor="phone">Phone</Label>
                 <div className="flex gap-2">
@@ -583,8 +591,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                             className="flex items-center justify-center w-[24px] h-[16px] text-center border border-border/20 rounded-sm bg-muted/30"
                             style={{ 
                               fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji", "EmojiOne", sans-serif',
-                              fontSize: '14px',
-                              lineHeight: '16px'
+                              fontSize: "14px",
+                              lineHeight: "16px"
                             }}
                           >
                             <span className="block leading-none">
@@ -603,8 +611,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                               className="flex items-center justify-center min-w-[28px] h-[20px] text-center border border-border/20 rounded-sm bg-muted/30"
                               style={{ 
                                 fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji", "EmojiOne", sans-serif',
-                                fontSize: '16px',
-                                lineHeight: '20px'
+                                fontSize: "16px",
+                                lineHeight: "20px"
                               }}
                               title={`${country.country} flag`}
                             >
@@ -705,7 +713,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                               size="sm"
                               className="w-full justify-start text-left hover:bg-accent"
                               onClick={() => {
-                                handleInputChange("role", role);
+                                const selectedRole = role;
+                                // Reset commission when selecting a non-Director role
+                                if (selectedRole !== "Director") {
+                                  handleInputChange("commission", "");
+                                }
+                                handleInputChange("role", selectedRole);
                                 setRoleSearch("");
                                 setShowRoleDropdown(false);
                               }}
@@ -801,6 +814,12 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   )}
                   
                   {formData.role && (
+                    <div className="mt-2 p-2 bg-muted rounded text-sm">
+                      <strong>Selected Role:</strong> {formData.role}
+                    </div>
+                  )}
+                  
+                  {formData.role && (
                     <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm">
                         <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
@@ -855,7 +874,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 </div>
               )}
 
-              {formData.role === "Director" && (
+              {(formData.role === "Director" || formData.role.includes("Director")) && (
                 <div>
                   <Label htmlFor="commission">Commission *</Label>
                   <Select 
@@ -956,9 +975,15 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                   <span className="ml-2">{formData.company === "Others" ? formData.otherCompany : formData.company}</span>
                 </div>
                 <div>
-                  <span className="text-sm font-medium">Role:</span>
+                  <span className="text-sm font-medium">Final Role:</span>
                   <span className="ml-2">{formData.role}</span>
                 </div>
+                {formData.commission && (
+                  <div>
+                    <span className="text-sm font-medium">Commission:</span>
+                    <span className="ml-2">{formData.commission}</span>
+                  </div>
+                )}
                 <div>
                   <span className="text-sm font-medium">Temporary Password:</span>
                   <span className="ml-2 font-mono bg-muted px-2 py-1 rounded">{generatedPassword}</span>
@@ -992,8 +1017,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 <Button 
                   onClick={handleConfirmCreate}
                   disabled={isCreating}
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {isCreating ? "Creating..." : "Confirm & Create User"}
+                  {isCreating ? "Creating..." : "Confirm & Create"}
                 </Button>
               </div>
             </div>
