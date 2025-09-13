@@ -1036,7 +1036,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 {/* Dynamic Title Field */}
                 {isTitleReady() && (
                   <div>
-                    <Label>Title</Label>
+                    <Label>Position</Label>
                     <Input
                       value={generateTitle()}
                       disabled
