@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRoles } from "@/hooks/useRoles";
 import { useCommissions } from "@/hooks/useCommissions";
 import { usePlants } from "@/hooks/usePlants";
+import { useDisciplines } from "@/hooks/useRoleData";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const { roles, isLoading: rolesLoading, addRole } = useRoles();
   const { commissions, isLoading: commissionsLoading, addCommission } = useCommissions();
   const { plants, isLoading: plantsLoading, addPlant } = usePlants();
+  const { data: disciplinesData, isLoading: disciplinesLoading } = useDisciplines();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -80,6 +82,9 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   
   // Get plant names from the database  
   const plantNames = plants.map(plant => plant.name);
+  
+  // Get discipline names from the database
+  const disciplineNames = disciplinesData?.map(discipline => discipline.value) || [];
 
   const companies = [
     { value: "BGC", label: "Basrah Gas Company (BGC)", logo: "/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" },
@@ -124,13 +129,6 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
     { code: "+1", country: "United States", flag: "🇺🇸", shortName: "US" },
   ];
 
-  const disciplines = [
-    { value: "Civil", label: "Civil" },
-    { value: "Static", label: "Static" },
-    { value: "PACO", label: "PACO" },
-    { value: "Process", label: "Process" },
-    { value: "Technical Safety", label: "Technical Safety" },
-  ];
 
   const availablePrivileges = [
     "Administrator",
@@ -201,6 +199,16 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           newData.role = `${prev.plant} Dep Plant Dir`;
         }
       }
+      // Handle TA2 role combinations
+      else if (field === "commission" && prev.role === "TA2" && value && prev.discipline) {
+        newData.role = `TA2 ${prev.discipline} (${value})`;
+      }
+      else if (field === "discipline" && prev.role === "TA2" && value && prev.commission) {
+        newData.role = `TA2 ${value} (${prev.commission})`;
+      }
+      else if (field === "role" && value === "TA2" && prev.commission && prev.discipline) {
+        newData.role = `TA2 ${prev.discipline} (${prev.commission})`;
+      }
       // Reset fields when switching away from specific roles
       else if (field === "role") {
         if (prev.role.includes("Director") && value !== "Director") {
@@ -209,6 +217,10 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
         if ((prev.role.includes("Plant Director") || prev.role.includes("Dep Plant Dir")) && 
             value !== "Plant Director" && value !== "Dep. Plant Director") {
           newData.plant = "";
+        }
+        if (prev.role.includes("TA2") && value !== "TA2") {
+          newData.commission = "";
+          newData.discipline = "";
         }
       }
       
@@ -751,6 +763,13 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                                   if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
                                     handleInputChange("plant", "");
                                   }
+                                  // Reset TA2 fields when selecting non-TA2 roles
+                                  if (selectedRole !== "TA2") {
+                                    handleInputChange("discipline", "");
+                                    if (selectedRole !== "Director") {
+                                      handleInputChange("commission", "");
+                                    }
+                                  }
                                   handleInputChange("role", selectedRole);
                                   setRoleSearch("");
                                   setShowRoleDropdown(false);
@@ -932,39 +951,57 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     </div>
                   )}
 
-                  {/* Discipline Field for Technical Authority */}
-                  {formData.role === "Technical Authority (TA2)" && (
+                  {/* Discipline Field for TA2 */}
+                  {(formData.role === "TA2" || formData.role.includes("TA2")) && (
                     <div>
                       <Label htmlFor="discipline">Discipline *</Label>
-                      <Select onValueChange={(value) => handleInputChange("discipline", value)}>
+                      <Select 
+                        value={formData.discipline}
+                        onValueChange={(value) => handleInputChange("discipline", value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select discipline" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {disciplines.map((discipline) => (
-                            <SelectItem key={discipline.value} value={discipline.value}>
-                              {discipline.label}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="bg-popover border shadow-lg z-50">
+                          {disciplinesLoading ? (
+                            <SelectItem value="" disabled>Loading disciplines...</SelectItem>
+                          ) : disciplineNames.length > 0 ? (
+                            disciplineNames.map((disciplineName) => (
+                              <SelectItem key={disciplineName} value={disciplineName}>
+                                {disciplineName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No disciplines available</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
                   )}
 
-                  {/* Commission Field for Technical Authority */}
-                  {formData.role === "Technical Authority (TA2)" && (
+                  {/* Commission Field for TA2 */}
+                  {(formData.role === "TA2" || formData.role.includes("TA2")) && (
                     <div>
-                      <Label htmlFor="ta2Commission">Commission</Label>
-                      <Select onValueChange={(value) => handleInputChange("commission", value)}>
+                      <Label htmlFor="ta2Commission">Commission *</Label>
+                      <Select 
+                        value={formData.commission}
+                        onValueChange={(value) => handleInputChange("commission", value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select commission" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {commissionNames.map((commissionName) => (
-                            <SelectItem key={commissionName} value={commissionName}>
-                              {commissionName}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="bg-popover border shadow-lg z-50">
+                          {commissionsLoading ? (
+                            <SelectItem value="" disabled>Loading commissions...</SelectItem>
+                          ) : commissionNames.length > 0 ? (
+                            commissionNames.map((commissionName) => (
+                              <SelectItem key={commissionName} value={commissionName}>
+                                {commissionName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No commissions available</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
