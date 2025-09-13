@@ -712,255 +712,265 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="role">Role *</Label>
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search roles..."
-                      value={roleSearch}
-                      onChange={(e) => setRoleSearch(e.target.value)}
-                      onFocus={() => setShowRoleDropdown(true)}
-                      onBlur={() => {
-                        // Delay hiding to allow clicking on dropdown items
-                        setTimeout(() => setShowRoleDropdown(false), 150);
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  
-                  {showRoleDropdown && (
-                    <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
-                      {filteredRoles.length > 0 ? (
-                        <>
-                          {filteredRoles.map((role) => (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="role">Role *</Label>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search roles..."
+                        value={roleSearch}
+                        onChange={(e) => setRoleSearch(e.target.value)}
+                        onFocus={() => setShowRoleDropdown(true)}
+                        onBlur={() => {
+                          // Delay hiding to allow clicking on dropdown items
+                          setTimeout(() => setShowRoleDropdown(false), 150);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    {showRoleDropdown && (
+                      <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto shadow-lg z-50 relative">
+                        {filteredRoles.length > 0 ? (
+                          <>
+                            {filteredRoles.map((role) => (
+                              <Button
+                                key={role}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start text-left hover:bg-accent"
+                                onClick={() => {
+                                  const selectedRole = role;
+                                  // Reset commission when selecting a non-Director role
+                                  if (selectedRole !== "Director") {
+                                    handleInputChange("commission", "");
+                                  }
+                                  // Reset plant when selecting non-Plant Director roles
+                                  if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
+                                    handleInputChange("plant", "");
+                                  }
+                                  handleInputChange("role", selectedRole);
+                                  setRoleSearch("");
+                                  setShowRoleDropdown(false);
+                                }}
+                              >
+                                {role}
+                              </Button>
+                            ))}
+                            {roleSearch && !filteredRoles.some(role => role.toLowerCase() === roleSearch.toLowerCase()) && (
+                              <div className="border-t mt-2 pt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => {
+                                    setShowNewRoleInput(true);
+                                    setShowRoleDropdown(false);
+                                    handleInputChange("newRole", roleSearch);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add "{roleSearch}" as new role
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        ) : roleSearch ? (
+                          <div className="p-2 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">
+                              No roles found matching "{roleSearch}"
+                            </p>
                             <Button
-                              key={role}
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="w-full justify-start text-left hover:bg-accent"
                               onClick={() => {
-                                const selectedRole = role;
-                                // Reset commission when selecting a non-Director role
-                                if (selectedRole !== "Director") {
-                                  handleInputChange("commission", "");
-                                }
-                                // Reset plant when selecting non-Plant Director roles
-                                if (selectedRole !== "Plant Director" && selectedRole !== "Dep. Plant Director") {
-                                  handleInputChange("plant", "");
-                                }
-                                handleInputChange("role", selectedRole);
-                                setRoleSearch("");
+                                setShowNewRoleInput(true);
+                                setShowRoleDropdown(false);
+                                handleInputChange("newRole", roleSearch);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add "{roleSearch}" as new role
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="p-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => {
+                                setShowNewRoleInput(true);
                                 setShowRoleDropdown(false);
                               }}
                             >
-                              {role}
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Custom Role
                             </Button>
-                          ))}
-                          {roleSearch && !filteredRoles.some(role => role.toLowerCase() === roleSearch.toLowerCase()) && (
-                            <div className="border-t mt-2 pt-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                                onClick={() => {
-                                  setShowNewRoleInput(true);
-                                  setShowRoleDropdown(false);
-                                  handleInputChange("newRole", roleSearch);
-                                }}
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add "{roleSearch}" as new role
-                              </Button>
-                            </div>
-                          )}
-                        </>
-                      ) : roleSearch ? (
-                        <div className="p-2 text-center">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            No roles found matching "{roleSearch}"
-                          </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {showNewRoleInput && (
+                      <div className="border rounded-lg bg-popover p-3 space-y-2">
+                        <Label htmlFor="newRole">New Role Name</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="newRole"
+                            value={formData.newRole}
+                            onChange={(e) => handleInputChange("newRole", e.target.value)}
+                            placeholder="Enter new role name"
+                            className="flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={addNewRole}
+                            disabled={!formData.newRole.trim()}
+                          >
+                            Add
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setShowNewRoleInput(true);
-                              setShowRoleDropdown(false);
-                              handleInputChange("newRole", roleSearch);
+                              setShowNewRoleInput(false);
+                              handleInputChange("newRole", "");
                             }}
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add "{roleSearch}" as new role
+                            Cancel
                           </Button>
                         </div>
-                      ) : (
-                        <div className="p-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => {
-                              setShowNewRoleInput(true);
-                              setShowRoleDropdown(false);
-                            }}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Custom Role
-                          </Button>
+                      </div>
+                    )}
+                    
+                    {formData.role && (
+                      <div className="mt-2 p-2 bg-muted rounded text-sm">
+                        <strong>Selected Role:</strong> {formData.role}
+                      </div>
+                    )}
+                    
+                    {formData.role && (
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm">
+                          <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                          <span className="text-sm font-semibold text-foreground">{formData.role}</span>
                         </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {showNewRoleInput && (
-                    <div className="border rounded-lg bg-popover p-3 space-y-2">
-                      <Label htmlFor="newRole">New Role Name</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="newRole"
-                          value={formData.newRole}
-                          onChange={(e) => handleInputChange("newRole", e.target.value)}
-                          placeholder="Enter new role name"
-                          className="flex-1"
-                        />
                         <Button
+                          variant="ghost"
                           size="sm"
-                          onClick={addNewRole}
-                          disabled={!formData.newRole.trim()}
+                          onClick={() => handleInputChange("role", "")}
+                          className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
+                          title="Remove selected role"
                         >
-                          Add
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setShowNewRoleInput(false);
-                            handleInputChange("newRole", "");
-                          }}
-                        >
-                          Cancel
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  )}
-                  
-                  {formData.role && (
-                    <div className="mt-2 p-2 bg-muted rounded text-sm">
-                      <strong>Selected Role:</strong> {formData.role}
-                    </div>
-                  )}
-                  
-                  {formData.role && (
-                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm">
-                        <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                        <span className="text-sm font-semibold text-foreground">{formData.role}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleInputChange("role", "")}
-                        className="h-8 w-8 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
-                        title="Remove selected role"
+                    )}
+                  </div>
+                </div>
+
+                {/* Secondary Fields Column */}
+                <div className="space-y-4">
+                  {/* Plant Field for Plant Director roles */}
+                  {(formData.role === "Plant Director" || formData.role === "Dep. Plant Director" || 
+                    formData.role.includes("Plant Director") || formData.role.includes("Dep Plant Dir")) && (
+                    <div>
+                      <Label htmlFor="plant">Plant *</Label>
+                      <Select 
+                        value={formData.plant}
+                        onValueChange={(value) => handleInputChange("plant", value)}
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select plant" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border shadow-lg z-50">
+                          {plantsLoading ? (
+                            <SelectItem value="" disabled>Loading plants...</SelectItem>
+                          ) : plantNames.length > 0 ? (
+                            plantNames.map((plantName) => (
+                              <SelectItem key={plantName} value={plantName}>
+                                {plantName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No plants available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Commission Field for Director roles */}
+                  {(formData.role === "Director" || (formData.role.includes("Director") && 
+                    !formData.role.includes("Plant Director") && !formData.role.includes("Dep Plant Dir"))) && (
+                    <div>
+                      <Label htmlFor="commission">Commission *</Label>
+                      <Select 
+                        value={formData.commission}
+                        onValueChange={(value) => handleInputChange("commission", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select commission" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border shadow-lg z-50">
+                          {commissionsLoading ? (
+                            <SelectItem value="" disabled>Loading commissions...</SelectItem>
+                          ) : commissionNames.length > 0 ? (
+                            commissionNames.map((commissionName) => (
+                              <SelectItem key={commissionName} value={commissionName}>
+                                {commissionName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No commissions available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Discipline Field for Technical Authority */}
+                  {formData.role === "Technical Authority (TA2)" && (
+                    <div>
+                      <Label htmlFor="discipline">Discipline *</Label>
+                      <Select onValueChange={(value) => handleInputChange("discipline", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select discipline" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {disciplines.map((discipline) => (
+                            <SelectItem key={discipline.value} value={discipline.value}>
+                              {discipline.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Commission Field for Technical Authority */}
+                  {formData.role === "Technical Authority (TA2)" && (
+                    <div>
+                      <Label htmlFor="ta2Commission">Commission</Label>
+                      <Select onValueChange={(value) => handleInputChange("commission", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select commission" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {commissionNames.map((commissionName) => (
+                            <SelectItem key={commissionName} value={commissionName}>
+                              {commissionName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
                 </div>
               </div>
-
-              {formData.role === "Technical Authority (TA2)" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="discipline">Discipline</Label>
-                    <Select onValueChange={(value) => handleInputChange("discipline", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select discipline" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {disciplines.map((discipline) => (
-                          <SelectItem key={discipline.value} value={discipline.value}>
-                            {discipline.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="commission">Commission</Label>
-                    <Select onValueChange={(value) => handleInputChange("commission", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select commission" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {commissionNames.map((commissionName) => (
-                          <SelectItem key={commissionName} value={commissionName}>
-                            {commissionName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {(formData.role === "Plant Director" || formData.role === "Dep. Plant Director" || 
-                formData.role.includes("Plant Director") || formData.role.includes("Dep Plant Dir")) && (
-                <div>
-                  <Label htmlFor="plant">Plant *</Label>
-                  <Select 
-                    value={formData.plant}
-                    onValueChange={(value) => handleInputChange("plant", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select plant" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border shadow-lg z-50">
-                      {plantsLoading ? (
-                        <SelectItem value="" disabled>Loading plants...</SelectItem>
-                      ) : plantNames.length > 0 ? (
-                        plantNames.map((plantName) => (
-                          <SelectItem key={plantName} value={plantName}>
-                            {plantName}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled>No plants available</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {(formData.role === "Director" || formData.role.includes("Director")) && (
-                <div>
-                  <Label htmlFor="commission">Commission *</Label>
-                  <Select 
-                    value={formData.commission}
-                    onValueChange={(value) => handleInputChange("commission", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select commission" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border shadow-lg z-50">
-                      {commissionsLoading ? (
-                        <SelectItem value="" disabled>Loading commissions...</SelectItem>
-                      ) : commissionNames.length > 0 ? (
-                        commissionNames.map((commissionName) => (
-                          <SelectItem key={commissionName} value={commissionName}>
-                            {commissionName}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled>No commissions available</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <div>
                 <Label htmlFor="systemRole">System Role *</Label>
                 <Select 
