@@ -33,7 +33,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  MoreHorizontal,
+  MoreVertical,
   GripVertical,
   ChevronUp,
   ChevronDown,
@@ -194,6 +194,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const [sortBy, setSortBy] = useState<'name' | 'company' | 'role' | 'last_login' | 'created_at'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>([
     { id: 'user', label: 'User', width: 250, minWidth: 200, visible: true, sortable: true },
@@ -389,7 +390,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover border shadow-lg z-50">
@@ -399,6 +400,13 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
               >
                 <Eye className="h-4 w-4 mr-2" />
                 View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setEditingUser(user as any)}
+                className="cursor-pointer"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit User
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => handleDeleteUser(user)}
@@ -811,6 +819,16 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
           isOpen={!!selectedUser}
           onClose={() => setSelectedUser(null)}
           onUserUpdated={fetchUsers}
+        />
+      )}
+
+      {editingUser && (
+        <EnhancedUserDetailsModal
+          user={editingUser as any}
+          isOpen={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          onUserUpdated={fetchUsers}
+          initialEditMode={true}
         />
       )}
 

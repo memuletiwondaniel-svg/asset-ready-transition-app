@@ -84,15 +84,17 @@ interface EnhancedUserDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUserUpdated: () => void;
+  initialEditMode?: boolean;
 }
 
 const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   user,
   isOpen,
   onClose,
-  onUserUpdated
+  onUserUpdated,
+  initialEditMode = false,
 }) => {
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(initialEditMode);
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
