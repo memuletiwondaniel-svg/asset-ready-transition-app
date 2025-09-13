@@ -134,8 +134,8 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, full_name, email, job_title')
-        .in('job_title', ['ORA Lead', 'Plant Director', 'Deputy Plant Director']);
+        .select('user_id, full_name, email, department')
+        .in('department', ['ORA Lead', 'Plant Director', 'Deputy Plant Director']);
       
       if (error) throw error;
       

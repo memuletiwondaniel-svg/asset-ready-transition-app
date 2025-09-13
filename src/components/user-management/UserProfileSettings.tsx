@@ -45,7 +45,6 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
     last_name: '',
     email: '',
     phone_number: '',
-    job_title: '',
     department: '',
     company: '',
     backup_email: ''
@@ -91,7 +90,6 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
         last_name: data.last_name || '',
         email: data.email || '',
         phone_number: data.phone_number || '',
-        job_title: data.job_title || '',
         department: data.department || '',
         company: data.company || '',
         backup_email: data.backup_email || ''
@@ -321,14 +319,6 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
 
                 <Separator />
 
-                <div>
-                  <Label htmlFor="job_title">Job Title</Label>
-                  <Input
-                    id="job_title"
-                    value={profileData.job_title}
-                    onChange={(e) => setProfileData({ ...profileData, job_title: e.target.value })}
-                  />
-                </div>
 
                 <div>
                   <Label htmlFor="department">Department</Label>

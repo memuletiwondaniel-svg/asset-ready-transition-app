@@ -198,7 +198,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const [columns, setColumns] = useState<ColumnConfig[]>([
     { id: 'user', label: 'User', width: 250, minWidth: 200, visible: true, sortable: true },
     { id: 'company', label: 'Company', width: 200, minWidth: 150, visible: true, sortable: true },
-    { id: 'role', label: 'Role', width: 180, minWidth: 120, visible: true, sortable: true },
+    { id: 'role', label: 'Position', width: 180, minWidth: 120, visible: true, sortable: true },
     { id: 'systemRole', label: 'System Role', width: 150, minWidth: 120, visible: true, sortable: false },
     { id: 'status', label: 'Status', width: 140, minWidth: 100, visible: true, sortable: true },
     { id: 'actions', label: 'Actions', width: 100, minWidth: 80, visible: true, sortable: false }
