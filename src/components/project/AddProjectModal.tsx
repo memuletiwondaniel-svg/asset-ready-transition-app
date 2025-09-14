@@ -183,7 +183,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
               </div>
 
               {/* Plant and Station */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
                 <div className="space-y-2">
                   <Label htmlFor="plant">Plant</Label>
                   <EnhancedCombobox
