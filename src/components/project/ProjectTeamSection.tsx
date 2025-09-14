@@ -157,7 +157,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                           case 'Project Manager':
                             return userPosition.includes('project');
                           case 'Project Engineer':
-                            return userPosition.includes('project') && userPosition.includes('engineer');
+                            return userPosition.includes('project');
                           case 'Commissioning Lead':
                             return userPosition.includes('commissioning');
                           case 'Construction Lead':
