@@ -135,10 +135,23 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                 
                 <div className="space-y-2">
                   <EnhancedCombobox
-                    options={allUsers.map(user => ({
-                      value: user.user_id,
-                      label: `${user.full_name} ${user.position ? `(${user.position})` : ''}`
-                    }))}
+                    options={allUsers
+                      .filter(user => {
+                        // Filter users based on role matching
+                        const userPosition = user.position?.toLowerCase() || '';
+                        const roleKeywords = role.toLowerCase().split(' ');
+                        
+                        // Check if user's position contains any of the role keywords
+                        return roleKeywords.some(keyword => 
+                          userPosition.includes(keyword) || 
+                          user.full_name.toLowerCase().includes(keyword)
+                        );
+                      })
+                      .map(user => ({
+                        value: user.user_id,
+                        label: `${user.full_name} ${user.position ? `(${user.position})` : ''}`
+                      }))
+                    }
                     value={assignedMember?.user_id || ''}
                     onValueChange={(value) => updateRoleMember(role, value)}
                     placeholder={isLoading ? "Loading users..." : "Search and select team member"}
