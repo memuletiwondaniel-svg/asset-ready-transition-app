@@ -218,8 +218,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
                 />
               </div>
 
-              {/* Plant and Station */}
-              <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+              {/* Plant, Station, and Hub */}
+              <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
                 <div className="space-y-2">
                   <Label htmlFor="plant">Plant</Label>
                   <EnhancedCombobox
@@ -255,23 +255,22 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
                     />
                   </div>
                 )}
-              </div>
 
-              {/* Hub */}
-              <div className="space-y-2">
-                <Label htmlFor="hub">Hub (Optional)</Label>
-                <EnhancedCombobox
-                  options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
-                  value={formData.hub_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
-                  onCreateNew={async (name) => {
-                    await createHub(name);
-                  }}
-                  placeholder="Select or create hub"
-                  emptyText="No hubs found"
-                  createText="Create hub"
-                  className="w-full"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="hub">Hub (Optional)</Label>
+                  <EnhancedCombobox
+                    options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
+                    value={formData.hub_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
+                    onCreateNew={async (name) => {
+                      await createHub(name);
+                    }}
+                    placeholder="Select or create hub"
+                    emptyText="No hubs found"
+                    createText="Create hub"
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               {/* Project Scope */}
