@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Upload, Link, FileText, Calendar, Users } from 'lucide-react';
+import { X, Plus, Upload, Link, FileText, Calendar, Users, Image } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -42,6 +42,42 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleImageDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({ 
+          ...prev, 
+          project_scope_image_url: event.target?.result as string 
+        }));
+      };
+      reader.readAsDataURL(imageFile);
+    }
+  }, []);
+
+  const handleImageDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleImageDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const prefixOptions = [
+    { value: 'DP', label: 'DP' },
+    { value: 'ST', label: 'ST' },
+    { value: 'MoC', label: 'MoC' }
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,21 +143,16 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
               <div className="space-y-2">
                 <Label htmlFor="project_id">Project ID *</Label>
                 <div className="flex gap-2">
-                  <Select 
-                    value={formData.project_id_prefix} 
-                    onValueChange={(value: 'DP' | 'ST' | 'MoC') => 
-                      setFormData(prev => ({ ...prev, project_id_prefix: value }))
+                  <EnhancedCombobox
+                    options={prefixOptions}
+                    value={formData.project_id_prefix}
+                    onValueChange={(value) => 
+                      setFormData(prev => ({ ...prev, project_id_prefix: value as 'DP' | 'ST' | 'MoC' }))
                     }
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Prefix" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DP">DP</SelectItem>
-                      <SelectItem value="ST">ST</SelectItem>
-                      <SelectItem value="MoC">MoC</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    placeholder="Prefix"
+                    allowCreate={false}
+                    className="w-32"
+                  />
                   <Input
                     value={formData.project_id_number}
                     onChange={(e) => {
@@ -210,16 +241,65 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
               {/* Project Scope */}
               <div className="space-y-2">
                 <Label htmlFor="project_scope">Project Scope</Label>
-                <Textarea
-                  id="project_scope"
-                  value={formData.project_scope}
-                  onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
-                  placeholder="Describe the project scope..."
-                  rows={4}
-                />
-                <div className="mt-3">
-                  <Label htmlFor="project_scope_image">Project Scope Image (Optional)</Label>
-                  <div className="mt-2">
+                <div className="space-y-3">
+                  <Textarea
+                    id="project_scope"
+                    value={formData.project_scope}
+                    onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
+                    placeholder="Describe the project scope..."
+                    rows={4}
+                  />
+                  
+                  {/* Drag and Drop Image Area */}
+                  <div className="space-y-2">
+                    <Label>Project Scope Image (Optional)</Label>
+                    <div
+                      className={`
+                        border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
+                        ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                        ${formData.project_scope_image_url ? 'bg-gray-50' : ''}
+                      `}
+                      onDrop={handleImageDrop}
+                      onDragOver={handleImageDragOver}
+                      onDragLeave={handleImageDragLeave}
+                      onClick={() => document.getElementById('project_scope_image')?.click()}
+                    >
+                      {formData.project_scope_image_url ? (
+                        <div className="relative">
+                          <img 
+                            src={formData.project_scope_image_url} 
+                            alt="Project Scope" 
+                            className="w-full max-h-48 object-contain rounded-lg mx-auto"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData(prev => ({ ...prev, project_scope_image_url: '' }));
+                            }}
+                            className="absolute top-2 right-2 bg-red-100 hover:bg-red-200 text-red-600 z-10"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex justify-center">
+                            <Image className="h-12 w-12 text-gray-400" />
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Drag and drop an image here</span>
+                            <br />
+                            or click to browse files
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            PNG, JPG, GIF up to 10MB
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <Input
                       id="project_scope_image"
                       type="file"
@@ -237,27 +317,9 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
                           reader.readAsDataURL(file);
                         }
                       }}
-                      className="cursor-pointer"
+                      className="hidden"
                     />
                   </div>
-                  {formData.project_scope_image_url && (
-                    <div className="mt-3 relative">
-                      <img 
-                        src={formData.project_scope_image_url} 
-                        alt="Project Scope" 
-                        className="w-full max-h-48 object-contain rounded-lg border"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFormData(prev => ({ ...prev, project_scope_image_url: '' }))}
-                        className="absolute top-2 right-2 bg-red-100 hover:bg-red-200 text-red-600"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
             </CardContent>
