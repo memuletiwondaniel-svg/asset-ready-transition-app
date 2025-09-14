@@ -15,7 +15,7 @@ import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
-import { ProjectDocumentsSection } from './ProjectDocumentsSection';
+import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -217,6 +217,48 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
                   placeholder="Describe the project scope..."
                   rows={4}
                 />
+                <div className="mt-3">
+                  <Label htmlFor="project_scope_image">Project Scope Image (Optional)</Label>
+                  <div className="mt-2">
+                    <Input
+                      id="project_scope_image"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              project_scope_image_url: event.target?.result as string 
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  {formData.project_scope_image_url && (
+                    <div className="mt-3 relative">
+                      <img 
+                        src={formData.project_scope_image_url} 
+                        alt="Project Scope" 
+                        className="w-full max-h-48 object-contain rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData(prev => ({ ...prev, project_scope_image_url: '' }))}
+                        className="absolute top-2 right-2 bg-red-100 hover:bg-red-200 text-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -234,7 +276,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
           />
 
           {/* Documents */}
-          <ProjectDocumentsSection 
+          <EnhancedProjectDocumentsSection 
             documents={documents}
             setDocuments={setDocuments}
           />

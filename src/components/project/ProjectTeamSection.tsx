@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, X } from 'lucide-react';
 import { useProfileUsersByRole } from '@/hooks/useProfileUsers';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ProjectTeamSectionProps {
   teamMembers: any[];
@@ -27,10 +28,12 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
     role: '',
     user_id: '',
     user_name: '',
-    is_lead: false
+    is_lead: false,
+    avatar_url: '',
+    position: ''
   });
 
-  const { data: filteredUsers = [], isLoading } = useProfileUsersByRole(newMember.role);
+  const { data: allUsers = [], isLoading } = useProfileUsersByRole('');
 
   const addTeamMember = () => {
     if (newMember.role && newMember.user_name) {
@@ -40,7 +43,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         is_lead: REQUIRED_ROLES.includes(newMember.role)
       };
       setTeamMembers(prev => [...prev, member]);
-      setNewMember({ role: '', user_id: '', user_name: '', is_lead: false });
+      setNewMember({ role: '', user_id: '', user_name: '', is_lead: false, avatar_url: '', position: '' });
     }
   };
 
@@ -106,14 +109,16 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
           <Select 
             value={newMember.user_id} 
             onValueChange={(value) => {
-              const selectedUser = filteredUsers.find(user => user.user_id === value);
+              const selectedUser = allUsers.find(user => user.user_id === value);
               setNewMember(prev => ({ 
                 ...prev, 
                 user_id: value, 
-                user_name: selectedUser?.full_name || value 
+                user_name: selectedUser?.full_name || value,
+                avatar_url: selectedUser?.avatar_url || '',
+                position: selectedUser?.position || ''
               }));
             }}
-            disabled={!newMember.role || isLoading}
+            disabled={isLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder={
@@ -125,14 +130,25 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
               } />
             </SelectTrigger>
             <SelectContent>
-              {filteredUsers.map((user) => (
+              {allUsers.map((user) => (
                 <SelectItem key={user.user_id} value={user.user_id}>
-                  {user.full_name}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                      <AvatarFallback className="text-xs">
+                        {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{user.full_name}</span>
+                      <span className="text-xs text-muted-foreground">{user.position}</span>
+                    </div>
+                  </div>
                 </SelectItem>
               ))}
-              {filteredUsers.length === 0 && newMember.role && !isLoading && (
+              {allUsers.length === 0 && !isLoading && (
                 <SelectItem value="" disabled>
-                  No users found for this role
+                  No users found
                 </SelectItem>
               )}
             </SelectContent>
@@ -160,21 +176,34 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <Badge 
-                      variant={member.is_lead ? "default" : "outline"}
-                      className={member.is_lead 
-                        ? "bg-blue-100 text-blue-700 border-blue-200" 
-                        : "bg-gray-100 text-gray-700 border-gray-200"
-                      }
-                    >
-                      {member.role}
-                    </Badge>
-                    <span className="font-medium text-gray-900">{member.user_name}</span>
-                    {member.is_lead && (
-                      <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
-                        Lead
-                      </Badge>
-                    )}
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                      <AvatarFallback className="text-xs">
+                        {member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{member.user_name}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={member.is_lead ? "default" : "outline"}
+                          className={member.is_lead 
+                            ? "bg-blue-100 text-blue-700 border-blue-200 text-xs" 
+                            : "bg-gray-100 text-gray-700 border-gray-200 text-xs"
+                          }
+                        >
+                          {member.role}
+                        </Badge>
+                        {member.position && (
+                          <span className="text-xs text-muted-foreground">{member.position}</span>
+                        )}
+                        {member.is_lead && (
+                          <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
+                            Lead
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <Button
                     type="button"

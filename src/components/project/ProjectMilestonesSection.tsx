@@ -79,7 +79,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
                 >
                   <CalendarDays className="mr-2 h-4 w-4" />
                   {newMilestone.milestone_date ? (
-                    format(newMilestone.milestone_date, "PPP")
+                    format(newMilestone.milestone_date, "do MMMM yyyy")
                   ) : (
                     <span>Pick a date</span>
                   )}
@@ -98,7 +98,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
           </div>
 
           <div className="space-y-2">
-            <Label>Scorecard Project</Label>
+            <Label>Scorecard</Label>
             <div className="flex items-center space-x-2 h-10">
               <Switch
                 checked={newMilestone.is_scorecard_project}
@@ -131,16 +131,17 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
                   key={milestone.id}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">{milestone.milestone_name}</span>
-                      <span className="text-sm text-gray-600">
-                        {new Date(milestone.milestone_date).toLocaleDateString()}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-4">
+                    <span className="font-medium text-gray-900 min-w-0 flex-1">{milestone.milestone_name}</span>
+                    <span className="text-sm text-gray-600 whitespace-nowrap">
+                      {format(new Date(milestone.milestone_date), "do MMMM yyyy")}
+                    </span>
                     {milestone.is_scorecard_project && (
-                      <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                        Scorecard Project
+                      <Badge 
+                        variant="outline" 
+                        className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 border-yellow-400 text-xs font-semibold shadow-sm whitespace-nowrap"
+                      >
+                        ✨ Scorecard
                       </Badge>
                     )}
                   </div>

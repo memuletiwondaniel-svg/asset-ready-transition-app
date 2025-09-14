@@ -6,6 +6,7 @@ export interface ProfileUser {
   full_name: string;
   role?: string;
   position?: string;
+  avatar_url?: string;
 }
 
 export const useProfileUsers = () => {
@@ -34,28 +35,10 @@ export const useProfileUsersByRole = (role: string) => {
   return useQuery({
     queryKey: ['profile-users-by-role', role],
     queryFn: async () => {
-      if (!role || role === 'Other') {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, position')
-          .eq('is_active', true)
-          .not('full_name', 'is', null);
-
-        if (error) throw error;
-
-        return data?.map(profile => ({
-          user_id: profile.user_id,
-          full_name: profile.full_name || '',
-          role: profile.position || '',
-          position: profile.position || ''
-        })) || [];
-      }
-
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, full_name, position')
+        .select('user_id, full_name, position, avatar_url')
         .eq('is_active', true)
-        .eq('position', role)
         .not('full_name', 'is', null);
 
       if (error) throw error;
@@ -64,9 +47,10 @@ export const useProfileUsersByRole = (role: string) => {
         user_id: profile.user_id,
         full_name: profile.full_name || '',
         role: profile.position || '',
-        position: profile.position || ''
+        position: profile.position || '',
+        avatar_url: profile.avatar_url || ''
       })) || [];
     },
-    enabled: !!role
+    enabled: true
   });
 };
