@@ -138,11 +138,6 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <h5 className="font-medium text-gray-900">{role}</h5>
-                    {required && (
-                      <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 text-xs mt-1">
-                        Required
-                      </Badge>
-                    )}
                   </div>
                 </div>
                 
