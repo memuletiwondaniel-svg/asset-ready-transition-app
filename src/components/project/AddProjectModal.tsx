@@ -391,7 +391,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
             </Button>
             <Button 
               type="submit"
-              disabled={isCreating || !formData.project_id_prefix || !formData.project_id_number || !formData.project_title}
+              disabled={isCreating}
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
             >
               Review Project
