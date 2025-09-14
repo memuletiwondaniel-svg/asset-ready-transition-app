@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
+import { ProjectSummaryModal } from './ProjectSummaryModal';
 import EnhancedAuthModal from '@/components/enhanced-auth/EnhancedAuthModal';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -48,6 +49,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const [documents, setDocuments] = useState<any[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   const handleImageDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -91,25 +93,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setAuthOpen(true);
-      return;
-    }
-
-    const projectData = {
-      project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
-      project_id_number: formData.project_id_number,
-      project_title: formData.project_title,
-      project_scope: formData.project_scope,
-      project_scope_image_url: formData.project_scope_image_url,
-      plant_id: formData.plant_id || undefined,
-      station_id: formData.station_id || undefined,
-      hub_id: formData.hub_id || undefined,
-    };
-
-    createProject(projectData);
-    handleClose();
+    // Show summary page instead of creating immediately
+    setShowSummary(true);
   };
 
   const handleClose = () => {
@@ -126,21 +111,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     setTeamMembers([]);
     setMilestones([]);
     setDocuments([]);
+    setShowSummary(false);
     onClose();
   };
 
-  const handleAuthenticated = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: 'Sign-in required',
-        description: 'Please sign in to create a project.',
-        variant: 'destructive'
-      });
-      setAuthOpen(true);
-      return;
-    }
-
+  const handleConfirmCreation = async () => {
     const projectData = {
       project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
       project_id_number: formData.project_id_number,
@@ -157,6 +132,24 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   };
 
   const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
+
+  if (showSummary) {
+    return (
+      <ProjectSummaryModal
+        open={open}
+        onClose={() => setShowSummary(false)}
+        onConfirm={handleConfirmCreation}
+        formData={formData}
+        teamMembers={teamMembers}
+        milestones={milestones}
+        documents={documents}
+        plants={plants}
+        stations={stations}
+        hubs={hubs}
+        isCreating={isCreating}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={() => {}} modal={true}>
@@ -396,15 +389,10 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
               disabled={isCreating || !formData.project_id_prefix || !formData.project_id_number || !formData.project_title}
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
             >
-              {isCreating ? 'Creating...' : 'Create Project'}
+              Review Project
             </Button>
           </div>
         </form>
-        <EnhancedAuthModal 
-          isOpen={authOpen}
-          onClose={() => setAuthOpen(false)}
-          onAuthenticated={handleAuthenticated}
-        />
       </DialogContent>
     </Dialog>
   );
