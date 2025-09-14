@@ -57,7 +57,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   const addAdditionalMember = () => {
     const newMember = {
       id: `additional-${Date.now()}`,
-      role: 'Additional Team Member',
+      role: '',
       user_id: '',
       user_name: '',
       is_lead: false,
@@ -68,9 +68,22 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   };
 
   const updateAdditionalMember = (memberId: string, field: string, value: any) => {
-    setTeamMembers(prev => prev.map(member => 
-      member.id === memberId ? { ...member, [field]: value } : member
-    ));
+    if (field === 'user_id') {
+      const selectedUser = allUsers.find(user => user.user_id === value);
+      setTeamMembers(prev => prev.map(member => 
+        member.id === memberId ? { 
+          ...member, 
+          user_id: value,
+          user_name: selectedUser?.full_name || '',
+          avatar_url: selectedUser?.avatar_url || '',
+          position: selectedUser?.position || ''
+        } : member
+      ));
+    } else {
+      setTeamMembers(prev => prev.map(member => 
+        member.id === memberId ? { ...member, [field]: value } : member
+      ));
+    }
   };
 
   const removeAdditionalMember = (memberId: string) => {
@@ -144,7 +157,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                           case 'Project Manager':
                             return userPosition.includes('project');
                           case 'Project Engineer':
-                            return userPosition.includes('project') && userPosition.includes('engineer');
+                            return userPosition.includes('project');
                           case 'Commissioning Lead':
                             return userPosition.includes('commissioning');
                           case 'Construction Lead':
@@ -204,42 +217,82 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         {teamMembers.filter(member => !REQUIRED_ROLES.some(r => r.role === member.role)).length > 0 && (
           <div className="space-y-3">
             <h4 className="font-medium text-gray-900">Additional Team Members</h4>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {teamMembers
                 .filter(member => !REQUIRED_ROLES.some(r => r.role === member.role))
                 .map((member) => (
                   <div 
                     key={member.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="p-4 border rounded-lg bg-gray-50/50"
                   >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.avatar_url} alt={member.user_name} />
-                        <AvatarFallback className="text-xs">
-                          {member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{member.user_name}</span>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200 text-xs">
-                            {member.role}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Role</label>
+                        <input
+                          type="text"
+                          value={member.role}
+                          onChange={(e) => updateAdditionalMember(member.id, 'role', e.target.value)}
+                          placeholder="Enter role (e.g., Safety Coordinator)"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Team Member</label>
+                        <EnhancedCombobox
+                          options={allUsers.map(user => ({
+                            value: user.user_id,
+                            label: `${user.full_name} ${user.position ? `(${user.position})` : ''}`
+                          }))}
+                          value={member.user_id}
+                          onValueChange={(value) => updateAdditionalMember(member.id, 'user_id', value)}
+                          placeholder="Search and select team member"
+                          emptyText="No users found"
+                          allowCreate={false}
+                          disabled={isLoading}
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeAdditionalMember(member.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {member.user_name && (
+                      <div className="flex items-center gap-3 pt-3 border-t">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                          <AvatarFallback className="text-xs">
+                            {member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 flex items-center gap-2">
+                          <Badge variant="default" className="text-xs">
+                            {member.user_name}
                           </Badge>
+                          {member.role && (
+                            <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-xs">
+                              {member.role}
+                            </Badge>
+                          )}
                           {member.position && (
-                            <span className="text-xs text-muted-foreground">{member.position}</span>
+                            <Badge variant="outline" className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs">
+                              {member.position}
+                            </Badge>
                           )}
                         </div>
                       </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeAdditionalMember(member.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    )}
                   </div>
                 ))}
             </div>
