@@ -85,6 +85,7 @@ export const useStations = () => {
     isLoading,
     error,
     fetchStations,
-    addStation
+    addStation,
+    createStation: addStation
   };
 };

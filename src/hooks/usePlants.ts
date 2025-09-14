@@ -85,6 +85,7 @@ export const usePlants = () => {
     isLoading,
     error,
     fetchPlants,
-    addPlant
+    addPlant,
+    createPlant: addPlant
   };
 };

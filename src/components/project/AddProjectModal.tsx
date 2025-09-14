@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Upload, Link, FileText, Calendar, Users } from 'lucide-react';
@@ -23,9 +24,9 @@ interface AddProjectModalProps {
 
 export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose }) => {
   const { createProject, isCreating } = useProjects();
-  const { plants } = usePlants();
-  const { stations } = useStations();
-  const { data: hubs = [] } = useHubs();
+  const { plants, createPlant } = usePlants();
+  const { stations, createStation } = useStations();
+  const { data: hubs = [], createHub } = useHubs();
 
   const [formData, setFormData] = useState({
     project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
@@ -154,43 +155,37 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="plant">Plant</Label>
-                  <Select 
-                    value={formData.plant_id} 
+                  <EnhancedCombobox
+                    options={plants.map(plant => ({ value: plant.id, label: plant.name }))}
+                    value={formData.plant_id}
                     onValueChange={(value) => {
                       setFormData(prev => ({ ...prev, plant_id: value, station_id: '' }));
                     }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select plant" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {plants.map((plant) => (
-                        <SelectItem key={plant.id} value={plant.id}>
-                          {plant.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onCreateNew={async (name) => {
+                      await createPlant(name);
+                    }}
+                    placeholder="Select or create plant"
+                    emptyText="No plants found"
+                    createText="Create plant"
+                    className="w-full"
+                  />
                 </div>
 
                 {showStationField && (
                   <div className="space-y-2">
                     <Label htmlFor="station">Station</Label>
-                    <Select 
-                      value={formData.station_id} 
+                    <EnhancedCombobox
+                      options={stations.map(station => ({ value: station.id, label: station.name }))}
+                      value={formData.station_id}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select station" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stations.map((station) => (
-                          <SelectItem key={station.id} value={station.id}>
-                            {station.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onCreateNew={async (name) => {
+                        await createStation(name);
+                      }}
+                      placeholder="Select or create station"
+                      emptyText="No stations found"
+                      createText="Create station"
+                      className="w-full"
+                    />
                   </div>
                 )}
               </div>
@@ -198,21 +193,18 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
               {/* Hub */}
               <div className="space-y-2">
                 <Label htmlFor="hub">Hub (Optional)</Label>
-                <Select 
-                  value={formData.hub_id} 
+                <EnhancedCombobox
+                  options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
+                  value={formData.hub_id}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select hub" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hubs.map((hub) => (
-                      <SelectItem key={hub.id} value={hub.id}>
-                        {hub.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onCreateNew={async (name) => {
+                    await createHub(name);
+                  }}
+                  placeholder="Select or create hub"
+                  emptyText="No hubs found"
+                  createText="Create hub"
+                  className="w-full"
+                />
               </div>
 
               {/* Project Scope */}

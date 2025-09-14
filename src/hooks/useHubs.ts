@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Hub {
   id: string;
@@ -8,7 +9,10 @@ export interface Hub {
 }
 
 export const useHubs = () => {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const query = useQuery({
     queryKey: ['hubs'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,4 +29,45 @@ export const useHubs = () => {
       return data as Hub[];
     },
   });
+
+  const createHub = async (hubName: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('hubs')
+        .insert({
+          name: hubName,
+          description: '',
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['hubs'] });
+      
+      toast({
+        title: "Hub Added",
+        description: `"${hubName}" has been added to the available hubs.`,
+      });
+
+      return data;
+    } catch (err) {
+      console.error('Error adding hub:', err);
+      toast({
+        title: "Error",
+        description: "Failed to add new hub. Please try again.",
+        variant: "destructive"
+      });
+      throw err;
+    }
+  };
+
+  return {
+    ...query,
+    createHub
+  };
 };
