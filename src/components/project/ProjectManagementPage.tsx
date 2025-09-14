@@ -77,10 +77,19 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
       {/* Projects Table */}
       <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b border-blue-100/60">
-          <CardTitle className="flex items-center text-blue-900">
-            <FolderOpen className="h-5 w-5 mr-2" />
-            Projects Overview
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center text-blue-900">
+              <FolderOpen className="h-5 w-5 mr-2" />
+              Projects Overview
+            </CardTitle>
+            <Button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Project
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {projects.length === 0 ? (
