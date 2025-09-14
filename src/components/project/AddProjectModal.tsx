@@ -121,7 +121,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={() => {}} modal={true}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
