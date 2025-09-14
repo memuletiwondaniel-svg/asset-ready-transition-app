@@ -90,6 +90,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     e.preventDefault();
     
     if (!formData.project_id_prefix || !formData.project_id_number || !formData.project_title) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (Project ID and Title)",
+        variant: "destructive",
+      });
       return;
     }
 
