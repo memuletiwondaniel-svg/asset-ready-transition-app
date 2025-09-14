@@ -57,7 +57,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
   const addAdditionalMember = () => {
     const newMember = {
       id: `additional-${Date.now()}`,
-      role: '',
+      role: 'Additional Team Member',
       user_id: '',
       user_name: '',
       is_lead: false,
@@ -207,18 +207,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                     key={member.id}
                     className="p-4 border rounded-lg bg-gray-50/50"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Role</label>
-                        <input
-                          type="text"
-                          value={member.role}
-                          onChange={(e) => updateAdditionalMember(member.id, 'role', e.target.value)}
-                          placeholder="Enter role (e.g., Safety Coordinator)"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Team Member</label>
                         <EnhancedCombobox
