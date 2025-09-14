@@ -16,8 +16,9 @@ interface ProjectTeamSectionProps {
 const REQUIRED_ROLES = [
   { role: 'Project Manager', required: true },
   { role: 'Project Engineer', required: true },
-  { role: 'Safety Lead', required: true },
-  { role: 'Quality Lead', required: true }
+  { role: 'Commissioning Lead', required: true },
+  { role: 'Construction Lead', required: true },
+  { role: 'ORA Lead', required: true }
 ];
 
 export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({ 
