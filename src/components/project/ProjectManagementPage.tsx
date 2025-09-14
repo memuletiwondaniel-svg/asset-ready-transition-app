@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2 } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { AddProjectModal } from './AddProjectModal';
 import {
@@ -13,7 +13,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const ProjectManagementPage = () => {
+interface ProjectManagementPageProps {
+  onBack?: () => void;
+}
+
+const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
   const { projects, isLoading, deleteProject } = useProjects();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -41,13 +45,25 @@ const ProjectManagementPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Project Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage all projects, team assignments, and milestones
-          </p>
+        <div className="flex items-center space-x-4">
+          {onBack && (
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="flex items-center"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Admin
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Project Management
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage all projects, team assignments, and milestones
+            </p>
+          </div>
         </div>
         <Button 
           onClick={() => setIsAddModalOpen(true)}
