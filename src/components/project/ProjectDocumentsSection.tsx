@@ -1,223 +1,294 @@
-
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { 
+  FileText, 
+  Plus, 
+  X, 
+  Upload, 
+  Link, 
+  File, 
+  FileImage, 
+  FileSpreadsheet,
+  Presentation,
+  FileCode,
+  Folder
+} from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FolderOpen, Upload, FileText, X } from 'lucide-react';
-
-interface DocumentFilter {
-  project: string;
-  originator: string;
-  plant: string;
-  site: string;
-  unit: string;
-  discipline: string;
-  docType: string;
-  sequence: string;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ProjectDocumentsSectionProps {
-  formData: any;
-  setFormData: React.Dispatch<React.SetStateAction<any>>;
-  documentFilters: DocumentFilter;
-  setDocumentFilters: React.Dispatch<React.SetStateAction<DocumentFilter>>;
+  documents: any[];
+  setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
+const getLinkIcon = (linkType: string) => {
+  switch (linkType) {
+    case 'assai':
+      return <Folder className="h-4 w-4" />;
+    case 'sharepoint':
+      return <Folder className="h-4 w-4" />;
+    case 'wrench':
+      return <Folder className="h-4 w-4" />;
+    default:
+      return <Link className="h-4 w-4" />;
+  }
+};
+
+const getFileIcon = (extension: string) => {
+  const ext = extension?.toLowerCase();
+  switch (ext) {
+    case 'pdf':
+      return <FileText className="h-4 w-4 text-red-500" />;
+    case 'doc':
+    case 'docx':
+      return <FileText className="h-4 w-4 text-blue-500" />;
+    case 'xls':
+    case 'xlsx':
+      return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
+    case 'ppt':
+    case 'pptx':
+      return <Presentation className="h-4 w-4 text-orange-500" />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+      return <FileImage className="h-4 w-4 text-purple-500" />;
+    case 'txt':
+    case 'csv':
+      return <FileCode className="h-4 w-4 text-gray-500" />;
+    default:
+      return <File className="h-4 w-4 text-gray-500" />;
+  }
+};
+
 export const ProjectDocumentsSection: React.FC<ProjectDocumentsSectionProps> = ({ 
-  formData, 
-  setFormData,
-  documentFilters,
-  setDocumentFilters
+  documents, 
+  setDocuments 
 }) => {
-  const plants = [
-    'KAZ',
-    'NRNGL', 
-    'UQ',
-    'Compressor Station (CS)',
-    'BNGL'
-  ];
+  const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
+  const [documentForm, setDocumentForm] = useState({
+    document_name: '',
+    document_type: 'file' as 'file' | 'link',
+    file: null as File | null,
+    link_url: '',
+    link_type: '' as 'assai' | 'sharepoint' | 'wrench' | ''
+  });
 
-  // Document filter options
-  const filterOptions = {
-    project: ['Project A', 'Project B', 'Project C'],
-    originator: ['Engineering', 'Construction', 'Operations'],
-    plant: plants,
-    site: ['Site 1', 'Site 2', 'Site 3'],
-    unit: ['Unit 100', 'Unit 200', 'Unit 300'],
-    discipline: ['Mechanical', 'Electrical', 'Instrumentation', 'Civil'],
-    docType: ['Drawing', 'Specification', 'Report', 'Manual'],
-    sequence: ['001', '002', '003', '004']
-  };
+  const addDocument = () => {
+    if (!documentForm.document_name) return;
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setFormData((prev: any) => ({
-      ...prev,
-      supportingDocs: [...prev.supportingDocs, ...files]
-    }));
-  };
+    if (documentForm.document_type === 'file' && !documentForm.file) return;
+    if (documentForm.document_type === 'link' && !documentForm.link_url) return;
 
-  const removeFile = (index: number) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      supportingDocs: prev.supportingDocs.filter((_: any, i: number) => i !== index)
-    }));
-  };
+    const document = {
+      id: Date.now().toString(),
+      document_name: documentForm.document_name,
+      document_type: documentForm.document_type,
+      file_path: documentForm.file ? documentForm.file.name : undefined,
+      link_url: documentForm.document_type === 'link' ? documentForm.link_url : undefined,
+      link_type: documentForm.document_type === 'link' ? documentForm.link_type : undefined,
+      file_extension: documentForm.file ? documentForm.file.name.split('.').pop() : undefined,
+      file_size: documentForm.file ? documentForm.file.size : undefined,
+    };
 
-  const updateDocumentFilter = (field: keyof DocumentFilter, value: string) => {
-    setDocumentFilters((prev: DocumentFilter) => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleFindDocumentsInAssai = () => {
-    // Build query parameters from document filters
-    const queryParams = new URLSearchParams();
-    Object.entries(documentFilters).forEach(([key, value]) => {
-      if (value) queryParams.append(key, value);
+    setDocuments(prev => [...prev, document]);
+    setDocumentForm({
+      document_name: '',
+      document_type: 'file',
+      file: null,
+      link_url: '',
+      link_type: ''
     });
-    
-    // Open Assai in new tab with search parameters
-    const assaiUrl = `https://assai.com/search?${queryParams.toString()}`;
-    window.open(assaiUrl, '_blank');
+    setIsAddDocumentOpen(false);
   };
 
-  const handleFindDocumentsInWrench = () => {
-    // Build query parameters from document filters
-    const queryParams = new URLSearchParams();
-    Object.entries(documentFilters).forEach(([key, value]) => {
-      if (value) queryParams.append(key, value);
-    });
-    
-    // Open Wrench in new tab with search parameters
-    const wrenchUrl = `https://wrench.com/search?${queryParams.toString()}`;
-    window.open(wrenchUrl, '_blank');
+  const removeDocument = (id: string) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== id));
+  };
+
+  const detectLinkType = (url: string): 'assai' | 'sharepoint' | 'wrench' | '' => {
+    if (url.includes('assai')) return 'assai';
+    if (url.includes('sharepoint') || url.includes('office.com')) return 'sharepoint';
+    if (url.includes('wrench')) return 'wrench';
+    return '';
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDocumentForm(prev => ({
+        ...prev,
+        file,
+        document_name: prev.document_name || file.name.split('.')[0]
+      }));
+    }
+  };
+
+  const handleLinkChange = (url: string) => {
+    const linkType = detectLinkType(url);
+    setDocumentForm(prev => ({
+      ...prev,
+      link_url: url,
+      link_type: linkType
+    }));
   };
 
   return (
-    <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-      <CardHeader className="pb-3 bg-gradient-to-r from-emerald-300 to-emerald-400 text-white rounded-t-lg">
-        <CardTitle className="text-xl flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <FolderOpen className="h-8 w-8" />
-          </div>
-          Project Documents
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center text-lg">
+          <FileText className="h-5 w-5 mr-2" />
+          Supporting Documents
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        {/* Document Search Filters */}
-        <div className="space-y-6">
-          <Label className="text-sm font-medium text-gray-700">Find Documents</Label>
-          <div className="flex items-center gap-2 flex-wrap">
-            {Object.entries(filterOptions).map(([key, options], index) => (
-              <div key={key} className="flex items-center gap-2">
-                <div className="min-w-[120px]">
-                  <Select value={documentFilters[key as keyof DocumentFilter]} onValueChange={(value) => updateDocumentFilter(key as keyof DocumentFilter, value)}>
-                    <SelectTrigger className="h-8 text-xs border-gray-300">
-                      <SelectValue placeholder={key.charAt(0).toUpperCase() + key.slice(1)} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((option) => (
-                        <SelectItem key={option} value={option} className="text-xs">{option}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {index < Object.keys(filterOptions).length - 1 && (
-                  <span className="text-gray-400 text-sm">-</span>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3 mt-8">
-            <Button
-              type="button"
-              onClick={handleFindDocumentsInAssai}
-              variant="outline"
-              className="h-10 px-4 text-sm flex items-center gap-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200"
-            >
-              <img src="/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png" alt="Assai" className="h-5 w-5" />
-              Find Documents in Assai
-            </Button>
-            <Button
-              type="button"
-              onClick={handleFindDocumentsInWrench}
-              variant="outline"
-              className="h-10 px-4 text-sm flex items-center gap-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200"
-            >
-              <img src="/lovable-uploads/81080018-90d7-4e00-a4b2-ee1682e5d8bd.png" alt="Wrench" className="h-5 w-5" />
-              Find Documents in Wrench
-            </Button>
-          </div>
-        </div>
-
-        {/* File Upload Section */}
-        <div className="space-y-4">
-          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Upload className="h-4 w-4 text-emerald-500" />
-            Upload Supporting Documents
-          </Label>
-          <div className="border-2 border-dashed border-emerald-300 rounded-xl p-6 text-center bg-emerald-50/50 hover:bg-emerald-50 transition-colors">
-            <div className="p-3 bg-emerald-100 rounded-full w-fit mx-auto mb-3">
-              <Upload className="h-6 w-6 text-emerald-500" />
-            </div>
-            <p className="text-sm font-medium text-gray-900 mb-1">
-              Click to upload files or drag and drop
-            </p>
-            <p className="text-xs text-gray-500 mb-3">
-              PDF, DOC, XLS files up to 10MB each
-            </p>
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              id="project-file-upload"
-            />
+      <CardContent className="space-y-4">
+        {/* Add Document Button */}
+        <Dialog open={isAddDocumentOpen} onOpenChange={setIsAddDocumentOpen}>
+          <DialogTrigger asChild>
             <Button 
               type="button"
-              variant="outline" 
-              onClick={() => document.getElementById('project-file-upload')?.click()}
-              className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+              variant="outline"
+              className="w-full border-dashed border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Choose Files
+              <Plus className="h-4 w-4 mr-2" />
+              Add Document
             </Button>
-          </div>
-          
-          {/* Uploaded Files List */}
-          {formData.supportingDocs.length > 0 && (
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-900">Uploaded Documents</h5>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {formData.supportingDocs.map((file: File, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100 rounded-lg">
-                        <FileText className="h-4 w-4 text-emerald-500" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                    </div>
-                    <Button 
-                      type="button"
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Supporting Document</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Document Name</Label>
+                <Input
+                  value={documentForm.document_name}
+                  onChange={(e) => setDocumentForm(prev => ({ ...prev, document_name: e.target.value }))}
+                  placeholder="Enter document name"
+                />
+              </div>
+
+              <Tabs 
+                value={documentForm.document_type} 
+                onValueChange={(value: 'file' | 'link') => 
+                  setDocumentForm(prev => ({ ...prev, document_type: value }))
+                }
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="file">Upload File</TabsTrigger>
+                  <TabsTrigger value="link">Add Link</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="file" className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Choose File</Label>
+                    <Input
+                      type="file"
+                      onChange={handleFileChange}
+                      className="cursor-pointer"
+                    />
                   </div>
-                ))}
+                  {documentForm.file && (
+                    <div className="text-sm text-gray-600">
+                      Selected: {documentForm.file.name} ({(documentForm.file.size / 1024).toFixed(1)} KB)
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="link" className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Document Link</Label>
+                    <Input
+                      value={documentForm.link_url}
+                      onChange={(e) => handleLinkChange(e.target.value)}
+                      placeholder="Paste Assai, SharePoint, or Wrench link"
+                    />
+                  </div>
+                  {documentForm.link_type && (
+                    <Badge variant="outline" className="capitalize">
+                      {documentForm.link_type} Link
+                    </Badge>
+                  )}
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-end gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsAddDocumentOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={addDocument}
+                  disabled={
+                    !documentForm.document_name ||
+                    (documentForm.document_type === 'file' && !documentForm.file) ||
+                    (documentForm.document_type === 'link' && !documentForm.link_url)
+                  }
+                >
+                  Add Document
+                </Button>
               </div>
             </div>
-          )}
-        </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Documents List */}
+        {documents.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-gray-900">Uploaded Documents</h4>
+            <div className="space-y-2">
+              {documents.map((doc) => (
+                <div 
+                  key={doc.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    {doc.document_type === 'file' 
+                      ? getFileIcon(doc.file_extension) 
+                      : getLinkIcon(doc.link_type)
+                    }
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{doc.document_name}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {doc.document_type === 'file' ? 'File' : 'Link'}
+                        </Badge>
+                        {doc.link_type && (
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {doc.link_type}
+                          </Badge>
+                        )}
+                        {doc.file_extension && (
+                          <Badge variant="outline" className="text-xs uppercase">
+                            {doc.file_extension}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeDocument(doc.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

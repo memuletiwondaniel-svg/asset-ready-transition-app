@@ -183,12 +183,10 @@ const AddNewProjectWidget: React.FC<AddNewProjectWidgetProps> = ({
               <form onSubmit={handleSubmit} className="space-y-6">
                 <ProjectInformationSection formData={formData} setFormData={setFormData} />
                 <TeamMembersSection formData={formData} setFormData={setFormData} />
-                <ProjectDocumentsSection 
-                  formData={formData} 
-                  setFormData={setFormData}
-                  documentFilters={documentFilters}
-                  setDocumentFilters={setDocumentFilters}
-                />
+                {/* Project Documents Section - Temporarily disabled, use new Project Management */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-blue-700">Document management is now available in the new Project Management module.</p>
+                </div>
               </form>
             </div>
           </ScrollArea>

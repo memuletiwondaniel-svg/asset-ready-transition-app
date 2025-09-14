@@ -615,6 +615,199 @@ export type Database = {
           },
         ]
       }
+      project_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          file_extension: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          link_type: string | null
+          link_url: string | null
+          project_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          file_extension?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          link_type?: string | null
+          link_url?: string | null
+          project_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          file_extension?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          link_type?: string | null
+          link_url?: string | null
+          project_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_milestones: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_scorecard_project: boolean | null
+          milestone_date: string
+          milestone_name: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_scorecard_project?: boolean | null
+          milestone_date: string
+          milestone_name: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_scorecard_project?: boolean | null
+          milestone_date?: string
+          milestone_name?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_team_members: {
+        Row: {
+          created_at: string
+          id: string
+          is_lead: boolean | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_lead?: boolean | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_lead?: boolean | null
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_team_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          created_by: string
+          hub_id: string | null
+          id: string
+          is_active: boolean
+          plant_id: string | null
+          project_id_number: string
+          project_id_prefix: string
+          project_scope: string | null
+          project_scope_image_url: string | null
+          project_title: string
+          station_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          hub_id?: string | null
+          id?: string
+          is_active?: boolean
+          plant_id?: string | null
+          project_id_number: string
+          project_id_prefix: string
+          project_scope?: string | null
+          project_scope_image_url?: string | null
+          project_title: string
+          station_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          hub_id?: string | null
+          id?: string
+          is_active?: boolean
+          plant_id?: string | null
+          project_id_number?: string
+          project_id_prefix?: string
+          project_scope?: string | null
+          project_scope_image_url?: string | null
+          project_title?: string
+          station_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_approvers: {
         Row: {
           approved_at: string | null

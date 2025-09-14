@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, BarChart3, Settings, ArrowLeft, ArrowRight, Upload, Clock, CheckCircle } from 'lucide-react';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
+import ProjectManagementPage from "./project/ProjectManagementPage";
 import { supabase } from '@/integrations/supabase/client';
 
 interface AdminToolsPageProps {
@@ -12,7 +13,7 @@ interface AdminToolsPageProps {
 }
 
 const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects'>('dashboard');
   const [userStats, setUserStats] = useState({
     total: 0,
     pending: 0,
@@ -57,6 +58,10 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     return <ManageChecklistPage onBack={() => setActiveView('dashboard')} />;
   }
 
+  if (activeView === 'projects') {
+    return <ProjectManagementPage />;
+  }
+
   const adminTools = [
     {
       id: 'users',
@@ -90,11 +95,12 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     },
     {
       id: 'projects',
-      title: 'Project Management',
+      title: 'Manage Project',
       description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
       icon: BarChart3,
       accentColor: '#FF8C00', // Microsoft Orange
-      stats: { total: 12, active: 8 }
+      stats: { total: 12, active: 8 },
+      onClick: () => setActiveView('projects')
     }
   ];
 
