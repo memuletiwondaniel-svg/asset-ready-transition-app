@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, X } from 'lucide-react';
+import { useProfileUsersByRole } from '@/hooks/useProfileUsers';
 
 interface ProjectTeamSectionProps {
   teamMembers: any[];
@@ -28,6 +29,8 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
     user_name: '',
     is_lead: false
   });
+
+  const { data: filteredUsers = [], isLoading } = useProfileUsersByRole(newMember.role);
 
   const addTeamMember = () => {
     if (newMember.role && newMember.user_name) {
@@ -101,24 +104,44 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
           </Select>
 
           <Select 
-            value={newMember.user_name} 
-            onValueChange={(value) => setNewMember(prev => ({ ...prev, user_name: value, user_id: value }))}
+            value={newMember.user_id} 
+            onValueChange={(value) => {
+              const selectedUser = filteredUsers.find(user => user.user_id === value);
+              setNewMember(prev => ({ 
+                ...prev, 
+                user_id: value, 
+                user_name: selectedUser?.full_name || value 
+              }));
+            }}
+            disabled={!newMember.role || isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select team member" />
+              <SelectValue placeholder={
+                !newMember.role 
+                  ? "Select role first" 
+                  : isLoading 
+                    ? "Loading users..." 
+                    : "Select team member"
+              } />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="John Doe">John Doe</SelectItem>
-              <SelectItem value="Jane Smith">Jane Smith</SelectItem>
-              <SelectItem value="Mike Johnson">Mike Johnson</SelectItem>
-              <SelectItem value="Add New User">+ Add New User</SelectItem>
+              {filteredUsers.map((user) => (
+                <SelectItem key={user.user_id} value={user.user_id}>
+                  {user.full_name}
+                </SelectItem>
+              ))}
+              {filteredUsers.length === 0 && newMember.role && !isLoading && (
+                <SelectItem value="" disabled>
+                  No users found for this role
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
 
           <Button 
             type="button"
             onClick={addTeamMember}
-            disabled={!newMember.role || !newMember.user_name}
+            disabled={!newMember.role || !newMember.user_id || isLoading}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
