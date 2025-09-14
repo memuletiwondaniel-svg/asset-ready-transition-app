@@ -150,20 +150,28 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                   <EnhancedCombobox
                     options={allUsers
                       .filter(user => {
-                        // Filter users based on specific role matching
-                        const userPosition = user.position?.toLowerCase() || '';
-                        
+                        const pos = (user.position || '').toLowerCase().trim();
                         switch (role) {
-                          case 'Project Manager':
-                            return userPosition.includes('project');
-                          case 'Project Engineer':
-                            return userPosition.includes('project');
-                          case 'Commissioning Lead':
-                            return userPosition.includes('commissioning');
-                          case 'Construction Lead':
-                            return userPosition.includes('construction');
-                          case 'ORA Lead':
-                            return userPosition.includes('ora');
+                          case 'Project Manager': {
+                            const keywords = ['project', 'proj', 'pm'];
+                            return keywords.some(k => pos.includes(k));
+                          }
+                          case 'Project Engineer': {
+                            const keywords = ['project', 'proj', 'pm'];
+                            return keywords.some(k => pos.includes(k));
+                          }
+                          case 'Commissioning Lead': {
+                            const keywords = ['commissioning', 'commission'];
+                            return keywords.some(k => pos.includes(k));
+                          }
+                          case 'Construction Lead': {
+                            const keywords = ['construction', 'construct'];
+                            return keywords.some(k => pos.includes(k));
+                          }
+                          case 'ORA Lead': {
+                            const keywords = ['ora'];
+                            return keywords.some(k => pos.includes(k));
+                          }
                           default:
                             return true;
                         }
