@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, X } from 'lucide-react';
 import { useProfileUsersByRole } from '@/hooks/useProfileUsers';
@@ -106,8 +107,12 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
             </SelectContent>
           </Select>
 
-          <Select 
-            value={newMember.user_id} 
+          <EnhancedCombobox
+            options={allUsers.map(user => ({
+              value: user.user_id,
+              label: user.full_name
+            }))}
+            value={newMember.user_id}
             onValueChange={(value) => {
               const selectedUser = allUsers.find(user => user.user_id === value);
               setNewMember(prev => ({ 
@@ -118,41 +123,18 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                 position: selectedUser?.position || ''
               }));
             }}
-            disabled={isLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={
-                !newMember.role 
-                  ? "Select role first" 
-                  : isLoading 
-                    ? "Loading users..." 
-                    : "Select team member"
-              } />
-            </SelectTrigger>
-            <SelectContent>
-              {allUsers.map((user) => (
-                <SelectItem key={user.user_id} value={user.user_id}>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar_url} alt={user.full_name} />
-                      <AvatarFallback className="text-xs">
-                        {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{user.full_name}</span>
-                      <span className="text-xs text-muted-foreground">{user.position}</span>
-                    </div>
-                  </div>
-                </SelectItem>
-              ))}
-              {allUsers.length === 0 && !isLoading && (
-                <div className="px-3 py-2 text-sm text-muted-foreground">
-                  No users found
-                </div>
-              )}
-            </SelectContent>
-          </Select>
+            placeholder={
+              !newMember.role 
+                ? "Select role first" 
+                : isLoading 
+                  ? "Loading users..." 
+                  : "Search and select team member"
+            }
+            emptyText="No users found"
+            allowCreate={false}
+            disabled={isLoading || !newMember.role}
+            className="w-full"
+          />
 
           <Button 
             type="button"
