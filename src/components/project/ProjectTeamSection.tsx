@@ -147,9 +147,9 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                 </SelectItem>
               ))}
               {allUsers.length === 0 && !isLoading && (
-                <SelectItem value="" disabled>
+                <div className="px-3 py-2 text-sm text-muted-foreground">
                   No users found
-                </SelectItem>
+                </div>
               )}
             </SelectContent>
           </Select>
