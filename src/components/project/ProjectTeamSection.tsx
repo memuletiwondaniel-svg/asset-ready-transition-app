@@ -137,15 +137,23 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                   <EnhancedCombobox
                     options={allUsers
                       .filter(user => {
-                        // Filter users based on role matching
+                        // Filter users based on specific role matching
                         const userPosition = user.position?.toLowerCase() || '';
-                        const roleKeywords = role.toLowerCase().split(' ');
                         
-                        // Check if user's position contains any of the role keywords
-                        return roleKeywords.some(keyword => 
-                          userPosition.includes(keyword) || 
-                          user.full_name.toLowerCase().includes(keyword)
-                        );
+                        switch (role) {
+                          case 'Project Manager':
+                            return userPosition.includes('project');
+                          case 'Project Engineer':
+                            return userPosition.includes('project') && userPosition.includes('engineer');
+                          case 'Commissioning Lead':
+                            return userPosition.includes('commissioning');
+                          case 'Construction Lead':
+                            return userPosition.includes('construction');
+                          case 'ORA Lead':
+                            return userPosition.includes('ora');
+                          default:
+                            return true;
+                        }
                       })
                       .map(user => ({
                         value: user.user_id,
