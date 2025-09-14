@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, X } from 'lucide-react';
-import { useProfileUsersByRole } from '@/hooks/useProfileUsers';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ProjectTeamSectionProps {
@@ -34,7 +34,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
     position: ''
   });
 
-  const { data: allUsers = [], isLoading } = useProfileUsersByRole('');
+  const { data: allUsers = [], isLoading } = useProfileUsers();
 
   const addTeamMember = () => {
     if (newMember.role && newMember.user_name) {
@@ -108,10 +108,21 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
           </Select>
 
           <EnhancedCombobox
-            options={allUsers.map(user => ({
-              value: user.user_id,
-              label: user.full_name
-            }))}
+            options={
+              newMember.role 
+                ? allUsers
+                    .filter(user => {
+                      // Filter users based on role matching
+                      if (newMember.role === 'Other') return true;
+                      return user.position?.toLowerCase().includes(newMember.role.toLowerCase()) || 
+                             user.full_name.toLowerCase().includes(newMember.role.toLowerCase());
+                    })
+                    .map(user => ({
+                      value: user.user_id,
+                      label: `${user.full_name} ${user.position ? `(${user.position})` : ''}`
+                    }))
+                : []
+            }
             value={newMember.user_id}
             onValueChange={(value) => {
               const selectedUser = allUsers.find(user => user.user_id === value);
@@ -130,7 +141,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                   ? "Loading users..." 
                   : "Search and select team member"
             }
-            emptyText="No users found"
+            emptyText={!newMember.role ? "Select role first" : "No matching users found"}
             allowCreate={false}
             disabled={isLoading || !newMember.role}
             className="w-full"
