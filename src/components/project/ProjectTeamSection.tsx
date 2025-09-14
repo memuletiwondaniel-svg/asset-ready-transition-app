@@ -189,32 +189,6 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                     disabled={isLoading}
                     className="w-full"
                   />
-                  
-                  {assignedMember && (
-                    <div className="flex items-center gap-3 pt-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={assignedMember.avatar_url} alt={assignedMember.user_name} />
-                        <AvatarFallback className="text-xs">
-                          {assignedMember.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 flex items-center gap-2">
-                        <Badge variant="default" className="text-xs">
-                          {assignedMember.user_name}
-                        </Badge>
-                        {assignedMember.position && (
-                          <Badge variant="outline" className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs">
-                            {assignedMember.position}
-                          </Badge>
-                        )}
-                        {assignedMember.is_lead && (
-                          <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
-                            Lead
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -275,32 +249,6 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                         </Button>
                       </div>
                     </div>
-                    
-                    {member.user_name && (
-                      <div className="flex items-center gap-3 pt-3 border-t">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.avatar_url} alt={member.user_name} />
-                          <AvatarFallback className="text-xs">
-                            {member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 flex items-center gap-2">
-                          <Badge variant="default" className="text-xs">
-                            {member.user_name}
-                          </Badge>
-                          {member.role && (
-                            <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-xs">
-                              {member.role}
-                            </Badge>
-                          )}
-                          {member.position && (
-                            <Badge variant="outline" className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs">
-                              {member.position}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
             </div>
