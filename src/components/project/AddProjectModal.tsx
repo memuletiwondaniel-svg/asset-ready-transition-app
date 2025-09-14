@@ -16,6 +16,8 @@ import { useHubs } from '@/hooks/useHubs';
 import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
+import EnhancedAuthModal from '@/components/enhanced-auth/EnhancedAuthModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -43,6 +45,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const [milestones, setMilestones] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const handleImageDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -79,10 +82,16 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     { value: 'MoC', label: 'MoC' }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.project_id_prefix || !formData.project_id_number || !formData.project_title) {
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setAuthOpen(true);
       return;
     }
 
@@ -116,6 +125,22 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     setMilestones([]);
     setDocuments([]);
     onClose();
+  };
+
+  const handleAuthenticated = () => {
+    const projectData = {
+      project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
+      project_id_number: formData.project_id_number,
+      project_title: formData.project_title,
+      project_scope: formData.project_scope,
+      project_scope_image_url: formData.project_scope_image_url,
+      plant_id: formData.plant_id || undefined,
+      station_id: formData.station_id || undefined,
+      hub_id: formData.hub_id || undefined,
+    };
+
+    createProject(projectData);
+    handleClose();
   };
 
   const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
@@ -362,6 +387,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
             </Button>
           </div>
         </form>
+        <EnhancedAuthModal 
+          isOpen={authOpen}
+          onClose={() => setAuthOpen(false)}
+          onAuthenticated={handleAuthenticated}
+        />
       </DialogContent>
     </Dialog>
   );
