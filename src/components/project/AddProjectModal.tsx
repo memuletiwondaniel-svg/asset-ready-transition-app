@@ -13,6 +13,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
+import { useToast } from '@/hooks/use-toast';
 import { ProjectTeamSection } from './ProjectTeamSection';
 import { ProjectMilestonesSection } from './ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
@@ -29,6 +30,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const { plants, createPlant } = usePlants();
   const { stations, createStation } = useStations();
   const { data: hubs = [], createHub } = useHubs();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
@@ -127,7 +129,18 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     onClose();
   };
 
-  const handleAuthenticated = () => {
+  const handleAuthenticated = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: 'Sign-in required',
+        description: 'Please sign in to create a project.',
+        variant: 'destructive'
+      });
+      setAuthOpen(true);
+      return;
+    }
+
     const projectData = {
       project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
       project_id_number: formData.project_id_number,
