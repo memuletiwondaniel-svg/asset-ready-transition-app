@@ -120,7 +120,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     onClose();
   };
 
-  const createProjectNow = () => {
+  const handleConfirmCreation = async () => {
     const projectData = {
       project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
       project_id_number: formData.project_id_number,
@@ -136,48 +136,23 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     handleClose();
   };
 
-  const handleConfirmCreation = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setAuthOpen(true);
-      toast({
-        title: 'Sign in required',
-        description: 'Please sign in to create a project.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    createProjectNow();
-  };
-
   const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
 
   if (showSummary) {
     return (
-      <>
-        <ProjectSummaryModal
-          open={open}
-          onClose={() => setShowSummary(false)}
-          onConfirm={handleConfirmCreation}
-          formData={formData}
-          teamMembers={teamMembers}
-          milestones={milestones}
-          documents={documents}
-          plants={plants}
-          stations={stations}
-          hubs={hubs}
-          isCreating={isCreating}
-        />
-        <EnhancedAuthModal
-          isOpen={authOpen}
-          onClose={() => setAuthOpen(false)}
-          onAuthenticated={() => {
-            setAuthOpen(false);
-            createProjectNow();
-          }}
-        />
-      </>
+      <ProjectSummaryModal
+        open={open}
+        onClose={() => setShowSummary(false)}
+        onConfirm={handleConfirmCreation}
+        formData={formData}
+        teamMembers={teamMembers}
+        milestones={milestones}
+        documents={documents}
+        plants={plants}
+        stations={stations}
+        hubs={hubs}
+        isCreating={isCreating}
+      />
     );
   }
 

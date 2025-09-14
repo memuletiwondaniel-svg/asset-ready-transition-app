@@ -95,11 +95,10 @@ export const useProjects = () => {
   const createProjectMutation = useMutation({
     mutationFn: async (projectData: Omit<Project, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'is_active'>) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
+      
       const { data, error } = await supabase
         .from('projects')
-        .insert([{ ...projectData, created_by: user.id }])
+        .insert([{ ...projectData, created_by: user?.id || null }])
         .select()
         .single();
 

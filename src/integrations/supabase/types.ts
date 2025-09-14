@@ -741,7 +741,7 @@ export type Database = {
       projects: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           hub_id: string | null
           id: string
           is_active: boolean
@@ -756,7 +756,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           hub_id?: string | null
           id?: string
           is_active?: boolean
@@ -771,7 +771,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           hub_id?: string | null
           id?: string
           is_active?: boolean
