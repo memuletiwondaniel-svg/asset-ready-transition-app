@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, BarChart3, Settings, ArrowLeft, ArrowRight, Upload, Clock, CheckCircle } from 'lucide-react';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
@@ -65,7 +66,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
   const adminTools = [
     {
       id: 'users',
-      title: 'User Management',
+      title: 'Manage User',
       description: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for BGC and Kent employees',
       icon: Users,
       accentColor: '#0078D4', // Microsoft Blue
@@ -150,132 +151,103 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
         </div>
 
         {/* Microsoft Fluent Design Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-          {adminTools.map((tool, index) => {
-            const IconComponent = tool.icon;
-            return (
-              <Card
-                key={tool.id}
-                className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm"
-                onClick={tool.onClick}
-                style={{ 
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)',
-                  borderLeft: `4px solid ${tool.accentColor}`
-                }}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div 
-                      className="w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                      style={{ backgroundColor: `${tool.accentColor}15` }}
+        <TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+            {adminTools.map((tool, index) => {
+              const IconComponent = tool.icon;
+              return (
+                <Tooltip key={tool.id}>
+                  <TooltipTrigger asChild>
+                    <Card
+                      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm"
+                      onClick={tool.onClick}
+                      style={{ 
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)',
+                        borderLeft: `4px solid ${tool.accentColor}`
+                      }}
                     >
-                      <IconComponent 
-                        className="h-6 w-6 transition-all duration-300" 
-                        style={{ color: tool.accentColor }} 
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col items-end space-y-1">
-                      {tool.stats.total !== undefined && (
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs font-medium bg-gray-50 border-gray-200 text-gray-700"
-                        >
-                          {tool.stats.total} Total
-                        </Badge>
-                      )}
-                      {tool.stats.pending && tool.stats.pending > 0 && (
-                        <Badge 
-                          className="text-xs font-medium animate-pulse"
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div 
+                            className="w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                            style={{ backgroundColor: `${tool.accentColor}15` }}
+                          >
+                            <IconComponent 
+                              className="h-10 w-10 transition-all duration-300" 
+                              style={{ color: tool.accentColor }} 
+                            />
+                          </div>
+                          
+                          <div className="flex flex-col items-end space-y-1">
+                            {tool.stats.total !== undefined && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs font-medium bg-gray-50 border-gray-200 text-gray-700"
+                              >
+                                {tool.stats.total} Total
+                              </Badge>
+                            )}
+                            {tool.stats.pending && tool.stats.pending > 0 && (
+                              <Badge 
+                                className="text-xs font-medium animate-pulse"
+                                style={{ 
+                                  backgroundColor: '#FFF4E6', 
+                                  color: '#CC8400', 
+                                  border: '1px solid #FFECCF' 
+                                }}
+                              >
+                                <Clock className="h-3 w-3 mr-1" />
+                                {tool.stats.pending} Pending
+                              </Badge>
+                            )}
+                            {tool.stats.active && tool.stats.active > 0 && (
+                              <Badge 
+                                className="text-xs font-medium"
+                                style={{ 
+                                  backgroundColor: '#F3F9F4', 
+                                  color: '#107C10', 
+                                  border: '1px solid #E1F3E3' 
+                                }}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                {tool.stats.active} Active
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="pt-0">
+                        <CardTitle className="text-lg font-semibold text-gray-900 mb-4 group-hover:text-primary transition-colors duration-300">
+                          {tool.title}
+                        </CardTitle>
+                        
+                        <Button 
+                          className="w-full font-medium transition-all duration-300 group-hover:scale-[1.02]"
                           style={{ 
-                            backgroundColor: '#FFF4E6', 
-                            color: '#CC8400', 
-                            border: '1px solid #FFECCF' 
+                            backgroundColor: tool.accentColor,
+                            borderColor: tool.accentColor
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (tool.onClick) tool.onClick();
                           }}
                         >
-                          <Clock className="h-3 w-3 mr-1" />
-                          {tool.stats.pending} Pending
-                        </Badge>
-                      )}
-                      {tool.stats.active && tool.stats.active > 0 && (
-                        <Badge 
-                          className="text-xs font-medium"
-                          style={{ 
-                            backgroundColor: '#F3F9F4', 
-                            color: '#107C10', 
-                            border: '1px solid #E1F3E3' 
-                          }}
-                        >
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          {tool.stats.active} Active
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <CardTitle className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-primary transition-colors duration-300">
-                    {tool.title}
-                  </CardTitle>
-                  
-                  <CardDescription className="text-gray-600 leading-relaxed mb-4 text-sm">
-                    {tool.description}
-                  </CardDescription>
-                  
-                  <Button 
-                    className="w-full font-medium transition-all duration-300 group-hover:scale-[1.02]"
-                    style={{ 
-                      backgroundColor: tool.accentColor,
-                      borderColor: tool.accentColor
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (tool.onClick) tool.onClick();
-                    }}
-                  >
-                    Manage {tool.title.split(' ')[0]}
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                          {tool.title}
+                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">{tool.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
 
-        {/* Microsoft Fluent Quick Actions */}
-        <Card className="border-0 bg-white/60 backdrop-blur-sm" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">Quick Actions</CardTitle>
-            <CardDescription className="text-gray-600">Frequently used administrative functions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button 
-                variant="outline" 
-                className="justify-start h-12 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all duration-200"
-              >
-                <Settings className="h-4 w-4 mr-3" />
-                System Settings
-              </Button>
-              <Button 
-                variant="outline" 
-                className="justify-start h-12 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all duration-200"
-                onClick={() => setActiveView('users')}
-              >
-                <Users className="h-4 w-4 mr-3" />
-                Bulk User Import
-              </Button>
-              <Button 
-                variant="outline" 
-                className="justify-start h-12 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all duration-200"
-              >
-                <BarChart3 className="h-4 w-4 mr-3" />
-                Generate Reports
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Microsoft Fluent Footer */}
         <div className="text-center mt-16">
