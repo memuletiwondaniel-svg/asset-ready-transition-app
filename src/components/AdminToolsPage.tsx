@@ -156,10 +156,10 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between mb-4">
                           <div 
-                            className="w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110 bg-primary/10"
+                            className="w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110 bg-primary/10"
                           >
                             <IconComponent 
-                              className="h-6 w-6 text-primary" 
+                              className="h-10 w-10 text-primary" 
                             />
                           </div>
                           
@@ -185,7 +185,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
                         </div>
                         
                         <div>
-                          <CardTitle className="text-lg font-semibold mb-3 group-hover:text-primary transition-colors">
+                          <CardTitle className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
                             {tool.title}
                           </CardTitle>
                           <div className="space-y-2">
