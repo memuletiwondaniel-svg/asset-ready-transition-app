@@ -87,14 +87,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
       onClick: () => setActiveView('checklist')
     },
     {
-      id: 'manage-checklist',
-      title: 'PSSR Configuration',
-      description: 'Configure and manage PSSR checklists for Pre-Startup Safety Reviews across all facility start-up operations',
-      icon: Settings,
-      accentColor: '#5C2D91', // Microsoft Purple
-      stats: { total: 3, active: 2 }
-    },
-    {
       id: 'projects',
       title: 'Manage Project',
       description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
@@ -106,30 +98,30 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f6f9fc 0%, #e9f3ff 100%)' }}>
-      {/* Fluent Navigation Bar */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-gray-200/50">
-        <div className="max-w-7xl mx-auto px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="transition-transform hover:scale-105">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-10 w-auto" 
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  Administration Tools
-                </h1>
-                <p className="text-sm text-gray-600">Basrah Gas Company • ORSH Platform</p>
-              </div>
+    <div className="min-h-screen bg-background">
+      {/* Modern Microsoft Fluent Navigation Bar */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container flex h-14 items-center">
+          <div className="flex items-center space-x-4">
+            <div className="transition-transform hover:scale-105">
+              <img 
+                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                alt="BGC Logo" 
+                className="h-8 w-auto" 
+              />
             </div>
+            <div>
+              <h1 className="text-lg font-semibold">
+                Administration Tools
+              </h1>
+              <p className="text-xs text-muted-foreground">Basrah Gas Company • ORSH Platform</p>
+            </div>
+          </div>
+          <div className="ml-auto">
             <Button 
               variant="outline" 
               onClick={onBack}
-              className="border-gray-300 hover:border-primary hover:bg-primary/5 transition-all duration-200"
+              className="h-9"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
@@ -138,109 +130,81 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        {/* Page Header - Microsoft Fluent Style */}
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-light text-gray-900 mb-4">
+      <div className="container py-8">
+        {/* Modern Header */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold tracking-tight">
             Administration
-            <span className="font-semibold"> Tools</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Manage users, projects, and system configurations with comprehensive administrative controls
+          <p className="text-muted-foreground mt-2">
+            Manage users, projects, and system configurations
           </p>
         </div>
 
-        {/* Microsoft Fluent Design Cards Grid */}
+        {/* Modern Cards Grid */}
         <TooltipProvider>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {adminTools.map((tool, index) => {
               const IconComponent = tool.icon;
               return (
                 <Tooltip key={tool.id}>
                   <TooltipTrigger asChild>
                     <Card
-                      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm"
+                      className="group cursor-pointer transition-all duration-200 hover:shadow-lg border-0 bg-card hover:bg-accent/5"
                       onClick={tool.onClick}
-                      style={{ 
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)',
-                        borderLeft: `4px solid ${tool.accentColor}`
-                      }}
                     >
                       <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-start justify-between mb-4">
                           <div 
-                            className="w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                            style={{ backgroundColor: `${tool.accentColor}15` }}
+                            className="w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110 bg-primary/10"
                           >
                             <IconComponent 
-                              className="h-10 w-10 transition-all duration-300" 
-                              style={{ color: tool.accentColor }} 
+                              className="h-6 w-6 text-primary" 
                             />
                           </div>
                           
                           <div className="flex flex-col items-end space-y-1">
                             {tool.stats.total !== undefined && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs font-medium bg-gray-50 border-gray-200 text-gray-700"
-                              >
-                                {tool.stats.total} Total
+                              <Badge variant="secondary" className="text-xs">
+                                {tool.stats.total}
                               </Badge>
                             )}
                             {tool.stats.pending && tool.stats.pending > 0 && (
-                              <Badge 
-                                className="text-xs font-medium animate-pulse"
-                                style={{ 
-                                  backgroundColor: '#FFF4E6', 
-                                  color: '#CC8400', 
-                                  border: '1px solid #FFECCF' 
-                                }}
-                              >
+                              <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {tool.stats.pending} Pending
+                                {tool.stats.pending}
                               </Badge>
                             )}
                             {tool.stats.active && tool.stats.active > 0 && (
-                              <Badge 
-                                className="text-xs font-medium"
-                                style={{ 
-                                  backgroundColor: '#F3F9F4', 
-                                  color: '#107C10', 
-                                  border: '1px solid #E1F3E3' 
-                                }}
-                              >
+                              <Badge variant="outline" className="text-xs text-green-600 border-green-200">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                {tool.stats.active} Active
+                                {tool.stats.active}
                               </Badge>
                             )}
                           </div>
                         </div>
-                      </CardHeader>
-                      
-                      <CardContent className="pt-0">
-                        <CardTitle className="text-lg font-semibold text-gray-900 mb-4 group-hover:text-primary transition-colors duration-300">
-                          {tool.title}
-                        </CardTitle>
                         
-                        <Button 
-                          className="w-full font-medium transition-all duration-300 group-hover:scale-[1.02]"
-                          style={{ 
-                            backgroundColor: tool.accentColor,
-                            borderColor: tool.accentColor
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (tool.onClick) tool.onClick();
-                          }}
-                        >
-                          {tool.title}
-                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                        </Button>
-                      </CardContent>
+                        <div>
+                          <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                            {tool.title}
+                          </CardTitle>
+                          <Button 
+                            className="w-full justify-between group-hover:shadow-sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (tool.onClick) tool.onClick();
+                            }}
+                          >
+                            Open
+                            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </div>
+                      </CardHeader>
                     </Card>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">{tool.description}</p>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p>{tool.description}</p>
                   </TooltipContent>
                 </Tooltip>
               );
@@ -249,15 +213,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
         </TooltipProvider>
 
 
-        {/* Microsoft Fluent Footer */}
-        <div className="text-center mt-16">
-          <div className="inline-flex items-center px-6 py-3 rounded-full bg-white/60 backdrop-blur-sm border border-gray-200" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div className="w-2 h-2 rounded-full bg-green-500 mr-3" />
-            <p className="text-sm text-gray-600 font-medium">
-              Administrative Tools • Basrah Gas Company © 2024
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
