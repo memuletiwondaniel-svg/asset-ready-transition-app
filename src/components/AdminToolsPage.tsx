@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, BarChart3, Settings, ArrowLeft, ArrowRight, Upload, Clock, CheckCircle } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCircle } from 'lucide-react';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
 import ProjectManagementPage from "./project/ProjectManagementPage";
@@ -81,7 +81,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
       id: 'checklist',
       title: 'Manage Checklists',
       description: 'Create, edit, and manage PSSR checklists with comprehensive item selection and configuration',
-      icon: Upload,
+      icon: ClipboardList,
       accentColor: '#107C10', // Microsoft Green
       stats: { total: 65, active: 65 },
       onClick: () => setActiveView('checklist')
@@ -90,7 +90,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
       id: 'projects',
       title: 'Manage Project',
       description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
-      icon: BarChart3,
+      icon: FolderOpen,
       accentColor: '#FF8C00', // Microsoft Orange
       stats: { total: 12, active: 8 },
       onClick: () => setActiveView('projects')
@@ -185,20 +185,27 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
                         </div>
                         
                         <div>
-                          <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                          <CardTitle className="text-lg font-semibold mb-3 group-hover:text-primary transition-colors">
                             {tool.title}
                           </CardTitle>
-                          <Button 
-                            className="w-full justify-between group-hover:shadow-sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (tool.onClick) tool.onClick();
-                            }}
-                          >
-                            Open
-                            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                          </Button>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm text-muted-foreground">
+                              <span>Total Items</span>
+                              <span className="font-medium">{tool.stats.total}</span>
+                            </div>
+                            {tool.stats.active && (
+                              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                <span>Active</span>
+                                <span className="font-medium text-green-600">{tool.stats.active}</span>
+                              </div>
+                            )}
+                            {tool.stats.pending && tool.stats.pending > 0 && (
+                              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                <span>Pending</span>
+                                <span className="font-medium text-orange-600">{tool.stats.pending}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </CardHeader>
                     </Card>
