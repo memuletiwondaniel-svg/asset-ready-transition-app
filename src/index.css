@@ -87,6 +87,19 @@
     --input: 0 0% 96%;                 /* Light input background */
     --ring: 210 100% 52%;
 
+    /* ORSH Brand Colors */
+    --orsh-primary: 200 100% 50%;
+    --orsh-secondary: 210 100% 35%;
+    --orsh-energy: 35 100% 50%;
+    --orsh-success: 150 100% 40%;
+    --orsh-ocean: 175 100% 45%;
+    
+    /* ORSH Gradients */
+    --orsh-gradient-primary: linear-gradient(135deg, hsl(200 100% 50%), hsl(210 100% 35%));
+    --orsh-gradient-energy: linear-gradient(135deg, hsl(35 100% 50%), hsl(0 100% 40%));
+    --orsh-gradient-success: linear-gradient(135deg, hsl(150 100% 50%), hsl(150 100% 25%));
+    --orsh-gradient-ocean: linear-gradient(135deg, hsl(175 100% 45%), hsl(190 100% 25%));
+    
     /* ORSH Gradient Background */
     --orsh-gradient: linear-gradient(135deg, #E6F3FF 0%, #F0E6FF 50%, #E6F0FF 100%);
 

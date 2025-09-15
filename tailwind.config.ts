@@ -69,6 +69,13 @@ export default {
 					DEFAULT: 'hsl(var(--google-gray))',
 					foreground: 'hsl(var(--google-gray-foreground))',
 				},
+				orsh: {
+					DEFAULT: "hsl(var(--orsh-primary))",
+					secondary: "hsl(var(--orsh-secondary))",
+					energy: "hsl(var(--orsh-energy))",
+					success: "hsl(var(--orsh-success))",
+					ocean: "hsl(var(--orsh-ocean))",
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -175,7 +182,8 @@ export default {
 				'slide-in-right': 'slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
 				'reveal': 'reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
 				'float': 'float 3s ease-in-out infinite',
-				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite'
+				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+				'spin-slow': 'spin 6s linear infinite'
 			}
 		}
 	},
