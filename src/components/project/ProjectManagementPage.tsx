@@ -5,7 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
+import { usePlants } from '@/hooks/usePlants';
+import { useStations } from '@/hooks/useStations';
+import { useHubs } from '@/hooks/useHubs';
 import { AddProjectModal } from './AddProjectModal';
+import { ViewProjectModal } from './ViewProjectModal';
+import { EditProjectModal } from './EditProjectModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +24,12 @@ interface ProjectManagementPageProps {
 
 const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
   const { projects, isLoading, deleteProject } = useProjects();
+  const { plants } = usePlants();
+  const { stations } = useStations();
+  const { data: hubs = [] } = useHubs();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [viewProject, setViewProject] = useState<any>(null);
+  const [editProject, setEditProject] = useState<any>(null);
 
   const getProjectId = (project: any) => {
     return `${project.project_id_prefix}${project.project_id_number}`;
@@ -31,6 +41,18 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
         Active
       </Badge>
     );
+  };
+
+  const getPlantName = (plantId: string) => {
+    return plants.find(p => p.id === plantId)?.name;
+  };
+
+  const getStationName = (stationId: string) => {
+    return stations.find(s => s.id === stationId)?.name;
+  };
+
+  const getHubName = (hubId: string) => {
+    return hubs.find(h => h.id === hubId)?.name;
   };
 
   if (isLoading) {
@@ -136,11 +158,17 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 bg-white shadow-lg border border-gray-200/60">
-                          <DropdownMenuItem className="flex items-center text-blue-600 hover:bg-blue-50/80">
+                          <DropdownMenuItem 
+                            className="flex items-center text-blue-600 hover:bg-blue-50/80"
+                            onClick={() => setViewProject(project)}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="flex items-center text-green-600 hover:bg-green-50/80">
+                          <DropdownMenuItem 
+                            className="flex items-center text-green-600 hover:bg-green-50/80"
+                            onClick={() => setEditProject(project)}
+                          >
                             <Edit3 className="h-4 w-4 mr-2" />
                             Edit Project
                           </DropdownMenuItem>
@@ -167,16 +195,16 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center">
-                        <span className="text-gray-700">{project.plant_name || 'Not assigned'}</span>
-                        {project.station_name && (
+                        <span className="text-gray-700">{getPlantName(project.plant_id) || 'Not assigned'}</span>
+                        {project.station_id && getStationName(project.station_id) && (
                           <Badge variant="outline" className="ml-2 text-xs">
-                            {project.station_name}
+                            {getStationName(project.station_id)}
                           </Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <span className="text-gray-700">{project.hub_name || 'Not assigned'}</span>
+                      <span className="text-gray-700">{getHubName(project.hub_id) || 'Not assigned'}</span>
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       {getStatusBadge(project)}
@@ -198,6 +226,23 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
       <AddProjectModal 
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+      />
+
+      {/* View Project Modal */}
+      <ViewProjectModal 
+        open={!!viewProject}
+        onClose={() => setViewProject(null)}
+        project={viewProject}
+        plantName={viewProject ? getPlantName(viewProject.plant_id) : undefined}
+        stationName={viewProject ? getStationName(viewProject.station_id) : undefined}
+        hubName={viewProject ? getHubName(viewProject.hub_id) : undefined}
+      />
+
+      {/* Edit Project Modal */}
+      <EditProjectModal 
+        open={!!editProject}
+        onClose={() => setEditProject(null)}
+        project={editProject}
       />
     </div>
   );
