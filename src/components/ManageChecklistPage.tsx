@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen, Edit3, MoreVertical, Trash2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen, Edit3, MoreVertical, Trash2, ClipboardList, Tag, Users, BookOpen } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -16,63 +17,48 @@ import { supabase } from '@/integrations/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-// Use the Checklist type from the hook
-
 interface ManageChecklistPageProps {
   onBack: () => void;
 }
+
 interface NewChecklistData {
   reason: string;
   selected_items: string[];
   custom_reason?: string;
 }
+
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   onBack
 }) => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'checklists' | 'items' | 'groups' | 'topics'>('dashboard');
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null);
   const [showSuccessPage, setShowSuccessPage] = useState(false);
-  const [showItemsManagement, setShowItemsManagement] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [createdChecklistName, setCreatedChecklistName] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [checklistToDelete, setChecklistToDelete] = useState<Checklist | null>(null);
-  const {
-    toast
-  } = useToast();
-  const {
-    data: checklists = [],
-    isLoading,
-    error
-  } = useChecklists();
-  const {
-    mutate: createChecklist
-  } = useCreateChecklist();
-  const {
-    mutate: updateChecklist
-  } = useUpdateChecklist();
-  const {
-    mutate: deleteChecklist
-  } = useDeleteChecklist();
+
+  const { toast } = useToast();
+  const { data: checklists = [], isLoading, error } = useChecklists();
+  const { mutate: createChecklist } = useCreateChecklist();
+  const { mutate: updateChecklist } = useUpdateChecklist();
+  const { mutate: deleteChecklist } = useDeleteChecklist();
+
   const handleCreateComplete = (checklistData: NewChecklistData) => {
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
         setCreatedChecklistName(newChecklist.name);
-
-        // Mark this checklist as newly created for badge display
         sessionStorage.setItem(`new-checklist-${newChecklist.id}`, 'true');
-
-        // Navigate back to checklist summary page (not success page)
         setShowCreateForm(false);
         toast({
           title: "Checklist created",
           description: `"${newChecklist.name}" is now available in your list.`
         });
-        // Don't set setShowSuccessPage(true) since we want to go back to main list
       },
       onError: error => {
         console.error('Failed to create checklist:', error);
@@ -84,16 +70,19 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       }
     });
   };
+
   const handleBackToChecklists = () => {
     setShowSuccessPage(false);
     setShowCreateForm(false);
     setShowEditForm(false);
     setEditingChecklist(null);
   };
+
   const handleEditChecklist = (checklist: Checklist) => {
     setEditingChecklist(checklist);
     setShowEditForm(true);
   };
+
   const handleEditComplete = () => {
     setShowEditForm(false);
     setEditingChecklist(null);
@@ -102,10 +91,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       description: "Checklist updated successfully."
     });
   };
+
   const handleDeleteChecklist = (checklist: Checklist) => {
     setChecklistToDelete(checklist);
     setShowDeleteDialog(true);
   };
+
   const confirmDeleteChecklist = () => {
     if (!checklistToDelete) return;
     deleteChecklist(checklistToDelete.id, {
@@ -127,6 +118,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       }
     });
   };
+
   const cancelDeleteChecklist = () => {
     setShowDeleteDialog(false);
     setChecklistToDelete(null);
@@ -142,9 +134,11 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       });
     }
   }, [error, toast]);
+
   const filteredAndSortedChecklists = useMemo(() => {
     let filtered = checklists.filter(checklist => {
-      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) || checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
     return [...filtered].sort((a, b) => {
@@ -160,6 +154,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       }
     });
   }, [checklists, searchQuery, filterCategory, sortBy]);
+
   const getStatusBadge = (status: Checklist['status']) => {
     switch (status) {
       case 'Active':
@@ -172,14 +167,53 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
   const isNewChecklist = (checklistId: string) => {
     return sessionStorage.getItem(`new-checklist-${checklistId}`) === 'true';
   };
+
   const handleChecklistClick = (checklist: Checklist) => {
-    // Remove the "new" badge when clicked
     sessionStorage.removeItem(`new-checklist-${checklist.id}`);
     setSelectedChecklist(checklist);
   };
+
+  // Category management data
+  const checklistCategories = [
+    {
+      id: 'checklists',
+      title: 'Checklists',
+      description: 'Manage and configure PSSR checklists for safety reviews and compliance',
+      icon: ClipboardList,
+      stats: { total: checklists.length, active: checklists.filter(c => c.status === 'Active').length },
+      onClick: () => setActiveView('checklists')
+    },
+    {
+      id: 'items',
+      title: 'Checklist Items',
+      description: 'Configure individual checklist items, questions, and validation criteria',
+      icon: FileText,
+      stats: { total: 245, active: 220 },
+      onClick: () => setActiveView('items')
+    },
+    {
+      id: 'groups',
+      title: 'Checklist Groups',
+      description: 'Organize checklist items into logical groups and categories',
+      icon: Users,
+      stats: { total: 18, active: 16 },
+      onClick: () => setActiveView('groups')
+    },
+    {
+      id: 'topics',
+      title: 'Checklist Topic',
+      description: 'Define and manage topics for categorizing and organizing checklists',
+      icon: BookOpen,
+      stats: { total: 8, active: 7 },
+      onClick: () => setActiveView('topics')
+    }
+  ];
+
+  // Handle form submissions and other views
   if (showCreateForm) {
     return <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} />;
   }
@@ -195,13 +229,151 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       setShowCreateForm(true);
     }} />;
   }
-  if (showItemsManagement) {
-    return <ChecklistManagementPage onBack={() => setShowItemsManagement(false)} />;
-  }
   if (selectedChecklist) {
     return <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} />;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+
+  // Handle different views
+  if (activeView === 'items') {
+    return <ChecklistManagementPage onBack={() => setActiveView('dashboard')} />;
+  } else if (activeView === 'groups') {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <Button onClick={() => setActiveView('dashboard')} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Categories
+        </Button>
+        <h1 className="text-2xl font-bold mb-4">Checklist Groups Management</h1>
+        <p className="text-muted-foreground">Coming soon...</p>
+      </div>
+    );
+  } else if (activeView === 'topics') {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <Button onClick={() => setActiveView('dashboard')} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Categories
+        </Button>
+        <h1 className="text-2xl font-bold mb-4">Checklist Topics Management</h1>
+        <p className="text-muted-foreground">Coming soon...</p>
+      </div>
+    );
+  } else if (activeView === 'dashboard') {
+    // Show dashboard view with categories
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Navigation Bar */}
+        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          <div className="container flex h-14 items-center">
+            <div className="flex items-center space-x-4">
+              <div className="transition-transform hover:scale-105">
+                <img 
+                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+                  alt="BGC Logo" 
+                  className="h-8 w-auto" 
+                />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold">
+                  Manage Checklists
+                </h1>
+                <p className="text-xs text-muted-foreground">PSSR Microservice • Basrah Gas Company</p>
+              </div>
+            </div>
+            <div className="ml-auto">
+              <Button 
+                variant="outline" 
+                onClick={onBack}
+                className="h-9"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Admin Tools
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="container py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Checklist Management
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Manage checklists, items, groups, and topics for PSSR safety reviews
+            </p>
+          </div>
+
+          {/* Categories Grid */}
+          <TooltipProvider>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {checklistCategories.map((category, index) => {
+                const IconComponent = category.icon;
+                return (
+                  <Tooltip key={category.id}>
+                    <TooltipTrigger asChild>
+                      <Card
+                        className="group cursor-pointer transition-all duration-200 hover:shadow-lg border-0 bg-card hover:bg-accent/5"
+                        onClick={category.onClick}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between mb-4">
+                            <div 
+                              className="w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110 bg-primary/10"
+                            >
+                              <IconComponent 
+                                className="h-10 w-10 text-primary" 
+                              />
+                            </div>
+                            
+                            <div className="flex flex-col items-end space-y-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {category.stats.total}
+                              </Badge>
+                              {category.stats.active && (
+                                <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                                  {category.stats.active} Active
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <CardTitle className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                              {category.title}
+                            </CardTitle>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                <span>Total Items</span>
+                                <span className="font-medium">{category.stats.total}</span>
+                              </div>
+                              {category.stats.active && (
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                  <span>Active</span>
+                                  <span className="font-medium text-green-600">{category.stats.active}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs">
+                      <p>{category.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
+        </div>
+      </div>
+    );
+  }
+
+  // Default to checklists view
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Navigation Bar */}
       <div className="fluent-navigation sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-8 py-6">
@@ -210,18 +382,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               <div className="fluent-reveal">
                 <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-12 w-auto animate-float" />
               </div>
-              <div className="animate-fade-in-up" style={{
-              animationDelay: '0.2s'
-            }}>
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                   Manage Checklists
                 </h1>
                 <p className="text-sm text-muted-foreground font-medium">PSSR Microservice • Basrah Gas Company</p>
               </div>
             </div>
-            <Button variant="outline" onClick={onBack} className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group">
+            <Button variant="outline" onClick={() => setActiveView('dashboard')} className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group">
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              Back to Admin Tools
+              Back to Categories
             </Button>
           </div>
         </div>
@@ -241,10 +411,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button variant="outline" className="fluent-button hover:bg-secondary/80 hover:border-primary/20" onClick={() => setShowItemsManagement(true)}>
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Browse Items & Categories
-              </Button>
               <Button className="fluent-button bg-primary hover:bg-primary-hover shadow-fluent-md hover:shadow-fluent-lg" onClick={() => setShowCreateForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create New Checklist
@@ -289,14 +455,18 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         </div>
 
         {/* Loading State */}
-        {isLoading ? <div className="flex items-center justify-center py-16">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
               <p className="text-muted-foreground">Loading checklists...</p>
             </div>
-          </div> : <>
+          </div>
+        ) : (
+          <>
             {/* Checklists Grid */}
-            {filteredAndSortedChecklists.length === 0 ? <div className="text-center py-16">
+            {filteredAndSortedChecklists.length === 0 ? (
+              <div className="text-center py-16">
                 <div className="flex flex-col items-center space-y-6">
                   <FileText className="h-16 w-16 text-muted-foreground" />
                   <div className="space-y-2">
@@ -306,14 +476,15 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                     </p>
                   </div>
                   <div className="flex items-center space-x-3">
-                    
                     <Button className="fluent-button bg-primary hover:bg-primary-hover" onClick={() => setShowCreateForm(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Create First Checklist
                     </Button>
                   </div>
                 </div>
-              </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredAndSortedChecklists.map((checklist, index) => (
                   <Card key={checklist.id} className="fluent-card group hover:shadow-fluent-lg transition-all duration-300 cursor-pointer animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}} onClick={() => handleChecklistClick(checklist)}>
                     <CardHeader className="pb-3">
@@ -381,43 +552,31 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                     </CardContent>
                   </Card>
                 ))}
-              </div>}
-          </>}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              Delete Checklist
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Are you sure you want to delete the checklist <strong>"{checklistToDelete?.name}"</strong>?
-              </p>
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mt-3">
-                <p className="text-sm text-destructive font-medium">⚠️ Warning:</p>
-                <ul className="text-sm text-destructive mt-1 space-y-1">
-                  <li>• This action cannot be undone</li>
-                  <li>• All checklist items and configurations will be permanently removed</li>
-                  <li>• Any active PSSRs using this checklist may be affected</li>
-                </ul>
-              </div>
+            <AlertDialogTitle>Delete Checklist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{checklistToDelete?.name}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDeleteChecklist}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteChecklist} className="bg-destructive hover:bg-destructive/90">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Checklist
+            <AlertDialogCancel onClick={cancelDeleteChecklist}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteChecklist} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+    </div>
+  );
 };
+
 export default ManageChecklistPage;
