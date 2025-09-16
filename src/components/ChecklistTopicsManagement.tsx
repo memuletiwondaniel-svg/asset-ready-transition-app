@@ -225,7 +225,7 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
               className="h-10 px-4 py-2 rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:-translate-x-0.5" />
-              Back to Categories
+              Back to Admin Tools
             </Button>
           </div>
           <div className="flex-1 flex justify-center">
