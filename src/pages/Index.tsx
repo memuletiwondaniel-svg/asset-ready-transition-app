@@ -166,7 +166,7 @@ const Index = () => {
             </div>
             
             {/* Right side - BGC Logo and Language Selector */}
-            <div className="flex items-center gap-12 ml-auto mr-8">
+            <div className="flex items-center gap-12 ml-auto mr-16">
               {/* BGC Logo placeholder */}
               
               
