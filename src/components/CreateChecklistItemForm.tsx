@@ -119,14 +119,14 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     } else if (type === 'project') {
       if (position === 'Construction Lead') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       if (position === 'Commissioning Lead') return 'bg-teal-50 text-teal-700 border-teal-200';
-      if (position === 'Project Manager') return 'bg-green-50 text-green-700 border-green-200';
-      if (position === 'Project Engineer') return 'bg-lime-50 text-lime-700 border-lime-200';
+      if (position === 'Proj Manager') return 'bg-green-50 text-green-700 border-green-200';
+      if (position === 'Proj Engr') return 'bg-lime-50 text-lime-700 border-lime-200';
       return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     } else if (type === 'asset') {
-      if (position === 'ORA Engr') return 'bg-amber-50 text-amber-700 border-amber-200';
+      if (position === 'ORA Engineer') return 'bg-amber-50 text-amber-700 border-amber-200';
       if (position === 'Ops Coach') return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      if (position === 'Site Engr') return 'bg-orange-50 text-orange-700 border-orange-200';
-      if (position === 'Dep Plant Director') return 'bg-red-50 text-red-700 border-red-200';
+      if (position === 'Site Engineer') return 'bg-orange-50 text-orange-700 border-orange-200';
+      if (position === 'Dep. Plant Director') return 'bg-red-50 text-red-700 border-red-200';
       if (position === 'Ops Team Lead') return 'bg-pink-50 text-pink-700 border-pink-200';
       return 'bg-amber-50 text-amber-700 border-amber-200';
     } else if (type === 'ta2') {
@@ -155,6 +155,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       if (position?.includes('P&E')) return 'bg-sky-50 text-sky-700 border-sky-200';
       if (position?.includes('Asset')) return 'bg-blue-50 text-blue-700 border-blue-200';
       if (position?.includes('HSE')) return 'bg-teal-50 text-teal-700 border-teal-200';
+      if (position === 'Plant Director') return 'bg-slate-50 text-slate-700 border-slate-200';
       return 'bg-sky-50 text-sky-700 border-sky-200'; // default Director color
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
@@ -166,14 +167,14 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     } else if (type === 'project') {
       if (position === 'Construction Lead') return 'bg-emerald-100 text-emerald-800 border-emerald-300';
       if (position === 'Commissioning Lead') return 'bg-teal-100 text-teal-800 border-teal-300';
-      if (position === 'Project Manager') return 'bg-green-100 text-green-800 border-green-300';
-      if (position === 'Project Engineer') return 'bg-lime-100 text-lime-800 border-lime-300';
+      if (position === 'Proj Manager') return 'bg-green-100 text-green-800 border-green-300';
+      if (position === 'Proj Engr') return 'bg-lime-100 text-lime-800 border-lime-300';
       return 'bg-emerald-100 text-emerald-800 border-emerald-300';
     } else if (type === 'asset') {
-      if (position === 'ORA Engr') return 'bg-amber-100 text-amber-800 border-amber-300';
+      if (position === 'ORA Engineer') return 'bg-amber-100 text-amber-800 border-amber-300';
       if (position === 'Ops Coach') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      if (position === 'Site Engr') return 'bg-orange-100 text-orange-800 border-orange-300';
-      if (position === 'Dep Plant Director') return 'bg-red-100 text-red-800 border-red-300';
+      if (position === 'Site Engineer') return 'bg-orange-100 text-orange-800 border-orange-300';
+      if (position === 'Dep. Plant Director') return 'bg-red-100 text-red-800 border-red-300';
       if (position === 'Ops Team Lead') return 'bg-pink-100 text-pink-800 border-pink-300';
       return 'bg-amber-100 text-amber-800 border-amber-300';
     } else if (type === 'ta2') {
@@ -202,6 +203,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       if (position?.includes('P&E')) return 'bg-slate-100 text-slate-800 border-slate-300';
       if (position?.includes('Asset')) return 'bg-zinc-100 text-zinc-800 border-zinc-300';
       if (position?.includes('HSE')) return 'bg-stone-100 text-stone-800 border-stone-300';
+      if (position === 'Plant Director') return 'bg-slate-200 text-slate-900 border-slate-400';
       return 'bg-neutral-100 text-neutral-800 border-neutral-300'; // default Director color
     }
     return 'bg-orange-100 text-orange-800 border-orange-300';
@@ -835,55 +837,27 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* HSE Section */}
-                    {(hseLeadResponsible.filter(hse => hse.position).length > 0 || formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
+                    {/* Project Section */}
+                    {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
+                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {hseLeadResponsible.filter(hse => hse.position).map(hse => (
+                          {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr'].includes(role)).map((role, index) => (
                             <div 
-                              key={hse.id}
+                              key={`project-${role}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `hse-resp-${hse.id}` ? null : `hse-resp-${hse.id}`)}
-                              >
-                                <span className="font-medium truncate">{hse.position}</span>
-                                {selectedTag === `hse-resp-${hse.id}` && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeHSELeadResponsible(hse.id);
-                                      setSelectedTag(null);
-                                    }}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </Button>
-                                )}
-                              </Badge>
-                            </div>
-                          ))}
-                          {formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((role, index) => (
-                            <div 
-                              key={`hse-${role}-${index}`}
-                              className="group relative"
-                            >
-                              <Badge 
-                                variant="secondary" 
-                                className={`${getResponsibleColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `hse-regular-${role}-${index}` ? null : `hse-regular-${role}-${index}`)}
+                                className={`${getResponsibleColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `project-resp-${role}-${index}` ? null : `project-resp-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
-                                {selectedTag === `hse-regular-${role}-${index}` && (
+                                {selectedTag === `project-resp-${role}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
@@ -972,28 +946,28 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                         </div>
                       </div>
                     )}
-                    
-                    {/* Project Section */}
-                    {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).length > 0 && (
+
+                    {/* Asset Section */}
+                    {formData.responsible.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
+                          <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Asset</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).map((role, index) => (
+                          {formData.responsible.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
                             <div 
-                              key={`project-${role}-${index}`}
+                              key={`asset-${role}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `project-resp-${role}-${index}` ? null : `project-resp-${role}-${index}`)}
+                                className={`${getResponsibleColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `asset-resp-${role}-${index}` ? null : `asset-resp-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
-                                {selectedTag === `project-resp-${role}-${index}` && (
+                                {selectedTag === `asset-resp-${role}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
@@ -1014,8 +988,77 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
 
-                    {/* Asset Section */}
-                    {formData.responsible.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
+                    {/* HSE Section */}
+                    {(hseLeadResponsible.filter(hse => hse.position).length > 0 || formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {hseLeadResponsible.filter(hse => hse.position).map(hse => (
+                            <div 
+                              key={hse.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-resp-${hse.id}` ? null : `hse-resp-${hse.id}`)}
+                              >
+                                <span className="font-medium truncate">{hse.position}</span>
+                                {selectedTag === `hse-resp-${hse.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeHSELeadResponsible(hse.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`hse-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-regular-${role}-${index}` ? null : `hse-regular-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `hse-regular-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('responsible', formData.responsible.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Directors Section */}
+                    {(directorResponsible.filter(dir => dir.position).length > 0 || formData.responsible.filter(role => ['Plant Director'].includes(role)).length > 0) && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
@@ -1284,96 +1327,27 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                  {/* Display all approvers together - organized by categories */}
                 {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0 || directorApprovers.filter(dir => dir.position).length > 0) && (
                   <div className="grid gap-4 p-4 bg-muted/30 rounded-lg border">
-                    {/* Directors Section */}
-                    {directorApprovers.filter(dir => dir.position).length > 0 && (
+                    {/* Project Section */}
+                    {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-slate-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
+                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {directorApprovers.filter(dir => dir.position).map(dir => (
+                          {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr'].includes(role)).map((role, index) => (
                             <div 
-                              key={dir.id}
+                              key={`project-app-${role}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `dir-app-${dir.id}` ? null : `dir-app-${dir.id}`)}
-                              >
-                                <span className="font-medium truncate">{dir.position}</span>
-                                {selectedTag === `dir-app-${dir.id}` && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeDirectorApprover(dir.id);
-                                      setSelectedTag(null);
-                                    }}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </Button>
-                                )}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* HSE Section */}
-                    {(hseLeadApprovers.filter(hse => hse.position).length > 0 || formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
-                          <div className="h-px bg-border flex-1 ml-2"></div>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {hseLeadApprovers.filter(hse => hse.position).map(hse => (
-                            <div 
-                              key={hse.id}
-                              className="group relative"
-                            >
-                              <Badge 
-                                variant="secondary" 
-                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `hse-app-${hse.id}` ? null : `hse-app-${hse.id}`)}
-                              >
-                                <span className="font-medium truncate">{hse.position}</span>
-                                {selectedTag === `hse-app-${hse.id}` && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeHSELeadApprover(hse.id);
-                                      setSelectedTag(null);
-                                    }}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </Button>
-                                )}
-                              </Badge>
-                            </div>
-                          ))}
-                          {formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((role, index) => (
-                            <div 
-                              key={`hse-${role}-${index}`}
-                              className="group relative"
-                            >
-                              <Badge 
-                                variant="secondary" 
-                                className={`${getApproverColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `hse-regular-app-${role}-${index}` ? null : `hse-regular-app-${role}-${index}`)}
+                                className={`${getApproverColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `project-app-${role}-${index}` ? null : `project-app-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
-                                {selectedTag === `hse-regular-app-${role}-${index}` && (
+                                {selectedTag === `project-app-${role}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
@@ -1463,8 +1437,187 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* Project Section */}
-                    {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).length > 0 && (
+                    {/* Asset Section */}
+                    {formData.approvers.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Asset</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.approvers.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`asset-app-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `asset-app-${role}-${index}` ? null : `asset-app-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `asset-app-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* HSE Section */}
+                    {(hseLeadApprovers.filter(hse => hse.position).length > 0 || formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {hseLeadApprovers.filter(hse => hse.position).map(hse => (
+                            <div 
+                              key={hse.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-app-${hse.id}` ? null : `hse-app-${hse.id}`)}
+                              >
+                                <span className="font-medium truncate">{hse.position}</span>
+                                {selectedTag === `hse-app-${hse.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeHSELeadApprover(hse.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`hse-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-regular-app-${role}-${index}` ? null : `hse-regular-app-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `hse-regular-app-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Directors Section */}
+                    {(directorApprovers.filter(dir => dir.position).length > 0 || formData.approvers.filter(role => ['Plant Director'].includes(role)).length > 0) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-slate-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {directorApprovers.filter(dir => dir.position).map(dir => (
+                            <div 
+                              key={dir.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `dir-app-${dir.id}` ? null : `dir-app-${dir.id}`)}
+                              >
+                                <span className="font-medium truncate">{dir.position}</span>
+                                {selectedTag === `dir-app-${dir.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeDirectorApprover(dir.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {formData.approvers.filter(role => ['Plant Director'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`director-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('director', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `director-regular-app-${role}-${index}` ? null : `director-regular-app-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `director-regular-app-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Other Roles Section - for any remaining roles */}
+                    {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
