@@ -50,6 +50,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [ta2Approvers, setTA2Approvers] = useState<TA2Approver[]>([]);
   const [ta2Responsible, setTA2Responsible] = useState<TA2Approver[]>([]);
+  const [showTA2ApproverConfig, setShowTA2ApproverConfig] = useState<string | null>(null);
+  const [showTA2ResponsibleConfig, setShowTA2ResponsibleConfig] = useState<string | null>(null);
   
   const createChecklistItemMutation = useCreateChecklistItem();
   
@@ -188,6 +190,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       position: ''
     };
     setTA2Approvers([...ta2Approvers, newTA2]);
+    setShowTA2ApproverConfig(newTA2.id);
   };
 
   const updateTA2Approver = (id: string, field: keyof TA2Approver, value: string) => {
@@ -202,8 +205,12 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
           
           if (disc === 'Tech Safety' || disc === 'Civil') {
             updated.position = `TA2 ${disc}`;
+            // Hide config once position is complete
+            if (disc) setShowTA2ApproverConfig(null);
           } else if (disc && comm) {
             updated.position = `TA2 ${disc} (${comm})`;
+            // Hide config once position is complete
+            setShowTA2ApproverConfig(null);
           } else if (disc) {
             updated.position = `TA2 ${disc}`;
           }
@@ -228,6 +235,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       position: ''
     };
     setTA2Responsible([...ta2Responsible, newTA2]);
+    setShowTA2ResponsibleConfig(newTA2.id);
   };
 
   const updateTA2Responsible = (id: string, field: keyof TA2Approver, value: string) => {
@@ -241,8 +249,12 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
           
           if (disc === 'Tech Safety' || disc === 'Civil') {
             updated.position = `TA2 ${disc}`;
+            // Hide config once position is complete
+            if (disc) setShowTA2ResponsibleConfig(null);
           } else if (disc && comm) {
             updated.position = `TA2 ${disc} (${comm})`;
+            // Hide config once position is complete
+            setShowTA2ResponsibleConfig(null);
           } else if (disc) {
             updated.position = `TA2 ${disc}`;
           }
@@ -469,11 +481,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                {/* Display selected regular responsible parties */}
-                {formData.responsible.length > 0 && (
+                {/* Display all responsible parties together */}
+                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.responsible.map(resp => (
-                      <Badge key={resp} variant="secondary" className="gap-1">
+                      <Badge key={resp} variant="secondary" className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
                         {resp}
                         <Button 
                           variant="ghost" 
@@ -485,56 +497,68 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                         </Button>
                       </Badge>
                     ))}
+                    {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
+                      <Badge key={ta2.id} variant="secondary" className="gap-1 bg-green-50 text-green-700 border-green-200">
+                        {ta2.position}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => removeTA2Responsible(ta2.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
                   </div>
                 )}
                 
-                {/* TA2 Responsible Parties */}
+                {/* TA2 Responsible Configuration */}
                 {ta2Responsible.map((ta2) => (
-                  <div key={ta2.id} className="border rounded-lg p-4 bg-green-50/50 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-green-800">TA2 Responsible Configuration</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeTA2Responsible(ta2.id)}
-                        className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Discipline</Label>
-                        <EnhancedSearchableCombobox
-                          options={disciplineOptions}
-                          value={ta2.discipline}
-                          onValueChange={(value) => updateTA2Responsible(ta2.id, 'discipline', value)}
-                          placeholder="Select discipline..."
-                          className="h-8"
-                        />
+                  showTA2ResponsibleConfig === ta2.id && (
+                    <div key={ta2.id} className="border rounded-lg p-4 bg-green-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-green-800">Configure TA2 Responsible</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeTA2Responsible(ta2.id);
+                            setShowTA2ResponsibleConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                       
-                      {ta2.discipline && !['Tech Safety', 'Civil'].includes(ta2.discipline) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs text-muted-foreground">Commission</Label>
+                          <Label className="text-xs text-muted-foreground">Discipline</Label>
                           <EnhancedSearchableCombobox
-                            options={getCommissionOptions(ta2.discipline)}
-                            value={ta2.commission}
-                            onValueChange={(value) => updateTA2Responsible(ta2.id, 'commission', value)}
-                            placeholder="Select commission..."
+                            options={disciplineOptions}
+                            value={ta2.discipline}
+                            onValueChange={(value) => updateTA2Responsible(ta2.id, 'discipline', value)}
+                            placeholder="Select discipline..."
                             className="h-8"
                           />
                         </div>
-                      )}
+                        
+                        {ta2.discipline && !['Tech Safety', 'Civil'].includes(ta2.discipline) && (
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Commission</Label>
+                            <EnhancedSearchableCombobox
+                              options={getCommissionOptions(ta2.discipline)}
+                              value={ta2.commission}
+                              onValueChange={(value) => updateTA2Responsible(ta2.id, 'commission', value)}
+                              placeholder="Select commission..."
+                              className="h-8"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    
-                    {ta2.position && (
-                      <Badge variant="outline" className="bg-green-100 text-green-800">
-                        {ta2.position}
-                      </Badge>
-                    )}
-                  </div>
+                  )
                 ))}
               </div>
               
@@ -567,11 +591,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                {/* Display selected regular approvers */}
-                {formData.approvers.length > 0 && (
+                {/* Display all approvers together */}
+                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.approvers.map(approver => (
-                      <Badge key={approver} variant="secondary" className="gap-1">
+                      <Badge key={approver} variant="secondary" className="gap-1 bg-purple-50 text-purple-700 border-purple-200">
                         {approver}
                         <Button 
                           variant="ghost" 
@@ -583,56 +607,68 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                         </Button>
                       </Badge>
                     ))}
+                    {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
+                      <Badge key={ta2.id} variant="secondary" className="gap-1 bg-orange-50 text-orange-700 border-orange-200">
+                        {ta2.position}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => removeTA2Approver(ta2.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
                   </div>
                 )}
                 
-                {/* TA2 Approvers */}
+                {/* TA2 Approver Configuration */}
                 {ta2Approvers.map((ta2) => (
-                  <div key={ta2.id} className="border rounded-lg p-4 bg-blue-50/50 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-blue-800">TA2 Approver Configuration</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeTA2Approver(ta2.id)}
-                        className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Discipline</Label>
-                        <EnhancedSearchableCombobox
-                          options={disciplineOptions}
-                          value={ta2.discipline}
-                          onValueChange={(value) => updateTA2Approver(ta2.id, 'discipline', value)}
-                          placeholder="Select discipline..."
-                          className="h-8"
-                        />
+                  showTA2ApproverConfig === ta2.id && (
+                    <div key={ta2.id} className="border rounded-lg p-4 bg-blue-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-blue-800">Configure TA2 Approver</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeTA2Approver(ta2.id);
+                            setShowTA2ApproverConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                       
-                      {ta2.discipline && !['Tech Safety', 'Civil'].includes(ta2.discipline) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs text-muted-foreground">Commission</Label>
+                          <Label className="text-xs text-muted-foreground">Discipline</Label>
                           <EnhancedSearchableCombobox
-                            options={getCommissionOptions(ta2.discipline)}
-                            value={ta2.commission}
-                            onValueChange={(value) => updateTA2Approver(ta2.id, 'commission', value)}
-                            placeholder="Select commission..."
+                            options={disciplineOptions}
+                            value={ta2.discipline}
+                            onValueChange={(value) => updateTA2Approver(ta2.id, 'discipline', value)}
+                            placeholder="Select discipline..."
                             className="h-8"
                           />
                         </div>
-                      )}
+                        
+                        {ta2.discipline && !['Tech Safety', 'Civil'].includes(ta2.discipline) && (
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Commission</Label>
+                            <EnhancedSearchableCombobox
+                              options={getCommissionOptions(ta2.discipline)}
+                              value={ta2.commission}
+                              onValueChange={(value) => updateTA2Approver(ta2.id, 'commission', value)}
+                              placeholder="Select commission..."
+                              className="h-8"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    
-                    {ta2.position && (
-                      <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                        {ta2.position}
-                      </Badge>
-                    )}
-                  </div>
+                  )
                 ))}
               </div>
               
