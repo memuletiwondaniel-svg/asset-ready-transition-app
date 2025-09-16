@@ -52,6 +52,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const [ta2Responsible, setTA2Responsible] = useState<TA2Approver[]>([]);
   const [showTA2ApproverConfig, setShowTA2ApproverConfig] = useState<string | null>(null);
   const [showTA2ResponsibleConfig, setShowTA2ResponsibleConfig] = useState<string | null>(null);
+  const [showEngrManagerApproverConfig, setShowEngrManagerApproverConfig] = useState<string | null>(null);
+  const [showEngrManagerResponsibleConfig, setShowEngrManagerResponsibleConfig] = useState<string | null>(null);
+  const [engrManagerApprovers, setEngrManagerApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [engrManagerResponsible, setEngrManagerResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
   
   const createChecklistItemMutation = useCreateChecklistItem();
   
@@ -79,6 +83,32 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       .filter(comm => ['P&E', 'Asset'].includes(comm.name))
       .map(comm => ({ value: comm.name, label: comm.name }));
   };
+
+  // Get commission options for Engineering Manager (only P&E and Asset)
+  const getEngrManagerCommissionOptions = () => {
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
+
+  // Get distinct colors for different approver types
+  const getApproverColor = (type: string, index?: number) => {
+    const colors = {
+      regular: 'bg-purple-50 text-purple-700 border-purple-200',
+      ta2: 'bg-orange-50 text-orange-700 border-orange-200',
+      engrManager: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-50 text-gray-700 border-gray-200';
+  };
+
+  const getResponsibleColor = (type: string, index?: number) => {
+    const colors = {
+      regular: 'bg-blue-50 text-blue-700 border-blue-200',
+      ta2: 'bg-green-50 text-green-700 border-green-200',
+      engrManager: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-50 text-gray-700 border-gray-200';
+  };
   const validateForm = (): boolean => {
     const newErrors: Partial<NewChecklistItemData> = {};
     if (!formData.description.trim()) {
@@ -87,10 +117,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    if (formData.approvers.length === 0 && ta2Approvers.length === 0) {
+    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0) {
       newErrors.approvers = 'At least one approver is required' as any;
     }
-    if (formData.responsible.length === 0 && ta2Responsible.length === 0) {
+    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0) {
       newErrors.responsible = 'At least one responsible party is required' as any;
     }
     setErrors(newErrors);
@@ -99,16 +129,18 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const handleSubmit = async () => {
     if (validateForm()) {
       try {
-        // Combine regular approvers with TA2 approvers
+        // Combine all approvers
         const allApprovers = [
           ...formData.approvers,
-          ...ta2Approvers.map(ta2 => ta2.position)
+          ...ta2Approvers.map(ta2 => ta2.position),
+          ...engrManagerApprovers.map(engr => engr.position)
         ];
         
-        // Combine regular responsible with TA2 responsible
+        // Combine all responsible
         const allResponsible = [
           ...formData.responsible,
-          ...ta2Responsible.map(ta2 => ta2.position)
+          ...ta2Responsible.map(ta2 => ta2.position),
+          ...engrManagerResponsible.map(engr => engr.position)
         ];
         
         const newItem = {
@@ -264,6 +296,63 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       }
       return ta2;
     }));
+  };
+
+  // Engineering Manager management functions
+  const addEngrManagerApprover = () => {
+    const newEngrManager = {
+      id: Date.now().toString(),
+      commission: '',
+      position: ''
+    };
+    setEngrManagerApprovers([...engrManagerApprovers, newEngrManager]);
+    setShowEngrManagerApproverConfig(newEngrManager.id);
+  };
+
+  const updateEngrManagerApprover = (id: string, field: string, value: string) => {
+    setEngrManagerApprovers(prev => prev.map(engr => {
+      if (engr.id === id) {
+        const updated = { ...engr, [field]: value };
+        if (field === 'commission' && value) {
+          updated.position = `Engr. Manager (${value})`;
+          setShowEngrManagerApproverConfig(null);
+        }
+        return updated;
+      }
+      return engr;
+    }));
+  };
+
+  const removeEngrManagerApprover = (id: string) => {
+    setEngrManagerApprovers(prev => prev.filter(engr => engr.id !== id));
+  };
+
+  const addEngrManagerResponsible = () => {
+    const newEngrManager = {
+      id: Date.now().toString(),
+      commission: '',
+      position: ''
+    };
+    setEngrManagerResponsible([...engrManagerResponsible, newEngrManager]);
+    setShowEngrManagerResponsibleConfig(newEngrManager.id);
+  };
+
+  const updateEngrManagerResponsible = (id: string, field: string, value: string) => {
+    setEngrManagerResponsible(prev => prev.map(engr => {
+      if (engr.id === id) {
+        const updated = { ...engr, [field]: value };
+        if (field === 'commission' && value) {
+          updated.position = `Engr. Manager (${value})`;
+          setShowEngrManagerResponsibleConfig(null);
+        }
+        return updated;
+      }
+      return engr;
+    }));
+  };
+
+  const removeEngrManagerResponsible = (id: string) => {
+    setEngrManagerResponsible(prev => prev.filter(engr => engr.id !== id));
   };
 
   const removeTA2Responsible = (id: string) => {
@@ -472,6 +561,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   onValueChange={(value) => {
                     if (value === 'TA2') {
                       addTA2Responsible();
+                    } else if (value === 'Engr. Manager') {
+                      addEngrManagerResponsible();
                     } else if (!formData.responsible.includes(value)) {
                       updateFormData('responsible', [...formData.responsible, value]);
                     }
@@ -482,10 +573,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 />
                 
                 {/* Display all responsible parties together */}
-                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0) && (
+                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.responsible.map(resp => (
-                      <Badge key={resp} variant="secondary" className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge key={resp} variant="secondary" className={`gap-1 ${getResponsibleColor('regular')}`}>
                         {resp}
                         <Button 
                           variant="ghost" 
@@ -498,13 +589,26 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </Badge>
                     ))}
                     {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
-                      <Badge key={ta2.id} variant="secondary" className="gap-1 bg-green-50 text-green-700 border-green-200">
+                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getResponsibleColor('ta2')}`}>
                         {ta2.position}
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
                           onClick={() => removeTA2Responsible(ta2.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                    {engrManagerResponsible.filter(engr => engr.position).map(engr => (
+                      <Badge key={engr.id} variant="secondary" className={`gap-1 ${getResponsibleColor('engrManager')}`}>
+                        {engr.position}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => removeEngrManagerResponsible(engr.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -559,6 +663,39 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     </div>
                   )
+                 ))}
+                
+                {/* Engineering Manager Responsible Configuration */}
+                {engrManagerResponsible.map((engr) => (
+                  showEngrManagerResponsibleConfig === engr.id && (
+                    <div key={engr.id} className="border rounded-lg p-4 bg-indigo-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-indigo-800">Configure Engineering Manager</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeEngrManagerResponsible(engr.id);
+                            setShowEngrManagerResponsibleConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Commission</Label>
+                        <EnhancedSearchableCombobox
+                          options={getEngrManagerCommissionOptions()}
+                          value={engr.commission}
+                          onValueChange={(value) => updateEngrManagerResponsible(engr.id, 'commission', value)}
+                          placeholder="Select commission..."
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  )
                 ))}
               </div>
               
@@ -582,6 +719,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   onValueChange={(value) => {
                     if (value === 'TA2') {
                       addTA2Approver();
+                    } else if (value === 'Engr. Manager') {
+                      addEngrManagerApprover();
                     } else if (!formData.approvers.includes(value)) {
                       updateFormData('approvers', [...formData.approvers, value]);
                     }
@@ -592,10 +731,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 />
                 
                 {/* Display all approvers together */}
-                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0) && (
+                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.approvers.map(approver => (
-                      <Badge key={approver} variant="secondary" className="gap-1 bg-purple-50 text-purple-700 border-purple-200">
+                      <Badge key={approver} variant="secondary" className={`gap-1 ${getApproverColor('regular')}`}>
                         {approver}
                         <Button 
                           variant="ghost" 
@@ -608,13 +747,26 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </Badge>
                     ))}
                     {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
-                      <Badge key={ta2.id} variant="secondary" className="gap-1 bg-orange-50 text-orange-700 border-orange-200">
+                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getApproverColor('ta2')}`}>
                         {ta2.position}
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
                           onClick={() => removeTA2Approver(ta2.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                    {engrManagerApprovers.filter(engr => engr.position).map(engr => (
+                      <Badge key={engr.id} variant="secondary" className={`gap-1 ${getApproverColor('engrManager')}`}>
+                        {engr.position}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => removeEngrManagerApprover(engr.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -666,6 +818,39 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             />
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )
+                ))}
+                
+                {/* Engineering Manager Approver Configuration */}
+                {engrManagerApprovers.map((engr) => (
+                  showEngrManagerApproverConfig === engr.id && (
+                    <div key={engr.id} className="border rounded-lg p-4 bg-cyan-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-cyan-800">Configure Engineering Manager</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeEngrManagerApprover(engr.id);
+                            setShowEngrManagerApproverConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Commission</Label>
+                        <EnhancedSearchableCombobox
+                          options={getEngrManagerCommissionOptions()}
+                          value={engr.commission}
+                          onValueChange={(value) => updateEngrManagerApprover(engr.id, 'commission', value)}
+                          placeholder="Select commission..."
+                          className="h-8"
+                        />
                       </div>
                     </div>
                   )
