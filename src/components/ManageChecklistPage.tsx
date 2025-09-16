@@ -359,7 +359,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Navigation Bar */}
       <div className="fluent-navigation sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 py-0">
+        <div className="max-w-7xl mx-auto px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Button 
