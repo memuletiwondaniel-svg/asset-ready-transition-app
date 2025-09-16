@@ -92,22 +92,40 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   };
 
   // Get distinct colors for different approver types
-  const getApproverColor = (type: string, index?: number) => {
-    const colors = {
-      regular: 'bg-purple-50 text-purple-700 border-purple-200',
-      ta2: 'bg-orange-50 text-orange-700 border-orange-200',
-      engrManager: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    };
-    return colors[type as keyof typeof colors] || 'bg-gray-50 text-gray-700 border-gray-200';
+  const getApproverColor = (type: string, position?: string) => {
+    if (type === 'regular') {
+      return 'bg-purple-50 text-purple-700 border-purple-200';
+    } else if (type === 'ta2') {
+      // Different colors for different TA2 disciplines
+      if (position?.includes('Process')) return 'bg-orange-50 text-orange-700 border-orange-200';
+      if (position?.includes('Elect')) return 'bg-amber-50 text-amber-700 border-amber-200';
+      if (position?.includes('Tech Safety')) return 'bg-red-50 text-red-700 border-red-200';
+      if (position?.includes('Civil')) return 'bg-stone-50 text-stone-700 border-stone-200';
+      if (position?.includes('Instrument')) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      if (position?.includes('Mechanical')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-orange-50 text-orange-700 border-orange-200'; // default TA2 color
+    } else if (type === 'engrManager') {
+      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    }
+    return 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
-  const getResponsibleColor = (type: string, index?: number) => {
-    const colors = {
-      regular: 'bg-blue-50 text-blue-700 border-blue-200',
-      ta2: 'bg-green-50 text-green-700 border-green-200',
-      engrManager: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    };
-    return colors[type as keyof typeof colors] || 'bg-gray-50 text-gray-700 border-gray-200';
+  const getResponsibleColor = (type: string, position?: string) => {
+    if (type === 'regular') {
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    } else if (type === 'ta2') {
+      // Different colors for different TA2 disciplines
+      if (position?.includes('Process')) return 'bg-green-50 text-green-700 border-green-200';
+      if (position?.includes('Elect')) return 'bg-lime-50 text-lime-700 border-lime-200';
+      if (position?.includes('Tech Safety')) return 'bg-rose-50 text-rose-700 border-rose-200';
+      if (position?.includes('Civil')) return 'bg-slate-50 text-slate-700 border-slate-200';
+      if (position?.includes('Instrument')) return 'bg-teal-50 text-teal-700 border-teal-200';
+      if (position?.includes('Mechanical')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-green-50 text-green-700 border-green-200'; // default TA2 color
+    } else if (type === 'engrManager') {
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    }
+    return 'bg-gray-50 text-gray-700 border-gray-200';
   };
   const validateForm = (): boolean => {
     const newErrors: Partial<NewChecklistItemData> = {};
@@ -589,7 +607,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </Badge>
                     ))}
                     {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
-                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getResponsibleColor('ta2')}`}>
+                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getResponsibleColor('ta2', ta2.position)}`}>
                         {ta2.position}
                         <Button 
                           variant="ghost" 
@@ -747,7 +765,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </Badge>
                     ))}
                     {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
-                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getApproverColor('ta2')}`}>
+                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getApproverColor('ta2', ta2.position)}`}>
                         {ta2.position}
                         <Button 
                           variant="ghost" 
