@@ -1,6 +1,13 @@
+
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
@@ -11,42 +18,40 @@ import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
-import ORSHLogo from "@/components/ORSHLogo";
+
+
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
+
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
     setShowAuth(false);
   };
+
   const handleBack = () => {
     setIsAuthenticated(false);
     setCurrentSection(null);
   };
+
   const handleNavigate = (section: string) => {
     setCurrentSection(section);
   };
+
   const handleBackToLanding = () => {
     setCurrentSection(null);
   };
-  const languages = [{
-    code: "en",
-    name: "English"
-  }, {
-    code: "ar",
-    name: "العربية"
-  }, {
-    code: "fr",
-    name: "Français"
-  }, {
-    code: "ms",
-    name: "Bahasa Melayu"
-  }, {
-    code: "ru",
-    name: "Русский"
-  }];
+
+  const languages = [
+    { code: "en", name: "English" },
+    { code: "ar", name: "العربية" },
+    { code: "fr", name: "Français" },
+    { code: "ms", name: "Bahasa Melayu" },
+    { code: "ru", name: "Русский" }
+  ];
+
   const translations = {
     en: {
       title: "Operation Readiness",
@@ -114,10 +119,12 @@ const Index = () => {
       support24: "Поддержка 24/7"
     }
   };
+
   const getCurrentTranslation = () => {
     const langCode = languages.find(lang => lang.name === selectedLanguage)?.code || 'en';
     return translations[langCode as keyof typeof translations];
   };
+
   const t = getCurrentTranslation();
 
   // Show specific section based on navigation
@@ -133,13 +140,15 @@ const Index = () => {
         return <AdminToolsPage onBack={handleBackToLanding} />;
       case 'p2o':
         // Placeholder for P2O Module - can be implemented later
-        return <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <div className="text-center">
               <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
               <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
               <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
             </div>
-          </div>;
+          </div>
+        );
       default:
         return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
     }
@@ -151,38 +160,54 @@ const Index = () => {
   }
 
   // Show welcome screen before authentication
-  return <div className="min-h-screen relative overflow-hidden">
+  return (
+    <div className="min-h-screen relative overflow-hidden">
       {/* Background removed during sign-in */}
-      {!showAuth && <>
+      {!showAuth && (
+        <>
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card/5 to-secondary/5" />
           <BackgroundSlideshow showFunFacts={false} />
-        </>}
+        </>
+      )}
       {/* Modern Navigation Header */}
       <header className="relative z-20">
         <div className="max-w-7xl mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo area - placeholder */}
-            
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 shadow-fluent-lg border border-white/20">
+              {/* Logo removed */}
+            </div>
             
             {/* Language Selector - Top Right */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group"
+                >
                   <Languages className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
                   <span className="text-sm">{selectedLanguage}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
-                {languages.map(language => <DropdownMenuItem key={language.code} onClick={() => setSelectedLanguage(language.name)} className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground">
+                {languages.map((language) => (
+                  <DropdownMenuItem
+                    key={language.code}
+                    onClick={() => setSelectedLanguage(language.name)}
+                    className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground"
+                  >
                     {language.name}
-                  </DropdownMenuItem>)}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </header>
       
-      {!showAuth && <main className="relative z-10 flex items-center min-h-[calc(100vh-100px)] py-4">
+      {!showAuth && (
+        <main className="relative z-10 flex items-center min-h-[calc(100vh-100px)] py-4">
           <div className="max-w-7xl mx-auto px-6 w-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               
@@ -208,7 +233,9 @@ const Index = () => {
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span>experience with the</span>
-                      <ORSHLogo size={40} />
+                      <span className="font-black text-3xl text-white tracking-wider">
+                        ORSH
+                      </span>
                       <span>platform.</span>
                     </div>
                   </div>
@@ -321,7 +348,11 @@ const Index = () => {
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row gap-4 items-start">
                     {/* Enhanced Microsoft Fluent CTA Button */}
-                    <Button onClick={() => setShowAuth(true)} size="lg" className="relative group bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white px-12 py-6 text-lg font-semibold shadow-fluent-3xl hover:shadow-fluent-4xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-2xl border-0 overflow-hidden backdrop-blur-sm">
+                    <Button 
+                      onClick={() => setShowAuth(true)} 
+                      size="lg"
+                      className="relative group bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white px-12 py-6 text-lg font-semibold shadow-fluent-3xl hover:shadow-fluent-4xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-2xl border-0 overflow-hidden backdrop-blur-sm"
+                    >
                       {/* Microsoft Fluent Button Effects */}
                       <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
                       <div className="absolute inset-0 border border-white/10 rounded-2xl group-hover:border-white/20 transition-colors duration-300" />
@@ -355,9 +386,13 @@ const Index = () => {
               
             </div>
           </div>
-        </main>}
+        </main>
+      )}
 
       <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
+
