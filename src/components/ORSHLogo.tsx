@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import orshLogoOriginal from '@/assets/orsh-logo-original.png';
 
 interface ORSHLogoProps {
   className?: string;
@@ -20,6 +22,34 @@ const ORSHLogo: React.FC<ORSHLogoProps> = ({
   dynamicColors = true
 }) => {
   const [currentVariant, setCurrentVariant] = useState(variant);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
+
+  // Process the image to remove background on component mount
+  useEffect(() => {
+    const processImage = async () => {
+      try {
+        const response = await fetch(orshLogoOriginal);
+        const blob = await response.blob();
+        const image = await loadImage(blob);
+        const processedBlob = await removeBackground(image);
+        const url = URL.createObjectURL(processedBlob);
+        setProcessedImageUrl(url);
+      } catch (error) {
+        console.error('Failed to process image:', error);
+        // Fallback to original image if processing fails
+        setProcessedImageUrl(orshLogoOriginal);
+      }
+    };
+
+    processImage();
+
+    // Cleanup function to revoke object URL
+    return () => {
+      if (processedImageUrl) {
+        URL.revokeObjectURL(processedImageUrl);
+      }
+    };
+  }, []);
 
   const gradientColors = {
     primary: {
@@ -70,105 +100,23 @@ const ORSHLogo: React.FC<ORSHLogoProps> = ({
         className="relative mr-3"
         style={{ width: logoSize, height: logoSize }}
       >
-        <svg
-          width={logoSize}
-          height={logoSize}
-          viewBox="0 0 100 100"
-          className="transition-all duration-[6000ms] ease-in-out"
-        >
-          <defs>
-            <linearGradient id={`orsh-gradient-${currentVariant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={colors.start}>
-                {dynamicColors && (
-                  <animate
-                    attributeName="stop-opacity"
-                    values="0;1;0"
-                    dur="8s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </stop>
-              <stop offset="50%" stopColor={colors.mid}>
-                {dynamicColors && (
-                  <animate
-                    attributeName="stop-opacity"
-                    values="0;1;0"
-                    dur="8s"
-                    begin="1s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </stop>
-              <stop offset="100%" stopColor={colors.end}>
-                {dynamicColors && (
-                  <animate
-                    attributeName="stop-opacity"
-                    values="0;1;0"
-                    dur="8s"
-                    begin="2s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </stop>
-            </linearGradient>
-            
-            <filter id="orsh-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          {/* Swirl shape matching the reference design */}
-          <path
-            d="M50 10 
-               C 30 10, 10 30, 10 50
-               C 10 70, 30 90, 50 90
-               C 65 90, 77 78, 77 63
-               C 77 48, 65 36, 50 36
-               C 42 36, 36 42, 36 50
-               C 36 58, 42 64, 50 64
-               L 50 50
-               L 50 10"
-            fill={`url(#orsh-gradient-${currentVariant})`}
-            filter="url(#orsh-glow)"
-          >
-            {dynamicColors && (
-              <animate
-                attributeName="opacity"
-                values="0;1;0"
-                dur="8s"
-                repeatCount="indefinite"
-              />
-            )}
-          </path>
-
-          {/* Inner swirl detail */}
-          <path
-            d="M50 25
-               C 37 25, 25 37, 25 50
-               C 25 63, 37 75, 50 75
-               C 58 75, 65 68, 65 60
-               C 65 52, 58 45, 50 45
-               L 50 25"
-            fill="none"
-            stroke={colors.end}
-            strokeWidth="2"
-            opacity="0.6"
-          >
-            {dynamicColors && (
-              <animate
-                attributeName="opacity"
-                values="0;0.6;0"
-                dur="8s"
-                begin="1s"
-                repeatCount="indefinite"
-              />
-            )}
-          </path>
-        </svg>
+        {processedImageUrl ? (
+          <img
+            src={processedImageUrl}
+            alt="ORSH Logo"
+            width={logoSize}
+            height={logoSize}
+            className="w-full h-full object-contain transition-all duration-[8000ms] ease-in-out"
+            style={{
+              filter: dynamicColors ? `hue-rotate(${currentVariant === 'energy' ? '45deg' : currentVariant === 'success' ? '90deg' : currentVariant === 'ocean' ? '180deg' : '0deg'})` : 'none'
+            }}
+          />
+        ) : (
+          <div 
+            className="w-full h-full bg-muted animate-pulse rounded-full"
+            style={{ width: logoSize, height: logoSize }}
+          />
+        )}
       </div>
       
       {showText && (
