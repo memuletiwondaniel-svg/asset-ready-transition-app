@@ -233,7 +233,7 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
               <img 
                 src="/images/orsh-logo.png" 
                 alt="ORSH Logo" 
-                className="h-48 w-auto filter drop-shadow-sm" 
+                className="h-38 w-auto filter drop-shadow-sm" 
               />
             </div>
           </div>
