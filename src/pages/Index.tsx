@@ -158,7 +158,7 @@ const Index = () => {
         </>}
       {/* Modern Navigation Header */}
       <header className="relative z-20">
-        <div className="max-w-7xl mx-auto px-8 py-1">
+        <div className="max-w-7xl mx-auto px-8 py-0.5">
           <div className="flex items-center justify-between">
             {/* ORSH Logo - Top Left */}
             <div className="flex items-center">
