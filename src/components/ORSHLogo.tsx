@@ -77,34 +77,34 @@ const ORSHLogo: React.FC<ORSHLogoProps> = ({
           className="transition-all duration-[6000ms] ease-in-out"
         >
           <defs>
-            <linearGradient id={`orsh-gradient-outer-${currentVariant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={colors.start} stopOpacity="0.9">
+            <linearGradient id={`orsh-gradient-${currentVariant}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={colors.start}>
                 {dynamicColors && (
                   <animate
                     attributeName="stop-opacity"
-                    values="0;0.9;0"
-                    dur="6s"
+                    values="0;1;0"
+                    dur="8s"
                     repeatCount="indefinite"
                   />
                 )}
               </stop>
-              <stop offset="50%" stopColor={colors.mid} stopOpacity="0.8">
+              <stop offset="50%" stopColor={colors.mid}>
                 {dynamicColors && (
                   <animate
                     attributeName="stop-opacity"
-                    values="0;0.8;0"
-                    dur="6s"
+                    values="0;1;0"
+                    dur="8s"
                     begin="1s"
                     repeatCount="indefinite"
                   />
                 )}
               </stop>
-              <stop offset="100%" stopColor={colors.end} stopOpacity="0.7">
+              <stop offset="100%" stopColor={colors.end}>
                 {dynamicColors && (
                   <animate
                     attributeName="stop-opacity"
-                    values="0;0.7;0"
-                    dur="6s"
+                    values="0;1;0"
+                    dur="8s"
                     begin="2s"
                     repeatCount="indefinite"
                   />
@@ -112,33 +112,8 @@ const ORSHLogo: React.FC<ORSHLogoProps> = ({
               </stop>
             </linearGradient>
             
-            <linearGradient id={`orsh-gradient-inner-${currentVariant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={colors.mid} stopOpacity="0.8">
-                {dynamicColors && (
-                  <animate
-                    attributeName="stop-opacity"
-                    values="0;0.8;0"
-                    dur="6s"
-                    begin="0.5s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </stop>
-              <stop offset="100%" stopColor={colors.end} stopOpacity="0.6">
-                {dynamicColors && (
-                  <animate
-                    attributeName="stop-opacity"
-                    values="0;0.6;0"
-                    dur="6s"
-                    begin="1.5s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </stop>
-            </linearGradient>
-            
-            <filter id="orsh-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <filter id="orsh-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
               <feMerge>
                 <feMergeNode in="coloredBlur"/>
                 <feMergeNode in="SourceGraphic"/>
@@ -146,111 +121,71 @@ const ORSHLogo: React.FC<ORSHLogoProps> = ({
             </filter>
           </defs>
           
-          {/* Outer circular layer */}
-          <circle
-            cx="50"
-            cy="50"
-            r="42"
-            fill="none"
-            stroke={`url(#orsh-gradient-outer-${currentVariant})`}
-            strokeWidth="16"
-            strokeDasharray="0 66 200 66"
+          {/* Swirl shape matching the reference design */}
+          <path
+            d="M50 10 
+               C 30 10, 10 30, 10 50
+               C 10 70, 30 90, 50 90
+               C 65 90, 77 78, 77 63
+               C 77 48, 65 36, 50 36
+               C 42 36, 36 42, 36 50
+               C 36 58, 42 64, 50 64
+               L 50 50
+               L 50 10"
+            fill={`url(#orsh-gradient-${currentVariant})`}
             filter="url(#orsh-glow)"
-            transform="rotate(-90 50 50)"
           >
             {dynamicColors && (
               <animate
                 attributeName="opacity"
                 values="0;1;0"
-                dur="6s"
+                dur="8s"
                 repeatCount="indefinite"
               />
             )}
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              values="-90 50 50;270 50 50;-90 50 50"
-              dur="12s"
-              repeatCount="indefinite"
-            />
-          </circle>
+          </path>
 
-          {/* Middle circular layer */}
-          <circle
-            cx="50"
-            cy="50"
-            r="30"
+          {/* Inner swirl detail */}
+          <path
+            d="M50 25
+               C 37 25, 25 37, 25 50
+               C 25 63, 37 75, 50 75
+               C 58 75, 65 68, 65 60
+               C 65 52, 58 45, 50 45
+               L 50 25"
             fill="none"
-            stroke={`url(#orsh-gradient-inner-${currentVariant})`}
-            strokeWidth="12"
-            strokeDasharray="0 47 150 47"
-            filter="url(#orsh-glow)"
-            transform="rotate(90 50 50)"
+            stroke={colors.end}
+            strokeWidth="2"
+            opacity="0.6"
           >
             {dynamicColors && (
               <animate
                 attributeName="opacity"
-                values="0;0.8;0"
-                dur="6s"
+                values="0;0.6;0"
+                dur="8s"
                 begin="1s"
                 repeatCount="indefinite"
               />
             )}
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              values="90 50 50;-270 50 50;90 50 50"
-              dur="15s"
-              repeatCount="indefinite"
-            />
-          </circle>
-
-          {/* Inner solid circle */}
-          <circle
-            cx="50"
-            cy="50"
-            r="18"
-            fill={`url(#orsh-gradient-inner-${currentVariant})`}
-            filter="url(#orsh-glow)"
-          >
-            {dynamicColors && (
-              <animate
-                attributeName="opacity"
-                values="0;0.9;0"
-                dur="6s"
-                begin="2s"
-                repeatCount="indefinite"
-              />
-            )}
-          </circle>
+          </path>
         </svg>
       </div>
       
       {showText && (
         <div className="flex flex-col">
           <span 
-            className="font-bold tracking-tight leading-none transition-all duration-[6000ms] ease-in-out"
+            className="font-bold tracking-tight leading-none transition-all duration-[8000ms] ease-in-out"
             style={{ 
               fontSize: `${textSize}px`,
               color: dynamicColors ? colors.end : textColor,
               fontFamily: 'Inter, system-ui, sans-serif',
-              fontWeight: '700'
+              fontWeight: '900'
             }}
           >
             RSH
-            {dynamicColors && (
-              <span className="inline-block">
-                <animate
-                  attributeName="fill"
-                  values={`${colors.start};${colors.mid};${colors.end};${colors.start}`}
-                  dur="8s"
-                  repeatCount="indefinite"
-                />
-              </span>
-            )}
           </span>
           <span 
-            className="text-xs opacity-70 leading-tight max-w-32 transition-all duration-[6000ms] ease-in-out"
+            className="text-xs opacity-70 leading-tight max-w-32 transition-all duration-[8000ms] ease-in-out"
             style={{ 
               color: dynamicColors ? colors.mid : textColor,
               fontSize: `${size * 0.2}px`
