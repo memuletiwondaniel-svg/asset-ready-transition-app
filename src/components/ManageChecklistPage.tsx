@@ -252,32 +252,27 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       <div className="min-h-screen bg-background">
         {/* Navigation Bar */}
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-          <div className="container flex h-14 items-center">
-            <div className="flex items-center space-x-4">
-              <div className="transition-transform hover:scale-105">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-8 w-auto" 
-                />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold">
-                  Manage Checklists
-                </h1>
-                <p className="text-xs text-muted-foreground">PSSR Microservice • Basrah Gas Company</p>
-              </div>
-            </div>
-            <div className="ml-auto">
+          <div className="container flex h-20 items-center">
+            <div className="flex items-center">
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 onClick={onBack}
-                className="h-9"
+                className="h-10 px-4 py-2 rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-foreground"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:-translate-x-0.5" />
                 Back to Admin Tools
               </Button>
             </div>
+            <div className="flex-1 flex justify-center">
+              <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
+                <img 
+                  src="/images/orsh-logo.png" 
+                  alt="ORSH Logo" 
+                  className="h-40 w-auto filter drop-shadow-sm" 
+                />
+              </div>
+            </div>
+            <div className="w-40"></div> {/* Spacer to center the logo */}
           </div>
         </div>
 
