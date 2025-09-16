@@ -56,10 +56,14 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const [showEngrManagerResponsibleConfig, setShowEngrManagerResponsibleConfig] = useState<string | null>(null);
   const [showHSELeadApproverConfig, setShowHSELeadApproverConfig] = useState<string | null>(null);
   const [showHSELeadResponsibleConfig, setShowHSELeadResponsibleConfig] = useState<string | null>(null);
+  const [showDirectorApproverConfig, setShowDirectorApproverConfig] = useState<string | null>(null);
+  const [showDirectorResponsibleConfig, setShowDirectorResponsibleConfig] = useState<string | null>(null);
   const [engrManagerApprovers, setEngrManagerApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
   const [engrManagerResponsible, setEngrManagerResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
   const [hseLeadApprovers, setHSELeadApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
   const [hseLeadResponsible, setHSELeadResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [directorApprovers, setDirectorApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [directorResponsible, setDirectorResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
   
   const createChecklistItemMutation = useCreateChecklistItem();
   
@@ -102,6 +106,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       .map(comm => ({ value: comm.name, label: comm.name }));
   };
 
+  // Get commission options for Director (all commissions)
+  const getDirectorCommissionOptions = () => {
+    return commissions.map(comm => ({ value: comm.name, label: comm.name }));
+  };
+
   // Get distinct colors for different approver types
   const getApproverColor = (type: string, position?: string) => {
     if (type === 'regular') {
@@ -122,6 +131,12 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       if (position?.includes('P&E')) return 'bg-pink-50 text-pink-700 border-pink-200';
       if (position?.includes('Asset')) return 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200';
       return 'bg-pink-50 text-pink-700 border-pink-200'; // default HSE Lead color
+    } else if (type === 'director') {
+      // Different colors for different Director commissions
+      if (position?.includes('P&E')) return 'bg-sky-50 text-sky-700 border-sky-200';
+      if (position?.includes('Asset')) return 'bg-blue-50 text-blue-700 border-blue-200';
+      if (position?.includes('HSE')) return 'bg-teal-50 text-teal-700 border-teal-200';
+      return 'bg-sky-50 text-sky-700 border-sky-200'; // default Director color
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   };
@@ -145,6 +160,12 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       if (position?.includes('P&E')) return 'bg-violet-50 text-violet-700 border-violet-200';
       if (position?.includes('Asset')) return 'bg-purple-50 text-purple-700 border-purple-200';
       return 'bg-violet-50 text-violet-700 border-violet-200'; // default HSE Lead color
+    } else if (type === 'director') {
+      // Different colors for different Director commissions
+      if (position?.includes('P&E')) return 'bg-slate-50 text-slate-700 border-slate-200';
+      if (position?.includes('Asset')) return 'bg-zinc-50 text-zinc-700 border-zinc-200';
+      if (position?.includes('HSE')) return 'bg-neutral-50 text-neutral-700 border-neutral-200';
+      return 'bg-slate-50 text-slate-700 border-slate-200'; // default Director color
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   };
@@ -156,10 +177,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0 && hseLeadApprovers.length === 0) {
+    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0 && hseLeadApprovers.length === 0 && directorApprovers.length === 0) {
       newErrors.approvers = 'At least one approver is required' as any;
     }
-    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0 && hseLeadResponsible.length === 0) {
+    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0 && hseLeadResponsible.length === 0 && directorResponsible.length === 0) {
       newErrors.responsible = 'At least one responsible party is required' as any;
     }
     setErrors(newErrors);
@@ -173,7 +194,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
           ...formData.approvers,
           ...ta2Approvers.map(ta2 => ta2.position),
           ...engrManagerApprovers.map(engr => engr.position),
-          ...hseLeadApprovers.map(hse => hse.position)
+          ...hseLeadApprovers.map(hse => hse.position),
+          ...directorApprovers.map(dir => dir.position)
         ];
         
         // Combine all responsible
@@ -181,7 +203,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
           ...formData.responsible,
           ...ta2Responsible.map(ta2 => ta2.position),
           ...engrManagerResponsible.map(engr => engr.position),
-          ...hseLeadResponsible.map(hse => hse.position)
+          ...hseLeadResponsible.map(hse => hse.position),
+          ...directorResponsible.map(dir => dir.position)
         ];
         
         const newItem = {
@@ -449,6 +472,63 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     setHSELeadResponsible(prev => prev.filter(hse => hse.id !== id));
   };
 
+  // Director management functions
+  const addDirectorApprover = () => {
+    const newDirector = {
+      id: Date.now().toString(),
+      commission: '',
+      position: ''
+    };
+    setDirectorApprovers([...directorApprovers, newDirector]);
+    setShowDirectorApproverConfig(newDirector.id);
+  };
+
+  const updateDirectorApprover = (id: string, field: string, value: string) => {
+    setDirectorApprovers(prev => prev.map(dir => {
+      if (dir.id === id) {
+        const updated = { ...dir, [field]: value };
+        if (field === 'commission' && value) {
+          updated.position = `${value} Director`;
+          setShowDirectorApproverConfig(null);
+        }
+        return updated;
+      }
+      return dir;
+    }));
+  };
+
+  const removeDirectorApprover = (id: string) => {
+    setDirectorApprovers(prev => prev.filter(dir => dir.id !== id));
+  };
+
+  const addDirectorResponsible = () => {
+    const newDirector = {
+      id: Date.now().toString(),
+      commission: '',
+      position: ''
+    };
+    setDirectorResponsible([...directorResponsible, newDirector]);
+    setShowDirectorResponsibleConfig(newDirector.id);
+  };
+
+  const updateDirectorResponsible = (id: string, field: string, value: string) => {
+    setDirectorResponsible(prev => prev.map(dir => {
+      if (dir.id === id) {
+        const updated = { ...dir, [field]: value };
+        if (field === 'commission' && value) {
+          updated.position = `${value} Director`;
+          setShowDirectorResponsibleConfig(null);
+        }
+        return updated;
+      }
+      return dir;
+    }));
+  };
+
+  const removeDirectorResponsible = (id: string) => {
+    setDirectorResponsible(prev => prev.filter(dir => dir.id !== id));
+  };
+
   const removeEngrManagerResponsible = (id: string) => {
     setEngrManagerResponsible(prev => prev.filter(engr => engr.id !== id));
   };
@@ -663,6 +743,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       addEngrManagerResponsible();
                     } else if (value === 'HSE Lead') {
                       addHSELeadResponsible();
+                    } else if (value === 'Director') {
+                      addDirectorResponsible();
                     } else if (!formData.responsible.includes(value)) {
                       updateFormData('responsible', [...formData.responsible, value]);
                     }
@@ -673,7 +755,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 />
                 
                 {/* Display all responsible parties together */}
-                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0) && (
+                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0 || directorResponsible.filter(dir => dir.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.responsible.map(resp => (
                       <Badge key={resp} variant="secondary" className={`gap-1 ${getResponsibleColor('regular')}`}>
@@ -724,9 +806,22 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           onClick={() => removeHSELeadResponsible(hse.id)}
                         >
                           <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
+                         </Button>
+                       </Badge>
+                     ))}
+                     {directorResponsible.filter(dir => dir.position).map(dir => (
+                       <Badge key={dir.id} variant="secondary" className={`gap-1 ${getResponsibleColor('director', dir.position)}`}>
+                         {dir.position}
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                           onClick={() => removeDirectorResponsible(dir.id)}
+                         >
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </Badge>
+                     ))}
                   </div>
                 )}
                 
@@ -843,6 +938,39 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     </div>
                   )
                 ))}
+                
+                {/* Director Responsible Configuration */}
+                {directorResponsible.map((dir) => (
+                  showDirectorResponsibleConfig === dir.id && (
+                    <div key={dir.id} className="border rounded-lg p-4 bg-slate-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-slate-800">Configure Director</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeDirectorResponsible(dir.id);
+                            setShowDirectorResponsibleConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Commission</Label>
+                        <EnhancedSearchableCombobox
+                          options={getDirectorCommissionOptions()}
+                          value={dir.commission}
+                          onValueChange={(value) => updateDirectorResponsible(dir.id, 'commission', value)}
+                          placeholder="Select commission..."
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  )
+                ))}
               </div>
               
               {errors.responsible && <p className="text-sm text-destructive flex items-center gap-1">
@@ -869,6 +997,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       addEngrManagerApprover();
                     } else if (value === 'HSE Lead') {
                       addHSELeadApprover();
+                    } else if (value === 'Director') {
+                      addDirectorApprover();
                     } else if (!formData.approvers.includes(value)) {
                       updateFormData('approvers', [...formData.approvers, value]);
                     }
@@ -879,7 +1009,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 />
                 
                 {/* Display all approvers together */}
-                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0) && (
+                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0 || directorApprovers.filter(dir => dir.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.approvers.map(approver => (
                       <Badge key={approver} variant="secondary" className={`gap-1 ${getApproverColor('regular')}`}>
@@ -931,10 +1061,23 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                         >
                           <X className="h-3 w-3" />
                         </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                       </Badge>
+                     ))}
+                     {directorApprovers.filter(dir => dir.position).map(dir => (
+                       <Badge key={dir.id} variant="secondary" className={`gap-1 ${getApproverColor('director', dir.position)}`}>
+                         {dir.position}
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                           onClick={() => removeDirectorApprover(dir.id)}
+                         >
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </Badge>
+                     ))}
+                   </div>
+                 )}
                 
                 {/* TA2 Approver Configuration */}
                 {ta2Approvers.map((ta2) => (
@@ -1042,6 +1185,39 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           options={getHSELeadCommissionOptions()}
                           value={hse.commission}
                           onValueChange={(value) => updateHSELeadApprover(hse.id, 'commission', value)}
+                          placeholder="Select commission..."
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  )
+                ))}
+                
+                {/* Director Approver Configuration */}
+                {directorApprovers.map((dir) => (
+                  showDirectorApproverConfig === dir.id && (
+                    <div key={dir.id} className="border rounded-lg p-4 bg-sky-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-sky-800">Configure Director</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeDirectorApprover(dir.id);
+                            setShowDirectorApproverConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Commission</Label>
+                        <EnhancedSearchableCombobox
+                          options={getDirectorCommissionOptions()}
+                          value={dir.commission}
+                          onValueChange={(value) => updateDirectorApprover(dir.id, 'commission', value)}
                           placeholder="Select commission..."
                           className="h-8"
                         />
