@@ -11,6 +11,7 @@ import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
+import ORSHLogo from "@/components/ORSHLogo";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -207,9 +208,7 @@ const Index = () => {
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span>experience with the</span>
-                      <span className="font-black text-3xl text-white tracking-wider">
-                        ORSH
-                      </span>
+                      <ORSHLogo size={40} />
                       <span>platform.</span>
                     </div>
                   </div>
