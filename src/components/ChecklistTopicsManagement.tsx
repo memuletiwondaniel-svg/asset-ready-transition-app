@@ -218,22 +218,7 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
       {/* Navigation Bar */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container flex h-14 items-center">
-          <div className="flex items-center space-x-4">
-            <div className="transition-transform hover:scale-105">
-              <img 
-                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                alt="BGC Logo" 
-                className="h-8 w-auto" 
-              />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold">
-                Checklist Topics
-              </h1>
-              <p className="text-xs text-muted-foreground">PSSR Microservice • Basrah Gas Company</p>
-            </div>
-          </div>
-          <div className="ml-auto">
+          <div className="flex items-center">
             <Button 
               variant="outline" 
               onClick={onBack}
@@ -243,6 +228,16 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
               Back to Categories
             </Button>
           </div>
+          <div className="flex-1 flex justify-center">
+            <div className="transition-transform hover:scale-105">
+              <img 
+                src="/images/orsh-logo.png" 
+                alt="ORSH Logo" 
+                className="h-8 w-auto" 
+              />
+            </div>
+          </div>
+          <div className="w-32"></div> {/* Spacer to center the logo */}
         </div>
       </div>
 
