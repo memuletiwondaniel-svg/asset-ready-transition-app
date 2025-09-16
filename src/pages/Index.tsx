@@ -162,7 +162,16 @@ const Index = () => {
           <div className="flex items-center justify-between my-[18px] mx-0 px-0 py-0">
             {/* ORSH Logo - Top Left */}
             <div className="flex items-center">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto" />
+              <div className="relative">
+                <img 
+                  src="/images/orsh-logo.png" 
+                  alt="ORSH Logo" 
+                  className="h-40 w-auto relative z-10" 
+                />
+                {/* Animated spinning O effect overlay */}
+                <div className="absolute top-0 left-0 w-16 h-16 mt-6 ml-4 rounded-full border-4 border-transparent animate-spin bg-gradient-to-r from-blue-500 via-purple-500 via-pink-500 via-orange-500 to-blue-500 bg-[length:400%_400%] animate-[spin_3s_linear_infinite,gradient-shift_2s_ease-in-out_infinite] opacity-60 blur-sm"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 mt-8 ml-6 rounded-full border-3 border-transparent animate-spin bg-gradient-to-r from-cyan-400 via-emerald-400 via-yellow-400 via-red-400 to-cyan-400 bg-[length:300%_300%] animate-[spin_2s_linear_infinite_reverse,gradient-shift_1.5s_ease-in-out_infinite] opacity-80"></div>
+              </div>
             </div>
             
             {/* Right side - BGC Logo and Language Selector */}

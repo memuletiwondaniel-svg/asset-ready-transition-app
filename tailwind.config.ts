@@ -170,6 +170,11 @@ export default {
 				'pulse-subtle': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.8' }
+				},
+				'gradient-shift': {
+					'0%': { backgroundPosition: '0% 50%' },
+					'50%': { backgroundPosition: '100% 50%' },
+					'100%': { backgroundPosition: '0% 50%' }
 				}
 			},
 			animation: {
@@ -183,7 +188,8 @@ export default {
 				'reveal': 'reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
 				'float': 'float 3s ease-in-out infinite',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'spin-slow': 'spin 6s linear infinite'
+				'spin-slow': 'spin 6s linear infinite',
+				'gradient-shift': 'gradient-shift 2s ease-in-out infinite'
 			}
 		}
 	},
