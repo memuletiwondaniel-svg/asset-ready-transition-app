@@ -116,17 +116,35 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const getApproverColor = (type: string, position?: string) => {
     if (type === 'regular') {
       return 'bg-purple-50 text-purple-700 border-purple-200';
+    } else if (type === 'project') {
+      if (position === 'Construction Lead') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      if (position === 'Commissioning Lead') return 'bg-teal-50 text-teal-700 border-teal-200';
+      if (position === 'Project Manager') return 'bg-green-50 text-green-700 border-green-200';
+      if (position === 'Project Engineer') return 'bg-lime-50 text-lime-700 border-lime-200';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    } else if (type === 'asset') {
+      if (position === 'ORA Engr') return 'bg-amber-50 text-amber-700 border-amber-200';
+      if (position === 'Ops Coach') return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      if (position === 'Site Engr') return 'bg-orange-50 text-orange-700 border-orange-200';
+      if (position === 'Dep Plant Director') return 'bg-red-50 text-red-700 border-red-200';
+      if (position === 'Ops Team Lead') return 'bg-pink-50 text-pink-700 border-pink-200';
+      return 'bg-amber-50 text-amber-700 border-amber-200';
     } else if (type === 'ta2') {
       // Different colors for different TA2 disciplines
-      if (position?.includes('Process')) return 'bg-orange-50 text-orange-700 border-orange-200';
-      if (position?.includes('Elect')) return 'bg-amber-50 text-amber-700 border-amber-200';
-      if (position?.includes('Tech Safety')) return 'bg-red-50 text-red-700 border-red-200';
-      if (position?.includes('Civil')) return 'bg-stone-50 text-stone-700 border-stone-200';
-      if (position?.includes('Instrument')) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      if (position?.includes('Mechanical')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      return 'bg-orange-50 text-orange-700 border-orange-200'; // default TA2 color
+      if (position?.includes('Process')) return 'bg-blue-50 text-blue-700 border-blue-200';
+      if (position?.includes('Elect')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      if (position?.includes('Tech Safety')) return 'bg-violet-50 text-violet-700 border-violet-200';
+      if (position?.includes('Civil')) return 'bg-purple-50 text-purple-700 border-purple-200';
+      if (position?.includes('Instrument')) return 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200';
+      if (position?.includes('Mechanical')) return 'bg-rose-50 text-rose-700 border-rose-200';
+      return 'bg-blue-50 text-blue-700 border-blue-200'; // default TA2 color
     } else if (type === 'engrManager') {
       return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    } else if (type === 'hse') {
+      if (position === 'HSE Manager') return 'bg-violet-50 text-violet-700 border-violet-200';
+      if (position === 'HSE Director') return 'bg-purple-50 text-purple-700 border-purple-200';
+      if (position === 'ER Lead') return 'bg-pink-50 text-pink-700 border-pink-200';
+      return 'bg-violet-50 text-violet-700 border-violet-200';
     } else if (type === 'hseLead') {
       // Different colors for different HSE Lead commissions
       if (position?.includes('P&E')) return 'bg-pink-50 text-pink-700 border-pink-200';
@@ -145,17 +163,35 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const getResponsibleColor = (type: string, position?: string) => {
     if (type === 'regular') {
       return 'bg-orange-100 text-orange-800 border-orange-300';
+    } else if (type === 'project') {
+      if (position === 'Construction Lead') return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+      if (position === 'Commissioning Lead') return 'bg-teal-100 text-teal-800 border-teal-300';
+      if (position === 'Project Manager') return 'bg-green-100 text-green-800 border-green-300';
+      if (position === 'Project Engineer') return 'bg-lime-100 text-lime-800 border-lime-300';
+      return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    } else if (type === 'asset') {
+      if (position === 'ORA Engr') return 'bg-amber-100 text-amber-800 border-amber-300';
+      if (position === 'Ops Coach') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      if (position === 'Site Engr') return 'bg-orange-100 text-orange-800 border-orange-300';
+      if (position === 'Dep Plant Director') return 'bg-red-100 text-red-800 border-red-300';
+      if (position === 'Ops Team Lead') return 'bg-pink-100 text-pink-800 border-pink-300';
+      return 'bg-amber-100 text-amber-800 border-amber-300';
     } else if (type === 'ta2') {
       // Distinct colors for different TA2 disciplines
       if (position?.includes('Process')) return 'bg-blue-100 text-blue-800 border-blue-300';
-      if (position?.includes('Elect')) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      if (position?.includes('Tech Safety')) return 'bg-red-100 text-red-800 border-red-300';
-      if (position?.includes('Civil')) return 'bg-gray-100 text-gray-800 border-gray-300';
-      if (position?.includes('Instrument')) return 'bg-cyan-100 text-cyan-800 border-cyan-300';
-      if (position?.includes('Mechanical')) return 'bg-green-100 text-green-800 border-green-300';
-      return 'bg-emerald-100 text-emerald-800 border-emerald-300'; // default TA2 color
+      if (position?.includes('Elect')) return 'bg-indigo-100 text-indigo-800 border-indigo-300';
+      if (position?.includes('Tech Safety')) return 'bg-violet-100 text-violet-800 border-violet-300';
+      if (position?.includes('Civil')) return 'bg-purple-100 text-purple-800 border-purple-300';
+      if (position?.includes('Instrument')) return 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300';
+      if (position?.includes('Mechanical')) return 'bg-rose-100 text-rose-800 border-rose-300';
+      return 'bg-blue-100 text-blue-800 border-blue-300'; // default TA2 color
     } else if (type === 'engrManager') {
       return 'bg-indigo-100 text-indigo-800 border-indigo-300';
+    } else if (type === 'hse') {
+      if (position === 'HSE Manager') return 'bg-violet-100 text-violet-800 border-violet-300';
+      if (position === 'HSE Director') return 'bg-purple-100 text-purple-800 border-purple-300';
+      if (position === 'ER Lead') return 'bg-pink-100 text-pink-800 border-pink-300';
+      return 'bg-violet-100 text-violet-800 border-violet-300';
     } else if (type === 'hseLead') {
       // Distinct colors for different HSE Lead commissions
       if (position?.includes('P&E')) return 'bg-violet-100 text-violet-800 border-violet-300';
@@ -755,18 +791,18 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                 {/* Display all responsible parties together - modern grid layout */}
+                 {/* Display all responsible parties together - organized by categories */}
                 {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0 || directorResponsible.filter(dir => dir.position).length > 0) && (
-                  <div className="grid gap-6 p-4 bg-muted/30 rounded-lg border">
+                  <div className="grid gap-4 p-4 bg-muted/30 rounded-lg border">
                     {/* Directors Section */}
                     {directorResponsible.filter(dir => dir.position).length > 0 && (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-slate-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-slate-700">Directors</Label>
+                          <div className="w-1 h-4 bg-slate-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                           {directorResponsible.filter(dir => dir.position).map(dir => (
                             <div 
                               key={dir.id}
@@ -774,22 +810,22 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('director', dir.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                className={`${getResponsibleColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `dir-resp-${dir.id}` ? null : `dir-resp-${dir.id}`)}
                               >
-                                <span className="text-sm font-medium">{dir.position}</span>
+                                <span className="font-medium truncate">{dir.position}</span>
                                 {selectedTag === `dir-resp-${dir.id}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeDirectorResponsible(dir.id);
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -799,15 +835,15 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* HSE Leads Section */}
-                    {hseLeadResponsible.filter(hse => hse.position).length > 0 && (
-                      <div className="space-y-3">
+                    {/* HSE Section */}
+                    {(hseLeadResponsible.filter(hse => hse.position).length > 0 || formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-violet-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-violet-700">HSE Leads</Label>
+                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                           {hseLeadResponsible.filter(hse => hse.position).map(hse => (
                             <div 
                               key={hse.id}
@@ -815,22 +851,50 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `hse-resp-${hse.id}` ? null : `hse-resp-${hse.id}`)}
                               >
-                                <span className="text-sm font-medium">{hse.position}</span>
+                                <span className="font-medium truncate">{hse.position}</span>
                                 {selectedTag === `hse-resp-${hse.id}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeHSELeadResponsible(hse.id);
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`hse-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-regular-${role}-${index}` ? null : `hse-regular-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `hse-regular-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('responsible', formData.responsible.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -840,15 +904,15 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* Engineering Managers Section */}
-                    {engrManagerResponsible.filter(engr => engr.position).length > 0 && (
-                      <div className="space-y-3">
+                    {/* Engineering Section */}
+                    {(engrManagerResponsible.filter(engr => engr.position).length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0) && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-indigo-700">Engineering Managers</Label>
+                          <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Engineering</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                           {engrManagerResponsible.filter(engr => engr.position).map(engr => (
                             <div 
                               key={engr.id}
@@ -856,22 +920,50 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('engrManager')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                className={`${getResponsibleColor('engrManager')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `engr-resp-${engr.id}` ? null : `engr-resp-${engr.id}`)}
                               >
-                                <span className="text-sm font-medium">{engr.position}</span>
+                                <span className="font-medium truncate">{engr.position}</span>
                                 {selectedTag === `engr-resp-${engr.id}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeEngrManagerResponsible(engr.id);
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
+                            <div 
+                              key={ta2.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('ta2', ta2.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `ta2-resp-${ta2.id}` ? null : `ta2-resp-${ta2.id}`)}
+                              >
+                                <span className="font-medium truncate">{ta2.position}</span>
+                                {selectedTag === `ta2-resp-${ta2.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeTA2Responsible(ta2.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -881,38 +973,79 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* TA2s Section */}
-                    {ta2Responsible.filter(ta2 => ta2.position).length > 0 && (
-                      <div className="space-y-3">
+                    {/* Project Section */}
+                    {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-blue-700">Technical Authority 2s</Label>
+                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                          {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).map((role, index) => (
                             <div 
-                              key={ta2.id}
+                              key={`project-${role}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('ta2', ta2.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
-                                onClick={() => setSelectedTag(selectedTag === `ta2-resp-${ta2.id}` ? null : `ta2-resp-${ta2.id}`)}
+                                className={`${getResponsibleColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `project-resp-${role}-${index}` ? null : `project-resp-${role}-${index}`)}
                               >
-                                <span className="text-sm font-medium">{ta2.position}</span>
-                                {selectedTag === `ta2-resp-${ta2.id}` && (
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `project-resp-${role}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      removeTA2Responsible(ta2.id);
+                                      updateFormData('responsible', formData.responsible.filter(r => r !== role));
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Asset Section */}
+                    {formData.responsible.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Asset</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.responsible.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`asset-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `asset-resp-${role}-${index}` ? null : `asset-resp-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `asset-resp-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('responsible', formData.responsible.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -923,37 +1056,37 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     )}
                     
                     {/* Other Roles Section */}
-                    {formData.responsible.length > 0 && (
-                      <div className="space-y-3">
+                    {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-orange-700">Other Roles</Label>
+                          <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Other Roles</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {formData.responsible.map(resp => (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((resp, index) => (
                             <div 
-                              key={resp}
+                              key={`other-${resp}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('regular')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
-                                onClick={() => setSelectedTag(selectedTag === `other-resp-${resp}` ? null : `other-resp-${resp}`)}
+                                className={`${getResponsibleColor('regular')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `other-resp-${resp}-${index}` ? null : `other-resp-${resp}-${index}`)}
                               >
-                                <span className="text-sm font-medium">{resp}</span>
-                                {selectedTag === `other-resp-${resp}` && (
+                                <span className="font-medium truncate">{resp}</span>
+                                {selectedTag === `other-resp-${resp}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       updateFormData('responsible', formData.responsible.filter(r => r !== resp));
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -1148,18 +1281,18 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                 {/* Display all approvers together - modern grid layout */}
+                 {/* Display all approvers together - organized by categories */}
                 {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0 || directorApprovers.filter(dir => dir.position).length > 0) && (
-                  <div className="grid gap-6 p-4 bg-muted/30 rounded-lg border">
+                  <div className="grid gap-4 p-4 bg-muted/30 rounded-lg border">
                     {/* Directors Section */}
                     {directorApprovers.filter(dir => dir.position).length > 0 && (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-slate-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-slate-700">Directors</Label>
+                          <div className="w-1 h-4 bg-slate-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                           {directorApprovers.filter(dir => dir.position).map(dir => (
                             <div 
                               key={dir.id}
@@ -1167,22 +1300,22 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `dir-app-${dir.id}` ? null : `dir-app-${dir.id}`)}
                               >
-                                <span className="text-sm font-medium">{dir.position}</span>
+                                <span className="font-medium truncate">{dir.position}</span>
                                 {selectedTag === `dir-app-${dir.id}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeDirectorApprover(dir.id);
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -1192,15 +1325,15 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* HSE Leads Section */}
-                    {hseLeadApprovers.filter(hse => hse.position).length > 0 && (
-                      <div className="space-y-3">
+                    {/* HSE Section */}
+                    {(hseLeadApprovers.filter(hse => hse.position).length > 0 || formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-violet-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-violet-700">HSE Leads</Label>
+                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                           {hseLeadApprovers.filter(hse => hse.position).map(hse => (
                             <div 
                               key={hse.id}
@@ -1208,22 +1341,50 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `hse-app-${hse.id}` ? null : `hse-app-${hse.id}`)}
                               >
-                                <span className="text-sm font-medium">{hse.position}</span>
+                                <span className="font-medium truncate">{hse.position}</span>
                                 {selectedTag === `hse-app-${hse.id}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeHSELeadApprover(hse.id);
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`hse-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-regular-app-${role}-${index}` ? null : `hse-regular-app-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `hse-regular-app-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -1233,15 +1394,15 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* Engineering Managers Section */}
-                    {engrManagerApprovers.filter(engr => engr.position).length > 0 && (
-                      <div className="space-y-3">
+                    {/* Engineering Section */}
+                    {(engrManagerApprovers.filter(engr => engr.position).length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0) && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-indigo-700">Engineering Managers</Label>
+                          <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Engineering</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                           {engrManagerApprovers.filter(engr => engr.position).map(engr => (
                             <div 
                               key={engr.id}
@@ -1249,22 +1410,50 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('engrManager')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                className={`${getApproverColor('engrManager')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `engr-app-${engr.id}` ? null : `engr-app-${engr.id}`)}
                               >
-                                <span className="text-sm font-medium">{engr.position}</span>
+                                <span className="font-medium truncate">{engr.position}</span>
                                 {selectedTag === `engr-app-${engr.id}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeEngrManagerApprover(engr.id);
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                          {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
+                            <div 
+                              key={ta2.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('ta2', ta2.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `ta2-app-${ta2.id}` ? null : `ta2-app-${ta2.id}`)}
+                              >
+                                <span className="font-medium truncate">{ta2.position}</span>
+                                {selectedTag === `ta2-app-${ta2.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeTA2Approver(ta2.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -1274,38 +1463,79 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* TA2s Section */}
-                    {ta2Approvers.filter(ta2 => ta2.position).length > 0 && (
-                      <div className="space-y-3">
+                    {/* Project Section */}
+                    {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-blue-700">Technical Authority 2s</Label>
+                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                          {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).map((role, index) => (
                             <div 
-                              key={ta2.id}
+                              key={`project-app-${role}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('ta2', ta2.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
-                                onClick={() => setSelectedTag(selectedTag === `ta2-app-${ta2.id}` ? null : `ta2-app-${ta2.id}`)}
+                                className={`${getApproverColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `project-app-${role}-${index}` ? null : `project-app-${role}-${index}`)}
                               >
-                                <span className="text-sm font-medium">{ta2.position}</span>
-                                {selectedTag === `ta2-app-${ta2.id}` && (
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `project-app-${role}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      removeTA2Approver(ta2.id);
+                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Asset Section */}
+                    {formData.approvers.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Asset</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.approvers.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
+                            <div 
+                              key={`asset-app-${role}-${index}`}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `asset-app-${role}-${index}` ? null : `asset-app-${role}-${index}`)}
+                              >
+                                <span className="font-medium truncate">{role}</span>
+                                {selectedTag === `asset-app-${role}-${index}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
@@ -1316,37 +1546,37 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     )}
                     
                     {/* Other Roles Section */}
-                    {formData.approvers.length > 0 && (
-                      <div className="space-y-3">
+                    {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0 && (
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
-                          <Label className="text-sm font-semibold text-orange-700">Other Roles</Label>
+                          <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
+                          <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Other Roles</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {formData.approvers.map(approver => (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                          {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((approver, index) => (
                             <div 
-                              key={approver}
+                              key={`other-app-${approver}-${index}`}
                               className="group relative"
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('regular')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
-                                onClick={() => setSelectedTag(selectedTag === `other-app-${approver}` ? null : `other-app-${approver}`)}
+                                className={`${getApproverColor('regular')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                onClick={() => setSelectedTag(selectedTag === `other-app-${approver}-${index}` ? null : `other-app-${approver}-${index}`)}
                               >
-                                <span className="text-sm font-medium">{approver}</span>
-                                {selectedTag === `other-app-${approver}` && (
+                                <span className="font-medium truncate">{approver}</span>
+                                {selectedTag === `other-app-${approver}-${index}` && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       updateFormData('approvers', formData.approvers.filter(a => a !== approver));
                                       setSelectedTag(null);
                                     }}
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-2.5 w-2.5" />
                                   </Button>
                                 )}
                               </Badge>
