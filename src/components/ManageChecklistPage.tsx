@@ -376,7 +376,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 <img 
                   src="/images/orsh-logo.png" 
                   alt="ORSH Logo" 
-                  className="h-20 w-auto filter drop-shadow-sm" 
+                  className="h-40 w-auto filter drop-shadow-sm" 
                 />
               </div>
             </div>
