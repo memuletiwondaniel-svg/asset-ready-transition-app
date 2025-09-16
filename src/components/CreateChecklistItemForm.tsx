@@ -143,31 +143,31 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
   const getResponsibleColor = (type: string, position?: string) => {
     if (type === 'regular') {
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'bg-orange-100 text-orange-800 border-orange-300';
     } else if (type === 'ta2') {
-      // Different colors for different TA2 disciplines
-      if (position?.includes('Process')) return 'bg-green-50 text-green-700 border-green-200';
-      if (position?.includes('Elect')) return 'bg-lime-50 text-lime-700 border-lime-200';
-      if (position?.includes('Tech Safety')) return 'bg-rose-50 text-rose-700 border-rose-200';
-      if (position?.includes('Civil')) return 'bg-slate-50 text-slate-700 border-slate-200';
-      if (position?.includes('Instrument')) return 'bg-teal-50 text-teal-700 border-teal-200';
-      if (position?.includes('Mechanical')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      return 'bg-green-50 text-green-700 border-green-200'; // default TA2 color
+      // Distinct colors for different TA2 disciplines
+      if (position?.includes('Process')) return 'bg-blue-100 text-blue-800 border-blue-300';
+      if (position?.includes('Elect')) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      if (position?.includes('Tech Safety')) return 'bg-red-100 text-red-800 border-red-300';
+      if (position?.includes('Civil')) return 'bg-gray-100 text-gray-800 border-gray-300';
+      if (position?.includes('Instrument')) return 'bg-cyan-100 text-cyan-800 border-cyan-300';
+      if (position?.includes('Mechanical')) return 'bg-green-100 text-green-800 border-green-300';
+      return 'bg-emerald-100 text-emerald-800 border-emerald-300'; // default TA2 color
     } else if (type === 'engrManager') {
-      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      return 'bg-indigo-100 text-indigo-800 border-indigo-300';
     } else if (type === 'hseLead') {
-      // Different colors for different HSE Lead commissions
-      if (position?.includes('P&E')) return 'bg-violet-50 text-violet-700 border-violet-200';
-      if (position?.includes('Asset')) return 'bg-purple-50 text-purple-700 border-purple-200';
-      return 'bg-violet-50 text-violet-700 border-violet-200'; // default HSE Lead color
+      // Distinct colors for different HSE Lead commissions
+      if (position?.includes('P&E')) return 'bg-violet-100 text-violet-800 border-violet-300';
+      if (position?.includes('Asset')) return 'bg-purple-100 text-purple-800 border-purple-300';
+      return 'bg-pink-100 text-pink-800 border-pink-300'; // default HSE Lead color
     } else if (type === 'director') {
-      // Different colors for different Director commissions
-      if (position?.includes('P&E')) return 'bg-slate-50 text-slate-700 border-slate-200';
-      if (position?.includes('Asset')) return 'bg-zinc-50 text-zinc-700 border-zinc-200';
-      if (position?.includes('HSE')) return 'bg-neutral-50 text-neutral-700 border-neutral-200';
-      return 'bg-slate-50 text-slate-700 border-slate-200'; // default Director color
+      // Distinct colors for different Director commissions
+      if (position?.includes('P&E')) return 'bg-slate-100 text-slate-800 border-slate-300';
+      if (position?.includes('Asset')) return 'bg-zinc-100 text-zinc-800 border-zinc-300';
+      if (position?.includes('HSE')) return 'bg-stone-100 text-stone-800 border-stone-300';
+      return 'bg-neutral-100 text-neutral-800 border-neutral-300'; // default Director color
     }
-    return 'bg-gray-50 text-gray-700 border-gray-200';
+    return 'bg-orange-100 text-orange-800 border-orange-300';
   };
   const validateForm = (): boolean => {
     const newErrors: Partial<NewChecklistItemData> = {};
@@ -754,74 +754,118 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                {/* Display all responsible parties together */}
+                 {/* Display all responsible parties together - organized by type */}
                 {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0 || directorResponsible.filter(dir => dir.position).length > 0) && (
-                  <div className="flex flex-wrap gap-2">
-                    {formData.responsible.map(resp => (
-                      <Badge key={resp} variant="secondary" className={`gap-1 ${getResponsibleColor('regular')}`}>
-                        {resp}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => updateFormData('responsible', formData.responsible.filter(r => r !== resp))}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
-                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getResponsibleColor('ta2', ta2.position)}`}>
-                        {ta2.position}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => removeTA2Responsible(ta2.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {engrManagerResponsible.filter(engr => engr.position).map(engr => (
-                      <Badge key={engr.id} variant="secondary" className={`gap-1 ${getResponsibleColor('engrManager')}`}>
-                        {engr.position}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => removeEngrManagerResponsible(engr.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {hseLeadResponsible.filter(hse => hse.position).map(hse => (
-                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getResponsibleColor('hseLead', hse.position)}`}>
-                        {hse.position}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => removeHSELeadResponsible(hse.id)}
-                        >
-                          <X className="h-3 w-3" />
-                         </Button>
-                       </Badge>
-                     ))}
-                     {directorResponsible.filter(dir => dir.position).map(dir => (
-                       <Badge key={dir.id} variant="secondary" className={`gap-1 ${getResponsibleColor('director', dir.position)}`}>
-                         {dir.position}
-                         <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                           onClick={() => removeDirectorResponsible(dir.id)}
-                         >
-                           <X className="h-3 w-3" />
-                         </Button>
-                       </Badge>
-                     ))}
+                  <div className="space-y-3">
+                    {/* Directors */}
+                    {directorResponsible.filter(dir => dir.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Directors</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {directorResponsible.filter(dir => dir.position).map(dir => (
+                            <Badge key={dir.id} variant="secondary" className={`${getResponsibleColor('director', dir.position)} hover:opacity-80 transition-opacity group`}>
+                              {dir.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeDirectorResponsible(dir.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* HSE Leads */}
+                    {hseLeadResponsible.filter(hse => hse.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">HSE Leads</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {hseLeadResponsible.filter(hse => hse.position).map(hse => (
+                            <Badge key={hse.id} variant="secondary" className={`${getResponsibleColor('hseLead', hse.position)} hover:opacity-80 transition-opacity group`}>
+                              {hse.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeHSELeadResponsible(hse.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Engineering Managers */}
+                    {engrManagerResponsible.filter(engr => engr.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Engineering Managers</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {engrManagerResponsible.filter(engr => engr.position).map(engr => (
+                            <Badge key={engr.id} variant="secondary" className={`${getResponsibleColor('engrManager')} hover:opacity-80 transition-opacity group`}>
+                              {engr.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeEngrManagerResponsible(engr.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* TA2s */}
+                    {ta2Responsible.filter(ta2 => ta2.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">TA2s</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
+                            <Badge key={ta2.id} variant="secondary" className={`${getResponsibleColor('ta2', ta2.position)} hover:opacity-80 transition-opacity group`}>
+                              {ta2.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeTA2Responsible(ta2.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Other Roles */}
+                    {formData.responsible.length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Other Roles</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {formData.responsible.map(resp => (
+                            <Badge key={resp} variant="secondary" className={`${getResponsibleColor('regular')} hover:opacity-80 transition-opacity group`}>
+                              {resp}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => updateFormData('responsible', formData.responsible.filter(r => r !== resp))}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
@@ -1008,75 +1052,119 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                {/* Display all approvers together */}
+                 {/* Display all approvers together - organized by type */}
                 {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0 || directorApprovers.filter(dir => dir.position).length > 0) && (
-                  <div className="flex flex-wrap gap-2">
-                    {formData.approvers.map(approver => (
-                      <Badge key={approver} variant="secondary" className={`gap-1 ${getApproverColor('regular')}`}>
-                        {approver}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => updateFormData('approvers', formData.approvers.filter(a => a !== approver))}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
-                      <Badge key={ta2.id} variant="secondary" className={`gap-1 ${getApproverColor('ta2', ta2.position)}`}>
-                        {ta2.position}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => removeTA2Approver(ta2.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {engrManagerApprovers.filter(engr => engr.position).map(engr => (
-                      <Badge key={engr.id} variant="secondary" className={`gap-1 ${getApproverColor('engrManager')}`}>
-                        {engr.position}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => removeEngrManagerApprover(engr.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {hseLeadApprovers.filter(hse => hse.position).map(hse => (
-                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getApproverColor('hseLead', hse.position)}`}>
-                        {hse.position}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                          onClick={() => removeHSELeadApprover(hse.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                       </Badge>
-                     ))}
-                     {directorApprovers.filter(dir => dir.position).map(dir => (
-                       <Badge key={dir.id} variant="secondary" className={`gap-1 ${getApproverColor('director', dir.position)}`}>
-                         {dir.position}
-                         <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
-                           onClick={() => removeDirectorApprover(dir.id)}
-                         >
-                           <X className="h-3 w-3" />
-                         </Button>
-                       </Badge>
-                     ))}
-                   </div>
+                  <div className="space-y-3">
+                    {/* Directors */}
+                    {directorApprovers.filter(dir => dir.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Directors</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {directorApprovers.filter(dir => dir.position).map(dir => (
+                            <Badge key={dir.id} variant="secondary" className={`${getApproverColor('director', dir.position)} hover:opacity-80 transition-opacity group`}>
+                              {dir.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeDirectorApprover(dir.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* HSE Leads */}
+                    {hseLeadApprovers.filter(hse => hse.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">HSE Leads</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {hseLeadApprovers.filter(hse => hse.position).map(hse => (
+                            <Badge key={hse.id} variant="secondary" className={`${getApproverColor('hseLead', hse.position)} hover:opacity-80 transition-opacity group`}>
+                              {hse.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeHSELeadApprover(hse.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Engineering Managers */}
+                    {engrManagerApprovers.filter(engr => engr.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Engineering Managers</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {engrManagerApprovers.filter(engr => engr.position).map(engr => (
+                            <Badge key={engr.id} variant="secondary" className={`${getApproverColor('engrManager')} hover:opacity-80 transition-opacity group`}>
+                              {engr.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeEngrManagerApprover(engr.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* TA2s */}
+                    {ta2Approvers.filter(ta2 => ta2.position).length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">TA2s</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
+                            <Badge key={ta2.id} variant="secondary" className={`${getApproverColor('ta2', ta2.position)} hover:opacity-80 transition-opacity group`}>
+                              {ta2.position}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => removeTA2Approver(ta2.id)}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Other Roles */}
+                    {formData.approvers.length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Other Roles</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {formData.approvers.map(approver => (
+                            <Badge key={approver} variant="secondary" className={`${getApproverColor('regular')} hover:opacity-80 transition-opacity group`}>
+                              {approver}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
+                                onClick={() => updateFormData('approvers', formData.approvers.filter(a => a !== approver))}
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                  )}
                 
                 {/* TA2 Approver Configuration */}
