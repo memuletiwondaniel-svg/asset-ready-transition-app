@@ -162,7 +162,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             {/* ORSH Logo - Top Left */}
             <div className="flex items-center">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-32 w-auto" />
+              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto" />
             </div>
             
             {/* Right side - BGC Logo and Language Selector */}
