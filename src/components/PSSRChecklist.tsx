@@ -20,7 +20,7 @@ import {
   Cog
 } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
-import { useChecklistItems, useChecklistCategories } from '@/hooks/useChecklistItems';
+import { useChecklistItems, useChecklistCategories as useChecklistCategoriesFromItems } from '@/hooks/useChecklistItems';
 import ChecklistItemModal from './ChecklistItemModal';
 
 interface ChecklistItemStatus {
@@ -39,7 +39,7 @@ const PSSRChecklist: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data: checklistItems = [], isLoading } = useChecklistItems();
-  const { data: categories = [] } = useChecklistCategories();
+  const { data: categories = [] } = useChecklistCategoriesFromItems();
 
   const filteredItems = checklistItems.filter(item => {
     const matchesCategory = item.category === selectedCategory;

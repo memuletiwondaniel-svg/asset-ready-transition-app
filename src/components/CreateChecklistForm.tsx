@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
-import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
+import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories as useChecklistCategoriesFromItems, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
@@ -43,7 +43,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const [showDetailModal, setShowDetailModal] = useState(false);
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
-  const { data: availableCategories = [] } = useChecklistCategories();
+  const { data: availableCategories = [] } = useChecklistCategoriesFromItems();
   
   const [formData, setFormData] = useState<NewChecklistData>({
     reason: '',

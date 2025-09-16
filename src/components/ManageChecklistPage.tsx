@@ -12,10 +12,12 @@ import ChecklistManagementPage from './ChecklistManagementPage';
 import EditChecklistForm from './EditChecklistForm';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
 import { useChecklists, useCreateChecklist, useUpdateChecklist, useDeleteChecklist, Checklist } from '@/hooks/useChecklists';
+import { useChecklistCategories } from '@/hooks/useChecklistCategories';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
 
 interface ManageChecklistPageProps {
   onBack: () => void;
@@ -30,7 +32,7 @@ interface NewChecklistData {
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   onBack
 }) => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'checklists' | 'items' | 'groups' | 'topics'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'checklists' | 'items' | 'categories' | 'topics'>('dashboard');
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -45,6 +47,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
   const { toast } = useToast();
   const { data: checklists = [], isLoading, error } = useChecklists();
+  const { data: categories = [] } = useChecklistCategories();
   const { mutate: createChecklist } = useCreateChecklist();
   const { mutate: updateChecklist } = useUpdateChecklist();
   const { mutate: deleteChecklist } = useDeleteChecklist();
@@ -196,12 +199,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       onClick: () => setActiveView('items')
     },
     {
-      id: 'groups',
-      title: 'Checklist Groups',
-      description: 'Organize checklist items into logical groups and categories',
+      id: 'categories',
+      title: 'Checklist Categories',
+      description: 'Organize checklist items into logical categories',
       icon: Users,
-      stats: { total: 18, active: 16 },
-      onClick: () => setActiveView('groups')
+      stats: { total: categories.length, active: categories.filter(c => c.is_active).length },
+      onClick: () => setActiveView('categories')
     },
     {
       id: 'topics',
@@ -236,17 +239,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   // Handle different views
   if (activeView === 'items') {
     return <ChecklistManagementPage onBack={() => setActiveView('dashboard')} />;
-  } else if (activeView === 'groups') {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <Button onClick={() => setActiveView('dashboard')} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Categories
-        </Button>
-        <h1 className="text-2xl font-bold mb-4">Checklist Groups Management</h1>
-        <p className="text-muted-foreground">Coming soon...</p>
-      </div>
-    );
+  } else if (activeView === 'categories') {
+    return <ChecklistCategoriesManagement onBack={() => setActiveView('dashboard')} />;
   } else if (activeView === 'topics') {
     return (
       <div className="min-h-screen bg-background p-8">
