@@ -361,21 +361,26 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       <div className="fluent-navigation sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="fluent-reveal">
-                <img src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" alt="BGC Logo" className="h-12 w-auto animate-float" />
-              </div>
-              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Manage Checklists
-                </h1>
-                <p className="text-sm text-muted-foreground font-medium">PSSR Microservice • Basrah Gas Company</p>
+            <div className="flex items-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveView('dashboard')} 
+                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+                Back to Categories
+              </Button>
+            </div>
+            <div className="flex-1 flex justify-center">
+              <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
+                <img 
+                  src="/images/orsh-logo.png" 
+                  alt="ORSH Logo" 
+                  className="h-40 w-auto filter drop-shadow-sm" 
+                />
               </div>
             </div>
-            <Button variant="outline" onClick={() => setActiveView('dashboard')} className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group">
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              Back to Categories
-            </Button>
+            <div className="w-40"></div> {/* Spacer to center the logo */}
           </div>
         </div>
       </div>
