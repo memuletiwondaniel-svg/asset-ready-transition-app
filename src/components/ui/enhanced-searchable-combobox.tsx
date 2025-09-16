@@ -69,7 +69,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-background/95 backdrop-blur-sm hover:bg-accent/10 hover:border-primary/30 transition-all duration-300",
+            "w-full justify-between bg-background/95 backdrop-blur-sm hover:bg-accent/10 hover:border-primary/30 transition-all duration-300 ease-out hover:scale-[1.01] focus:scale-[1.01] focus:border-primary/60 focus:ring-2 focus:ring-primary/20",
             className
           )}
           disabled={disabled}
