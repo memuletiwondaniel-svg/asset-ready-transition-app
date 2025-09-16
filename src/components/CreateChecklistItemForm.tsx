@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search } from 'lucide-react';
-import { useCreateChecklistItem, useChecklistTopics } from '@/hooks/useChecklistItems';
+import { useCreateChecklistItem } from '@/hooks/useChecklistItems';
+import { useChecklistTopics } from '@/hooks/useChecklistTopics';
 import { useUsers } from '@/hooks/useUsers';
 import { toast } from '@/hooks/use-toast';
 interface CreateChecklistItemFormProps {
@@ -52,11 +53,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const categories = ['General', 'Process Safety', 'Organization', 'Documentation', 'Health & Safety', 'Emergency Response', 'Elect', 'Static', 'Rotating', 'PACO', 'Civil'];
 
   // State for managing topics
-  const [topicOptions, setTopicOptions] = React.useState<string[]>(existingTopics);
+  const [topicOptions, setTopicOptions] = React.useState<string[]>([]);
 
   // Update topic options when existingTopics changes
   React.useEffect(() => {
-    setTopicOptions(existingTopics);
+    setTopicOptions(existingTopics.map(topic => topic.name));
   }, [existingTopics]);
 
   // Get unique roles from users for approvers and responsible parties
