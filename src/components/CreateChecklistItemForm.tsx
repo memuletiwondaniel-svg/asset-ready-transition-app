@@ -6,11 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Combobox } from '@/components/ui/combobox';
+import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
 import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search } from 'lucide-react';
 import { useCreateChecklistItem } from '@/hooks/useChecklistItems';
-import { useChecklistTopics } from '@/hooks/useChecklistTopics';
-import { useUsers } from '@/hooks/useUsers';
+import { useChecklistCategories, useCreateChecklistCategory } from '@/hooks/useChecklistCategories';
+import { useChecklistTopics, useCreateChecklistTopic } from '@/hooks/useChecklistTopics';
+import { useRoles } from '@/hooks/useRoles';
+import { useDisciplines } from '@/hooks/useDisciplines';
+import { useCommissions } from '@/hooks/useCommissions';
 import { toast } from '@/hooks/use-toast';
 interface CreateChecklistItemFormProps {
   onBack: () => void;
@@ -21,8 +24,15 @@ interface NewChecklistItemData {
   evidenceGuidance: string;
   category: string;
   approvers: string[];
-  responsible: string;
+  responsible: string[];
   topic: string;
+}
+
+interface TA2Approver {
+  id: string;
+  discipline: string;
+  commission: string;
+  position: string;
 }
 const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   onBack,
@@ -33,37 +43,40 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     evidenceGuidance: '',
     category: '',
     approvers: [],
-    responsible: '',
+    responsible: [],
     topic: ''
   });
   const [errors, setErrors] = useState<Partial<NewChecklistItemData>>({});
   const [showPreview, setShowPreview] = useState(false);
-  const [approverSearch, setApproverSearch] = useState('');
-  const [responsibleSearch, setResponsibleSearch] = useState('');
+  const [ta2Approvers, setTA2Approvers] = useState<TA2Approver[]>([]);
+  const [ta2Responsible, setTA2Responsible] = useState<TA2Approver[]>([]);
+  
   const createChecklistItemMutation = useCreateChecklistItem();
-  const {
-    users
-  } = useUsers();
-  const {
-    data: existingTopics = [],
-    refetch: refetchTopics
-  } = useChecklistTopics();
+  
+  // Hooks for data fetching
+  const { data: categories = [] } = useChecklistCategories();
+  const createCategoryMutation = useCreateChecklistCategory();
+  const { data: topics = [] } = useChecklistTopics();
+  const createTopicMutation = useCreateChecklistTopic();
+  const { roles } = useRoles();
+  const { disciplines } = useDisciplines();
+  const { commissions } = useCommissions();
 
-  // Microsoft Fluent Design categories
-  const categories = ['General', 'Process Safety', 'Organization', 'Documentation', 'Health & Safety', 'Emergency Response', 'Elect', 'Static', 'Rotating', 'PACO', 'Civil'];
-
-  // State for managing topics
-  const [topicOptions, setTopicOptions] = React.useState<string[]>([]);
-
-  // Update topic options when existingTopics changes
-  React.useEffect(() => {
-    setTopicOptions(existingTopics.map(topic => topic.name));
-  }, [existingTopics]);
-
-  // Get unique roles from users for approvers and responsible parties
-  const userRoles = [...new Set(users.map(user => user.role).filter(Boolean))];
-  const filteredApproverRoles = userRoles.filter(role => role.toLowerCase().includes(approverSearch.toLowerCase()));
-  const filteredResponsibleRoles = userRoles.filter(role => role.toLowerCase().includes(responsibleSearch.toLowerCase()));
+  // Transform data for comboboxes
+  const categoryOptions = categories.map(cat => ({ value: cat.name, label: cat.name }));
+  const topicOptions = topics.map(topic => ({ value: topic.name, label: topic.name }));
+  const roleOptions = roles.map(role => ({ value: role.name, label: role.name }));
+  const disciplineOptions = disciplines.map(disc => ({ value: disc.name, label: disc.name }));
+  
+  // Filter commissions based on discipline selection - only P&E and Asset for most disciplines
+  const getCommissionOptions = (disciplineName: string) => {
+    if (disciplineName === 'Tech Safety' || disciplineName === 'Civil') {
+      return []; // No commission field for these disciplines
+    }
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
   const validateForm = (): boolean => {
     const newErrors: Partial<NewChecklistItemData> = {};
     if (!formData.description.trim()) {
@@ -72,11 +85,11 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    if (formData.approvers.length === 0) {
+    if (formData.approvers.length === 0 && ta2Approvers.length === 0) {
       newErrors.approvers = 'At least one approver is required' as any;
     }
-    if (!formData.responsible) {
-      newErrors.responsible = 'Responsible party is required';
+    if (formData.responsible.length === 0 && ta2Responsible.length === 0) {
+      newErrors.responsible = 'At least one responsible party is required' as any;
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -84,16 +97,27 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const handleSubmit = async () => {
     if (validateForm()) {
       try {
-        // Generate auto-assigned ID (simplified for demo)
-        const autoId = `CHK-${Date.now().toString().slice(-6)}`;
+        // Combine regular approvers with TA2 approvers
+        const allApprovers = [
+          ...formData.approvers,
+          ...ta2Approvers.map(ta2 => ta2.position)
+        ];
+        
+        // Combine regular responsible with TA2 responsible
+        const allResponsible = [
+          ...formData.responsible,
+          ...ta2Responsible.map(ta2 => ta2.position)
+        ];
+        
         const newItem = {
           description: formData.description.trim(),
           required_evidence: formData.evidenceGuidance.trim(),
           category: formData.category,
-          Approver: formData.approvers.join(', '),
-          responsible: formData.responsible,
+          Approver: allApprovers.join(', '),
+          responsible: allResponsible.join(', '),
           topic: formData.topic.trim()
         };
+        
         await createChecklistItemMutation.mutateAsync(newItem);
         toast({
           title: "Success",
@@ -122,21 +146,116 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       }));
     }
   };
-  const addApprover = (role: string) => {
-    if (!formData.approvers.includes(role)) {
-      updateFormData('approvers', [...formData.approvers, role]);
+  // Handle creating new categories and topics
+  const handleCreateCategory = async (categoryName: string) => {
+    try {
+      await createCategoryMutation.mutateAsync({ name: categoryName });
+      toast({
+        title: "Success",
+        description: `Category "${categoryName}" created successfully`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create category",
+        variant: "destructive"
+      });
     }
-    setApproverSearch('');
   };
-  const removeApprover = (role: string) => {
-    updateFormData('approvers', formData.approvers.filter(a => a !== role));
-  };
-  const handleAddTopic = (newTopic: string) => {
-    if (!topicOptions.includes(newTopic)) {
-      setTopicOptions(prev => [...prev, newTopic]);
-      // Refetch topics to include the new one from database
-      refetchTopics();
+
+  const handleCreateTopic = async (topicName: string) => {
+    try {
+      await createTopicMutation.mutateAsync({ name: topicName });
+      toast({
+        title: "Success",
+        description: `Topic "${topicName}" created successfully`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create topic",
+        variant: "destructive"
+      });
     }
+  };
+
+  // TA2 management functions
+  const addTA2Approver = () => {
+    const newTA2: TA2Approver = {
+      id: Date.now().toString(),
+      discipline: '',
+      commission: '',
+      position: ''
+    };
+    setTA2Approvers([...ta2Approvers, newTA2]);
+  };
+
+  const updateTA2Approver = (id: string, field: keyof TA2Approver, value: string) => {
+    setTA2Approvers(prev => prev.map(ta2 => {
+      if (ta2.id === id) {
+        const updated = { ...ta2, [field]: value };
+        
+        // Update position based on discipline and commission
+        if (field === 'discipline' || field === 'commission') {
+          const disc = field === 'discipline' ? value : ta2.discipline;
+          const comm = field === 'commission' ? value : ta2.commission;
+          
+          if (disc === 'Tech Safety' || disc === 'Civil') {
+            updated.position = `TA2 ${disc}`;
+          } else if (disc && comm) {
+            updated.position = `TA2 ${disc} (${comm})`;
+          } else if (disc) {
+            updated.position = `TA2 ${disc}`;
+          }
+        }
+        
+        return updated;
+      }
+      return ta2;
+    }));
+  };
+
+  const removeTA2Approver = (id: string) => {
+    setTA2Approvers(prev => prev.filter(ta2 => ta2.id !== id));
+  };
+
+  // Similar functions for TA2 responsible parties
+  const addTA2Responsible = () => {
+    const newTA2: TA2Approver = {
+      id: Date.now().toString(),
+      discipline: '',
+      commission: '',
+      position: ''
+    };
+    setTA2Responsible([...ta2Responsible, newTA2]);
+  };
+
+  const updateTA2Responsible = (id: string, field: keyof TA2Approver, value: string) => {
+    setTA2Responsible(prev => prev.map(ta2 => {
+      if (ta2.id === id) {
+        const updated = { ...ta2, [field]: value };
+        
+        if (field === 'discipline' || field === 'commission') {
+          const disc = field === 'discipline' ? value : ta2.discipline;
+          const comm = field === 'commission' ? value : ta2.commission;
+          
+          if (disc === 'Tech Safety' || disc === 'Civil') {
+            updated.position = `TA2 ${disc}`;
+          } else if (disc && comm) {
+            updated.position = `TA2 ${disc} (${comm})`;
+          } else if (disc) {
+            updated.position = `TA2 ${disc}`;
+          }
+        }
+        
+        return updated;
+      }
+      return ta2;
+    }));
+  };
+
+  const removeTA2Responsible = (id: string) => {
+    setTA2Responsible(prev => prev.filter(ta2 => ta2.id !== id));
   };
   if (showPreview) {
     return <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -187,12 +306,26 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   {formData.approvers.map(approver => <Badge key={approver} variant="outline">
                       {approver}
                     </Badge>)}
+                  {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => 
+                    <Badge key={ta2.id} variant="outline" className="bg-blue-50 text-blue-700">
+                      {ta2.position}
+                    </Badge>
+                  )}
                 </div>
               </div>
               
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Responsible Party</Label>
-                <p className="mt-1 text-sm">{formData.responsible}</p>
+                <Label className="text-sm font-medium text-muted-foreground">Responsible Parties</Label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {formData.responsible.map(resp => <Badge key={resp} variant="outline">
+                      {resp}
+                    </Badge>)}
+                  {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => 
+                    <Badge key={ta2.id} variant="outline" className="bg-green-50 text-green-700">
+                      {ta2.position}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -273,16 +406,16 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 <Label className="text-sm font-medium flex items-center gap-2">
                   Category <span className="text-destructive">*</span>
                 </Label>
-                <Select value={formData.category} onValueChange={value => updateFormData('category', value)}>
-                  <SelectTrigger className="fluent-input">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-lg z-50">
-                    {categories.map(category => <SelectItem key={category} value={category} className="cursor-pointer">
-                        {category}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <EnhancedSearchableCombobox
+                  options={categoryOptions}
+                  value={formData.category}
+                  onValueChange={value => updateFormData('category', value)}
+                  onCreateNew={handleCreateCategory}
+                  allowCreate={true}
+                  placeholder="Select or create category..."
+                  searchPlaceholder="Search categories..."
+                  className="fluent-input"
+                />
                 {errors.category && <p className="text-sm text-destructive flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
                     {errors.category}
@@ -290,10 +423,19 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="topic" className="text-sm font-medium flex items-center gap-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
                   Topic
                 </Label>
-                <Combobox value={formData.topic} onValueChange={value => updateFormData('topic', value)} items={topicOptions} placeholder="Select or add a topic..." searchPlaceholder="Search topics..." emptyText="No topics found." allowCustom={true} onAddCustom={handleAddTopic} className="fluent-input" />
+                <EnhancedSearchableCombobox
+                  options={topicOptions}
+                  value={formData.topic}
+                  onValueChange={value => updateFormData('topic', value)}
+                  onCreateNew={handleCreateTopic}
+                  allowCreate={true}
+                  placeholder="Select or create topic..."
+                  searchPlaceholder="Search topics..."
+                  className="fluent-input"
+                />
                 {errors.topic && <p className="text-sm text-destructive flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
                     {errors.topic}
@@ -304,26 +446,97 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               </div>
             </div>
 
-            {/* Responsible */}
+            {/* Responsible Parties */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
-                Responsible <span className="text-destructive">*</span>
+                Responsible Parties <span className="text-destructive">*</span>
               </Label>
-              <div className="relative">
-                <Input placeholder="Search for responsible party..." value={responsibleSearch} onChange={e => setResponsibleSearch(e.target.value)} className="fluent-input" />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              
+              {/* Regular Roles */}
+              <div className="space-y-3">
+                <EnhancedSearchableCombobox
+                  options={roleOptions}
+                  value=""
+                  onValueChange={(value) => {
+                    if (value === 'TA2') {
+                      addTA2Responsible();
+                    } else if (!formData.responsible.includes(value)) {
+                      updateFormData('responsible', [...formData.responsible, value]);
+                    }
+                  }}
+                  placeholder="Select role..."
+                  searchPlaceholder="Search roles..."
+                  className="fluent-input"
+                />
+                
+                {/* Display selected regular responsible parties */}
+                {formData.responsible.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.responsible.map(resp => (
+                      <Badge key={resp} variant="secondary" className="gap-1">
+                        {resp}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => updateFormData('responsible', formData.responsible.filter(r => r !== resp))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
+                {/* TA2 Responsible Parties */}
+                {ta2Responsible.map((ta2) => (
+                  <div key={ta2.id} className="border rounded-lg p-4 bg-green-50/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-green-800">TA2 Responsible Configuration</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTA2Responsible(ta2.id)}
+                        className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Discipline</Label>
+                        <EnhancedSearchableCombobox
+                          options={disciplineOptions}
+                          value={ta2.discipline}
+                          onValueChange={(value) => updateTA2Responsible(ta2.id, 'discipline', value)}
+                          placeholder="Select discipline..."
+                          className="h-8"
+                        />
+                      </div>
+                      
+                      {ta2.discipline && !['Tech Safety', 'Civil'].includes(ta2.discipline) && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Commission</Label>
+                          <EnhancedSearchableCombobox
+                            options={getCommissionOptions(ta2.discipline)}
+                            value={ta2.commission}
+                            onValueChange={(value) => updateTA2Responsible(ta2.id, 'commission', value)}
+                            placeholder="Select commission..."
+                            className="h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {ta2.position && (
+                      <Badge variant="outline" className="bg-green-100 text-green-800">
+                        {ta2.position}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
               </div>
-              
-              {responsibleSearch && filteredResponsibleRoles.length > 0 && <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
-                  {filteredResponsibleRoles.map(role => <Button key={role} variant="ghost" size="sm" className="w-full justify-start text-left" onClick={() => {
-                updateFormData('responsible', role);
-                setResponsibleSearch('');
-              }}>
-                      {role}
-                    </Button>)}
-                </div>}
-              
-              {formData.responsible && <Badge variant="outline">{formData.responsible}</Badge>}
               
               {errors.responsible && <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
@@ -336,25 +549,92 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               <Label className="text-sm font-medium flex items-center gap-2">
                 Approvers <span className="text-destructive">*</span>
               </Label>
-              <div className="relative">
-                <Input placeholder="Search for approver roles..." value={approverSearch} onChange={e => setApproverSearch(e.target.value)} className="fluent-input" />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
               
-              {approverSearch && filteredApproverRoles.length > 0 && <div className="border rounded-lg bg-popover p-2 space-y-1 max-h-48 overflow-y-auto">
-                  {filteredApproverRoles.map(role => <Button key={role} variant="ghost" size="sm" className="w-full justify-start text-left" onClick={() => addApprover(role)} disabled={formData.approvers.includes(role)}>
-                      {role}
-                    </Button>)}
-                </div>}
-              
-              {formData.approvers.length > 0 && <div className="flex flex-wrap gap-2">
-                  {formData.approvers.map(approver => <Badge key={approver} variant="secondary" className="gap-1">
-                      {approver}
-                      <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" onClick={() => removeApprover(approver)}>
-                        <X className="h-3 w-3" />
+              {/* Regular Roles */}
+              <div className="space-y-3">
+                <EnhancedSearchableCombobox
+                  options={roleOptions}
+                  value=""
+                  onValueChange={(value) => {
+                    if (value === 'TA2') {
+                      addTA2Approver();
+                    } else if (!formData.approvers.includes(value)) {
+                      updateFormData('approvers', [...formData.approvers, value]);
+                    }
+                  }}
+                  placeholder="Select role..."
+                  searchPlaceholder="Search roles..."
+                  className="fluent-input"
+                />
+                
+                {/* Display selected regular approvers */}
+                {formData.approvers.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.approvers.map(approver => (
+                      <Badge key={approver} variant="secondary" className="gap-1">
+                        {approver}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => updateFormData('approvers', formData.approvers.filter(a => a !== approver))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
+                {/* TA2 Approvers */}
+                {ta2Approvers.map((ta2) => (
+                  <div key={ta2.id} className="border rounded-lg p-4 bg-blue-50/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-blue-800">TA2 Approver Configuration</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTA2Approver(ta2.id)}
+                        className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                      >
+                        <X className="h-4 w-4" />
                       </Button>
-                    </Badge>)}
-                </div>}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Discipline</Label>
+                        <EnhancedSearchableCombobox
+                          options={disciplineOptions}
+                          value={ta2.discipline}
+                          onValueChange={(value) => updateTA2Approver(ta2.id, 'discipline', value)}
+                          placeholder="Select discipline..."
+                          className="h-8"
+                        />
+                      </div>
+                      
+                      {ta2.discipline && !['Tech Safety', 'Civil'].includes(ta2.discipline) && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Commission</Label>
+                          <EnhancedSearchableCombobox
+                            options={getCommissionOptions(ta2.discipline)}
+                            value={ta2.commission}
+                            onValueChange={(value) => updateTA2Approver(ta2.id, 'commission', value)}
+                            placeholder="Select commission..."
+                            className="h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {ta2.position && (
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                        {ta2.position}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
               
               {errors.approvers && <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
