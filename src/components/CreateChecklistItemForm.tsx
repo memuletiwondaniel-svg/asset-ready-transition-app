@@ -118,7 +118,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     } else if (type === 'engrManager') {
       return 'bg-cyan-50 text-cyan-700 border-cyan-200';
     } else if (type === 'hseLead') {
-      return 'bg-pink-50 text-pink-700 border-pink-200';
+      // Different colors for different HSE Lead commissions
+      if (position?.includes('P&E')) return 'bg-pink-50 text-pink-700 border-pink-200';
+      if (position?.includes('Asset')) return 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200';
+      return 'bg-pink-50 text-pink-700 border-pink-200'; // default HSE Lead color
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   };
@@ -138,7 +141,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     } else if (type === 'engrManager') {
       return 'bg-indigo-50 text-indigo-700 border-indigo-200';
     } else if (type === 'hseLead') {
-      return 'bg-violet-50 text-violet-700 border-violet-200';
+      // Different colors for different HSE Lead commissions
+      if (position?.includes('P&E')) return 'bg-violet-50 text-violet-700 border-violet-200';
+      if (position?.includes('Asset')) return 'bg-purple-50 text-purple-700 border-purple-200';
+      return 'bg-violet-50 text-violet-700 border-violet-200'; // default HSE Lead color
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   };
@@ -709,7 +715,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </Badge>
                     ))}
                     {hseLeadResponsible.filter(hse => hse.position).map(hse => (
-                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getResponsibleColor('hseLead')}`}>
+                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getResponsibleColor('hseLead', hse.position)}`}>
                         {hse.position}
                         <Button 
                           variant="ghost" 
@@ -915,7 +921,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </Badge>
                     ))}
                     {hseLeadApprovers.filter(hse => hse.position).map(hse => (
-                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getApproverColor('hseLead')}`}>
+                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getApproverColor('hseLead', hse.position)}`}>
                         {hse.position}
                         <Button 
                           variant="ghost" 
