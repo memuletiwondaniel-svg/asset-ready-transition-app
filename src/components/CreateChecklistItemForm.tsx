@@ -755,169 +755,209 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                 {/* Display all responsible parties together - organized by type */}
+                 {/* Display all responsible parties together - modern grid layout */}
                 {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0 || directorResponsible.filter(dir => dir.position).length > 0) && (
-                  <div className="space-y-3">
-                    {/* Directors */}
+                  <div className="grid gap-6 p-4 bg-muted/30 rounded-lg border">
+                    {/* Directors Section */}
                     {directorResponsible.filter(dir => dir.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Directors</Label>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-slate-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-slate-700">Directors</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {directorResponsible.filter(dir => dir.position).map(dir => (
-                            <Badge 
-                              key={dir.id} 
-                              variant="secondary" 
-                              className={`${getResponsibleColor('director', dir.position)} hover:opacity-80 transition-opacity cursor-pointer`}
-                              onClick={() => setSelectedTag(selectedTag === `dir-resp-${dir.id}` ? null : `dir-resp-${dir.id}`)}
+                            <div 
+                              key={dir.id}
+                              className="group relative"
                             >
-                              {dir.position}
-                              {selectedTag === `dir-resp-${dir.id}` && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeDirectorResponsible(dir.id);
-                                    setSelectedTag(null);
-                                  }}
-                                >
-                                  <X className="h-2.5 w-2.5" />
-                                </Button>
-                              )}
-                            </Badge>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('director', dir.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `dir-resp-${dir.id}` ? null : `dir-resp-${dir.id}`)}
+                              >
+                                <span className="text-sm font-medium">{dir.position}</span>
+                                {selectedTag === `dir-resp-${dir.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeDirectorResponsible(dir.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* HSE Leads */}
+                    {/* HSE Leads Section */}
                     {hseLeadResponsible.filter(hse => hse.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">HSE Leads</Label>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-violet-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-violet-700">HSE Leads</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {hseLeadResponsible.filter(hse => hse.position).map(hse => (
-                            <Badge 
-                              key={hse.id} 
-                              variant="secondary" 
-                              className={`${getResponsibleColor('hseLead', hse.position)} hover:opacity-80 transition-opacity cursor-pointer`}
-                              onClick={() => setSelectedTag(selectedTag === `hse-resp-${hse.id}` ? null : `hse-resp-${hse.id}`)}
+                            <div 
+                              key={hse.id}
+                              className="group relative"
                             >
-                              {hse.position}
-                              {selectedTag === `hse-resp-${hse.id}` && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeHSELeadResponsible(hse.id);
-                                    setSelectedTag(null);
-                                  }}
-                                >
-                                  <X className="h-2.5 w-2.5" />
-                                </Button>
-                              )}
-                            </Badge>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-resp-${hse.id}` ? null : `hse-resp-${hse.id}`)}
+                              >
+                                <span className="text-sm font-medium">{hse.position}</span>
+                                {selectedTag === `hse-resp-${hse.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeHSELeadResponsible(hse.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* Engineering Managers */}
+                    {/* Engineering Managers Section */}
                     {engrManagerResponsible.filter(engr => engr.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Engineering Managers</Label>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-indigo-700">Engineering Managers</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {engrManagerResponsible.filter(engr => engr.position).map(engr => (
-                            <Badge 
-                              key={engr.id} 
-                              variant="secondary" 
-                              className={`${getResponsibleColor('engrManager')} hover:opacity-80 transition-opacity cursor-pointer`}
-                              onClick={() => setSelectedTag(selectedTag === `engr-resp-${engr.id}` ? null : `engr-resp-${engr.id}`)}
+                            <div 
+                              key={engr.id}
+                              className="group relative"
                             >
-                              {engr.position}
-                              {selectedTag === `engr-resp-${engr.id}` && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeEngrManagerResponsible(engr.id);
-                                    setSelectedTag(null);
-                                  }}
-                                >
-                                  <X className="h-2.5 w-2.5" />
-                                </Button>
-                              )}
-                            </Badge>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('engrManager')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `engr-resp-${engr.id}` ? null : `engr-resp-${engr.id}`)}
+                              >
+                                <span className="text-sm font-medium">{engr.position}</span>
+                                {selectedTag === `engr-resp-${engr.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeEngrManagerResponsible(engr.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* TA2s */}
+                    {/* TA2s Section */}
                     {ta2Responsible.filter(ta2 => ta2.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">TA2s</Label>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-blue-700">Technical Authority 2s</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                           {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
-                            <Badge 
-                              key={ta2.id} 
-                              variant="secondary" 
-                              className={`${getResponsibleColor('ta2', ta2.position)} hover:opacity-80 transition-opacity cursor-pointer`}
-                              onClick={() => setSelectedTag(selectedTag === `ta2-resp-${ta2.id}` ? null : `ta2-resp-${ta2.id}`)}
+                            <div 
+                              key={ta2.id}
+                              className="group relative"
                             >
-                              {ta2.position}
-                              {selectedTag === `ta2-resp-${ta2.id}` && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeTA2Responsible(ta2.id);
-                                    setSelectedTag(null);
-                                  }}
-                                >
-                                  <X className="h-2.5 w-2.5" />
-                                </Button>
-                              )}
-                            </Badge>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('ta2', ta2.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `ta2-resp-${ta2.id}` ? null : `ta2-resp-${ta2.id}`)}
+                              >
+                                <span className="text-sm font-medium">{ta2.position}</span>
+                                {selectedTag === `ta2-resp-${ta2.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeTA2Responsible(ta2.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* Other Roles */}
+                    {/* Other Roles Section */}
                     {formData.responsible.length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Other Roles</Label>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-orange-700">Other Roles</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {formData.responsible.map(resp => (
-                            <Badge 
-                              key={resp} 
-                              variant="secondary" 
-                              className={`${getResponsibleColor('regular')} hover:opacity-80 transition-opacity cursor-pointer`}
-                              onClick={() => setSelectedTag(selectedTag === `other-resp-${resp}` ? null : `other-resp-${resp}`)}
+                            <div 
+                              key={resp}
+                              className="group relative"
                             >
-                              {resp}
-                              {selectedTag === `other-resp-${resp}` && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateFormData('responsible', formData.responsible.filter(r => r !== resp));
-                                    setSelectedTag(null);
-                                  }}
-                                >
-                                  <X className="h-2.5 w-2.5" />
-                                </Button>
-                              )}
-                            </Badge>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getResponsibleColor('regular')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `other-resp-${resp}` ? null : `other-resp-${resp}`)}
+                              >
+                                <span className="text-sm font-medium">{resp}</span>
+                                {selectedTag === `other-resp-${resp}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('responsible', formData.responsible.filter(r => r !== resp));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1108,169 +1148,209 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                   className="fluent-input"
                 />
                 
-                 {/* Display all approvers together - organized by type */}
+                 {/* Display all approvers together - modern grid layout */}
                 {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0 || directorApprovers.filter(dir => dir.position).length > 0) && (
-                  <div className="space-y-3">
-                    {/* Directors */}
+                  <div className="grid gap-6 p-4 bg-muted/30 rounded-lg border">
+                    {/* Directors Section */}
                     {directorApprovers.filter(dir => dir.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Directors</Label>
-                         <div className="flex flex-wrap gap-1.5">
-                           {directorApprovers.filter(dir => dir.position).map(dir => (
-                             <Badge 
-                               key={dir.id} 
-                               variant="secondary" 
-                               className={`${getApproverColor('director', dir.position)} hover:opacity-80 transition-opacity cursor-pointer`}
-                               onClick={() => setSelectedTag(selectedTag === `dir-app-${dir.id}` ? null : `dir-app-${dir.id}`)}
-                             >
-                               {dir.position}
-                               {selectedTag === `dir-app-${dir.id}` && (
-                                 <Button 
-                                   variant="ghost" 
-                                   size="sm" 
-                                   className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     removeDirectorApprover(dir.id);
-                                     setSelectedTag(null);
-                                   }}
-                                 >
-                                   <X className="h-2.5 w-2.5" />
-                                 </Button>
-                               )}
-                             </Badge>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-slate-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-slate-700">Directors</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {directorApprovers.filter(dir => dir.position).map(dir => (
+                            <div 
+                              key={dir.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `dir-app-${dir.id}` ? null : `dir-app-${dir.id}`)}
+                              >
+                                <span className="text-sm font-medium">{dir.position}</span>
+                                {selectedTag === `dir-app-${dir.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeDirectorApprover(dir.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* HSE Leads */}
+                    {/* HSE Leads Section */}
                     {hseLeadApprovers.filter(hse => hse.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">HSE Leads</Label>
-                         <div className="flex flex-wrap gap-1.5">
-                           {hseLeadApprovers.filter(hse => hse.position).map(hse => (
-                             <Badge 
-                               key={hse.id} 
-                               variant="secondary" 
-                               className={`${getApproverColor('hseLead', hse.position)} hover:opacity-80 transition-opacity cursor-pointer`}
-                               onClick={() => setSelectedTag(selectedTag === `hse-app-${hse.id}` ? null : `hse-app-${hse.id}`)}
-                             >
-                               {hse.position}
-                               {selectedTag === `hse-app-${hse.id}` && (
-                                 <Button 
-                                   variant="ghost" 
-                                   size="sm" 
-                                   className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     removeHSELeadApprover(hse.id);
-                                     setSelectedTag(null);
-                                   }}
-                                 >
-                                   <X className="h-2.5 w-2.5" />
-                                 </Button>
-                               )}
-                             </Badge>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-violet-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-violet-700">HSE Leads</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {hseLeadApprovers.filter(hse => hse.position).map(hse => (
+                            <div 
+                              key={hse.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `hse-app-${hse.id}` ? null : `hse-app-${hse.id}`)}
+                              >
+                                <span className="text-sm font-medium">{hse.position}</span>
+                                {selectedTag === `hse-app-${hse.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeHSELeadApprover(hse.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* Engineering Managers */}
+                    {/* Engineering Managers Section */}
                     {engrManagerApprovers.filter(engr => engr.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Engineering Managers</Label>
-                         <div className="flex flex-wrap gap-1.5">
-                           {engrManagerApprovers.filter(engr => engr.position).map(engr => (
-                             <Badge 
-                               key={engr.id} 
-                               variant="secondary" 
-                               className={`${getApproverColor('engrManager')} hover:opacity-80 transition-opacity cursor-pointer`}
-                               onClick={() => setSelectedTag(selectedTag === `engr-app-${engr.id}` ? null : `engr-app-${engr.id}`)}
-                             >
-                               {engr.position}
-                               {selectedTag === `engr-app-${engr.id}` && (
-                                 <Button 
-                                   variant="ghost" 
-                                   size="sm" 
-                                   className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     removeEngrManagerApprover(engr.id);
-                                     setSelectedTag(null);
-                                   }}
-                                 >
-                                   <X className="h-2.5 w-2.5" />
-                                 </Button>
-                               )}
-                             </Badge>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-indigo-700">Engineering Managers</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {engrManagerApprovers.filter(engr => engr.position).map(engr => (
+                            <div 
+                              key={engr.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('engrManager')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `engr-app-${engr.id}` ? null : `engr-app-${engr.id}`)}
+                              >
+                                <span className="text-sm font-medium">{engr.position}</span>
+                                {selectedTag === `engr-app-${engr.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeEngrManagerApprover(engr.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* TA2s */}
+                    {/* TA2s Section */}
                     {ta2Approvers.filter(ta2 => ta2.position).length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">TA2s</Label>
-                         <div className="flex flex-wrap gap-1.5">
-                           {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
-                             <Badge 
-                               key={ta2.id} 
-                               variant="secondary" 
-                               className={`${getApproverColor('ta2', ta2.position)} hover:opacity-80 transition-opacity cursor-pointer`}
-                               onClick={() => setSelectedTag(selectedTag === `ta2-app-${ta2.id}` ? null : `ta2-app-${ta2.id}`)}
-                             >
-                               {ta2.position}
-                               {selectedTag === `ta2-app-${ta2.id}` && (
-                                 <Button 
-                                   variant="ghost" 
-                                   size="sm" 
-                                   className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     removeTA2Approver(ta2.id);
-                                     setSelectedTag(null);
-                                   }}
-                                 >
-                                   <X className="h-2.5 w-2.5" />
-                                 </Button>
-                               )}
-                             </Badge>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-blue-700">Technical Authority 2s</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
+                            <div 
+                              key={ta2.id}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('ta2', ta2.position)} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `ta2-app-${ta2.id}` ? null : `ta2-app-${ta2.id}`)}
+                              >
+                                <span className="text-sm font-medium">{ta2.position}</span>
+                                {selectedTag === `ta2-app-${ta2.id}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeTA2Approver(ta2.id);
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {/* Other Roles */}
+                    {/* Other Roles Section */}
                     {formData.approvers.length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Other Roles</Label>
-                         <div className="flex flex-wrap gap-1.5">
-                           {formData.approvers.map(approver => (
-                             <Badge 
-                               key={approver} 
-                               variant="secondary" 
-                               className={`${getApproverColor('regular')} hover:opacity-80 transition-opacity cursor-pointer`}
-                               onClick={() => setSelectedTag(selectedTag === `other-app-${approver}` ? null : `other-app-${approver}`)}
-                             >
-                               {approver}
-                               {selectedTag === `other-app-${approver}` && (
-                                 <Button 
-                                   variant="ghost" 
-                                   size="sm" 
-                                   className="ml-1 h-3 w-3 p-0 opacity-60 hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground rounded-full" 
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     updateFormData('approvers', formData.approvers.filter(a => a !== approver));
-                                     setSelectedTag(null);
-                                   }}
-                                 >
-                                   <X className="h-2.5 w-2.5" />
-                                 </Button>
-                               )}
-                             </Badge>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
+                          <Label className="text-sm font-semibold text-orange-700">Other Roles</Label>
+                          <div className="h-px bg-border flex-1 ml-2"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {formData.approvers.map(approver => (
+                            <div 
+                              key={approver}
+                              className="group relative"
+                            >
+                              <Badge 
+                                variant="secondary" 
+                                className={`${getApproverColor('regular')} w-full justify-center py-2 px-4 hover:shadow-md transition-all duration-200 cursor-pointer border-2 hover:scale-[1.02]`}
+                                onClick={() => setSelectedTag(selectedTag === `other-app-${approver}` ? null : `other-app-${approver}`)}
+                              >
+                                <span className="text-sm font-medium">{approver}</span>
+                                {selectedTag === `other-app-${approver}` && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateFormData('approvers', formData.approvers.filter(a => a !== approver));
+                                      setSelectedTag(null);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
