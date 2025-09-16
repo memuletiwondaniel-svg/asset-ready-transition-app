@@ -54,8 +54,12 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   const [showTA2ResponsibleConfig, setShowTA2ResponsibleConfig] = useState<string | null>(null);
   const [showEngrManagerApproverConfig, setShowEngrManagerApproverConfig] = useState<string | null>(null);
   const [showEngrManagerResponsibleConfig, setShowEngrManagerResponsibleConfig] = useState<string | null>(null);
+  const [showHSELeadApproverConfig, setShowHSELeadApproverConfig] = useState<string | null>(null);
+  const [showHSELeadResponsibleConfig, setShowHSELeadResponsibleConfig] = useState<string | null>(null);
   const [engrManagerApprovers, setEngrManagerApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
   const [engrManagerResponsible, setEngrManagerResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [hseLeadApprovers, setHSELeadApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [hseLeadResponsible, setHSELeadResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
   
   const createChecklistItemMutation = useCreateChecklistItem();
   
@@ -91,6 +95,13 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       .map(comm => ({ value: comm.name, label: comm.name }));
   };
 
+  // Get commission options for HSE Lead (only P&E and Asset)
+  const getHSELeadCommissionOptions = () => {
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
+
   // Get distinct colors for different approver types
   const getApproverColor = (type: string, position?: string) => {
     if (type === 'regular') {
@@ -106,6 +117,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       return 'bg-orange-50 text-orange-700 border-orange-200'; // default TA2 color
     } else if (type === 'engrManager') {
       return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    } else if (type === 'hseLead') {
+      return 'bg-pink-50 text-pink-700 border-pink-200';
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   };
@@ -124,6 +137,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       return 'bg-green-50 text-green-700 border-green-200'; // default TA2 color
     } else if (type === 'engrManager') {
       return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    } else if (type === 'hseLead') {
+      return 'bg-violet-50 text-violet-700 border-violet-200';
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   };
@@ -135,10 +150,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0) {
+    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0 && hseLeadApprovers.length === 0) {
       newErrors.approvers = 'At least one approver is required' as any;
     }
-    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0) {
+    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0 && hseLeadResponsible.length === 0) {
       newErrors.responsible = 'At least one responsible party is required' as any;
     }
     setErrors(newErrors);
@@ -151,14 +166,16 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
         const allApprovers = [
           ...formData.approvers,
           ...ta2Approvers.map(ta2 => ta2.position),
-          ...engrManagerApprovers.map(engr => engr.position)
+          ...engrManagerApprovers.map(engr => engr.position),
+          ...hseLeadApprovers.map(hse => hse.position)
         ];
         
         // Combine all responsible
         const allResponsible = [
           ...formData.responsible,
           ...ta2Responsible.map(ta2 => ta2.position),
-          ...engrManagerResponsible.map(engr => engr.position)
+          ...engrManagerResponsible.map(engr => engr.position),
+          ...hseLeadResponsible.map(hse => hse.position)
         ];
         
         const newItem = {
@@ -367,6 +384,63 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       }
       return engr;
     }));
+  };
+
+  // HSE Lead management functions
+  const addHSELeadApprover = () => {
+    const newHSELead = {
+      id: Date.now().toString(),
+      commission: '',
+      position: ''
+    };
+    setHSELeadApprovers([...hseLeadApprovers, newHSELead]);
+    setShowHSELeadApproverConfig(newHSELead.id);
+  };
+
+  const updateHSELeadApprover = (id: string, field: string, value: string) => {
+    setHSELeadApprovers(prev => prev.map(hse => {
+      if (hse.id === id) {
+        const updated = { ...hse, [field]: value };
+        if (field === 'commission' && value) {
+          updated.position = `HSE Lead (${value})`;
+          setShowHSELeadApproverConfig(null);
+        }
+        return updated;
+      }
+      return hse;
+    }));
+  };
+
+  const removeHSELeadApprover = (id: string) => {
+    setHSELeadApprovers(prev => prev.filter(hse => hse.id !== id));
+  };
+
+  const addHSELeadResponsible = () => {
+    const newHSELead = {
+      id: Date.now().toString(),
+      commission: '',
+      position: ''
+    };
+    setHSELeadResponsible([...hseLeadResponsible, newHSELead]);
+    setShowHSELeadResponsibleConfig(newHSELead.id);
+  };
+
+  const updateHSELeadResponsible = (id: string, field: string, value: string) => {
+    setHSELeadResponsible(prev => prev.map(hse => {
+      if (hse.id === id) {
+        const updated = { ...hse, [field]: value };
+        if (field === 'commission' && value) {
+          updated.position = `HSE Lead (${value})`;
+          setShowHSELeadResponsibleConfig(null);
+        }
+        return updated;
+      }
+      return hse;
+    }));
+  };
+
+  const removeHSELeadResponsible = (id: string) => {
+    setHSELeadResponsible(prev => prev.filter(hse => hse.id !== id));
   };
 
   const removeEngrManagerResponsible = (id: string) => {
@@ -581,6 +655,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       addTA2Responsible();
                     } else if (value === 'Engr. Manager') {
                       addEngrManagerResponsible();
+                    } else if (value === 'HSE Lead') {
+                      addHSELeadResponsible();
                     } else if (!formData.responsible.includes(value)) {
                       updateFormData('responsible', [...formData.responsible, value]);
                     }
@@ -591,7 +667,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 />
                 
                 {/* Display all responsible parties together */}
-                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0) && (
+                {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.responsible.map(resp => (
                       <Badge key={resp} variant="secondary" className={`gap-1 ${getResponsibleColor('regular')}`}>
@@ -627,6 +703,19 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           size="sm" 
                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
                           onClick={() => removeEngrManagerResponsible(engr.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                    {hseLeadResponsible.filter(hse => hse.position).map(hse => (
+                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getResponsibleColor('hseLead')}`}>
+                        {hse.position}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => removeHSELeadResponsible(hse.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -715,6 +804,39 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     </div>
                   )
                 ))}
+                
+                {/* HSE Lead Responsible Configuration */}
+                {hseLeadResponsible.map((hse) => (
+                  showHSELeadResponsibleConfig === hse.id && (
+                    <div key={hse.id} className="border rounded-lg p-4 bg-violet-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-violet-800">Configure HSE Lead</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeHSELeadResponsible(hse.id);
+                            setShowHSELeadResponsibleConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Commission</Label>
+                        <EnhancedSearchableCombobox
+                          options={getHSELeadCommissionOptions()}
+                          value={hse.commission}
+                          onValueChange={(value) => updateHSELeadResponsible(hse.id, 'commission', value)}
+                          placeholder="Select commission..."
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  )
+                ))}
               </div>
               
               {errors.responsible && <p className="text-sm text-destructive flex items-center gap-1">
@@ -739,6 +861,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       addTA2Approver();
                     } else if (value === 'Engr. Manager') {
                       addEngrManagerApprover();
+                    } else if (value === 'HSE Lead') {
+                      addHSELeadApprover();
                     } else if (!formData.approvers.includes(value)) {
                       updateFormData('approvers', [...formData.approvers, value]);
                     }
@@ -749,7 +873,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                 />
                 
                 {/* Display all approvers together */}
-                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0) && (
+                {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0) && (
                   <div className="flex flex-wrap gap-2">
                     {formData.approvers.map(approver => (
                       <Badge key={approver} variant="secondary" className={`gap-1 ${getApproverColor('regular')}`}>
@@ -785,6 +909,19 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           size="sm" 
                           className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
                           onClick={() => removeEngrManagerApprover(engr.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                    {hseLeadApprovers.filter(hse => hse.position).map(hse => (
+                      <Badge key={hse.id} variant="secondary" className={`gap-1 ${getApproverColor('hseLead')}`}>
+                        {hse.position}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+                          onClick={() => removeHSELeadApprover(hse.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -866,6 +1003,39 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           options={getEngrManagerCommissionOptions()}
                           value={engr.commission}
                           onValueChange={(value) => updateEngrManagerApprover(engr.id, 'commission', value)}
+                          placeholder="Select commission..."
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  )
+                ))}
+                
+                {/* HSE Lead Approver Configuration */}
+                {hseLeadApprovers.map((hse) => (
+                  showHSELeadApproverConfig === hse.id && (
+                    <div key={hse.id} className="border rounded-lg p-4 bg-pink-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-pink-800">Configure HSE Lead</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            removeHSELeadApprover(hse.id);
+                            setShowHSELeadApproverConfig(null);
+                          }}
+                          className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Commission</Label>
+                        <EnhancedSearchableCombobox
+                          options={getHSELeadCommissionOptions()}
+                          value={hse.commission}
+                          onValueChange={(value) => updateHSELeadApprover(hse.id, 'commission', value)}
                           placeholder="Select commission..."
                           className="h-8"
                         />
