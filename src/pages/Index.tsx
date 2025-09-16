@@ -18,7 +18,7 @@ import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
-import ORSHLogo from "@/components/ORSHLogo";
+
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -173,9 +173,9 @@ const Index = () => {
       <header className="relative z-20">
         <div className="max-w-7xl mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
-            {/* ORSH Logo - Top Left */}
+            {/* Logo area - placeholder */}
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 shadow-fluent-lg border border-white/20">
-              <ORSHLogo size={40} variant="primary" showText={true} darkMode={true} animated={true} />
+              {/* Logo removed */}
             </div>
             
             {/* Language Selector - Top Right */}
