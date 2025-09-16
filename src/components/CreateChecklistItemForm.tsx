@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search } from 'lucide-react';
-import { useCreateChecklistItem, useChecklistTopics } from '@/hooks/useChecklistItems';
+import { useCreateChecklistItem, useChecklistTopicsFromItems } from '@/hooks/useChecklistItems';
 import { useUsers } from '@/hooks/useUsers';
 import { toast } from '@/hooks/use-toast';
 
@@ -46,7 +46,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
   const createChecklistItemMutation = useCreateChecklistItem();
   const { users } = useUsers();
-  const { data: existingTopics = [], refetch: refetchTopics } = useChecklistTopics();
+  const { data: existingTopics = [], refetch: refetchTopics } = useChecklistTopicsFromItems();
 
   // Microsoft Fluent Design categories
   const categories = [

@@ -69,9 +69,9 @@ export const useChecklistCategories = () => {
   });
 };
 
-export const useChecklistTopics = () => {
+export const useChecklistTopicsFromItems = () => {
   return useQuery({
-    queryKey: ['checklist-topics'],
+    queryKey: ['checklist-topics-from-items'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('checklist_items')
