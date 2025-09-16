@@ -365,10 +365,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               <Button 
                 variant="outline" 
                 onClick={() => setActiveView('dashboard')} 
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
+                className="h-11 px-6 rounded-lg border border-border/50 bg-background/95 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/30 hover:border-primary/20 transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-primary group"
               >
-                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-                Back to Categories
+                <ArrowLeft className="h-4 w-4 mr-3 group-hover:-translate-x-1 transition-transform duration-300 ease-out" />
+                <span className="tracking-wide">Back to Categories</span>
               </Button>
             </div>
             <div className="flex-1 flex justify-center">
