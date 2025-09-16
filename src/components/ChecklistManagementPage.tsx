@@ -48,7 +48,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();
 
@@ -376,6 +376,35 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Top Row with Logo and Back Button */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-white/95 via-white/90 to-white/95 backdrop-blur-xl border-b border-gray-200/40 shadow-sm">
+        <div className="relative z-10 flex items-center justify-between px-8 py-6">
+          {/* Back Button */}
+          <div className="flex-shrink-0">
+            <Button 
+              variant="outline" 
+              onClick={onBack}
+              className="h-12 px-6 rounded-xl border border-border/40 bg-background/95 backdrop-blur-sm shadow-sm hover:shadow-lg hover:bg-accent/10 hover:border-primary/30 transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-primary group flex items-center gap-3"
+            >
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform duration-300 ease-out" />
+              <span className="tracking-wide">Back to Checklist Management</span>
+            </Button>
+          </div>
+          
+          {/* Centered ORSH Logo */}
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <img 
+              src="/images/orsh-logo.png"
+              alt="ORSH Logo"
+              className="h-40 object-contain"
+            />
+          </div>
+          
+          {/* Spacer to balance layout */}
+          <div className="flex-shrink-0 w-48"></div>
+        </div>
+      </div>
+
       {/* Microsoft Fluent Design Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-white/90 via-white/80 to-white/90 backdrop-blur-xl border-b border-gray-200/60 shadow-lg">
         {/* Background Pattern */}
@@ -385,14 +414,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center space-x-6">
-                <Button 
-                  variant="ghost" 
-                  onClick={onBack}
-                  className="flex items-center gap-2 hover:bg-white/80 text-gray-700 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-md"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back
-                </Button>
                 <div className="space-y-1">
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">
                     Browse Items & Categories
