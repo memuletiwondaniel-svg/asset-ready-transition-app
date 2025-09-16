@@ -162,13 +162,15 @@ const Index = () => {
           <div className="flex items-center justify-between">
             {/* ORSH Logo - Top Left */}
             <div className="flex items-center">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-12 w-auto" />
+              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-20 w-auto" />
             </div>
             
             {/* Right side - BGC Logo and Language Selector */}
-            <div className="flex items-center gap-4 mx-0 px-0">
+            <div className="flex items-center gap-8 mx-0 px-0">
               {/* BGC Logo placeholder */}
-              
+              <div className="h-20 w-auto bg-white/10 rounded-lg flex items-center px-4">
+                <span className="text-white text-sm font-medium">Basrah Gas Company</span>
+              </div>
               
               {/* Language Selector */}
               <DropdownMenu>
