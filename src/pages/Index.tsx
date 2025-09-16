@@ -160,23 +160,35 @@ const Index = () => {
       <header className="relative z-20">
         <div className="max-w-7xl mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo area - placeholder */}
+            {/* ORSH Logo - Top Left */}
+            <div className="flex items-center">
+              <img 
+                src="/images/orsh-logo.png" 
+                alt="ORSH Logo" 
+                className="h-12 w-auto"
+              />
+            </div>
             
-            
-            {/* Language Selector - Top Right */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group">
-                  <Languages className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-sm">{selectedLanguage}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
-                {languages.map(language => <DropdownMenuItem key={language.code} onClick={() => setSelectedLanguage(language.name)} className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground">
-                    {language.name}
-                  </DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Right side - BGC Logo and Language Selector */}
+            <div className="flex items-center gap-4">
+              {/* BGC Logo placeholder */}
+              <div className="text-white font-bold text-lg">BGC</div>
+              
+              {/* Language Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group">
+                    <Languages className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm">{selectedLanguage}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
+                  {languages.map(language => <DropdownMenuItem key={language.code} onClick={() => setSelectedLanguage(language.name)} className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground">
+                      {language.name}
+                    </DropdownMenuItem>)}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
