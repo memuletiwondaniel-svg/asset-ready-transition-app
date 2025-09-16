@@ -168,9 +168,7 @@ const Index = () => {
             {/* Right side - BGC Logo and Language Selector */}
             <div className="flex items-center gap-8 mx-0 px-0">
               {/* BGC Logo placeholder */}
-              <div className="h-20 w-auto bg-white/10 rounded-lg flex items-center px-4">
-                <span className="text-white text-sm font-medium">Basrah Gas Company</span>
-              </div>
+              
               
               {/* Language Selector */}
               <DropdownMenu>
