@@ -44,6 +44,47 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_item_reviews: {
+        Row: {
+          checklist_item_id: string
+          comments: string | null
+          created_at: string
+          id: string
+          pssr_id: string
+          reviewed_at: string | null
+          reviewer_user_id: string
+          status: string
+        }
+        Insert: {
+          checklist_item_id: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          pssr_id: string
+          reviewed_at?: string | null
+          reviewer_user_id: string
+          status: string
+        }
+        Update: {
+          checklist_item_id?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          pssr_id?: string
+          reviewed_at?: string | null
+          reviewer_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_item_reviews_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           Approver: string | null
@@ -125,6 +166,48 @@ export type Database = {
           is_active?: boolean
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      checklist_uploads: {
+        Row: {
+          error_log: string | null
+          file_path: string
+          filename: string
+          id: string
+          items_added: number | null
+          items_failed: number | null
+          items_processed: number | null
+          items_updated: number | null
+          upload_status: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          error_log?: string | null
+          file_path: string
+          filename: string
+          id?: string
+          items_added?: number | null
+          items_failed?: number | null
+          items_processed?: number | null
+          items_updated?: number | null
+          upload_status?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          error_log?: string | null
+          file_path?: string
+          filename?: string
+          id?: string
+          items_added?: number | null
+          items_failed?: number | null
+          items_processed?: number | null
+          items_updated?: number | null
+          upload_status?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
         }
         Relationships: []
       }
@@ -673,6 +756,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_team_members: {
+        Row: {
+          created_at: string
+          id: string
+          is_lead: boolean | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_lead?: boolean | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_lead?: boolean | null
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_team_members_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

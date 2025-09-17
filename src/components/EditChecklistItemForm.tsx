@@ -6,343 +6,224 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
-import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search, Users, UserCheck, Save } from 'lucide-react';
-import { useUpdateChecklistItem } from '@/hooks/useChecklistItems';
-import { useChecklistCategories, useCreateChecklistCategory } from '@/hooks/useChecklistCategories';
-import { useChecklistTopics, useCreateChecklistTopic } from '@/hooks/useChecklistTopics';
-import { useRoles } from '@/hooks/useRoles';
-import { useDisciplines } from '@/hooks/useDisciplines';
-import { useCommissions } from '@/hooks/useCommissions';
-import { toast } from '@/hooks/use-toast';
+import { ArrowLeft, Save, AlertCircle, Plus, Trash2, X } from 'lucide-react';
+import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 interface EditChecklistItemFormProps {
-  item: any;
+  item: ChecklistItem;
   onBack: () => void;
-  onComplete: (item: any) => void;
+  onSave: (updatedItem: ChecklistItem) => void;
+  onDelete?: (itemId: string) => void;
+  availableUsers?: Array<{ id: string; name: string; role: string; }>;
 }
 
-interface ChecklistItemData {
-  description: string;
-  evidenceGuidance: string;
-  category: string;
-  approvers: string[];
-  responsible: string[];
-  topic: string;
-}
-
-interface TA2Approver {
+interface CustomPerson {
   id: string;
-  discipline: string;
-  commission: string;
-  position: string;
+  name: string;
+  role: string;
 }
 
-const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
-  item,
-  onBack,
-  onComplete
+const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({ 
+  item, 
+  onBack, 
+  onSave, 
+  onDelete,
+  availableUsers = []
 }) => {
-  const [formData, setFormData] = useState<ChecklistItemData>({
-    description: item.description || '',
-    evidenceGuidance: item.required_evidence || '',
-    category: item.category || '',
-    approvers: item.Approver ? item.Approver.split(', ') : [],
-    responsible: item.responsible ? item.responsible.split(', ') : [],
-    topic: item.topic || ''
+  const [formData, setFormData] = useState({
+    description: item.description,
+    supportingEvidence: item.supporting_evidence || '',
+    category: item.category,
+    approvingAuthority: item.approving_authority || ''
   });
-  const [errors, setErrors] = useState<Partial<ChecklistItemData>>({});
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [ta2Approvers, setTA2Approvers] = useState<TA2Approver[]>([]);
-  const [ta2Responsible, setTA2Responsible] = useState<TA2Approver[]>([]);
-  const [showTA2ApproverConfig, setShowTA2ApproverConfig] = useState<string | null>(null);
-  const [showTA2ResponsibleConfig, setShowTA2ResponsibleConfig] = useState<string | null>(null);
-  const [showEngrManagerApproverConfig, setShowEngrManagerApproverConfig] = useState<string | null>(null);
-  const [showEngrManagerResponsibleConfig, setShowEngrManagerResponsibleConfig] = useState<string | null>(null);
-  const [showHSELeadApproverConfig, setShowHSELeadApproverConfig] = useState<string | null>(null);
-  const [showHSELeadResponsibleConfig, setShowHSELeadResponsibleConfig] = useState<string | null>(null);
-  const [showDirectorApproverConfig, setShowDirectorApproverConfig] = useState<string | null>(null);
-  const [showDirectorResponsibleConfig, setShowDirectorResponsibleConfig] = useState<string | null>(null);
-  const [engrManagerApprovers, setEngrManagerApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
-  const [engrManagerResponsible, setEngrManagerResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
-  const [hseLeadApprovers, setHSELeadApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
-  const [hseLeadResponsible, setHSELeadResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
-  const [directorApprovers, setDirectorApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
-  const [directorResponsible, setDirectorResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
-  
-  const updateChecklistItemMutation = useUpdateChecklistItem();
-  
-  // Hooks for data fetching
-  const { data: categories = [] } = useChecklistCategories();
-  const createCategoryMutation = useCreateChecklistCategory();
-  const { data: topics = [] } = useChecklistTopics();
-  const createTopicMutation = useCreateChecklistTopic();
-  const { roles } = useRoles();
-  const { disciplines } = useDisciplines();
-  const { commissions } = useCommissions();
 
-  // Transform data for comboboxes
-  const categoryOptions = categories.map(cat => ({ value: cat.name, label: cat.name }));
-  const topicOptions = topics.map(topic => ({ value: topic.name, label: topic.name }));
-  const roleOptions = roles.map(role => ({ value: role.name, label: role.name }));
-  const disciplineOptions = disciplines.map(disc => ({ value: disc.name, label: disc.name }));
-  
-  // Filter commissions based on discipline selection - only P&E and Asset for most disciplines
-  const getCommissionOptions = (disciplineName: string) => {
-    if (disciplineName === 'Tech Safety' || disciplineName === 'Civil') {
-      return []; // No commission field for these disciplines
-    }
-    return commissions
-      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
-      .map(comm => ({ value: comm.name, label: comm.name }));
-  };
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [customAuthorities, setCustomAuthorities] = useState<CustomPerson[]>([]);
+  const [customResponsibleParties, setCustomResponsibleParties] = useState<CustomPerson[]>([]);
+  const [newAuthorityName, setNewAuthorityName] = useState('');
+  const [newAuthorityRole, setNewAuthorityRole] = useState('');
+  const [newPartyName, setNewPartyName] = useState('');
+  const [newPartyRole, setNewPartyRole] = useState('');
 
-  // Get commission options for Engineering Manager (only P&E and Asset)
-  const getEngrManagerCommissionOptions = () => {
-    return commissions
-      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
-      .map(comm => ({ value: comm.name, label: comm.name }));
-  };
+  // Predefined categories
+  const categories = [
+    'General',
+    'Technical Integrity', 
+    'Health & Safety',
+    'Start-Up Readiness',
+    'Plant Integrity',
+    'Process Safety',
+    'People',
+    'Documentation',
+    'PSSR Walkdown'
+  ];
 
-  // Get commission options for HSE Lead (only P&E and Asset)
-  const getHSELeadCommissionOptions = () => {
-    return commissions
-      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
-      .map(comm => ({ value: comm.name, label: comm.name }));
-  };
+  // Common approving authorities
+  const defaultAuthorities = [
+    'PSSR Lead',
+    'Operations Manager',
+    'Engineering Manager', 
+    'Safety Manager',
+    'Plant Manager',
+    'Technical Authority',
+    'Process Engineer',
+    'Mechanical Engineer',
+    'Electrical Engineer',
+    'HSE Coordinator',
+    'Maintenance Supervisor',
+    'Quality Assurance Manager'
+  ];
 
-  // Get commission options for Director (all commissions)
-  const getDirectorCommissionOptions = () => {
-    return commissions.map(comm => ({ value: comm.name, label: comm.name }));
-  };
-
-  // Get distinct colors for different approver types
-  const getApproverColor = (type: string, position?: string) => {
-    if (type === 'regular') {
-      return 'bg-purple-50 text-purple-700 border-purple-200';
-    } else if (type === 'project') {
-      if (position === 'Construction Lead') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      if (position === 'Commissioning Lead') return 'bg-teal-50 text-teal-700 border-teal-200';
-      if (position === 'Proj Manager') return 'bg-green-50 text-green-700 border-green-200';
-      if (position === 'Proj Engr') return 'bg-lime-50 text-lime-700 border-lime-200';
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    } else if (type === 'asset') {
-      if (position === 'ORA Engineer') return 'bg-amber-50 text-amber-700 border-amber-200';
-      if (position === 'Ops Coach') return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      if (position === 'Site Engineer') return 'bg-orange-50 text-orange-700 border-orange-200';
-      if (position === 'Dep. Plant Director') return 'bg-red-50 text-red-700 border-red-200';
-      if (position === 'Ops Team Lead') return 'bg-pink-50 text-pink-700 border-pink-200';
-      return 'bg-amber-50 text-amber-700 border-amber-200';
-    } else if (type === 'ta2') {
-      // Different colors for different TA2 disciplines
-      if (position?.includes('Process')) return 'bg-blue-50 text-blue-700 border-blue-200';
-      if (position?.includes('Elect')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      if (position?.includes('Tech Safety')) return 'bg-violet-50 text-violet-700 border-violet-200';
-      if (position?.includes('Civil')) return 'bg-purple-50 text-purple-700 border-purple-200';
-      if (position?.includes('Instrument')) return 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200';
-      if (position?.includes('Mechanical')) return 'bg-rose-50 text-rose-700 border-rose-200';
-      return 'bg-blue-50 text-blue-700 border-blue-200'; // default TA2 color
-    } else if (type === 'engrManager') {
-      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
-    } else if (type === 'hse') {
-      if (position === 'HSE Manager') return 'bg-violet-50 text-violet-700 border-violet-200';
-      if (position === 'HSE Director') return 'bg-purple-50 text-purple-700 border-purple-200';
-      if (position === 'ER Lead') return 'bg-pink-50 text-pink-700 border-pink-200';
-      return 'bg-violet-50 text-violet-700 border-violet-200';
-    } else if (type === 'hseLead') {
-      // Different colors for different HSE Lead commissions
-      if (position?.includes('P&E')) return 'bg-pink-50 text-pink-700 border-pink-200';
-      if (position?.includes('Asset')) return 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200';
-      return 'bg-pink-50 text-pink-700 border-pink-200'; // default HSE Lead color
-    } else if (type === 'director') {
-      // Different colors for different Director commissions
-      if (position?.includes('P&E')) return 'bg-sky-50 text-sky-700 border-sky-200';
-      if (position?.includes('Asset')) return 'bg-blue-50 text-blue-700 border-blue-200';
-      if (position?.includes('HSE')) return 'bg-teal-50 text-teal-700 border-teal-200';
-      if (position === 'Plant Director') return 'bg-slate-50 text-slate-700 border-slate-200';
-      return 'bg-sky-50 text-sky-700 border-sky-200'; // default Director color
-    }
-    return 'bg-gray-50 text-gray-700 border-gray-200';
-  };
-
-  const getResponsibleColor = (type: string, position?: string) => {
-    if (type === 'regular') {
-      return 'bg-orange-100 text-orange-800 border-orange-300';
-    } else if (type === 'project') {
-      if (position === 'Construction Lead') return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-      if (position === 'Commissioning Lead') return 'bg-teal-100 text-teal-800 border-teal-300';
-      if (position === 'Proj Manager') return 'bg-green-100 text-green-800 border-green-300';
-      if (position === 'Proj Engr') return 'bg-lime-100 text-lime-800 border-lime-300';
-      return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-    } else if (type === 'asset') {
-      if (position === 'ORA Engineer') return 'bg-amber-100 text-amber-800 border-amber-300';
-      if (position === 'Ops Coach') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      if (position === 'Site Engineer') return 'bg-orange-100 text-orange-800 border-orange-300';
-      if (position === 'Dep. Plant Director') return 'bg-red-100 text-red-800 border-red-300';
-      if (position === 'Ops Team Lead') return 'bg-pink-100 text-pink-800 border-pink-300';
-      return 'bg-amber-100 text-amber-800 border-amber-300';
-    } else if (type === 'ta2') {
-      // Distinct colors for different TA2 disciplines
-      if (position?.includes('Process')) return 'bg-blue-100 text-blue-800 border-blue-300';
-      if (position?.includes('Elect')) return 'bg-indigo-100 text-indigo-800 border-indigo-300';
-      if (position?.includes('Tech Safety')) return 'bg-violet-100 text-violet-800 border-violet-300';
-      if (position?.includes('Civil')) return 'bg-purple-100 text-purple-800 border-purple-300';
-      if (position?.includes('Instrument')) return 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300';
-      if (position?.includes('Mechanical')) return 'bg-rose-100 text-rose-800 border-rose-300';
-      return 'bg-blue-100 text-blue-800 border-blue-300'; // default TA2 color
-    } else if (type === 'engrManager') {
-      return 'bg-indigo-100 text-indigo-800 border-indigo-300';
-    } else if (type === 'hse') {
-      if (position === 'HSE Manager') return 'bg-violet-100 text-violet-800 border-violet-300';
-      if (position === 'HSE Director') return 'bg-purple-100 text-purple-800 border-purple-300';
-      if (position === 'ER Lead') return 'bg-pink-100 text-pink-800 border-pink-300';
-      return 'bg-violet-100 text-violet-800 border-violet-300';
-    } else if (type === 'hseLead') {
-      // Distinct colors for different HSE Lead commissions
-      if (position?.includes('P&E')) return 'bg-violet-100 text-violet-800 border-violet-300';
-      if (position?.includes('Asset')) return 'bg-purple-100 text-purple-800 border-purple-300';
-      return 'bg-pink-100 text-pink-800 border-pink-300'; // default HSE Lead color
-    } else if (type === 'director') {
-      // Distinct colors for different Director commissions
-      if (position?.includes('P&E')) return 'bg-slate-100 text-slate-800 border-slate-300';
-      if (position?.includes('Asset')) return 'bg-zinc-100 text-zinc-800 border-zinc-300';
-      if (position?.includes('HSE')) return 'bg-stone-100 text-stone-800 border-stone-300';
-      if (position === 'Plant Director') return 'bg-slate-200 text-slate-900 border-slate-400';
-      return 'bg-neutral-100 text-neutral-800 border-neutral-300'; // default Director color
-    }
-    return 'bg-orange-100 text-orange-800 border-orange-300';
-  };
+  // Common responsible parties
+  const defaultResponsibleParties = [
+    'Operations Team',
+    'Engineering Team',
+    'Maintenance Team',
+    'HSE Team',
+    'Project Team',
+    'Quality Team',
+    'Technical Team',
+    'Safety Team',
+    'Process Team',
+    'Mechanical Team',
+    'Electrical Team',
+    'Instrumentation Team'
+  ];
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ChecklistItemData> = {};
+    const newErrors: Record<string, string> = {};
+
     if (!formData.description.trim()) {
-      newErrors.description = 'Checklist question is required';
+      newErrors.description = 'Question/Description is required';
     }
+
+    if (!formData.supportingEvidence.trim()) {
+      newErrors.supportingEvidence = 'Evidence guidance is required';
+    }
+
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0 && hseLeadApprovers.length === 0 && directorApprovers.length === 0) {
-      newErrors.approvers = 'At least one approver is required' as any;
+
+    if (!formData.approvingAuthority.trim()) {
+      newErrors.approvingAuthority = 'Approving authority is required';
     }
-    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0 && hseLeadResponsible.length === 0 && directorResponsible.length === 0) {
-      newErrors.responsible = 'At least one responsible party is required' as any;
-    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSave = () => {
     if (validateForm()) {
-      try {
-        // Combine all approvers
-        const allApprovers = [
-          ...formData.approvers,
-          ...ta2Approvers.map(ta2 => ta2.position),
-          ...engrManagerApprovers.map(engr => engr.position),
-          ...hseLeadApprovers.map(hse => hse.position),
-          ...directorApprovers.map(dir => dir.position)
-        ];
-        
-        // Combine all responsible
-        const allResponsible = [
-          ...formData.responsible,
-          ...ta2Responsible.map(ta2 => ta2.position),
-          ...engrManagerResponsible.map(engr => engr.position),
-          ...hseLeadResponsible.map(hse => hse.position),
-          ...directorResponsible.map(dir => dir.position)
-        ];
-        
-        const updateData = {
-          description: formData.description.trim(),
-          required_evidence: formData.evidenceGuidance.trim(),
-          category: formData.category,
-          Approver: allApprovers.join(', '),
-          responsible: allResponsible.join(', '),
-          topic: formData.topic.trim()
-        };
-        
-        await updateChecklistItemMutation.mutateAsync({ 
-          itemId: item.unique_id, 
-          updateData 
-        });
-        
-        toast({
-          title: "Success",
-          description: "Checklist item updated successfully"
-        });
-        onComplete(updateData);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to update checklist item",
-          variant: "destructive"
-        });
-      }
+      const updatedItem: ChecklistItem = {
+        ...item,
+        description: formData.description.trim(),
+        supporting_evidence: formData.supportingEvidence.trim(),
+        category: formData.category,
+        approving_authority: formData.approvingAuthority.trim()
+      };
+      onSave(updatedItem);
     }
   };
 
-  const updateFormData = (field: keyof ChecklistItemData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const updateFormData = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: undefined
-      }));
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  const addCustomAuthority = () => {
+    if (newAuthorityName.trim() && newAuthorityRole.trim()) {
+      const newAuthority: CustomPerson = {
+        id: `auth-${Date.now()}`,
+        name: newAuthorityName.trim(),
+        role: newAuthorityRole.trim()
+      };
+      setCustomAuthorities(prev => [...prev, newAuthority]);
+      setFormData(prev => ({ ...prev, approvingAuthority: `${newAuthority.name} (${newAuthority.role})` }));
+      setNewAuthorityName('');
+      setNewAuthorityRole('');
+    }
+  };
+
+  const removeCustomAuthority = (id: string) => {
+    setCustomAuthorities(prev => prev.filter(auth => auth.id !== id));
+  };
+
+  const addCustomResponsibleParty = () => {
+    if (newPartyName.trim() && newPartyRole.trim()) {
+      const newParty: CustomPerson = {
+        id: `party-${Date.now()}`,
+        name: newPartyName.trim(),
+        role: newPartyRole.trim()
+      };
+      setCustomResponsibleParties(prev => [...prev, newParty]);
+      setNewPartyName('');
+      setNewPartyRole('');
+    }
+  };
+
+  const removeCustomResponsibleParty = (id: string) => {
+    setCustomResponsibleParties(prev => prev.filter(party => party.id !== id));
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with ORSH Logo */}
-        <div className="mb-8 text-center space-y-4">
-          <div className="flex justify-center mb-6">
-            <img 
-              src="/images/orsh-logo.png" 
-              alt="ORSH Logo" 
-              className="h-16 w-auto"
-            />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-background border border-border rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Edit Checklist Item</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Modify the details of checklist item {item.id}
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              {onDelete && (
+                <Button 
+                  variant="outline"
+                  onClick={() => onDelete(item.id)}
+                  className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Item
+                </Button>
+              )}
+              <Button variant="outline" onClick={onBack}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Form Card */}
-        <Card className="border-border/50 shadow-2xl">
-          <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
-            <CardTitle className="text-2xl font-bold text-foreground">Edit Checklist Item</CardTitle>
-            <CardDescription className="text-base">
-              Update the item details below
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="p-8 space-y-8">
-            {/* Reference ID */}
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="space-y-6">
+            {/* Item ID (Read-only) */}
             <div className="space-y-2">
               <Label className="text-base font-semibold">Reference ID</Label>
               <div className="flex items-center space-x-2">
                 <Badge variant="outline" className="text-sm px-3 py-1">
-                  {item.unique_id}
+                  {item.id}
                 </Badge>
                 <span className="text-sm text-muted-foreground">(Auto-assigned, cannot be changed)</span>
               </div>
             </div>
 
-            {/* Checklist Question */}
+            {/* Question/Description */}
             <div className="space-y-2">
               <Label htmlFor="description" className="text-base font-semibold">
-                Checklist Question <span className="text-destructive">*</span>
+                Question/Description <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => updateFormData('description', e.target.value)}
-                placeholder="Enter the checklist question or requirement..."
-                className="min-h-[60px] resize-none"
-                rows={3}
+                className="min-h-[100px] resize-none"
+                rows={4}
               />
               {errors.description && (
                 <p className="text-sm text-destructive flex items-center">
@@ -352,125 +233,210 @@ const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
               )}
             </div>
 
-            {/* Category and Topic Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Category */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">
-                  Category <span className="text-destructive">*</span>
-                </Label>
-                <EnhancedSearchableCombobox
-                  options={categoryOptions}
-                  value={formData.category}
-                  onValueChange={(value) => updateFormData('category', value)}
-                  placeholder="Select category..."
-                  searchPlaceholder="Search categories..."
-                  onCreateNew={async (value) => {
-                    try {
-                      await createCategoryMutation.mutateAsync({ name: value });
-                      updateFormData('category', value);
-                      toast({
-                        title: "Success",
-                        description: `Category "${value}" created successfully`
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Failed to create category",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                />
-                {errors.category && (
-                  <p className="text-sm text-destructive flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.category}
-                  </p>
-                )}
-              </div>
-
-              {/* Topic */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Topic</Label>
-                <EnhancedSearchableCombobox
-                  options={topicOptions}
-                  value={formData.topic}
-                  onValueChange={(value) => updateFormData('topic', value)}
-                  placeholder="Select or enter topic..."
-                  searchPlaceholder="Search topics..."
-                  onCreateNew={async (value) => {
-                    try {
-                      await createTopicMutation.mutateAsync({ name: value });
-                      updateFormData('topic', value);
-                      toast({
-                        title: "Success",
-                        description: `Topic "${value}" created successfully`
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Failed to create topic",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                />
-              </div>
-            </div>
-
             {/* Evidence Guidance */}
             <div className="space-y-2">
-              <Label htmlFor="evidenceGuidance" className="text-base font-semibold">
-                Evidence Guidance
+              <Label htmlFor="supportingEvidence" className="text-base font-semibold">
+                Evidence Guidance <span className="text-destructive">*</span>
               </Label>
               <Textarea
-                id="evidenceGuidance"
-                value={formData.evidenceGuidance}
-                onChange={(e) => updateFormData('evidenceGuidance', e.target.value)}
-                placeholder="Describe what evidence or documentation is required..."
-                className="min-h-[50px] resize-none"
-                rows={2}
+                id="supportingEvidence"
+                value={formData.supportingEvidence}
+                onChange={(e) => updateFormData('supportingEvidence', e.target.value)}
+                className="min-h-[80px] resize-none"
+                rows={3}
               />
-              {errors.evidenceGuidance && (
+              {errors.supportingEvidence && (
                 <p className="text-sm text-destructive flex items-center">
                   <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.evidenceGuidance}
+                  {errors.supportingEvidence}
                 </p>
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between pt-6">
-              <Button 
-                variant="outline" 
-                onClick={onBack} 
-                disabled={updateChecklistItemMutation.isPending}
-                className="px-6 py-2 rounded-lg border-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all duration-200 font-medium"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Manage Checklist
-              </Button>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={updateChecklistItemMutation.isPending}
-                className="px-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg transition-all duration-200 font-medium"
-              >
-                {updateChecklistItemMutation.isPending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Update Item
-                  </>
-                )}
-              </Button>
+            {/* Category */}
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">
+                Category <span className="text-destructive">*</span>
+              </Label>
+              <Select value={formData.category} onValueChange={(value) => updateFormData('category', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category} className="cursor-pointer">
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.category && (
+                <p className="text-sm text-destructive flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.category}
+                </p>
+              )}
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Approving Authority */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">
+                Approving Authority <span className="text-destructive">*</span>
+              </Label>
+              
+              <Select value={formData.approvingAuthority} onValueChange={(value) => updateFormData('approvingAuthority', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border shadow-lg z-50 max-h-60">
+                  {defaultAuthorities.map((authority) => (
+                    <SelectItem key={authority} value={authority} className="cursor-pointer">
+                      {authority}
+                    </SelectItem>
+                  ))}
+                  {availableUsers.map((user) => (
+                    <SelectItem key={user.id} value={`${user.name} (${user.role})`} className="cursor-pointer">
+                      {user.name} ({user.role})
+                    </SelectItem>
+                  ))}
+                  {customAuthorities.map((authority) => (
+                    <SelectItem key={authority.id} value={`${authority.name} (${authority.role})`} className="cursor-pointer">
+                      {authority.name} ({authority.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Custom Authorities */}
+              {customAuthorities.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Custom Approving Authorities</Label>
+                  <div className="space-y-2">
+                    {customAuthorities.map((authority) => (
+                      <div key={authority.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                        <div>
+                          <span className="font-medium">{authority.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">({authority.role})</span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => removeCustomAuthority(authority.id)}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add New Authority */}
+              <div className="border border-border/50 rounded-lg p-4 space-y-3">
+                <Label className="text-sm font-medium">Add New Approving Authority</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Input
+                    placeholder="Name"
+                    value={newAuthorityName}
+                    onChange={(e) => setNewAuthorityName(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Role/Title"
+                    value={newAuthorityRole}
+                    onChange={(e) => setNewAuthorityRole(e.target.value)}
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={addCustomAuthority}
+                    disabled={!newAuthorityName.trim() || !newAuthorityRole.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {errors.approvingAuthority && (
+                <p className="text-sm text-destructive flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.approvingAuthority}
+                </p>
+              )}
+            </div>
+
+            {/* Responsible Parties (Additional) */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Additional Responsible Parties</Label>
+              <p className="text-sm text-muted-foreground">
+                Add additional teams or individuals responsible for this checklist item
+              </p>
+
+              {/* Custom Responsible Parties */}
+              {customResponsibleParties.length > 0 && (
+                <div className="space-y-2">
+                  {customResponsibleParties.map((party) => (
+                    <div key={party.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                      <div>
+                        <span className="font-medium">{party.name}</span>
+                        <span className="text-sm text-muted-foreground ml-2">({party.role})</span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => removeCustomResponsibleParty(party.id)}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add New Responsible Party */}
+              <div className="border border-border/50 rounded-lg p-4 space-y-3">
+                <Label className="text-sm font-medium">Add Responsible Party</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Input
+                    placeholder="Name/Team"
+                    value={newPartyName}
+                    onChange={(e) => setNewPartyName(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Role/Department"
+                    value={newPartyRole}
+                    onChange={(e) => setNewPartyRole(e.target.value)}
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={addCustomResponsibleParty}
+                    disabled={!newPartyName.trim() || !newPartyRole.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-border p-6">
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={onBack}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              className="bg-primary hover:bg-primary-hover"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

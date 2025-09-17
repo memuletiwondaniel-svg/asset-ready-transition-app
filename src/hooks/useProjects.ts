@@ -202,7 +202,7 @@ export const useProjectTeamMembers = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('project_team_members')
         .select('*')
         .eq('project_id', projectId)
@@ -223,7 +223,7 @@ export const useProjectTeamMembers = (projectId?: string) => {
 
   const addTeamMemberMutation = useMutation({
     mutationFn: async (memberData: { project_id: string; user_id: string; role: string; is_lead?: boolean }) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('project_team_members')
         .insert([memberData])
         .select()
@@ -251,7 +251,7 @@ export const useProjectTeamMembers = (projectId?: string) => {
 
   const removeTeamMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('project_team_members')
         .delete()
         .eq('id', memberId);
