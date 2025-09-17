@@ -812,9 +812,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Directors Section */}
                     {directorResponsible.filter(dir => dir.position).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-slate-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -853,9 +852,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Project Section */}
                     {formData.responsible.filter(role => ['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr'].includes(role)).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -894,9 +892,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Engineering Section */}
                     {(engrManagerResponsible.filter(engr => engr.position).length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0) && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Engineering</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Engineering</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -963,9 +960,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Asset Section */}
                     {formData.responsible.filter(role => ['ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Asset</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Asset</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1004,9 +1000,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* HSE Section */}
                     {(hseLeadResponsible.filter(hse => hse.position).length > 0 || formData.responsible.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1074,9 +1069,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Other Roles Section */}
                     {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Other Roles</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Other Roles</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1303,9 +1297,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Project Section */}
                     {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr'].includes(role)).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1344,9 +1337,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Engineering Section */}
                     {(engrManagerApprovers.filter(engr => engr.position).length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0) && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Engineering</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Engineering</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1413,9 +1405,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Asset Section */}
                     {formData.approvers.filter(role => ['ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Asset</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Asset</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1454,9 +1445,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* HSE Section */}
                     {(hseLeadApprovers.filter(hse => hse.position).length > 0 || formData.approvers.filter(role => ['HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0) && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-violet-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-violet-700 uppercase tracking-wider">HSE</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1523,9 +1513,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Directors Section */}
                     {(directorApprovers.filter(dir => dir.position).length > 0 || formData.approvers.filter(role => ['Plant Director'].includes(role)).length > 0) && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-slate-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Director</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
@@ -1594,9 +1583,8 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     {/* Other Roles Section */}
                     {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Other Roles</Label>
+                         <div className="flex items-center gap-2">
+                           <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Other Roles</Label>
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
