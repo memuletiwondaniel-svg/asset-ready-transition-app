@@ -679,11 +679,13 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
             
             {/* ORSH Logo Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <img 
-                src="/src/assets/orsh-logo-text.png" 
-                alt="ORSH Logo" 
-                className="h-8 object-contain"
-              />
+              <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
+                <img 
+                  src="/images/orsh-logo.png" 
+                  alt="ORSH Logo" 
+                  className="h-40 w-auto filter drop-shadow-sm"
+                />
+              </div>
             </div>
             
             {/* Empty div for layout balance */}
