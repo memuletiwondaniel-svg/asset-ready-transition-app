@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
@@ -552,13 +553,15 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         />
       )}
 
-      {/* Create Checklist Item Form */}
-      {showCreateForm && (
-        <CreateChecklistItemForm
-          onBack={handleCreateCancel}
-          onComplete={handleCreateComplete}
-        />
-      )}
+      {/* Create Checklist Item Modal */}
+      <Dialog open={showCreateForm} onOpenChange={(open) => { if (!open) handleCreateCancel(); }}>
+        <DialogContent className="max-w-5xl p-0 bg-background">
+          <CreateChecklistItemForm
+            onBack={handleCreateCancel}
+            onComplete={handleCreateComplete}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
