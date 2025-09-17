@@ -26,7 +26,7 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
-import EditChecklistItemModal from './EditChecklistItemModal';
+
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
 import ChecklistItemDetailModal from './ChecklistItemDetailModal';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
@@ -532,15 +532,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
         />
       )}
 
-      {/* Edit Checklist Item Modal */}
-      {editingItem && (
-        <EditChecklistItemModal
-          isOpen={showEditModal}
-          onClose={handleCloseEditModal}
-          item={editingItem}
-          onSaveComplete={handleSaveComplete}
-        />
-      )}
 
       {/* Delete Modal */}
       {deletingItem && (
