@@ -708,7 +708,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               <Label htmlFor="evidenceGuidance" className="text-sm font-medium flex items-center gap-2">
                 Evidence Guidance
               </Label>
-              <Textarea id="evidenceGuidance" placeholder="Describe what evidence or documentation is required (optional)..." value={formData.evidenceGuidance} onChange={e => updateFormData('evidenceGuidance', e.target.value)} className="min-h-[80px] resize-none fluent-input" rows={3} />
+              <Textarea id="evidenceGuidance" placeholder="Describe what evidence or documentation is required (optional)..." value={formData.evidenceGuidance} onChange={e => updateFormData('evidenceGuidance', e.target.value)} className="min-h-[40px] resize-none fluent-input" rows={2} />
               {errors.evidenceGuidance && <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
                   {errors.evidenceGuidance}
