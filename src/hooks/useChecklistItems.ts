@@ -106,7 +106,6 @@ export const useUpdateChecklistItem = () => {
   return useMutation({
     mutationFn: async ({ itemId, updateData }: { itemId: string; updateData: UpdateChecklistItemData }) => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
 
       // Map alias fields to DB column names
       const dbUpdate: any = { ...updateData };
@@ -121,7 +120,8 @@ export const useUpdateChecklistItem = () => {
         .from('checklist_items')
         .update({
           ...dbUpdate,
-          updated_by: session.user.id,
+          // Only set updated_by if user is authenticated
+          ...(session?.user && { updated_by: session.user.id }),
           updated_at: new Date().toISOString(),
         })
         .eq('unique_id', itemId)
@@ -168,7 +168,6 @@ export const useCreateChecklistItem = () => {
   return useMutation({
     mutationFn: async (itemData: CreateChecklistItemData) => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
 
       // Map aliases to DB columns
       const dbInsert: any = { ...itemData };
@@ -183,7 +182,8 @@ export const useCreateChecklistItem = () => {
         .from('checklist_items')
         .insert({
           ...dbInsert,
-          created_by: session.user.id,
+          // Only set created_by if user is authenticated
+          ...(session?.user && { created_by: session.user.id }),
         })
         .select()
         .single();
@@ -211,13 +211,13 @@ export const useDeleteChecklistItem = () => {
   return useMutation({
     mutationFn: async (itemId: string) => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
 
       const { error } = await supabase
         .from('checklist_items')
         .update({ 
           is_active: false,
-          updated_by: session.user.id,
+          // Only set updated_by if user is authenticated
+          ...(session?.user && { updated_by: session.user.id }),
           updated_at: new Date().toISOString(),
         })
         .eq('unique_id', itemId);
