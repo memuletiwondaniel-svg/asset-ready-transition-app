@@ -667,16 +667,27 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
       <div className="sticky top-0 bg-background/95 backdrop-blur-lg border-b z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={onBack} className="fluent-button hover:bg-secondary/50">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <div>
-                <h1 className="text-2xl font-semibold">Create Checklist Item</h1>
-                <p className="text-sm text-muted-foreground">Add a new item to the PSSR checklist library</p>
-              </div>
+            {/* Back Button with Microsoft Fluent Design */}
+            <Button 
+              variant="outline" 
+              onClick={onBack} 
+              className="px-6 py-2 h-auto bg-background hover:bg-primary/5 border-border/60 hover:border-primary/30 text-foreground hover:text-primary transition-all duration-200 font-medium rounded-lg shadow-sm hover:shadow-md"
+            >
+              <ArrowLeft className="h-4 w-4 mr-3" />
+              Back to Manage Checklist
+            </Button>
+            
+            {/* ORSH Logo Center */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <img 
+                src="/src/assets/orsh-logo-text.png" 
+                alt="ORSH Logo" 
+                className="h-8 object-contain"
+              />
             </div>
+            
+            {/* Empty div for layout balance */}
+            <div className="w-48"></div>
           </div>
         </div>
       </div>
