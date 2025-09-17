@@ -780,7 +780,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
             {/* Responsible Parties */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
-                Responsible Parties <span className="text-destructive">*</span>
+                Responsible <span className="text-destructive">*</span>
               </Label>
               
               {/* Regular Roles */}
