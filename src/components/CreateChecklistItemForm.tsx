@@ -15,6 +15,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { useDisciplines } from '@/hooks/useDisciplines';
 import { useCommissions } from '@/hooks/useCommissions';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 interface CreateChecklistItemFormProps {
   onBack: () => void;
   onComplete: (item: any) => void;
@@ -286,15 +287,28 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
   // Handle creating new categories and topics
   const handleCreateCategory = async (categoryName: string) => {
     try {
-      await createCategoryMutation.mutateAsync({ name: categoryName });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to create a category.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const created = await createCategoryMutation.mutateAsync({ name: categoryName });
+      // Select the newly created category
+      updateFormData('category', created.name);
+
       toast({
         title: "Success",
-        description: `Category "${categoryName}" created successfully`
+        description: `Category "${created.name}" created successfully`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create category",
+        description: error?.message || "Failed to create category",
         variant: "destructive"
       });
     }
@@ -302,15 +316,28 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
   const handleCreateTopic = async (topicName: string) => {
     try {
-      await createTopicMutation.mutateAsync({ name: topicName });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to create a topic.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const created = await createTopicMutation.mutateAsync({ name: topicName });
+      // Select the newly created topic
+      updateFormData('topic', created.name);
+
       toast({
         title: "Success",
-        description: `Topic "${topicName}" created successfully`
+        description: `Topic "${created.name}" created successfully`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create topic",
+        description: error?.message || "Failed to create topic",
         variant: "destructive"
       });
     }
