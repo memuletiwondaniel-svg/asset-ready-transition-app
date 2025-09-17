@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Edit3, Trash2, Save, Plus, MoreVertical, Eye, Grid3X3, Table } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Grid3X3, Table } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,8 +40,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [deletingItem, setDeletingItem] = useState<ChecklistItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [viewingItem, setViewingItem] = useState<ChecklistItem | null>(null);
@@ -143,21 +141,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
     setShowDetailModal(true);
   };
 
-  const handleEditItem = (item: ChecklistItem) => {
-    setViewingItem(item);
-    setDetailModalMode('edit');
-    setShowDetailModal(true);
-  };
 
   const handleCloseDetailModal = () => {
     setShowDetailModal(false);
     setViewingItem(null);
   };
 
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    setEditingItem(null);
-  };
 
   const handleSaveComplete = () => {
     // Navigate back to checklist categories view
@@ -334,10 +323,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Details
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                                    <Edit3 className="mr-2 h-4 w-4" />
-                                    Edit Item
-                                  </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
                                     onClick={() => handleDeleteItem(item)}
@@ -471,7 +456,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           <ChecklistItemsTableView
             items={checklistItems || []}
             onViewItem={handleViewItem}
-            onEditItem={handleEditItem}
             onDeleteItem={handleDeleteItem}
           />
         ) : (
