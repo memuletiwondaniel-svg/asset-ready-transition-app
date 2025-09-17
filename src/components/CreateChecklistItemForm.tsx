@@ -948,7 +948,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     )}
 
                     {/* Asset Section */}
-                    {formData.responsible.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
+                    {formData.responsible.filter(role => ['ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
@@ -956,7 +956,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.responsible.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
+                          {formData.responsible.filter(role => ['ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
                             <div 
                               key={`asset-${role}-${index}`}
                               className="group relative"
@@ -1057,49 +1057,9 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
 
-                    {/* Directors Section */}
-                    {(directorResponsible.filter(dir => dir.position).length > 0 || formData.responsible.filter(role => ['Plant Director'].includes(role)).length > 0) && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Asset</Label>
-                          <div className="h-px bg-border flex-1 ml-2"></div>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.responsible.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
-                            <div 
-                              key={`asset-${role}-${index}`}
-                              className="group relative"
-                            >
-                              <Badge 
-                                variant="secondary" 
-                                className={`${getResponsibleColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `asset-resp-${role}-${index}` ? null : `asset-resp-${role}-${index}`)}
-                              >
-                                <span className="font-medium truncate">{role}</span>
-                                {selectedTag === `asset-resp-${role}-${index}` && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateFormData('responsible', formData.responsible.filter(r => r !== role));
-                                      setSelectedTag(null);
-                                    }}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </Button>
-                                )}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     
                     {/* Other Roles Section */}
-                    {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0 && (
+                    {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
@@ -1107,7 +1067,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((resp, index) => (
+                          {formData.responsible.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).map((resp, index) => (
                             <div 
                               key={`other-${resp}-${index}`}
                               className="group relative"
@@ -1438,7 +1398,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                     )}
                     
                     {/* Asset Section */}
-                    {formData.approvers.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
+                    {formData.approvers.filter(role => ['ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
@@ -1446,7 +1406,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.approvers.filter(role => ['ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
+                          {formData.approvers.filter(role => ['ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
                             <div 
                               key={`asset-app-${role}-${index}`}
                               className="group relative"
@@ -1616,87 +1576,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                       </div>
                     )}
                     
-                    {/* Other Roles Section - for any remaining roles */}
-                    {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'Ops Coach', 'Site Engineer', 'Dep. Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Project</Label>
-                          <div className="h-px bg-border flex-1 ml-2"></div>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.approvers.filter(role => ['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer'].includes(role)).map((role, index) => (
-                            <div 
-                              key={`project-app-${role}-${index}`}
-                              className="group relative"
-                            >
-                              <Badge 
-                                variant="secondary" 
-                                className={`${getApproverColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `project-app-${role}-${index}` ? null : `project-app-${role}-${index}`)}
-                              >
-                                <span className="font-medium truncate">{role}</span>
-                                {selectedTag === `project-app-${role}-${index}` && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
-                                      setSelectedTag(null);
-                                    }}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </Button>
-                                )}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Asset Section */}
-                    {formData.approvers.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
-                          <Label className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Asset</Label>
-                          <div className="h-px bg-border flex-1 ml-2"></div>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.approvers.filter(role => ['ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead'].includes(role)).map((role, index) => (
-                            <div 
-                              key={`asset-app-${role}-${index}`}
-                              className="group relative"
-                            >
-                              <Badge 
-                                variant="secondary" 
-                                className={`${getApproverColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
-                                onClick={() => setSelectedTag(selectedTag === `asset-app-${role}-${index}` ? null : `asset-app-${role}-${index}`)}
-                              >
-                                <span className="font-medium truncate">{role}</span>
-                                {selectedTag === `asset-app-${role}-${index}` && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full shadow-lg animate-scale-in" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateFormData('approvers', formData.approvers.filter(r => r !== role));
-                                      setSelectedTag(null);
-                                    }}
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </Button>
-                                )}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     
                     {/* Other Roles Section */}
                     {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0 && (
