@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -113,7 +113,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden">
+      <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden" aria-describedby="enhanced-auth-description">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Authentication</DialogTitle>
+          <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
+        </DialogHeader>
         <div 
           className="w-screen h-screen flex items-center justify-center p-4 relative fixed inset-0 overflow-hidden"
           style={{
