@@ -696,7 +696,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
                 Checklist Question <span className="text-destructive">*</span>
               </Label>
-              <Textarea id="description" placeholder="Enter the checklist question or requirement..." value={formData.description} onChange={e => updateFormData('description', e.target.value)} className="min-h-[100px] resize-none fluent-input" rows={4} />
+              <Textarea id="description" placeholder="Enter the checklist question or requirement..." value={formData.description} onChange={e => updateFormData('description', e.target.value)} className="min-h-[50px] resize-none fluent-input" rows={4} />
               {errors.description && <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
                   {errors.description}
