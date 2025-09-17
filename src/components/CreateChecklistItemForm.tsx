@@ -599,21 +599,15 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  Auto-assigned ID: {(() => {
-                    const categoryPrefixes: Record<string, string> = {
-                      'Civil': 'CX',
-                      'Documentation': 'DC',
-                      'Electrical': 'EL',
-                      'Emergency Response': 'ER',
-                      'General': 'GN',
-                      'Health & Safety': 'HS',
-                      'Organization': 'OR',
-                      'PACO': 'IN',
-                      'Process Safety': 'PS',
-                      'Rotating': 'MR',
-                      'Static': 'MS'
+                  {(() => {
+                    // Generate prefix from category name by taking first letter of each word
+                    const generatePrefix = (category: string) => {
+                      return category
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase())
+                        .join('');
                     };
-                    const prefix = categoryPrefixes[formData.category] || 'GN';
+                    const prefix = generatePrefix(formData.category || 'General');
                     const serialNumber = String(Date.now()).slice(-2).padStart(2, '0');
                     return `${prefix}-${serialNumber}`;
                   })()}
