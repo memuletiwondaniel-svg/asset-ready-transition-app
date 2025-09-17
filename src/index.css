@@ -232,6 +232,15 @@
     transform: translateY(0);
   }
 
+  /* Disable hover transforms within containers that opt-out (e.g., modals) */
+  .no-hover-effects .fluent-card:hover {
+    transform: none;
+    box-shadow: var(--elevation-shadow-rest);
+  }
+  .no-hover-effects .fluent-button:hover {
+    transform: none;
+  }
+
   .fluent-acrylic {
     background: var(--fluent-acrylic-background);
     backdrop-filter: blur(30px) saturate(120%);

@@ -576,7 +576,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
     setTA2Responsible(prev => prev.filter(ta2 => ta2.id !== id));
   };
   if (showPreview) {
-    return <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    return <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-hover-effects">
         <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto fluent-card">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
@@ -662,7 +662,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
         </Card>
       </div>;
   }
-  return <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
+  return <div className="fixed inset-0 bg-background z-50 overflow-y-auto no-hover-effects">
       {/* Microsoft Fluent Design Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur-lg border-b z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
