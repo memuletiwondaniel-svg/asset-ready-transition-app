@@ -163,64 +163,56 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-sm shadow-2xl" aria-describedby="checklist-item-detail-description">
-        {/* Fluent Design Header */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/8 via-indigo-500/4 to-purple-500/6"></div>
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+      <DialogContent className="max-w-6xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background shadow-2xl rounded-2xl" aria-describedby="checklist-item-detail-description">
+        {/* Modern Header Design */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500"></div>
           
-          <DialogHeader className="relative px-6 py-6 border-b border-border/5">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-600/15 flex items-center justify-center backdrop-blur-sm border border-blue-200/20">
-                  {mode === 'edit' ? (
-                    <>
-                      <Save className="h-6 w-6 text-blue-600" />
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent"></div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-6 w-6 text-blue-600 flex items-center justify-center font-bold text-sm">ID</div>
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent"></div>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex-grow space-y-1">
-                <DialogTitle className="text-xl font-semibold text-foreground tracking-tight">
-                  {mode === 'edit' ? 'Edit Checklist Item' : 'Checklist Item Details'}
-                </DialogTitle>
-                <p id="checklist-item-detail-description" className="sr-only">
-                  {mode === 'edit' ? 'Edit form for checklist item' : 'Details view for checklist item'}
-                </p>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100/60">
-                    <span className="font-medium">ID: {item?.unique_id}</span>
-                  </div>
-                  {item?.category && (
-                    <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-purple-100/60">
-                      <span className="text-purple-700 font-medium">{item.category}</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground/80 leading-relaxed">
-                  {mode === 'edit' ? 'Modify item specifications and requirements' : 'View comprehensive item information and requirements'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {mode === 'view' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMode('edit')}
-                    className="h-8 px-3 rounded-lg border-blue-200/60 text-blue-700 hover:bg-blue-50"
-                  >
-                    <Save className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
+          <DialogHeader className="relative px-8 py-8 border-b border-border/10">
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/images/orsh-logo.png" 
+                alt="ORSH Logo" 
+                className="h-16 w-auto"
+              />
+            </div>
+            
+            <div className="text-center space-y-4">
+              <DialogTitle className="text-3xl font-bold text-foreground tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                {mode === 'edit' ? 'Edit Checklist Item' : 'Checklist Item Preview'}
+              </DialogTitle>
+              <p id="checklist-item-detail-description" className="sr-only">
+                {mode === 'edit' ? 'Edit form for checklist item' : 'Details view for checklist item'}
+              </p>
+              
+              <div className="flex items-center justify-center gap-4 text-sm">
+                <Badge variant="outline" className="px-4 py-2 text-base font-semibold bg-blue-50 text-blue-700 border-blue-200">
+                  ID: {item?.unique_id}
+                </Badge>
+                {item?.category && (
+                  <Badge variant="outline" className="px-4 py-2 text-base font-semibold bg-purple-50 text-purple-700 border-purple-200">
+                    {item.category}
+                  </Badge>
                 )}
               </div>
+              
+              <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                {mode === 'edit' ? 'Modify item specifications and requirements using Microsoft Fluent Design principles' : 'Comprehensive item information with modern visual design'}
+              </p>
             </div>
+            
+            {mode === 'view' && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setMode('edit')}
+                  className="px-6 py-2 rounded-lg border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 font-medium"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Edit Item
+                </Button>
+              </div>
+            )}
           </DialogHeader>
         </div>
 
@@ -332,15 +324,43 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                 <div className="absolute left-4 top-12 bottom-0 w-px bg-gradient-to-b from-emerald-200/60 to-transparent"></div>
               </div>
 
-              {/* Responsible Party */}
+              {/* Responsible */}
               <div className="space-y-2 ml-12">
                 <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <span className="w-1 h-4 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-full"></span>
-                  Responsible Party
+                  Responsible
                 </Label>
-                <div className="p-3 bg-gradient-to-br from-emerald-50/40 to-emerald-100/40 rounded-lg border border-emerald-200/40 text-sm text-foreground">
-                  {item.responsible_party || 'No responsible party assigned'}
-                </div>
+                {item.responsible ? (
+                  <div className="flex flex-wrap gap-2">
+                    {item.responsible.split(', ').map((responsible, index) => {
+                      // Determine color based on responsible party type
+                      let colorClass = 'bg-orange-100 text-orange-800 border-orange-300';
+                      
+                      if (responsible.includes('Proj Manager') || responsible.includes('Proj Engr')) {
+                        colorClass = 'bg-green-100 text-green-800 border-green-300';
+                      } else if (responsible.includes('TA2')) {
+                        colorClass = 'bg-indigo-100 text-indigo-800 border-indigo-300';
+                      } else if (responsible.includes('ORA Engineer') || responsible.includes('Site Engineer') || responsible.includes('Dep. Plant Director')) {
+                        colorClass = 'bg-amber-100 text-amber-800 border-amber-300';
+                      } else if (responsible.includes('HSE') || responsible.includes('ER Lead')) {
+                        colorClass = 'bg-purple-100 text-purple-800 border-purple-300';
+                      } else if (responsible.includes('Director')) {
+                        colorClass = 'bg-slate-100 text-slate-800 border-slate-300';
+                      }
+                      
+                      return (
+                        <Badge key={index} variant="outline" className={`px-3 py-1 text-sm font-medium border-2 ${colorClass}`}>
+                          <Users className="h-3 w-3 mr-1" />
+                          {responsible}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 text-sm text-foreground">
+                    No responsible party assigned
+                  </div>
+                )}
               </div>
 
               {/* Approving Authority */}
@@ -350,18 +370,33 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                   Approving Authority
                 </Label>
                 {item.approving_authority ? (
-                  <div className="space-y-2">
-                    {item.approving_authority.split(', ').map((approver, index) => (
-                      <div key={index} className="p-2 bg-gradient-to-br from-indigo-50/40 to-indigo-100/40 rounded-lg border border-indigo-200/40">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-3 w-3 text-indigo-600" />
-                          <span className="text-sm text-indigo-800 font-medium">{approver}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex flex-wrap gap-2">
+                    {item.approving_authority.split(', ').map((approver, index) => {
+                      // Determine color based on approver type
+                      let colorClass = 'bg-blue-100 text-blue-800 border-blue-300';
+                      
+                      if (approver.includes('Proj Manager') || approver.includes('Proj Engr')) {
+                        colorClass = 'bg-green-100 text-green-800 border-green-300';
+                      } else if (approver.includes('TA2')) {
+                        colorClass = 'bg-indigo-100 text-indigo-800 border-indigo-300';
+                      } else if (approver.includes('ORA Engineer') || approver.includes('Site Engineer') || approver.includes('Dep. Plant Director')) {
+                        colorClass = 'bg-amber-100 text-amber-800 border-amber-300';
+                      } else if (approver.includes('HSE') || approver.includes('ER Lead')) {
+                        colorClass = 'bg-purple-100 text-purple-800 border-purple-300';
+                      } else if (approver.includes('Director')) {
+                        colorClass = 'bg-slate-100 text-slate-800 border-slate-300';
+                      }
+                      
+                      return (
+                        <Badge key={index} variant="outline" className={`px-3 py-1 text-sm font-medium border-2 ${colorClass}`}>
+                          <Shield className="h-3 w-3 mr-1" />
+                          {approver}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="p-3 bg-gradient-to-br from-indigo-50/40 to-indigo-100/40 rounded-lg border border-indigo-200/40 text-sm text-foreground">
+                  <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 text-sm text-foreground">
                     No approving authority specified
                   </div>
                 )}
@@ -379,9 +414,9 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
               type="button"
               variant="outline" 
               onClick={handleCancel}
-              className="h-9 px-4 rounded-lg border-border/50 hover:bg-slate-100/60 transition-all duration-200 text-sm"
+              className="h-10 px-6 rounded-lg border-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all duration-200 font-medium"
             >
-              {mode === 'edit' ? 'Cancel' : 'Close'}
+              {mode === 'edit' ? 'Cancel' : 'Back to Manage Checklist'}
             </Button>
             {mode === 'edit' && (
               <Button 
