@@ -812,7 +812,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `dir-resp-${dir.id}` ? null : `dir-resp-${dir.id}`)}
                               >
                                 <span className="font-medium truncate">{dir.position}</span>
@@ -853,7 +853,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('project', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `project-resp-${role}-${index}` ? null : `project-resp-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -894,7 +894,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('engrManager')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('engrManager')} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `engr-resp-${engr.id}` ? null : `engr-resp-${engr.id}`)}
                               >
                                 <span className="font-medium truncate">{engr.position}</span>
@@ -922,7 +922,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('ta2', ta2.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('ta2', ta2.position)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `ta2-resp-${ta2.id}` ? null : `ta2-resp-${ta2.id}`)}
                               >
                                 <span className="font-medium truncate">{ta2.position}</span>
@@ -963,7 +963,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `asset-resp-${role}-${index}` ? null : `asset-resp-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -1004,7 +1004,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `hse-resp-${hse.id}` ? null : `hse-resp-${hse.id}`)}
                               >
                                 <span className="font-medium truncate">{hse.position}</span>
@@ -1032,7 +1032,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `hse-regular-${role}-${index}` ? null : `hse-regular-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -1074,7 +1074,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getResponsibleColor('regular')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getResponsibleColor('regular')} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `other-resp-${resp}-${index}` ? null : `other-resp-${resp}-${index}`)}
                               >
                                 <span className="font-medium truncate">{resp}</span>
@@ -1303,7 +1303,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('project', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('project', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `project-app-${role}-${index}` ? null : `project-app-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -1344,7 +1344,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('engrManager')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('engrManager')} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `engr-app-${engr.id}` ? null : `engr-app-${engr.id}`)}
                               >
                                 <span className="font-medium truncate">{engr.position}</span>
@@ -1372,7 +1372,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('ta2', ta2.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('ta2', ta2.position)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `ta2-app-${ta2.id}` ? null : `ta2-app-${ta2.id}`)}
                               >
                                 <span className="font-medium truncate">{ta2.position}</span>
@@ -1413,7 +1413,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('asset', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `asset-app-${role}-${index}` ? null : `asset-app-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -1454,7 +1454,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('hseLead', hse.position)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `hse-app-${hse.id}` ? null : `hse-app-${hse.id}`)}
                               >
                                 <span className="font-medium truncate">{hse.position}</span>
@@ -1482,7 +1482,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('hse', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `hse-regular-app-${role}-${index}` ? null : `hse-regular-app-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -1523,7 +1523,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('director', dir.position)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `dir-app-${dir.id}` ? null : `dir-app-${dir.id}`)}
                               >
                                 <span className="font-medium truncate">{dir.position}</span>
@@ -1551,7 +1551,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('director', role)} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('director', role)} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `director-regular-app-${role}-${index}` ? null : `director-regular-app-${role}-${index}`)}
                               >
                                 <span className="font-medium truncate">{role}</span>
@@ -1594,7 +1594,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                             >
                               <Badge 
                                 variant="secondary" 
-                                className={`${getApproverColor('regular')} w-full justify-center py-1.5 px-2 text-xs hover:shadow-md transition-all duration-200 cursor-pointer border hover:scale-[1.02] truncate`}
+                                className={`${getApproverColor('regular')} w-full justify-center py-1.5 px-2 text-xs cursor-pointer border truncate`}
                                 onClick={() => setSelectedTag(selectedTag === `other-app-${approver}-${index}` ? null : `other-app-${approver}-${index}`)}
                               >
                                 <span className="font-medium truncate">{approver}</span>
