@@ -255,7 +255,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-sm shadow-2xl">
+      <DialogContent className="max-w-5xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-sm shadow-2xl" aria-describedby="edit-checklist-item-description">
         {/* Fluent Design Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/4 to-secondary/6"></div>
@@ -273,6 +273,9 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                 <DialogTitle className="text-2xl font-semibold text-foreground tracking-tight">
                   Edit Checklist Item
                 </DialogTitle>
+                <p id="edit-checklist-item-description" className="sr-only">
+                  Edit form for checklist item {item?.id}
+                </p>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
                     <FileText className="h-3.5 w-3.5" />

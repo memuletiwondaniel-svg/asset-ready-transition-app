@@ -290,7 +290,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[92vh] border-0 p-0 overflow-hidden bg-transparent">
+      <DialogContent className="max-w-5xl max-h-[92vh] border-0 p-0 overflow-hidden bg-transparent" aria-describedby="checklist-item-modal-description">
         {/* Microsoft Fluent Background Layer */}
         <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-card/85 backdrop-blur-2xl"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-secondary/5"></div>
@@ -311,6 +311,9 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({
             <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
               {item.unique_id} - {response} Response
             </DialogTitle>
+            <p id="checklist-item-modal-description" className="text-sm text-muted-foreground mt-2 sr-only">
+              Response details for checklist item {item.unique_id}
+            </p>
           </div>
 
           {/* Scrollable Content */}

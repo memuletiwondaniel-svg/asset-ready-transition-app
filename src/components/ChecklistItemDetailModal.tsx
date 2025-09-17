@@ -163,7 +163,7 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-sm shadow-2xl">
+      <DialogContent className="max-w-4xl max-h-[95vh] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-sm shadow-2xl" aria-describedby="checklist-item-detail-description">
         {/* Fluent Design Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/8 via-indigo-500/4 to-purple-500/6"></div>
@@ -190,6 +190,9 @@ const ChecklistItemDetailModal: React.FC<ChecklistItemDetailModalProps> = ({
                 <DialogTitle className="text-xl font-semibold text-foreground tracking-tight">
                   {mode === 'edit' ? 'Edit Checklist Item' : 'Checklist Item Details'}
                 </DialogTitle>
+                <p id="checklist-item-detail-description" className="sr-only">
+                  {mode === 'edit' ? 'Edit form for checklist item' : 'Details view for checklist item'}
+                </p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100/60">
                     <span className="font-medium">ID: {item?.unique_id}</span>

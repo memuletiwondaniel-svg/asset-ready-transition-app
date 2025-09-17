@@ -1579,7 +1579,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
 
                     
                     {/* Other Roles Section */}
-                    {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).length > 0 && (
+                    {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).length > 0 && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
@@ -1587,7 +1587,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
                           <div className="h-px bg-border flex-1 ml-2"></div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                          {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Project Manager', 'Project Engineer', 'ORA Engr', 'Ops Coach', 'Site Engr', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead'].includes(role)).map((approver, index) => (
+                          {formData.approvers.filter(role => !['Construction Lead', 'Commissioning Lead', 'Proj Manager', 'Proj Engr', 'ORA Engineer', 'ORA Engr', 'Ops Coach', 'Site Engineer', 'Site Engr', 'Dep. Plant Director', 'Dep Plant Director', 'Ops Team Lead', 'HSE Manager', 'HSE Director', 'ER Lead', 'Plant Director'].includes(role)).map((approver, index) => (
                             <div 
                               key={`other-app-${approver}-${index}`}
                               className="group relative"
