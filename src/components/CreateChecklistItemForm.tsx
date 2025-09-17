@@ -599,7 +599,24 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  Auto-assigned ID: CHK-{Date.now().toString().slice(-6)}
+                  Auto-assigned ID: {(() => {
+                    const categoryPrefixes: Record<string, string> = {
+                      'Civil': 'CX',
+                      'Documentation': 'DC',
+                      'Electrical': 'EL',
+                      'Emergency Response': 'ER',
+                      'General': 'GN',
+                      'Health & Safety': 'HS',
+                      'Organization': 'OR',
+                      'PACO': 'IN',
+                      'Process Safety': 'PS',
+                      'Rotating': 'MR',
+                      'Static': 'MS'
+                    };
+                    const prefix = categoryPrefixes[formData.category] || 'GN';
+                    const serialNumber = String(Date.now()).slice(-2).padStart(2, '0');
+                    return `${prefix}-${serialNumber}`;
+                  })()}
                 </Badge>
               </div>
               
