@@ -29,6 +29,7 @@ import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
 import ChecklistItemDetailModal from './ChecklistItemDetailModal';
+import EditChecklistItemForm from './EditChecklistItemForm';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemsTableView from './ChecklistItemsTableView';
 
@@ -143,8 +144,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
 
   const handleEditItem = (item: ChecklistItem) => {
     setViewingItem(item);
-    setDetailModalMode('edit');
-    setShowDetailModal(true);
+    setShowEditForm(true);
   };
 
 

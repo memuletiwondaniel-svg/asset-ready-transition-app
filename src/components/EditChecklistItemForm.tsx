@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,437 +6,1286 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, AlertCircle, Plus, Trash2, X } from 'lucide-react';
-import { ChecklistItem } from '@/hooks/useChecklistItems';
+import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
+import { ArrowLeft, Plus, CheckCircle, AlertCircle, X, Search } from 'lucide-react';
+import { ChecklistItem, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
+import { useChecklistCategories, useCreateChecklistCategory } from '@/hooks/useChecklistCategories';
+import { useChecklistTopics, useCreateChecklistTopic } from '@/hooks/useChecklistTopics';
+import { useRoles } from '@/hooks/useRoles';
+import { useDisciplines } from '@/hooks/useDisciplines';
+import { useCommissions } from '@/hooks/useCommissions';
+import { toast } from '@/hooks/use-toast';
 
 interface EditChecklistItemFormProps {
   item: ChecklistItem;
   onBack: () => void;
-  onSave: (updatedItem: ChecklistItem) => void;
-  onDelete?: (itemId: string) => void;
-  availableUsers?: Array<{ id: string; name: string; role: string; }>;
+  onComplete: (item: any) => void;
 }
 
-interface CustomPerson {
+interface EditChecklistItemData {
+  description: string;
+  evidenceGuidance: string;
+  category: string;
+  approvers: string[];
+  responsible: string[];
+  topic: string;
+}
+
+interface TA2Approver {
   id: string;
-  name: string;
-  role: string;
+  discipline: string;
+  commission: string;
+  position: string;
 }
 
-const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({ 
-  item, 
-  onBack, 
-  onSave, 
-  onDelete,
-  availableUsers = []
+const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
+  item,
+  onBack,
+  onComplete
 }) => {
-  const [formData, setFormData] = useState({
-    description: item.description,
-    supportingEvidence: item.supporting_evidence || '',
-    category: item.category,
-    approvingAuthority: item.approving_authority || ''
+  const [formData, setFormData] = useState<EditChecklistItemData>({
+    description: item.description || '',
+    evidenceGuidance: item.evidenceGuidance || '',
+    category: '',
+    approvers: [],
+    responsible: [],
+    topic: ''
   });
+  const [errors, setErrors] = useState<Partial<EditChecklistItemData>>({});
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [ta2Approvers, setTA2Approvers] = useState<TA2Approver[]>([]);
+  const [ta2Responsible, setTA2Responsible] = useState<TA2Approver[]>([]);
+  const [showTA2ApproverConfig, setShowTA2ApproverConfig] = useState<string | null>(null);
+  const [showTA2ResponsibleConfig, setShowTA2ResponsibleConfig] = useState<string | null>(null);
+  const [showEngrManagerApproverConfig, setShowEngrManagerApproverConfig] = useState<string | null>(null);
+  const [showEngrManagerResponsibleConfig, setShowEngrManagerResponsibleConfig] = useState<string | null>(null);
+  const [showHSELeadApproverConfig, setShowHSELeadApproverConfig] = useState<string | null>(null);
+  const [showHSELeadResponsibleConfig, setShowHSELeadResponsibleConfig] = useState<string | null>(null);
+  const [showDirectorApproverConfig, setShowDirectorApproverConfig] = useState<string | null>(null);
+  const [showDirectorResponsibleConfig, setShowDirectorResponsibleConfig] = useState<string | null>(null);
+  const [engrManagerApprovers, setEngrManagerApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [engrManagerResponsible, setEngrManagerResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [hseLeadApprovers, setHSELeadApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [hseLeadResponsible, setHSELeadResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [directorApprovers, setDirectorApprovers] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  const [directorResponsible, setDirectorResponsible] = useState<Array<{id: string; commission: string; position: string}>>([]);
+  
+  const updateChecklistItemMutation = useUpdateChecklistItem();
+  
+  // Hooks for data fetching
+  const { data: categories = [] } = useChecklistCategories();
+  const createCategoryMutation = useCreateChecklistCategory();
+  const { data: topics = [] } = useChecklistTopics();
+  const createTopicMutation = useCreateChecklistTopic();
+  const { roles } = useRoles();
+  const { disciplines } = useDisciplines();
+  const { commissions } = useCommissions();
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [customAuthorities, setCustomAuthorities] = useState<CustomPerson[]>([]);
-  const [customResponsibleParties, setCustomResponsibleParties] = useState<CustomPerson[]>([]);
-  const [newAuthorityName, setNewAuthorityName] = useState('');
-  const [newAuthorityRole, setNewAuthorityRole] = useState('');
-  const [newPartyName, setNewPartyName] = useState('');
-  const [newPartyRole, setNewPartyRole] = useState('');
+  // Transform data for comboboxes
+  const categoryOptions = categories.map(cat => ({ value: cat.name, label: cat.name }));
+  const topicOptions = topics.map(topic => ({ value: topic.name, label: topic.name }));
+  const roleOptions = roles.map(role => ({ value: role.name, label: role.name }));
+  const disciplineOptions = disciplines.map(disc => ({ value: disc.name, label: disc.name }));
+  
+  // Filter commissions based on discipline selection - only P&E and Asset for most disciplines
+  const getCommissionOptions = (disciplineName: string) => {
+    if (disciplineName === 'Tech Safety' || disciplineName === 'Civil') {
+      return []; // No commission field for these disciplines
+    }
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
 
-  // Predefined categories
-  const categories = [
-    'General',
-    'Technical Integrity', 
-    'Health & Safety',
-    'Start-Up Readiness',
-    'Plant Integrity',
-    'Process Safety',
-    'People',
-    'Documentation',
-    'PSSR Walkdown'
-  ];
+  // Get commission options for Engineering Manager (only P&E and Asset)
+  const getEngrManagerCommissionOptions = () => {
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
 
-  // Common approving authorities
-  const defaultAuthorities = [
-    'PSSR Lead',
-    'Operations Manager',
-    'Engineering Manager', 
-    'Safety Manager',
-    'Plant Manager',
-    'Technical Authority',
-    'Process Engineer',
-    'Mechanical Engineer',
-    'Electrical Engineer',
-    'HSE Coordinator',
-    'Maintenance Supervisor',
-    'Quality Assurance Manager'
-  ];
+  // Get commission options for HSE Lead (only P&E and Asset)
+  const getHSELeadCommissionOptions = () => {
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
 
-  // Common responsible parties
-  const defaultResponsibleParties = [
-    'Operations Team',
-    'Engineering Team',
-    'Maintenance Team',
-    'HSE Team',
-    'Project Team',
-    'Quality Team',
-    'Technical Team',
-    'Safety Team',
-    'Process Team',
-    'Mechanical Team',
-    'Electrical Team',
-    'Instrumentation Team'
-  ];
+  // Get commission options for Director (only P&E and Asset)
+  const getDirectorCommissionOptions = () => {
+    return commissions
+      .filter(comm => ['P&E', 'Asset'].includes(comm.name))
+      .map(comm => ({ value: comm.name, label: comm.name }));
+  };
 
+  // Set position based on discipline and commission
+  const setPositionBasedOnDisciplineAndCommission = (discipline: string, commission: string): string => {
+    if (discipline === 'Tech Safety') {
+      return 'TA2';
+    }
+    if (discipline === 'Civil') {
+      return 'Civil TA2';
+    }
+    if (commission === 'P&E') {
+      return `P&E ${discipline} TA2`;
+    }
+    if (commission === 'Asset') {
+      return `Asset ${discipline} TA2`;
+    }
+    return `${discipline} TA2`;
+  };
+
+  // Set Engineering Manager position based on commission
+  const setEngrManagerPosition = (commission: string): string => {
+    if (commission === 'P&E') {
+      return 'P&E Engineering Manager';
+    }
+    if (commission === 'Asset') {
+      return 'Asset Engineering Manager';
+    }
+    return 'Engineering Manager';
+  };
+
+  // Set HSE Lead position based on commission
+  const setHSELeadPosition = (commission: string): string => {
+    if (commission === 'P&E') {
+      return 'P&E HSE Lead';
+    }
+    if (commission === 'Asset') {
+      return 'Asset HSE Lead';
+    }
+    return 'HSE Lead';
+  };
+
+  // Set Director position based on commission
+  const setDirectorPosition = (commission: string): string => {
+    if (commission === 'P&E') {
+      return 'P&E Director';
+    }
+    if (commission === 'Asset') {
+      return 'Asset Director';
+    }
+    return 'Director';
+  };
+
+  // Validation function
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Partial<EditChecklistItemData> = {};
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Question/Description is required';
+      newErrors.description = 'Description is required';
     }
 
-    if (!formData.supportingEvidence.trim()) {
-      newErrors.supportingEvidence = 'Evidence guidance is required';
-    }
-
-    if (!formData.category) {
+    if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
-    }
-
-    if (!formData.approvingAuthority.trim()) {
-      newErrors.approvingAuthority = 'Approving authority is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
-    if (validateForm()) {
-      const updatedItem: ChecklistItem = {
-        ...item,
-        description: formData.description.trim(),
-        supporting_evidence: formData.supportingEvidence.trim(),
-        category: formData.category,
-        approving_authority: formData.approvingAuthority.trim()
-      };
-      onSave(updatedItem);
+  // Handle form submission
+  const handleSubmit = () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Combine all approver data
+    const allApprovers = [
+      ...ta2Approvers.map(a => `TA2:${a.discipline}:${a.commission}:${a.position}`),
+      ...engrManagerApprovers.map(a => `Engineering Manager:${a.commission}:${a.position}`),
+      ...hseLeadApprovers.map(a => `HSE Lead:${a.commission}:${a.position}`),
+      ...directorApprovers.map(a => `Director:${a.commission}:${a.position}`)
+    ];
+
+    // Combine all responsible data
+    const allResponsible = [
+      ...ta2Responsible.map(r => `TA2:${r.discipline}:${r.commission}:${r.position}`),
+      ...engrManagerResponsible.map(r => `Engineering Manager:${r.commission}:${r.position}`),
+      ...hseLeadResponsible.map(r => `HSE Lead:${r.commission}:${r.position}`),
+      ...directorResponsible.map(r => `Director:${r.commission}:${r.position}`)
+    ];
+
+    const updateData = {
+      description: formData.description,
+      evidence_guidance: formData.evidenceGuidance,
+      category: formData.category,
+      topic: formData.topic || null,
+      approvers: allApprovers,
+      responsible: allResponsible,
+    };
+
+    updateChecklistItemMutation.mutate({
+      itemId: item.id,
+      updateData: updateData
+    }, {
+      onSuccess: (updatedItem) => {
+        toast({
+          title: "Success",
+          description: "Checklist item updated successfully!",
+          variant: "default",
+        });
+        onComplete(updatedItem);
+      },
+      onError: (error) => {
+        console.error('Error updating checklist item:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update checklist item. Please try again.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  // Handle category creation
+  const handleCreateCategory = async (categoryName: string) => {
+    try {
+      await createCategoryMutation.mutateAsync({
+        name: categoryName,
+        description: `Category: ${categoryName}`,
+      });
+      
+      setFormData(prev => ({ ...prev, category: categoryName }));
+      
+      toast({
+        title: "Success",
+        description: `Category "${categoryName}" created successfully!`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create category. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const updateFormData = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+  // Handle topic creation
+  const handleCreateTopic = async (topicName: string) => {
+    try {
+      await createTopicMutation.mutateAsync({
+        name: topicName,
+        description: `Topic: ${topicName}`,
+      });
+      
+      setFormData(prev => ({ ...prev, topic: topicName }));
+      
+      toast({
+        title: "Success",
+        description: `Topic "${topicName}" created successfully!`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error creating topic:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create topic. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const addCustomAuthority = () => {
-    if (newAuthorityName.trim() && newAuthorityRole.trim()) {
-      const newAuthority: CustomPerson = {
-        id: `auth-${Date.now()}`,
-        name: newAuthorityName.trim(),
-        role: newAuthorityRole.trim()
-      };
-      setCustomAuthorities(prev => [...prev, newAuthority]);
-      setFormData(prev => ({ ...prev, approvingAuthority: `${newAuthority.name} (${newAuthority.role})` }));
-      setNewAuthorityName('');
-      setNewAuthorityRole('');
+  // TA2 Management Functions
+  const addTA2Approver = (discipline: string, commission: string) => {
+    const position = setPositionBasedOnDisciplineAndCommission(discipline, commission);
+    const newTA2: TA2Approver = {
+      id: `ta2-approver-${Date.now()}`,
+      discipline,
+      commission,
+      position
+    };
+    setTA2Approvers(prev => [...prev, newTA2]);
+    setShowTA2ApproverConfig(null);
+  };
+
+  const removeTA2Approver = (id: string) => {
+    setTA2Approvers(prev => prev.filter(ta2 => ta2.id !== id));
+  };
+
+  const updateTA2Approver = (id: string, discipline: string, commission: string) => {
+    const position = setPositionBasedOnDisciplineAndCommission(discipline, commission);
+    setTA2Approvers(prev => prev.map(ta2 => 
+      ta2.id === id ? { ...ta2, discipline, commission, position } : ta2
+    ));
+  };
+
+  const addTA2Responsible = (discipline: string, commission: string) => {
+    const position = setPositionBasedOnDisciplineAndCommission(discipline, commission);
+    const newTA2: TA2Approver = {
+      id: `ta2-responsible-${Date.now()}`,
+      discipline,
+      commission,
+      position
+    };
+    setTA2Responsible(prev => [...prev, newTA2]);
+    setShowTA2ResponsibleConfig(null);
+  };
+
+  const removeTA2Responsible = (id: string) => {
+    setTA2Responsible(prev => prev.filter(ta2 => ta2.id !== id));
+  };
+
+  const updateTA2Responsible = (id: string, discipline: string, commission: string) => {
+    const position = setPositionBasedOnDisciplineAndCommission(discipline, commission);
+    setTA2Responsible(prev => prev.map(ta2 => 
+      ta2.id === id ? { ...ta2, discipline, commission, position } : ta2
+    ));
+  };
+
+  // Engineering Manager Management Functions
+  const addEngrManagerApprover = (commission: string) => {
+    const position = setEngrManagerPosition(commission);
+    const newEngrManager = {
+      id: `engr-manager-approver-${Date.now()}`,
+      commission,
+      position
+    };
+    setEngrManagerApprovers(prev => [...prev, newEngrManager]);
+    setShowEngrManagerApproverConfig(null);
+  };
+
+  const removeEngrManagerApprover = (id: string) => {
+    setEngrManagerApprovers(prev => prev.filter(em => em.id !== id));
+  };
+
+  const updateEngrManagerApprover = (id: string, commission: string) => {
+    const position = setEngrManagerPosition(commission);
+    setEngrManagerApprovers(prev => prev.map(em => 
+      em.id === id ? { ...em, commission, position } : em
+    ));
+  };
+
+  const addEngrManagerResponsible = (commission: string) => {
+    const position = setEngrManagerPosition(commission);
+    const newEngrManager = {
+      id: `engr-manager-responsible-${Date.now()}`,
+      commission,
+      position
+    };
+    setEngrManagerResponsible(prev => [...prev, newEngrManager]);
+    setShowEngrManagerResponsibleConfig(null);
+  };
+
+  const removeEngrManagerResponsible = (id: string) => {
+    setEngrManagerResponsible(prev => prev.filter(em => em.id !== id));
+  };
+
+  const updateEngrManagerResponsible = (id: string, commission: string) => {
+    const position = setEngrManagerPosition(commission);
+    setEngrManagerResponsible(prev => prev.map(em => 
+      em.id === id ? { ...em, commission, position } : em
+    ));
+  };
+
+  // HSE Lead Management Functions
+  const addHSELeadApprover = (commission: string) => {
+    const position = setHSELeadPosition(commission);
+    const newHSELead = {
+      id: `hse-lead-approver-${Date.now()}`,
+      commission,
+      position
+    };
+    setHSELeadApprovers(prev => [...prev, newHSELead]);
+    setShowHSELeadApproverConfig(null);
+  };
+
+  const removeHSELeadApprover = (id: string) => {
+    setHSELeadApprovers(prev => prev.filter(hse => hse.id !== id));
+  };
+
+  const updateHSELeadApprover = (id: string, commission: string) => {
+    const position = setHSELeadPosition(commission);
+    setHSELeadApprovers(prev => prev.map(hse => 
+      hse.id === id ? { ...hse, commission, position } : hse
+    ));
+  };
+
+  const addHSELeadResponsible = (commission: string) => {
+    const position = setHSELeadPosition(commission);
+    const newHSELead = {
+      id: `hse-lead-responsible-${Date.now()}`,
+      commission,
+      position
+    };
+    setHSELeadResponsible(prev => [...prev, newHSELead]);
+    setShowHSELeadResponsibleConfig(null);
+  };
+
+  const removeHSELeadResponsible = (id: string) => {
+    setHSELeadResponsible(prev => prev.filter(hse => hse.id !== id));
+  };
+
+  const updateHSELeadResponsible = (id: string, commission: string) => {
+    const position = setHSELeadPosition(commission);
+    setHSELeadResponsible(prev => prev.map(hse => 
+      hse.id === id ? { ...hse, commission, position } : hse
+    ));
+  };
+
+  // Director Management Functions
+  const addDirectorApprover = (commission: string) => {
+    const position = setDirectorPosition(commission);
+    const newDirector = {
+      id: `director-approver-${Date.now()}`,
+      commission,
+      position
+    };
+    setDirectorApprovers(prev => [...prev, newDirector]);
+    setShowDirectorApproverConfig(null);
+  };
+
+  const removeDirectorApprover = (id: string) => {
+    setDirectorApprovers(prev => prev.filter(dir => dir.id !== id));
+  };
+
+  const updateDirectorApprover = (id: string, commission: string) => {
+    const position = setDirectorPosition(commission);
+    setDirectorApprovers(prev => prev.map(dir => 
+      dir.id === id ? { ...dir, commission, position } : dir
+    ));
+  };
+
+  const addDirectorResponsible = (commission: string) => {
+    const position = setDirectorPosition(commission);
+    const newDirector = {
+      id: `director-responsible-${Date.now()}`,
+      commission,
+      position
+    };
+    setDirectorResponsible(prev => [...prev, newDirector]);
+    setShowDirectorResponsibleConfig(null);
+  };
+
+  const removeDirectorResponsible = (id: string) => {
+    setDirectorResponsible(prev => prev.filter(dir => dir.id !== id));
+  };
+
+  const updateDirectorResponsible = (id: string, commission: string) => {
+    const position = setDirectorPosition(commission);
+    setDirectorResponsible(prev => prev.map(dir => 
+      dir.id === id ? { ...dir, commission, position } : dir
+    ));
+  };
+
+  // Get badge color based on role type and position
+  const getBadgeColor = (type: string, position: string) => {
+    if (type === 'TA2') {
+      if (position.includes('P&E')) return 'bg-blue-100 text-blue-800 border-blue-200';
+      if (position.includes('Asset')) return 'bg-green-100 text-green-800 border-green-200';
+      if (position.includes('Civil')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-purple-100 text-purple-800 border-purple-200';
     }
-  };
-
-  const removeCustomAuthority = (id: string) => {
-    setCustomAuthorities(prev => prev.filter(auth => auth.id !== id));
-  };
-
-  const addCustomResponsibleParty = () => {
-    if (newPartyName.trim() && newPartyRole.trim()) {
-      const newParty: CustomPerson = {
-        id: `party-${Date.now()}`,
-        name: newPartyName.trim(),
-        role: newPartyRole.trim()
-      };
-      setCustomResponsibleParties(prev => [...prev, newParty]);
-      setNewPartyName('');
-      setNewPartyRole('');
+    if (type === 'Engineering Manager') {
+      if (position.includes('P&E')) return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      if (position.includes('Asset')) return 'bg-teal-100 text-teal-800 border-teal-200';
+      return 'bg-cyan-100 text-cyan-800 border-cyan-200';
     }
+    if (type === 'HSE Lead') {
+      if (position.includes('P&E')) return 'bg-orange-100 text-orange-800 border-orange-200';
+      if (position.includes('Asset')) return 'bg-red-100 text-red-800 border-red-200';
+      return 'bg-pink-100 text-pink-800 border-pink-200';
+    }
+    if (type === 'Director') {
+      if (position.includes('P&E')) return 'bg-gray-100 text-gray-800 border-gray-200';
+      if (position.includes('Asset')) return 'bg-slate-100 text-slate-800 border-slate-200';
+      return 'bg-zinc-100 text-zinc-800 border-zinc-200';
+    }
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const removeCustomResponsibleParty = (id: string) => {
-    setCustomResponsibleParties(prev => prev.filter(party => party.id !== id));
-  };
+  // Preview component
+  if (showPreview) {
+    const allApprovers = [
+      ...ta2Approvers.map(a => ({ type: 'TA2', position: a.position })),
+      ...engrManagerApprovers.map(a => ({ type: 'Engineering Manager', position: a.position })),
+      ...hseLeadApprovers.map(a => ({ type: 'HSE Lead', position: a.position })),
+      ...directorApprovers.map(a => ({ type: 'Director', position: a.position }))
+    ];
+
+    const allResponsible = [
+      ...ta2Responsible.map(r => ({ type: 'TA2', position: r.position })),
+      ...engrManagerResponsible.map(r => ({ type: 'Engineering Manager', position: r.position })),
+      ...hseLeadResponsible.map(r => ({ type: 'HSE Lead', position: r.position })),
+      ...directorResponsible.map(r => ({ type: 'Director', position: r.position }))
+    ];
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-6 w-6" />
+                <div>
+                  <CardTitle className="text-xl">Preview Checklist Item</CardTitle>
+                  <CardDescription className="text-blue-100">
+                    Review your checklist item before saving
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6 p-8">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Description</h3>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.description}</p>
+                </div>
+
+                {formData.evidenceGuidance && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Evidence Guidance</h3>
+                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{formData.evidenceGuidance}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Category</h3>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      {formData.category}
+                    </Badge>
+                  </div>
+
+                  {formData.topic && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">Topic</h3>
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                        {formData.topic}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                {allApprovers.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Approvers</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {allApprovers.map((approver, index) => (
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className={getBadgeColor(approver.type, approver.position)}
+                        >
+                          {approver.position}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {allResponsible.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Responsible Parties</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {allResponsible.map((responsible, index) => (
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className={getBadgeColor(responsible.type, responsible.position)}
+                        >
+                          {responsible.position}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPreview(false)}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Edit
+                </Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={updateChecklistItemMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {updateChecklistItemMutation.isPending ? (
+                    <>
+                      <AlertCircle className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Update Item
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-background border border-border rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-border p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Edit Checklist Item</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Modify the details of checklist item {item.id}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
+      <div className="max-w-4xl mx-auto">
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-6 w-6" />
+              <div>
+                <CardTitle className="text-xl">Edit Checklist Item</CardTitle>
+                <CardDescription className="text-blue-100">
+                  Update the details of your checklist item
+                </CardDescription>
+              </div>
             </div>
-            <div className="flex space-x-3">
-              {onDelete && (
-                <Button 
-                  variant="outline"
-                  onClick={() => onDelete(item.id)}
-                  className="text-destructive hover:bg-destructive/10 border-destructive/20"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Item
-                </Button>
-              )}
-              <Button variant="outline" onClick={onBack}>
-                <X className="h-4 w-4" />
+          </CardHeader>
+          <CardContent className="space-y-8 p-8">
+            {/* Description Section */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                  Checklist Question/Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter the checklist question or description..."
+                  className="mt-2 min-h-[100px] resize-none border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                {errors.description && (
+                  <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="evidenceGuidance" className="text-sm font-medium text-gray-700">
+                  Evidence Guidance
+                </Label>
+                <Textarea
+                  id="evidenceGuidance"
+                  value={formData.evidenceGuidance}
+                  onChange={(e) => setFormData(prev => ({ ...prev, evidenceGuidance: e.target.value }))}
+                  placeholder="Provide guidance on what evidence is needed to complete this checklist item..."
+                  className="mt-2 min-h-[80px] resize-none border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Category and Topic Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Category *</Label>
+                <EnhancedSearchableCombobox
+                  options={categoryOptions}
+                  value={formData.category}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  onCreateNew={handleCreateCategory}
+                  placeholder="Select or create category..."
+                  className="mt-2"
+                />
+                {errors.category && (
+                  <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Topic</Label>
+                <EnhancedSearchableCombobox
+                  options={topicOptions}
+                  value={formData.topic}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}
+                  onCreateNew={handleCreateTopic}
+                  placeholder="Select or create topic..."
+                  className="mt-2"
+                />
+              </div>
+            </div>
+
+            {/* Responsible Parties Section */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-700">Responsible Parties</h3>
+
+              {/* TA2 Responsible */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">TA2 Responsible</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTA2ResponsibleConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add TA2
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {ta2Responsible.map((ta2) => (
+                    <Badge
+                      key={ta2.id}
+                      variant="outline"
+                      className={getBadgeColor('TA2', ta2.position)}
+                    >
+                      {ta2.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeTA2Responsible(ta2.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showTA2ResponsibleConfig === 'add' && (
+                  <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addTA2Responsible(value, 'P&E');
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Discipline" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {disciplineOptions.map((disc) => (
+                          <SelectItem key={disc.value} value={disc.value}>
+                            {disc.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addTA2Responsible('Tech Safety', value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCommissionOptions('Tech Safety').map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowTA2ResponsibleConfig(null)}
+                      className="col-span-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Engineering Manager Responsible */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">Engineering Manager Responsible</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowEngrManagerResponsibleConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Engineering Manager
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {engrManagerResponsible.map((em) => (
+                    <Badge
+                      key={em.id}
+                      variant="outline"
+                      className={getBadgeColor('Engineering Manager', em.position)}
+                    >
+                      {em.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeEngrManagerResponsible(em.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showEngrManagerResponsibleConfig === 'add' && (
+                  <div className="mt-2">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addEngrManagerResponsible(value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getEngrManagerCommissionOptions().map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowEngrManagerResponsibleConfig(null)}
+                      className="mt-2 w-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* HSE Lead Responsible */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">HSE Lead Responsible</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowHSELeadResponsibleConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add HSE Lead
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {hseLeadResponsible.map((hse) => (
+                    <Badge
+                      key={hse.id}
+                      variant="outline"
+                      className={getBadgeColor('HSE Lead', hse.position)}
+                    >
+                      {hse.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeHSELeadResponsible(hse.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showHSELeadResponsibleConfig === 'add' && (
+                  <div className="mt-2">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addHSELeadResponsible(value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getHSELeadCommissionOptions().map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowHSELeadResponsibleConfig(null)}
+                      className="mt-2 w-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Director Responsible */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">Director Responsible</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDirectorResponsibleConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Director
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {directorResponsible.map((dir) => (
+                    <Badge
+                      key={dir.id}
+                      variant="outline"
+                      className={getBadgeColor('Director', dir.position)}
+                    >
+                      {dir.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeDirectorResponsible(dir.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showDirectorResponsibleConfig === 'add' && (
+                  <div className="mt-2">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addDirectorResponsible(value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getDirectorCommissionOptions().map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDirectorResponsibleConfig(null)}
+                      className="mt-2 w-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Approvers Section */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-700">Approvers</h3>
+
+              {/* TA2 Approvers */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">TA2 Approvers</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTA2ApproverConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add TA2
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {ta2Approvers.map((ta2) => (
+                    <Badge
+                      key={ta2.id}
+                      variant="outline"
+                      className={getBadgeColor('TA2', ta2.position)}
+                    >
+                      {ta2.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeTA2Approver(ta2.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showTA2ApproverConfig === 'add' && (
+                  <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addTA2Approver(value, 'P&E');
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Discipline" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {disciplineOptions.map((disc) => (
+                          <SelectItem key={disc.value} value={disc.value}>
+                            {disc.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addTA2Approver('Tech Safety', value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCommissionOptions('Tech Safety').map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowTA2ApproverConfig(null)}
+                      className="col-span-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Engineering Manager Approvers */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">Engineering Manager Approvers</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowEngrManagerApproverConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Engineering Manager
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {engrManagerApprovers.map((em) => (
+                    <Badge
+                      key={em.id}
+                      variant="outline"
+                      className={getBadgeColor('Engineering Manager', em.position)}
+                    >
+                      {em.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeEngrManagerApprover(em.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showEngrManagerApproverConfig === 'add' && (
+                  <div className="mt-2">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addEngrManagerApprover(value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getEngrManagerCommissionOptions().map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowEngrManagerApproverConfig(null)}
+                      className="mt-2 w-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* HSE Lead Approvers */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">HSE Lead Approvers</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowHSELeadApproverConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add HSE Lead
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {hseLeadApprovers.map((hse) => (
+                    <Badge
+                      key={hse.id}
+                      variant="outline"
+                      className={getBadgeColor('HSE Lead', hse.position)}
+                    >
+                      {hse.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeHSELeadApprover(hse.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showHSELeadApproverConfig === 'add' && (
+                  <div className="mt-2">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addHSELeadApprover(value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getHSELeadCommissionOptions().map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowHSELeadApproverConfig(null)}
+                      className="mt-2 w-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Director Approvers */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-md font-medium text-gray-600">Director Approvers</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDirectorApproverConfig('add')}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Director
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {directorApprovers.map((dir) => (
+                    <Badge
+                      key={dir.id}
+                      variant="outline"
+                      className={getBadgeColor('Director', dir.position)}
+                    >
+                      {dir.position}
+                      <X
+                        className="ml-1 inline cursor-pointer"
+                        onClick={() => removeDirectorApprover(dir.id)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                {showDirectorApproverConfig === 'add' && (
+                  <div className="mt-2">
+                    <Select
+                      onValueChange={(value) => {
+                        if (value) {
+                          addDirectorApprover(value);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Commission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getDirectorCommissionOptions().map((comm) => (
+                          <SelectItem key={comm.value} value={comm.value}>
+                            {comm.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDirectorApproverConfig(null)}
+                      className="mt-2 w-full"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-6 border-t">
+              <Button 
+                variant="outline" 
+                onClick={onBack}
+                className="flex-1"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowPreview(true)}
+                className="flex-1"
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Preview
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={updateChecklistItemMutation.isPending}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                {updateChecklistItemMutation.isPending ? (
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Update Item
+                  </>
+                )}
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="space-y-6">
-            {/* Item ID (Read-only) */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">Reference ID</Label>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-sm px-3 py-1">
-                  {item.id}
-                </Badge>
-                <span className="text-sm text-muted-foreground">(Auto-assigned, cannot be changed)</span>
-              </div>
-            </div>
-
-            {/* Question/Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-base font-semibold">
-                Question/Description <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => updateFormData('description', e.target.value)}
-                className="min-h-[100px] resize-none"
-                rows={4}
-              />
-              {errors.description && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.description}
-                </p>
-              )}
-            </div>
-
-            {/* Evidence Guidance */}
-            <div className="space-y-2">
-              <Label htmlFor="supportingEvidence" className="text-base font-semibold">
-                Evidence Guidance <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="supportingEvidence"
-                value={formData.supportingEvidence}
-                onChange={(e) => updateFormData('supportingEvidence', e.target.value)}
-                className="min-h-[80px] resize-none"
-                rows={3}
-              />
-              {errors.supportingEvidence && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.supportingEvidence}
-                </p>
-              )}
-            </div>
-
-            {/* Category */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">
-                Category <span className="text-destructive">*</span>
-              </Label>
-              <Select value={formData.category} onValueChange={(value) => updateFormData('category', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category} className="cursor-pointer">
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.category && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.category}
-                </p>
-              )}
-            </div>
-
-            {/* Approving Authority */}
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">
-                Approving Authority <span className="text-destructive">*</span>
-              </Label>
-              
-              <Select value={formData.approvingAuthority} onValueChange={(value) => updateFormData('approvingAuthority', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border shadow-lg z-50 max-h-60">
-                  {defaultAuthorities.map((authority) => (
-                    <SelectItem key={authority} value={authority} className="cursor-pointer">
-                      {authority}
-                    </SelectItem>
-                  ))}
-                  {availableUsers.map((user) => (
-                    <SelectItem key={user.id} value={`${user.name} (${user.role})`} className="cursor-pointer">
-                      {user.name} ({user.role})
-                    </SelectItem>
-                  ))}
-                  {customAuthorities.map((authority) => (
-                    <SelectItem key={authority.id} value={`${authority.name} (${authority.role})`} className="cursor-pointer">
-                      {authority.name} ({authority.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Custom Authorities */}
-              {customAuthorities.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Custom Approving Authorities</Label>
-                  <div className="space-y-2">
-                    {customAuthorities.map((authority) => (
-                      <div key={authority.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-                        <div>
-                          <span className="font-medium">{authority.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">({authority.role})</span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeCustomAuthority(authority.id)}
-                          className="text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Add New Authority */}
-              <div className="border border-border/50 rounded-lg p-4 space-y-3">
-                <Label className="text-sm font-medium">Add New Approving Authority</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input
-                    placeholder="Name"
-                    value={newAuthorityName}
-                    onChange={(e) => setNewAuthorityName(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Role/Title"
-                    value={newAuthorityRole}
-                    onChange={(e) => setNewAuthorityRole(e.target.value)}
-                  />
-                  <Button 
-                    variant="outline" 
-                    onClick={addCustomAuthority}
-                    disabled={!newAuthorityName.trim() || !newAuthorityRole.trim()}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add
-                  </Button>
-                </div>
-              </div>
-
-              {errors.approvingAuthority && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.approvingAuthority}
-                </p>
-              )}
-            </div>
-
-            {/* Responsible Parties (Additional) */}
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">Additional Responsible Parties</Label>
-              <p className="text-sm text-muted-foreground">
-                Add additional teams or individuals responsible for this checklist item
-              </p>
-
-              {/* Custom Responsible Parties */}
-              {customResponsibleParties.length > 0 && (
-                <div className="space-y-2">
-                  {customResponsibleParties.map((party) => (
-                    <div key={party.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-                      <div>
-                        <span className="font-medium">{party.name}</span>
-                        <span className="text-sm text-muted-foreground ml-2">({party.role})</span>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => removeCustomResponsibleParty(party.id)}
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add New Responsible Party */}
-              <div className="border border-border/50 rounded-lg p-4 space-y-3">
-                <Label className="text-sm font-medium">Add Responsible Party</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input
-                    placeholder="Name/Team"
-                    value={newPartyName}
-                    onChange={(e) => setNewPartyName(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Role/Department"
-                    value={newPartyRole}
-                    onChange={(e) => setNewPartyRole(e.target.value)}
-                  />
-                  <Button 
-                    variant="outline" 
-                    onClick={addCustomResponsibleParty}
-                    disabled={!newPartyName.trim() || !newPartyRole.trim()}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-border p-6">
-          <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={onBack}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

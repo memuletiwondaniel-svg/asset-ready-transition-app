@@ -98,8 +98,6 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                 </div>
               </TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4">Description</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Topic</TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-24">Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -155,21 +153,6 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                   <p className="text-sm text-gray-800 line-clamp-2 leading-relaxed">
                     {item.description}
                   </p>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  <Badge 
-                    variant="secondary" 
-                    className={getCategoryColor(item.category)}
-                  >
-                    {item.category}
-                  </Badge>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  {item.topic ? (
-                    <span className="text-sm text-purple-600 font-medium">{item.topic}</span>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">No topic</span>
-                  )}
                 </TableCell>
                 <TableCell className="px-6 py-4 text-center">
                   <Badge 
