@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft } from 'lucide-react';
+import AdminHeader from '@/components/admin/AdminHeader';
+import { getCurrentTranslations } from '@/utils/translations';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -20,9 +22,11 @@ import {
 
 interface ProjectManagementPageProps {
   onBack?: () => void;
+  selectedLanguage?: string;
+  translations?: any;
 }
 
-const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
+const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translations }: ProjectManagementPageProps) => {
   const { projects, isLoading, deleteProject } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -30,6 +34,10 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
+  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
+  
+  // Get translations
+  const t = translations || getCurrentTranslations(currentLanguage);
 
   const getProjectId = (project: any) => {
     return `${project.project_id_prefix}${project.project_id_number}`;
@@ -37,9 +45,9 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
 
   const getStatusBadge = (project: any) => {
     return (
-      <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
-        Active
-      </Badge>
+                      <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
+                        {t.active}
+                      </Badge>
     );
   };
 
@@ -97,7 +105,7 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center text-blue-900">
               <FolderOpen className="h-5 w-5 mr-2" />
-              Projects Overview
+              {t.projectsOverview}
             </CardTitle>
           </div>
         </CardHeader>
@@ -105,29 +113,27 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
           {projects.length === 0 ? (
             <div className="text-center py-16">
               <FolderOpen className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No Projects Found</h3>
-              <p className="text-gray-500 mb-4">
-                Get started by creating your first project
-              </p>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">{t.totalProjects || 'No Projects Found'}</h3>
+              <p className="text-gray-500 mb-4">{t.createProject || 'Get started by creating your first project'}</p>
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Project
+                {t.createProject}
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-blue-100/60 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
-                  <TableHead className="font-semibold text-blue-900 px-6 py-4">Actions</TableHead>
+                  <TableHead className="font-semibold text-blue-900 px-6 py-4">{t.actions}</TableHead>
                   <TableHead className="font-semibold text-blue-900 px-6 py-4">Project ID</TableHead>
                   <TableHead className="font-semibold text-blue-900 px-6 py-4">Project Title</TableHead>
                   <TableHead className="font-semibold text-blue-900 px-6 py-4">Plant</TableHead>
                   <TableHead className="font-semibold text-blue-900 px-6 py-4">Hub</TableHead>
-                  <TableHead className="font-semibold text-blue-900 px-6 py-4">Status</TableHead>
-                  <TableHead className="font-semibold text-blue-900 px-6 py-4">Created</TableHead>
+                  <TableHead className="font-semibold text-blue-900 px-6 py-4">{t.active || 'Status'}</TableHead>
+                  <TableHead className="font-semibold text-blue-900 px-6 py-4">{t.createdAt}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -151,21 +157,21 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
                             onClick={() => setViewProject(project)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            View Details
+                            {t.viewDetails}
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="flex items-center text-green-600 hover:bg-green-50/80"
                             onClick={() => setEditProject(project)}
                           >
                             <Edit3 className="h-4 w-4 mr-2" />
-                            Edit Project
+                            {t.editProject}
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="flex items-center text-red-600 hover:bg-red-50/80"
                             onClick={() => deleteProject(project.id)}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Project
+                            {t.deleteProject}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

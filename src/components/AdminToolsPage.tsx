@@ -7,7 +7,9 @@ import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCirc
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
 import ProjectManagementPage from "./project/ProjectManagementPage";
+import AdminHeader from "./admin/AdminHeader";
 import { supabase } from '@/integrations/supabase/client';
+import { getCurrentTranslations } from '@/utils/translations';
 
 interface AdminToolsPageProps {
   onBack: () => void;
@@ -15,6 +17,7 @@ interface AdminToolsPageProps {
 
 const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects'>('dashboard');
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [userStats, setUserStats] = useState({
     total: 0,
     pending: 0,
@@ -51,23 +54,26 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     fetchUserStats();
   }, []);
 
+  // Get current translations
+  const t = getCurrentTranslations(selectedLanguage);
+
   if (activeView === 'users') {
-    return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} />;
+    return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
   }
 
   if (activeView === 'checklist') {
-    return <ManageChecklistPage onBack={() => setActiveView('dashboard')} />;
+    return <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
   }
 
   if (activeView === 'projects') {
-    return <ProjectManagementPage onBack={() => setActiveView('dashboard')} />;
+    return <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
   }
 
   const adminTools = [
     {
       id: 'users',
-      title: 'Manage User',
-      description: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for BGC and Kent employees',
+      title: t.manageUser,
+      description: t.manageUserDesc,
       icon: Users,
       accentColor: '#0078D4', // Microsoft Blue
       stats: { 
@@ -79,8 +85,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     },
     {
       id: 'checklist',
-      title: 'Manage Checklists',
-      description: 'Create, edit, and manage PSSR checklists with comprehensive item selection and configuration',
+      title: t.manageChecklists,
+      description: t.manageChecklistsDesc,
       icon: ClipboardList,
       accentColor: '#107C10', // Microsoft Green
       stats: { total: 65, active: 65 },
@@ -88,8 +94,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     },
     {
       id: 'projects',
-      title: 'Manage Project',
-      description: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
+      title: t.manageProject,
+      description: t.manageProjectDesc,
       icon: FolderOpen,
       accentColor: '#FF8C00', // Microsoft Orange
       stats: { total: 12, active: 8 },
@@ -99,45 +105,46 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Modern Microsoft Fluent Navigation Bar */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container flex h-14 items-center">
-          <div className="flex items-center space-x-4">
-            <div className="transition-transform hover:scale-105">
-              <img 
-                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                alt="BGC Logo" 
-                className="h-8 w-auto" 
-              />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold">
-                Administration Tools
-              </h1>
-              <p className="text-xs text-muted-foreground">Basrah Gas Company • ORSH Platform</p>
-            </div>
+      <AdminHeader
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={setSelectedLanguage}
+        translations={t}
+      >
+        <div className="flex items-center space-x-4">
+          <div className="transition-transform hover:scale-105">
+            <img 
+              src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
+              alt="BGC Logo" 
+              className="h-8 w-auto" 
+            />
           </div>
-          <div className="ml-auto">
-            <Button 
-              variant="outline" 
-              onClick={onBack}
-              className="h-9"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
+          <div>
+            <h1 className="text-lg font-semibold">
+              {t.adminToolsTitle}
+            </h1>
+            <p className="text-xs text-muted-foreground">{t.company} • {t.platform}</p>
           </div>
         </div>
-      </div>
+        <div className="ml-auto">
+          <Button 
+            variant="outline" 
+            onClick={onBack}
+            className="h-9"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.backToDashboard}
+          </Button>
+        </div>
+      </AdminHeader>
 
       <div className="container py-8">
         {/* Modern Header */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold tracking-tight">
-            Administration
+            {t.administration}
           </h2>
           <p className="text-muted-foreground mt-2">
-            Manage users, projects, and system configurations
+            {t.adminToolsSubtitle}
           </p>
         </div>
 
@@ -190,18 +197,18 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
                           </CardTitle>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm text-muted-foreground">
-                              <span>Total Items</span>
+                              <span>{t.totalUsers || 'Total Items'}</span>
                               <span className="font-medium">{tool.stats.total}</span>
                             </div>
                             {tool.stats.active && (
                               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>Active</span>
+                                <span>{t.active}</span>
                                 <span className="font-medium text-green-600">{tool.stats.active}</span>
                               </div>
                             )}
                             {tool.stats.pending && tool.stats.pending > 0 && (
                               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>Pending</span>
+                                <span>{t.pending}</span>
                                 <span className="font-medium text-orange-600">{tool.stats.pending}</span>
                               </div>
                             )}

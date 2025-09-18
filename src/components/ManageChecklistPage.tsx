@@ -23,6 +23,8 @@ import ChecklistTopicsManagement from './ChecklistTopicsManagement';
 
 interface ManageChecklistPageProps {
   onBack: () => void;
+  selectedLanguage?: string;
+  translations?: any;
 }
 
 interface NewChecklistData {

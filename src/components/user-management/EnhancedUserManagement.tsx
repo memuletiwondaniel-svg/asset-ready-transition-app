@@ -48,6 +48,8 @@ import CreateUserModal from './CreateUserModal'; // Uses edge function to create
 
 interface EnhancedUserManagementProps {
   onBack: () => void;
+  selectedLanguage?: string;
+  translations?: any;
 }
 
 interface User {
