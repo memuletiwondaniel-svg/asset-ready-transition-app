@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings } from 'lucide-react';
 import EditChecklistForm from './EditChecklistForm';
-import EditChecklistItemForm from './EditChecklistItemForm';
+import EditChecklistItemModal from './EditChecklistItemModal';
 import { Checklist } from '@/hooks/useChecklists';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 

@@ -14,7 +14,7 @@ import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCatego
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
-import ChecklistItemDetailModal from './ChecklistItemDetailModal';
+import ViewChecklistItemModal from './ViewChecklistItemModal';
 import ChecklistReviewSummaryPage from './ChecklistReviewSummaryPage';
 import { useToast } from '@/hooks/use-toast';
 

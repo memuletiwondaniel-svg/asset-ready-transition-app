@@ -11,8 +11,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
-import ChecklistItemDetailModal from './ChecklistItemDetailModal';
-import EditChecklistItemForm from './EditChecklistItemForm';
+import ViewChecklistItemModal from './ViewChecklistItemModal';
+import EditChecklistItemModal from './EditChecklistItemModal';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemsTableView from './ChecklistItemsTableView';
 interface ChecklistManagementPageProps {
