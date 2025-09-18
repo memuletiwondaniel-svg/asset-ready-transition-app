@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye } from 'lucide-react';
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemModal from './EditChecklistItemModal';
+import ViewChecklistItemModal from './ViewChecklistItemModal';
 import { Checklist } from '@/hooks/useChecklists';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 
@@ -24,6 +25,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showEditChecklist, setShowEditChecklist] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
+  const [viewingItem, setViewingItem] = useState<ChecklistItem | null>(null);
   const { data: allChecklistItems = [], isLoading } = useChecklistItems();
   const [selectedItems, setSelectedItems] = useState<string[]>(
     checklist.selected_items || []
@@ -352,6 +354,13 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
                               <Button 
                                 variant="ghost" 
                                 size="sm"
+                                onClick={() => setViewingItem(item)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
                                 onClick={() => handleEditItem(item)}
                               >
                                 <Edit className="h-4 w-4" />
@@ -424,6 +433,19 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* View Item Modal */}
+      {viewingItem && (
+        <ViewChecklistItemModal 
+          isOpen={true}
+          item={viewingItem}
+          onClose={() => setViewingItem(null)}
+          onEdit={() => {
+            setEditingItem(viewingItem);
+            setViewingItem(null);
+          }}
+        />
+      )}
 
       {/* Edit Item Modal */}
       {editingItem && (

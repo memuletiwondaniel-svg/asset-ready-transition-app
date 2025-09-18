@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X, Eye, FileText } from 'lucide-react';
+import { X, Eye, FileText, Edit3 } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 import { useChecklistCategories } from '@/hooks/useChecklistCategories';
 import { useChecklistTopics } from '@/hooks/useChecklistTopics';
@@ -18,6 +18,7 @@ interface ViewChecklistItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: ChecklistItem | null;
+  onEdit?: () => void;
 }
 
 interface TA2Approver {
@@ -31,6 +32,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
   isOpen,
   onClose,
   item,
+  onEdit,
 }) => {
   const [formData, setFormData] = useState({
     description: '',
@@ -297,7 +299,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-sm">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -311,19 +313,24 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {onEdit && (
+                <Button variant="outline" size="sm" onClick={onEdit} className="text-xs">
+                  <Edit3 className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 p-6 bg-card/50 rounded-lg border border-border/50">
           {/* Checklist Question */}
           <div className="space-y-3">
             <Label className="text-sm font-medium flex items-center gap-2">
               Checklist Question
             </Label>
-            <div className="p-3 bg-muted/30 rounded-lg border">
+            <div className="p-4 bg-background rounded-lg border border-border">
               <p className="text-sm whitespace-pre-wrap">{formData.description}</p>
             </div>
           </div>
@@ -332,7 +339,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
           {formData.evidenceGuidance && (
             <div className="space-y-3">
               <Label className="text-sm font-medium">Evidence Guidance</Label>
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-4 bg-background rounded-lg border border-border">
                 <p className="text-sm whitespace-pre-wrap">{formData.evidenceGuidance}</p>
               </div>
             </div>
@@ -342,7 +349,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <Label className="text-sm font-medium">Category</Label>
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-4 bg-background rounded-lg border border-border">
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                   {formData.category}
                 </Badge>
@@ -351,7 +358,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
 
             <div className="space-y-3">
               <Label className="text-sm font-medium">Topic</Label>
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-4 bg-background rounded-lg border border-border">
                 {formData.topic ? (
                   <Badge variant="outline" className="bg-secondary/10 text-secondary-foreground border-secondary/30">
                     {formData.topic}
@@ -368,7 +375,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
             <Label className="text-sm font-medium">Responsible Parties</Label>
             
             {(formData.responsible.length > 0 || ta2Responsible.filter(ta2 => ta2.position).length > 0 || engrManagerResponsible.filter(engr => engr.position).length > 0 || hseLeadResponsible.filter(hse => hse.position).length > 0 || directorResponsible.filter(dir => dir.position).length > 0) ? (
-              <div className="grid gap-4 p-4 bg-muted/30 rounded-lg border">
+              <div className="grid gap-4 p-4 bg-background rounded-lg border border-border">
                 {/* Directors Section */}
                 {directorResponsible.filter(dir => dir.position).length > 0 && (
                   <div className="space-y-2">
@@ -514,7 +521,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
                 )}
               </div>
             ) : (
-              <div className="p-4 bg-muted/30 rounded-lg border">
+              <div className="p-4 bg-background rounded-lg border border-border">
                 <span className="text-sm text-muted-foreground italic">No responsible parties assigned</span>
               </div>
             )}
@@ -525,7 +532,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
             <Label className="text-sm font-medium">Approvers</Label>
             
             {(formData.approvers.length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0 || engrManagerApprovers.filter(engr => engr.position).length > 0 || hseLeadApprovers.filter(hse => hse.position).length > 0 || directorApprovers.filter(dir => dir.position).length > 0) ? (
-              <div className="grid gap-4 p-4 bg-muted/30 rounded-lg border">
+              <div className="grid gap-4 p-4 bg-background rounded-lg border border-border">
                 {/* Engineering Section */}
                 {(engrManagerApprovers.filter(engr => engr.position).length > 0 || ta2Approvers.filter(ta2 => ta2.position).length > 0) && (
                   <div className="space-y-2">
@@ -680,7 +687,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
                 )}
               </div>
             ) : (
-              <div className="p-4 bg-muted/30 rounded-lg border">
+              <div className="p-4 bg-background rounded-lg border border-border">
                 <span className="text-sm text-muted-foreground italic">No approvers assigned</span>
               </div>
             )}
