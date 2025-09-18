@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Edit, MoreVertical, Trash2, FileText, GripVertical } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Eye, Edit, MoreVertical, Trash2, FileText, GripVertical, Search } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 import {
   DndContext,
@@ -68,11 +69,11 @@ interface Column {
 }
 
 const defaultColumns: Column[] = [
-  { id: 'actions', label: 'Actions', width: 'w-20' },
+  { id: 'actions', label: 'Actions', width: 'w-16' },
   { id: 'id', label: 'ID', icon: FileText, width: 'w-24' },
-  { id: 'category', label: 'Category', width: 'w-32' },
+  { id: 'category', label: 'Category', width: 'w-auto' },
   { id: 'topic', label: 'Topic', width: 'w-32' },
-  { id: 'description', label: 'Description', width: 'flex-1 min-w-96' },
+  { id: 'description', label: 'Description', width: 'flex-1 min-w-0' },
 ];
 
 // Sortable Header Component
@@ -127,6 +128,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
   onDeleteItem,
 }) => {
   const [columns, setColumns] = useState<Column[]>(defaultColumns);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -147,9 +149,23 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
       });
     }
   };
-  // Sort items by category order
-  const sortedItems = React.useMemo(() => {
-    return [...items].sort((a, b) => {
+  // Filter and sort items
+  const filteredAndSortedItems = useMemo(() => {
+    let filtered = items;
+    
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = items.filter(item => 
+        item.unique_id?.toLowerCase().includes(searchLower) ||
+        item.description?.toLowerCase().includes(searchLower) ||
+        item.topic?.toLowerCase().includes(searchLower) ||
+        item.category?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Sort by category order
+    return filtered.sort((a, b) => {
       const aIndex = CATEGORY_ORDER.indexOf(a.category);
       const bIndex = CATEGORY_ORDER.indexOf(b.category);
       
@@ -165,7 +181,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
       return (a.sequence_number || 0) - (b.sequence_number || 0) || 
              a.unique_id.localeCompare(b.unique_id);
     });
-  }, [items]);
+  }, [items, searchTerm]);
 
   const getCategoryColor = (category: string) => {
     return CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || 'bg-gray-100/80 text-gray-700 border-gray-200/60';
@@ -233,7 +249,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         return (
           <Badge 
             variant="outline" 
-            className={`${getCategoryColor(item.category)} text-xs font-medium`}
+            className={`${getCategoryColor(item.category)} text-xs font-medium whitespace-nowrap`}
           >
             {item.category}
           </Badge>
@@ -256,8 +272,20 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-lg overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Search by ID, description, topic, or category..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/60 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
         <DndContext 
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -274,7 +302,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedItems.map((item, index) => (
+              {filteredAndSortedItems.map((item, index) => (
                 <TableRow 
                   key={item.unique_id} 
                   className={`border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-300 ${
@@ -294,6 +322,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
             </TableBody>
           </Table>
         </DndContext>
+        </div>
       </div>
     </div>
   );
