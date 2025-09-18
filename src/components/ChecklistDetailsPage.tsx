@@ -430,14 +430,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
         <EditChecklistItemForm 
           item={editingItem}
           onBack={() => setEditingItem(null)}
-          onSave={handleSaveItem}
-          onDelete={handleDeleteItem}
-          availableUsers={[
-            // Mock users - in real app this would come from user microservice
-            { id: '1', name: 'Ahmed Al-Rashid', role: 'PSSR Lead' },
-            { id: '2', name: 'Sarah Johnson', role: 'Operations Manager' },
-            { id: '3', name: 'Mohammed Hassan', role: 'Safety Manager' }
-          ]}
+          onComplete={handleSaveItem}
         />
       )}
     </div>

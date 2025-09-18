@@ -47,6 +47,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   
   const { data: checklistItems, isLoading: itemsLoading } = useChecklistItems();

@@ -45,7 +45,7 @@ const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<EditChecklistItemData>({
     description: item.description || '',
-    evidenceGuidance: item.evidenceGuidance || '',
+    evidenceGuidance: item.required_evidence || '',
     category: '',
     approvers: [],
     responsible: [],
@@ -214,11 +214,11 @@ const EditChecklistItemForm: React.FC<EditChecklistItemFormProps> = ({
 
     const updateData = {
       description: formData.description,
-      evidence_guidance: formData.evidenceGuidance,
+      required_evidence: formData.evidenceGuidance,
       category: formData.category,
       topic: formData.topic || null,
-      approvers: allApprovers,
-      responsible: allResponsible,
+      responsible: allResponsible.join(';'),
+      Approver: allApprovers.join(';'),
     };
 
     updateChecklistItemMutation.mutate({
