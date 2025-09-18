@@ -836,8 +836,8 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-gradient-to-br from-background via-background to-muted/30">
+        <DialogHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -856,9 +856,9 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-5 bg-card/50 rounded-lg p-4 border border-border/50">
           {/* Checklist Question */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
               Checklist Question <span className="text-destructive">*</span>
             </Label>
@@ -866,9 +866,23 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
               id="description" 
               placeholder="Enter the checklist question or requirement..." 
               value={formData.description} 
-              onChange={e => updateFormData('description', e.target.value)} 
-              className="min-h-[12px] resize-none fluent-input" 
-              rows={2} 
+              onChange={e => {
+                updateFormData('description', e.target.value);
+                // Auto-adjust height
+                const target = e.target;
+                target.style.height = 'auto';
+                target.style.height = Math.max(60, target.scrollHeight) + 'px';
+              }} 
+              className="min-h-[60px] resize-none bg-background border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+              style={{
+                height: 'auto',
+                minHeight: '60px'
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = Math.max(60, target.scrollHeight) + 'px';
+              }}
             />
             {errors.description && (
               <p className="text-sm text-destructive flex items-center gap-1">
@@ -879,16 +893,16 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
           </div>
 
           {/* Evidence Guidance */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Label htmlFor="evidenceGuidance" className="text-sm font-medium flex items-center gap-2">
               Evidence Guidance
             </Label>
             <Textarea 
               id="evidenceGuidance" 
-              placeholder="Describe what evidence or documentation is required (optional)..." 
+              placeholder="Help future users understand what documentation or evidence is needed" 
               value={formData.evidenceGuidance} 
               onChange={e => updateFormData('evidenceGuidance', e.target.value)} 
-              className="min-h-[40px] resize-none fluent-input" 
+              className="min-h-[40px] resize-none bg-background border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
               rows={2} 
             />
             {errors.evidenceGuidance && (
@@ -897,14 +911,11 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                 {errors.evidenceGuidance}
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Help future users understand what documentation or evidence is needed
-            </p>
           </div>
 
           {/* Category and Topic */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-2">
                 Category <span className="text-destructive">*</span>
               </Label>
@@ -916,7 +927,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                 allowCreate={true}
                 placeholder="Select or create category..."
                 searchPlaceholder="Search categories..."
-                className="fluent-input"
+                className="bg-background border-2 border-border focus:border-primary"
               />
               {errors.category && (
                 <p className="text-sm text-destructive flex items-center gap-1">
@@ -926,7 +937,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
               )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-2">
                 Topic
               </Label>
@@ -936,9 +947,9 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                 onValueChange={value => updateFormData('topic', value)}
                 onCreateNew={handleCreateTopic}
                 allowCreate={true}
-                placeholder="Select or create topic..."
+                placeholder="Choose an existing topic or type to add new one"
                 searchPlaceholder="Search topics..."
-                className="fluent-input"
+                className="bg-background border-2 border-border focus:border-primary"
               />
               {errors.topic && (
                 <p className="text-sm text-destructive flex items-center gap-1">
@@ -946,9 +957,6 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                   {errors.topic}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Choose an existing topic or type to add a new one
-              </p>
             </div>
           </div>
 
@@ -1953,7 +1961,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-6 border-t">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border/50 mt-4">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
