@@ -265,6 +265,9 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
           topic: formData.topic.trim()
         };
         
+        console.log('Attempting to update item with ID:', item!.id);
+        console.log('Update data:', updateData);
+        
         await updateChecklistItemMutation.mutateAsync({
           itemId: item!.id,
           updateData: updateData
@@ -276,9 +279,10 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
         onComplete(updateData);
         onClose();
       } catch (error) {
+        console.error('Update error:', error);
         toast({
           title: "Error",
-          description: "Failed to update checklist item",
+          description: error instanceof Error ? error.message : "Failed to update checklist item",
           variant: "destructive"
         });
       }

@@ -126,9 +126,13 @@ export const useUpdateChecklistItem = () => {
         })
         .eq('unique_id', itemId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        throw new Error(`Checklist item with ID "${itemId}" not found`);
+      }
+      
       // Return mapped item to keep aliases consistent in UI
       return {
         ...data,
