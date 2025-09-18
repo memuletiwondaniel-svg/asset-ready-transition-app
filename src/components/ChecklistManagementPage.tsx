@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
@@ -32,6 +33,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [searchTerm, setSearchTerm] = useState('');
   const {
     data: checklistItems,
     isLoading: itemsLoading
@@ -45,7 +47,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   React.useEffect(() => {
     if (categoryStats && categoryOrder.length === 0) {
       // Set categories in the specified default order
-      const defaultOrder = ["General", "Hardware Integrity", "Process Safety", "Documentation", "Organization", "Health & Safety", "Emergency Response", "Electrical", "PACO", "Static", "Rotating", "Civil"];
+      const defaultOrder = ["General", "Process Safety", "Health & Safety", "Organization", "Documentation", "PACO", "Rotating", "Static", "Civil", "Elect"];
 
       // Only include categories that actually exist in the data
       const existingCategories = Object.keys(categoryStats);
@@ -98,7 +100,22 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
     }
   };
   const getItemsByCategory = (category: string) => {
-    return checklistItems?.filter(item => item.category === category) || [];
+    let filtered = checklistItems?.filter(item => item.category === category) || [];
+    
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(item => 
+        item.unique_id?.toLowerCase().includes(searchLower) ||
+        item.description?.toLowerCase().includes(searchLower) ||
+        item.topic?.toLowerCase().includes(searchLower) ||
+        item.category?.toLowerCase().includes(searchLower) ||
+        item.Approver?.toLowerCase().includes(searchLower) ||
+        item.responsible?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
   };
   const handleViewItem = (item: ChecklistItem) => {
     setViewingItem(item);
@@ -309,7 +326,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
           <div className="flex-shrink-0">
             <Button variant="outline" onClick={onBack} className="h-12 px-6 rounded-xl border border-border/40 bg-background/95 backdrop-blur-sm shadow-sm hover:shadow-lg hover:bg-accent/10 hover:border-primary/30 transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-primary group flex items-center gap-3">
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform duration-300 ease-out" />
-              <span className="tracking-wide">Back to Checklist Management</span>
+              <span className="tracking-wide">Checklist Management</span>
             </Button>
           </div>
           
@@ -357,7 +374,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                 
                 <Button onClick={handleCreateItem} className="fluent-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3">
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Checklist Item
+                  + New Checklist Item
                 </Button>
               </div>
             </div>
@@ -374,7 +391,19 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               No checklist items are currently available. Items will appear here once they are created.
             </p>
-          </div> : viewMode === 'table' ? <ChecklistItemsTableView items={checklistItems || []} onViewItem={handleViewItem} onEditItem={handleEditItem} onDeleteItem={handleDeleteItem} /> : <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          </div> : viewMode === 'table' ? <ChecklistItemsTableView items={checklistItems || []} onViewItem={handleViewItem} onEditItem={handleEditItem} onDeleteItem={handleDeleteItem} /> : <div className="space-y-6">
+            {/* Search Bar for Cards View */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by ID, description, topic, category, approver, or responsible..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/60 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <SortableContext items={categoryOrder} strategy={verticalListSortingStrategy}>
               <Accordion type="multiple" value={expandedCategories} onValueChange={setExpandedCategories} className="space-y-6">
                 {categoryOrder.map(category => <DraggableCategory key={category} category={category} count={categoryStats[category] || 0} isOpen={expandedCategories.includes(category)} />)}
@@ -396,9 +425,10 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                       </div>
                     </div>
                   </div>
-                </div> : null}
+                 </div> : null}
             </DragOverlay>
-          </DndContext>}
+          </DndContext>
+          </div>}
       </div>
       
       {/* Detail Modal */}
