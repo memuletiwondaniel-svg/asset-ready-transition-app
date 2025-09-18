@@ -222,29 +222,26 @@ export const useDeleteChecklistItem = () => {
 
   return useMutation({
     mutationFn: async (itemId: string) => {
-      console.log('Attempting to delete checklist item via RPC:', itemId);
+      console.log('Attempting to hard delete checklist item via RPC:', itemId);
 
-      // First try SECURITY DEFINER RPC (bypasses RLS and resequences)
+      // Use SECURITY DEFINER RPC to completely delete item from database
       const rpcResult = await supabase.rpc('soft_delete_checklist_item', { p_unique_id: itemId });
 
       if (rpcResult.error) {
-        console.error('Supabase RPC error during deletion, falling back to direct update:', rpcResult.error);
-        // Fallback: direct soft delete via REST update
+        console.error('Supabase RPC error during deletion, falling back to direct delete:', rpcResult.error);
+        // Fallback: direct hard delete via REST
         const { error } = await supabase
           .from('checklist_items')
-          .update({ 
-            is_active: false,
-            updated_at: new Date().toISOString(),
-          })
+          .delete()
           .eq('unique_id', itemId);
 
         if (error) {
-          console.error('Supabase direct update error during deletion:', error);
+          console.error('Supabase direct delete error:', error);
           throw error;
         }
       }
       
-      console.log('Deletion completed successfully.');
+      console.log('Hard deletion completed successfully - item completely removed from database.');
       return itemId;
     },
     onMutate: async (itemId: string) => {
