@@ -177,17 +177,8 @@ const Index = () => {
       <header className="relative z-20">
         <div className="max-w-7xl mx-auto px-8 py-0 -my-8">
           <div className="flex items-center justify-between my-[18px] mx-0 px-0 py-0">
-            {/* ORSH Logo - Top Left */}
+            {/* Language Selector - Top Left */}
             <div className="flex items-center">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto" />
-            </div>
-            
-            {/* Right side - BGC Logo and Language Selector */}
-            <div className="flex items-center gap-12 ml-auto mr-8">
-              {/* BGC Logo placeholder */}
-              
-              
-              {/* Language Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group">
@@ -202,6 +193,14 @@ const Index = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            
+            {/* ORSH Logo - Top Center */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto" />
+            </div>
+            
+            {/* Right side spacer for balance */}
+            <div className="w-32"></div>
           </div>
         </div>
       </header>
@@ -227,15 +226,8 @@ const Index = () => {
                   
                   {/* Two-line description with enhanced Microsoft typography */}
                   <div className="space-y-2 text-2xl text-white/90 font-light leading-relaxed max-w-2xl">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span>Transform your project start-up and handover</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span>experience with the</span>
-                      <span className="font-black text-3xl text-white tracking-wider">
-                        ORSH
-                      </span>
-                      <span>platform.</span>
+                    <div className="text-2xl text-white/90 font-light leading-relaxed">
+                      {t.description}
                     </div>
                   </div>
                 </div>
