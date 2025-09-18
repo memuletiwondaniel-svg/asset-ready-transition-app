@@ -66,34 +66,29 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {onBack && (
-            <Button
-              variant="outline"
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container flex h-20 items-center">
+          <div className="flex items-center">
+            <Button 
+              variant="ghost" 
               onClick={onBack}
-              className="flex items-center"
+              className="h-10 px-4 py-2 rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-foreground"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Admin
+              <ArrowLeft className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:-translate-x-0.5" />
+              Back to Admin & Tools
             </Button>
-          )}
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Project Management
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Manage all projects, team assignments, and milestones
-            </p>
           </div>
+          <div className="flex-1 flex justify-center">
+            <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
+              <img 
+                src="/images/orsh-logo.png" 
+                alt="ORSH Logo" 
+                className="h-40 w-auto filter drop-shadow-sm" 
+              />
+            </div>
+          </div>
+          <div className="w-40"></div> {/* Spacer to center the logo */}
         </div>
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Project
-        </Button>
       </div>
 
       {/* Projects Table */}
@@ -104,13 +99,6 @@ const ProjectManagementPage = ({ onBack }: ProjectManagementPageProps) => {
               <FolderOpen className="h-5 w-5 mr-2" />
               Projects Overview
             </CardTitle>
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Project
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
