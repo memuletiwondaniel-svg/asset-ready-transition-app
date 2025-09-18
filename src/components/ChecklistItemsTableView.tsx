@@ -97,8 +97,9 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                   ID
                 </div>
               </TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Category</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Topic</TableHead>
               <TableHead className="font-semibold text-gray-700 px-6 py-4">Description</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-24">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,26 +145,30 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                 <TableCell className="px-6 py-4">
                   <Badge 
                     variant="outline" 
+                    className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
+                  >
+                    {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Badge 
+                    variant="outline" 
                     className={`${getCategoryColor(item.category)} text-xs font-medium`}
                   >
-                    {item.unique_id}
+                    {item.category}
                   </Badge>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  {item.topic ? (
+                    <span className="text-sm text-gray-700 font-medium">{item.topic}</span>
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">No topic</span>
+                  )}
                 </TableCell>
                 <TableCell className="px-6 py-4 max-w-lg">
                   <p className="text-sm text-gray-800 line-clamp-2 leading-relaxed">
                     {item.description}
                   </p>
-                </TableCell>
-                <TableCell className="px-6 py-4 text-center">
-                  <Badge 
-                    variant={item.is_active ? "default" : "secondary"}
-                    className={item.is_active 
-                      ? "bg-green-100/80 text-green-700 border-green-200/60" 
-                      : "bg-gray-100/80 text-gray-600 border-gray-200/60"
-                    }
-                  >
-                    {item.is_active ? "Active" : "Inactive"}
-                  </Badge>
                 </TableCell>
               </TableRow>
             ))}
