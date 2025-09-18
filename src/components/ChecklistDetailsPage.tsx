@@ -427,9 +427,10 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
 
       {/* Edit Item Modal */}
       {editingItem && (
-        <EditChecklistItemForm 
+        <EditChecklistItemModal 
+          isOpen={true}
           item={editingItem}
-          onBack={() => setEditingItem(null)}
+          onClose={() => setEditingItem(null)}
           onComplete={handleSaveItem}
         />
       )}

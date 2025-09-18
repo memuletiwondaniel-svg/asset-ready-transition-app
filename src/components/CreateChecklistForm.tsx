@@ -859,11 +859,10 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
 
       {/* Detail Modal */}
       {selectedDetailItem && (
-        <ChecklistItemDetailModal
+        <ViewChecklistItemModal
           item={selectedDetailItem}
           isOpen={showDetailModal}
           onClose={handleDetailModalClose}
-          mode="view"
         />
       )}
     </div>

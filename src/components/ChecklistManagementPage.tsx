@@ -402,7 +402,26 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       </div>
       
       {/* Detail Modal */}
-      {showDetailModal && viewingItem && <ChecklistItemDetailModal isOpen={showDetailModal} onClose={handleCloseDetailModal} item={viewingItem} mode={detailModalMode} />}
+      {showDetailModal && viewingItem && detailModalMode === 'view' && (
+        <ViewChecklistItemModal 
+          isOpen={showDetailModal} 
+          onClose={handleCloseDetailModal} 
+          item={viewingItem} 
+        />
+      )}
+      
+      {/* Edit Modal */}
+      {showEditForm && viewingItem && (
+        <EditChecklistItemModal 
+          isOpen={showEditForm} 
+          onClose={() => setShowEditForm(false)} 
+          item={viewingItem}
+          onComplete={() => {
+            setShowEditForm(false);
+            setViewingItem(null);
+          }}
+        />
+      )}
 
 
       {/* Delete Modal */}
