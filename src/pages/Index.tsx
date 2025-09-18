@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
-import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
+import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
 import LandingPage from "@/components/LandingPage";
@@ -13,15 +13,16 @@ import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { session, signOut } = useAuth();
+  const isAuthenticated = !!session;
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const handleAuthenticated = () => {
-    setIsAuthenticated(true);
     setShowAuth(false);
   };
   const handleBack = () => {
-    setIsAuthenticated(false);
+    // Sign out and return to welcome screen
+    try { signOut(); } catch {}
     setCurrentSection(null);
   };
   const handleNavigate = (section: string) => {
@@ -118,6 +119,13 @@ const Index = () => {
     return translations[langCode as keyof typeof translations];
   };
   const t = getCurrentTranslation();
+
+  // Close auth modal when session is ready
+  useEffect(() => {
+    if (session && showAuth) {
+      setShowAuth(false);
+    }
+  }, [session, showAuth]);
 
   // Show specific section based on navigation
   if (isAuthenticated && currentSection) {
