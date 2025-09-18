@@ -242,18 +242,17 @@ export const useDeleteChecklistItem = () => {
 
       console.log('Update data:', updateData);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('checklist_items')
         .update(updateData)
-        .eq('unique_id', itemId)
-        .select();
+        .eq('unique_id', itemId);
 
       if (error) {
         console.error('Supabase error during deletion:', error);
         throw error;
       }
       
-      console.log('Deletion successful, affected rows:', data?.length || 0);
+      console.log('Deletion request sent successfully.');
       return itemId;
     },
     onMutate: async (itemId: string) => {
