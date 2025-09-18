@@ -43,9 +43,9 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
     return acc;
   }, {} as Record<string, number>);
 
-  // Initialize category order when data loads
+  // Initialize and update category order when data changes
   React.useEffect(() => {
-    if (categoryStats && categoryOrder.length === 0) {
+    if (categoryStats) {
       // Set categories in the specified default order
       const defaultOrder = ["General", "Process Safety", "Health & Safety", "Organization", "Documentation", "PACO", "Rotating", "Static", "Civil", "Elect"];
 
@@ -55,9 +55,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
 
       // Add any categories that exist in data but not in our default order
       const remainingCategories = existingCategories.filter(cat => !defaultOrder.includes(cat));
-      setCategoryOrder([...orderedExistingCategories, ...remainingCategories]);
+      const newCategoryOrder = [...orderedExistingCategories, ...remainingCategories];
+      
+      // Only update if the order has actually changed
+      if (JSON.stringify(newCategoryOrder) !== JSON.stringify(categoryOrder)) {
+        setCategoryOrder(newCategoryOrder);
+      }
     }
-  }, [categoryStats, categoryOrder.length]);
+  }, [categoryStats]);
 
   // Drag and drop sensors
   const sensors = useSensors(useSensor(PointerSensor, {

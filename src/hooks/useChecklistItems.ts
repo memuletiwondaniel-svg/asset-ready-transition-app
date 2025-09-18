@@ -144,12 +144,20 @@ export const useUpdateChecklistItem = () => {
     },
     onSuccess: (updatedItem) => {
       console.log('Update successful, updating cache and invalidating queries...', updatedItem);
+      
+      // Update the cache with the new item data
       queryClient.setQueryData<ChecklistItem[] | undefined>(['checklist-items'], (prev) => {
         if (!prev) return prev;
         return prev.map((item) => (item.unique_id === updatedItem.unique_id ? (updatedItem as ChecklistItem) : item));
       });
+      
+      // Invalidate all related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-topics'] });
+      
+      // Also force refetch to make sure cards view gets updated
+      queryClient.refetchQueries({ queryKey: ['checklist-items'] });
     },
   });
 };
