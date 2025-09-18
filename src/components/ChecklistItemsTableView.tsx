@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Edit, MoreVertical, Trash2, FileText } from 'lucide-react';
+import { Eye, Edit, MoreVertical, Trash2, FileText, GripVertical } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Category order and colors
 const CATEGORY_ORDER = [
@@ -40,12 +59,94 @@ interface ChecklistItemsTableViewProps {
   onDeleteItem: (item: ChecklistItem) => void;
 }
 
+// Define column structure
+interface Column {
+  id: string;
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  width: string;
+}
+
+const defaultColumns: Column[] = [
+  { id: 'actions', label: 'Actions', width: 'w-20' },
+  { id: 'id', label: 'ID', icon: FileText, width: 'w-24' },
+  { id: 'category', label: 'Category', width: 'w-32' },
+  { id: 'topic', label: 'Topic', width: 'w-32' },
+  { id: 'description', label: 'Description', width: 'flex-1 min-w-96' },
+];
+
+// Sortable Header Component
+interface SortableHeaderProps {
+  column: Column;
+}
+
+const SortableHeader: React.FC<SortableHeaderProps> = ({ column }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <TableHead 
+      ref={setNodeRef}
+      style={style}
+      className={`font-semibold text-gray-700 px-4 py-4 relative group ${column.width} ${
+        isDragging ? 'opacity-50' : ''
+      } ${column.id === 'actions' ? 'text-center' : ''}`}
+      {...attributes}
+    >
+      <div className="flex items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          {column.icon && <column.icon className="h-4 w-4" />}
+          <span>{column.label}</span>
+        </div>
+        <div 
+          {...listeners}
+          className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity p-1"
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" />
+        </div>
+      </div>
+    </TableHead>
+  );
+};
+
 const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
   items,
   onViewItem,
   onEditItem,
   onDeleteItem,
 }) => {
+  const [columns, setColumns] = useState<Column[]>(defaultColumns);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setColumns((columns) => {
+        const oldIndex = columns.findIndex((col) => col.id === active.id);
+        const newIndex = columns.findIndex((col) => col.id === over.id);
+
+        return arrayMove(columns, oldIndex, newIndex);
+      });
+    }
+  };
   // Sort items by category order
   const sortedItems = React.useMemo(() => {
     return [...items].sort((a, b) => {
@@ -84,96 +185,115 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
     );
   }
 
+  const renderCellContent = (column: Column, item: ChecklistItem) => {
+    switch (column.id) {
+      case 'actions':
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full transition-all duration-200"
+              >
+                <span className="sr-only">Open menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-gray-200/60">
+              <DropdownMenuItem onClick={() => onViewItem(item)} className="hover:bg-blue-50/50">
+                <Eye className="mr-2 h-4 w-4" />
+                View Item
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEditItem(item)} className="hover:bg-green-50/50">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Item
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => onDeleteItem(item)}
+                className="text-red-600 focus:text-red-600 hover:bg-red-50/50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Item
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      case 'id':
+        return (
+          <Badge 
+            variant="outline" 
+            className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
+          >
+            {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
+          </Badge>
+        );
+      case 'category':
+        return (
+          <Badge 
+            variant="outline" 
+            className={`${getCategoryColor(item.category)} text-xs font-medium`}
+          >
+            {item.category}
+          </Badge>
+        );
+      case 'topic':
+        return item.topic ? (
+          <span className="text-sm text-gray-700 font-medium">{item.topic}</span>
+        ) : (
+          <span className="text-sm text-gray-400 italic">No topic</span>
+        );
+      case 'description':
+        return (
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+            {item.description}
+          </p>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-lg overflow-hidden">
       <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-gray-200/60 bg-gradient-to-r from-gray-50/80 to-gray-100/80">
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-16">Actions</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-32">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  ID
-                </div>
-              </TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Topic</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4">Description</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedItems.map((item, index) => (
-              <TableRow 
-                key={item.unique_id} 
-                className={`border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-300 ${
-                  index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'
-                }`}
-              >
-                <TableCell className="px-6 py-4 text-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full transition-all duration-200"
-                      >
-                        <span className="sr-only">Open menu</span>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-gray-200/60">
-                      <DropdownMenuItem onClick={() => onViewItem(item)} className="hover:bg-blue-50/50">
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Item
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEditItem(item)} className="hover:bg-green-50/50">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Item
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => onDeleteItem(item)}
-                        className="text-red-600 focus:text-red-600 hover:bg-red-50/50"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Item
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  <Badge 
-                    variant="outline" 
-                    className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
-                  >
-                    {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  <Badge 
-                    variant="outline" 
-                    className={`${getCategoryColor(item.category)} text-xs font-medium`}
-                  >
-                    {item.category}
-                  </Badge>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  {item.topic ? (
-                    <span className="text-sm text-gray-700 font-medium">{item.topic}</span>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">No topic</span>
-                  )}
-                </TableCell>
-                <TableCell className="px-6 py-4 max-w-lg">
-                  <p className="text-sm text-gray-800 line-clamp-2 leading-relaxed">
-                    {item.description}
-                  </p>
-                </TableCell>
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200/60 bg-gradient-to-r from-gray-50/80 to-gray-100/80">
+                <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
+                  {columns.map((column) => (
+                    <SortableHeader key={column.id} column={column} />
+                  ))}
+                </SortableContext>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sortedItems.map((item, index) => (
+                <TableRow 
+                  key={item.unique_id} 
+                  className={`border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-300 ${
+                    index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'
+                  }`}
+                >
+                  {columns.map((column) => (
+                    <TableCell 
+                      key={column.id} 
+                      className={`px-4 py-4 ${column.id === 'actions' ? 'text-center' : ''} ${column.width}`}
+                    >
+                      {renderCellContent(column, item)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DndContext>
       </div>
     </div>
   );
