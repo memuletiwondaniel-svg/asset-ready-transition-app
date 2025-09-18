@@ -741,85 +741,115 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
   if (showPreview) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background/95 to-muted/20 backdrop-blur-sm">
+          <DialogHeader className="pb-4 border-b border-border/30">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-xl font-semibold">Preview Changes</DialogTitle>
+                <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">Preview Changes</DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">Review the updated details before saving</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)} className="hover:bg-muted/50 transition-colors">
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </DialogHeader>
-          <div className="space-y-6">
+          <div className="space-y-5 p-1">
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                <Badge variant="secondary" className="bg-primary/15 text-primary border border-primary/20 font-medium px-3 py-1.5 rounded-full shadow-sm">
                   {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
                 </Badge>
               </div>
               
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Question</Label>
-                <p className="mt-1 text-sm">{formData.description}</p>
+              <div className="bg-card/60 border border-border/50 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Question</Label>
+                <p className="text-sm leading-relaxed bg-gradient-to-r from-foreground to-foreground/90 bg-clip-text">{formData.description}</p>
               </div>
               
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Evidence Guidance</Label>
-                <p className="mt-1 text-sm">{formData.evidenceGuidance}</p>
+              <div className="bg-card/40 border border-border/40 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Evidence Guidance</Label>
+                <p className="text-sm leading-relaxed text-foreground/90">{formData.evidenceGuidance || "No guidance provided"}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Category</Label>
-                  <p className="mt-1 text-sm">{formData.category}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-card/50 border border-border/40 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Category</Label>
+                  <p className="text-sm font-medium text-foreground/90">{formData.category}</p>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Topic</Label>
-                  <p className="mt-1 text-sm">{formData.topic}</p>
+                <div className="bg-card/50 border border-border/40 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Topic</Label>
+                  <p className="text-sm font-medium text-foreground/90">{formData.topic || "No topic specified"}</p>
                 </div>
               </div>
               
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Approvers</Label>
-                <div className="mt-1 flex flex-wrap gap-2">
+              <div className="bg-card/30 border border-border/30 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3 block">Approvers</Label>
+                <div className="flex flex-wrap gap-2">
                   {formData.approvers.map(approver => (
-                    <Badge key={approver} variant="outline">
+                    <Badge key={approver} variant="outline" className="bg-blue-50/80 text-blue-700 border-blue-200/60 hover:bg-blue-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
                       {approver}
                     </Badge>
                   ))}
                   {ta2Approvers.filter(ta2 => ta2.position).map(ta2 => (
-                    <Badge key={ta2.id} variant="outline" className="bg-blue-50 text-blue-700">
+                    <Badge key={ta2.id} variant="outline" className="bg-blue-50/80 text-blue-700 border-blue-200/60 hover:bg-blue-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
                       {ta2.position}
+                    </Badge>
+                  ))}
+                  {engrManagerApprovers.filter(eng => eng.position).map(eng => (
+                    <Badge key={eng.id} variant="outline" className="bg-cyan-50/80 text-cyan-700 border-cyan-200/60 hover:bg-cyan-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
+                      {eng.position}
+                    </Badge>
+                  ))}
+                  {hseLeadApprovers.filter(hse => hse.position).map(hse => (
+                    <Badge key={hse.id} variant="outline" className="bg-violet-50/80 text-violet-700 border-violet-200/60 hover:bg-violet-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
+                      {hse.position}
+                    </Badge>
+                  ))}
+                  {directorApprovers.filter(dir => dir.position).map(dir => (
+                    <Badge key={dir.id} variant="outline" className="bg-slate-50/80 text-slate-700 border-slate-200/60 hover:bg-slate-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
+                      {dir.position}
                     </Badge>
                   ))}
                 </div>
               </div>
               
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Responsible Parties</Label>
-                <div className="mt-1 flex flex-wrap gap-2">
+              <div className="bg-card/30 border border-border/30 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3 block">Responsible Parties</Label>
+                <div className="flex flex-wrap gap-2">
                   {formData.responsible.map(resp => (
-                    <Badge key={resp} variant="outline">
+                    <Badge key={resp} variant="outline" className="bg-orange-50/80 text-orange-700 border-orange-200/60 hover:bg-orange-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
                       {resp}
                     </Badge>
                   ))}
                   {ta2Responsible.filter(ta2 => ta2.position).map(ta2 => (
-                    <Badge key={ta2.id} variant="outline" className="bg-green-50 text-green-700">
+                    <Badge key={ta2.id} variant="outline" className="bg-green-50/80 text-green-700 border-green-200/60 hover:bg-green-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
                       {ta2.position}
+                    </Badge>
+                  ))}
+                  {engrManagerResponsible.filter(eng => eng.position).map(eng => (
+                    <Badge key={eng.id} variant="outline" className="bg-indigo-50/80 text-indigo-700 border-indigo-200/60 hover:bg-indigo-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
+                      {eng.position}
+                    </Badge>
+                  ))}
+                  {hseLeadResponsible.filter(hse => hse.position).map(hse => (
+                    <Badge key={hse.id} variant="outline" className="bg-purple-50/80 text-purple-700 border-purple-200/60 hover:bg-purple-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
+                      {hse.position}
+                    </Badge>
+                  ))}
+                  {directorResponsible.filter(dir => dir.position).map(dir => (
+                    <Badge key={dir.id} variant="outline" className="bg-neutral-50/80 text-neutral-700 border-neutral-200/60 hover:bg-neutral-100/80 transition-colors font-medium px-3 py-1 rounded-full shadow-sm">
+                      {dir.position}
                     </Badge>
                   ))}
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setShowPreview(false)}>
+            <div className="flex justify-end gap-3 pt-4 border-t border-border/30 bg-gradient-to-r from-background/50 to-muted/30 -mx-1 px-1 rounded-b-lg">
+              <Button variant="outline" onClick={() => setShowPreview(false)} className="hover:bg-muted/50 border-border/60 transition-all duration-200">
                 Edit
               </Button>
-              <Button onClick={handleSubmit} disabled={updateChecklistItemMutation.isPending} className="bg-primary hover:bg-primary/90">
+              <Button onClick={handleSubmit} disabled={updateChecklistItemMutation.isPending} className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-200">
                 {updateChecklistItemMutation.isPending ? 'Saving...' : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
