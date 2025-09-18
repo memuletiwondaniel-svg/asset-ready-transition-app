@@ -222,19 +222,38 @@ export const useDeleteChecklistItem = () => {
 
   return useMutation({
     mutationFn: async (itemId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Attempting to delete checklist item:', itemId);
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication failed');
+      }
+      
+      console.log('User session:', session?.user ? 'authenticated' : 'not authenticated');
 
-      const { error } = await supabase
+      const updateData = { 
+        is_active: false,
+        updated_at: new Date().toISOString(),
+        // Only set updated_by if user is authenticated
+        ...(session?.user && { updated_by: session.user.id }),
+      };
+
+      console.log('Update data:', updateData);
+
+      const { data, error } = await supabase
         .from('checklist_items')
-        .update({ 
-          is_active: false,
-          // Only set updated_by if user is authenticated
-          ...(session?.user && { updated_by: session.user.id }),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('unique_id', itemId);
+        .update(updateData)
+        .eq('unique_id', itemId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error during deletion:', error);
+        throw error;
+      }
+      
+      console.log('Deletion successful, affected rows:', data?.length || 0);
       return itemId;
     },
     onMutate: async (itemId: string) => {
@@ -245,7 +264,8 @@ export const useDeleteChecklistItem = () => {
       }
       return { previousItems };
     },
-    onError: (_err, _itemId, context) => {
+    onError: (err, _itemId, context) => {
+      console.error('Deletion mutation error:', err);
       if (context?.previousItems) {
         queryClient.setQueryData(['checklist-items'], context.previousItems);
       }

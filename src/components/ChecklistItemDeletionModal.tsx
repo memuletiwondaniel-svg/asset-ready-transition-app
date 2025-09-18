@@ -24,18 +24,21 @@ const ChecklistItemDeletionModal: React.FC<ChecklistItemDeletionModalProps> = ({
 
   const handleDelete = () => {
     setIsDeleting(true);
-    deleteChecklistItem(item.id, {
+    // Use unique_id explicitly to ensure we're using the correct identifier
+    const itemIdentifier = item.unique_id || item.id;
+    deleteChecklistItem(itemIdentifier, {
       onSuccess: () => {
         toast({
           title: "Item Deleted Successfully",
-          description: `Checklist item ${item.id} has been removed and numbering has been updated.`,
+          description: `Checklist item ${item.unique_id || item.id} has been removed and numbering has been updated.`,
           variant: "default"
         });
-        onDeleted(item.id);
+        onDeleted(item.unique_id || item.id);
         onClose();
       },
       onError: (error) => {
         console.error('Failed to delete checklist item:', error);
+        console.error('Item data:', item);
         toast({
           title: "Deletion Failed",
           description: "Failed to delete checklist item. Please try again.",
