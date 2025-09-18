@@ -69,11 +69,11 @@ interface Column {
 }
 
 const defaultColumns: Column[] = [
-  { id: 'actions', label: 'Actions', width: 'w-16' },
+  { id: 'actions', label: 'Actions', width: 'w-12' },
   { id: 'id', label: 'ID', icon: FileText, width: 'w-24' },
+  { id: 'description', label: 'Description', width: 'flex-1 min-w-0' },
   { id: 'category', label: 'Category', width: 'w-auto' },
   { id: 'topic', label: 'Topic', width: 'w-32' },
-  { id: 'description', label: 'Description', width: 'flex-1 min-w-0' },
 ];
 
 // Sortable Header Component
@@ -160,7 +160,9 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         item.unique_id?.toLowerCase().includes(searchLower) ||
         item.description?.toLowerCase().includes(searchLower) ||
         item.topic?.toLowerCase().includes(searchLower) ||
-        item.category?.toLowerCase().includes(searchLower)
+        item.category?.toLowerCase().includes(searchLower) ||
+        item.Approver?.toLowerCase().includes(searchLower) ||
+        item.responsible?.toLowerCase().includes(searchLower)
       );
     }
     
@@ -210,10 +212,10 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full transition-all duration-200"
+                className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full transition-all duration-200"
               >
                 <span className="sr-only">Open menu</span>
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-gray-200/60">
@@ -277,7 +279,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
-          placeholder="Search by ID, description, topic, or category..."
+          placeholder="Search by ID, description, topic, category, approver, or responsible..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/60 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
