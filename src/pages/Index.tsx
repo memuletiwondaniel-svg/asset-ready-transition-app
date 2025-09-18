@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Languages, Phone } from "lucide-react";
@@ -15,21 +16,29 @@ const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { session, signOut } = useAuth();
   const isAuthenticated = !!session;
-  const [currentSection, setCurrentSection] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [selectedLanguage, setSelectedLanguage] = useState("English");
+  
+  // Get current section from URL path
+  const currentSection = location.pathname === '/' ? null : location.pathname.slice(1);
+  
   const handleAuthenticated = () => {
     setShowAuth(false);
   };
+  
   const handleBack = () => {
     // Sign out and return to welcome screen
     try { signOut(); } catch {}
-    setCurrentSection(null);
+    navigate('/');
   };
+  
   const handleNavigate = (section: string) => {
-    setCurrentSection(section);
+    navigate(`/${section}`);
   };
+  
   const handleBackToLanding = () => {
-    setCurrentSection(null);
+    navigate('/');
   };
   const languages = [{
     code: "en",
