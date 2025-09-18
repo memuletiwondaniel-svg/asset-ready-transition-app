@@ -244,7 +244,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
             variant="outline" 
             className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
           >
-            {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
+            {item.unique_id || 'XX-YY'}
           </Badge>
         );
       case 'category':

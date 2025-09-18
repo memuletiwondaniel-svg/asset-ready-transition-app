@@ -309,7 +309,7 @@ const ViewChecklistItemModal: React.FC<ViewChecklistItemModalProps> = ({
               <div>
                 <DialogTitle className="text-xl font-semibold">View Checklist Item</DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
+                  {item.unique_id || 'XX-YY'}
                 </p>
               </div>
             </div>

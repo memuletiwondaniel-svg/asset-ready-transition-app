@@ -761,7 +761,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="secondary" className="bg-primary/15 text-primary border border-primary/20 font-medium px-3 py-1.5 rounded-full shadow-sm">
-                  {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
+                  {item.unique_id || 'XX-YY'}
                 </Badge>
               </div>
               
@@ -880,7 +880,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
               <div>
                 <DialogTitle className="text-xl font-semibold">Edit Checklist Item</DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
+                  {item.unique_id || 'XX-YY'}
                 </p>
               </div>
             </div>
