@@ -60,7 +60,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
   }
 
   if (activeView === 'projects') {
-    return <ProjectManagementPage />;
+    return <ProjectManagementPage onBack={() => setActiveView('dashboard')} />;
   }
 
   const adminTools = [
