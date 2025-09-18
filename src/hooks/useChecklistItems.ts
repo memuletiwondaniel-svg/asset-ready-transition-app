@@ -222,37 +222,17 @@ export const useDeleteChecklistItem = () => {
 
   return useMutation({
     mutationFn: async (itemId: string) => {
-      console.log('Attempting to delete checklist item:', itemId);
-      
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Authentication failed');
-      }
-      
-      console.log('User session:', session?.user ? 'authenticated' : 'not authenticated');
+      console.log('Attempting to delete checklist item via RPC:', itemId);
 
-      const updateData = { 
-        is_active: false,
-        updated_at: new Date().toISOString(),
-        // Only set updated_by if user is authenticated
-        ...(session?.user && { updated_by: session.user.id }),
-      };
-
-      console.log('Update data:', updateData);
-
-      const { error } = await supabase
-        .from('checklist_items')
-        .update(updateData)
-        .eq('unique_id', itemId);
+      // Use a SECURITY DEFINER RPC to bypass RLS and resequence items
+      const { error } = await supabase.rpc('soft_delete_checklist_item', { p_unique_id: itemId });
 
       if (error) {
-        console.error('Supabase error during deletion:', error);
+        console.error('Supabase RPC error during deletion:', error);
         throw error;
       }
       
-      console.log('Deletion request sent successfully.');
+      console.log('RPC deletion successful.');
       return itemId;
     },
     onMutate: async (itemId: string) => {

@@ -1427,6 +1427,10 @@ export type Database = {
         Args: { item_unique_id: string; new_position: number }
         Returns: undefined
       }
+      soft_delete_checklist_item: {
+        Args: { p_unique_id: string }
+        Returns: undefined
+      }
       track_failed_login: {
         Args: { ip_addr?: unknown; user_uuid: string }
         Returns: undefined
