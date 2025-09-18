@@ -225,12 +225,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    if (formData.approvers.length === 0 && ta2Approvers.length === 0 && engrManagerApprovers.length === 0 && hseLeadApprovers.length === 0 && directorApprovers.length === 0) {
-      newErrors.approvers = 'At least one approver is required' as any;
-    }
-    if (formData.responsible.length === 0 && ta2Responsible.length === 0 && engrManagerResponsible.length === 0 && hseLeadResponsible.length === 0 && directorResponsible.length === 0) {
-      newErrors.responsible = 'At least one responsible party is required' as any;
-    }
+    // Removed required validation for approvers and responsible fields - they are now optional
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
