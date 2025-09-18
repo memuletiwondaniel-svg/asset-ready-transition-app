@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Edit, MoreVertical, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Eye, Edit, MoreVertical, Trash2, FileText } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 // Category order and colors
@@ -40,78 +40,31 @@ interface ChecklistItemsTableViewProps {
   onDeleteItem: (item: ChecklistItem) => void;
 }
 
-type SortField = 'id' | 'category' | 'topic' | 'description';
-type SortDirection = 'asc' | 'desc';
-
 const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
   items,
   onViewItem,
   onEditItem,
   onDeleteItem,
 }) => {
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
-    }
-    return sortDirection === 'asc' 
-      ? <ArrowUp className="h-4 w-4 text-blue-600" />
-      : <ArrowDown className="h-4 w-4 text-blue-600" />;
-  };
-
-  const sortedItems = useMemo(() => {
-    if (!sortField) {
-      // Default sorting by category order
-      return [...items].sort((a, b) => {
-        const aIndex = CATEGORY_ORDER.indexOf(a.category);
-        const bIndex = CATEGORY_ORDER.indexOf(b.category);
-        
-        const aOrder = aIndex === -1 ? CATEGORY_ORDER.length : aIndex;
-        const bOrder = bIndex === -1 ? CATEGORY_ORDER.length : bIndex;
-        
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        
-        return (a.sequence_number || 0) - (b.sequence_number || 0) || 
-               a.unique_id.localeCompare(b.unique_id);
-      });
-    }
-
+  // Sort items by category order
+  const sortedItems = React.useMemo(() => {
     return [...items].sort((a, b) => {
-      let comparison = 0;
+      const aIndex = CATEGORY_ORDER.indexOf(a.category);
+      const bIndex = CATEGORY_ORDER.indexOf(b.category);
       
-      switch (sortField) {
-        case 'id':
-          comparison = a.unique_id.localeCompare(b.unique_id);
-          break;
-        case 'category':
-          comparison = a.category.localeCompare(b.category);
-          break;
-        case 'topic':
-          const aTopic = a.topic || '';
-          const bTopic = b.topic || '';
-          comparison = aTopic.localeCompare(bTopic);
-          break;
-        case 'description':
-          comparison = a.description.localeCompare(b.description);
-          break;
+      // If category not found in order, put it at the end
+      const aOrder = aIndex === -1 ? CATEGORY_ORDER.length : aIndex;
+      const bOrder = bIndex === -1 ? CATEGORY_ORDER.length : bIndex;
+      
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
       }
       
-      return sortDirection === 'asc' ? comparison : -comparison;
+      // If same category, sort by sequence_number or unique_id
+      return (a.sequence_number || 0) - (b.sequence_number || 0) || 
+             a.unique_id.localeCompare(b.unique_id);
     });
-  }, [items, sortField, sortDirection]);
+  }, [items]);
 
   const getCategoryColor = (category: string) => {
     return CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || 'bg-gray-100/80 text-gray-700 border-gray-200/60';
@@ -137,48 +90,16 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200/60 bg-gradient-to-r from-gray-50/80 to-gray-100/80">
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-24">Actions</TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-48">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleSort('id')}
-                  className="flex items-center gap-2 h-auto p-0 hover:bg-transparent font-semibold text-gray-700"
-                >
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 text-center w-16">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-32">
+                <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   ID
-                  {getSortIcon('id')}
-                </Button>
+                </div>
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-56">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleSort('category')}
-                  className="flex items-center gap-2 h-auto p-0 hover:bg-transparent font-semibold text-gray-700"
-                >
-                  Category
-                  {getSortIcon('category')}
-                </Button>
-              </TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-56">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleSort('topic')}
-                  className="flex items-center gap-2 h-auto p-0 hover:bg-transparent font-semibold text-gray-700"
-                >
-                  Topic
-                  {getSortIcon('topic')}
-                </Button>
-              </TableHead>
-              <TableHead className="font-semibold text-gray-700 px-6 py-4 min-w-96">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleSort('description')}
-                  className="flex items-center gap-2 h-auto p-0 hover:bg-transparent font-semibold text-gray-700"
-                >
-                  Description
-                  {getSortIcon('description')}
-                </Button>
-              </TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Category</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4 w-40">Topic</TableHead>
+              <TableHead className="font-semibold text-gray-700 px-6 py-4">Description</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -221,7 +142,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-                <TableCell className="px-6 py-4 w-48">
+                <TableCell className="px-6 py-4">
                   <Badge 
                     variant="outline" 
                     className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
@@ -229,7 +150,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                     {item.unique_id?.replace(/^(.{2})(.{2}).*/, '$1-$2') || 'XX-YY'}
                   </Badge>
                 </TableCell>
-                <TableCell className="px-6 py-4 w-56">
+                <TableCell className="px-6 py-4">
                   <Badge 
                     variant="outline" 
                     className={`${getCategoryColor(item.category)} text-xs font-medium`}
@@ -237,15 +158,15 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                     {item.category}
                   </Badge>
                 </TableCell>
-                <TableCell className="px-6 py-4 w-56">
+                <TableCell className="px-6 py-4">
                   {item.topic ? (
                     <span className="text-sm text-gray-700 font-medium">{item.topic}</span>
                   ) : (
                     <span className="text-sm text-gray-400 italic">No topic</span>
                   )}
                 </TableCell>
-                <TableCell className="px-6 py-4 min-w-96">
-                  <p className="text-sm text-gray-800 line-clamp-3 leading-relaxed">
+                <TableCell className="px-6 py-4 max-w-lg">
+                  <p className="text-sm text-gray-800 line-clamp-2 leading-relaxed">
                     {item.description}
                   </p>
                 </TableCell>
