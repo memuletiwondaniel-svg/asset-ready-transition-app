@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Grid3X3, Table } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -138,6 +138,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
   const handleViewItem = (item: ChecklistItem) => {
     setViewingItem(item);
     setDetailModalMode('view');
+    setShowDetailModal(true);
+  };
+
+  const handleEditItem = (item: ChecklistItem) => {
+    setViewingItem(item);
+    setDetailModalMode('edit');
     setShowDetailModal(true);
   };
 
@@ -321,7 +327,11 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
                                 <DropdownMenuContent align="end" className="w-48">
                                   <DropdownMenuItem onClick={() => handleViewItem(item)}>
                                     <Eye className="mr-2 h-4 w-4" />
-                                    View Details
+                                    View Item
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit Item
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
@@ -456,6 +466,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({ onBac
           <ChecklistItemsTableView
             items={checklistItems || []}
             onViewItem={handleViewItem}
+            onEditItem={handleEditItem}
             onDeleteItem={handleDeleteItem}
           />
         ) : (

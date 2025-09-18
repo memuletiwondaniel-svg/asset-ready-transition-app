@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, MoreVertical, Trash2, FileText } from 'lucide-react';
+import { Eye, Edit, MoreVertical, Trash2, FileText } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 
 // Category order and colors
@@ -36,12 +36,14 @@ const CATEGORY_COLORS = {
 interface ChecklistItemsTableViewProps {
   items: ChecklistItem[];
   onViewItem: (item: ChecklistItem) => void;
+  onEditItem: (item: ChecklistItem) => void;
   onDeleteItem: (item: ChecklistItem) => void;
 }
 
 const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
   items,
   onViewItem,
+  onEditItem,
   onDeleteItem,
 }) => {
   // Sort items by category order
@@ -124,7 +126,11 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                     <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-gray-200/60">
                       <DropdownMenuItem onClick={() => onViewItem(item)} className="hover:bg-blue-50/50">
                         <Eye className="mr-2 h-4 w-4" />
-                        View Details
+                        View Item
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEditItem(item)} className="hover:bg-green-50/50">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Item
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
