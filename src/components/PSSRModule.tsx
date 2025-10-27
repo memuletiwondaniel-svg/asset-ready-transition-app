@@ -328,7 +328,35 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Modern Microsoft Fluent Dynamic Background */}
+      <div className="absolute inset-0 bg-background">
+        {/* Animated gradient mesh */}
+        <div className="absolute inset-0 opacity-60 dark:opacity-40">
+          <div 
+            className="absolute inset-0 animate-gradient-shift"
+            style={{
+              background: 'radial-gradient(at 20% 30%, hsl(210, 100%, 70%) 0%, transparent 50%), radial-gradient(at 80% 20%, hsl(280, 90%, 75%) 0%, transparent 50%), radial-gradient(at 40% 80%, hsl(200, 85%, 80%) 0%, transparent 50%), radial-gradient(at 90% 70%, hsl(320, 80%, 78%) 0%, transparent 50%)',
+              filter: 'blur(80px)',
+            }}
+          />
+        </div>
+        
+        {/* Overlay gradient for depth */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: 'linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, hsl(var(--secondary) / 0.15) 100%)'
+          }}
+        />
+        
+        {/* Noise texture for Microsoft authenticity */}
+        <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay" style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'3\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' /%3E%3C/svg%3E")'
+        }} />
+      </div>
+      
+      <div className="relative z-10">
       {/* Modern Header */}
       <header className="fluent-navigation sticky top-0 z-50 border-b border-border/50">
         <div className="max-w-7xl mx-auto px-8 py-6">
@@ -492,6 +520,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
           )}
         </div>
       </main>
+      </div>
     </div>
   );
 };
