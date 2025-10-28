@@ -1,30 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { 
   Users, 
   Plus, 
-  Edit, 
   Trash2, 
-  CheckCircle, 
-  Clock, 
-  AlertCircle,
   Save,
   ArrowLeft,
   ArrowRight,
   Search,
-  Shield,
-  Building,
-  Briefcase,
   Target,
-  Settings
+  UserCheck,
+  CheckCircle
 } from 'lucide-react';
 
 interface PSSRData {
@@ -38,13 +32,9 @@ interface PSSRData {
 interface Approver {
   id: string;
   name: string;
-  title: string;
-  email: string;
+  position: string;
   avatar: string;
-  level: 1 | 2 | 3;
-  role: string;
-  required: boolean;
-  status: 'pending' | 'approved' | 'declined';
+  level: 1 | 2;
 }
 
 interface PSSRStepThreeProps {
@@ -65,221 +55,91 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
   const [approvers, setApprovers] = useState<Approver[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<1 | 2 | 3>(1);
+  const [selectedLevel, setSelectedLevel] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
 
-  // Mock user data for approver selection
-  const mockUsers = [
-    { id: '1', name: 'Ahmed Al-Rashid', title: 'PSSR Lead', email: 'ahmed.alrashid@company.com', avatar: '/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png' },
-    { id: '2', name: 'Sarah Johnson', title: 'Project Manager', email: 'sarah.johnson@company.com', avatar: '/lovable-uploads/b229716e-e39e-41cb-91d3-2c30dd517fa8.png' },
-    { id: '3', name: 'Omar Hassan', title: 'Plant Director - KAZ', email: 'omar.hassan@company.com', avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png' },
-    { id: '4', name: 'Maria Garcia', title: 'Engineering Manager (P&E)', email: 'maria.garcia@company.com', avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png' },
-    { id: '5', name: 'John Smith', title: 'Engineering Manager (Asset)', email: 'john.smith@company.com', avatar: '/lovable-uploads/f183d942-af72-43b6-8db2-66997da17688.png' },
-    { id: '6', name: 'Dr. Lisa Chen', title: 'Project & Engineering Director', email: 'lisa.chen@company.com', avatar: '/lovable-uploads/2a2a9f93-6c5a-4520-b802-82ee00f3a43c.png' },
-    { id: '7', name: 'Mohammed Al-Basri', title: 'Production & Maintenance Director', email: 'mohammed.albasri@company.com', avatar: '/lovable-uploads/30a2a118-1d3d-4475-a504-cba628119b02.png' },
-    { id: '8', name: 'Elena Petrov', title: 'HSE Director', email: 'elena.petrov@company.com', avatar: '/lovable-uploads/35226e03-6fa5-44db-a5ba-2677ed7dcaaf.png' }
-  ];
+  // Fetch real users from database
+  const { data: profileUsers, isLoading } = useProfileUsers();
 
-  // Auto-assign default approvers based on PSSR reason
+  // Initialize with default approvers for Tier 1 PSSR
   useEffect(() => {
-    const defaultApprovers = getDefaultApprovers();
-    setApprovers(defaultApprovers);
-  }, [data.reason, data.plant, data.projectId]);
+    if (profileUsers && profileUsers.length > 0 && approvers.length === 0) {
+      const defaultApprovers = getDefaultTier1Approvers();
+      setApprovers(defaultApprovers);
+    }
+  }, [profileUsers]);
 
-  const getDefaultApprovers = (): Approver[] => {
-    const baseApprovers: Approver[] = [];
+  const getDefaultTier1Approvers = (): Approver[] => {
+    if (!profileUsers) return [];
     
-    // Level 1: PSSR Lead (always required)
-    baseApprovers.push({
-      id: '1',
-      name: 'Ahmed Al-Rashid',
-      title: 'PSSR Lead',
-      email: 'ahmed.alrashid@company.com',
-      avatar: '/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png',
-      level: 1,
-      role: 'PSSR Lead',
-      required: true,
-      status: 'pending'
-    });
+    // Level 1 approvers based on position/role
+    const level1Positions = ['PSSR Lead', 'Engineering Manager (P&E)', 'Engineering Manager (Asset)', 'Project Manager', 'Deputy Plant Director'];
+    const level1Approvers = profileUsers
+      .filter(user => level1Positions.some(pos => user.position?.includes(pos)))
+      .slice(0, 5)
+      .map(user => ({
+        id: user.user_id,
+        name: user.full_name,
+        position: user.position || 'Not specified',
+        avatar: user.avatar_url || '',
+        level: 1 as const
+      }));
 
-    // Level 2 Approvers
-    // Project Manager (only for new asset commissioning)
-    if (data.reason === 'Start-up or Commissioning of a new Asset') {
-      baseApprovers.push({
-        id: '2',
-        name: 'Sarah Johnson',
-        title: 'Project Manager',
-        email: 'sarah.johnson@company.com',
-        avatar: '/lovable-uploads/b229716e-e39e-41cb-91d3-2c30dd517fa8.png',
-        level: 2,
-        role: 'Project Manager',
-        required: true,
-        status: 'pending'
-      });
-    }
+    // Level 2 approvers based on position/role  
+    const level2Positions = ['Plant Director', 'P&E Director', 'HSSE Director', 'P&M Director'];
+    const level2Approvers = profileUsers
+      .filter(user => level2Positions.some(pos => user.position?.includes(pos)))
+      .slice(0, 4)
+      .map(user => ({
+        id: user.user_id,
+        name: user.full_name,
+        position: user.position || 'Not specified',
+        avatar: user.avatar_url || '',
+        level: 2 as const
+      }));
 
-    // Plant Director (based on plant/asset)
-    const plantDirector = getPlantDirector(data.plant || data.asset);
-    if (plantDirector) {
-      baseApprovers.push(plantDirector);
-    }
-
-    // Engineering Managers
-    baseApprovers.push(
-      {
-        id: '4',
-        name: 'Maria Garcia',
-        title: 'Engineering Manager (P&E)',
-        email: 'maria.garcia@company.com',
-        avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png',
-        level: 2,
-        role: 'Engineering Manager (P&E)',
-        required: true,
-        status: 'pending'
-      },
-      {
-        id: '5',
-        name: 'John Smith',
-        title: 'Engineering Manager (Asset)',
-        email: 'john.smith@company.com',
-        avatar: '/lovable-uploads/f183d942-af72-43b6-8db2-66997da17688.png',
-        level: 2,
-        role: 'Engineering Manager (Asset)',
-        required: true,
-        status: 'pending'
-      }
-    );
-
-    // Level 3 Approvers (Directors)
-    baseApprovers.push(
-      {
-        id: '6',
-        name: 'Dr. Lisa Chen',
-        title: 'Project & Engineering Director',
-        email: 'lisa.chen@company.com',
-        avatar: '/lovable-uploads/2a2a9f93-6c5a-4520-b802-82ee00f3a43c.png',
-        level: 3,
-        role: 'Project & Engineering Director',
-        required: true,
-        status: 'pending'
-      },
-      {
-        id: '7',
-        name: 'Mohammed Al-Basri',
-        title: 'Production & Maintenance Director',
-        email: 'mohammed.albasri@company.com',
-        avatar: '/lovable-uploads/30a2a118-1d3d-4475-a504-cba628119b02.png',
-        level: 3,
-        role: 'Production & Maintenance Director',
-        required: true,
-        status: 'pending'
-      },
-      {
-        id: '8',
-        name: 'Elena Petrov',
-        title: 'HSE Director',
-        email: 'elena.petrov@company.com',
-        avatar: '/lovable-uploads/35226e03-6fa5-44db-a5ba-2677ed7dcaaf.png',
-        level: 3,
-        role: 'HSE Director',
-        required: true,
-        status: 'pending'
-      }
-    );
-
-    return baseApprovers;
+    return [...level1Approvers, ...level2Approvers];
   };
 
-  const getPlantDirector = (plant?: string): Approver | null => {
-    if (!plant) return null;
-    
-    // Return appropriate plant director based on plant
-    return {
-      id: '3',
-      name: 'Omar Hassan',
-      title: `Plant Director - ${plant}`,
-      email: 'omar.hassan@company.com',
-      avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
-      level: 2,
-      role: 'Plant Director',
-      required: true,
-      status: 'pending'
-    };
-  };
-
-  const getApproversByLevel = (level: 1 | 2 | 3) => {
+  const getApproversByLevel = (level: 1 | 2) => {
     return approvers.filter(approver => approver.level === level);
   };
 
-  const getLevelIcon = (level: 1 | 2 | 3) => {
-    switch (level) {
-      case 1: return <Shield className="h-5 w-5 text-blue-600" />;
-      case 2: return <Building className="h-5 w-5 text-green-600" />;
-      case 3: return <Briefcase className="h-5 w-5 text-purple-600" />;
-    }
-  };
-
-  const getLevelColor = (level: 1 | 2 | 3) => {
-    switch (level) {
-      case 1: return 'border-l-blue-500 bg-blue-50';
-      case 2: return 'border-l-green-500 bg-green-50';
-      case 3: return 'border-l-purple-500 bg-purple-50';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'declined': return <AlertCircle className="h-4 w-4 text-red-600" />;
-      default: return <Clock className="h-4 w-4 text-yellow-600" />;
-    }
-  };
-
   const handleAddApprover = () => {
-    if (!selectedUser) {
+    if (!selectedUserId) {
       toast({ title: 'Please select a user', variant: 'destructive' });
       return;
     }
 
-    const user = mockUsers.find(u => u.id === selectedUser);
+    const user = profileUsers?.find(u => u.user_id === selectedUserId);
     if (!user) return;
 
     const newApprover: Approver = {
-      id: user.id,
-      name: user.name,
-      title: user.title,
-      email: user.email,
-      avatar: user.avatar,
-      level: selectedLevel,
-      role: user.title,
-      required: false,
-      status: 'pending'
+      id: user.user_id,
+      name: user.full_name,
+      position: user.position || 'Not specified',
+      avatar: user.avatar_url || '',
+      level: selectedLevel
     };
 
     setApprovers(prev => [...prev, newApprover]);
     setShowAddModal(false);
-    setSelectedUser('');
+    setSelectedUserId('');
     setSearchTerm('');
     
     toast({ title: 'Approver added successfully' });
   };
 
   const handleRemoveApprover = (approverId: string) => {
-    const approver = approvers.find(a => a.id === approverId);
-    if (approver?.required) {
-      toast({ title: 'Cannot remove required approver', variant: 'destructive' });
-      return;
-    }
-
     setApprovers(prev => prev.filter(a => a.id !== approverId));
     toast({ title: 'Approver removed' });
   };
 
-  const filteredUsers = mockUsers.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.title.toLowerCase().includes(searchTerm.toLowerCase())
-  ).filter(user => !approvers.some(approver => approver.id === user.id));
+  const filteredUsers = (profileUsers || []).filter(user => 
+    user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.position?.toLowerCase().includes(searchTerm.toLowerCase())
+  ).filter(user => !approvers.some(approver => approver.id === user.user_id));
 
   const handleFinalizePSSR = () => {
     onDataUpdate({ approvers, finalized: true });
@@ -291,141 +151,117 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
     onNext();
   };
 
-  const getApprovalStats = () => {
+  const calculateProgress = () => {
     const level1Count = getApproversByLevel(1).length;
     const level2Count = getApproversByLevel(2).length;
-    const level3Count = getApproversByLevel(3).length;
-    const total = approvers.length;
-    
-    return { level1Count, level2Count, level3Count, total };
+    const totalExpected = 9; // 5 Level 1 + 4 Level 2
+    const totalCurrent = approvers.length;
+    return Math.min((totalCurrent / totalExpected) * 100, 100);
   };
 
-  const stats = getApprovalStats();
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8">Loading approvers...</div>;
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="border-l-4 border-l-purple-500 bg-purple-50">
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-3">
-            <Users className="h-6 w-6 text-purple-600" />
+      <Card className="bg-card/60 backdrop-blur-sm border-border/40">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <UserCheck className="h-6 w-6 text-primary" />
             <div>
-              <h3 className="font-semibold text-purple-900">PSSR Approval Workflow</h3>
-              <p className="text-sm text-purple-700">
-                Default approvers have been assigned based on your PSSR reason. Review and modify as needed.
+              <h3 className="font-semibold text-lg">PSSR Approval Workflow - Tier 1</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Configure approvers for your PSSR. Level 1 approval must be completed before Level 2 begins.
               </p>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Approval Configuration Progress</span>
+              <span className="font-medium">{approvers.length} / 9 Approvers</span>
+            </div>
+            <Progress value={calculateProgress()} className="h-3" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Level 1: {getApproversByLevel(1).length} / 5</span>
+              <span>Level 2: {getApproversByLevel(2).length} / 4</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.level1Count}</div>
-            <div className="text-sm text-gray-600">Level 1</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.level2Count}</div>
-            <div className="text-sm text-gray-600">Level 2</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.level3Count}</div>
-            <div className="text-sm text-gray-600">Level 3</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-600">{stats.total}</div>
-            <div className="text-sm text-gray-600">Total Approvers</div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Approval Levels */}
       <div className="space-y-6">
-        {[1, 2, 3].map(level => {
-          const levelApprovers = getApproversByLevel(level as 1 | 2 | 3);
+        {[1, 2].map(level => {
+          const levelApprovers = getApproversByLevel(level as 1 | 2);
           const levelDescription = {
-            1: 'PSSR Lead approval signifies that the PSSR has been successfully completed with no pending actions.',
-            2: 'Level 2 approval commences only after Level 1 approval and includes operational and engineering leadership.',
-            3: 'Level 3 approval includes executive directors and commences only after all Level 2 approvals are received.'
+            1: 'Level 1: PSSR Lead, Engineering Manager (P&E), Engineering Manager (Asset), Project Manager, Deputy Plant Director',
+            2: 'Level 2: Plant Director, P&E Director, HSSE Director, P&M Director'
+          };
+
+          const levelLabel = {
+            1: 'Level 1 Approvers',
+            2: 'Level 2 Approvers'
           };
 
           return (
-            <Card key={level} className={`border-l-4 ${getLevelColor(level as 1 | 2 | 3)}`}>
+            <Card key={level} className="bg-card/60 backdrop-blur-sm border-border/40">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {getLevelIcon(level as 1 | 2 | 3)}
-                    <div>
-                      <CardTitle className="text-lg">Level {level} Approval</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {levelDescription[level as keyof typeof levelDescription]}
-                      </p>
-                    </div>
+                  <div>
+                    <CardTitle className="text-lg">{levelLabel[level as keyof typeof levelLabel]}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {levelDescription[level as keyof typeof levelDescription]}
+                    </p>
                   </div>
-                  <Badge variant="outline">
-                    {levelApprovers.length} Approver{levelApprovers.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {levelApprovers.map(approver => (
-                    <div key={approver.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={approver.avatar} alt={approver.name} />
-                          <AvatarFallback>
-                            {approver.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{approver.name}</p>
-                          <p className="text-xs text-gray-600">{approver.title}</p>
-                          <p className="text-xs text-gray-500">{approver.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          {getStatusIcon(approver.status)}
-                          <span className="text-xs capitalize">{approver.status}</span>
-                        </div>
-                        {approver.required && (
-                          <Badge variant="secondary" className="text-xs">Required</Badge>
-                        )}
-                        {!approver.required && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveApprover(approver.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {/* Add Approver Button */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSelectedLevel(level as 1 | 2 | 3);
+                      setSelectedLevel(level as 1 | 2);
                       setShowAddModal(true);
                     }}
-                    className="w-full mt-2"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Level {level} Approver
+                    Add Approver
                   </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {levelApprovers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No approvers assigned yet. Click "Add Approver" to assign.
+                    </p>
+                  ) : (
+                    levelApprovers.map(approver => (
+                      <div key={approver.id} className="flex items-center justify-between p-4 bg-background/60 rounded-lg border border-border/60 hover:bg-muted/20 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-12 w-12 border-2 border-border">
+                            <AvatarImage src={approver.avatar} alt={approver.name} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {approver.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{approver.name}</p>
+                            <p className="text-sm text-muted-foreground">{approver.position}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveApprover(approver.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -463,9 +299,9 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
             <div>
               <Label>Search Users</Label>
               <div className="relative mt-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or title..."
+                  placeholder="Search by name or position..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -473,38 +309,46 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
               </div>
             </div>
 
-            <div>
-              <Label>Select Approver</Label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Choose an approver" />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-50 max-h-60">
-                  {filteredUsers.map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      <div className="flex items-center space-x-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="text-xs">
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-600">{user.title}</p>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              <Label>Available Users</Label>
+              {filteredUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No users available</p>
+              ) : (
+                filteredUsers.map(user => (
+                  <div
+                    key={user.user_id}
+                    onClick={() => setSelectedUserId(user.user_id)}
+                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedUserId === user.user_id 
+                        ? 'bg-primary/10 border-primary' 
+                        : 'bg-background hover:bg-muted/50'
+                    }`}
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar_url || ''} alt={user.full_name} />
+                      <AvatarFallback>
+                        {user.full_name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{user.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{user.position || 'No position'}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button variant="outline" onClick={() => setShowAddModal(false)}>
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => {
+                setShowAddModal(false);
+                setSelectedUserId('');
+                setSearchTerm('');
+              }}>
                 Cancel
               </Button>
-              <Button onClick={handleAddApprover}>
+              <Button onClick={handleAddApprover} disabled={!selectedUserId}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Approver
               </Button>
             </div>
