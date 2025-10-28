@@ -28,9 +28,13 @@ import {
   SortAsc,
   SortDesc,
   Eye,
-  EyeOff
+  EyeOff,
+  Plus,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
+import CreateChecklistItemForm from './CreateChecklistItemForm';
 
 interface FormData {
   asset: string;
@@ -78,6 +82,10 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
   const [naJustification, setNaJustification] = useState('');
   const [naDocuments, setNaDocuments] = useState<File[]>([]);
   const [customApprovers, setCustomApprovers] = useState<string[]>([]);
+  const [showAddFromPoolModal, setShowAddFromPoolModal] = useState(false);
+  const [showCreateCustomModal, setShowCreateCustomModal] = useState(false);
+  const [poolSearchTerm, setPoolSearchTerm] = useState('');
+  const [poolSelectedCategory, setPoolSelectedCategory] = useState('all');
 
   // Auto-assign checklist based on PSSR reason
   const getAssignedChecklist = () => {
@@ -177,6 +185,94 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
         item.id === itemId ? { ...item, status: 'draft' } : item
       ));
     }
+  };
+
+  // Handle Select All
+  const handleSelectAll = () => {
+    const draftItems = filteredItems.filter(item => item.status === 'draft');
+    const draftIds = draftItems.map(item => item.id);
+    
+    setSelectedItems(prev => [...new Set([...prev, ...draftIds])]);
+    setChecklistItems(prev => prev.map(item => 
+      draftIds.includes(item.id) ? { ...item, status: 'selected' } : item
+    ));
+    
+    toast({ title: `Selected ${draftItems.length} items` });
+  };
+
+  // Handle Deselect All
+  const handleDeselectAll = () => {
+    const selectedInView = filteredItems.filter(item => item.status === 'selected').map(item => item.id);
+    
+    setSelectedItems(prev => prev.filter(id => !selectedInView.includes(id)));
+    setChecklistItems(prev => prev.map(item => 
+      selectedInView.includes(item.id) ? { ...item, status: 'draft' } : item
+    ));
+    
+    toast({ title: 'All items deselected from current view' });
+  };
+
+  // Get items not already in the checklist
+  const getAvailablePoolItems = () => {
+    const currentItemIds = checklistItems.map(item => item.unique_id);
+    return allChecklistItems
+      .filter(item => !currentItemIds.includes(item.unique_id))
+      .map(item => ({
+        ...item,
+        id: item.unique_id,
+        supportingEvidence: item.required_evidence || '',
+        approvingAuthority: item.Approver || '',
+        status: 'draft' as const,
+        customApprovers: (item.Approver || '').split(', ').filter(Boolean)
+      }));
+  };
+
+  // Filter pool items
+  const getFilteredPoolItems = () => {
+    const poolItems = getAvailablePoolItems();
+    return poolItems.filter(item => {
+      const matchesSearch = item.description.toLowerCase().includes(poolSearchTerm.toLowerCase()) ||
+                           item.id.toLowerCase().includes(poolSearchTerm.toLowerCase());
+      const matchesCategory = poolSelectedCategory === 'all' || item.category === poolSelectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  };
+
+  // Add items from pool
+  const handleAddFromPool = (itemIds: string[]) => {
+    const poolItems = getAvailablePoolItems();
+    const itemsToAdd = poolItems.filter(item => itemIds.includes(item.id));
+    
+    setChecklistItems(prev => [...prev, ...itemsToAdd]);
+    setShowAddFromPoolModal(false);
+    toast({ title: `Added ${itemsToAdd.length} item(s) from pool` });
+  };
+
+  // Add custom item
+  const handleAddCustomItem = (itemData: any) => {
+    const newItem: ChecklistItemWithStatus = {
+      id: `CUSTOM-${Date.now()}`,
+      unique_id: `CUSTOM-${Date.now()}`,
+      description: itemData.description,
+      required_evidence: itemData.evidenceGuidance,
+      category: itemData.category,
+      Approver: itemData.approvers.join(', '),
+      approving_authority: itemData.approvers.join(', '),
+      responsible_party: itemData.responsible.join(', '),
+      topic: itemData.topic,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      version: 1,
+      status: 'draft',
+      supportingEvidence: itemData.evidenceGuidance,
+      approvingAuthority: itemData.approvers.join(', '),
+      customApprovers: itemData.approvers
+    };
+    
+    setChecklistItems(prev => [...prev, newItem]);
+    setShowCreateCustomModal(false);
+    toast({ title: 'Custom checklist item added' });
   };
 
   // Handle Not Applicable
@@ -355,6 +451,44 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
             >
               {showSelected ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               <span>Selected Only</span>
+            </Button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSelectAll}
+              disabled={filteredItems.filter(item => item.status === 'draft').length === 0}
+              className="flex items-center space-x-2"
+            >
+              <CheckSquare className="h-4 w-4" />
+              <span>Select All</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDeselectAll}
+              disabled={filteredItems.filter(item => item.status === 'selected').length === 0}
+              className="flex items-center space-x-2"
+            >
+              <Square className="h-4 w-4" />
+              <span>Deselect All</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowAddFromPoolModal(true)}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add from Pool</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateCustomModal(true)}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Custom Item</span>
             </Button>
           </div>
 
@@ -614,17 +748,95 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
                   </Button>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button variant="outline" onClick={() => setShowEditModal(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={saveEditedItem}>
-                  Save Changes
-                </Button>
-              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add from Pool Modal */}
+      <Dialog open={showAddFromPoolModal} onOpenChange={setShowAddFromPoolModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Checklist Items from Pool</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search available items..."
+                  value={poolSearchTerm}
+                  onChange={(e) => setPoolSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={poolSelectedCategory} onValueChange={setPoolSelectedCategory}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-50">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.slice(1).map(category => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {getFilteredPoolItems().length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No items available in the pool
+                </div>
+              ) : (
+                getFilteredPoolItems().map((item) => (
+                  <Card key={item.id} className="p-3 hover:bg-gray-50">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id={`pool-${item.id}`}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleAddFromPool([item.id]);
+                          }
+                        }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Badge variant="outline">{item.id}</Badge>
+                          <Badge variant="secondary">{item.category}</Badge>
+                        </div>
+                        <p className="text-sm text-gray-700">{item.description}</p>
+                        {item.supportingEvidence && (
+                          <p className="text-xs text-gray-500 mt-1">Evidence: {item.supportingEvidence}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button variant="outline" onClick={() => setShowAddFromPoolModal(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Custom Item Modal */}
+      <Dialog open={showCreateCustomModal} onOpenChange={setShowCreateCustomModal}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Custom Checklist Item</DialogTitle>
+          </DialogHeader>
+          
+          <CreateChecklistItemForm
+            onBack={() => setShowCreateCustomModal(false)}
+            onComplete={handleAddCustomItem}
+          />
         </DialogContent>
       </Dialog>
     </div>

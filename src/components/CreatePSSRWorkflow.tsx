@@ -300,17 +300,18 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
               </div>
               <Progress value={progressPercentage} className="w-full h-3" />
               
-              {/* Step indicators */}
+              {/* Step indicators - Clickable */}
               <div className="grid grid-cols-4 md:grid-cols-8 gap-2 mt-4">
                 {steps.map((step) => (
-                  <div 
-                    key={step.number} 
-                    className={`text-center p-2 rounded-lg border transition-colors ${
+                  <button
+                    key={step.number}
+                    onClick={() => setCurrentStep(step.number)}
+                    className={`text-center p-2 rounded-lg border transition-all hover:scale-105 hover:shadow-md cursor-pointer ${
                       step.number < currentStep 
-                        ? 'bg-green-50 border-green-200 text-green-700'
+                        ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                         : step.number === currentStep
-                        ? 'bg-blue-50 border-blue-200 text-blue-700'
-                        : 'bg-gray-50 border-gray-200 text-gray-500'
+                        ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center justify-center mb-1">
@@ -321,7 +322,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                       )}
                     </div>
                     <p className="text-xs font-medium">{step.title}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
