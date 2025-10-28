@@ -123,10 +123,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 leading-tight line-clamp-1 flex-1 min-w-0">
                 {pssr.projectName}
               </h3>
-              <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                <ShieldCheck className="h-3 w-3 flex-shrink-0" />
-                <span className="font-medium">{pssr.asset}</span>
-              </div>
+              <span className="text-muted-foreground text-xs font-medium">{pssr.asset}</span>
             </div>
             
             <div className="flex items-center gap-3 text-muted-foreground text-xs">
@@ -145,12 +142,10 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
-                  className="w-8 h-8 rounded-xl border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
+                  className="w-8 h-8 rounded-full border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
                 />
-                {/* Teams-style status indicator with dynamic colors */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-card rounded-full flex items-center justify-center border border-border">
-                  <div className={`w-1.5 h-1.5 rounded-full ${getTeamStatusColor(pssr.teamStatus)}`}></div>
-                </div>
+                {/* Teams-style status indicator - bottom right */}
+                <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-card ${getTeamStatusColor(pssr.teamStatus)}`}></div>
               </div>
               <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate max-w-16">
                 {pssr.pssrLead.split(' ')[0]}
@@ -182,12 +177,9 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 {pssr.status}
               </div>
 
-              {/* Pending Approvals Indicator */}
+              {/* Pending Approvals - Simple Text */}
               {pssr.pendingApprovals > 0 && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 border border-amber-500/30 rounded-md">
-                  <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{pssr.pendingApprovals} pending</span>
-                </div>
+                <span className="text-xs text-muted-foreground">{pssr.pendingApprovals} pending</span>
               )}
             </div>
           </div>
