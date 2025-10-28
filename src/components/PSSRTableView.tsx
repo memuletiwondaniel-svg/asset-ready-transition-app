@@ -183,7 +183,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
           </div>
         );
       case 'progress':
-        return <div className="font-bold text-lg text-foreground">{pssr.progress}%</div>;
+        return <div className="font-bold text-sm text-foreground">{pssr.progress}%</div>;
       case 'status':
         return getStatusBadge(pssr.status);
       case 'created':
@@ -257,14 +257,14 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
             {pssrs.map((pssr, index) => (
               <TableRow
                 key={pssr.id}
-                className="cursor-pointer hover:bg-muted/30 transition-all duration-200 border-b border-border/30 last:border-0"
+                className="cursor-pointer hover:bg-muted/30 transition-all duration-200 border-b border-border/30 last:border-0 h-16"
                 onClick={() => onViewDetails(pssr.id)}
               >
                 {visibleColumns.map((column) => (
                   <TableCell 
                     key={column.id}
                     style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
-                    className="px-4 py-3"
+                    className="px-4 py-4"
                   >
                     {renderCell(pssr, column.id)}
                   </TableCell>
