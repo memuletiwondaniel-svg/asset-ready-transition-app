@@ -160,11 +160,15 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
   const renderCell = (pssr: PSSR, columnId: string) => {
     switch (columnId) {
       case 'projectId':
-        return <div className="font-bold text-primary">{pssr.projectId}</div>;
+        return (
+          <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm inline-block min-w-[60px] text-center">
+            {pssr.projectId}
+          </div>
+        );
       case 'projectName':
-        return <div className="font-semibold">{pssr.projectName}</div>;
+        return <div className="font-semibold text-foreground">{pssr.projectName}</div>;
       case 'asset':
-        return <div className="font-medium">{pssr.asset}</div>;
+        return <div className="font-semibold text-foreground">{pssr.asset}</div>;
       case 'tier':
         return getTierBadge(pssr.tier);
       case 'pssrLead':
@@ -173,13 +177,13 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
             <img 
               src={pssr.pssrLeadAvatar} 
               alt={pssr.pssrLead}
-              className="w-6 h-6 rounded-full border border-primary/20"
+              className="w-7 h-7 rounded-full border-2 border-primary/20 shadow-sm"
             />
-            <span className="text-sm">{pssr.pssrLead.split(' ')[0]}</span>
+            <span className="text-sm font-medium text-foreground">{pssr.pssrLead.split(' ')[0]}</span>
           </div>
         );
       case 'progress':
-        return <div className="font-bold">{pssr.progress}%</div>;
+        return <div className="font-bold text-lg text-foreground">{pssr.progress}%</div>;
       case 'status':
         return getStatusBadge(pssr.status);
       case 'created':
@@ -201,17 +205,18 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
       <div className="flex justify-end">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2 bg-background hover:bg-muted/50 border-border/50">
               <Settings className="h-4 w-4" />
               Columns
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-md border-border/50 shadow-lg z-50">
             {columns.map(column => (
               <DropdownMenuCheckboxItem
                 key={column.id}
                 checked={column.visible}
                 onCheckedChange={() => toggleColumnVisibility(column.id)}
+                className="cursor-pointer"
               >
                 {column.label}
               </DropdownMenuCheckboxItem>
@@ -221,10 +226,10 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border/50 overflow-auto">
+      <div className="rounded-xl border border-border/50 overflow-hidden bg-card/50 backdrop-blur-sm shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30">
+            <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/50">
               {visibleColumns.map((column) => (
                 <TableHead
                   key={column.id}
@@ -233,15 +238,15 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
                   onDragOver={(e) => handleDragOver(e, column.id)}
                   onDragEnd={handleDragEnd}
                   style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
-                  className="relative group cursor-move select-none"
+                  className="relative group cursor-move select-none h-12 px-4"
                 >
                   <div className="flex items-center gap-2">
-                    <GripVertical className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="font-semibold">{column.label}</span>
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="font-semibold text-sm text-foreground">{column.label}</span>
                   </div>
                   {/* Resize Handle */}
                   <div
-                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 active:bg-primary"
+                    className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary/50 active:bg-primary transition-colors"
                     onMouseDown={(e) => handleResizeStart(e, column.id)}
                   />
                 </TableHead>
@@ -249,16 +254,17 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pssrs.map((pssr) => (
+            {pssrs.map((pssr, index) => (
               <TableRow
                 key={pssr.id}
-                className="cursor-pointer hover:bg-muted/20 transition-colors"
+                className="cursor-pointer hover:bg-muted/30 transition-all duration-200 border-b border-border/30 last:border-0"
                 onClick={() => onViewDetails(pssr.id)}
               >
                 {visibleColumns.map((column) => (
                   <TableCell 
                     key={column.id}
                     style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
+                    className="px-4 py-3"
                   >
                     {renderCell(pssr, column.id)}
                   </TableCell>

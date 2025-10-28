@@ -425,28 +425,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
             {/* Header Actions */}
             <div className="flex items-center gap-4">
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 border border-border/50">
-                <Button
-                  variant={viewMode === 'card' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('card')}
-                  className="h-8 px-3"
-                >
-                  <LayoutGrid className="h-4 w-4 mr-2" />
-                  Cards
-                </Button>
-                <Button
-                  variant={viewMode === 'table' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className="h-8 px-3"
-                >
-                  <TableIcon className="h-4 w-4 mr-2" />
-                  Table
-                </Button>
-              </div>
-
               <Button 
                 variant="outline"
                 className="fluent-button border-border/50 hover:bg-secondary/50"
@@ -587,9 +565,34 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         {/* PSSR List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">
-              PSSR Reviews ({filteredPSSRs.length})
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                PSSR Reviews ({filteredPSSRs.length})
+              </h2>
+              
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 border border-border/50">
+                <Button
+                  variant={viewMode === 'card' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('card')}
+                  className="h-8 px-3"
+                >
+                  <LayoutGrid className="h-4 w-4 mr-1.5" />
+                  Cards
+                </Button>
+                <Button
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="h-8 px-3"
+                >
+                  <TableIcon className="h-4 w-4 mr-1.5" />
+                  Table
+                </Button>
+              </div>
+            </div>
+            
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>Showing {filteredPSSRs.length} of {stats.total} reviews</span>
               {filteredPSSRs.length > 0 && viewMode === 'card' && (
