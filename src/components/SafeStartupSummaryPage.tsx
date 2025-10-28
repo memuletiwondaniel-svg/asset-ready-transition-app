@@ -399,71 +399,83 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       {/* Enhanced Dynamic Gradient Background */}
       <div className="absolute inset-0 bg-background">
         {/* Main layer - Diagonal flowing gradients with color morph */}
-        <div className="absolute inset-0 opacity-30 dark:opacity-22">
+        <div className="absolute inset-0 opacity-40 dark:opacity-30">
           <div 
             className="absolute inset-0"
             style={{
               background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 24%, 88%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 23%, 88%) 0%, transparent 35%)',
-              filter: 'blur(70px)',
-              animation: 'gradient-shift 15s ease infinite, gradient-color-morph 45s linear infinite',
+              filter: 'blur(50px)',
+              animation: 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
+            }}
+          />
+        </div>
+
+        {/* Dramatic sweep layer - moves across screen */}
+        <div className="absolute inset-0 opacity-35 dark:opacity-25">
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(260, 28%, 86%) 0%, transparent 50%)',
+              filter: 'blur(60px)',
+              animation: 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
             }}
           />
         </div>
 
         {/* Horizontal flowing layer with faster color morph */}
-        <div className="absolute inset-0 opacity-20 dark:opacity-15">
+        <div className="absolute inset-0 opacity-28 dark:opacity-20">
           <div 
             className="absolute inset-0"
             style={{
               background: 'radial-gradient(at 10% 50%, hsl(190, 27%, 86%) 0%, transparent 50%), radial-gradient(at 90% 50%, hsl(270, 25%, 87%) 0%, transparent 50%)',
-              filter: 'blur(80px)',
-              animation: 'gradient-horizontal 25s ease-in-out infinite, gradient-color-morph-fast 35s linear infinite',
+              filter: 'blur(55px)',
+              animation: 'gradient-horizontal 14s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
             }}
           />
         </div>
 
         {/* Vertical flowing layer with color morph */}
-        <div className="absolute inset-0 opacity-18 dark:opacity-14">
+        <div className="absolute inset-0 opacity-25 dark:opacity-18">
           <div 
             className="absolute inset-0"
             style={{
               background: 'radial-gradient(at 50% 10%, hsl(220, 26%, 88%) 0%, transparent 50%), radial-gradient(at 50% 90%, hsl(310, 24%, 89%) 0%, transparent 50%)',
-              filter: 'blur(85px)',
-              animation: 'gradient-vertical 20s ease-in-out infinite, gradient-color-morph 45s linear infinite',
+              filter: 'blur(58px)',
+              animation: 'gradient-vertical 16s ease-in-out infinite, gradient-color-morph 18s linear infinite',
             }}
           />
         </div>
         
         {/* Counter-rotating layer without color morph for contrast */}
-        <div className="absolute inset-0 opacity-18 dark:opacity-14">
+        <div className="absolute inset-0 opacity-22 dark:opacity-16">
           <div 
             className="absolute inset-0"
             style={{
               background: 'radial-gradient(at 70% 40%, hsl(180, 25%, 87%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 24%, 88%) 0%, transparent 45%)',
-              filter: 'blur(90px)',
-              animation: 'gradient-shift 20s ease-in-out infinite reverse',
+              filter: 'blur(52px)',
+              animation: 'gradient-shift 15s ease-in-out infinite reverse',
             }}
           />
         </div>
 
-        {/* Pulsing accent gradients with slow color morph */}
-        <div className="absolute inset-0 opacity-15 dark:opacity-12">
+        {/* Pulsing accent gradients with color morph */}
+        <div className="absolute inset-0 opacity-20 dark:opacity-15">
           <div 
             className="absolute inset-0"
             style={{
               background: 'radial-gradient(at 35% 35%, hsl(240, 25%, 86%) 0%, transparent 35%), radial-gradient(at 65% 65%, hsl(330, 23%, 87%) 0%, transparent 35%)',
-              filter: 'blur(95px)',
-              animation: 'gradient-pulse 18s ease-in-out infinite, gradient-color-morph-slow 55s linear infinite',
+              filter: 'blur(48px)',
+              animation: 'gradient-pulse 13s ease-in-out infinite, gradient-color-morph-slow 22s linear infinite',
             }}
           />
         </div>
         
         {/* Overlay gradient for depth with subtle color morph */}
         <div 
-          className="absolute inset-0 opacity-18"
+          className="absolute inset-0 opacity-20"
           style={{
             background: 'linear-gradient(135deg, hsl(220, 22%, 90%) 0%, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%, hsl(280, 20%, 89%) 100%)',
-            animation: 'gradient-color-morph 45s linear infinite',
+            animation: 'gradient-color-morph 18s linear infinite',
           }}
         />
         
@@ -658,26 +670,36 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                 PSSR Reviews ({filteredPSSRs.length})
               </h2>
               
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 border border-border/50">
-                <Button
-                  variant={viewMode === 'card' ? 'default' : 'ghost'}
-                  size="sm"
+              {/* View Mode Toggle - Modern Pill Style */}
+              <div className="inline-flex items-center gap-0.5 p-1 rounded-full bg-muted/50 border border-border/30 backdrop-blur-sm">
+                <button
                   onClick={() => setViewMode('card')}
-                  className="h-8 px-3"
+                  className={`
+                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+                    transition-all duration-200 ease-out
+                    ${viewMode === 'card' 
+                      ? 'bg-background text-foreground shadow-sm scale-[1.02]' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                    }
+                  `}
                 >
-                  <LayoutGrid className="h-4 w-4 mr-1.5" />
-                  Cards
-                </Button>
-                <Button
-                  variant={viewMode === 'table' ? 'default' : 'ghost'}
-                  size="sm"
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Cards</span>
+                </button>
+                <button
                   onClick={() => setViewMode('table')}
-                  className="h-8 px-3"
+                  className={`
+                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+                    transition-all duration-200 ease-out
+                    ${viewMode === 'table' 
+                      ? 'bg-background text-foreground shadow-sm scale-[1.02]' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                    }
+                  `}
                 >
-                  <TableIcon className="h-4 w-4 mr-1.5" />
-                  Table
-                </Button>
+                  <TableIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Table</span>
+                </button>
               </div>
             </div>
             

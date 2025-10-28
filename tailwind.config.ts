@@ -171,36 +171,50 @@ export default {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.8' }
 				},
-				'gradient-shift': {
-					'0%, 100%': { 
-						transform: 'translate(0%, 0%) scale(1)',
-						opacity: '0.6'
-					},
-					'33%': { 
-						transform: 'translate(5%, -5%) scale(1.1)',
-						opacity: '0.7'
-					},
-					'66%': { 
-						transform: 'translate(-5%, 5%) scale(1.05)',
-						opacity: '0.65'
-					}
+			'gradient-shift': {
+				'0%, 100%': { 
+					transform: 'translate(0%, 0%) scale(1)',
+					opacity: '0.6'
 				},
-				'gradient-horizontal': {
-					'0%, 100%': { 
-						transform: 'translateX(0%) scale(1)',
-					},
-					'50%': { 
-						transform: 'translateX(20%) scale(1.05)',
-					}
+				'33%': { 
+					transform: 'translate(15%, -12%) scale(1.15)',
+					opacity: '0.7'
 				},
-				'gradient-vertical': {
-					'0%, 100%': { 
-						transform: 'translateY(0%) scale(1)',
-					},
-					'50%': { 
-						transform: 'translateY(-15%) scale(1.03)',
-					}
+				'66%': { 
+					transform: 'translate(-12%, 15%) scale(1.08)',
+					opacity: '0.65'
+				}
+			},
+			'gradient-horizontal': {
+				'0%, 100%': { 
+					transform: 'translateX(-30%) scale(1)',
 				},
+				'50%': { 
+					transform: 'translateX(30%) scale(1.1)',
+				}
+			},
+			'gradient-vertical': {
+				'0%, 100%': { 
+					transform: 'translateY(-25%) scale(1)',
+				},
+				'50%': { 
+					transform: 'translateY(25%) scale(1.08)',
+				}
+			},
+			'gradient-sweep': {
+				'0%': { 
+					transform: 'translateX(-100%) translateY(-20%) rotate(-5deg)',
+					opacity: '0.3'
+				},
+				'50%': { 
+					transform: 'translateX(0%) translateY(0%) rotate(0deg)',
+					opacity: '0.5'
+				},
+				'100%': { 
+					transform: 'translateX(100%) translateY(20%) rotate(5deg)',
+					opacity: '0.3'
+				}
+			},
 				'gradient-pulse': {
 					'0%, 100%': { 
 						transform: 'scale(1)',
@@ -231,13 +245,14 @@ export default {
 				'float': 'float 3s ease-in-out infinite',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
 				'spin-slow': 'spin 6s linear infinite',
-				'gradient-shift': 'gradient-shift 15s ease infinite',
-				'gradient-horizontal': 'gradient-horizontal 25s ease-in-out infinite',
-				'gradient-vertical': 'gradient-vertical 20s ease-in-out infinite',
-				'gradient-pulse': 'gradient-pulse 18s ease-in-out infinite',
-				'gradient-color-morph': 'gradient-color-morph 45s linear infinite',
-				'gradient-color-morph-fast': 'gradient-color-morph 35s linear infinite',
-				'gradient-color-morph-slow': 'gradient-color-morph 55s linear infinite'
+			'gradient-shift': 'gradient-shift 12s ease infinite',
+			'gradient-horizontal': 'gradient-horizontal 14s ease-in-out infinite',
+			'gradient-vertical': 'gradient-vertical 16s ease-in-out infinite',
+			'gradient-pulse': 'gradient-pulse 13s ease-in-out infinite',
+			'gradient-sweep': 'gradient-sweep 20s ease-in-out infinite',
+			'gradient-color-morph': 'gradient-color-morph 18s linear infinite',
+			'gradient-color-morph-fast': 'gradient-color-morph 15s linear infinite',
+			'gradient-color-morph-slow': 'gradient-color-morph 22s linear infinite'
 			}
 		}
 	},
