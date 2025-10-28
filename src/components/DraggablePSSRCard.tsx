@@ -132,9 +132,9 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             </div>
           </div>
 
-          {/* Plant/Asset - Right Justified Column */}
-          <div className="flex items-center justify-end w-32 flex-shrink-0">
-            <span className="text-foreground text-base font-semibold text-right">{pssr.asset}</span>
+          {/* Plant/Asset - Left Justified Column */}
+          <div className="flex items-center justify-start w-32 flex-shrink-0">
+            <span className="text-foreground text-base font-semibold text-left">{pssr.asset}</span>
           </div>
 
           {/* PSSR Lead (Center) */}
