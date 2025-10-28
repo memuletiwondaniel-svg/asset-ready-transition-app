@@ -398,67 +398,72 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     <div className="min-h-screen relative overflow-hidden">
       {/* Enhanced Dynamic Gradient Background */}
       <div className="absolute inset-0 bg-background">
-        {/* Main layer - Diagonal flowing gradients */}
-        <div className="absolute inset-0 opacity-48 dark:opacity-38">
+        {/* Main layer - Diagonal flowing gradients with color morph */}
+        <div className="absolute inset-0 opacity-30 dark:opacity-22">
           <div 
-            className="absolute inset-0 animate-gradient-shift"
+            className="absolute inset-0"
             style={{
-              background: 'radial-gradient(at 20% 30%, hsl(210, 48%, 84%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 45%, 83%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 50%, 85%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 47%, 84%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 44%, 84%) 0%, transparent 35%)',
+              background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 24%, 88%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 23%, 88%) 0%, transparent 35%)',
               filter: 'blur(70px)',
+              animation: 'gradient-shift 15s ease infinite, gradient-color-morph 45s linear infinite',
             }}
           />
         </div>
 
-        {/* Horizontal flowing layer */}
-        <div className="absolute inset-0 opacity-32 dark:opacity-25">
+        {/* Horizontal flowing layer with faster color morph */}
+        <div className="absolute inset-0 opacity-20 dark:opacity-15">
           <div 
-            className="absolute inset-0 animate-gradient-horizontal"
+            className="absolute inset-0"
             style={{
-              background: 'radial-gradient(at 10% 50%, hsl(190, 52%, 82%) 0%, transparent 50%), radial-gradient(at 90% 50%, hsl(270, 48%, 83%) 0%, transparent 50%)',
+              background: 'radial-gradient(at 10% 50%, hsl(190, 27%, 86%) 0%, transparent 50%), radial-gradient(at 90% 50%, hsl(270, 25%, 87%) 0%, transparent 50%)',
               filter: 'blur(80px)',
+              animation: 'gradient-horizontal 25s ease-in-out infinite, gradient-color-morph-fast 35s linear infinite',
             }}
           />
         </div>
 
-        {/* Vertical flowing layer */}
-        <div className="absolute inset-0 opacity-28 dark:opacity-22">
+        {/* Vertical flowing layer with color morph */}
+        <div className="absolute inset-0 opacity-18 dark:opacity-14">
           <div 
-            className="absolute inset-0 animate-gradient-vertical"
+            className="absolute inset-0"
             style={{
-              background: 'radial-gradient(at 50% 10%, hsl(220, 50%, 84%) 0%, transparent 50%), radial-gradient(at 50% 90%, hsl(310, 46%, 85%) 0%, transparent 50%)',
+              background: 'radial-gradient(at 50% 10%, hsl(220, 26%, 88%) 0%, transparent 50%), radial-gradient(at 50% 90%, hsl(310, 24%, 89%) 0%, transparent 50%)',
               filter: 'blur(85px)',
+              animation: 'gradient-vertical 20s ease-in-out infinite, gradient-color-morph 45s linear infinite',
             }}
           />
         </div>
         
-        {/* Counter-rotating layer */}
-        <div className="absolute inset-0 opacity-30 dark:opacity-24">
+        {/* Counter-rotating layer without color morph for contrast */}
+        <div className="absolute inset-0 opacity-18 dark:opacity-14">
           <div 
             className="absolute inset-0"
             style={{
-              background: 'radial-gradient(at 70% 40%, hsl(180, 49%, 83%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 47%, 84%) 0%, transparent 45%)',
+              background: 'radial-gradient(at 70% 40%, hsl(180, 25%, 87%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 24%, 88%) 0%, transparent 45%)',
               filter: 'blur(90px)',
               animation: 'gradient-shift 20s ease-in-out infinite reverse',
             }}
           />
         </div>
 
-        {/* Pulsing accent gradients */}
-        <div className="absolute inset-0 opacity-22 dark:opacity-18">
+        {/* Pulsing accent gradients with slow color morph */}
+        <div className="absolute inset-0 opacity-15 dark:opacity-12">
           <div 
-            className="absolute inset-0 animate-gradient-pulse"
+            className="absolute inset-0"
             style={{
-              background: 'radial-gradient(at 35% 35%, hsl(240, 48%, 82%) 0%, transparent 35%), radial-gradient(at 65% 65%, hsl(330, 46%, 83%) 0%, transparent 35%)',
+              background: 'radial-gradient(at 35% 35%, hsl(240, 25%, 86%) 0%, transparent 35%), radial-gradient(at 65% 65%, hsl(330, 23%, 87%) 0%, transparent 35%)',
               filter: 'blur(95px)',
+              animation: 'gradient-pulse 18s ease-in-out infinite, gradient-color-morph-slow 55s linear infinite',
             }}
           />
         </div>
         
-        {/* Overlay gradient for depth */}
+        {/* Overlay gradient for depth with subtle color morph */}
         <div 
-          className="absolute inset-0 opacity-28"
+          className="absolute inset-0 opacity-18"
           style={{
-            background: 'linear-gradient(135deg, hsl(220, 45%, 86%) 0%, transparent 30%, hsl(var(--primary) / 0.10) 50%, transparent 70%, hsl(280, 42%, 85%) 100%)'
+            background: 'linear-gradient(135deg, hsl(220, 22%, 90%) 0%, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%, hsl(280, 20%, 89%) 100%)',
+            animation: 'gradient-color-morph 45s linear infinite',
           }}
         />
         

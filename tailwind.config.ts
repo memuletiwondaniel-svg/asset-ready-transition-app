@@ -210,6 +210,13 @@ export default {
 						transform: 'scale(1.15)',
 						opacity: '0.7'
 					}
+				},
+				'gradient-color-morph': {
+					'0%': { filter: 'hue-rotate(0deg)' },
+					'25%': { filter: 'hue-rotate(90deg)' },
+					'50%': { filter: 'hue-rotate(180deg)' },
+					'75%': { filter: 'hue-rotate(270deg)' },
+					'100%': { filter: 'hue-rotate(360deg)' }
 				}
 			},
 			animation: {
@@ -227,7 +234,10 @@ export default {
 				'gradient-shift': 'gradient-shift 15s ease infinite',
 				'gradient-horizontal': 'gradient-horizontal 25s ease-in-out infinite',
 				'gradient-vertical': 'gradient-vertical 20s ease-in-out infinite',
-				'gradient-pulse': 'gradient-pulse 18s ease-in-out infinite'
+				'gradient-pulse': 'gradient-pulse 18s ease-in-out infinite',
+				'gradient-color-morph': 'gradient-color-morph 45s linear infinite',
+				'gradient-color-morph-fast': 'gradient-color-morph 35s linear infinite',
+				'gradient-color-morph-slow': 'gradient-color-morph 55s linear infinite'
 			}
 		}
 	},
