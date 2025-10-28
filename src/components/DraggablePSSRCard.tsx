@@ -125,21 +125,13 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               </h3>
             </div>
             
-            {/* Asset - Made Conspicuous */}
-            <div className="bg-accent/30 border-2 border-accent/50 rounded-lg px-3 py-1.5 mb-1.5 shadow-sm group-hover:shadow-md transition-all duration-200">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-accent-foreground flex-shrink-0" />
-                <span className="text-sm font-bold text-accent-foreground">Asset: {pssr.asset}</span>
-              </div>
-            </div>
-            
             <div className="flex items-center gap-3 text-muted-foreground text-xs">
-              <div className="flex items-center gap-2">
-                <div className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${getPriorityColor(pssr.priority)}`}>
-                  {pssr.priority}
-                </div>
-                {getStatusIcon(pssr.status)}
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3 w-3 flex-shrink-0" />
+                <span>Asset: {pssr.asset}</span>
               </div>
+              <span>•</span>
+              {getStatusIcon(pssr.status)}
               <span>•</span>
               <span>{new Date(pssr.created).toLocaleDateString()}</span>
             </div>
@@ -179,24 +171,36 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             </div>
           </div>
 
-          {/* Status Only (Right) */}
-          <div className="flex flex-col items-end justify-center gap-2 flex-shrink-0 min-w-0">
-            {/* Status Badge - More Prominent */}
-            <div className={`px-3 py-1.5 rounded-lg font-semibold text-sm border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md ${
-              pssr.status === 'Approved' ? 'bg-success/10 text-success border-success/30' :
-              pssr.status === 'Under Review' ? 'bg-warning/10 text-warning border-warning/30' :
-              'bg-muted/30 text-muted-foreground border-muted/30'
-            }`}>
-              {pssr.status}
+          {/* Progress and Status (Right) */}
+          <div className="flex items-center gap-3 flex-shrink-0 min-w-0">
+            {/* Progress */}
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground font-medium mb-1">Progress</div>
+              <div className="text-xl font-bold text-foreground">{pssr.progress}%</div>
             </div>
 
-            {/* Pending Approvals Indicator */}
-            {pssr.pendingApprovals > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-warning/10 border border-warning/30 rounded-md">
-                <AlertTriangle className="h-3 w-3 text-warning" />
-                <span className="text-xs font-medium text-warning">{pssr.pendingApprovals} pending</span>
+            {/* Divider */}
+            <div className="w-px h-12 bg-border/30"></div>
+
+            {/* Status Section */}
+            <div className="flex flex-col items-end justify-center gap-2">
+              {/* Status Badge */}
+              <div className={`px-3 py-1.5 rounded-lg font-semibold text-sm border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md ${
+                pssr.status === 'Approved' ? 'bg-success/10 text-success border-success/30' :
+                pssr.status === 'Under Review' ? 'bg-warning/10 text-warning border-warning/30' :
+                'bg-muted/30 text-muted-foreground border-muted/30'
+              }`}>
+                {pssr.status}
               </div>
-            )}
+
+              {/* Pending Approvals Indicator */}
+              {pssr.pendingApprovals > 0 && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-warning/10 border border-warning/30 rounded-md">
+                  <AlertTriangle className="h-3 w-3 text-warning" />
+                  <span className="text-xs font-medium text-warning">{pssr.pendingApprovals} pending</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
