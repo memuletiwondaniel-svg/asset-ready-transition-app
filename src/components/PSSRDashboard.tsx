@@ -223,7 +223,102 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack, onNavigat
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Enhanced Dynamic Gradient Background */}
+      <div className="absolute inset-0 bg-background">
+        {/* Main layer - Diagonal flowing gradients with color morph */}
+        <div className="absolute inset-0 opacity-42 dark:opacity-32">
+          <div 
+            className="absolute inset-0 animate-gradient-shift-morph"
+            style={{
+              background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 24%, 88%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 23%, 88%) 0%, transparent 35%)',
+              filter: 'blur(50px)',
+            }}
+          />
+        </div>
+
+        {/* Dramatic sweep layer - moves across screen */}
+        <div className="absolute inset-0 opacity-35 dark:opacity-25">
+          <div 
+            className="absolute inset-0 animate-gradient-sweep-morph"
+            style={{
+              background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(260, 28%, 86%) 0%, transparent 50%)',
+              filter: 'blur(60px)',
+            }}
+          />
+        </div>
+
+        {/* Horizontal flowing layer with faster color morph */}
+        <div className="absolute inset-0 opacity-28 dark:opacity-20">
+          <div 
+            className="absolute inset-0 animate-gradient-horizontal-morph"
+            style={{
+              background: 'radial-gradient(at 10% 50%, hsl(190, 27%, 86%) 0%, transparent 50%), radial-gradient(at 90% 50%, hsl(270, 25%, 87%) 0%, transparent 50%)',
+              filter: 'blur(55px)',
+            }}
+          />
+        </div>
+
+        {/* Vertical flowing layer with color morph */}
+        <div className="absolute inset-0 opacity-25 dark:opacity-18">
+          <div 
+            className="absolute inset-0 animate-gradient-vertical-morph"
+            style={{
+              background: 'radial-gradient(at 50% 10%, hsl(220, 26%, 88%) 0%, transparent 50%), radial-gradient(at 50% 90%, hsl(310, 24%, 89%) 0%, transparent 50%)',
+              filter: 'blur(58px)',
+            }}
+          />
+        </div>
+        
+        {/* Counter-rotating layer without color morph for contrast */}
+        <div className="absolute inset-0 opacity-22 dark:opacity-16">
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(at 70% 40%, hsl(180, 25%, 87%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 24%, 88%) 0%, transparent 45%)',
+              filter: 'blur(52px)',
+              animation: 'gradient-shift 15s ease-in-out infinite reverse',
+            }}
+          />
+        </div>
+
+        {/* Pulsing accent gradients with color morph */}
+        <div className="absolute inset-0 opacity-20 dark:opacity-15">
+          <div 
+            className="absolute inset-0 animate-gradient-pulse-morph"
+            style={{
+              background: 'radial-gradient(at 35% 35%, hsl(240, 25%, 86%) 0%, transparent 35%), radial-gradient(at 65% 65%, hsl(330, 23%, 87%) 0%, transparent 35%)',
+              filter: 'blur(48px)',
+            }}
+          />
+        </div>
+        
+        {/* Overlay gradient for depth with subtle color morph */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            background: 'linear-gradient(135deg, hsl(220, 22%, 90%) 0%, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%, hsl(280, 20%, 89%) 100%)',
+            animation: 'gradient-color-morph 18s linear infinite',
+          }}
+        />
+        
+        {/* Subtle geometric pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(var(--primary)) 1px, transparent 1px),
+                             radial-gradient(circle at 80% 80%, hsl(var(--primary)) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}
+        />
+        
+        {/* Enhanced noise texture */}
+        <div className="absolute inset-0 opacity-[0.015] mix-blend-soft-light" style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'4\' numOctaves=\'5\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' /%3E%3C/svg%3E")'
+        }} />
+      </div>
+      
+      <div className="relative z-10">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -549,6 +644,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack, onNavigat
           </TabsContent>
         </Tabs>
       </main>
+      </div>
     </div>
   );
 };
