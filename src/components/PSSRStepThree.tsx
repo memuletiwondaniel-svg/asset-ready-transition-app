@@ -202,7 +202,7 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
       {/* Header */}
       <Card className="bg-card/60 backdrop-blur-sm border-border/40">
         <CardContent className="p-6">
-          <div className="flex items-center space-x-3 mb-4">
+          <div className="flex items-center space-x-3">
             <UserCheck className="h-6 w-6 text-primary" />
             <div>
               <h3 className="font-semibold text-lg">PSSR Approval Workflow - Tier {pssrTier}</h3>
@@ -211,19 +211,6 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
                 {pssrTier === 2 && 'Tier 2 PSSR requires approval from Deputy Plant Director and Plant Director.'}
                 {pssrTier === 3 && 'Tier 3 PSSR requires approval from Deputy Plant Director only.'}
               </p>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Approval Configuration Progress</span>
-              <span className="font-medium">{approvers.length} / 9 Approvers</span>
-            </div>
-            <Progress value={calculateProgress()} className="h-3" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Level 1: {getApproversByLevel(1).length} / 5</span>
-              <span>Level 2: {getApproversByLevel(2).length} / 4</span>
             </div>
           </div>
         </CardContent>

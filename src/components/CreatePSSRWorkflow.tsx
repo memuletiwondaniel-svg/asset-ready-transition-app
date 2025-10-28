@@ -66,7 +66,13 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
   const checkStepCompletion = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(pssrData.asset && pssrData.reason && pssrData.projectId);
+        return !!(
+          pssrData.reason && 
+          pssrData.plant && 
+          pssrData.projectId && 
+          pssrData.projectName && 
+          pssrData.asset
+        );
       case 2:
         return !!(pssrData.checklistItems && pssrData.checklistItems.length > 0);
       case 3:
@@ -317,8 +323,8 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Modern Progress Bar */}
-        <Card className="mb-6 bg-card/60 backdrop-blur-sm border-border/40">
+        {/* Modern Progress Bar - Sticky */}
+        <Card className="mb-6 bg-card/60 backdrop-blur-sm border-border/40 sticky top-4 z-10">
           <CardContent className="p-8">
             <div className="space-y-6">
               {/* Header */}
