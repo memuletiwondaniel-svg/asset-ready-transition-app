@@ -54,8 +54,8 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
     { number: 1, title: 'Enter PSSR Information', description: 'Basic PSSR details and scope' },
     { number: 2, title: 'Select Checklist Items', description: 'Choose applicable checklist items' },
     { number: 3, title: 'Review PSSR Approvers', description: 'Configure approval workflow' },
-    { number: 4, title: 'Schedule PSSR Activity', description: 'Plan kick-off and walkdown events' },
-    { number: 5, title: 'Link a PSSR', description: 'Connect related PSSRs' }
+    { number: 4, title: 'Link a PSSR', description: 'Connect related PSSRs' },
+    { number: 5, title: 'Schedule PSSR Activity', description: 'Plan kick-off and walkdown events' }
   ];
 
   const checkStepCompletion = (step: number): boolean => {
@@ -73,9 +73,9 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
       case 3:
         return !!(pssrData.approvers && pssrData.approvers.length > 0);
       case 4:
-        return !!(pssrData.scheduledActivities && pssrData.scheduledActivities.length > 0);
-      case 5:
         return true; // Optional step
+      case 5:
+        return !!(pssrData.scheduledActivities && pssrData.scheduledActivities.length > 0);
       default:
         return false;
     }
@@ -220,16 +220,6 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
         );
       case 4:
         return (
-          <PSSRStepFour
-            data={pssrData}
-            onDataUpdate={handleDataUpdate}
-            onNext={handleNext}
-            onBack={handleBack}
-            onSave={handleSave}
-          />
-        );
-      case 5:
-        return (
           <PSSRStepSix
             data={pssrData}
             onDataUpdate={handleDataUpdate}
@@ -237,6 +227,16 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
             onBack={handleBack}
             onSave={handleSave}
             currentPssrId={pssrId}
+          />
+        );
+      case 5:
+        return (
+          <PSSRStepFour
+            data={pssrData}
+            onDataUpdate={handleDataUpdate}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSave={handleSave}
           />
         );
       default:
@@ -338,7 +338,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                         )}
                       </div>
                       
-                      {/* Step Title */}
+                      {/* Step Title - without step number */}
                       <p className={`text-xs font-semibold leading-tight line-clamp-2 ${
                         isCurrent ? 'text-blue-700 dark:text-blue-400' : ''
                       }`}>

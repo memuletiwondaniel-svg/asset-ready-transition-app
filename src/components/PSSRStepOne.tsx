@@ -98,8 +98,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
         <CardContent className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <Label htmlFor="reason" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-blue-600" />
+              <Label htmlFor="reason" className="text-sm font-semibold text-gray-700">
                 Reason for PSSR *
               </Label>
               <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({...prev, reason: value, projectId: '', projectName: '', asset: ''}))}>

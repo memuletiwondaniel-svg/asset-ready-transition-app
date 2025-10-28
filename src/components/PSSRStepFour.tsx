@@ -56,7 +56,7 @@ interface Attendee {
 
 interface PSSREvent {
   id: string;
-  type: 'kickoff' | 'walkdown';
+  type: 'kickoff' | 'walkdown' | 'sof';
   title: string;
   date: Date;
   time: string;
@@ -89,7 +89,7 @@ const PSSRStepFour: React.FC<PSSRStepFourProps> = ({
 }) => {
   const [events, setEvents] = useState<PSSREvent[]>([]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [currentEventType, setCurrentEventType] = useState<'kickoff' | 'walkdown'>('kickoff');
+  const [currentEventType, setCurrentEventType] = useState<'kickoff' | 'walkdown' | 'sof'>('kickoff');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState('09:00');
   const [venue, setVenue] = useState('');
@@ -149,8 +149,9 @@ const PSSRStepFour: React.FC<PSSRStepFourProps> = ({
     }
   ];
 
-  const generateDefaultMessage = (type: 'kickoff' | 'walkdown') => {
-    const baseMessage = `You are invited to attend the PSSR ${type === 'kickoff' ? 'Kick-off' : 'Walkdown'} meeting.
+  const generateDefaultMessage = (type: 'kickoff' | 'walkdown' | 'sof') => {
+    const meetingType = type === 'kickoff' ? 'Kick-off' : type === 'walkdown' ? 'Walkdown' : 'Sign-off (SoF)';
+    const baseMessage = `You are invited to attend the PSSR ${meetingType} meeting.
 
 PSSR Details:
 ${data.projectId ? `Project ID: ${data.projectId}` : ''}
@@ -171,21 +172,22 @@ PSSR Team`;
     return baseMessage;
   };
 
-  const generateEventTitle = (type: 'kickoff' | 'walkdown') => {
+  const generateEventTitle = (type: 'kickoff' | 'walkdown' | 'sof') => {
+    const meetingType = type === 'kickoff' ? 'Kick-off' : type === 'walkdown' ? 'Walkdown' : 'Sign-off';
     if (data.reason === 'Start-up or Commissioning of a new Asset' && data.projectId && data.projectName) {
-      return `PSSR ${type === 'kickoff' ? 'Kick-off' : 'Walkdown'}: ${data.projectId}: ${data.projectName}`;
+      return `PSSR ${meetingType}: ${data.projectId}: ${data.projectName}`;
     } else {
       const plant = data.plant || data.asset || 'Plant';
       const reasonShort = data.reason?.includes('TAR') ? 'TAR' : 'Restart';
-      return `PSSR ${type === 'kickoff' ? 'Kick-off' : 'Walkdown'}: ${plant} ${reasonShort}`;
+      return `PSSR ${meetingType}: ${plant} ${reasonShort}`;
     }
   };
 
-  const handleScheduleEvent = (type: 'kickoff' | 'walkdown') => {
+  const handleScheduleEvent = (type: 'kickoff' | 'walkdown' | 'sof') => {
     setCurrentEventType(type);
     setSelectedDate(undefined);
     setSelectedTime('09:00');
-    setVenue(type === 'walkdown' ? 'Site Location - TBD' : '');
+    setVenue(type === 'walkdown' ? 'Site Location - TBD' : type === 'sof' ? 'Conference Room - TBD' : '');
     setInviteMessage(generateDefaultMessage(type));
     setEventAttendees([...defaultAttendees]);
     setShowScheduleModal(true);
@@ -322,7 +324,7 @@ PSSR Team`;
       </Card>
 
       {/* Schedule Event Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleScheduleEvent('kickoff')}>
           <CardContent className="p-6 text-center">
             <Video className="h-12 w-12 text-blue-600 mx-auto mb-4" />
@@ -350,15 +352,85 @@ PSSR Team`;
             </Button>
           </CardContent>
         </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleScheduleEvent('sof')}>
+          <CardContent className="p-6 text-center">
+            <Users className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+            <h3 className="font-semibold text-lg mb-2">Schedule SoF Meeting</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Schedule the Sign-off (SoF) meeting to finalize and approve the PSSR
+            </p>
+            <Button className="w-full" variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              Schedule SoF Meeting
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Timeline View - Show when all 3 events are scheduled */}
+      {events.length === 3 && (
+        <Card className="bg-gradient-to-br from-blue-50 to-purple-50">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CalendarIcon className="h-5 w-5 mr-2" />
+              PSSR Activity Timeline
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              {/* Timeline line */}
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-green-500 to-purple-500" />
+              
+              <div className="space-y-8">
+                {[...events].sort((a, b) => a.date.getTime() - b.date.getTime()).map((event, index) => (
+                  <div key={event.id} className="relative pl-20">
+                    {/* Timeline dot */}
+                    <div className={`absolute left-5 w-6 h-6 rounded-full border-4 border-white shadow-md ${
+                      event.type === 'kickoff' ? 'bg-blue-500' : 
+                      event.type === 'walkdown' ? 'bg-green-500' : 'bg-purple-500'
+                    }`} />
+                    
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={event.type === 'kickoff' ? 'default' : event.type === 'walkdown' ? 'secondary' : 'outline'} 
+                                 className={event.type === 'sof' ? 'bg-purple-50 text-purple-700 border-purple-200' : ''}>
+                            {event.type === 'kickoff' ? 'Kick-off' : event.type === 'walkdown' ? 'Walkdown' : 'SoF Meeting'}
+                          </Badge>
+                          <span className="text-sm font-medium text-gray-600">
+                            {format(event.date, 'MMM dd, yyyy')} at {event.time}
+                          </span>
+                        </div>
+                      </div>
+                      <h4 className="font-semibold text-gray-900">{event.title}</h4>
+                      {event.venue && (
+                        <p className="text-sm text-gray-600 mt-1 flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {event.venue}
+                        </p>
+                      )}
+                      <div className="flex items-center space-x-4 text-xs mt-2">
+                        <span className="text-green-600">{event.responses.accepted} Accepted</span>
+                        <span className="text-yellow-600">{event.responses.tentative} Tentative</span>
+                        <span className="text-gray-600">{event.responses.no_response} Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Scheduled Events */}
-      {events.length > 0 && (
+      {events.length > 0 && events.length < 3 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Clock className="h-5 w-5 mr-2" />
-              Scheduled Events
+              Scheduled Events ({events.length}/3)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -369,8 +441,9 @@ PSSR Team`;
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <Badge variant={event.type === 'kickoff' ? 'default' : 'secondary'}>
-                            {event.type === 'kickoff' ? 'Kick-off' : 'Walkdown'}
+                          <Badge variant={event.type === 'kickoff' ? 'default' : event.type === 'walkdown' ? 'secondary' : 'outline'}
+                                 className={event.type === 'sof' ? 'bg-purple-50 text-purple-700 border-purple-200' : ''}>
+                            {event.type === 'kickoff' ? 'Kick-off' : event.type === 'walkdown' ? 'Walkdown' : 'SoF Meeting'}
                           </Badge>
                           <Badge variant="outline" className="bg-green-50 text-green-700">
                             {event.status}
@@ -452,8 +525,11 @@ PSSR Team`;
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              {currentEventType === 'kickoff' ? <Video className="h-6 w-6" /> : <MapPin className="h-6 w-6" />}
-              <span>Schedule PSSR {currentEventType === 'kickoff' ? 'Kick-off' : 'Walkdown'}</span>
+              {currentEventType === 'kickoff' ? <Video className="h-6 w-6" /> : 
+               currentEventType === 'walkdown' ? <MapPin className="h-6 w-6" /> : 
+               <Users className="h-6 w-6" />}
+              <span>Schedule PSSR {currentEventType === 'kickoff' ? 'Kick-off' : 
+                                   currentEventType === 'walkdown' ? 'Walkdown' : 'Sign-off Meeting'}</span>
             </DialogTitle>
           </DialogHeader>
           
@@ -502,14 +578,14 @@ PSSR Team`;
               </div>
             </div>
 
-            {/* Venue (for walkdown only) */}
-            {currentEventType === 'walkdown' && (
+            {/* Venue (for walkdown and sof) */}
+            {(currentEventType === 'walkdown' || currentEventType === 'sof') && (
               <div>
                 <Label>Venue *</Label>
                 <Input
                   value={venue}
                   onChange={(e) => setVenue(e.target.value)}
-                  placeholder="Enter walkdown location/venue"
+                  placeholder={currentEventType === 'walkdown' ? 'Enter walkdown location/venue' : 'Enter meeting room/venue'}
                   className="mt-1"
                 />
               </div>

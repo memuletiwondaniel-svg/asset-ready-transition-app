@@ -12,7 +12,9 @@ import {
   Clock, 
   Info,
   Trash2,
-  Plus
+  Plus,
+  ArrowLeft,
+  Save
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -239,13 +241,85 @@ const PSSRStepSix: React.FC<PSSRStepSixProps> = ({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Link PSSR</h2>
-          <p className="text-gray-600 mt-1">Link this PSSR to other PSSRs as prerequisites</p>
+          <p className="text-gray-600 mt-1">Link this PSSR to other PSSRs as prerequisites or successors</p>
         </div>
         <Button onClick={handleLinkPSSR} className="bg-blue-600 hover:bg-blue-700">
           <Link className="h-4 w-4 mr-2" />
           Link PSSR
         </Button>
       </div>
+
+      {/* Logical Map */}
+      {linkedPSSRs.length > 0 && (
+        <Card className="bg-gradient-to-br from-blue-50 to-purple-50">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Link className="h-5 w-5 mr-2" />
+              PSSR Dependency Map
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center space-x-4 py-8">
+              {/* Prerequisites */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-center text-gray-600 mb-4">Prerequisites</p>
+                {linkedPSSRs.map((link, index) => (
+                  <div key={link.id} className="relative">
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-200 min-w-[200px]">
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(link.linked_pssr.status, link.linked_pssr.approval_status)}
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm">{link.linked_pssr.pssr_id}</p>
+                          <p className="text-xs text-gray-600">{link.linked_pssr.asset}</p>
+                        </div>
+                        {getStatusBadge(link.linked_pssr.status, link.linked_pssr.approval_status)}
+                      </div>
+                    </div>
+                    {index < linkedPSSRs.length - 1 && (
+                      <div className="absolute left-1/2 -bottom-3 w-0.5 h-3 bg-gray-300" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Arrow */}
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-12 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500" />
+                <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-12 border-l-purple-500 rotate-90" />
+              </div>
+
+              {/* Current PSSR */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-center text-gray-600 mb-4">Current PSSR</p>
+                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg min-w-[200px]">
+                  <div className="text-white">
+                    <p className="font-bold text-lg">{currentPssrId || 'PSSR-XXXX'}</p>
+                    <p className="text-sm text-blue-100 mt-1">{data.asset || 'Current Asset'}</p>
+                    <Badge variant="outline" className="mt-2 bg-white/20 text-white border-white/40">
+                      In Progress
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrow for successors */}
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500 to-green-500" />
+                <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-12 border-l-green-500 rotate-90" />
+              </div>
+
+              {/* Successors */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-center text-gray-600 mb-4">Successors</p>
+                <div className="bg-white/50 p-3 rounded-lg border-2 border-dashed border-gray-300 min-w-[200px] text-center">
+                  <p className="text-xs text-gray-500">No successor PSSRs</p>
+                  <p className="text-xs text-gray-400 mt-1">Other PSSRs can depend on this one</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Linked PSSRs */}
       <Card>
@@ -465,6 +539,24 @@ const PSSRStepSix: React.FC<PSSRStepSixProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6 border-t">
+        <Button variant="outline" onClick={onBack} className="flex items-center space-x-2">
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Approvers</span>
+        </Button>
+        
+        <div className="flex space-x-3">
+          <Button variant="outline" onClick={onSave} className="flex items-center space-x-2">
+            <Save className="h-4 w-4" />
+            <span>Save</span>
+          </Button>
+          <Button onClick={onNext} className="flex items-center space-x-2">
+            <span>Continue</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
