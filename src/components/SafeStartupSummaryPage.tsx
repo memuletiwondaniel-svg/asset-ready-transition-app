@@ -396,36 +396,36 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Enhanced Modern Microsoft Fluent Dynamic Background */}
+      {/* Subtle Modern Gradient Background */}
       <div className="absolute inset-0 bg-background">
-        {/* Multiple animated gradient layers for richer appearance */}
-        <div className="absolute inset-0 opacity-70 dark:opacity-50">
+        {/* Multiple animated gradient layers with soft pastel colors */}
+        <div className="absolute inset-0 opacity-40 dark:opacity-30">
           <div 
             className="absolute inset-0 animate-gradient-shift"
             style={{
-              background: 'radial-gradient(at 20% 30%, hsl(210, 100%, 65%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 95%, 70%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 90%, 75%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 85%, 73%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 80%, 70%) 0%, transparent 35%)',
+              background: 'radial-gradient(at 20% 30%, hsl(210, 35%, 90%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 40%, 88%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 38%, 91%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 42%, 89%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 36%, 90%) 0%, transparent 35%)',
               filter: 'blur(70px)',
             }}
           />
         </div>
         
         {/* Secondary animated layer with opposite movement */}
-        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+        <div className="absolute inset-0 opacity-25 dark:opacity-20">
           <div 
             className="absolute inset-0"
             style={{
-              background: 'radial-gradient(at 70% 40%, hsl(180, 85%, 70%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 80%, 75%) 0%, transparent 45%)',
+              background: 'radial-gradient(at 70% 40%, hsl(180, 40%, 88%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 38%, 90%) 0%, transparent 45%)',
               filter: 'blur(90px)',
               animation: 'gradient-shift 20s ease-in-out infinite reverse',
             }}
           />
         </div>
         
-        {/* Overlay gradient for depth and richness */}
+        {/* Overlay gradient for depth */}
         <div 
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0 opacity-25"
           style={{
-            background: 'linear-gradient(135deg, hsl(220, 70%, 85%) 0%, transparent 30%, hsl(var(--primary) / 0.15) 50%, transparent 70%, hsl(280, 60%, 80%) 100%)'
+            background: 'linear-gradient(135deg, hsl(220, 30%, 92%) 0%, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%, hsl(280, 28%, 91%) 100%)'
           }}
         />
         
