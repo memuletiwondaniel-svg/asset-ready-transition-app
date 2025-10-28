@@ -74,8 +74,42 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Modern Gradient Background */}
+      <div className="absolute inset-0 bg-background">
+        {/* Main layer */}
+        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+          <div 
+            className="absolute inset-0 animate-gradient-shift-morph"
+            style={{
+              background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%)',
+              filter: 'blur(50px)',
+            }}
+          />
+        </div>
+
+        {/* Sweep layer */}
+        <div className="absolute inset-0 opacity-30 dark:opacity-20">
+          <div 
+            className="absolute inset-0 animate-gradient-sweep-morph"
+            style={{
+              background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(260, 28%, 86%) 0%, transparent 50%)',
+              filter: 'blur(60px)',
+            }}
+          />
+        </div>
+        
+        {/* Overlay gradient */}
+        <div 
+          className="absolute inset-0 opacity-15"
+          style={{
+            background: 'linear-gradient(135deg, hsl(220, 22%, 90%) 0%, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%)',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10">
+      <header className="fluent-navigation sticky top-0 z-50 border-b border-border/50">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-12">
             <div className="flex items-center space-x-3">
@@ -383,6 +417,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
           </TabsContent>
         </Tabs>
       </main>
+      </div>
     </div>
   );
 };
