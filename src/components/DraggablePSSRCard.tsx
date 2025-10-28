@@ -117,8 +117,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           {/* Primary Info - Project ID and Name */}
           <div className="flex-1 min-w-0 max-w-md flex flex-col justify-center">
             {/* Project ID and Name */}
-            <div className="flex items-center gap-2 mb-1">
-              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2.5 py-1 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 min-w-[70px] text-center">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-3 py-1 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 w-20 text-center">
                 {pssr.projectId}
               </div>
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 leading-tight line-clamp-1 flex-1 min-w-0">
@@ -126,9 +126,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               </h3>
             </div>
             
-            <div className="flex items-center gap-3 text-muted-foreground text-xs">
-              {getStatusIcon(pssr.status)}
-              <span>•</span>
+            <div className="text-muted-foreground text-xs">
               <span>{new Date(pssr.created).toLocaleDateString()}</span>
             </div>
           </div>
@@ -138,8 +136,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             <span className="text-foreground text-base font-semibold text-left">{pssr.asset}</span>
           </div>
 
-          {/* Tier Column */}
-          <div className="flex items-center justify-center w-20 flex-shrink-0">
+          {/* Tier Column - Left Justified */}
+          <div className="flex items-center justify-start w-20 flex-shrink-0">
             <div className={`px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm ${
               pssr.tier === 1 ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-2 border-red-500/40' :
               pssr.tier === 2 ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-2 border-orange-500/40' :
@@ -149,22 +147,20 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             </div>
           </div>
 
-          {/* PSSR Lead (Center) */}
-          <div className="flex items-center gap-3 px-2 flex-shrink-0">
+          {/* PSSR Lead - Left Justified */}
+          <div className="flex items-center gap-2 px-2 flex-shrink-0">
             {/* Lead Profile */}
-            <div className="text-center">
-              <div className="text-[10px] text-muted-foreground font-medium mb-0.5">PSSR Lead</div>
-              <div className="relative mb-1">
-                <img 
-                  src={pssr.pssrLeadAvatar} 
-                  alt={pssr.pssrLead}
-                  className="w-8 h-8 rounded-full border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
-                />
-                {/* Teams-style status indicator - bottom right */}
-                <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-card ${getTeamStatusColor(pssr.teamStatus)}`}></div>
-              </div>
-              <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate max-w-16">
-                {pssr.pssrLead.split(' ')[0]}
+            <div className="flex items-center gap-2">
+              <img 
+                src={pssr.pssrLeadAvatar} 
+                alt={pssr.pssrLead}
+                className="w-8 h-8 rounded-full border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
+              />
+              <div className="flex flex-col">
+                <div className="text-[10px] text-muted-foreground font-medium">PSSR Lead</div>
+                <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
+                  {pssr.pssrLead.split(' ')[0]}
+                </div>
               </div>
             </div>
           </div>

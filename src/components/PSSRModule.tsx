@@ -333,30 +333,52 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Modern Microsoft Fluent Dynamic Background */}
+      {/* Enhanced Modern Microsoft Fluent Dynamic Background */}
       <div className="absolute inset-0 bg-background">
-        {/* Animated gradient mesh */}
-        <div className="absolute inset-0 opacity-60 dark:opacity-40">
+        {/* Multiple animated gradient layers for richer appearance */}
+        <div className="absolute inset-0 opacity-70 dark:opacity-50">
           <div 
             className="absolute inset-0 animate-gradient-shift"
             style={{
-              background: 'radial-gradient(at 20% 30%, hsl(210, 100%, 70%) 0%, transparent 50%), radial-gradient(at 80% 20%, hsl(280, 90%, 75%) 0%, transparent 50%), radial-gradient(at 40% 80%, hsl(200, 85%, 80%) 0%, transparent 50%), radial-gradient(at 90% 70%, hsl(320, 80%, 78%) 0%, transparent 50%)',
-              filter: 'blur(80px)',
+              background: 'radial-gradient(at 20% 30%, hsl(210, 100%, 65%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 95%, 70%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 90%, 75%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 85%, 73%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 80%, 70%) 0%, transparent 35%)',
+              filter: 'blur(70px)',
             }}
           />
         </div>
         
-        {/* Overlay gradient for depth */}
+        {/* Secondary animated layer with opposite movement */}
+        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(at 70% 40%, hsl(180, 85%, 70%) 0%, transparent 45%), radial-gradient(at 30% 70%, hsl(300, 80%, 75%) 0%, transparent 45%)',
+              filter: 'blur(90px)',
+              animation: 'gradient-shift 20s ease-in-out infinite reverse',
+            }}
+          />
+        </div>
+        
+        {/* Overlay gradient for depth and richness */}
         <div 
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-40"
           style={{
-            background: 'linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, hsl(var(--secondary) / 0.15) 100%)'
+            background: 'linear-gradient(135deg, hsl(220, 70%, 85%) 0%, transparent 30%, hsl(var(--primary) / 0.15) 50%, transparent 70%, hsl(280, 60%, 80%) 100%)'
           }}
         />
         
-        {/* Noise texture for Microsoft authenticity */}
-        <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay" style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'3\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' /%3E%3C/svg%3E")'
+        {/* Subtle geometric pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(var(--primary)) 1px, transparent 1px),
+                             radial-gradient(circle at 80% 80%, hsl(var(--primary)) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}
+        />
+        
+        {/* Enhanced noise texture */}
+        <div className="absolute inset-0 opacity-[0.015] mix-blend-soft-light" style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'4\' numOctaves=\'5\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' /%3E%3C/svg%3E")'
         }} />
       </div>
       
