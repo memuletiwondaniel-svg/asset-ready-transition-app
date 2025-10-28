@@ -93,7 +93,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     },
     {
       id: 'PSSR-2024-003',
-      projectId: 'DP 083C',
+      projectId: 'DP 083',
       projectName: 'UQ Jetty 2 Export Terminal',
       asset: 'UQ',
       status: 'Approved',

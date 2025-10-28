@@ -36,10 +36,13 @@ import {
   Calendar,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  LayoutGrid,
+  Table as TableIcon
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
+import PSSRTableView from './PSSRTableView';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
@@ -77,6 +80,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
@@ -136,7 +140,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     },
     {
       id: 'PSSR-2024-003',
-      projectId: 'DP 083C',
+      projectId: 'DP 083',
       projectName: 'UQ Jetty 2 Export Terminal',
       asset: 'UQ',
       status: 'Approved',
@@ -421,6 +425,28 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
             {/* Header Actions */}
             <div className="flex items-center gap-4">
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 border border-border/50">
+                <Button
+                  variant={viewMode === 'card' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('card')}
+                  className="h-8 px-3"
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Cards
+                </Button>
+                <Button
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="h-8 px-3"
+                >
+                  <TableIcon className="h-4 w-4 mr-2" />
+                  Table
+                </Button>
+              </div>
+
               <Button 
                 variant="outline"
                 className="fluent-button border-border/50 hover:bg-secondary/50"
@@ -566,7 +592,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
             </h2>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>Showing {filteredPSSRs.length} of {stats.total} reviews</span>
-              {filteredPSSRs.length > 0 && (
+              {filteredPSSRs.length > 0 && viewMode === 'card' && (
                 <span className="text-xs bg-muted/50 px-2 py-1 rounded-lg">
                   💡 Drag cards to reorder
                 </span>
@@ -574,45 +600,52 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
             </div>
           </div>
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={filteredPSSRs.map(pssr => pssr.id)} strategy={verticalListSortingStrategy}>
-              <div className="grid gap-4">
-                {filteredPSSRs.map((pssr, index) => (
-                  <DraggablePSSRCard
-                    key={pssr.id}
-                    pssr={pssr}
-                    index={index}
-                    onViewDetails={handleViewDetails}
-                    getPriorityColor={getPriorityColor}
-                    getStatusIcon={getStatusIcon}
-                    getTeamStatusColor={getTeamStatusColor}
-                    getRiskLevelColor={getRiskLevelColor}
-                    isPinned={pinnedPSSRs.includes(pssr.id)}
-                    onTogglePin={handleTogglePin}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-
-            <DragOverlay>
-              {activeDragId ? (
-                <div className="fluent-card p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
-                  <div className="text-center">
-                    <ShieldCheck className="h-8 w-8 text-primary mx-auto mb-2" />
-                    <p className="font-semibold text-foreground">Moving PSSR...</p>
-                    <p className="text-sm text-muted-foreground">
-                      {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
-                    </p>
-                  </div>
+          {viewMode === 'table' ? (
+            <PSSRTableView 
+              pssrs={filteredPSSRs}
+              onViewDetails={handleViewDetails}
+            />
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={filteredPSSRs.map(pssr => pssr.id)} strategy={verticalListSortingStrategy}>
+                <div className="grid gap-4">
+                  {filteredPSSRs.map((pssr, index) => (
+                    <DraggablePSSRCard
+                      key={pssr.id}
+                      pssr={pssr}
+                      index={index}
+                      onViewDetails={handleViewDetails}
+                      getPriorityColor={getPriorityColor}
+                      getStatusIcon={getStatusIcon}
+                      getTeamStatusColor={getTeamStatusColor}
+                      getRiskLevelColor={getRiskLevelColor}
+                      isPinned={pinnedPSSRs.includes(pssr.id)}
+                      onTogglePin={handleTogglePin}
+                    />
+                  ))}
                 </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+              </SortableContext>
+
+              <DragOverlay>
+                {activeDragId ? (
+                  <div className="fluent-card p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
+                    <div className="text-center">
+                      <ShieldCheck className="h-8 w-8 text-primary mx-auto mb-2" />
+                      <p className="font-semibold text-foreground">Moving PSSR...</p>
+                      <p className="text-sm text-muted-foreground">
+                        {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
 
           {filteredPSSRs.length === 0 && (
             <div className="text-center py-16">
