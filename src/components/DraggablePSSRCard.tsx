@@ -111,19 +111,18 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
         {/* Modern gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        <div className="relative z-10 flex items-stretch justify-between ml-7 mr-8 h-full">
+        <div className="relative z-10 flex items-stretch justify-between ml-7 mr-8 h-full gap-4">
           
-          {/* Primary Info - Project ID, Name, and Asset on Same Row */}
+          {/* Primary Info - Project ID and Name */}
           <div className="flex-1 min-w-0 max-w-md flex flex-col justify-center">
-            {/* Project ID, Name, and Asset on Same Row */}
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            {/* Project ID and Name */}
+            <div className="flex items-center gap-2 mb-2">
               <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2.5 py-1 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200">
                 {pssr.projectId}
               </div>
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 leading-tight line-clamp-1 flex-1 min-w-0">
                 {pssr.projectName}
               </h3>
-              <span className="text-muted-foreground text-xs font-medium">{pssr.asset}</span>
             </div>
             
             <div className="flex items-center gap-3 text-muted-foreground text-xs">
@@ -131,6 +130,11 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               <span>•</span>
               <span>{new Date(pssr.created).toLocaleDateString()}</span>
             </div>
+          </div>
+
+          {/* Plant/Asset - Right Justified Column */}
+          <div className="flex items-center justify-end w-32 flex-shrink-0">
+            <span className="text-foreground text-base font-semibold text-right">{pssr.asset}</span>
           </div>
 
           {/* PSSR Lead (Center) */}
@@ -154,7 +158,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </div>
 
           {/* Progress and Status (Right) - Fixed Width for Alignment */}
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-6 flex-shrink-0">
             {/* Progress - Fixed Width */}
             <div className="text-center w-16">
               <div className="text-xs text-muted-foreground font-medium mb-1">Progress</div>
