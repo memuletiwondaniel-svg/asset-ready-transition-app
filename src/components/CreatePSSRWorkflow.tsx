@@ -319,7 +319,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                         isComplete
                           ? 'bg-primary/10 border-primary text-primary shadow-md'
                           : isCurrent
-                          ? 'bg-gradient-to-br from-blue-500/20 via-purple-500/15 to-indigo-500/20 border-blue-500 shadow-lg ring-2 ring-blue-400/30'
+                          ? 'bg-gradient-to-br from-blue-500/20 via-purple-500/15 to-indigo-500/20 border-blue-500 shadow-lg ring-2 ring-blue-400/30 animate-gradient-color-morph-fast'
                           : 'bg-background/40 border-border/40 text-muted-foreground hover:border-primary/30'
                       }`}
                     >
@@ -328,7 +328,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                         isComplete 
                           ? 'bg-primary text-primary-foreground'
                           : isCurrent
-                          ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 text-white font-bold shadow-md'
+                          ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 text-white font-bold shadow-md animate-gradient-color-morph'
                           : 'bg-muted/50 text-muted-foreground'
                       }`}>
                         {isComplete ? (
@@ -348,8 +348,8 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                       {/* Current Indicator */}
                       {isCurrent && (
                         <>
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 animate-pulse shadow-md" />
-                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse pointer-events-none" />
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 animate-gradient-color-morph shadow-md" />
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-gradient-color-morph-slow pointer-events-none" />
                         </>
                       )}
                     </button>
