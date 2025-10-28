@@ -67,7 +67,8 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: '2024-02-15',
       teamMembers: 8,
       lastActivity: '2 hours ago',
-      location: 'Hassi Messaoud'
+      location: 'Hassi Messaoud',
+      tier: 1 as 1 | 2 | 3
     },
     {
       id: 'PSSR-2024-002',
@@ -87,7 +88,8 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: '2024-02-20',
       teamMembers: 5,
       lastActivity: '1 day ago',
-      location: 'Kazachstan'
+      location: 'Kazachstan',
+      tier: 3 as 1 | 2 | 3
     },
     {
       id: 'PSSR-2024-003',
@@ -107,7 +109,8 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: null,
       teamMembers: 12,
       lastActivity: 'Completed',
-      location: 'Queensland'
+      location: 'Queensland',
+      tier: 2 as 1 | 2 | 3
     },
     {
       id: 'PSSR-2024-004',
@@ -127,7 +130,8 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       nextReview: '2024-02-10',
       teamMembers: 6,
       lastActivity: '30 minutes ago',
-      location: 'Majnoon Field'
+      location: 'Majnoon Field',
+      tier: 1 as 1 | 2 | 3
     }
   ];
 

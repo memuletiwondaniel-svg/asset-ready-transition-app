@@ -23,6 +23,7 @@ interface DraggablePSSRCardProps {
     teamMembers: number;
     lastActivity: string;
     location: string;
+    tier: 1 | 2 | 3;
   };
   index: number;
   onViewDetails: (pssrId: string) => void;
@@ -73,7 +74,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       }`}
     >
       <div 
-        className={`fluent-card h-32 p-3 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
+        className={`fluent-card h-24 p-2.5 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
           isPinned ? 'border-l-warning bg-warning/5' : 'border-l-primary/20'
         } hover:border-l-primary relative overflow-hidden ${
           isDragging ? 'ring-2 ring-primary/50 bg-primary/5' : ''
@@ -116,8 +117,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           {/* Primary Info - Project ID and Name */}
           <div className="flex-1 min-w-0 max-w-md flex flex-col justify-center">
             {/* Project ID and Name */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2.5 py-1 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-2.5 py-1 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 min-w-[70px] text-center">
                 {pssr.projectId}
               </div>
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 leading-tight line-clamp-1 flex-1 min-w-0">
@@ -133,15 +134,26 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </div>
 
           {/* Plant/Asset - Left Justified Column */}
-          <div className="flex items-center justify-start w-32 flex-shrink-0">
+          <div className="flex items-center justify-start w-28 flex-shrink-0">
             <span className="text-foreground text-base font-semibold text-left">{pssr.asset}</span>
           </div>
 
+          {/* Tier Column */}
+          <div className="flex items-center justify-center w-20 flex-shrink-0">
+            <div className={`px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm ${
+              pssr.tier === 1 ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-2 border-red-500/40' :
+              pssr.tier === 2 ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-2 border-orange-500/40' :
+              'bg-green-500/15 text-green-600 dark:text-green-400 border-2 border-green-500/40'
+            }`}>
+              Tier {pssr.tier}
+            </div>
+          </div>
+
           {/* PSSR Lead (Center) */}
-          <div className="flex items-center gap-3 px-3 flex-shrink-0">
+          <div className="flex items-center gap-3 px-2 flex-shrink-0">
             {/* Lead Profile */}
             <div className="text-center">
-              <div className="text-xs text-muted-foreground font-medium mb-0.5">PSSR Lead</div>
+              <div className="text-[10px] text-muted-foreground font-medium mb-0.5">PSSR Lead</div>
               <div className="relative mb-1">
                 <img 
                   src={pssr.pssrLeadAvatar} 
@@ -161,15 +173,15 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           <div className="flex items-center gap-6 flex-shrink-0">
             {/* Progress - Fixed Width */}
             <div className="text-center w-16">
-              <div className="text-xs text-muted-foreground font-medium mb-1">Progress</div>
-              <div className="text-xl font-bold text-foreground">{pssr.progress}%</div>
+              <div className="text-[10px] text-muted-foreground font-medium mb-0.5">Progress</div>
+              <div className="text-lg font-bold text-foreground">{pssr.progress}%</div>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-12 bg-border/30"></div>
+            <div className="w-px h-16 bg-border/30"></div>
 
             {/* Status Section - Fixed Width */}
-            <div className="flex flex-col items-center justify-center gap-2 w-32">
+            <div className="flex flex-col items-center justify-center gap-1 w-32">
               {/* Status Badge - Consistent Size */}
               <div className={`w-full px-3 py-1.5 rounded-lg font-semibold text-sm border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md text-center ${
                 pssr.status === 'Approved' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40' :
