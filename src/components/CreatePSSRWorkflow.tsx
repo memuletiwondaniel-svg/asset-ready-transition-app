@@ -319,7 +319,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                         isComplete
                           ? 'bg-primary/10 border-primary text-primary shadow-md'
                           : isCurrent
-                          ? 'bg-background border-primary/60 shadow-md ring-2 ring-primary/20'
+                          ? 'bg-gradient-to-br from-primary/20 via-accent/15 to-primary/20 border-primary shadow-lg ring-2 ring-primary/30'
                           : 'bg-background/40 border-border/40 text-muted-foreground hover:border-primary/30'
                       }`}
                     >
@@ -328,7 +328,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                         isComplete 
                           ? 'bg-primary text-primary-foreground'
                           : isCurrent
-                          ? 'bg-primary/20 text-primary'
+                          ? 'bg-gradient-to-br from-primary via-accent to-primary text-primary-foreground animate-gradient-shift'
                           : 'bg-muted/50 text-muted-foreground'
                       }`}>
                         {isComplete ? (
@@ -345,7 +345,10 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
                       
                       {/* Current Indicator */}
                       {isCurrent && (
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <>
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-r from-primary via-accent to-primary animate-pulse" />
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 animate-gradient-shift pointer-events-none" />
+                        </>
                       )}
                     </button>
                   );
