@@ -57,10 +57,10 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
     { id: 'projectId', label: 'Project ID', visible: true, width: 100 },
     { id: 'projectName', label: 'Project Name', visible: true, width: 250 },
     { id: 'asset', label: 'Plant/Asset', visible: true, width: 150 },
-    { id: 'tier', label: 'Tier', visible: true, width: 80 },
+    { id: 'tier', label: 'Tier', visible: true, width: 90 },
     { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 150 },
     { id: 'progress', label: 'Progress', visible: true, width: 100 },
-    { id: 'status', label: 'Status', visible: true, width: 120 },
+    { id: 'status', label: 'Status', visible: true, width: 140 },
     { id: 'created', label: 'Created', visible: true, width: 120 },
     { id: 'pendingApprovals', label: 'Pending', visible: true, width: 100 },
   ]);
@@ -142,7 +142,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
       ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/40'
       : 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/40';
     
-    return <Badge className={`border ${classes}`}>Tier {tier}</Badge>;
+    return <Badge className={`border ${classes} whitespace-nowrap inline-flex`}>Tier {tier}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
@@ -154,7 +154,7 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
       ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/40'
       : 'bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/40';
     
-    return <Badge className={`border ${classes}`}>{status}</Badge>;
+    return <Badge className={`border ${classes} whitespace-nowrap inline-flex`}>{status}</Badge>;
   };
 
   const renderCell = (pssr: PSSR, columnId: string) => {
