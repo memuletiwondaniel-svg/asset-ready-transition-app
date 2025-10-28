@@ -18,23 +18,27 @@ import {
   ClipboardCheck, 
   AlertCircle,
   FileText,
-  Upload,
   X,
-  Edit,
-  Users,
-  Save,
+  Plus,
+  Info,
+  CheckSquare,
+  Square,
   ArrowLeft,
   ArrowRight,
-  SortAsc,
-  SortDesc,
+  Edit,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Upload,
+  Users,
+  Save,
   Eye,
   EyeOff,
-  Plus,
-  CheckSquare,
-  Square
+  SortAsc,
+  SortDesc
 } from 'lucide-react';
-import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
-import CreateChecklistItemForm from './CreateChecklistItemForm';
+import { ChecklistItem, useChecklistItems } from '@/hooks/useChecklistItems';
+import CreateCustomChecklistItem from './CreateCustomChecklistItem';
 
 interface FormData {
   asset: string;
@@ -251,28 +255,28 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
   // Add custom item
   const handleAddCustomItem = (itemData: any) => {
     const newItem: ChecklistItemWithStatus = {
-      id: `CUSTOM-${Date.now()}`,
-      unique_id: `CUSTOM-${Date.now()}`,
+      id: itemData.unique_id || `CUSTOM-${Date.now()}`,
+      unique_id: itemData.unique_id || `CUSTOM-${Date.now()}`,
       description: itemData.description,
-      required_evidence: itemData.evidenceGuidance,
+      required_evidence: itemData.evidenceGuidance || '',
       category: itemData.category,
-      Approver: itemData.approvers.join(', '),
-      approving_authority: itemData.approvers.join(', '),
-      responsible_party: itemData.responsible.join(', '),
-      topic: itemData.topic,
+      Approver: itemData.approver?.join(', ') || '',
+      approving_authority: itemData.approver?.join(', ') || '',
+      responsible_party: itemData.responsible?.join(', ') || '',
+      topic: itemData.topic || '',
       is_active: true,
-      created_at: new Date().toISOString(),
+      created_at: itemData.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
       version: 1,
-      status: 'draft',
-      supportingEvidence: itemData.evidenceGuidance,
-      approvingAuthority: itemData.approvers.join(', '),
-      customApprovers: itemData.approvers
+      status: 'selected',
+      supportingEvidence: itemData.evidenceGuidance || '',
+      approvingAuthority: itemData.approver?.join(', ') || '',
+      customApprovers: itemData.approver || []
     };
     
     setChecklistItems(prev => [...prev, newItem]);
-    setShowCreateCustomModal(false);
-    toast({ title: 'Custom checklist item added' });
+    setSelectedItems(prev => [...prev, newItem.id]);
+    toast({ title: 'Custom checklist item added to this PSSR' });
   };
 
   // Handle Not Applicable
@@ -826,19 +830,14 @@ const PSSRStepTwo: React.FC<PSSRStepTwoProps> = ({ formData, onBack, onContinueT
         </DialogContent>
       </Dialog>
 
-      {/* Create Custom Item Modal */}
-      <Dialog open={showCreateCustomModal} onOpenChange={setShowCreateCustomModal}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Custom Checklist Item</DialogTitle>
-          </DialogHeader>
-          
-          <CreateChecklistItemForm
-            onBack={() => setShowCreateCustomModal(false)}
-            onComplete={handleAddCustomItem}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Create Custom Item - Full Page Overlay */}
+      {showCreateCustomModal && (
+        <CreateCustomChecklistItem
+          pssrId={formData.projectId || 'DRAFT'}
+          onClose={() => setShowCreateCustomModal(false)}
+          onSave={handleAddCustomItem}
+        />
+      )}
     </div>
   );
 };

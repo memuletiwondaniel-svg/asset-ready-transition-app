@@ -50,6 +50,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
   const [currentStep, setCurrentStep] = useState(1);
   const [pssrData, setPssrData] = useState<PSSRData>({});
   const [pssrId, setPssrId] = useState<string | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
   const steps = [
     { number: 1, title: 'Enter PSSR Information', description: 'Basic PSSR details and scope' },
@@ -62,7 +63,33 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
     { number: 8, title: 'Approve PSSR', description: 'Final PSSR approval' }
   ];
 
+  const checkStepCompletion = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return !!(pssrData.asset && pssrData.reason && pssrData.projectId);
+      case 2:
+        return !!(pssrData.checklistItems && pssrData.checklistItems.length > 0);
+      case 3:
+        return !!(pssrData.approvers && pssrData.approvers.length > 0);
+      case 4:
+        return !!(pssrData.scheduledActivities && pssrData.scheduledActivities.length > 0);
+      case 5:
+        return !!(pssrData.checklistResponses && pssrData.checklistResponses.length > 0);
+      case 6:
+        return true; // Optional step
+      case 7:
+        return true; // Approval step
+      case 8:
+        return !!(pssrData.approvalStatus === 'approved');
+      default:
+        return false;
+    }
+  };
+
   const handleNext = () => {
+    if (checkStepCompletion(currentStep)) {
+      setCompletedSteps(prev => new Set([...prev, currentStep]));
+    }
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else if (onComplete) {
@@ -290,40 +317,76 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Progress Bar */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="space-y-4">
+        {/* Modern Progress Bar */}
+        <Card className="mb-6 bg-card/60 backdrop-blur-sm border-border/40">
+          <CardContent className="p-8">
+            <div className="space-y-6">
+              {/* Header */}
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-900">Progress</h2>
-                <span className="text-sm text-gray-600">{currentStep} of {steps.length} steps</span>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    PSSR Creation Progress
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {completedSteps.size} of {steps.length} steps completed
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-primary">{Math.round(progressPercentage)}%</div>
+                  <p className="text-xs text-muted-foreground">Complete</p>
+                </div>
               </div>
-              <Progress value={progressPercentage} className="w-full h-3" />
               
-              {/* Step indicators - Clickable */}
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-2 mt-4">
-                {steps.map((step) => (
-                  <button
-                    key={step.number}
-                    onClick={() => setCurrentStep(step.number)}
-                    className={`text-center p-2 rounded-lg border transition-all hover:scale-105 hover:shadow-md cursor-pointer ${
-                      step.number < currentStep 
-                        ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                        : step.number === currentStep
-                        ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
-                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center mb-1">
-                      {step.number < currentStep ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                      ) : (
-                        <span className="text-xs font-bold">{step.number}</span>
+              {/* Progress Bar */}
+              <div className="relative">
+                <Progress value={progressPercentage} className="h-4" />
+              </div>
+              
+              {/* Step indicators - Modern clickable cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                {steps.map((step) => {
+                  const isComplete = completedSteps.has(step.number);
+                  const isCurrent = step.number === currentStep;
+                  
+                  return (
+                    <button
+                      key={step.number}
+                      onClick={() => setCurrentStep(step.number)}
+                      className={`relative group text-center p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                        isComplete
+                          ? 'bg-primary/10 border-primary text-primary shadow-md'
+                          : isCurrent
+                          ? 'bg-background border-primary/60 shadow-md ring-2 ring-primary/20'
+                          : 'bg-background/40 border-border/40 text-muted-foreground hover:border-primary/30'
+                      }`}
+                    >
+                      {/* Step Number/Icon */}
+                      <div className={`flex items-center justify-center mx-auto w-10 h-10 rounded-full mb-2 transition-all ${
+                        isComplete 
+                          ? 'bg-primary text-primary-foreground'
+                          : isCurrent
+                          ? 'bg-primary/20 text-primary'
+                          : 'bg-muted/50 text-muted-foreground'
+                      }`}>
+                        {isComplete ? (
+                          <CheckCircle2 className="h-5 w-5" />
+                        ) : (
+                          <span className="text-sm font-bold">{step.number}</span>
+                        )}
+                      </div>
+                      
+                      {/* Step Title */}
+                      <p className="text-xs font-semibold leading-tight line-clamp-2">
+                        {step.title}
+                      </p>
+                      
+                      {/* Current Indicator */}
+                      {isCurrent && (
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary animate-pulse" />
                       )}
-                    </div>
-                    <p className="text-xs font-medium">{step.title}</p>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </CardContent>

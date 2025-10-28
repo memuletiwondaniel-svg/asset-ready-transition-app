@@ -27,6 +27,7 @@ interface PSSRData {
   projectId?: string;
   projectName?: string;
   asset?: string;
+  tier?: 1 | 2 | 3; // PSSR Tier
 }
 
 interface Approver {
@@ -62,44 +63,77 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
   // Fetch real users from database
   const { data: profileUsers, isLoading } = useProfileUsers();
 
-  // Initialize with default approvers for Tier 1 PSSR
+  // Determine PSSR tier (default to Tier 1)
+  const pssrTier = data.tier || 1;
+
+  // Initialize with default approvers based on PSSR tier
   useEffect(() => {
     if (profileUsers && profileUsers.length > 0 && approvers.length === 0) {
-      const defaultApprovers = getDefaultTier1Approvers();
+      const defaultApprovers = getDefaultApprovers(pssrTier);
       setApprovers(defaultApprovers);
     }
-  }, [profileUsers]);
+  }, [profileUsers, pssrTier]);
 
-  const getDefaultTier1Approvers = (): Approver[] => {
+  const getDefaultApprovers = (tier: 1 | 2 | 3): Approver[] => {
     if (!profileUsers) return [];
     
-    // Level 1 approvers based on position/role
-    const level1Positions = ['PSSR Lead', 'Engineering Manager (P&E)', 'Engineering Manager (Asset)', 'Project Manager', 'Deputy Plant Director'];
-    const level1Approvers = profileUsers
-      .filter(user => level1Positions.some(pos => user.position?.includes(pos)))
-      .slice(0, 5)
-      .map(user => ({
-        id: user.user_id,
-        name: user.full_name,
-        position: user.position || 'Not specified',
-        avatar: user.avatar_url || '',
-        level: 1 as const
-      }));
+    switch (tier) {
+      case 1:
+        // Tier 1: Level 1 + Level 2 approvers
+        const tier1Level1Positions = ['PSSR Lead', 'Engineering Manager (P&E)', 'Engineering Manager (Asset)', 'Project Manager', 'Deputy Plant Director'];
+        const tier1Level1 = profileUsers
+          .filter(user => tier1Level1Positions.some(pos => user.position?.includes(pos)))
+          .slice(0, 5)
+          .map(user => ({
+            id: user.user_id,
+            name: user.full_name,
+            position: user.position || 'Not specified',
+            avatar: user.avatar_url || '',
+            level: 1 as const
+          }));
 
-    // Level 2 approvers based on position/role  
-    const level2Positions = ['Plant Director', 'P&E Director', 'HSSE Director', 'P&M Director'];
-    const level2Approvers = profileUsers
-      .filter(user => level2Positions.some(pos => user.position?.includes(pos)))
-      .slice(0, 4)
-      .map(user => ({
-        id: user.user_id,
-        name: user.full_name,
-        position: user.position || 'Not specified',
-        avatar: user.avatar_url || '',
-        level: 2 as const
-      }));
+        const tier1Level2Positions = ['Plant Director', 'P&E Director', 'HSSE Director', 'P&M Director'];
+        const tier1Level2 = profileUsers
+          .filter(user => tier1Level2Positions.some(pos => user.position?.includes(pos)))
+          .slice(0, 4)
+          .map(user => ({
+            id: user.user_id,
+            name: user.full_name,
+            position: user.position || 'Not specified',
+            avatar: user.avatar_url || '',
+            level: 2 as const
+          }));
 
-    return [...level1Approvers, ...level2Approvers];
+        return [...tier1Level1, ...tier1Level2];
+      
+      case 2:
+        // Tier 2: Deputy Plant Director + Plant Director
+        const tier2Positions = ['Deputy Plant Director', 'Plant Director'];
+        return profileUsers
+          .filter(user => tier2Positions.some(pos => user.position?.includes(pos)))
+          .slice(0, 2)
+          .map((user, index) => ({
+            id: user.user_id,
+            name: user.full_name,
+            position: user.position || 'Not specified',
+            avatar: user.avatar_url || '',
+            level: index === 0 ? 1 : 2
+          }));
+      
+      case 3:
+        // Tier 3: Deputy Plant Director only
+        const tier3User = profileUsers.find(user => user.position?.includes('Deputy Plant Director'));
+        return tier3User ? [{
+          id: tier3User.user_id,
+          name: tier3User.full_name,
+          position: tier3User.position || 'Not specified',
+          avatar: tier3User.avatar_url || '',
+          level: 1 as const
+        }] : [];
+      
+      default:
+        return [];
+    }
   };
 
   const getApproversByLevel = (level: 1 | 2) => {
@@ -171,9 +205,11 @@ const PSSRStepThree: React.FC<PSSRStepThreeProps> = ({
           <div className="flex items-center space-x-3 mb-4">
             <UserCheck className="h-6 w-6 text-primary" />
             <div>
-              <h3 className="font-semibold text-lg">PSSR Approval Workflow - Tier 1</h3>
+              <h3 className="font-semibold text-lg">PSSR Approval Workflow - Tier {pssrTier}</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Configure approvers for your PSSR. Level 1 approval must be completed before Level 2 begins.
+                {pssrTier === 1 && 'Configure approvers for your PSSR. Level 1 approval must be completed before Level 2 begins.'}
+                {pssrTier === 2 && 'Tier 2 PSSR requires approval from Deputy Plant Director and Plant Director.'}
+                {pssrTier === 3 && 'Tier 3 PSSR requires approval from Deputy Plant Director only.'}
               </p>
             </div>
           </div>
