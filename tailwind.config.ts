@@ -233,18 +233,18 @@ export default {
 					'100%': { filter: 'hue-rotate(360deg)' }
 				}
 			},
-			animation: {
-				'accordion-down': 'accordion-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-				'accordion-up': 'accordion-up 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-				'fade-in': 'fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-				'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-				'scale-in': 'scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-				'slide-up': 'slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-				'slide-in-right': 'slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-				'reveal': 'reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-				'float': 'float 3s ease-in-out infinite',
-				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'spin-slow': 'spin 6s linear infinite',
+		animation: {
+			'accordion-down': 'accordion-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+			'accordion-up': 'accordion-up 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+			'fade-in': 'fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+			'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+			'scale-in': 'scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+			'slide-up': 'slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+			'slide-in-right': 'slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+			'reveal': 'reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+			'float': 'float 3s ease-in-out infinite',
+			'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+			'spin-slow': 'spin 6s linear infinite',
 			'gradient-shift': 'gradient-shift 12s ease infinite',
 			'gradient-horizontal': 'gradient-horizontal 14s ease-in-out infinite',
 			'gradient-vertical': 'gradient-vertical 16s ease-in-out infinite',
@@ -252,8 +252,14 @@ export default {
 			'gradient-sweep': 'gradient-sweep 20s ease-in-out infinite',
 			'gradient-color-morph': 'gradient-color-morph 18s linear infinite',
 			'gradient-color-morph-fast': 'gradient-color-morph 15s linear infinite',
-			'gradient-color-morph-slow': 'gradient-color-morph 22s linear infinite'
-			}
+			'gradient-color-morph-slow': 'gradient-color-morph 22s linear infinite',
+			// Combined animations for visible background movement
+			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
+			'gradient-sweep-morph': 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
+			'gradient-horizontal-morph': 'gradient-horizontal 14s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
+			'gradient-vertical-morph': 'gradient-vertical 16s ease-in-out infinite, gradient-color-morph 18s linear infinite',
+			'gradient-pulse-morph': 'gradient-pulse 13s ease-in-out infinite, gradient-color-morph-slow 22s linear infinite'
+		}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

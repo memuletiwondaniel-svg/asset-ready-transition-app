@@ -169,7 +169,6 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           <div className="flex items-center gap-6 flex-shrink-0">
             {/* Progress - Fixed Width */}
             <div className="text-center w-16">
-              <div className="text-[10px] text-muted-foreground font-medium mb-0.5">Progress</div>
               <div className="text-lg font-bold text-foreground">{pssr.progress}%</div>
             </div>
 

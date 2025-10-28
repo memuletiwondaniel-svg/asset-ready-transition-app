@@ -399,13 +399,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       {/* Enhanced Dynamic Gradient Background */}
       <div className="absolute inset-0 bg-background">
         {/* Main layer - Diagonal flowing gradients with color morph */}
-        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+        <div className="absolute inset-0 opacity-42 dark:opacity-32">
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 animate-gradient-shift-morph"
             style={{
               background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 24%, 88%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 23%, 88%) 0%, transparent 35%)',
               filter: 'blur(50px)',
-              animation: 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
             }}
           />
         </div>
@@ -413,11 +412,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         {/* Dramatic sweep layer - moves across screen */}
         <div className="absolute inset-0 opacity-35 dark:opacity-25">
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 animate-gradient-sweep-morph"
             style={{
               background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(260, 28%, 86%) 0%, transparent 50%)',
               filter: 'blur(60px)',
-              animation: 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
             }}
           />
         </div>
@@ -425,11 +423,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         {/* Horizontal flowing layer with faster color morph */}
         <div className="absolute inset-0 opacity-28 dark:opacity-20">
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 animate-gradient-horizontal-morph"
             style={{
               background: 'radial-gradient(at 10% 50%, hsl(190, 27%, 86%) 0%, transparent 50%), radial-gradient(at 90% 50%, hsl(270, 25%, 87%) 0%, transparent 50%)',
               filter: 'blur(55px)',
-              animation: 'gradient-horizontal 14s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
             }}
           />
         </div>
@@ -437,11 +434,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         {/* Vertical flowing layer with color morph */}
         <div className="absolute inset-0 opacity-25 dark:opacity-18">
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 animate-gradient-vertical-morph"
             style={{
               background: 'radial-gradient(at 50% 10%, hsl(220, 26%, 88%) 0%, transparent 50%), radial-gradient(at 50% 90%, hsl(310, 24%, 89%) 0%, transparent 50%)',
               filter: 'blur(58px)',
-              animation: 'gradient-vertical 16s ease-in-out infinite, gradient-color-morph 18s linear infinite',
             }}
           />
         </div>
@@ -461,11 +457,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         {/* Pulsing accent gradients with color morph */}
         <div className="absolute inset-0 opacity-20 dark:opacity-15">
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 animate-gradient-pulse-morph"
             style={{
               background: 'radial-gradient(at 35% 35%, hsl(240, 25%, 86%) 0%, transparent 35%), radial-gradient(at 65% 65%, hsl(330, 23%, 87%) 0%, transparent 35%)',
               filter: 'blur(48px)',
-              animation: 'gradient-pulse 13s ease-in-out infinite, gradient-color-morph-slow 22s linear infinite',
             }}
           />
         </div>
@@ -525,13 +520,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
             {/* Header Actions */}
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline"
-                className="fluent-button border-border/50 hover:bg-secondary/50"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Export
-              </Button>
               {userRole === 'admin' && (
                 <Button 
                   variant="outline"
@@ -556,81 +544,55 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
-          <Card className="fluent-card">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total PSSRs</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total PSSRs</CardTitle>
               <ClipboardList className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-2xl font-semibold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">
                 Active reviews
               </p>
             </CardContent>
           </Card>
 
-          <Card className="fluent-card">
+          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Approved</CardTitle>
-              <CheckCircle className="h-4 w-4 text-success" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">{stats.approved}</div>
+              <div className="text-2xl font-semibold text-success">{stats.approved}</div>
               <p className="text-xs text-muted-foreground">
                 Completed reviews
               </p>
             </CardContent>
           </Card>
 
-          <Card className="fluent-card">
+          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Under Review</CardTitle>
-              <Clock className="h-4 w-4 text-warning" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Under Review</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-warning">{stats.underReview}</div>
+              <div className="text-2xl font-semibold text-warning">{stats.underReview}</div>
               <p className="text-xs text-muted-foreground">
                 In progress
               </p>
             </CardContent>
           </Card>
 
-          <Card className="fluent-card">
+          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Draft</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Draft</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.draft}</div>
+              <div className="text-2xl font-semibold">{stats.draft}</div>
               <p className="text-xs text-muted-foreground">
                 Not submitted
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="fluent-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{stats.criticalIssues}</div>
-              <p className="text-xs text-muted-foreground">
-                High priority
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="fluent-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Progress</CardTitle>
-              <BarChart3 className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.avgProgress}%</div>
-              <p className="text-xs text-muted-foreground">
-                Overall completion
               </p>
             </CardContent>
           </Card>
