@@ -78,22 +78,22 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
       {/* Modern Gradient Background */}
       <div className="absolute inset-0 bg-background">
         {/* Main layer */}
-        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+        <div className="absolute inset-0 opacity-25 dark:opacity-20">
           <div 
             className="absolute inset-0 animate-gradient-shift-morph"
             style={{
-              background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%)',
+              background: 'radial-gradient(at 20% 30%, hsl(220, 12%, 90%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(240, 10%, 92%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(210, 11%, 91%) 0%, transparent 40%)',
               filter: 'blur(50px)',
             }}
           />
         </div>
 
         {/* Sweep layer */}
-        <div className="absolute inset-0 opacity-30 dark:opacity-20">
+        <div className="absolute inset-0 opacity-20 dark:opacity-15">
           <div 
             className="absolute inset-0 animate-gradient-sweep-morph"
             style={{
-              background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(260, 28%, 86%) 0%, transparent 50%)',
+              background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(230, 10%, 88%) 0%, transparent 50%)',
               filter: 'blur(60px)',
             }}
           />
@@ -101,9 +101,9 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
         
         {/* Overlay gradient */}
         <div 
-          className="absolute inset-0 opacity-15"
+          className="absolute inset-0 opacity-10"
           style={{
-            background: 'linear-gradient(135deg, hsl(220, 22%, 90%) 0%, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%)',
+            background: 'linear-gradient(135deg, hsl(220, 8%, 92%) 0%, transparent 30%, hsl(var(--primary) / 0.05) 50%, transparent 70%)',
           }}
         />
       </div>
