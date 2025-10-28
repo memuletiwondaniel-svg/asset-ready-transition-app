@@ -8,9 +8,7 @@ import PSSRStepOne from './PSSRStepOne';
 import PSSRStepTwo from './PSSRStepTwo';
 import PSSRStepThree from './PSSRStepThree';
 import PSSRStepFour from './PSSRStepFour';
-import PSSRStepFive from './PSSRStepFive';
 import PSSRStepSix from './PSSRStepSix';
-import PSSRStepEight from './PSSRStepEight';
 
 interface CreatePSSRWorkflowProps {
   onBack: () => void;
@@ -57,10 +55,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
     { number: 2, title: 'Select Checklist Items', description: 'Choose applicable checklist items' },
     { number: 3, title: 'Review PSSR Approvers', description: 'Configure approval workflow' },
     { number: 4, title: 'Schedule PSSR Activity', description: 'Plan kick-off and walkdown events' },
-    { number: 5, title: 'Complete Checklist Item', description: 'Fill out checklist responses' },
-    { number: 6, title: 'Link a PSSR', description: 'Connect related PSSRs' },
-    { number: 7, title: 'Approve Checklist Item', description: 'Review and approve items' },
-    { number: 8, title: 'Approve PSSR', description: 'Final PSSR approval' }
+    { number: 5, title: 'Link a PSSR', description: 'Connect related PSSRs' }
   ];
 
   const checkStepCompletion = (step: number): boolean => {
@@ -80,13 +75,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
       case 4:
         return !!(pssrData.scheduledActivities && pssrData.scheduledActivities.length > 0);
       case 5:
-        return !!(pssrData.checklistResponses && pssrData.checklistResponses.length > 0);
-      case 6:
         return true; // Optional step
-      case 7:
-        return true; // Approval step
-      case 8:
-        return !!(pssrData.approvalStatus === 'approved');
       default:
         return false;
     }
@@ -241,39 +230,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
         );
       case 5:
         return (
-          <PSSRStepFive
-            data={pssrData}
-            onDataUpdate={handleDataUpdate}
-            onNext={handleNext}
-            onBack={handleBack}
-            onSave={handleSave}
-          />
-        );
-      case 6:
-        return (
           <PSSRStepSix
-            data={pssrData}
-            onDataUpdate={handleDataUpdate}
-            onNext={handleNext}
-            onBack={handleBack}
-            onSave={handleSave}
-            currentPssrId={pssrId}
-          />
-        );
-      case 7:
-        return (
-          <div className="text-center py-8">
-            <p className="text-lg font-medium text-gray-600">
-              Step 7: Approve Checklist Item
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              This step was implemented separately. Proceed to Step 8.
-            </p>
-          </div>
-        );
-      case 8:
-        return (
-          <PSSRStepEight
             data={pssrData}
             onDataUpdate={handleDataUpdate}
             onNext={handleNext}
@@ -349,7 +306,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
               </div>
               
               {/* Step indicators - Modern clickable cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {steps.map((step) => {
                   const isComplete = completedSteps.has(step.number);
                   const isCurrent = step.number === currentStep;
