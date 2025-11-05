@@ -25,6 +25,7 @@ import TranslationManagement from './TranslationManagement';
 import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
 import OrshLogo from './ui/OrshLogo';
 import LanguageSelector from '@/components/admin/LanguageSelector';
+import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import { getCurrentTranslations } from '@/utils/translations';
 
 interface ManageChecklistPageProps {
@@ -238,7 +239,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <div className="flex-1 flex justify-center">
               <OrshLogo size="medium" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
               <LanguageSelector 
                 selectedLanguage={currentLanguage}
                 onLanguageChange={setCurrentLanguage}
@@ -248,23 +250,21 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           </div>
         </div>
 
-        <div className="container py-10 max-w-7xl mx-auto">
+        <div className="container py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Modern Header */}
-          <div className="mb-10 text-center animate-fade-in">
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-2 leading-tight" style={{
-            fontFamily: "'Poppins', sans-serif"
-          }}>
-              <span className="text-slate-700 dark:text-slate-200">
-                {t.pssrConfiguration}
-              </span>
+          <div className="mb-14 animate-fade-in">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Checklist Management
             </h1>
-            
+            <p className="text-muted-foreground/80 text-sm md:text-base max-w-3xl">
+              Manage your checklists, items, categories, topics, and translations in one centralized location
+            </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
             {/* Modern Tab Navigation */}
             <div className="flex justify-center">
-              <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
+              <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/90 backdrop-blur-md p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
                 <TabsTrigger value="checklists" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <ClipboardList className="h-4 w-4" />
                   <span className="hidden sm:inline">{t.checklists}</span>
@@ -281,10 +281,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   <BookOpen className="h-4 w-4" />
                   <span className="hidden sm:inline">{t.topics}</span>
                 </TabsTrigger>
-                <TabsTrigger value="pssr-settings" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t.pssrSettings}</span>
-                </TabsTrigger>
                 <TabsTrigger value="translations" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <Languages className="h-4 w-4" />
                   <span className="hidden sm:inline">Translations</span>
@@ -292,9 +288,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </TabsList>
             </div>
 
-            <TabsContent value="checklists" className="space-y-6 animate-fade-in mt-0">
+            <TabsContent value="checklists" className="space-y-8 animate-fade-in mt-0">
               <div className="flex items-center justify-between">
-                <Button onClick={() => setShowCreateForm(true)}>
+                <Button onClick={() => setShowCreateForm(true)} className="shadow-md hover:shadow-lg transition-shadow">
                   <Plus className="h-4 w-4 mr-2" />
                   {t.createNewChecklist}
                 </Button>
@@ -303,13 +299,13 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               <div className="flex gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input placeholder={t.searchChecklists} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+                  <Input placeholder={t.searchChecklists} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-11 rounded-xl border-border/60 bg-background/60 backdrop-blur-sm focus:border-primary/40 focus:ring-primary/20" />
                 </div>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-44 h-11 rounded-xl border-border/60 bg-background/60 backdrop-blur-sm">
                     <SelectValue placeholder={t.sortBy} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="name">{t.name}</SelectItem>
                     <SelectItem value="date">{t.date}</SelectItem>
                     <SelectItem value="items">{t.items}</SelectItem>
@@ -389,12 +385,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <TabsContent value="topics" className="animate-fade-in mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
                 <ChecklistTopicsManagement onBack={() => {}} translations={t} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="pssr-settings" className="animate-fade-in mt-0">
-              <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
-                <PSSRSettingsManagement onBack={() => {}} />
               </div>
             </TabsContent>
 
