@@ -29,13 +29,32 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
     endDate: dateRange.end || undefined
   });
 
-  const filteredLogs = logs?.filter(log => 
-    searchQuery.trim() === '' ||
-    log.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.activity_type.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredLogs = logs?.filter(log => {
+    // Apply search filter
+    const matchesSearch = searchQuery.trim() === '' ||
+      log.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.activity_type.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Apply quick filter for user/project activities
+    let matchesQuickFilter = true;
+    if (activityTypeFilter === 'user') {
+      matchesQuickFilter = log.activity_type.includes('user_') || 
+                           log.activity_type.includes('account_') || 
+                           log.activity_type === 'login' || 
+                           log.activity_type === 'logout' ||
+                           log.activity_type === 'failed_login' ||
+                           log.activity_type === 'status_changed';
+    } else if (activityTypeFilter === 'project') {
+      matchesQuickFilter = log.activity_type.includes('project_');
+    } else if (activityTypeFilter && activityTypeFilter !== 'user' && activityTypeFilter !== 'project') {
+      // Exact match for specific activity type from dropdown
+      matchesQuickFilter = log.activity_type === activityTypeFilter;
+    }
+
+    return matchesSearch && matchesQuickFilter;
+  }) || [];
 
   const activityTypes = Array.from(new Set(logs?.map(log => log.activity_type) || []));
 
@@ -140,7 +159,7 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
               </div>
 
               {/* Activity Type Filter */}
-              <div>
+              <div className="md:col-span-2">
                 <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Activity Types" />
@@ -155,42 +174,38 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Date Range */}
-              <div className="flex gap-2">
-                <Input
-                  type="date"
-                  value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                  className="w-full"
-                />
-              </div>
             </div>
 
-            {/* Active Filters Summary */}
-            {(searchQuery || activityTypeFilter || dateRange.start) && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
-                {searchQuery && (
-                  <Badge variant="secondary" className="gap-1">
-                    Search: {searchQuery}
-                    <button onClick={() => setSearchQuery('')} className="ml-1 hover:text-destructive">×</button>
-                  </Badge>
-                )}
-                {activityTypeFilter && (
-                  <Badge variant="secondary" className="gap-1">
-                    Type: {activityTypeFilter}
-                    <button onClick={() => setActivityTypeFilter('')} className="ml-1 hover:text-destructive">×</button>
-                  </Badge>
-                )}
-                {dateRange.start && (
-                  <Badge variant="secondary" className="gap-1">
-                    From: {dateRange.start}
-                    <button onClick={() => setDateRange(prev => ({ ...prev, start: '' }))} className="ml-1 hover:text-destructive">×</button>
-                  </Badge>
-                )}
-              </div>
-            )}
+            {/* Quick Filter Buttons */}
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button
+                variant={activityTypeFilter === '' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActivityTypeFilter('')}
+                className="gap-2"
+              >
+                <Activity className="h-4 w-4" />
+                All Activities
+              </Button>
+              <Button
+                variant={activityTypeFilter === 'user' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActivityTypeFilter('user')}
+                className="gap-2"
+              >
+                <User className="h-4 w-4" />
+                User Activities
+              </Button>
+              <Button
+                variant={activityTypeFilter === 'project' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActivityTypeFilter('project')}
+                className="gap-2"
+              >
+                <Activity className="h-4 w-4" />
+                Project Activities
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
