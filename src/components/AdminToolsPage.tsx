@@ -96,9 +96,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t}>
         
         <div className="ml-auto">
-          <Button variant="outline" onClick={onBack} className="h-9">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t.backToDashboard}
+          <Button variant="outline" onClick={onBack} className="h-9 gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to ORSH Homepage
           </Button>
         </div>
       </AdminHeader>
