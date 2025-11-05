@@ -92,7 +92,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     gradient: 'from-blue-500 to-blue-600',
     tooltip: 'View and manage user accounts, permissions, and access levels',
     stats: {
-      total: userStats.total
+      total: userStats.total,
+      label: 'users'
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('users')
@@ -114,7 +115,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     gradient: 'from-orange-500 to-orange-600',
     tooltip: 'Manage projects, milestones, team members, and documents',
     stats: {
-      total: 12
+      total: 12,
+      label: 'projects'
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('projects')
@@ -277,32 +279,32 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                         <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
                       </Button>
                       
-                      <CardHeader className="relative space-y-6 p-8">
-                        {/* Icon Section */}
-                        <div className="flex items-center justify-between">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
-                                <IconComponent className="h-8 w-8 text-white" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs">
-                              <p>{tool.tooltip}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        
-                        {/* Stats Badge */}
-                        {tool.stats.total !== undefined && (
-                          <div className="flex flex-col items-end">
-                            <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-                              {tool.stats.total}
-                            </span>
-                            <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                              Total
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                    <CardHeader className="relative space-y-6 p-8 pr-14">
+                      {/* Icon Section */}
+                      <div className="flex items-center justify-between">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
+                              <IconComponent className="h-8 w-8 text-white" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <p>{tool.tooltip}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      
+                      {/* Stats Badge */}
+                      {tool.stats.total !== undefined && (
+                        <div className="flex flex-col items-end">
+                          <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                            {tool.stats.total}
+                          </span>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                            {tool.stats.label || 'Total'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                       
                       {/* Title & Description */}
                       <div className="space-y-2">
@@ -353,7 +355,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                       <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
                     </Button>
                     
-                    <CardHeader className="relative space-y-6 p-8">
+                    <CardHeader className="relative space-y-6 p-8 pr-14">
                       {/* Icon Section */}
                       <div className="flex items-center justify-between">
                         <Tooltip>
@@ -374,7 +376,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                             {tool.stats.total}
                           </span>
                           <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                            Total
+                            {tool.stats.label || 'Total'}
                           </span>
                         </div>
                       )}
