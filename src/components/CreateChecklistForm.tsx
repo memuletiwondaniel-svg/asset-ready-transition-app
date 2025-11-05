@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories as useChecklistCategoriesFromItems, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
+import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
@@ -44,6 +45,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: availableCategories = [] } = useChecklistCategoriesFromItems();
+  const { data: pssrReasons = [] } = usePSSRReasons();
   
   const [formData, setFormData] = useState<NewChecklistData>({
     reason: '',
@@ -56,14 +58,10 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   // Combine database items and custom items
   const allChecklistItems = [...checklistItems, ...customChecklistItems];
 
-  // Checklist reasons
-  const checklistReasons = [
-    'Start-up or Commissioning of a new Asset',
-    'Restart following modification to existing Hardware, Safeguarding or Operating Philosophy',
-    'Restart following a process safety incident',
-    'Restart following a Turn Around (TAR) Event or Major Maintenance Activity',
-    'Others'
-  ];
+  // Get checklist reasons from database (with "Others" option added)
+  const checklistReasons = React.useMemo(() => {
+    return [...pssrReasons.map(r => r.name), 'Others'];
+  }, [pssrReasons]);
 
   // Create categories with fixed order
   const categories = React.useMemo(() => {

@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import { useCustomReasons, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
+import { usePSSRReasons } from '@/hooks/usePSSRReasons';
 import { useToast } from '@/hooks/use-toast';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
@@ -43,17 +44,17 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   const { toast } = useToast();
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: customReasons = [] } = useCustomReasons();
+  const { data: pssrReasons = [] } = usePSSRReasons();
   const { mutate: updateChecklist, isPending } = useUpdateChecklist();
 
-  // All available reasons (predefined + custom)
-  const allReasons = [
-    "Start-up or Commissioning of a new Asset",
-    "Restart following modification to existing Hardware, Safeguarding or Operating Philosophy", 
-    "Restart following a process safety incident",
-    "Restart following a Turn Around (TAR) Event or Major Maintenance Activity",
-    ...customReasons,
-    "Others"
-  ];
+  // All available reasons (PSSR reasons from database + custom reasons + Others)
+  const allReasons = React.useMemo(() => {
+    return [
+      ...pssrReasons.map(r => r.name),
+      ...customReasons,
+      "Others"
+    ];
+  }, [pssrReasons, customReasons]);
 
   const allChecklistItems = [...checklistItems, ...customChecklistItems];
 
