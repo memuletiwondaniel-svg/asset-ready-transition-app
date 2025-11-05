@@ -70,6 +70,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     description: t.manageUserDesc,
     icon: Users,
     gradient: 'from-blue-500 to-blue-600',
+    tooltip: 'View and manage user accounts, permissions, and access levels',
     stats: {
       total: userStats.total
     },
@@ -81,6 +82,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     description: 'Manage checklists, categories, topics, and PSSR settings',
     icon: ClipboardList,
     gradient: 'from-emerald-500 to-emerald-600',
+    tooltip: 'Configure PSSR checklists, categories, topics, and translation settings',
     stats: {},
     height: 'md:row-span-3',
     onClick: () => setActiveView('checklist')
@@ -90,6 +92,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     description: t.manageProjectDesc,
     icon: FolderOpen,
     gradient: 'from-orange-500 to-orange-600',
+    tooltip: 'Manage projects, milestones, team members, and documents',
     stats: {
       total: 12
     },
@@ -138,25 +141,33 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </div>
 
         {/* Masonry Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
-          {adminTools.map((tool, index) => {
-            const IconComponent = tool.icon;
-            return (
-              <Card 
-                key={tool.id}
-                className={`group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in ${tool.height}`}
-                style={{ animationDelay: `${index * 100}ms` }}
-                onClick={tool.onClick}
-              >
-                {/* Gradient Background Effect */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-                
-                <CardHeader className="relative space-y-6 p-8">
-                  {/* Icon Section */}
-                  <div className="flex items-center justify-between">
-                    <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg`}>
-                      <IconComponent className="h-8 w-8 text-white" />
-                    </div>
+        <TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
+            {adminTools.map((tool, index) => {
+              const IconComponent = tool.icon;
+              return (
+                <Card 
+                  key={tool.id}
+                  className={`group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in ${tool.height}`}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                  onClick={tool.onClick}
+                >
+                  {/* Gradient Background Effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                  
+                  <CardHeader className="relative space-y-6 p-8">
+                    {/* Icon Section */}
+                    <div className="flex items-center justify-between">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
+                            <IconComponent className="h-8 w-8 text-white" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p>{tool.tooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     
                     {/* Stats Badge */}
                     {tool.stats.total !== undefined && (
@@ -191,6 +202,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
             );
           })}
         </div>
+      </TooltipProvider>
       </div>
     </div>;
 };
