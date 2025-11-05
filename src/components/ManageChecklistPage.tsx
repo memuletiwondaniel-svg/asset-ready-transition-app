@@ -234,10 +234,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
         <div className="container py-10 max-w-7xl mx-auto">
           {/* Modern Header */}
           <div className="mb-10 text-center animate-fade-in">
-            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-emerald-600 to-primary bg-clip-text text-transparent mb-3">
-              PSSR Configuration
+            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
+              <span className="bg-gradient-to-r from-primary via-emerald-600 to-primary bg-clip-text text-transparent drop-shadow-sm">
+                PSSR Configuration
+              </span>
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light">
               Manage all aspects of PSSR system - checklists, items, categories, topics, and settings
             </p>
           </div>
