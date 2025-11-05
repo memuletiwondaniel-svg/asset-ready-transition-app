@@ -14,6 +14,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { 
   Search, 
   Filter, 
@@ -38,8 +39,13 @@ import {
   ChevronUp,
   ChevronDown,
   EyeOff,
-  Columns
+  Columns,
+  Home
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/admin/ThemeToggle';
+import LanguageSelector from '@/components/admin/LanguageSelector';
+import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
+import OrshLogo from '@/components/ui/OrshLogo';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
@@ -623,23 +629,72 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">User Management</h1>
-              <p className="text-muted-foreground">
-                Manage users, roles, and permissions across ORSH platform
-              </p>
-            </div>
+    <div className="min-h-screen bg-background">
+      {/* Header with Breadcrumb */}
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
+        <div className="container flex h-20 items-center justify-between gap-4">
+          {/* Left - Breadcrumb Navigation */}
+          <div className="flex items-center min-w-0 flex-1">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack}
+                    className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                  >
+                    <Home className="h-4 w-4" />
+                    <span className="hidden sm:inline">Home</span>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack}
+                    className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                  >
+                    Administration
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:inline" />
+                <BreadcrumbItem className="hidden sm:inline">
+                  <BreadcrumbPage className="font-medium">
+                    User Management
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
-          
+
+          {/* Center - ORSH Logo */}
+          <div className="flex-shrink-0">
+            <OrshLogo size="medium" />
+          </div>
+
+          {/* Right - Controls */}
+          <div className="flex items-center gap-3 justify-end flex-1">
+            <ThemeToggle />
+            <LanguageSelector 
+              selectedLanguage="English"
+              onLanguageChange={() => {}}
+            />
+            <UserProfileDropdown translations={{}} />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Page Title */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            User Management
+          </h1>
+          <p className="text-muted-foreground/80 text-sm md:text-base">
+            Manage users, roles, and permissions across ORSH platform
+          </p>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

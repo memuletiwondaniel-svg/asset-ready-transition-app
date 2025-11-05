@@ -3,7 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft, Home } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { ThemeToggle } from '@/components/admin/ThemeToggle';
+import LanguageSelector from '@/components/admin/LanguageSelector';
+import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { getCurrentTranslations } from '@/utils/translations';
 import { useProjects } from '@/hooks/useProjects';
@@ -94,29 +98,62 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container flex h-20 items-center">
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="h-10 px-4 py-2 rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:-translate-x-0.5" />
-              Back to Admin & Tools
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header with Breadcrumb */}
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
+        <div className="container flex h-20 items-center justify-between gap-4">
+          {/* Left - Breadcrumb Navigation */}
+          <div className="flex items-center min-w-0 flex-1">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack}
+                    className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                  >
+                    <Home className="h-4 w-4" />
+                    <span className="hidden sm:inline">Home</span>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack}
+                    className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                  >
+                    Administration
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:inline" />
+                <BreadcrumbItem className="hidden sm:inline">
+                  <BreadcrumbPage className="font-medium">
+                    Project Management
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
-          <div className="flex-1 flex justify-center">
+
+          {/* Center - ORSH Logo */}
+          <div className="flex-shrink-0">
             <OrshLogo size="medium" />
           </div>
-          <div className="w-40"></div> {/* Spacer to center the logo */}
+
+          {/* Right - Controls */}
+          <div className="flex items-center gap-3 justify-end flex-1">
+            <ThemeToggle />
+            <LanguageSelector 
+              selectedLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
+            />
+            <UserProfileDropdown translations={t} />
+          </div>
         </div>
       </div>
 
-      {/* Projects Table */}
-      <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
+      <div className="container py-6 space-y-6">
+        {/* Projects Table */}
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b border-blue-100/60">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center text-blue-900">
@@ -231,6 +268,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           )}
         </CardContent>
       </Card>
+      </div>
 
       {/* Add Project Modal */}
       <AddProjectModal 

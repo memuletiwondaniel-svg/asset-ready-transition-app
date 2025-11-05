@@ -495,63 +495,66 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
       </div>
 
       <div className="relative z-10">
-        <AdminHeader 
-          selectedLanguage={currentLanguage}
-          onLanguageChange={setCurrentLanguage}
-          translations={t}
-        />
-
-        <div className="border-t border-border/50" />
-
-        <div className="container pt-16 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Enhanced Breadcrumb Navigation */}
-          <div className="mb-14 animate-fade-in">
-            <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-border/40 shadow-sm">
+        {/* Header with Breadcrumb */}
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
+          <div className="container flex h-20 items-center justify-between gap-4">
+            {/* Left - Breadcrumb Navigation */}
+            <div className="flex items-center min-w-0 flex-1">
               <Breadcrumb>
-                <BreadcrumbList className="flex-wrap">
+                <BreadcrumbList>
                   <BreadcrumbItem>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-2 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50">
-                          <Home className="h-4 w-4" />
-                          <span className="font-medium">Home</span>
-                        </BreadcrumbLink>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Return to home page</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <BreadcrumbLink 
+                      onClick={onBack}
+                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                    >
+                      <Home className="h-4 w-4" />
+                      <span className="hidden sm:inline">Home</span>
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator className="text-muted-foreground/40" />
+                  <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50">
-                          <span className="font-medium">Administration</span>
-                        </BreadcrumbLink>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Back to administration panel</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <BreadcrumbLink 
+                      onClick={onBack}
+                      className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                    >
+                      Administration
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator className="text-muted-foreground/40" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="font-semibold text-foreground px-2 py-1">
+                  <BreadcrumbSeparator className="hidden sm:inline" />
+                  <BreadcrumbItem className="hidden sm:inline">
+                    <BreadcrumbPage className="font-medium">
                       PSSR Configuration
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-          </div>
 
+            {/* Center - ORSH Logo */}
+            <div className="flex-shrink-0">
+              <AdminHeader 
+                selectedLanguage={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
+                translations={t}
+              >
+                <span></span>
+              </AdminHeader>
+            </div>
+
+            {/* Right - Empty for balance - controls in AdminHeader */}
+            <div className="flex-1"></div>
+          </div>
+        </div>
+
+        <div className="border-t border-border/50" />
+
+        <div className="container pt-16 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Soft, De-emphasized Header */}
-          <div className="mb-16 text-center animate-fade-in">
-            <h1 className="text-xl md:text-2xl font-normal tracking-wide mb-3 text-muted-foreground/80">
+          <div className="mb-14 animate-fade-in">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               PSSR Configuration
             </h1>
-            <p className="text-muted-foreground/60 text-sm max-w-2xl mx-auto leading-relaxed">
+            <p className="text-muted-foreground/80 text-sm md:text-base max-w-3xl">
               Manage PSSR reasons, tie-in scopes, and Management of Change options
             </p>
           </div>
