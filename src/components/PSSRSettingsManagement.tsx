@@ -431,21 +431,32 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
     const style = {
       transform: CSS.Transform.toString(transform),
-      transition,
+      transition: transition || 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease',
       opacity: isDragging ? 0.5 : 1,
       backgroundColor: isDragging ? 'hsl(var(--accent))' : 'transparent',
     };
 
     return (
-      <TableRow ref={setNodeRef} style={style} className={isDragging ? 'relative z-50' : ''}>
+      <TableRow 
+        ref={setNodeRef} 
+        style={style} 
+        className={`
+          transition-all duration-300 hover:bg-accent/30 
+          ${isDragging ? 'relative z-50 shadow-2xl scale-105 rounded-lg' : ''}
+        `}
+      >
         <TableCell className="w-12">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-                <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+              <div 
+                {...attributes} 
+                {...listeners} 
+                className="cursor-grab active:cursor-grabbing p-2 rounded-md hover:bg-accent/50 transition-all duration-300 hover:scale-110"
+              >
+                <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors duration-300" />
               </div>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="animate-scale-up">
               <p>Drag to reorder</p>
             </TooltipContent>
           </Tooltip>
@@ -485,7 +496,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden animate-smooth-in">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
@@ -620,13 +631,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            {/* Compact Modern Tab Navigation */}
-            <div className="flex justify-center">
-              <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-md border">
+            {/* Compact Modern Tab Navigation with Smooth Transitions */}
+            <div className="flex justify-center animate-smooth-in">
+              <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-md border transition-all duration-300">
                 {showReasonsTab && (
                   <TabsTrigger 
                     value="reasons" 
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-accent/50"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:scale-105 hover:bg-accent/50 hover:scale-102 active:scale-100"
                   >
                     PSSR Reasons
                   </TabsTrigger>
@@ -634,7 +645,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 {showTieInTab && (
                   <TabsTrigger 
                     value="tie-in"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-accent/50"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:scale-105 hover:bg-accent/50 hover:scale-102 active:scale-100"
                   >
                     Tie-in Scopes
                   </TabsTrigger>
@@ -642,7 +653,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 {showMOCTab && (
                   <TabsTrigger 
                     value="moc"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-accent/50"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:scale-105 hover:bg-accent/50 hover:scale-102 active:scale-100"
                   >
                     MOC Scopes
                   </TabsTrigger>
@@ -650,12 +661,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               </TabsList>
             </div>
 
-          {/* PSSR Reasons Tab */}
-          <TabsContent value="reasons" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6">
+          {/* PSSR Reasons Tab with Smooth Page Transition */}
+          <TabsContent value="reasons" className="animate-slide-up">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden card-lift">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6 transition-all duration-300">
                 <div className="flex items-center justify-between mb-3">
-                  <div>
+                  <div className="animate-smooth-in">
                     <CardTitle>PSSR Reasons</CardTitle>
                     <CardDescription>Manage available reasons for creating a PSSR</CardDescription>
                   </div>
@@ -663,19 +674,19 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <TooltipTrigger asChild>
                       <Button 
                         onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                        className="btn-premium bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
                         Add Reason
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="animate-scale-up">
                       <p>Create a new PSSR reason</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 {selectedReasons.size > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-slide-down">
                     <span className="text-sm text-muted-foreground">
                       {selectedReasons.size} item(s) selected
                     </span>
@@ -686,13 +697,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => handleBulkToggleActive('reason', true)}
-                            className="h-8"
+                            className="h-8 transition-all duration-300 hover:scale-105 hover:bg-primary/10"
                           >
-                            <Check className="h-4 w-4 mr-1" />
+                            <Check className="h-4 w-4 mr-1 transition-transform duration-300" />
                             Enable
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="animate-scale-up">
                           <p>Enable selected items</p>
                         </TooltipContent>
                       </Tooltip>
@@ -702,13 +713,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => handleBulkToggleActive('reason', false)}
-                            className="h-8"
+                            className="h-8 transition-all duration-300 hover:scale-105 hover:bg-muted"
                           >
-                            <X className="h-4 w-4 mr-1" />
+                            <X className="h-4 w-4 mr-1 transition-transform duration-300" />
                             Disable
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="animate-scale-up">
                           <p>Disable selected items</p>
                         </TooltipContent>
                       </Tooltip>
@@ -718,13 +729,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             variant="destructive"
                             size="sm"
                             onClick={() => openBulkDeleteDialog('reason')}
-                            className="h-8"
+                            className="h-8 transition-all duration-300 hover:scale-105"
                           >
-                            <Trash className="h-4 w-4 mr-1" />
+                            <Trash className="h-4 w-4 mr-1 transition-transform duration-300 hover:rotate-12" />
                             Delete
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="animate-scale-up">
                           <p>Delete selected items</p>
                         </TooltipContent>
                       </Tooltip>
@@ -775,14 +786,17 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                                 <TooltipTrigger asChild>
                                   <Badge 
                                     variant={reason.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95"
                                     onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
                                   >
-                                    {reason.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                    {reason.is_active ? 
+                                      <CheckCircle className="h-3 w-3 mr-1 transition-transform duration-300" /> : 
+                                      <XCircle className="h-3 w-3 mr-1 transition-transform duration-300" />
+                                    }
                                     {reason.is_active ? 'Active' : 'Inactive'}
                                   </Badge>
                                 </TooltipTrigger>
-                                <TooltipContent>
+                                <TooltipContent className="animate-scale-up">
                                   <p>Click to {reason.is_active ? 'disable' : 'enable'}</p>
                                 </TooltipContent>
                               </Tooltip>
@@ -795,11 +809,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                                       variant="ghost"
                                       size="icon"
                                       onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
+                                      className="transition-all duration-300 hover:scale-110 hover:bg-primary/10 active:scale-95"
                                     >
-                                      <Edit2 className="h-4 w-4" />
+                                      <Edit2 className="h-4 w-4 transition-transform duration-300 hover:rotate-12" />
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent>
+                                  <TooltipContent className="animate-scale-up">
                                     <p>Edit reason</p>
                                   </TooltipContent>
                                 </Tooltip>
@@ -809,11 +824,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                                       variant="ghost"
                                       size="icon"
                                       onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
+                                      className="transition-all duration-300 hover:scale-110 hover:bg-destructive/10 hover:text-destructive active:scale-95"
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <Trash2 className="h-4 w-4 transition-transform duration-300 hover:rotate-12" />
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent>
+                                  <TooltipContent className="animate-scale-up">
                                     <p>Delete reason</p>
                                   </TooltipContent>
                                 </Tooltip>
@@ -829,10 +845,10 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </Card>
           </TabsContent>
 
-          {/* Tie-in Scopes Tab */}
-          <TabsContent value="tie-in" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6">
+          {/* Tie-in Scopes Tab with Smooth Page Transition */}
+          <TabsContent value="tie-in" className="animate-slide-up">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden card-lift">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6 transition-all duration-300">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <CardTitle>Tie-in Scopes</CardTitle>
@@ -1010,10 +1026,10 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </Card>
           </TabsContent>
 
-          {/* MOC Scopes Tab */}
-          <TabsContent value="moc" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6">
+          {/* MOC Scopes Tab with Smooth Page Transition */}
+          <TabsContent value="moc" className="animate-slide-up">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden card-lift">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6 transition-all duration-300">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <CardTitle>MOC Scopes</CardTitle>
