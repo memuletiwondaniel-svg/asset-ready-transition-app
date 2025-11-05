@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, ArrowUp, ArrowDown, CheckCircle, XCircle, Search, X } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X } from 'lucide-react';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -424,22 +424,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             <Button
                               variant="ghost"
                               size="icon"
-                              disabled={index === 0}
-                              onClick={() => handleReorder('reason', reason.id, 'up', reason.display_order)}
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={index === allReasons.length - 1}
-                              onClick={() => handleReorder('reason', reason.id, 'down', reason.display_order)}
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
                               onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -511,22 +495,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             <Button
                               variant="ghost"
                               size="icon"
-                              disabled={index === 0}
-                              onClick={() => handleReorder('tie-in', scope.id, 'up', scope.display_order)}
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={index === allTieInScopes.length - 1}
-                              onClick={() => handleReorder('tie-in', scope.id, 'down', scope.display_order)}
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
                               onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -593,22 +561,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={index === 0}
-                              onClick={() => handleReorder('moc', scope.id, 'up', scope.display_order)}
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={index === allMOCScopes.length - 1}
-                              onClick={() => handleReorder('moc', scope.id, 'down', scope.display_order)}
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
