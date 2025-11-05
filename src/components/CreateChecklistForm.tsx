@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories as useChecklistCategoriesFromItems, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
-import { usePSSRReasons } from '@/hooks/usePSSRReasons';
+import { usePSSRReasons, usePSSRTieInScopes } from '@/hooks/usePSSRReasons';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
@@ -46,6 +46,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: availableCategories = [] } = useChecklistCategoriesFromItems();
   const { data: pssrReasons = [] } = usePSSRReasons();
+  const { data: tieInScopes = [] } = usePSSRTieInScopes();
   
   const [formData, setFormData] = useState<NewChecklistData>({
     reason: '',
@@ -53,6 +54,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   });
   const [customReason, setCustomReason] = useState('');
   const [plantChangeType, setPlantChangeType] = useState('');
+  const [selectedTieInScopes, setSelectedTieInScopes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -276,6 +278,15 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         });
         return;
       }
+      // Check if tie-in scopes are required
+      if (formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'tie_in' && selectedTieInScopes.length === 0) {
+        toast({
+          title: "Tie-in Scope Required",
+          description: "Please select at least one tie-in scope to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
       setCurrentStep(2);
     }
   };
@@ -289,7 +300,8 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
       ...formData,
       name: formData.reason, // Set name as reason
       custom_reason: formData.reason === 'Others' ? customReason : undefined,
-      plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? plantChangeType : undefined
+      plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? plantChangeType : undefined,
+      selected_tie_in_scopes: plantChangeType === 'tie_in' ? selectedTieInScopes : undefined
     };
     onComplete(finalData);
   };
@@ -575,6 +587,44 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                               <SelectItem value="moc">Implementation of an approved Asset MOC</SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                      )}
+
+                      {/* Tie-in Scopes Multi-select */}
+                      {formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'tie_in' && (
+                        <div className="mt-4 space-y-3 animate-fade-in-up">
+                          <Label className="text-sm font-medium">
+                            Select Advanced Tie-in Scope(s) *
+                          </Label>
+                          <div className="space-y-3 border border-border/30 rounded-lg p-4 bg-muted/20">
+                            {tieInScopes.map((scope) => (
+                              <div key={scope.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/40 transition-colors">
+                                <Checkbox
+                                  id={`scope-${scope.code}`}
+                                  checked={selectedTieInScopes.includes(scope.code)}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedTieInScopes(prev =>
+                                      checked
+                                        ? [...prev, scope.code]
+                                        : prev.filter(c => c !== scope.code)
+                                    );
+                                  }}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1 space-y-1">
+                                  <Label
+                                    htmlFor={`scope-${scope.code}`}
+                                    className="text-sm font-semibold cursor-pointer text-foreground"
+                                  >
+                                    {scope.code}
+                                  </Label>
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {scope.description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

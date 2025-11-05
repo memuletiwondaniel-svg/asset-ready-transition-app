@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import { useCustomReasons, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
-import { usePSSRReasons } from '@/hooks/usePSSRReasons';
+import { usePSSRReasons, usePSSRTieInScopes } from '@/hooks/usePSSRReasons';
 import { useToast } from '@/hooks/use-toast';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
@@ -32,7 +32,8 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     reason: checklist.reason,
     selected_items: checklist.selected_items || [],
     custom_reason: checklist.custom_reason || '',
-    plant_change_type: (checklist as any).plant_change_type || ''
+    plant_change_type: (checklist as any).plant_change_type || '',
+    selected_tie_in_scopes: (checklist as any).selected_tie_in_scopes || []
   });
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,6 +47,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: customReasons = [] } = useCustomReasons();
   const { data: pssrReasons = [] } = usePSSRReasons();
+  const { data: tieInScopes = [] } = usePSSRTieInScopes();
   const { mutate: updateChecklist, isPending } = useUpdateChecklist();
 
   // All available reasons (PSSR reasons from database + custom reasons + Others)
@@ -76,7 +78,8 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
         reason: formData.reason,
         selected_items: formData.selected_items,
         custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined,
-        plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? formData.plant_change_type : undefined
+        plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? formData.plant_change_type : undefined,
+        selected_tie_in_scopes: formData.plant_change_type === 'tie_in' ? formData.selected_tie_in_scopes : undefined
       }
     }, {
       onSuccess: () => {
@@ -277,6 +280,44 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                     <SelectItem value="moc">Implementation of an approved Asset MOC</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {formData.reason === 'Restart following plant changes or modifications' && formData.plant_change_type === 'tie_in' && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  Select Advanced Tie-in Scope(s) *
+                </Label>
+                <div className="space-y-3 border border-border/30 rounded-lg p-4 bg-muted/20">
+                  {tieInScopes.map((scope) => (
+                    <div key={scope.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/40 transition-colors">
+                      <Checkbox
+                        id={`scope-${scope.code}`}
+                        checked={formData.selected_tie_in_scopes.includes(scope.code)}
+                        onCheckedChange={(checked) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            selected_tie_in_scopes: checked
+                              ? [...prev.selected_tie_in_scopes, scope.code]
+                              : prev.selected_tie_in_scopes.filter(c => c !== scope.code)
+                          }));
+                        }}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 space-y-1">
+                        <Label
+                          htmlFor={`scope-${scope.code}`}
+                          className="text-sm font-semibold cursor-pointer"
+                        >
+                          {scope.code}
+                        </Label>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {scope.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>

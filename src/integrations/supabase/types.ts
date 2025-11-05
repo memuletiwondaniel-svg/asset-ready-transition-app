@@ -138,6 +138,7 @@ export type Database = {
           plant_change_type: string | null
           reason: string
           selected_items: string[]
+          selected_tie_in_scopes: string[] | null
           status: string
           updated_at: string
         }
@@ -150,6 +151,7 @@ export type Database = {
           plant_change_type?: string | null
           reason: string
           selected_items?: string[]
+          selected_tie_in_scopes?: string[] | null
           status?: string
           updated_at?: string
         }
@@ -162,6 +164,7 @@ export type Database = {
           plant_change_type?: string | null
           reason?: string
           selected_items?: string[]
+          selected_tie_in_scopes?: string[] | null
           status?: string
           updated_at?: string
         }
