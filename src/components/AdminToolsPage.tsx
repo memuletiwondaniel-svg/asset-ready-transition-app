@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCircle } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCircle, Home } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
 import ProjectManagementPage from "./project/ProjectManagementPage";
@@ -109,7 +110,23 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       {/* Subtle Divider */}
       <div className="border-t border-border/50" />
 
-      <div className="container pt-24 pb-8 max-w-7xl mx-auto">
+      <div className="container pt-8 pb-8 max-w-7xl mx-auto">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb className="mb-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
+                <Home className="h-4 w-4" />
+                Home
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{t.administration}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Header Section */}
         <div className="mb-16">
           <h1 className="text-2xl font-medium text-foreground/80 mb-2">
