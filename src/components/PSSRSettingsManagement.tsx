@@ -494,9 +494,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
         <div className="border-t border-border/50" />
 
-        <div className="container pt-10 pb-12 max-w-7xl mx-auto">
+        <div className="container pt-16 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb Navigation */}
-          <Breadcrumb className="mb-10 animate-fade-in">
+          <Breadcrumb className="mb-14 animate-fade-in">
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors">
@@ -517,22 +517,18 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </BreadcrumbList>
           </Breadcrumb>
 
-          {/* Modern Header */}
-          <div className="mb-10 text-center animate-fade-in">
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-2 leading-tight" style={{
-              fontFamily: "'Poppins', sans-serif"
-            }}>
-              <span className="text-slate-700 dark:text-slate-200">
-                PSSR Configuration
-              </span>
+          {/* Soft, De-emphasized Header */}
+          <div className="mb-16 text-center animate-fade-in">
+            <h1 className="text-xl md:text-2xl font-normal tracking-wide mb-3 text-muted-foreground/80">
+              PSSR Configuration
             </h1>
-            <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
+            <p className="text-muted-foreground/60 text-sm max-w-2xl mx-auto leading-relaxed">
               Manage PSSR reasons, tie-in scopes, and Management of Change options
             </p>
           </div>
 
           {/* Enhanced Search Bar */}
-          <div className="mb-12 animate-scale-in">
+          <div className="mb-16 animate-scale-in">
             <div className="relative max-w-xl mx-auto">
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-primary/10 rounded-2xl blur-xl" />
               <div className="relative bg-card/80 backdrop-blur-sm border-2 border-border/50 rounded-2xl shadow-lg hover:border-emerald-500/30 transition-colors">
@@ -563,7 +559,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             )}
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
             {/* Modern Tab Navigation */}
             <div className="flex justify-center">
               <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
@@ -596,8 +592,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* PSSR Reasons Tab */}
           <TabsContent value="reasons" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-8 px-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <CardTitle>PSSR Reasons</CardTitle>
@@ -648,7 +644,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   </div>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-8">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -726,8 +722,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* Tie-in Scopes Tab */}
           <TabsContent value="tie-in" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-8 px-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <CardTitle>Tie-in Scopes</CardTitle>
@@ -778,7 +774,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   </div>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-8">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -858,8 +854,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* MOC Scopes Tab */}
           <TabsContent value="moc" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-8 px-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <CardTitle>MOC Scopes</CardTitle>
@@ -910,7 +906,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   </div>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-8">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
