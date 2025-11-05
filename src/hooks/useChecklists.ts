@@ -15,6 +15,8 @@ export interface CreateChecklistData {
   selected_items: string[];
   plant_change_type?: string;
   selected_tie_in_scopes?: string[];
+  moc_number?: string;
+  selected_moc_scopes?: string[];
 }
 
 export const useChecklists = () => {
@@ -100,6 +102,8 @@ export const useCreateChecklist = () => {
           selected_items: checklistData.selected_items,
           plant_change_type: checklistData.plant_change_type || null,
           selected_tie_in_scopes: checklistData.selected_tie_in_scopes || null,
+          moc_number: checklistData.moc_number || null,
+          selected_moc_scopes: checklistData.selected_moc_scopes || null,
           created_by: userId,
         })
         .select()
@@ -155,6 +159,8 @@ export const useUpdateChecklist = () => {
       if (checklistData.selected_items) updateData.selected_items = checklistData.selected_items;
       if (checklistData.plant_change_type !== undefined) updateData.plant_change_type = checklistData.plant_change_type || null;
       if (checklistData.selected_tie_in_scopes !== undefined) updateData.selected_tie_in_scopes = checklistData.selected_tie_in_scopes || null;
+      if (checklistData.moc_number !== undefined) updateData.moc_number = checklistData.moc_number || null;
+      if (checklistData.selected_moc_scopes !== undefined) updateData.selected_moc_scopes = checklistData.selected_moc_scopes || null;
 
       const { data, error } = await supabase
         .from('checklists')

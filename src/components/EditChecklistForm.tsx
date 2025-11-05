@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import { useCustomReasons, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
-import { usePSSRReasons, usePSSRTieInScopes } from '@/hooks/usePSSRReasons';
+import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 import { useToast } from '@/hooks/use-toast';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
@@ -33,7 +33,9 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     selected_items: checklist.selected_items || [],
     custom_reason: checklist.custom_reason || '',
     plant_change_type: (checklist as any).plant_change_type || '',
-    selected_tie_in_scopes: (checklist as any).selected_tie_in_scopes || []
+    selected_tie_in_scopes: (checklist as any).selected_tie_in_scopes || [],
+    moc_number: (checklist as any).moc_number || '',
+    selected_moc_scopes: (checklist as any).selected_moc_scopes || []
   });
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +50,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   const { data: customReasons = [] } = useCustomReasons();
   const { data: pssrReasons = [] } = usePSSRReasons();
   const { data: tieInScopes = [] } = usePSSRTieInScopes();
+  const { data: mocScopes = [] } = usePSSRMOCScopes();
   const { mutate: updateChecklist, isPending } = useUpdateChecklist();
 
   // All available reasons (PSSR reasons from database + custom reasons + Others)
@@ -79,7 +82,9 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
         selected_items: formData.selected_items,
         custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined,
         plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? formData.plant_change_type : undefined,
-        selected_tie_in_scopes: formData.plant_change_type === 'tie_in' ? formData.selected_tie_in_scopes : undefined
+        selected_tie_in_scopes: formData.plant_change_type === 'tie_in' ? formData.selected_tie_in_scopes : undefined,
+        moc_number: formData.plant_change_type === 'moc' ? formData.moc_number : undefined,
+        selected_moc_scopes: formData.plant_change_type === 'moc' ? formData.selected_moc_scopes : undefined
       }
     }, {
       onSuccess: () => {
@@ -317,6 +322,54 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {formData.reason === 'Restart following plant changes or modifications' && formData.plant_change_type === 'moc' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mocNumber">MOC Number *</Label>
+                  <Input
+                    id="mocNumber"
+                    placeholder="Enter MOC number"
+                    value={formData.moc_number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, moc_number: e.target.value }))}
+                    maxLength={50}
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">
+                    Select MOC Scope(s) *
+                  </Label>
+                  <div className="space-y-3 border border-border/30 rounded-lg p-4 bg-muted/20">
+                    {mocScopes.map((scope) => (
+                      <div key={scope.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/40 transition-colors">
+                        <Checkbox
+                          id={`moc-scope-${scope.id}`}
+                          checked={formData.selected_moc_scopes.includes(scope.name)}
+                          onCheckedChange={(checked) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              selected_moc_scopes: checked
+                                ? [...prev.selected_moc_scopes, scope.name]
+                                : prev.selected_moc_scopes.filter(n => n !== scope.name)
+                            }));
+                          }}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor={`moc-scope-${scope.id}`}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {scope.name}
+                          </Label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

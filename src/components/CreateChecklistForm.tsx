@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories as useChecklistCategoriesFromItems, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
-import { usePSSRReasons, usePSSRTieInScopes } from '@/hooks/usePSSRReasons';
+import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
 import ChecklistProgressSteps from './ChecklistProgressSteps';
@@ -47,6 +47,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const { data: availableCategories = [] } = useChecklistCategoriesFromItems();
   const { data: pssrReasons = [] } = usePSSRReasons();
   const { data: tieInScopes = [] } = usePSSRTieInScopes();
+  const { data: mocScopes = [] } = usePSSRMOCScopes();
   
   const [formData, setFormData] = useState<NewChecklistData>({
     reason: '',
@@ -55,6 +56,8 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const [customReason, setCustomReason] = useState('');
   const [plantChangeType, setPlantChangeType] = useState('');
   const [selectedTieInScopes, setSelectedTieInScopes] = useState<string[]>([]);
+  const [mocNumber, setMocNumber] = useState('');
+  const [selectedMocScopes, setSelectedMocScopes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -287,6 +290,25 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         });
         return;
       }
+      // Check if MOC number and scopes are required
+      if (formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'moc') {
+        if (!mocNumber.trim()) {
+          toast({
+            title: "MOC Number Required",
+            description: "Please enter the MOC number to continue.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (selectedMocScopes.length === 0) {
+          toast({
+            title: "MOC Scope Required",
+            description: "Please select at least one MOC scope to continue.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       setCurrentStep(2);
     }
   };
@@ -301,7 +323,9 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
       name: formData.reason, // Set name as reason
       custom_reason: formData.reason === 'Others' ? customReason : undefined,
       plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? plantChangeType : undefined,
-      selected_tie_in_scopes: plantChangeType === 'tie_in' ? selectedTieInScopes : undefined
+      selected_tie_in_scopes: plantChangeType === 'tie_in' ? selectedTieInScopes : undefined,
+      moc_number: plantChangeType === 'moc' ? mocNumber : undefined,
+      selected_moc_scopes: plantChangeType === 'moc' ? selectedMocScopes : undefined
     };
     onComplete(finalData);
   };
@@ -624,6 +648,57 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                                 </div>
                               </div>
                             ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* MOC Number and Scopes */}
+                      {formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'moc' && (
+                        <div className="mt-4 space-y-4 animate-fade-in-up">
+                          <div className="space-y-2">
+                            <Label htmlFor="mocNumber" className="text-sm font-medium">
+                              MOC Number *
+                            </Label>
+                            <Input
+                              id="mocNumber"
+                              placeholder="Enter MOC number"
+                              value={mocNumber}
+                              onChange={(e) => setMocNumber(e.target.value)}
+                              className="h-12"
+                              maxLength={50}
+                            />
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <Label className="text-sm font-medium">
+                              Select MOC Scope(s) *
+                            </Label>
+                            <div className="space-y-3 border border-border/30 rounded-lg p-4 bg-muted/20">
+                              {mocScopes.map((scope) => (
+                                <div key={scope.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/40 transition-colors">
+                                  <Checkbox
+                                    id={`moc-scope-${scope.id}`}
+                                    checked={selectedMocScopes.includes(scope.name)}
+                                    onCheckedChange={(checked) => {
+                                      setSelectedMocScopes(prev =>
+                                        checked
+                                          ? [...prev, scope.name]
+                                          : prev.filter(n => n !== scope.name)
+                                      );
+                                    }}
+                                    className="mt-1"
+                                  />
+                                  <div className="flex-1">
+                                    <Label
+                                      htmlFor={`moc-scope-${scope.id}`}
+                                      className="text-sm font-medium cursor-pointer text-foreground"
+                                    >
+                                      {scope.name}
+                                    </Label>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       )}

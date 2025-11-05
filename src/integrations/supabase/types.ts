@@ -134,10 +134,12 @@ export type Database = {
           created_by: string | null
           custom_reason: string | null
           id: string
+          moc_number: string | null
           name: string
           plant_change_type: string | null
           reason: string
           selected_items: string[]
+          selected_moc_scopes: string[] | null
           selected_tie_in_scopes: string[] | null
           status: string
           updated_at: string
@@ -147,10 +149,12 @@ export type Database = {
           created_by?: string | null
           custom_reason?: string | null
           id?: string
+          moc_number?: string | null
           name: string
           plant_change_type?: string | null
           reason: string
           selected_items?: string[]
+          selected_moc_scopes?: string[] | null
           selected_tie_in_scopes?: string[] | null
           status?: string
           updated_at?: string
@@ -160,10 +164,12 @@ export type Database = {
           created_by?: string | null
           custom_reason?: string | null
           id?: string
+          moc_number?: string | null
           name?: string
           plant_change_type?: string | null
           reason?: string
           selected_items?: string[]
+          selected_moc_scopes?: string[] | null
           selected_tie_in_scopes?: string[] | null
           status?: string
           updated_at?: string
