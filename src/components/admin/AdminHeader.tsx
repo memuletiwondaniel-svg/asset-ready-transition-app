@@ -1,6 +1,7 @@
 import React from 'react';
 import LanguageSelector from './LanguageSelector';
 import UserProfileDropdown from './UserProfileDropdown';
+import { ThemeToggle } from './ThemeToggle';
 
 interface AdminHeaderProps {
   selectedLanguage: string;
@@ -34,8 +35,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
           </div>
         </div>
         
-        {/* Right side - Language selector and User profile */}
+        {/* Right side - Theme toggle, Language selector and User profile */}
         <div className="flex items-center space-x-3">
+          <ThemeToggle />
           <LanguageSelector 
             selectedLanguage={selectedLanguage}
             onLanguageChange={onLanguageChange}
