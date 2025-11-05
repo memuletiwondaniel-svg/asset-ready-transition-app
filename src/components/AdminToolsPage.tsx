@@ -12,6 +12,7 @@ import ProjectManagementPage from "./project/ProjectManagementPage";
 import PSSRSettingsManagement from "./PSSRSettingsManagement";
 import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
+import ActivityTrendsWidget from "./ActivityTrendsWidget";
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentTranslations } from '@/utils/translations';
 interface AdminToolsPageProps {
@@ -333,6 +334,11 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
               Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
             </p>
           )}
+        </div>
+
+        {/* Activity Trends Widget */}
+        <div className="mb-12">
+          <ActivityTrendsWidget />
         </div>
 
         {/* Favorites Section */}
