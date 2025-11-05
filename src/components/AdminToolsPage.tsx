@@ -72,6 +72,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     stats: {
       total: userStats.total
     },
+    height: 'md:row-span-2',
     onClick: () => setActiveView('users')
   }, {
     id: 'checklist',
@@ -80,6 +81,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     icon: ClipboardList,
     gradient: 'from-emerald-500 to-emerald-600',
     stats: {},
+    height: 'md:row-span-3',
     onClick: () => setActiveView('checklist')
   }, {
     id: 'projects',
@@ -90,6 +92,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     stats: {
       total: 12
     },
+    height: 'md:row-span-2',
     onClick: () => setActiveView('projects')
   }];
   return <div className="min-h-screen bg-background">
@@ -114,14 +117,15 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
           </p>
         </div>
 
-        {/* Modern Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {adminTools.map((tool) => {
+        {/* Masonry Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
+          {adminTools.map((tool, index) => {
             const IconComponent = tool.icon;
             return (
               <Card 
                 key={tool.id}
-                className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden"
+                className={`group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in ${tool.height}`}
+                style={{ animationDelay: `${index * 100}ms` }}
                 onClick={tool.onClick}
               >
                 {/* Gradient Background Effect */}
