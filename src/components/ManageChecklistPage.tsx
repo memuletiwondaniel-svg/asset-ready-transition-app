@@ -234,8 +234,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
         <div className="container py-10 max-w-7xl mx-auto">
           {/* Modern Header */}
           <div className="mb-10 text-center animate-fade-in">
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
-              <span className="bg-gradient-to-r from-primary via-emerald-600 to-primary bg-clip-text text-transparent drop-shadow-sm">
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">
                 PSSR Configuration
               </span>
             </h1>
