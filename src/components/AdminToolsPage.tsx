@@ -185,14 +185,24 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     height: 'md:row-span-2',
     onClick: () => setActiveView('users')
   }, {
-    id: 'checklist',
+    id: 'pssr-settings',
     title: 'PSSR Configuration',
-    description: 'Manage checklists, categories, topics, and PSSR settings',
-    icon: ClipboardList,
+    description: 'Manage PSSR reasons, tie-in scopes, and MOC options',
+    icon: Settings,
     gradient: 'from-emerald-500 to-emerald-600',
-    tooltip: 'Configure PSSR checklists, categories, topics, and translation settings',
+    tooltip: 'Configure PSSR reasons, tie-in scopes, and Management of Change settings',
     stats: {},
-    height: 'md:row-span-3',
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('pssr-settings')
+  }, {
+    id: 'checklist',
+    title: 'Checklist Management',
+    description: 'Manage checklists, categories, topics, and translations',
+    icon: ClipboardList,
+    gradient: 'from-purple-500 to-purple-600',
+    tooltip: 'Configure checklists, categories, topics, and translation settings',
+    stats: {},
+    height: 'md:row-span-2',
     onClick: () => setActiveView('checklist')
   }, {
     id: 'projects',
@@ -253,6 +263,13 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     return (
       <div className="animate-fade-in">
         <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+      </div>
+    );
+  }
+  if (activeView === 'pssr-settings') {
+    return (
+      <div className="animate-fade-in">
+        <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
       </div>
     );
   }

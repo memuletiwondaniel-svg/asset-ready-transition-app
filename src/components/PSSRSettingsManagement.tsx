@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,18 +8,32 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Edit2, Trash2, ArrowUp, ArrowDown, CheckCircle, XCircle } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Home, Plus, Edit2, Trash2, ArrowUp, ArrowDown, CheckCircle, XCircle, Search, X } from 'lucide-react';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import AdminHeader from './admin/AdminHeader';
+import { getCurrentTranslations } from '@/utils/translations';
 
 interface PSSRSettingsManagementProps {
   onBack: () => void;
+  selectedLanguage?: string;
+  translations?: any;
 }
 
-const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({ onBack }) => {
+const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({ 
+  onBack,
+  selectedLanguage = 'English',
+  translations = {}
+}) => {
   const queryClient = useQueryClient();
+  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('reasons');
+  
+  const t = getCurrentTranslations(currentLanguage);
   
   // Fetch ALL items (including inactive) for admin management
   const { data: allReasons = [] } = useQuery({
@@ -212,14 +226,112 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({ onBack 
     }
   };
 
+  // Filter tab content based on search
+  const tabMatches = (tabName: string, content: string[]) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return tabName.toLowerCase().includes(query) || 
+           content.some(item => item.toLowerCase().includes(query));
+  };
+
+  const showReasonsTab = tabMatches('reasons', allReasons.map(r => r.name));
+  const showTieInTab = tabMatches('tie-in scopes', allTieInScopes.map(s => s.code + s.description));
+  const showMOCTab = tabMatches('moc scopes', allMOCScopes.map(s => s.name));
+
+  // Auto-switch to first visible tab if current tab is hidden by search
+  React.useEffect(() => {
+    if (searchQuery.trim()) {
+      if (activeTab === 'reasons' && !showReasonsTab) {
+        if (showTieInTab) setActiveTab('tie-in');
+        else if (showMOCTab) setActiveTab('moc');
+      } else if (activeTab === 'tie-in' && !showTieInTab) {
+        if (showReasonsTab) setActiveTab('reasons');
+        else if (showMOCTab) setActiveTab('moc');
+      } else if (activeTab === 'moc' && !showMOCTab) {
+        if (showReasonsTab) setActiveTab('reasons');
+        else if (showTieInTab) setActiveTab('tie-in');
+      }
+    }
+  }, [searchQuery, activeTab, showReasonsTab, showTieInTab, showMOCTab]);
+
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="reasons" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="reasons">PSSR Reasons</TabsTrigger>
-          <TabsTrigger value="tie-in">Tie-in Scopes</TabsTrigger>
-          <TabsTrigger value="moc">MOC Scopes</TabsTrigger>
-        </TabsList>
+    <div className="min-h-screen bg-background">
+      <AdminHeader 
+        selectedLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+        translations={t}
+      />
+
+      <div className="border-t border-border/50" />
+
+      <div className="container pt-8 pb-8 max-w-7xl mx-auto">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb className="mb-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors">
+                <Home className="h-4 w-4" />
+                Home
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors">
+                Administration
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-medium">PSSR Configuration</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        {/* De-emphasized Header */}
+        <div className="mb-8">
+          <h1 className="text-xl font-medium text-muted-foreground mb-1">
+            PSSR Configuration
+          </h1>
+          <p className="text-sm text-muted-foreground/70">
+            Manage PSSR reasons, tie-in scopes, and MOC scope options
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search configuration settings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-11 pr-11 h-12 border-border/50 focus-visible:border-primary/50"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2 ml-1">
+              {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} match your search
+            </p>
+          )}
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-12">
+            {showReasonsTab && <TabsTrigger value="reasons" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PSSR Reasons</TabsTrigger>}
+            {showTieInTab && <TabsTrigger value="tie-in" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tie-in Scopes</TabsTrigger>}
+            {showMOCTab && <TabsTrigger value="moc" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">MOC Scopes</TabsTrigger>}
+          </TabsList>
 
           {/* PSSR Reasons Tab */}
           <TabsContent value="reasons">
@@ -545,6 +657,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({ onBack 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
