@@ -24,6 +24,7 @@ export const translations = {
     // Navigation
     backToAdminTools: 'Back to Admin & Tools',
     backToDashboard: 'Back to Dashboard',
+    backToAdministration: 'Back to Administration',
     
     // User Profile
     profile: 'Profile',
@@ -51,6 +52,19 @@ export const translations = {
     manageChecklistsDesc: 'Create, edit, and manage PSSR checklists with comprehensive item selection and configuration',
     checklistManagement: 'Checklist Management',
     checklistsOverview: 'Checklists Overview',
+    pssrConfiguration: 'PSSR Configuration',
+    checklists: 'Checklists',
+    items: 'Items',
+    categories: 'Categories',
+    topics: 'Topics',
+    pssrSettings: 'PSSR Settings',
+    createNewChecklist: 'Create New Checklist',
+    searchChecklists: 'Search checklists...',
+    sortBy: 'Sort by',
+    name: 'Name',
+    date: 'Date',
+    noChecklistsFound: 'No Checklists Found',
+    createFirstChecklist: 'Create your first checklist to get started',
     
     // Project Management
     manageProject: 'Manage Project',
@@ -109,6 +123,7 @@ export const translations = {
     // Navigation
     backToAdminTools: 'العودة إلى الإدارة والأدوات',
     backToDashboard: 'العودة إلى لوحة التحكم',
+    backToAdministration: 'العودة إلى الإدارة',
     
     // User Profile
     profile: 'الملف الشخصي',
@@ -136,6 +151,19 @@ export const translations = {
     manageChecklistsDesc: 'إنشاء وتحرير وإدارة قوائم تحقق PSSR مع اختيار وتكوين شامل للعناصر',
     checklistManagement: 'إدارة قوائم التحقق',
     checklistsOverview: 'نظرة عامة على قوائم التحقق',
+    pssrConfiguration: 'تكوين PSSR',
+    checklists: 'قوائم التحقق',
+    items: 'العناصر',
+    categories: 'الفئات',
+    topics: 'المواضيع',
+    pssrSettings: 'إعدادات PSSR',
+    createNewChecklist: 'إنشاء قائمة تحقق جديدة',
+    searchChecklists: 'البحث في قوائم التحقق...',
+    sortBy: 'ترتيب حسب',
+    name: 'الاسم',
+    date: 'التاريخ',
+    noChecklistsFound: 'لم يتم العثور على قوائم تحقق',
+    createFirstChecklist: 'أنشئ قائمة التحقق الأولى للبدء',
     
     // Project Management
     manageProject: 'إدارة المشاريع',
@@ -194,6 +222,7 @@ export const translations = {
     // Navigation
     backToAdminTools: 'Retour aux Outils d\'Admin',
     backToDashboard: 'Retour au Tableau de Bord',
+    backToAdministration: 'Retour à l\'Administration',
     
     // User Profile
     profile: 'Profil',
@@ -221,6 +250,19 @@ export const translations = {
     manageChecklistsDesc: 'Créer, modifier et gérer les listes de contrôle PSSR avec sélection et configuration complètes des éléments',
     checklistManagement: 'Gestion des Listes de Contrôle',
     checklistsOverview: 'Aperçu des Listes de Contrôle',
+    pssrConfiguration: 'Configuration PSSR',
+    checklists: 'Listes de Contrôle',
+    items: 'Éléments',
+    categories: 'Catégories',
+    topics: 'Sujets',
+    pssrSettings: 'Paramètres PSSR',
+    createNewChecklist: 'Créer une Nouvelle Liste',
+    searchChecklists: 'Rechercher des listes...',
+    sortBy: 'Trier par',
+    name: 'Nom',
+    date: 'Date',
+    noChecklistsFound: 'Aucune Liste Trouvée',
+    createFirstChecklist: 'Créez votre première liste pour commencer',
     
     // Project Management
     manageProject: 'Gérer les Projets',
@@ -279,6 +321,7 @@ export const translations = {
     // Navigation
     backToAdminTools: 'Kembali ke Admin & Alatan',
     backToDashboard: 'Kembali ke Papan Pemuka',
+    backToAdministration: 'Kembali ke Pentadbiran',
     
     // User Profile
     profile: 'Profil',
@@ -306,6 +349,19 @@ export const translations = {
     manageChecklistsDesc: 'Cipta, edit dan urus senarai semak PSSR dengan pemilihan dan konfigurasi item yang komprehensif',
     checklistManagement: 'Pengurusan Senarai Semak',
     checklistsOverview: 'Tinjauan Senarai Semak',
+    pssrConfiguration: 'Konfigurasi PSSR',
+    checklists: 'Senarai Semak',
+    items: 'Item',
+    categories: 'Kategori',
+    topics: 'Topik',
+    pssrSettings: 'Tetapan PSSR',
+    createNewChecklist: 'Cipta Senarai Semak Baharu',
+    searchChecklists: 'Cari senarai semak...',
+    sortBy: 'Susun mengikut',
+    name: 'Nama',
+    date: 'Tarikh',
+    noChecklistsFound: 'Tiada Senarai Semak Dijumpai',
+    createFirstChecklist: 'Cipta senarai semak pertama anda untuk bermula',
     
     // Project Management
     manageProject: 'Urus Projek',
@@ -364,6 +420,7 @@ export const translations = {
     // Navigation
     backToAdminTools: 'Назад к Админ Инструментам',
     backToDashboard: 'Назад к Панели',
+    backToAdministration: 'Назад к Администрированию',
     
     // User Profile
     profile: 'Профиль',
@@ -391,6 +448,19 @@ export const translations = {
     manageChecklistsDesc: 'Создание, редактирование и управление контрольными списками PSSR с комплексным выбором и настройкой элементов',
     checklistManagement: 'Управление Контрольными Списками',
     checklistsOverview: 'Обзор Контрольных Списков',
+    pssrConfiguration: 'Конфигурация PSSR',
+    checklists: 'Контрольные Списки',
+    items: 'Элементы',
+    categories: 'Категории',
+    topics: 'Темы',
+    pssrSettings: 'Настройки PSSR',
+    createNewChecklist: 'Создать Новый Список',
+    searchChecklists: 'Поиск списков...',
+    sortBy: 'Сортировать по',
+    name: 'Имя',
+    date: 'Дата',
+    noChecklistsFound: 'Списки Не Найдены',
+    createFirstChecklist: 'Создайте свой первый список для начала',
     
     // Project Management
     manageProject: 'Управление Проектами',
