@@ -139,15 +139,27 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
 
   // Handle conditional views AFTER all hooks
   if (activeView === 'users') {
-    return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
+    return (
+      <div className="animate-fade-in">
+        <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+      </div>
+    );
   }
   if (activeView === 'checklist') {
-    return <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
+    return (
+      <div className="animate-fade-in">
+        <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+      </div>
+    );
   }
   if (activeView === 'projects') {
-    return <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
+    return (
+      <div className="animate-fade-in">
+        <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background animate-fade-in">
       <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t} />
 
       {/* Subtle Divider */}
@@ -220,12 +232,13 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
               Recently Accessed
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {recentToolsData.map((tool) => {
+              {recentToolsData.map((tool, index) => {
                 const IconComponent = tool.icon;
                 return (
                   <Card
                     key={tool.id}
-                    className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border bg-card/50 backdrop-blur"
+                    className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border bg-card/50 backdrop-blur animate-scale-in"
+                    style={{ animationDelay: `${index * 75}ms` }}
                     onClick={tool.onClick}
                   >
                     <CardHeader className="p-5">
