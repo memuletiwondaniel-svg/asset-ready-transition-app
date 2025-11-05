@@ -106,6 +106,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </div>
       </AdminHeader>
 
+      {/* Subtle Divider */}
+      <div className="border-t border-border/50" />
+
       <div className="container pt-24 pb-8 max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-16">
