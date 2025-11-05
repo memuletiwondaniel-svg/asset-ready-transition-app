@@ -21,20 +21,19 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
 import ChecklistTopicsManagement from './ChecklistTopicsManagement';
 import PSSRSettingsManagement from './PSSRSettingsManagement';
-
 interface ManageChecklistPageProps {
   onBack: () => void;
   selectedLanguage?: string;
   translations?: any;
 }
-
 interface NewChecklistData {
   reason: string;
   selected_items: string[];
   custom_reason?: string;
 }
-
-const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => {
+const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
+  onBack
+}) => {
   const [activeTab, setActiveTab] = useState('checklists');
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -47,15 +46,29 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
   const [createdChecklistName, setCreatedChecklistName] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [checklistToDelete, setChecklistToDelete] = useState<Checklist | null>(null);
-
-  const { toast } = useToast();
-  const { data: checklists = [], isLoading, error } = useChecklists();
-  const { data: categories = [] } = useChecklistCategories();
-  const { data: topics = [] } = useChecklistTopics();
-  const { mutate: createChecklist } = useCreateChecklist();
-  const { mutate: updateChecklist } = useUpdateChecklist();
-  const { mutate: deleteChecklist } = useDeleteChecklist();
-
+  const {
+    toast
+  } = useToast();
+  const {
+    data: checklists = [],
+    isLoading,
+    error
+  } = useChecklists();
+  const {
+    data: categories = []
+  } = useChecklistCategories();
+  const {
+    data: topics = []
+  } = useChecklistTopics();
+  const {
+    mutate: createChecklist
+  } = useCreateChecklist();
+  const {
+    mutate: updateChecklist
+  } = useUpdateChecklist();
+  const {
+    mutate: deleteChecklist
+  } = useDeleteChecklist();
   const handleCreateComplete = (checklistData: NewChecklistData) => {
     createChecklist(checklistData, {
       onSuccess: newChecklist => {
@@ -77,19 +90,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
       }
     });
   };
-
   const handleBackToChecklists = () => {
     setShowSuccessPage(false);
     setShowCreateForm(false);
     setShowEditForm(false);
     setEditingChecklist(null);
   };
-
   const handleEditChecklist = (checklist: Checklist) => {
     setEditingChecklist(checklist);
     setShowEditForm(true);
   };
-
   const handleEditComplete = () => {
     setShowEditForm(false);
     setEditingChecklist(null);
@@ -98,12 +108,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
       description: "Checklist updated successfully."
     });
   };
-
   const handleDeleteChecklist = (checklist: Checklist) => {
     setChecklistToDelete(checklist);
     setShowDeleteDialog(true);
   };
-
   const confirmDeleteChecklist = () => {
     if (!checklistToDelete) return;
     deleteChecklist(checklistToDelete.id, {
@@ -125,12 +133,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
       }
     });
   };
-
   const cancelDeleteChecklist = () => {
     setShowDeleteDialog(false);
     setChecklistToDelete(null);
   };
-
   React.useEffect(() => {
     if (error) {
       toast({
@@ -140,11 +146,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
       });
     }
   }, [error, toast]);
-
   const filteredAndSortedChecklists = useMemo(() => {
     let filtered = checklists.filter(checklist => {
-      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) || checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
     return [...filtered].sort((a, b) => {
@@ -160,7 +164,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
       }
     });
   }, [checklists, searchQuery, filterCategory, sortBy]);
-
   const getStatusBadge = (status: Checklist['status']) => {
     switch (status) {
       case 'Active':
@@ -173,16 +176,13 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
-
   const isNewChecklist = (checklistId: string) => {
     return sessionStorage.getItem(`new-checklist-${checklistId}`) === 'true';
   };
-
   const handleChecklistClick = (checklist: Checklist) => {
     sessionStorage.removeItem(`new-checklist-${checklist.id}`);
     setSelectedChecklist(checklist);
   };
-
   if (showCreateForm) {
     return <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} />;
   }
@@ -201,25 +201,23 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
   if (selectedChecklist) {
     return <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} />;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-primary/10 to-emerald-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l from-emerald-500/10 to-orange-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '700ms' }} />
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t from-orange-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '1400ms' }} />
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l from-emerald-500/10 to-orange-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
+        animationDelay: '700ms'
+      }} />
+        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t from-orange-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
+        animationDelay: '1400ms'
+      }} />
       </div>
       
       <div className="relative z-10">
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
           <div className="container flex h-20 items-center">
             <div className="flex items-center">
-              <Button 
-                variant="ghost" 
-                onClick={onBack} 
-                className="h-10 px-4 py-2 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 gap-2"
-              >
+              <Button variant="ghost" onClick={onBack} className="h-10 px-4 py-2 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Administration
               </Button>
@@ -234,52 +232,37 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
         <div className="container py-10 max-w-7xl mx-auto">
           {/* Modern Header */}
           <div className="mb-10 text-center animate-fade-in">
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4 leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4 leading-tight" style={{
+            fontFamily: "'Poppins', sans-serif"
+          }}>
               <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 dark:from-slate-100 dark:via-blue-400 dark:to-slate-100 bg-clip-text text-transparent">
                 PSSR Configuration
               </span>
             </h1>
-            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light">
-              Manage all aspects of PSSR system - checklists, items, categories, topics, and settings
-            </p>
+            
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             {/* Modern Tab Navigation */}
             <div className="flex justify-center">
               <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
-                <TabsTrigger 
-                  value="checklists" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
-                >
+                <TabsTrigger value="checklists" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <ClipboardList className="h-4 w-4" />
                   <span className="hidden sm:inline">Checklists</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="items"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
-                >
+                <TabsTrigger value="items" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <FileText className="h-4 w-4" />
                   <span className="hidden sm:inline">Items</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="categories"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
-                >
+                <TabsTrigger value="categories" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Categories</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="topics"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
-                >
+                <TabsTrigger value="topics" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <BookOpen className="h-4 w-4" />
                   <span className="hidden sm:inline">Topics</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="pssr-settings"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
-                >
+                <TabsTrigger value="pssr-settings" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
                   <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">PSSR Settings</span>
                 </TabsTrigger>
@@ -311,25 +294,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                 </Select>
               </div>
 
-              {isLoading ? (
-                <div className="flex items-center justify-center py-16">
+              {isLoading ? <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : filteredAndSortedChecklists.length === 0 ? (
-                <div className="text-center py-16">
+                </div> : filteredAndSortedChecklists.length === 0 ? <div className="text-center py-16">
                   <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold mb-2">No Checklists Found</h3>
                   <p className="text-muted-foreground">Create your first checklist to get started</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredAndSortedChecklists.map((checklist, index) => (
-                    <Card 
-                      key={checklist.id} 
-                      className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in" 
-                      style={{ animationDelay: `${index * 50}ms` }}
-                      onClick={() => handleChecklistClick(checklist)}
-                    >
+                </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredAndSortedChecklists.map((checklist, index) => <Card key={checklist.id} className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in" style={{
+                animationDelay: `${index * 50}ms`
+              }} onClick={() => handleChecklistClick(checklist)}>
                       {/* Gradient Background Effect */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       
@@ -340,17 +314,23 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                             <CardDescription className="line-clamp-2">{checklist.reason}</CardDescription>
                           </div>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-accent">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditChecklist(checklist); }}>
+                              <DropdownMenuItem onClick={e => {
+                          e.stopPropagation();
+                          handleEditChecklist(checklist);
+                        }}>
                                 <Edit3 className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDeleteChecklist(checklist); }} className="text-destructive">
+                              <DropdownMenuItem onClick={e => {
+                          e.stopPropagation();
+                          handleDeleteChecklist(checklist);
+                        }} className="text-destructive">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -367,10 +347,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                    </Card>)}
+                </div>}
             </TabsContent>
 
             <TabsContent value="items" className="animate-fade-in mt-0">
@@ -416,8 +394,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };
-
 export default ManageChecklistPage;
