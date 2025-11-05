@@ -81,18 +81,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
 
   // Get current translations
   const t = getCurrentTranslations(selectedLanguage);
-
-  // Filter admin tools based on search query
-  const filteredAdminTools = useMemo(() => {
-    if (!searchQuery.trim()) return adminTools;
-    
-    const query = searchQuery.toLowerCase().trim();
-    return adminTools.filter(tool => 
-      tool.title.toLowerCase().includes(query) ||
-      tool.description.toLowerCase().includes(query) ||
-      tool.tooltip.toLowerCase().includes(query)
-    );
-  }, [searchQuery, userStats.total, t]);
   if (activeView === 'users') {
     return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
   }
@@ -137,6 +125,18 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     height: 'md:row-span-2',
     onClick: () => handleToolClick('projects', () => setActiveView('projects'))
   }];
+
+  // Filter admin tools based on search query
+  const filteredAdminTools = useMemo(() => {
+    if (!searchQuery.trim()) return adminTools;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return adminTools.filter(tool => 
+      tool.title.toLowerCase().includes(query) ||
+      tool.description.toLowerCase().includes(query) ||
+      tool.tooltip.toLowerCase().includes(query)
+    );
+  }, [searchQuery, userStats.total, t]);
 
   // Get recent tools data
   const recentToolsData = useMemo(() => {
