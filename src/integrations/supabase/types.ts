@@ -22,6 +22,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          translations: Json | null
           updated_at: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          translations?: Json | null
           updated_at?: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          translations?: Json | null
           updated_at?: string
         }
         Relationships: []
@@ -57,6 +60,7 @@ export type Database = {
           responsible: string | null
           sequence_number: number | null
           topic: string | null
+          translations: Json | null
           unique_id: string | null
           updated_at: string
           updated_by: string | null
@@ -74,6 +78,7 @@ export type Database = {
           responsible?: string | null
           sequence_number?: number | null
           topic?: string | null
+          translations?: Json | null
           unique_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -91,6 +96,7 @@ export type Database = {
           responsible?: string | null
           sequence_number?: number | null
           topic?: string | null
+          translations?: Json | null
           unique_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -106,6 +112,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          translations: Json | null
           updated_at: string
         }
         Insert: {
@@ -115,6 +122,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          translations?: Json | null
           updated_at?: string
         }
         Update: {
@@ -124,6 +132,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          translations?: Json | null
           updated_at?: string
         }
         Relationships: []
