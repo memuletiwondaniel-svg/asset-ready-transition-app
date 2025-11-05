@@ -53,16 +53,14 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
-            className={`h-9 px-3 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/50 transition-all duration-200 ${className}`}
+            className={`h-9 w-9 p-0 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 ${className}`}
           >
-            <Avatar className="h-6 w-6 mr-2">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+              <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">
                 {user.initials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium max-w-20 truncate">{user.name}</span>
-            <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
         
