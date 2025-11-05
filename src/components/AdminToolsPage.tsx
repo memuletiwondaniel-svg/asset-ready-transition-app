@@ -68,12 +68,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     title: t.manageUser,
     description: t.manageUserDesc,
     icon: Users,
-    accentColor: '#0078D4',
-    // Microsoft Blue
+    gradient: 'from-blue-500 to-blue-600',
     stats: {
-      total: userStats.total,
-      pending: userStats.pending,
-      active: userStats.active
+      total: userStats.total
     },
     onClick: () => setActiveView('users')
   }, {
@@ -81,23 +78,17 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     title: 'PSSR Configuration',
     description: 'Manage checklists, categories, topics, and PSSR settings',
     icon: ClipboardList,
-    accentColor: '#107C10',
-    // Microsoft Green
-    stats: {
-      total: 78,
-      active: 78
-    },
+    gradient: 'from-emerald-500 to-emerald-600',
+    stats: {},
     onClick: () => setActiveView('checklist')
   }, {
     id: 'projects',
     title: t.manageProject,
     description: t.manageProjectDesc,
     icon: FolderOpen,
-    accentColor: '#FF8C00',
-    // Microsoft Orange
+    gradient: 'from-orange-500 to-orange-600',
     stats: {
-      total: 12,
-      active: 8
+      total: 12
     },
     onClick: () => setActiveView('projects')
   }];
@@ -112,77 +103,70 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </div>
       </AdminHeader>
 
-      <div className="container py-8">
-        {/* Modern Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold tracking-tight">
+      <div className="container py-8 max-w-7xl mx-auto">
+        {/* Modern Header with Gradient */}
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-3">
             {t.administration}
-          </h2>
-          <p className="text-muted-foreground mt-2">
+          </h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {t.adminToolsSubtitle}
           </p>
         </div>
 
         {/* Modern Cards Grid */}
-        <TooltipProvider>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {adminTools.map((tool, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {adminTools.map((tool) => {
             const IconComponent = tool.icon;
-            return <Tooltip key={tool.id}>
-                  <TooltipTrigger asChild>
-                    <Card className="group cursor-pointer transition-all duration-200 hover:shadow-lg border-0 bg-card hover:bg-accent/5" onClick={tool.onClick}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110 bg-primary/10">
-                            <IconComponent className="h-10 w-10 text-primary" />
-                          </div>
-                          
-                          <div className="flex flex-col items-end space-y-1">
-                            {tool.stats.total !== undefined && <Badge variant="secondary" className="text-xs">
-                                {tool.stats.total}
-                              </Badge>}
-                            {tool.stats.pending && tool.stats.pending > 0 && <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {tool.stats.pending}
-                              </Badge>}
-                            {tool.stats.active && tool.stats.active > 0 && <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                {tool.stats.active}
-                              </Badge>}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <CardTitle className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
-                            {tool.title}
-                          </CardTitle>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm text-muted-foreground">
-                              <span>{t.totalUsers || 'Total Items'}</span>
-                              <span className="font-medium">{tool.stats.total}</span>
-                            </div>
-                            {tool.stats.active && <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>{t.active}</span>
-                                <span className="font-medium text-green-600">{tool.stats.active}</span>
-                              </div>}
-                            {tool.stats.pending && tool.stats.pending > 0 && <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>{t.pending}</span>
-                                <span className="font-medium text-orange-600">{tool.stats.pending}</span>
-                              </div>}
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    <p>{tool.description}</p>
-                  </TooltipContent>
-                </Tooltip>;
+            return (
+              <Card 
+                key={tool.id}
+                className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden"
+                onClick={tool.onClick}
+              >
+                {/* Gradient Background Effect */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                
+                <CardHeader className="relative space-y-6 p-8">
+                  {/* Icon Section */}
+                  <div className="flex items-center justify-between">
+                    <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg`}>
+                      <IconComponent className="h-8 w-8 text-white" />
+                    </div>
+                    
+                    {/* Stats Badge */}
+                    {tool.stats.total !== undefined && (
+                      <div className="flex flex-col items-end">
+                        <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                          {tool.stats.total}
+                        </span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                          Total
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Title & Description */}
+                  <div className="space-y-2">
+                    <CardTitle className="text-2xl font-bold group-hover:text-primary transition-colors">
+                      {tool.title}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {tool.description}
+                    </CardDescription>
+                  </div>
+                  
+                  {/* Hover Indicator */}
+                  <div className="flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span>Manage</span>
+                    <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
+                  </div>
+                </CardHeader>
+              </Card>
+            );
           })}
-          </div>
-        </TooltipProvider>
-
-
+        </div>
       </div>
     </div>;
 };
