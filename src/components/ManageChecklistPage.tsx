@@ -235,7 +235,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4 leading-tight" style={{
             fontFamily: "'Poppins', sans-serif"
           }}>
-              <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 dark:from-slate-100 dark:via-blue-400 dark:to-slate-100 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 dark:from-indigo-400 dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent drop-shadow-sm">
                 PSSR Configuration
               </span>
             </h1>
