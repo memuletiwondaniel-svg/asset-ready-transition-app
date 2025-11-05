@@ -324,26 +324,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       </div>;
   }
   return <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* Top Row with Logo and Back Button */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-white/95 via-white/90 to-white/95 backdrop-blur-xl border-b border-gray-200/40 shadow-sm">
-        <div className="relative z-10 flex items-center justify-between px-8 py-6">
-          {/* Back Button */}
-          <div className="flex-shrink-0">
-            <Button variant="outline" onClick={onBack} className="h-12 px-6 rounded-xl border border-border/40 bg-background/95 backdrop-blur-sm shadow-sm hover:shadow-lg hover:bg-accent/10 hover:border-primary/30 transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-primary group flex items-center gap-3">
-              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform duration-300 ease-out" />
-              <span className="tracking-wide">Checklist Management</span>
-            </Button>
-          </div>
-          
-          {/* Centered ORSH Logo */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 object-contain" />
-          </div>
-          
-          {/* Spacer to balance layout */}
-          <div className="flex-shrink-0 w-48"></div>
-        </div>
-      </div>
 
       {/* Microsoft Fluent Design Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-white/90 via-white/80 to-white/90 backdrop-blur-xl border-b border-gray-200/60 shadow-lg">

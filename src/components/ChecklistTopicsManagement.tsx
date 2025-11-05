@@ -214,45 +214,13 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation Bar */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container flex h-20 items-center">
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="h-10 px-4 py-2 rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] font-medium text-foreground/90 hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:-translate-x-0.5" />
-              Back to Admin Tools
-            </Button>
-          </div>
-          <div className="flex-1 flex justify-center">
-            <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
-              <img 
-                src="/images/orsh-logo.png" 
-                alt="ORSH Logo" 
-                className="h-40 w-auto filter drop-shadow-sm" 
-              />
-            </div>
-          </div>
-          <div className="w-40"></div> {/* Spacer to center the logo */}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-2xl font-bold tracking-tight">Topics</h3>
+          <p className="text-muted-foreground mt-2">Define and manage topics for categorizing checklists</p>
         </div>
-      </div>
-
-      <div className="container py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Checklist Topics Management
-              </h2>
-              <p className="text-muted-foreground mt-2">
-                Define and manage topics for categorizing and organizing checklists
-              </p>
-            </div>
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button className="h-10">
@@ -305,11 +273,10 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
-        </div>
+      </div>
 
-        {/* Search and Stats */}
-        <div className="mb-6">
+      {/* Search and Stats */}
+      <div className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -325,11 +292,11 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
                 {topics.length} Topics
               </Badge>
             </div>
-          </div>
         </div>
+      </div>
 
-        {/* Topics Table */}
-        <Card>
+      {/* Topics Table */}
+      <Card>
           <CardHeader>
             <CardTitle>All Topics</CardTitle>
             <CardDescription>
@@ -403,7 +370,6 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -480,7 +446,7 @@ const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ o
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+  </div>
   );
 };
 
