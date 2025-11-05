@@ -24,6 +24,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
+  const [userStatsAnimating, setUserStatsAnimating] = useState(false);
+  const [projectStatsAnimating, setProjectStatsAnimating] = useState(false);
   const [userStats, setUserStats] = useState({
     total: 0,
     pending: 0,
@@ -46,13 +48,20 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
           console.error('Error fetching user stats:', error);
           return;
         }
-        const stats = {
+        const newStats = {
           total: users?.length || 0,
           pending: users?.filter(u => u.status === 'pending_approval').length || 0,
           active: users?.filter(u => u.status === 'active').length || 0,
           inactive: users?.filter(u => u.status === 'inactive').length || 0
         };
-        setUserStats(stats);
+        
+        // Trigger animation if stats changed
+        if (userStats.total !== 0 && newStats.total !== userStats.total) {
+          setUserStatsAnimating(true);
+          setTimeout(() => setUserStatsAnimating(false), 1000);
+        }
+        
+        setUserStats(newStats);
       } catch (error) {
         console.error('Error fetching user stats:', error);
       }
@@ -80,7 +89,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     return () => {
       supabase.removeChannel(userChannel);
     };
-  }, []);
+  }, [userStats.total]);
 
   // Fetch project statistics with real-time updates
   useEffect(() => {
@@ -94,8 +103,16 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
           console.error('Error fetching project stats:', error);
           return;
         }
+        const newTotal = projects?.length || 0;
+        
+        // Trigger animation if stats changed
+        if (projectStats.total !== 0 && newTotal !== projectStats.total) {
+          setProjectStatsAnimating(true);
+          setTimeout(() => setProjectStatsAnimating(false), 1000);
+        }
+        
         setProjectStats({
-          total: projects?.length || 0
+          total: newTotal
         });
       } catch (error) {
         console.error('Error fetching project stats:', error);
@@ -124,7 +141,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     return () => {
       supabase.removeChannel(projectChannel);
     };
-  }, []);
+  }, [projectStats.total]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -162,7 +179,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     tooltip: 'View and manage user accounts, permissions, and access levels',
     stats: {
       total: userStats.total,
-      label: 'users'
+      label: 'users',
+      isAnimating: userStatsAnimating
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('users')
@@ -185,7 +203,8 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     tooltip: 'Manage projects, milestones, team members, and documents',
     stats: {
       total: projectStats.total,
-      label: 'projects'
+      label: 'projects',
+      isAnimating: projectStatsAnimating
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('projects')
@@ -365,7 +384,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                       {/* Stats Badge */}
                       {tool.stats.total !== undefined && (
                         <div className="flex flex-col items-end">
-                          <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                          <span className={`text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${
+                            tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''
+                          }`}>
                             {tool.stats.total}
                           </span>
                           <span className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -441,7 +462,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                       {/* Stats Badge */}
                       {tool.stats.total !== undefined && (
                         <div className="flex flex-col items-end">
-                          <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                          <span className={`text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${
+                            tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''
+                          }`}>
                             {tool.stats.total}
                           </span>
                           <span className="text-xs text-muted-foreground uppercase tracking-wider">
