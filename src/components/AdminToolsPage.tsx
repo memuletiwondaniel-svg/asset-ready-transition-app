@@ -30,6 +30,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     active: 0,
     inactive: 0
   });
+  const [projectStats, setProjectStats] = useState({
+    total: 0
+  });
 
   // Fetch user statistics
   useEffect(() => {
@@ -55,6 +58,28 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       }
     };
     fetchUserStats();
+  }, []);
+
+  // Fetch project statistics
+  useEffect(() => {
+    const fetchProjectStats = async () => {
+      try {
+        const {
+          data: projects,
+          error
+        } = await supabase.from('projects').select('id', { count: 'exact' }).eq('is_active', true);
+        if (error) {
+          console.error('Error fetching project stats:', error);
+          return;
+        }
+        setProjectStats({
+          total: projects?.length || 0
+        });
+      } catch (error) {
+        console.error('Error fetching project stats:', error);
+      }
+    };
+    fetchProjectStats();
   }, []);
 
   // Load favorites from localStorage
@@ -115,7 +140,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     gradient: 'from-orange-500 to-orange-600',
     tooltip: 'Manage projects, milestones, team members, and documents',
     stats: {
-      total: 12,
+      total: projectStats.total,
       label: 'projects'
     },
     height: 'md:row-span-2',
@@ -142,7 +167,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       tool.description.toLowerCase().includes(query) ||
       tool.tooltip.toLowerCase().includes(query)
     );
-  }, [searchQuery, userStats.total, t]);
+  }, [searchQuery, userStats.total, projectStats.total, t]);
 
   // Get favorite and non-favorite tools
   const favoriteToolsList = useMemo(() => {
