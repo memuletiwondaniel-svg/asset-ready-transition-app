@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { PageTransition } from "@/components/PageTransition";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -19,16 +20,18 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/safe-startup" element={<Index />} />
-              <Route path="/users" element={<Index />} />
-              <Route path="/manage-checklist" element={<Index />} />
-              <Route path="/admin-tools" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <PageTransition>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/safe-startup" element={<Index />} />
+                <Route path="/users" element={<Index />} />
+                <Route path="/manage-checklist" element={<Index />} />
+                <Route path="/admin-tools" element={<Index />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </PageTransition>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
