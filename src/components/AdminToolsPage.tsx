@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCircle, Home } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCircle, Home, Search, X } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
@@ -20,6 +21,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
 }) => {
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings'>('dashboard');
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [searchQuery, setSearchQuery] = useState('');
   const [userStats, setUserStats] = useState({
     total: 0,
     pending: 0,
@@ -55,6 +57,18 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
 
   // Get current translations
   const t = getCurrentTranslations(selectedLanguage);
+
+  // Filter admin tools based on search query
+  const filteredAdminTools = useMemo(() => {
+    if (!searchQuery.trim()) return adminTools;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return adminTools.filter(tool => 
+      tool.title.toLowerCase().includes(query) ||
+      tool.description.toLowerCase().includes(query) ||
+      tool.tooltip.toLowerCase().includes(query)
+    );
+  }, [searchQuery, userStats.total, t]);
   if (activeView === 'users') {
     return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
   }
@@ -131,7 +145,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </Breadcrumb>
 
         {/* Header Section */}
-        <div className="mb-16">
+        <div className="mb-8">
           <h1 className="text-2xl font-medium text-foreground/80 mb-2">
             {t.administration}
           </h1>
@@ -140,10 +154,40 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-12">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search admin tools..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10 h-11"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
+            </p>
+          )}
+        </div>
+
         {/* Masonry Cards Grid */}
         <TooltipProvider>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
-            {adminTools.map((tool, index) => {
+          {filteredAdminTools.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
+              {filteredAdminTools.map((tool, index) => {
               const IconComponent = tool.icon;
               return (
                 <Card 
@@ -201,8 +245,20 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
               </Card>
             );
           })}
-        </div>
-      </TooltipProvider>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No results found</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Try adjusting your search terms
+              </p>
+              <Button variant="outline" onClick={() => setSearchQuery('')}>
+                Clear search
+              </Button>
+            </div>
+          )}
+        </TooltipProvider>
       </div>
     </div>;
 };
