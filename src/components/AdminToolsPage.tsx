@@ -120,9 +120,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
             />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">
-              {t.adminToolsTitle}
-            </h1>
             <p className="text-xs text-muted-foreground">{t.company} • {t.platform}</p>
           </div>
         </div>
