@@ -135,6 +135,7 @@ export type Database = {
           custom_reason: string | null
           id: string
           name: string
+          plant_change_type: string | null
           reason: string
           selected_items: string[]
           status: string
@@ -146,6 +147,7 @@ export type Database = {
           custom_reason?: string | null
           id?: string
           name: string
+          plant_change_type?: string | null
           reason: string
           selected_items?: string[]
           status?: string
@@ -157,6 +159,7 @@ export type Database = {
           custom_reason?: string | null
           id?: string
           name?: string
+          plant_change_type?: string | null
           reason?: string
           selected_items?: string[]
           status?: string

@@ -31,7 +31,8 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   const [formData, setFormData] = useState({
     reason: checklist.reason,
     selected_items: checklist.selected_items || [],
-    custom_reason: checklist.custom_reason || ''
+    custom_reason: checklist.custom_reason || '',
+    plant_change_type: (checklist as any).plant_change_type || ''
   });
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,7 +75,8 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
         name: formData.reason, // Set name as reason
         reason: formData.reason,
         selected_items: formData.selected_items,
-        custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined
+        custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined,
+        plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? formData.plant_change_type : undefined
       }
     }, {
       onSuccess: () => {
@@ -257,6 +259,24 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
                   placeholder="Enter custom reason"
                   rows={3}
                 />
+              </div>
+            )}
+
+            {formData.reason === 'Restart following plant changes or modifications' && (
+              <div className="space-y-2">
+                <Label htmlFor="plantChangeType">Plant Change Type *</Label>
+                <Select
+                  value={formData.plant_change_type}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, plant_change_type: value }))}
+                >
+                  <SelectTrigger id="plantChangeType">
+                    <SelectValue placeholder="Select plant change type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tie_in">Project Advanced Tie-in scope</SelectItem>
+                    <SelectItem value="moc">Implementation of an approved Asset MOC</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </CardContent>

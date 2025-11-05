@@ -13,6 +13,7 @@ export interface CreateChecklistData {
   reason: string;
   custom_reason?: string;
   selected_items: string[];
+  plant_change_type?: string;
 }
 
 export const useChecklists = () => {
@@ -96,6 +97,7 @@ export const useCreateChecklist = () => {
           reason: checklistData.reason === 'Others' ? checklistData.custom_reason! : checklistData.reason,
           custom_reason: checklistData.reason === 'Others' ? checklistData.custom_reason : null,
           selected_items: checklistData.selected_items,
+          plant_change_type: checklistData.plant_change_type || null,
           created_by: userId,
         })
         .select()
@@ -149,6 +151,7 @@ export const useUpdateChecklist = () => {
         updateData.custom_reason = checklistData.reason === 'Others' ? checklistData.custom_reason : null;
       }
       if (checklistData.selected_items) updateData.selected_items = checklistData.selected_items;
+      if (checklistData.plant_change_type !== undefined) updateData.plant_change_type = checklistData.plant_change_type || null;
 
       const { data, error } = await supabase
         .from('checklists')

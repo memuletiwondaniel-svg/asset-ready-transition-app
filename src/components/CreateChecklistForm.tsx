@@ -52,6 +52,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
     selected_items: [],
   });
   const [customReason, setCustomReason] = useState('');
+  const [plantChangeType, setPlantChangeType] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -266,6 +267,15 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
 
   const handleNext = () => {
     if (currentStep === 1 && formData.reason) {
+      // Check if plant change type is required and selected
+      if (formData.reason === 'Restart following plant changes or modifications' && !plantChangeType) {
+        toast({
+          title: "Plant Change Type Required",
+          description: "Please select a plant change type to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
       setCurrentStep(2);
     }
   };
@@ -278,7 +288,8 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
     const finalData = {
       ...formData,
       name: formData.reason, // Set name as reason
-      custom_reason: formData.reason === 'Others' ? customReason : undefined
+      custom_reason: formData.reason === 'Others' ? customReason : undefined,
+      plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? plantChangeType : undefined
     };
     onComplete(finalData);
   };
@@ -543,6 +554,27 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                             onChange={(e) => setCustomReason(e.target.value)}
                             className="h-10"
                           />
+                        </div>
+                      )}
+
+                      {/* Plant Change Type Selection */}
+                      {formData.reason === 'Restart following plant changes or modifications' && (
+                        <div className="mt-4 space-y-2 animate-fade-in-up">
+                          <Label htmlFor="plantChangeType" className="text-sm font-medium">
+                            Plant Change Type *
+                          </Label>
+                          <Select
+                            value={plantChangeType}
+                            onValueChange={setPlantChangeType}
+                          >
+                            <SelectTrigger id="plantChangeType" className="h-12">
+                              <SelectValue placeholder="Select plant change type" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                              <SelectItem value="tie_in">Project Advanced Tie-in scope</SelectItem>
+                              <SelectItem value="moc">Implementation of an approved Asset MOC</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
                     </div>
