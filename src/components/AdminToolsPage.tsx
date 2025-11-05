@@ -103,7 +103,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </div>
       </AdminHeader>
 
-      <div className="container py-8 max-w-7xl mx-auto">
+      <div className="container pt-16 pb-8 max-w-7xl mx-auto">
         {/* Modern Header with Gradient */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-3">
