@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X, GripVertical, Trash, Check } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -435,9 +436,16 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
     return (
       <TableRow ref={setNodeRef} style={style} className={isDragging ? 'relative z-50' : ''}>
         <TableCell className="w-12">
-          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-            <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+                <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Drag to reorder</p>
+            </TooltipContent>
+          </Tooltip>
         </TableCell>
         {children}
       </TableRow>
@@ -473,7 +481,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
   }, [searchQuery, activeTab, showReasonsTab, showTieInTab, showMOCTab]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+    <TooltipProvider delayDuration={200}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
@@ -495,27 +504,47 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
         <div className="border-t border-border/50" />
 
         <div className="container pt-16 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumb Navigation */}
-          <Breadcrumb className="mb-14 animate-fade-in">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors">
-                  <Home className="h-4 w-4" />
-                  Home
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors">
-                  Administration
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="font-medium">PSSR Configuration</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          {/* Enhanced Breadcrumb Navigation */}
+          <div className="mb-14 animate-fade-in">
+            <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-border/40 shadow-sm">
+              <Breadcrumb>
+                <BreadcrumbList className="flex-wrap">
+                  <BreadcrumbItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-2 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50">
+                          <Home className="h-4 w-4" />
+                          <span className="font-medium">Home</span>
+                        </BreadcrumbLink>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Return to home page</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="text-muted-foreground/40" />
+                  <BreadcrumbItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50">
+                          <span className="font-medium">Administration</span>
+                        </BreadcrumbLink>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Back to administration panel</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="text-muted-foreground/40" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="font-semibold text-foreground px-2 py-1">
+                      PSSR Configuration
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </div>
 
           {/* Soft, De-emphasized Header */}
           <div className="mb-16 text-center animate-fade-in">
@@ -541,14 +570,21 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   className="pl-14 pr-14 h-16 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-muted rounded-xl"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-muted rounded-xl"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Clear search</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -599,13 +635,20 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <CardTitle>PSSR Reasons</CardTitle>
                     <CardDescription>Manage available reasons for creating a PSSR</CardDescription>
                   </div>
-                  <Button 
-                    onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Reason
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Reason
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Create a new PSSR reason</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 {selectedReasons.size > 0 && (
                   <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
@@ -613,33 +656,54 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       {selectedReasons.size} item(s) selected
                     </span>
                     <div className="flex gap-2 ml-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('reason', true)}
-                        className="h-8"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Enable
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('reason', false)}
-                        className="h-8"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Disable
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => openBulkDeleteDialog('reason')}
-                        className="h-8"
-                      >
-                        <Trash className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleActive('reason', true)}
+                            className="h-8"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Enable
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Enable selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleActive('reason', false)}
+                            className="h-8"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Disable
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Disable selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => openBulkDeleteDialog('reason')}
+                            className="h-8"
+                          >
+                            <Trash className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 )}
@@ -683,31 +747,52 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             <TableCell className="font-medium">{reason.display_order}</TableCell>
                             <TableCell>{reason.name}</TableCell>
                             <TableCell>
-                              <Badge 
-                                variant={reason.is_active ? "default" : "secondary"}
-                                className="cursor-pointer"
-                                onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
-                              >
-                                {reason.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                                {reason.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge 
+                                    variant={reason.is_active ? "default" : "secondary"}
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
+                                  >
+                                    {reason.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                    {reason.is_active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Click to {reason.is_active ? 'disable' : 'enable'}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit reason</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete reason</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
                             </TableCell>
                           </SortableRow>
@@ -729,13 +814,20 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <CardTitle>Tie-in Scopes</CardTitle>
                     <CardDescription>Manage advanced tie-in scope options</CardDescription>
                   </div>
-                  <Button 
-                    onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Scope
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Scope
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Create a new tie-in scope</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 {selectedTieInScopes.size > 0 && (
                   <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
@@ -743,33 +835,54 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       {selectedTieInScopes.size} item(s) selected
                     </span>
                     <div className="flex gap-2 ml-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('tie-in', true)}
-                        className="h-8"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Enable
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('tie-in', false)}
-                        className="h-8"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Disable
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => openBulkDeleteDialog('tie-in')}
-                        className="h-8"
-                      >
-                        <Trash className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleActive('tie-in', true)}
+                            className="h-8"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Enable
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Enable selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleActive('tie-in', false)}
+                            className="h-8"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Disable
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Disable selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => openBulkDeleteDialog('tie-in')}
+                            className="h-8"
+                          >
+                            <Trash className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 )}
@@ -815,31 +928,52 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             <TableCell className="font-semibold">{scope.code}</TableCell>
                             <TableCell className="max-w-md truncate">{scope.description}</TableCell>
                             <TableCell>
-                              <Badge 
-                                variant={scope.is_active ? "default" : "secondary"}
-                                className="cursor-pointer"
-                                onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
-                              >
-                                {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                                {scope.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge 
+                                    variant={scope.is_active ? "default" : "secondary"}
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
+                                  >
+                                    {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                    {scope.is_active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Click to {scope.is_active ? 'disable' : 'enable'}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit tie-in scope</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete tie-in scope</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
                             </TableCell>
                           </SortableRow>
@@ -861,13 +995,20 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <CardTitle>MOC Scopes</CardTitle>
                     <CardDescription>Manage Management of Change scope options</CardDescription>
                   </div>
-                  <Button 
-                    onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Scope
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Scope
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Create a new MOC scope</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 {selectedMOCScopes.size > 0 && (
                   <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
@@ -875,33 +1016,54 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       {selectedMOCScopes.size} item(s) selected
                     </span>
                     <div className="flex gap-2 ml-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('moc', true)}
-                        className="h-8"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Enable
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('moc', false)}
-                        className="h-8"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Disable
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => openBulkDeleteDialog('moc')}
-                        className="h-8"
-                      >
-                        <Trash className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleActive('moc', true)}
+                            className="h-8"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Enable
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Enable selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleActive('moc', false)}
+                            className="h-8"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Disable
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Disable selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => openBulkDeleteDialog('moc')}
+                            className="h-8"
+                          >
+                            <Trash className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete selected items</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 )}
@@ -945,31 +1107,52 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                             <TableCell className="font-medium">{scope.display_order}</TableCell>
                             <TableCell>{scope.name}</TableCell>
                             <TableCell>
-                              <Badge 
-                                variant={scope.is_active ? "default" : "secondary"}
-                                className="cursor-pointer"
-                                onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
-                              >
-                                {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                                {scope.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge 
+                                    variant={scope.is_active ? "default" : "secondary"}
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
+                                  >
+                                    {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                    {scope.is_active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Click to {scope.is_active ? 'disable' : 'enable'}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit MOC scope</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete MOC scope</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
                             </TableCell>
                           </SortableRow>
@@ -1084,6 +1267,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
