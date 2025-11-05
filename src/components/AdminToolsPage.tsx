@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
 import ProjectManagementPage from "./project/ProjectManagementPage";
 import PSSRSettingsManagement from "./PSSRSettingsManagement";
 import AdminHeader from "./admin/AdminHeader";
+import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentTranslations } from '@/utils/translations';
 interface AdminToolsPageProps {
@@ -19,7 +20,7 @@ interface AdminToolsPageProps {
 const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
   onBack
 }) => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings' | 'activity-log'>('dashboard');
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
@@ -117,6 +118,16 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('projects')
+  }, {
+    id: 'activity-log',
+    title: 'Activity Log',
+    description: 'Monitor and audit all administrative actions across the platform',
+    icon: Activity,
+    gradient: 'from-cyan-500 to-cyan-600',
+    tooltip: 'View detailed audit logs of all administrative activities and user actions',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('activity-log')
   }];
 
   // Filter admin tools based on search query
@@ -159,6 +170,13 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     return (
       <div className="animate-fade-in">
         <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+      </div>
+    );
+  }
+  if (activeView === 'activity-log') {
+    return (
+      <div className="animate-fade-in">
+        <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} />
       </div>
     );
   }
