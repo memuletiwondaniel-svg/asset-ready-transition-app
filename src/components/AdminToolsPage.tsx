@@ -34,7 +34,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     total: 0
   });
 
-  // Fetch user statistics
+  // Fetch user statistics with real-time updates
   useEffect(() => {
     const fetchUserStats = async () => {
       try {
@@ -57,10 +57,32 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         console.error('Error fetching user stats:', error);
       }
     };
+    
     fetchUserStats();
+
+    // Set up real-time subscription for user changes
+    const userChannel = supabase
+      .channel('user-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          // Refetch stats when any change occurs
+          fetchUserStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(userChannel);
+    };
   }, []);
 
-  // Fetch project statistics
+  // Fetch project statistics with real-time updates
   useEffect(() => {
     const fetchProjectStats = async () => {
       try {
@@ -79,7 +101,29 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         console.error('Error fetching project stats:', error);
       }
     };
+    
     fetchProjectStats();
+
+    // Set up real-time subscription for project changes
+    const projectChannel = supabase
+      .channel('project-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects'
+        },
+        () => {
+          // Refetch stats when any change occurs
+          fetchProjectStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(projectChannel);
+    };
   }, []);
 
   // Load favorites from localStorage
