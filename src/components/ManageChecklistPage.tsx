@@ -23,6 +23,7 @@ import ChecklistTopicsManagement from './ChecklistTopicsManagement';
 import PSSRSettingsManagement from './PSSRSettingsManagement';
 import TranslationManagement from './TranslationManagement';
 import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
+import OrshLogo from './ui/OrshLogo';
 import LanguageSelector from '@/components/admin/LanguageSelector';
 import { getCurrentTranslations } from '@/utils/translations';
 
@@ -235,7 +236,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </Button>
             </div>
             <div className="flex-1 flex justify-center">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto filter drop-shadow-md" />
+              <OrshLogo size="medium" />
             </div>
             <div className="flex items-center gap-2">
               <LanguageSelector 

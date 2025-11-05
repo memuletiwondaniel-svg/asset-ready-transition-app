@@ -12,6 +12,7 @@ import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
+import OrshLogo from "@/components/ui/OrshLogo";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { session, signOut } = useAuth();
@@ -196,7 +197,7 @@ const Index = () => {
             
             {/* ORSH Logo - Top Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto" />
+              <OrshLogo size="medium" />
             </div>
             
             {/* Right side spacer for balance */}

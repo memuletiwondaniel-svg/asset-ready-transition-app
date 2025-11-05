@@ -2,6 +2,7 @@ import React from 'react';
 import LanguageSelector from './LanguageSelector';
 import UserProfileDropdown from './UserProfileDropdown';
 import { ThemeToggle } from './ThemeToggle';
+import OrshLogo from '@/components/ui/OrshLogo';
 
 interface AdminHeaderProps {
   selectedLanguage: string;
@@ -26,13 +27,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         
         {/* Center - ORSH Logo */}
         <div className="flex-1 flex justify-center">
-          <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
-            <img 
-              src="/images/orsh-logo.png" 
-              alt="ORSH Logo" 
-              className="h-40 w-auto filter drop-shadow-sm" 
-            />
-          </div>
+          <OrshLogo size="medium" />
         </div>
         
         {/* Right side - Theme toggle, Language selector and User profile */}

@@ -13,6 +13,7 @@ import { useHubs } from '@/hooks/useHubs';
 import { AddProjectModal } from './AddProjectModal';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
+import OrshLogo from '../ui/OrshLogo';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,13 +88,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
             </Button>
           </div>
           <div className="flex-1 flex justify-center">
-            <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
-              <img 
-                src="/images/orsh-logo.png" 
-                alt="ORSH Logo" 
-                className="h-40 w-auto filter drop-shadow-sm" 
-              />
-            </div>
+            <OrshLogo size="medium" />
           </div>
           <div className="w-40"></div> {/* Spacer to center the logo */}
         </div>

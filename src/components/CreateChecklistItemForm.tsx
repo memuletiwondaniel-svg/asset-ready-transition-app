@@ -15,6 +15,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { useDisciplines } from '@/hooks/useDisciplines';
 import { useCommissions } from '@/hooks/useCommissions';
 import { toast } from '@/hooks/use-toast';
+import OrshLogo from './ui/OrshLogo';
 interface CreateChecklistItemFormProps {
   onBack: () => void;
   onComplete: (item: any) => void;
@@ -696,13 +697,7 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
             
             {/* ORSH Logo Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <div className="transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">
-                <img 
-                  src="/images/orsh-logo.png" 
-                  alt="ORSH Logo" 
-                  className="h-40 w-auto filter drop-shadow-sm"
-                />
-              </div>
+              <OrshLogo size="medium" />
             </div>
             
             {/* Empty div for layout balance */}
