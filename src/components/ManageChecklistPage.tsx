@@ -203,66 +203,88 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <div className="absolute inset-0 bg-background">
-        <div className="absolute inset-0 opacity-42 dark:opacity-32">
-          <div 
-            className="absolute inset-0 animate-gradient-shift-morph"
-            style={{
-              background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%), radial-gradient(at 90% 70%, hsl(320, 24%, 88%) 0%, transparent 40%), radial-gradient(at 50% 50%, hsl(250, 23%, 88%) 0%, transparent 35%)',
-              filter: 'blur(50px)',
-            }}
-          />
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-primary/10 to-emerald-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l from-emerald-500/10 to-orange-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '700ms' }} />
+        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t from-orange-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '1400ms' }} />
       </div>
       
       <div className="relative z-10">
-        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
           <div className="container flex h-20 items-center">
             <div className="flex items-center">
-              <Button variant="ghost" onClick={onBack} className="h-10 px-4 py-2 rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Admin Tools
+              <Button 
+                variant="ghost" 
+                onClick={onBack} 
+                className="h-10 px-4 py-2 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-accent/50 hover:border-border transition-all duration-200 gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Administration
               </Button>
             </div>
             <div className="flex-1 flex justify-center">
-              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto filter drop-shadow-sm" />
+              <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto filter drop-shadow-md" />
             </div>
             <div className="w-40"></div>
           </div>
         </div>
 
-        <div className="container py-8">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold tracking-tight">PSSR Configuration</h2>
-            <p className="text-muted-foreground mt-2">Manage checklists, items, categories, topics, and PSSR settings</p>
+        <div className="container py-10 max-w-7xl mx-auto">
+          {/* Modern Header */}
+          <div className="mb-10 text-center animate-fade-in">
+            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-emerald-600 to-primary bg-clip-text text-transparent mb-3">
+              PSSR Configuration
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Manage all aspects of PSSR system - checklists, items, categories, topics, and settings
+            </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
-              <TabsTrigger value="checklists" className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4" />
-                <span className="hidden sm:inline">Checklists</span>
-              </TabsTrigger>
-              <TabsTrigger value="items" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Items</span>
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Categories</span>
-              </TabsTrigger>
-              <TabsTrigger value="topics" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Topics</span>
-              </TabsTrigger>
-              <TabsTrigger value="pssr-settings" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">PSSR Settings</span>
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            {/* Modern Tab Navigation */}
+            <div className="flex justify-center">
+              <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
+                <TabsTrigger 
+                  value="checklists" 
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  <span className="hidden sm:inline">Checklists</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="items"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Items</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="categories"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
+                >
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Categories</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="topics"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">Topics</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="pssr-settings"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">PSSR Settings</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="checklists" className="space-y-6">
+            <TabsContent value="checklists" className="space-y-6 animate-fade-in mt-0">
               <div className="flex items-center justify-between">
                 <Button onClick={() => setShowCreateForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -299,17 +321,25 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredAndSortedChecklists.map(checklist => (
-                    <Card key={checklist.id} className="cursor-pointer hover:shadow-lg transition-all" onClick={() => handleChecklistClick(checklist)}>
-                      <CardHeader>
+                  {filteredAndSortedChecklists.map((checklist, index) => (
+                    <Card 
+                      key={checklist.id} 
+                      className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in" 
+                      style={{ animationDelay: `${index * 50}ms` }}
+                      onClick={() => handleChecklistClick(checklist)}
+                    >
+                      {/* Gradient Background Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      <CardHeader className="relative">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg mb-2">{checklist.name}</CardTitle>
+                            <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors">{checklist.name}</CardTitle>
                             <CardDescription className="line-clamp-2">{checklist.reason}</CardDescription>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-accent">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -326,7 +356,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
                           </DropdownMenu>
                         </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="relative">
                         <div className="flex items-center justify-between">
                           {getStatusBadge(checklist.status)}
                           <div className="flex items-center text-sm text-muted-foreground">
@@ -341,20 +371,28 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
               )}
             </TabsContent>
 
-            <TabsContent value="items">
-              <ChecklistManagementPage onBack={() => {}} />
+            <TabsContent value="items" className="animate-fade-in mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
+                <ChecklistManagementPage onBack={() => {}} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="categories">
-              <ChecklistCategoriesManagement onBack={() => {}} />
+            <TabsContent value="categories" className="animate-fade-in mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
+                <ChecklistCategoriesManagement onBack={() => {}} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="topics">
-              <ChecklistTopicsManagement onBack={() => {}} />
+            <TabsContent value="topics" className="animate-fade-in mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
+                <ChecklistTopicsManagement onBack={() => {}} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="pssr-settings">
-              <PSSRSettingsManagement onBack={() => {}} />
+            <TabsContent value="pssr-settings" className="animate-fade-in mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
+                <PSSRSettingsManagement onBack={() => {}} />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
