@@ -81,15 +81,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
 
   // Get current translations
   const t = getCurrentTranslations(selectedLanguage);
-  if (activeView === 'users') {
-    return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
-  }
-  if (activeView === 'checklist') {
-    return <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
-  }
-  if (activeView === 'projects') {
-    return <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
-  }
+  
   const adminTools = [{
     id: 'users',
     title: t.manageUser,
@@ -144,6 +136,17 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       .map(id => adminTools.find(tool => tool.id === id))
       .filter(Boolean);
   }, [recentTools, userStats.total, t]);
+
+  // Handle conditional views AFTER all hooks
+  if (activeView === 'users') {
+    return <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
+  }
+  if (activeView === 'checklist') {
+    return <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
+  }
+  if (activeView === 'projects') {
+    return <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
+  }
   return <div className="min-h-screen bg-background">
       <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t} />
 
