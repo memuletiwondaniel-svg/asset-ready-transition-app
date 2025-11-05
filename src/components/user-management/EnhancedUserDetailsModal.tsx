@@ -35,6 +35,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useHubs } from '@/hooks/useHubs';
+import { useLogActivity } from '@/hooks/useActivityLogs';
 
 // Type definitions matching the database schema exactly
 interface DatabaseUser {
@@ -98,6 +99,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 }) => {
   const [editMode, setEditMode] = useState(initialEditMode);
   const [loading, setLoading] = useState(false);
+  const { mutate: logActivity } = useLogActivity();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
@@ -445,6 +447,17 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         return;
       }
 
+      // Log activity
+      logActivity({
+        activityType: 'account_approved',
+        description: `Approved user account for ${user.full_name || user.email}`,
+        metadata: {
+          user_id: user.user_id,
+          user_email: user.email,
+          user_name: user.full_name
+        }
+      });
+
       toast.success('User approved successfully');
       onUserUpdated();
       onClose();
@@ -474,6 +487,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         toast.error('Failed to reject user');
         return;
       }
+
+      // Log activity
+      logActivity({
+        activityType: 'account_rejected',
+        description: `Rejected user account for ${user.full_name || user.email}${rejectionReason ? `: ${rejectionReason}` : ''}`,
+        metadata: {
+          user_id: user.user_id,
+          user_email: user.email,
+          user_name: user.full_name,
+          rejection_reason: rejectionReason
+        }
+      });
 
       toast.success('User rejected successfully');
       onUserUpdated();
@@ -600,6 +625,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       }
 
       console.log('Profile update response:', updateResponse);
+
+      // Log activity
+      logActivity({
+        activityType: 'user_updated',
+        description: `Updated user profile for ${formData.first_name} ${formData.last_name} (${formData.email})`,
+        metadata: {
+          user_id: user.user_id,
+          user_email: formData.email,
+          user_name: `${formData.first_name} ${formData.last_name}`.trim(),
+          updated_fields: Object.keys(updatePayload)
+        }
+      });
 
       // Update system role if it changed
       if (systemRole !== (user.roles?.[0] || 'user')) {

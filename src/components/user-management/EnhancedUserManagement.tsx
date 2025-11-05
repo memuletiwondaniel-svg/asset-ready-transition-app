@@ -45,6 +45,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import EnhancedUserDetailsModal from './EnhancedUserDetailsModal';
 import CreateUserModal from './CreateUserModal'; // Uses edge function to create users
+import { useLogActivity } from '@/hooks/useActivityLogs';
 
 interface EnhancedUserManagementProps {
   onBack: () => void;
@@ -181,6 +182,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
 
 const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack }) => {
   const { user: currentUser } = useAuth();
+  const { mutate: logActivity } = useLogActivity();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -576,14 +578,31 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     if (!userToDelete) return;
 
     try {
-      // Note: This would typically require admin privileges and proper backend logic
-      // For now, we'll show a toast that this action would be performed
-      toast.success(`User ${userToDelete.full_name} would be deleted (admin action required)`);
-      
-      // In a real implementation, you would call:
-      // await supabase.rpc('delete_user', { user_id: userToDelete.user_id });
-      // fetchUsers(); // Refresh the list
-      
+      // Delete the user from profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', userToDelete.user_id);
+
+      if (error) {
+        console.error('Error deleting user:', error);
+        toast.error(`Failed to delete user: ${error.message}`);
+        return;
+      }
+
+      // Log activity
+      logActivity({
+        activityType: 'user_deleted',
+        description: `Deleted user account for ${userToDelete.full_name || userToDelete.email}`,
+        metadata: {
+          user_id: userToDelete.user_id,
+          user_email: userToDelete.email,
+          user_name: userToDelete.full_name
+        }
+      });
+
+      toast.success(`User ${userToDelete.full_name} deleted successfully`);
+      fetchUsers(); // Refresh the list
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     } catch (error) {

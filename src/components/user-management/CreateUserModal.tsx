@@ -30,6 +30,7 @@ import { useStations } from "@/hooks/useStations";
 import { useFields } from "@/hooks/useFields";
 import { useDisciplines } from "@/hooks/useDisciplines";
 import { useHubs } from "@/hooks/useHubs";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ interface CreateUserModalProps {
 
 const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: CreateUserModalProps) => {
   const { toast } = useToast();
+  const { mutate: logActivity } = useLogActivity();
   const { roles, isLoading: rolesLoading, addRole } = useRoles();
   const { commissions, isLoading: commissionsLoading, addCommission } = useCommissions();
   const { plants, isLoading: plantsLoading, addPlant } = usePlants();
@@ -526,6 +528,20 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       if (profileImage && createResp?.user_id) {
         await uploadProfileImage(createResp.user_id);
       }
+
+      // Log activity
+      logActivity({
+        activityType: 'user_created',
+        description: `Created new user account for ${formData.firstName} ${formData.lastName} (${formData.email})`,
+        metadata: {
+          user_id: createResp?.user_id,
+          user_email: formData.email,
+          user_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          company: formData.company,
+          role: formData.role,
+          position: positionTitle
+        }
+      });
 
       // Try to send welcome email (non-blocking)
       try {
