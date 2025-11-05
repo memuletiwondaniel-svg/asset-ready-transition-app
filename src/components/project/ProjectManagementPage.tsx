@@ -10,6 +10,8 @@ import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
+import { useLogActivity } from '@/hooks/useActivityLogs';
+import { supabase } from '@/integrations/supabase/client';
 import { AddProjectModal } from './AddProjectModal';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
@@ -32,6 +34,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const { plants } = usePlants();
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
+  const { mutate: logActivity } = useLogActivity();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
@@ -62,6 +65,24 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   const getHubName = (hubId: string) => {
     return hubs.find(h => h.id === hubId)?.name;
+  };
+
+  const handleDeleteProject = async (project: any) => {
+    try {
+      deleteProject(project.id);
+      
+      // Log activity
+      logActivity({
+        activityType: 'project_deleted',
+        description: `Deleted project: ${project.project_id_prefix}${project.project_id_number} - ${project.project_title}`,
+        metadata: {
+          project_id: `${project.project_id_prefix}${project.project_id_number}`,
+          project_title: project.project_title
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
   };
 
   if (isLoading) {
@@ -163,7 +184,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="flex items-center text-red-600 hover:bg-red-50/80"
-                            onClick={() => deleteProject(project.id)}
+                            onClick={() => handleDeleteProject(project)}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             {t.deleteProject}

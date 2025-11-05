@@ -20,6 +20,7 @@ import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSecti
 import { ProjectSummaryModal } from './ProjectSummaryModal';
 import EnhancedAuthModal from '@/components/enhanced-auth/EnhancedAuthModal';
 import { supabase } from '@/integrations/supabase/client';
+import { useLogActivity } from '@/hooks/useActivityLogs';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -32,6 +33,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   const { stations, createStation } = useStations();
   const { data: hubs = [], createHub } = useHubs();
   const { toast } = useToast();
+  const { mutate: logActivity } = useLogActivity();
 
   const [formData, setFormData] = useState({
     project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
@@ -132,7 +134,22 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
       hub_id: formData.hub_id || undefined,
     };
 
-    createProject(projectData);
+    try {
+      createProject(projectData);
+      
+      // Log activity
+      logActivity({
+        activityType: 'project_created',
+        description: `Created project: ${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
+        metadata: {
+          project_id: `${formData.project_id_prefix}${formData.project_id_number}`,
+          project_title: formData.project_title
+        }
+      });
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
+    
     handleClose();
   };
 
