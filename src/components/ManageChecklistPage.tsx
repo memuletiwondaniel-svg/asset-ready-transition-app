@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, MoreVertical, Trash2, ClipboardList, Users, BookOpen, Settings, Wrench } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, MoreVertical, Trash2, ClipboardList, Users, BookOpen, Settings, Wrench, Languages } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
 import ChecklistTopicsManagement from './ChecklistTopicsManagement';
 import PSSRSettingsManagement from './PSSRSettingsManagement';
+import TranslationManagement from './TranslationManagement';
 import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
 import LanguageSelector from '@/components/admin/LanguageSelector';
 import { getCurrentTranslations } from '@/utils/translations';
@@ -283,6 +284,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">{t.pssrSettings}</span>
                 </TabsTrigger>
+                <TabsTrigger value="translations" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md gap-2 hover:bg-accent/50">
+                  <Languages className="h-4 w-4" />
+                  <span className="hidden sm:inline">Translations</span>
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -389,6 +394,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <TabsContent value="pssr-settings" className="animate-fade-in mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
                 <PSSRSettingsManagement onBack={() => {}} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="translations" className="animate-fade-in mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
+                <TranslationManagement onBack={() => {}} translations={t} />
               </div>
             </TabsContent>
           </Tabs>

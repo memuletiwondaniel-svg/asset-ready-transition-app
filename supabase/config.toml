@@ -109,3 +109,7 @@ verify_jwt = false
 [functions.upload-user-avatar]
 verify_jwt = false
 
+# Function to translate content using Lovable AI
+[functions.translate-content]
+verify_jwt = false
+
