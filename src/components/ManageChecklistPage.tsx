@@ -370,19 +370,19 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
             <TabsContent value="items" className="animate-fade-in mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
-                <ChecklistManagementPage onBack={() => {}} />
+                <ChecklistManagementPage onBack={() => {}} translations={t} />
               </div>
             </TabsContent>
 
             <TabsContent value="categories" className="animate-fade-in mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
-                <ChecklistCategoriesManagement onBack={() => {}} />
+                <ChecklistCategoriesManagement onBack={() => {}} translations={t} />
               </div>
             </TabsContent>
 
             <TabsContent value="topics" className="animate-fade-in mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-2xl shadow-xl border p-6">
-                <ChecklistTopicsManagement onBack={() => {}} />
+                <ChecklistTopicsManagement onBack={() => {}} translations={t} />
               </div>
             </TabsContent>
 

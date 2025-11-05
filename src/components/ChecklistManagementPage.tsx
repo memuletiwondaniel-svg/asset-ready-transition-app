@@ -18,10 +18,23 @@ import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemsTableView from './ChecklistItemsTableView';
 interface ChecklistManagementPageProps {
   onBack: () => void;
+  translations?: any;
 }
 const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
-  onBack
+  onBack,
+  translations
 }) => {
+  const t = translations || {
+    search: 'Search',
+    items: 'Items',
+    edit: 'Edit',
+    delete: 'Delete',
+    view: 'View',
+    save: 'Save',
+    cancel: 'Cancel',
+    create: 'Create',
+    add: 'Add'
+  };
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);

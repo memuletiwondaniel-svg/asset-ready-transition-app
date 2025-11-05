@@ -53,6 +53,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ChecklistCategoriesManagementProps {
   onBack: () => void;
+  translations?: any;
 }
 
 interface CategoryFormData {
@@ -61,7 +62,19 @@ interface CategoryFormData {
   display_order?: number;
 }
 
-const ChecklistCategoriesManagement: React.FC<ChecklistCategoriesManagementProps> = ({ onBack }) => {
+const ChecklistCategoriesManagement: React.FC<ChecklistCategoriesManagementProps> = ({ onBack, translations }) => {
+  const t = translations || {
+    search: 'Search',
+    categories: 'Categories',
+    edit: 'Edit',
+    delete: 'Delete',
+    view: 'View',
+    save: 'Save',
+    cancel: 'Cancel',
+    create: 'Create',
+    add: 'Add',
+    name: 'Name'
+  };
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
