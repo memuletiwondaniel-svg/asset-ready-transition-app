@@ -5,6 +5,9 @@ export interface PSSRReason {
   id: string;
   name: string;
   display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PSSRReasonSubOption {
@@ -12,6 +15,9 @@ export interface PSSRReasonSubOption {
   parent_reason_id: string;
   name: string;
   display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PSSRTieInScope {
@@ -19,12 +25,18 @@ export interface PSSRTieInScope {
   code: string;
   description: string;
   display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PSSRMOCScope {
   id: string;
   name: string;
   display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const usePSSRReasons = () => {
