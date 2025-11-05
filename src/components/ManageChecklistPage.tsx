@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
+import LanguageSelector from '@/components/admin/LanguageSelector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,8 +34,11 @@ interface NewChecklistData {
   custom_reason?: string;
 }
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
-  onBack
+  onBack,
+  selectedLanguage = "English",
+  translations = {}
 }) => {
+  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
   const [activeTab, setActiveTab] = useState('checklists');
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -225,7 +230,13 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <div className="flex-1 flex justify-center">
               <img src="/images/orsh-logo.png" alt="ORSH Logo" className="h-40 w-auto filter drop-shadow-md" />
             </div>
-            <div className="w-40"></div>
+            <div className="flex items-center gap-2">
+              <LanguageSelector 
+                selectedLanguage={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
+              />
+              <UserProfileDropdown translations={translations} />
+            </div>
           </div>
         </div>
 
