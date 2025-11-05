@@ -22,6 +22,11 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     { code: "ru", name: "Русский" }
   ];
 
+  const getLanguageCode = (languageName: string) => {
+    const lang = languages.find(l => l.name === languageName);
+    return lang ? lang.code.toUpperCase() : 'EN';
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -30,8 +35,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           size="sm" 
           className={`h-9 px-3 bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/50 transition-all duration-200 ${className}`}
         >
-          <Languages className="h-4 w-4 mr-2" />
-          <span className="text-sm font-medium">{selectedLanguage}</span>
+          <span className="text-sm font-semibold">{getLanguageCode(selectedLanguage)}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
