@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Activity, Loader2, Settings, FolderOpen, Edit3, MoreVertical, Trash2, ClipboardList, Tag, Users, BookOpen } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, MoreVertical, Trash2, ClipboardList, Users, BookOpen, Settings, Wrench } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
 import ChecklistTopicsManagement from './ChecklistTopicsManagement';
+import PSSRSettingsManagement from './PSSRSettingsManagement';
 
 interface ManageChecklistPageProps {
   onBack: () => void;
@@ -233,12 +234,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
 
         <div className="container py-8">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold tracking-tight">Checklist Management</h2>
-            <p className="text-muted-foreground mt-2">Manage checklists, items, categories, and topics for PSSR safety reviews</p>
+            <h2 className="text-3xl font-bold tracking-tight">PSSR Configuration</h2>
+            <p className="text-muted-foreground mt-2">Manage checklists, items, categories, topics, and PSSR settings</p>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+            <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
               <TabsTrigger value="checklists" className="flex items-center gap-2">
                 <ClipboardList className="h-4 w-4" />
                 <span className="hidden sm:inline">Checklists</span>
@@ -254,6 +255,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
               <TabsTrigger value="topics" className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Topics</span>
+              </TabsTrigger>
+              <TabsTrigger value="pssr-settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">PSSR Settings</span>
               </TabsTrigger>
             </TabsList>
 
@@ -346,6 +351,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({ onBack }) => 
 
             <TabsContent value="topics">
               <ChecklistTopicsManagement onBack={() => {}} />
+            </TabsContent>
+
+            <TabsContent value="pssr-settings">
+              <PSSRSettingsManagement onBack={() => {}} />
             </TabsContent>
           </Tabs>
         </div>

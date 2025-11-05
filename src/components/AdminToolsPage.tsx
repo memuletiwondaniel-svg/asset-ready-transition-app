@@ -70,10 +70,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     return <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />;
   }
 
-  if (activeView === 'pssr-settings') {
-    return <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} />;
-  }
-
   const adminTools = [
     {
       id: 'users',
@@ -90,11 +86,11 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
     },
     {
       id: 'checklist',
-      title: t.manageChecklists,
-      description: t.manageChecklistsDesc,
+      title: 'PSSR Configuration',
+      description: 'Manage checklists, categories, topics, and PSSR settings',
       icon: ClipboardList,
       accentColor: '#107C10', // Microsoft Green
-      stats: { total: 65, active: 65 },
+      stats: { total: 78, active: 78 },
       onClick: () => setActiveView('checklist')
     },
     {
@@ -105,15 +101,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
       accentColor: '#FF8C00', // Microsoft Orange
       stats: { total: 12, active: 8 },
       onClick: () => setActiveView('projects')
-    },
-    {
-      id: 'pssr-settings',
-      title: 'PSSR Settings',
-      description: 'Manage PSSR reasons, tie-in scopes, and MOC options',
-      icon: Settings,
-      accentColor: '#5E5E5E', // Microsoft Gray
-      stats: { total: 13, active: 13 },
-      onClick: () => setActiveView('pssr-settings')
     }
   ];
 
@@ -164,7 +151,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({ onBack }) => {
 
         {/* Modern Cards Grid */}
         <TooltipProvider>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {adminTools.map((tool, index) => {
               const IconComponent = tool.icon;
               return (

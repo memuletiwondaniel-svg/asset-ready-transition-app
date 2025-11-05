@@ -213,30 +213,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({ onBack 
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
-        <div className="container py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={onBack}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">PSSR Settings Management</h1>
-                <p className="text-sm text-muted-foreground">Manage PSSR reasons, scopes, and options</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container py-8">
-        <Tabs defaultValue="reasons" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="reasons">PSSR Reasons</TabsTrigger>
-            <TabsTrigger value="tie-in">Tie-in Scopes</TabsTrigger>
-            <TabsTrigger value="moc">MOC Scopes</TabsTrigger>
-          </TabsList>
+    <div className="space-y-6">
+      <Tabs defaultValue="reasons" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="reasons">PSSR Reasons</TabsTrigger>
+          <TabsTrigger value="tie-in">Tie-in Scopes</TabsTrigger>
+          <TabsTrigger value="moc">MOC Scopes</TabsTrigger>
+        </TabsList>
 
           {/* PSSR Reasons Tab */}
           <TabsContent value="reasons">
@@ -486,9 +469,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({ onBack 
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
-      {/* Edit/Create Dialog */}
+        {/* Edit/Create Dialog */}
       <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ ...editDialog, open })}>
         <DialogContent>
           <DialogHeader>
