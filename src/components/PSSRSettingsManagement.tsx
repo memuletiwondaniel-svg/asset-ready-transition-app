@@ -9,13 +9,32 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X, GripVertical } from 'lucide-react';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import AdminHeader from './admin/AdminHeader';
 import { getCurrentTranslations } from '@/utils/translations';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface PSSRSettingsManagementProps {
   onBack: () => void;
@@ -82,48 +101,73 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
     type: '', 
     id: '' 
   });
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<string | null>(null);
 
-  // Reorder function
-  const handleReorder = async (type: string, id: string, direction: 'up' | 'down', currentOrder: number) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Drag and drop handlers
+  const handleDragStart = (event: DragStartEvent, type: string) => {
+    setActiveId(event.active.id as string);
+    setActiveType(type);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent, type: string) => {
+    const { active, over } = event;
+    
+    setActiveId(null);
+    setActiveType(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
     const tableName = type === 'reason' ? 'pssr_reasons' 
       : type === 'tie-in' ? 'pssr_tie_in_scopes' 
       : 'pssr_moc_scopes';
     
-    const newOrder = direction === 'up' ? currentOrder - 1 : currentOrder + 1;
-    
+    let items: any[];
+    if (type === 'reason') {
+      items = allReasons;
+    } else if (type === 'tie-in') {
+      items = allTieInScopes;
+    } else {
+      items = allMOCScopes;
+    }
+
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
+
+    const reorderedItems = arrayMove(items, oldIndex, newIndex);
+
     try {
-      // Get all items to find the one to swap with
-      const { data: items, error: fetchError } = await supabase
-        .from(tableName)
-        .select('*')
-        .order('display_order');
+      // Update display_order for all affected items
+      const updates = reorderedItems.map((item, index) => ({
+        id: item.id,
+        display_order: index + 1
+      }));
 
-      if (fetchError) throw fetchError;
+      for (const update of updates) {
+        const { error } = await supabase
+          .from(tableName)
+          .update({ display_order: update.display_order })
+          .eq('id', update.id);
 
-      const currentItem = items.find(item => item.id === id);
-      const swapItem = items.find(item => item.display_order === newOrder);
-
-      if (!currentItem || !swapItem) {
-        toast.error('Cannot reorder: item not found');
-        return;
+        if (error) throw error;
       }
 
-      // Swap the display orders
-      const { error: update1Error } = await supabase
-        .from(tableName)
-        .update({ display_order: newOrder })
-        .eq('id', id);
-
-      if (update1Error) throw update1Error;
-
-      const { error: update2Error } = await supabase
-        .from(tableName)
-        .update({ display_order: currentOrder })
-        .eq('id', swapItem.id);
-
-      if (update2Error) throw update2Error;
-
-      queryClient.invalidateQueries({ queryKey: [type === 'reason' ? 'pssr-reasons-all' : type === 'tie-in' ? 'pssr-tie-in-scopes-all' : 'pssr-moc-scopes-all'] });
+      queryClient.invalidateQueries({ 
+        queryKey: [type === 'reason' ? 'pssr-reasons-all' : type === 'tie-in' ? 'pssr-tie-in-scopes-all' : 'pssr-moc-scopes-all'] 
+      });
       toast.success('Order updated successfully');
     } catch (error) {
       console.error('Error reordering:', error);
@@ -224,6 +268,41 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
       console.error('Error deleting:', error);
       toast.error('Failed to delete item');
     }
+  };
+
+  // Sortable row component
+  interface SortableRowProps {
+    id: string;
+    children: React.ReactNode;
+  }
+
+  const SortableRow: React.FC<SortableRowProps> = ({ id, children }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+      backgroundColor: isDragging ? 'hsl(var(--accent))' : 'transparent',
+    };
+
+    return (
+      <TableRow ref={setNodeRef} style={style} className={isDragging ? 'relative z-50' : ''}>
+        <TableCell className="w-12">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+          </div>
+        </TableCell>
+        {children}
+      </TableRow>
+    );
   };
 
   // Filter tab content based on search
@@ -395,52 +474,65 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allReasons.map((reason, index) => (
-                      <TableRow key={reason.id}>
-                        <TableCell className="font-medium">{reason.display_order}</TableCell>
-                        <TableCell>{reason.name}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={reason.is_active ? "default" : "secondary"}
-                            className="cursor-pointer"
-                            onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
-                          >
-                            {reason.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                            {reason.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={(event) => handleDragStart(event, 'reason')}
+                  onDragEnd={(event) => handleDragEnd(event, 'reason')}
+                >
+                  <SortableContext
+                    items={allReasons.map(r => r.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12"></TableHead>
+                          <TableHead>Order</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allReasons.map((reason) => (
+                          <SortableRow key={reason.id} id={reason.id}>
+                            <TableCell className="font-medium">{reason.display_order}</TableCell>
+                            <TableCell>{reason.name}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={reason.is_active ? "default" : "secondary"}
+                                className="cursor-pointer"
+                                onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
+                              >
+                                {reason.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                {reason.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </SortableContext>
+                </DndContext>
               </CardContent>
             </Card>
           </TabsContent>
@@ -464,54 +556,67 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order</TableHead>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allTieInScopes.map((scope, index) => (
-                      <TableRow key={scope.id}>
-                        <TableCell className="font-medium">{scope.display_order}</TableCell>
-                        <TableCell className="font-semibold">{scope.code}</TableCell>
-                        <TableCell className="max-w-md truncate">{scope.description}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={scope.is_active ? "default" : "secondary"}
-                            className="cursor-pointer"
-                            onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
-                          >
-                            {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                            {scope.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={(event) => handleDragStart(event, 'tie-in')}
+                  onDragEnd={(event) => handleDragEnd(event, 'tie-in')}
+                >
+                  <SortableContext
+                    items={allTieInScopes.map(s => s.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12"></TableHead>
+                          <TableHead>Order</TableHead>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allTieInScopes.map((scope) => (
+                          <SortableRow key={scope.id} id={scope.id}>
+                            <TableCell className="font-medium">{scope.display_order}</TableCell>
+                            <TableCell className="font-semibold">{scope.code}</TableCell>
+                            <TableCell className="max-w-md truncate">{scope.description}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={scope.is_active ? "default" : "secondary"}
+                                className="cursor-pointer"
+                                onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
+                              >
+                                {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                {scope.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </SortableContext>
+                </DndContext>
               </CardContent>
             </Card>
           </TabsContent>
@@ -535,52 +640,65 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allMOCScopes.map((scope, index) => (
-                      <TableRow key={scope.id}>
-                        <TableCell className="font-medium">{scope.display_order}</TableCell>
-                        <TableCell>{scope.name}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={scope.is_active ? "default" : "secondary"}
-                            className="cursor-pointer"
-                            onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
-                          >
-                            {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                            {scope.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={(event) => handleDragStart(event, 'moc')}
+                  onDragEnd={(event) => handleDragEnd(event, 'moc')}
+                >
+                  <SortableContext
+                    items={allMOCScopes.map(s => s.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12"></TableHead>
+                          <TableHead>Order</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allMOCScopes.map((scope) => (
+                          <SortableRow key={scope.id} id={scope.id}>
+                            <TableCell className="font-medium">{scope.display_order}</TableCell>
+                            <TableCell>{scope.name}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={scope.is_active ? "default" : "secondary"}
+                                className="cursor-pointer"
+                                onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
+                              >
+                                {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                {scope.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </SortableContext>
+                </DndContext>
               </CardContent>
             </Card>
           </TabsContent>
