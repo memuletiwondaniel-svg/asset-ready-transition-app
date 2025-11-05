@@ -16,7 +16,10 @@ import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOC
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import AdminHeader from './admin/AdminHeader';
+import { ThemeToggle } from './admin/ThemeToggle';
+import LanguageSelector from './admin/LanguageSelector';
+import UserProfileDropdown from './admin/UserProfileDropdown';
+import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
 import {
   DndContext,
@@ -495,19 +498,19 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
       </div>
 
       <div className="relative z-10">
-        {/* Header with Breadcrumb */}
-        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
-          <div className="container flex h-20 items-center justify-between gap-4">
+        {/* Modern Compact Header */}
+        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
+          <div className="container flex h-16 items-center justify-between gap-4">
             {/* Left - Breadcrumb Navigation */}
-            <div className="flex items-center min-w-0 flex-1">
+            <div className="flex items-center min-w-0">
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
                     <BreadcrumbLink 
                       onClick={onBack}
-                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors text-sm"
                     >
-                      <Home className="h-4 w-4" />
+                      <Home className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Home</span>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
@@ -515,14 +518,14 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   <BreadcrumbItem>
                     <BreadcrumbLink 
                       onClick={onBack}
-                      className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                      className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline text-sm"
                     >
                       Administration
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden sm:inline" />
                   <BreadcrumbItem className="hidden sm:inline">
-                    <BreadcrumbPage className="font-medium">
+                    <BreadcrumbPage className="font-medium text-sm">
                       PSSR Configuration
                     </BreadcrumbPage>
                   </BreadcrumbItem>
@@ -531,81 +534,99 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </div>
 
             {/* Center - ORSH Logo */}
-            <div className="flex-shrink-0">
-              <AdminHeader 
-                selectedLanguage={currentLanguage}
-                onLanguageChange={setCurrentLanguage}
-                translations={t}
-              >
-                <span></span>
-              </AdminHeader>
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <OrshLogo size="medium" />
             </div>
 
-            {/* Right - Empty for balance - controls in AdminHeader */}
-            <div className="flex-1"></div>
+            {/* Right - Theme Toggle, Language, User */}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <LanguageSelector 
+                selectedLanguage={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
+              />
+              <UserProfileDropdown translations={t} />
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-border/50" />
+        <div className="container pt-8 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Compact Modern Header with Inline Search */}
+          <div className="mb-8 animate-fade-in">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  PSSR Configuration
+                </h1>
+                <p className="text-muted-foreground/70 text-xs md:text-sm mt-1">
+                  Manage PSSR reasons, tie-in scopes, and Management of Change options
+                </p>
+              </div>
+              
+              {/* Inline Search */}
+              <div className="flex-shrink-0 w-80 hidden lg:block">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search settings..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10 h-10 text-sm border-border/60 bg-card/50 backdrop-blur-sm focus:border-primary/40 focus:ring-primary/20 rounded-xl"
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-muted rounded-lg"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
 
-        <div className="container pt-16 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Soft, De-emphasized Header */}
-          <div className="mb-14 animate-fade-in">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              PSSR Configuration
-            </h1>
-            <p className="text-muted-foreground/80 text-sm md:text-base max-w-3xl">
-              Manage PSSR reasons, tie-in scopes, and Management of Change options
-            </p>
-          </div>
-
-          {/* Enhanced Search Bar */}
-          <div className="mb-16 animate-scale-in">
-            <div className="relative max-w-xl mx-auto">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-primary/10 rounded-2xl blur-xl" />
-              <div className="relative bg-card/80 backdrop-blur-sm border-2 border-border/50 rounded-2xl shadow-lg hover:border-emerald-500/30 transition-colors">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            {/* Mobile Search */}
+            <div className="lg:hidden mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search configuration settings..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-14 pr-14 h-16 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="pl-10 pr-10 h-11 text-sm border-border/60 bg-card/50 backdrop-blur-sm rounded-xl"
                 />
                 {searchQuery && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-muted rounded-xl"
-                        onClick={() => setSearchQuery('')}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Clear search</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-lg"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
                 )}
               </div>
             </div>
+
             {searchQuery && (
-              <p className="text-sm text-muted-foreground mt-3 text-center animate-fade-in">
+              <p className="text-xs text-muted-foreground animate-fade-in">
                 Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'}
               </p>
             )}
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
-            {/* Modern Tab Navigation */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            {/* Compact Modern Tab Navigation */}
             <div className="flex justify-center">
-              <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
+              <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-md border">
                 {showReasonsTab && (
                   <TabsTrigger 
                     value="reasons" 
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-accent/50"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-accent/50"
                   >
                     PSSR Reasons
                   </TabsTrigger>
@@ -613,7 +634,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 {showTieInTab && (
                   <TabsTrigger 
                     value="tie-in"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-accent/50"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-accent/50"
                   >
                     Tie-in Scopes
                   </TabsTrigger>
@@ -621,7 +642,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 {showMOCTab && (
                   <TabsTrigger 
                     value="moc"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-accent/50"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm hover:bg-accent/50"
                   >
                     MOC Scopes
                   </TabsTrigger>
@@ -631,9 +652,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* PSSR Reasons Tab */}
           <TabsContent value="reasons" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-8 px-8">
-                <div className="flex items-center justify-between mb-4">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <CardTitle>PSSR Reasons</CardTitle>
                     <CardDescription>Manage available reasons for creating a PSSR</CardDescription>
@@ -810,9 +831,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* Tie-in Scopes Tab */}
           <TabsContent value="tie-in" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-8 px-8">
-                <div className="flex items-center justify-between mb-4">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <CardTitle>Tie-in Scopes</CardTitle>
                     <CardDescription>Manage advanced tie-in scope options</CardDescription>
@@ -991,9 +1012,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* MOC Scopes Tab */}
           <TabsContent value="moc" className="animate-fade-in mt-0">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-8 px-8">
-                <div className="flex items-center justify-between mb-4">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <CardTitle>MOC Scopes</CardTitle>
                     <CardDescription>Manage Management of Change scope options</CardDescription>
