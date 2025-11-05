@@ -895,6 +895,98 @@ export type Database = {
           },
         ]
       }
+      pssr_moc_scopes: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pssr_reason_sub_options: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          parent_reason_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_reason_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_reason_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_reason_sub_options_parent_reason_id_fkey"
+            columns: ["parent_reason_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_reasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pssr_reasons: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pssr_team_members: {
         Row: {
           created_at: string
@@ -929,6 +1021,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pssr_tie_in_scopes: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          display_order: number
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       pssrs: {
         Row: {
@@ -1091,7 +1213,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
           user_agent: string | null
           user_id: string
@@ -1101,7 +1223,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           user_agent?: string | null
           user_id: string
@@ -1111,7 +1233,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           user_agent?: string | null
           user_id?: string
@@ -1132,7 +1254,7 @@ export type Database = {
           created_at: string | null
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -1141,7 +1263,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1150,7 +1272,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1272,7 +1394,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean | null
           last_activity: string | null
           session_token: string
@@ -1284,7 +1406,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           last_activity?: string | null
           session_token: string
@@ -1296,7 +1418,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           last_activity?: string | null
           session_token?: string
@@ -1324,29 +1446,26 @@ export type Database = {
         Returns: boolean
       }
       get_active_roles: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           value: string
         }[]
       }
       get_active_ta2_commissions: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           value: string
         }[]
       }
       get_active_ta2_disciplines: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           value: string
         }[]
       }
-      get_category_ref_id: {
-        Args: { category_name: string }
-        Returns: string
-      }
+      get_category_ref_id: { Args: { category_name: string }; Returns: string }
       get_enhanced_user_management_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           account_status: string
           avatar_url: string
@@ -1392,13 +1511,13 @@ export type Database = {
         }[]
       }
       get_unique_topics: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           topic: string
         }[]
       }
       get_user_management_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           account_status: string
           company: Database["public"]["Enums"]["user_company"]
@@ -1415,10 +1534,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      initiate_password_reset: {
-        Args: { user_email: string }
-        Returns: string
-      }
+      initiate_password_reset: { Args: { user_email: string }; Returns: string }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
@@ -1454,10 +1570,7 @@ export type Database = {
         Args: { role_name: string; user_uuid: string }
         Returns: boolean
       }
-      user_is_admin: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
+      user_is_admin: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
       ta2_commission: "Asset" | "Project and Engineering"

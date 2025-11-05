@@ -1,17 +1,24 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Briefcase, Building2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { FileText, Building2 } from 'lucide-react';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
+import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 
 interface FormData {
   asset: string;
   reason: string;
+  reasonSubOption: string;
+  tieInScopes: string[];
+  mocNumber: string;
+  mocScope: string;
   projectId: string;
   projectName: string;
   scope: string;
@@ -66,6 +73,17 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onContextAction
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
+  const { data: pssrReasons = [] } = usePSSRReasons();
+  const [selectedReasonId, setSelectedReasonId] = useState<string | null>(null);
+  const { data: reasonSubOptions = [] } = usePSSRReasonSubOptions(selectedReasonId);
+  const { data: tieInScopes = [] } = usePSSRTieInScopes();
+  const { data: mocScopes = [] } = usePSSRMOCScopes();
+
+  // Update selected reason ID when formData.reason changes
+  useEffect(() => {
+    const selectedReason = pssrReasons.find(r => r.name === formData.reason);
+    setSelectedReasonId(selectedReason?.id || null);
+  }, [formData.reason, pssrReasons]);
 
   const handleProjectUpdate = (updatedProject: Project) => {
     setProjects(prevProjects => 
@@ -96,26 +114,139 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             <div className="space-y-3">
               <Label htmlFor="reason" className="text-sm font-semibold text-gray-700">
                 Reason for PSSR *
               </Label>
-              <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({...prev, reason: value, projectId: '', projectName: '', asset: ''}))}>
+              <Select 
+                value={formData.reason} 
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev, 
+                  reason: value, 
+                  projectId: '', 
+                  projectName: '', 
+                  asset: '',
+                  reasonSubOption: '',
+                  tieInScopes: [],
+                  mocNumber: '',
+                  mocScope: ''
+                }))}
+              >
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md">
-                  {reasons.map((r) => (
-                    <SelectItem key={r} value={r} className="py-3">
-                      {r}
+                  {pssrReasons.map((r) => (
+                    <SelectItem key={r.id} value={r.name} className="py-3">
+                      {r.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {formData.reason && formData.reason !== 'Start-up or Commissioning of a new Asset' && (
+            {/* Sub-options for "Restart following plant changes or modifications" */}
+            {formData.reason === 'Restart following plant changes or modifications' && reasonSubOptions.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold text-gray-700">Change Type *</Label>
+                <Select 
+                  value={formData.reasonSubOption} 
+                  onValueChange={(value) => setFormData(prev => ({
+                    ...prev, 
+                    reasonSubOption: value,
+                    tieInScopes: [],
+                    mocNumber: '',
+                    mocScope: ''
+                  }))}
+                >
+                  <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
+                    <SelectValue placeholder="Select change type" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md">
+                    {reasonSubOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.name} className="py-3">
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Tie-in scopes selection */}
+            {formData.reasonSubOption === 'Project Advanced Tie-in scope' && (
+              <div className="space-y-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                <Label className="text-sm font-semibold text-gray-700">Select Tie-in Scope(s) *</Label>
+                <div className="space-y-3">
+                  {tieInScopes.map((scope) => (
+                    <div key={scope.id} className="flex items-start space-x-3 p-3 bg-white rounded-md border border-gray-200">
+                      <Checkbox
+                        id={scope.id}
+                        checked={formData.tieInScopes?.includes(scope.code) || false}
+                        onCheckedChange={(checked) => {
+                          const currentScopes = formData.tieInScopes || [];
+                          setFormData(prev => ({
+                            ...prev,
+                            tieInScopes: checked
+                              ? [...currentScopes, scope.code]
+                              : currentScopes.filter(s => s !== scope.code)
+                          }));
+                        }}
+                      />
+                      <div className="flex-1">
+                        <label htmlFor={scope.id} className="text-sm font-medium cursor-pointer">
+                          {scope.code}
+                        </label>
+                        <p className="text-xs text-gray-600 mt-1">{scope.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* MOC Number and Scope */}
+            {formData.reasonSubOption === 'Implementation of an approved Asset MOC' && (
+              <div className="space-y-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                <div className="space-y-3">
+                  <Label htmlFor="mocNumber" className="text-sm font-semibold text-gray-700">
+                    MOC Number *
+                  </Label>
+                  <Input
+                    id="mocNumber"
+                    value={formData.mocNumber || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, mocNumber: e.target.value }))}
+                    placeholder="Enter MOC number"
+                    className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-gray-700">MOC Scope *</Label>
+                  <Select 
+                    value={formData.mocScope} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, mocScope: value }))}
+                  >
+                    <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
+                      <SelectValue placeholder="Select MOC scope" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md">
+                      {mocScopes.map((scope) => (
+                        <SelectItem key={scope.id} value={scope.name} className="py-3">
+                          {scope.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {formData.reason && formData.reason !== 'Start-Up or Commissioning of a new Facility or Project' && (
               <div className="space-y-3">
                 <Label htmlFor="asset" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-blue-600" />
@@ -158,7 +289,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
             )}
           </div>
 
-          {formData.reason === 'Start-up or Commissioning of a new Asset' && (
+          {formData.reason === 'Start-Up or Commissioning of a new Facility or Project' && (
             <div className="p-6 bg-blue-50 rounded-xl">
               
               <div className="mb-4">

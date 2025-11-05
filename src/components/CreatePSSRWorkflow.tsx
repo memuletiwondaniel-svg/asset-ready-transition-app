@@ -19,6 +19,10 @@ interface PSSRData {
   // Compatible with existing FormData structure
   asset?: string;
   reason?: string;
+  reasonSubOption?: string;
+  tieInScopes?: string[];
+  mocNumber?: string;
+  mocScope?: string;
   projectId?: string;
   projectName?: string;
   scope?: string;
@@ -150,6 +154,10 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({ onBack, onCompl
             formData={{
               asset: pssrData.asset || '',
               reason: pssrData.reason || '',
+              reasonSubOption: pssrData.reasonSubOption || '',
+              tieInScopes: pssrData.tieInScopes || [],
+              mocNumber: pssrData.mocNumber || '',
+              mocScope: pssrData.mocScope || '',
               projectId: pssrData.projectId || '',
               projectName: pssrData.projectName || '',
               scope: pssrData.scope || '',

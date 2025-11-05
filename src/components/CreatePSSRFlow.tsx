@@ -32,6 +32,10 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   const [formData, setFormData] = useState({
     asset: '',
     reason: '',
+    reasonSubOption: '',
+    tieInScopes: [] as string[],
+    mocNumber: '',
+    mocScope: '',
     projectId: '',
     projectName: '',
     scope: '',
