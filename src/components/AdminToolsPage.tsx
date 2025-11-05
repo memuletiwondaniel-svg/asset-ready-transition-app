@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, Clock, CheckCircle, Home, Search, X } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
@@ -22,7 +22,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings'>('dashboard');
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentTools, setRecentTools] = useState<string[]>([]);
   const [userStats, setUserStats] = useState({
     total: 0,
     pending: 0,
@@ -56,29 +55,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     fetchUserStats();
   }, []);
 
-  // Load recent tools from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('orsh-recent-admin-tools');
-    if (stored) {
-      try {
-        setRecentTools(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error parsing recent tools:', e);
-      }
-    }
-  }, []);
-
-  // Handle tool access tracking
-  const handleToolClick = (toolId: string, action: () => void) => {
-    // Update recent tools (max 3, most recent first)
-    setRecentTools(prev => {
-      const updated = [toolId, ...prev.filter(id => id !== toolId)].slice(0, 3);
-      localStorage.setItem('orsh-recent-admin-tools', JSON.stringify(updated));
-      return updated;
-    });
-    action();
-  };
-
   // Get current translations
   const t = getCurrentTranslations(selectedLanguage);
   
@@ -93,7 +69,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       total: userStats.total
     },
     height: 'md:row-span-2',
-    onClick: () => handleToolClick('users', () => setActiveView('users'))
+    onClick: () => setActiveView('users')
   }, {
     id: 'checklist',
     title: 'PSSR Configuration',
@@ -103,7 +79,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     tooltip: 'Configure PSSR checklists, categories, topics, and translation settings',
     stats: {},
     height: 'md:row-span-3',
-    onClick: () => handleToolClick('checklist', () => setActiveView('checklist'))
+    onClick: () => setActiveView('checklist')
   }, {
     id: 'projects',
     title: t.manageProject,
@@ -115,7 +91,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       total: 12
     },
     height: 'md:row-span-2',
-    onClick: () => handleToolClick('projects', () => setActiveView('projects'))
+    onClick: () => setActiveView('projects')
   }];
 
   // Filter admin tools based on search query
@@ -129,13 +105,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       tool.tooltip.toLowerCase().includes(query)
     );
   }, [searchQuery, userStats.total, t]);
-
-  // Get recent tools data
-  const recentToolsData = useMemo(() => {
-    return recentTools
-      .map(id => adminTools.find(tool => tool.id === id))
-      .filter(Boolean);
-  }, [recentTools, userStats.total, t]);
 
   // Handle conditional views AFTER all hooks
   if (activeView === 'users') {
@@ -223,47 +192,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
             </p>
           )}
         </div>
-
-        {/* Recently Accessed Tools */}
-        {recentToolsData.length > 0 && !searchQuery && (
-          <div className="mb-16">
-            <h2 className="text-sm font-medium text-foreground/70 mb-5 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Recently Accessed
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {recentToolsData.map((tool, index) => {
-                const IconComponent = tool.icon;
-                return (
-                  <Card
-                    key={tool.id}
-                    className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border bg-card/50 backdrop-blur animate-scale-in"
-                    style={{ animationDelay: `${index * 75}ms` }}
-                    onClick={tool.onClick}
-                  >
-                    <CardHeader className="p-5">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-200 group-hover:scale-110 shadow`}>
-                          <IconComponent className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                            {tool.title}
-                          </CardTitle>
-                          {tool.stats.total !== undefined && (
-                            <p className="text-xs text-muted-foreground">
-                              {tool.stats.total} total
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Masonry Cards Grid */}
         <TooltipProvider>
