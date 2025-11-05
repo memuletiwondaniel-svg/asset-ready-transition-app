@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X, GripVertical } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X, GripVertical, Trash, Check } from 'lucide-react';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -101,8 +102,16 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
     type: '', 
     id: '' 
   });
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState<{ open: boolean; type: string; count: number }>({ 
+    open: false, 
+    type: '', 
+    count: 0 
+  });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string | null>(null);
+  const [selectedReasons, setSelectedReasons] = useState<Set<string>>(new Set());
+  const [selectedTieInScopes, setSelectedTieInScopes] = useState<Set<string>>(new Set());
+  const [selectedMOCScopes, setSelectedMOCScopes] = useState<Set<string>>(new Set());
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -268,6 +277,136 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
       console.error('Error deleting:', error);
       toast.error('Failed to delete item');
     }
+  };
+
+  // Bulk selection handlers
+  const toggleSelectAll = (type: string, checked: boolean) => {
+    if (type === 'reason') {
+      setSelectedReasons(checked ? new Set(allReasons.map(r => r.id)) : new Set());
+    } else if (type === 'tie-in') {
+      setSelectedTieInScopes(checked ? new Set(allTieInScopes.map(s => s.id)) : new Set());
+    } else {
+      setSelectedMOCScopes(checked ? new Set(allMOCScopes.map(s => s.id)) : new Set());
+    }
+  };
+
+  const toggleSelectItem = (type: string, id: string) => {
+    if (type === 'reason') {
+      const newSelected = new Set(selectedReasons);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      setSelectedReasons(newSelected);
+    } else if (type === 'tie-in') {
+      const newSelected = new Set(selectedTieInScopes);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      setSelectedTieInScopes(newSelected);
+    } else {
+      const newSelected = new Set(selectedMOCScopes);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      setSelectedMOCScopes(newSelected);
+    }
+  };
+
+  // Bulk action handlers
+  const handleBulkToggleActive = async (type: string, active: boolean) => {
+    const tableName = type === 'reason' ? 'pssr_reasons' 
+      : type === 'tie-in' ? 'pssr_tie_in_scopes' 
+      : 'pssr_moc_scopes';
+    
+    const selectedIds = type === 'reason' ? Array.from(selectedReasons)
+      : type === 'tie-in' ? Array.from(selectedTieInScopes)
+      : Array.from(selectedMOCScopes);
+
+    if (selectedIds.length === 0) {
+      toast.error('No items selected');
+      return;
+    }
+
+    try {
+      for (const id of selectedIds) {
+        const { error } = await supabase
+          .from(tableName)
+          .update({ is_active: active })
+          .eq('id', id);
+
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ 
+        queryKey: [type === 'reason' ? 'pssr-reasons-all' : type === 'tie-in' ? 'pssr-tie-in-scopes-all' : 'pssr-moc-scopes-all'] 
+      });
+      
+      // Clear selections
+      if (type === 'reason') setSelectedReasons(new Set());
+      else if (type === 'tie-in') setSelectedTieInScopes(new Set());
+      else setSelectedMOCScopes(new Set());
+
+      toast.success(`${selectedIds.length} item(s) ${active ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      console.error('Error updating items:', error);
+      toast.error('Failed to update items');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const { type } = bulkDeleteDialog;
+    const tableName = type === 'reason' ? 'pssr_reasons' 
+      : type === 'tie-in' ? 'pssr_tie_in_scopes' 
+      : 'pssr_moc_scopes';
+    
+    const selectedIds = type === 'reason' ? Array.from(selectedReasons)
+      : type === 'tie-in' ? Array.from(selectedTieInScopes)
+      : Array.from(selectedMOCScopes);
+
+    try {
+      for (const id of selectedIds) {
+        const { error } = await supabase
+          .from(tableName)
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ 
+        queryKey: [type === 'reason' ? 'pssr-reasons-all' : type === 'tie-in' ? 'pssr-tie-in-scopes-all' : 'pssr-moc-scopes-all'] 
+      });
+      
+      // Clear selections
+      if (type === 'reason') setSelectedReasons(new Set());
+      else if (type === 'tie-in') setSelectedTieInScopes(new Set());
+      else setSelectedMOCScopes(new Set());
+
+      toast.success(`${selectedIds.length} item(s) deleted successfully`);
+      setBulkDeleteDialog({ open: false, type: '', count: 0 });
+    } catch (error) {
+      console.error('Error deleting items:', error);
+      toast.error('Failed to delete items');
+    }
+  };
+
+  const openBulkDeleteDialog = (type: string) => {
+    const count = type === 'reason' ? selectedReasons.size
+      : type === 'tie-in' ? selectedTieInScopes.size
+      : selectedMOCScopes.size;
+
+    if (count === 0) {
+      toast.error('No items selected');
+      return;
+    }
+
+    setBulkDeleteDialog({ open: true, type, count });
   };
 
   // Sortable row component
@@ -459,7 +598,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           <TabsContent value="reasons" className="animate-fade-in mt-0">
             <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
               <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <CardTitle>PSSR Reasons</CardTitle>
                     <CardDescription>Manage available reasons for creating a PSSR</CardDescription>
@@ -472,6 +611,42 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     Add Reason
                   </Button>
                 </div>
+                {selectedReasons.size > 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedReasons.size} item(s) selected
+                    </span>
+                    <div className="flex gap-2 ml-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('reason', true)}
+                        className="h-8"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Enable
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('reason', false)}
+                        className="h-8"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Disable
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openBulkDeleteDialog('reason')}
+                        className="h-8"
+                      >
+                        <Trash className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <DndContext
@@ -487,6 +662,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={allReasons.length > 0 && selectedReasons.size === allReasons.length}
+                              onCheckedChange={(checked) => toggleSelectAll('reason', checked as boolean)}
+                            />
+                          </TableHead>
                           <TableHead className="w-12"></TableHead>
                           <TableHead>Order</TableHead>
                           <TableHead>Name</TableHead>
@@ -497,6 +678,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       <TableBody>
                         {allReasons.map((reason) => (
                           <SortableRow key={reason.id} id={reason.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedReasons.has(reason.id)}
+                                onCheckedChange={() => toggleSelectItem('reason', reason.id)}
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">{reason.display_order}</TableCell>
                             <TableCell>{reason.name}</TableCell>
                             <TableCell>
@@ -541,7 +728,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           <TabsContent value="tie-in" className="animate-fade-in mt-0">
             <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
               <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <CardTitle>Tie-in Scopes</CardTitle>
                     <CardDescription>Manage advanced tie-in scope options</CardDescription>
@@ -554,6 +741,42 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     Add Scope
                   </Button>
                 </div>
+                {selectedTieInScopes.size > 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedTieInScopes.size} item(s) selected
+                    </span>
+                    <div className="flex gap-2 ml-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('tie-in', true)}
+                        className="h-8"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Enable
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('tie-in', false)}
+                        className="h-8"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Disable
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openBulkDeleteDialog('tie-in')}
+                        className="h-8"
+                      >
+                        <Trash className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <DndContext
@@ -569,6 +792,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={allTieInScopes.length > 0 && selectedTieInScopes.size === allTieInScopes.length}
+                              onCheckedChange={(checked) => toggleSelectAll('tie-in', checked as boolean)}
+                            />
+                          </TableHead>
                           <TableHead className="w-12"></TableHead>
                           <TableHead>Order</TableHead>
                           <TableHead>Code</TableHead>
@@ -580,6 +809,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       <TableBody>
                         {allTieInScopes.map((scope) => (
                           <SortableRow key={scope.id} id={scope.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedTieInScopes.has(scope.id)}
+                                onCheckedChange={() => toggleSelectItem('tie-in', scope.id)}
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">{scope.display_order}</TableCell>
                             <TableCell className="font-semibold">{scope.code}</TableCell>
                             <TableCell className="max-w-md truncate">{scope.description}</TableCell>
@@ -625,7 +860,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           <TabsContent value="moc" className="animate-fade-in mt-0">
             <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
               <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <CardTitle>MOC Scopes</CardTitle>
                     <CardDescription>Manage Management of Change scope options</CardDescription>
@@ -638,6 +873,42 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     Add Scope
                   </Button>
                 </div>
+                {selectedMOCScopes.size > 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedMOCScopes.size} item(s) selected
+                    </span>
+                    <div className="flex gap-2 ml-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('moc', true)}
+                        className="h-8"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Enable
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('moc', false)}
+                        className="h-8"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Disable
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openBulkDeleteDialog('moc')}
+                        className="h-8"
+                      >
+                        <Trash className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <DndContext
@@ -653,6 +924,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={allMOCScopes.length > 0 && selectedMOCScopes.size === allMOCScopes.length}
+                              onCheckedChange={(checked) => toggleSelectAll('moc', checked as boolean)}
+                            />
+                          </TableHead>
                           <TableHead className="w-12"></TableHead>
                           <TableHead>Order</TableHead>
                           <TableHead>Name</TableHead>
@@ -663,6 +940,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       <TableBody>
                         {allMOCScopes.map((scope) => (
                           <SortableRow key={scope.id} id={scope.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedMOCScopes.has(scope.id)}
+                                onCheckedChange={() => toggleSelectItem('moc', scope.id)}
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">{scope.display_order}</TableCell>
                             <TableCell>{scope.name}</TableCell>
                             <TableCell>
@@ -778,6 +1061,26 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               </Button>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <Dialog open={bulkDeleteDialog.open} onOpenChange={(open) => setBulkDeleteDialog({ ...bulkDeleteDialog, open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Bulk Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {bulkDeleteDialog.count} item(s)? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkDeleteDialog({ open: false, type: '', count: 0 })}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDelete}>
+                Delete {bulkDeleteDialog.count} Item(s)
               </Button>
             </DialogFooter>
           </DialogContent>
