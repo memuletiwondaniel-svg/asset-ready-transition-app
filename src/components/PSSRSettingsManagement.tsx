@@ -255,94 +255,140 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
   }, [searchQuery, activeTab, showReasonsTab, showTieInTab, showMOCTab]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminHeader 
-        selectedLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-        translations={t}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l from-primary/10 to-emerald-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
+          animationDelay: '700ms'
+        }} />
+        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t from-emerald-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
+          animationDelay: '1400ms'
+        }} />
+      </div>
 
-      <div className="border-t border-border/50" />
+      <div className="relative z-10">
+        <AdminHeader 
+          selectedLanguage={currentLanguage}
+          onLanguageChange={setCurrentLanguage}
+          translations={t}
+        />
 
-      <div className="container pt-8 pb-8 max-w-7xl mx-auto">
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb className="mb-8">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors">
-                <Home className="h-4 w-4" />
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors">
-                Administration
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-medium">PSSR Configuration</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <div className="border-t border-border/50" />
 
-        {/* De-emphasized Header */}
-        <div className="mb-8">
-          <h1 className="text-xl font-medium text-muted-foreground mb-1">
-            PSSR Configuration
-          </h1>
-          <p className="text-sm text-muted-foreground/70">
-            Manage PSSR reasons, tie-in scopes, and MOC scope options
-          </p>
-        </div>
+        <div className="container pt-10 pb-12 max-w-7xl mx-auto">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb className="mb-10 animate-fade-in">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5 hover:text-foreground transition-colors">
+                  <Home className="h-4 w-4" />
+                  Home
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors">
+                  Administration
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-medium">PSSR Configuration</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search configuration settings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 pr-11 h-12 border-border/50 focus-visible:border-primary/50"
-            />
+          {/* Modern Header */}
+          <div className="mb-10 text-center animate-fade-in">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-2 leading-tight" style={{
+              fontFamily: "'Poppins', sans-serif"
+            }}>
+              <span className="text-slate-700 dark:text-slate-200">
+                PSSR Configuration
+              </span>
+            </h1>
+            <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
+              Manage PSSR reasons, tie-in scopes, and Management of Change options
+            </p>
+          </div>
+
+          {/* Enhanced Search Bar */}
+          <div className="mb-12 animate-scale-in">
+            <div className="relative max-w-xl mx-auto">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-primary/10 rounded-2xl blur-xl" />
+              <div className="relative bg-card/80 backdrop-blur-sm border-2 border-border/50 rounded-2xl shadow-lg hover:border-emerald-500/30 transition-colors">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search configuration settings..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-14 pr-14 h-16 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-muted rounded-xl"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
             {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <p className="text-sm text-muted-foreground mt-3 text-center animate-fade-in">
+                Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'}
+              </p>
             )}
           </div>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2 ml-1">
-              {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} match your search
-            </p>
-          )}
-        </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-12">
-            {showReasonsTab && <TabsTrigger value="reasons" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PSSR Reasons</TabsTrigger>}
-            {showTieInTab && <TabsTrigger value="tie-in" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tie-in Scopes</TabsTrigger>}
-            {showMOCTab && <TabsTrigger value="moc" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">MOC Scopes</TabsTrigger>}
-          </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            {/* Modern Tab Navigation */}
+            <div className="flex justify-center">
+              <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1.5 text-muted-foreground shadow-lg border animate-scale-in">
+                {showReasonsTab && (
+                  <TabsTrigger 
+                    value="reasons" 
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-accent/50"
+                  >
+                    PSSR Reasons
+                  </TabsTrigger>
+                )}
+                {showTieInTab && (
+                  <TabsTrigger 
+                    value="tie-in"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-accent/50"
+                  >
+                    Tie-in Scopes
+                  </TabsTrigger>
+                )}
+                {showMOCTab && (
+                  <TabsTrigger 
+                    value="moc"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-accent/50"
+                  >
+                    MOC Scopes
+                  </TabsTrigger>
+                )}
+              </TabsList>
+            </div>
 
           {/* PSSR Reasons Tab */}
-          <TabsContent value="reasons">
-            <Card>
-              <CardHeader>
+          <TabsContent value="reasons" className="animate-fade-in mt-0">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>PSSR Reasons</CardTitle>
                     <CardDescription>Manage available reasons for creating a PSSR</CardDescription>
                   </div>
-                  <Button onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}>
+                  <Button 
+                    onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Reason
                   </Button>
@@ -416,15 +462,18 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </TabsContent>
 
           {/* Tie-in Scopes Tab */}
-          <TabsContent value="tie-in">
-            <Card>
-              <CardHeader>
+          <TabsContent value="tie-in" className="animate-fade-in mt-0">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Tie-in Scopes</CardTitle>
                     <CardDescription>Manage advanced tie-in scope options</CardDescription>
                   </div>
-                  <Button onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}>
+                  <Button 
+                    onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Scope
                   </Button>
@@ -500,15 +549,18 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </TabsContent>
 
           {/* MOC Scopes Tab */}
-          <TabsContent value="moc">
-            <Card>
-              <CardHeader>
+          <TabsContent value="moc" className="animate-fade-in mt-0">
+            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl">
+              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>MOC Scopes</CardTitle>
                     <CardDescription>Manage Management of Change scope options</CardDescription>
                   </div>
-                  <Button onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}>
+                  <Button 
+                    onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Scope
                   </Button>
@@ -583,80 +635,84 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
         </Tabs>
 
         {/* Edit/Create Dialog */}
-      <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ ...editDialog, open })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editDialog.item?.id ? 'Edit' : 'Add'} {editDialog.type === 'reason' ? 'Reason' : editDialog.type === 'tie-in' ? 'Tie-in Scope' : 'MOC Scope'}
-            </DialogTitle>
-            <DialogDescription>
-              {editDialog.item?.id ? 'Update' : 'Create a new'} {editDialog.type} entry
-            </DialogDescription>
-          </DialogHeader>
+        <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ ...editDialog, open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editDialog.item?.id ? 'Edit' : 'Add'} {editDialog.type === 'reason' ? 'Reason' : editDialog.type === 'tie-in' ? 'Tie-in Scope' : 'MOC Scope'}
+              </DialogTitle>
+              <DialogDescription>
+                {editDialog.item?.id ? 'Update' : 'Create a new'} {editDialog.type} entry
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-4">
-            {editDialog.type === 'tie-in' ? (
-              <>
+            <div className="space-y-4">
+              {editDialog.type === 'tie-in' ? (
+                <>
+                  <div className="space-y-2">
+                    <Label>Code</Label>
+                    <Input
+                      value={editDialog.item?.code || ''}
+                      onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, code: e.target.value } })}
+                      placeholder="e.g., MECH, PACO, ELECT"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={editDialog.item?.description || ''}
+                      onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, description: e.target.value } })}
+                      placeholder="Detailed description of the scope"
+                      rows={4}
+                    />
+                  </div>
+                </>
+              ) : (
                 <div className="space-y-2">
-                  <Label>Code</Label>
+                  <Label>Name</Label>
                   <Input
-                    value={editDialog.item?.code || ''}
-                    onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, code: e.target.value } })}
-                    placeholder="e.g., MECH, PACO, ELECT"
+                    value={editDialog.item?.name || ''}
+                    onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, name: e.target.value } })}
+                    placeholder="Enter name"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea
-                    value={editDialog.item?.description || ''}
-                    onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, description: e.target.value } })}
-                    placeholder="Detailed description of the scope"
-                    rows={4}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  value={editDialog.item?.name || ''}
-                  onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, name: e.target.value } })}
-                  placeholder="Enter name"
-                />
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialog({ open: false, type: '', item: null })}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialog({ open: false, type: '', item: null })}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+              >
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this item? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog({ open: false, type: '', id: '' })}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this item? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialog({ open: false, type: '', id: '' })}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        </div>
       </div>
     </div>
   );
