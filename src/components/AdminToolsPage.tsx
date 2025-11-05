@@ -106,13 +106,13 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </div>
       </AdminHeader>
 
-      <div className="container pt-16 pb-8 max-w-7xl mx-auto">
-        {/* Modern Header with Gradient */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-3">
+      <div className="container pt-24 pb-8 max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-16">
+          <h1 className="text-2xl font-medium text-foreground/80 mb-2">
             {t.administration}
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm">
             {t.adminToolsSubtitle}
           </p>
         </div>
