@@ -145,22 +145,14 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       .filter(Boolean);
   }, [recentTools, userStats.total, t]);
   return <div className="min-h-screen bg-background">
-      <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t}>
-        
-        <div className="ml-auto">
-          <Button variant="outline" onClick={onBack} className="h-9 gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to ORSH Homepage
-          </Button>
-        </div>
-      </AdminHeader>
+      <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t} />
 
       {/* Subtle Divider */}
       <div className="border-t border-border/50" />
 
       <div className="container pt-8 pb-8 max-w-7xl mx-auto">
         {/* Breadcrumb Navigation */}
-        <Breadcrumb className="mb-8">
+        <Breadcrumb className="mb-10">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
@@ -176,7 +168,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         </Breadcrumb>
 
         {/* Header Section */}
-        <div className="mb-8">
+        <div className="mb-10">
           <h1 className="text-2xl font-medium text-foreground/80 mb-2">
             {t.administration}
           </h1>
@@ -185,30 +177,33 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
           </p>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar - Elevated Design */}
         <div className="mb-12">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search admin tools..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 h-11"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="relative max-w-xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg blur-xl" />
+            <div className="relative bg-background border-2 border-border/50 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search admin tools..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-12 h-14 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-muted"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
           {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-3 ml-1">
               Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
             </p>
           )}
@@ -216,12 +211,12 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
 
         {/* Recently Accessed Tools */}
         {recentToolsData.length > 0 && !searchQuery && (
-          <div className="mb-12">
-            <h2 className="text-sm font-medium text-foreground/70 mb-4 flex items-center gap-2">
+          <div className="mb-16">
+            <h2 className="text-sm font-medium text-foreground/70 mb-5 flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Recently Accessed
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {recentToolsData.map((tool) => {
                 const IconComponent = tool.icon;
                 return (
@@ -230,9 +225,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                     className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border bg-card/50 backdrop-blur"
                     onClick={tool.onClick}
                   >
-                    <CardHeader className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-200 group-hover:scale-110 shadow`}>
+                    <CardHeader className="p-5">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-200 group-hover:scale-110 shadow`}>
                           <IconComponent className="h-5 w-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
