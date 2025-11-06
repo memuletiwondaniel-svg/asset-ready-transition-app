@@ -206,7 +206,74 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     setSelectedChecklist(checklist);
   };
   if (showCreateForm) {
-    return <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} />;
+    return (
+      <AnimatedBackground>
+        <div className="relative z-10">
+          <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
+            <div className="container flex h-20 items-center justify-between gap-4">
+              {/* Left - Breadcrumb Navigation */}
+              <div className="flex items-center min-w-0 flex-1">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink 
+                        onClick={() => setShowCreateForm(false)}
+                        className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                      >
+                        <Home className="h-4 w-4" />
+                        <span className="hidden sm:inline">Home</span>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink 
+                        onClick={() => setShowCreateForm(false)}
+                        className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                      >
+                        Administration
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden sm:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink 
+                        onClick={() => setShowCreateForm(false)}
+                        className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                      >
+                        Checklist Management
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage className="font-semibold">Create New Checklist</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+
+              {/* Center - Logo */}
+              <div className="hidden md:flex flex-shrink-0">
+                <OrshLogo />
+              </div>
+
+              {/* Right - Settings Controls */}
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <LanguageSelector 
+                  selectedLanguage={currentLanguage}
+                  onLanguageChange={setCurrentLanguage}
+                />
+                <UserProfileDropdown translations={t} />
+              </div>
+            </div>
+          </div>
+
+          <CreateChecklistForm 
+            onBack={() => setShowCreateForm(false)} 
+            onComplete={handleCreateComplete} 
+          />
+        </div>
+      </AnimatedBackground>
+    );
   }
   if (showEditForm && editingChecklist) {
     return <EditChecklistForm checklist={editingChecklist} onBack={() => {

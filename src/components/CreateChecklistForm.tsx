@@ -501,31 +501,15 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
   if (currentStep === 1) {
     return (
       <AnimatedBackground className="min-h-screen">
-        {/* Header - Top Center */}
-        <div className="relative z-10 pt-8 pb-4">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-4 mb-2">
-              <img 
-                src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                alt="BGC Logo" 
-                className="h-12 w-auto" 
-              />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-              Create New Checklist
-            </h1>
-          </div>
-        </div>
-        
         {/* Content Layer */}
         <div className="relative z-10">
           {/* Progress Steps */}
-          <div className="max-w-4xl mx-auto px-8">
+          <div className="max-w-4xl mx-auto px-8 pt-6">
             <ChecklistProgressSteps currentStep={currentStep} />
           </div>
 
           {/* Form Content */}
-          <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-32">
+          <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-20">
             <div className="w-full max-w-4xl">
               <Card className="border border-white/30 bg-white/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 fluent-card">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-lg"></div>
