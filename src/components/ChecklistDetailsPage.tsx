@@ -433,7 +433,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="id">Item ID</SelectItem>
                         <SelectItem value="description">Description</SelectItem>
                         <SelectItem value="category">Category</SelectItem>
                         <SelectItem value="authority">Authority</SelectItem>
@@ -448,10 +447,15 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <List className="h-4 w-4" />
                       </Button>
                     </div>
-                    {/* Add Item Button */}
-                    <Button variant="default" size="sm" className="h-11 shadow-sm hover:shadow-md transition-shadow">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
+                    {/* Add Item Button - Modern Design */}
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="h-11 px-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                      <Plus className="h-4 w-4 mr-2 transition-transform group-hover:rotate-90 duration-300" />
+                      <span className="font-semibold">Add Item</span>
                     </Button>
                   </div>
                 </div>
