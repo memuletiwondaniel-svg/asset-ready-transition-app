@@ -478,11 +478,23 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   <h3 className="text-xl font-semibold mb-2">{t.noChecklistsFound}</h3>
                   <p className="text-muted-foreground">{t.createFirstChecklist}</p>
                 </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredAndSortedChecklists.map((checklist, index) => <Card key={checklist.id} className="group cursor-pointer card-lift border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-smooth-in" style={{
-                animationDelay: `${index * 50}ms`
-              }} onClick={() => handleChecklistClick(checklist)}>
-                      {/* Gradient Background Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  {filteredAndSortedChecklists.map((checklist, index) => {
+                    const colorVariants = [
+                      'from-primary/8 to-primary/3 border-primary/10',
+                      'from-accent/8 to-accent/3 border-accent/10',
+                      'from-emerald-500/8 to-emerald-500/3 border-emerald-500/10',
+                      'from-blue-500/8 to-blue-500/3 border-blue-500/10',
+                      'from-violet-500/8 to-violet-500/3 border-violet-500/10',
+                      'from-amber-500/8 to-amber-500/3 border-amber-500/10'
+                    ];
+                    const colorClass = colorVariants[index % colorVariants.length];
+                    
+                    return (
+                      <Card key={checklist.id} className={`group cursor-pointer card-lift border bg-gradient-to-br backdrop-blur overflow-hidden animate-smooth-in ${colorClass}`} style={{
+                        animationDelay: `${index * 50}ms`
+                      }} onClick={() => handleChecklistClick(checklist)}>
+                        {/* Gradient Background Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
                       <CardHeader className="relative">
                         <div className="flex items-start justify-between">
@@ -524,7 +536,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                           </div>
                         </div>
                       </CardContent>
-                    </Card>)}
+                    </Card>
+                    );
+                  })}
                 </div>}
             </TabsContent>
 
