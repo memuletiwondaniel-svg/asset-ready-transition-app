@@ -455,7 +455,14 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   <p className="text-muted-foreground">{t.createFirstChecklist}</p>
                 </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredAndSortedChecklists.map((checklist, index) => {
-                const colorVariants = ['from-primary/15 to-primary/8 border-primary/20', 'from-accent/15 to-accent/8 border-accent/20', 'from-emerald-500/15 to-emerald-500/8 border-emerald-500/20', 'from-blue-500/15 to-blue-500/8 border-blue-500/20', 'from-violet-500/15 to-violet-500/8 border-violet-500/20', 'from-amber-500/15 to-amber-500/8 border-amber-500/20'];
+                const colorVariants = [
+                  'from-blue-500/10 via-blue-500/5 to-transparent border-blue-500/15',
+                  'from-violet-500/10 via-violet-500/5 to-transparent border-violet-500/15',
+                  'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/15',
+                  'from-amber-500/10 via-amber-500/5 to-transparent border-amber-500/15',
+                  'from-rose-500/10 via-rose-500/5 to-transparent border-rose-500/15',
+                  'from-cyan-500/10 via-cyan-500/5 to-transparent border-cyan-500/15'
+                ];
                 const colorClass = colorVariants[index % colorVariants.length];
                 return <Card key={checklist.id} className={`group cursor-pointer card-lift border bg-gradient-to-br backdrop-blur overflow-hidden animate-smooth-in ${colorClass}`} style={{
                   animationDelay: `${index * 50}ms`
