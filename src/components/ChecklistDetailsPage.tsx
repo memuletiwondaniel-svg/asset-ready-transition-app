@@ -441,7 +441,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                     <Button 
                       variant="default"
                       size="default"
-                      className="h-11 px-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group relative overflow-hidden"
+                      className="h-11 px-6 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group relative overflow-hidden"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                       <Plus className="h-5 w-5 mr-2 transition-transform group-hover:rotate-90 duration-300 relative z-10" />
