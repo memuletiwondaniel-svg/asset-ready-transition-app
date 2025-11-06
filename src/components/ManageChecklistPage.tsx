@@ -220,31 +220,31 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                         onClick={() => setShowCreateForm(false)}
                         className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
                       >
-                        <Home className="h-4 w-4" />
+                        <Home className="h-4 w-4 flex-shrink-0" />
                         <span className="hidden sm:inline">Home</span>
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
-                    <BreadcrumbItem>
+                    <BreadcrumbItem className="hidden md:block">
                       <BreadcrumbLink 
                         onClick={() => setShowCreateForm(false)}
-                        className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                        className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[120px]"
                       >
                         Administration
                       </BreadcrumbLink>
                     </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden sm:block" />
-                    <BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem className="hidden lg:block">
                       <BreadcrumbLink 
                         onClick={() => setShowCreateForm(false)}
-                        className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
+                        className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[150px]"
                       >
                         Checklist Management
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                      <BreadcrumbPage className="font-semibold">Create New Checklist</BreadcrumbPage>
+                      <BreadcrumbPage className="font-semibold truncate max-w-[150px] sm:max-w-[200px]">Create New Checklist</BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>

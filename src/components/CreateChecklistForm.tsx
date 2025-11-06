@@ -500,345 +500,314 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
 
   if (currentStep === 1) {
     return (
-      <AnimatedBackground className="min-h-screen">
-        {/* Content Layer */}
-        <div className="relative z-10">
-          {/* Progress Steps */}
-          <div className="max-w-4xl mx-auto px-8 pt-6">
-            <ChecklistProgressSteps currentStep={currentStep} />
-          </div>
-
-          {/* Form Content */}
-          <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-8 -mt-20">
-            <div className="w-full max-w-4xl">
-              <Card className="border border-white/30 bg-white/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 fluent-card">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-lg"></div>
-                <div className="relative z-10">
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Checklist Information</CardTitle>
-                    <CardDescription>
-                      Provide basic information about your new PSSR checklist
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-
-                    {/* Reason for Checklist */}
-                    <div className="space-y-2">
-                      <Label className="text-base font-semibold">
-                        Reason for Checklist <span className="text-destructive">*</span>
-                      </Label>
-                      <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select the primary reason for creating this checklist" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                          {checklistReasons.map((reason) => (
-                            <SelectItem key={reason} value={reason} className="cursor-pointer">
-                              {reason}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      {/* Custom Reason Input */}
-                      {formData.reason === 'Others' && (
-                        <div className="mt-4 space-y-2">
-                          <Label htmlFor="customReason" className="text-sm font-medium">
-                            Please specify the reason
-                          </Label>
-                          <Input
-                            id="customReason"
-                            placeholder="Enter your custom reason"
-                            value={customReason}
-                            onChange={(e) => setCustomReason(e.target.value)}
-                            className="h-10"
-                          />
-                        </div>
-                      )}
-
-                      {/* Plant Change Type Selection */}
-                      {formData.reason === 'Restart following plant changes or modifications' && (
-                        <div className="mt-4 space-y-2 animate-fade-in-up">
-                          <Label htmlFor="plantChangeType" className="text-sm font-medium">
-                            Plant Change Type *
-                          </Label>
-                          <Select
-                            value={plantChangeType}
-                            onValueChange={setPlantChangeType}
-                          >
-                            <SelectTrigger id="plantChangeType" className="h-12">
-                              <SelectValue placeholder="Select plant change type" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                              <SelectItem value="tie_in">Project Advanced Tie-in scope</SelectItem>
-                              <SelectItem value="moc">Implementation of an approved Asset MOC</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      {/* Tie-in Scopes Multi-select */}
-                      {formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'tie_in' && (
-                        <div className="mt-4 space-y-3 animate-fade-in-up">
-                          <Label className="text-sm font-medium">
-                            Select Advanced Tie-in Scope(s) *
-                          </Label>
-                          <div className="space-y-3 border border-border/30 rounded-lg p-4 bg-muted/20">
-                            {tieInScopes.map((scope) => (
-                              <div key={scope.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/40 transition-colors">
-                                <Checkbox
-                                  id={`scope-${scope.code}`}
-                                  checked={selectedTieInScopes.includes(scope.code)}
-                                  onCheckedChange={(checked) => {
-                                    setSelectedTieInScopes(prev =>
-                                      checked
-                                        ? [...prev, scope.code]
-                                        : prev.filter(c => c !== scope.code)
-                                    );
-                                  }}
-                                  className="mt-1"
-                                />
-                                <div className="flex-1 space-y-1">
-                                  <Label
-                                    htmlFor={`scope-${scope.code}`}
-                                    className="text-sm font-semibold cursor-pointer text-foreground"
-                                  >
-                                    {scope.code}
-                                  </Label>
-                                  <p className="text-xs text-muted-foreground leading-relaxed">
-                                    {scope.description}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* MOC Number and Scopes */}
-                      {formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'moc' && (
-                        <div className="mt-4 space-y-4 animate-fade-in-up">
-                          <div className="space-y-2">
-                            <Label htmlFor="mocNumber" className="text-sm font-medium">
-                              MOC Number *
-                            </Label>
-                            <Input
-                              id="mocNumber"
-                              placeholder="Enter MOC number"
-                              value={mocNumber}
-                              onChange={(e) => setMocNumber(e.target.value)}
-                              className="h-12"
-                              maxLength={50}
-                            />
-                          </div>
-                          
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium">
-                              Select MOC Scope(s) *
-                            </Label>
-                            <div className="space-y-3 border border-border/30 rounded-lg p-4 bg-muted/20">
-                              {mocScopes.map((scope) => (
-                                <div key={scope.id} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/40 transition-colors">
-                                  <Checkbox
-                                    id={`moc-scope-${scope.id}`}
-                                    checked={selectedMocScopes.includes(scope.name)}
-                                    onCheckedChange={(checked) => {
-                                      setSelectedMocScopes(prev =>
-                                        checked
-                                          ? [...prev, scope.name]
-                                          : prev.filter(n => n !== scope.name)
-                                      );
-                                    }}
-                                    className="mt-1"
-                                  />
-                                  <div className="flex-1">
-                                    <Label
-                                      htmlFor={`moc-scope-${scope.id}`}
-                                      className="text-sm font-medium cursor-pointer text-foreground"
-                                    >
-                                      {scope.name}
-                                    </Label>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex justify-between items-center pt-6 border-t border-border/20">
-                      <Button 
-                        onClick={onBack}
-                        variant="outline"
-                        className="group relative overflow-hidden bg-gradient-to-r from-muted/80 to-muted/60 border-2 border-border/30 hover:border-destructive/40 px-6 py-3 rounded-xl font-medium text-muted-foreground hover:text-destructive transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg hover:shadow-destructive/10"
-                      >
-                        {/* Background gradient overlay on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 via-destructive/10 to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                        
-                        <div className="relative flex items-center">
-                          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-all duration-300 ease-out" />
-                          <span className="font-semibold">Cancel</span>
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        onClick={handleNext}
-                        disabled={!formData.reason || (formData.reason === 'Others' && !customReason)}
-                        className="fluent-button bg-primary hover:bg-primary-hover px-8"
-                      >
-                        Next: Select Items
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </div>
-              </Card>
-            </div>
-          </div>
+      <div className="pb-8">
+        {/* Progress Steps */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ChecklistProgressSteps currentStep={currentStep} />
         </div>
-      </AnimatedBackground>
+
+        {/* Form Content */}
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <Card className="border-border/50 shadow-xl backdrop-blur-sm bg-card/95">
+            <CardHeader className="space-y-1 pb-4">
+              <CardDescription className="text-muted-foreground">
+                Provide basic information about your new PSSR checklist
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+
+              {/* Reason for Checklist */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Reason for Checklist <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.reason} onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select the primary reason for creating this checklist" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                    {checklistReasons.map((reason) => (
+                      <SelectItem key={reason} value={reason} className="cursor-pointer">
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Custom Reason Input */}
+              {formData.reason === 'Others' && (
+                <div className="space-y-2">
+                  <Label htmlFor="customReason" className="text-sm font-medium">
+                    Please specify the reason
+                  </Label>
+                  <Input
+                    id="customReason"
+                    placeholder="Enter your custom reason"
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+              )}
+
+              {/* Plant Change Type Selection */}
+              {formData.reason === 'Restart following plant changes or modifications' && (
+                <div className="space-y-2">
+                  <Label htmlFor="plantChangeType" className="text-sm font-medium">
+                    Plant Change Type *
+                  </Label>
+                  <Select
+                    value={plantChangeType}
+                    onValueChange={setPlantChangeType}
+                  >
+                    <SelectTrigger id="plantChangeType" className="h-11">
+                      <SelectValue placeholder="Select plant change type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                      <SelectItem value="tie_in">Project Advanced Tie-in scope</SelectItem>
+                      <SelectItem value="moc">Implementation of an approved Asset MOC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Tie-in Scopes Multi-select */}
+              {formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'tie_in' && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">
+                    Select Advanced Tie-in Scope(s) *
+                  </Label>
+                  <div className="space-y-2 border border-border/30 rounded-lg p-4 bg-muted/10">
+                    {tieInScopes.map((scope) => (
+                      <div key={scope.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/30 transition-colors">
+                        <Checkbox
+                          id={`scope-${scope.code}`}
+                          checked={selectedTieInScopes.includes(scope.code)}
+                          onCheckedChange={(checked) => {
+                            setSelectedTieInScopes(prev =>
+                              checked
+                                ? [...prev, scope.code]
+                                : prev.filter(c => c !== scope.code)
+                            );
+                          }}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 space-y-1">
+                          <Label
+                            htmlFor={`scope-${scope.code}`}
+                            className="text-sm font-semibold cursor-pointer"
+                          >
+                            {scope.code}
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {scope.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* MOC Number and Scopes */}
+              {formData.reason === 'Restart following plant changes or modifications' && plantChangeType === 'moc' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mocNumber" className="text-sm font-medium">
+                      MOC Number *
+                    </Label>
+                    <Input
+                      id="mocNumber"
+                      placeholder="Enter MOC number"
+                      value={mocNumber}
+                      onChange={(e) => setMocNumber(e.target.value)}
+                      className="h-10"
+                      maxLength={50}
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      Select MOC Scope(s) *
+                    </Label>
+                    <div className="space-y-2 border border-border/30 rounded-lg p-4 bg-muted/10">
+                      {mocScopes.map((scope) => (
+                        <div key={scope.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/30 transition-colors">
+                          <Checkbox
+                            id={`moc-scope-${scope.id}`}
+                            checked={selectedMocScopes.includes(scope.name)}
+                            onCheckedChange={(checked) => {
+                              setSelectedMocScopes(prev =>
+                                checked
+                                  ? [...prev, scope.name]
+                                  : prev.filter(n => n !== scope.name)
+                              );
+                            }}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <Label
+                              htmlFor={`moc-scope-${scope.id}`}
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              {scope.name}
+                            </Label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center pt-6 mt-6 border-t">
+                <Button 
+                  onClick={onBack}
+                  variant="outline"
+                  size="lg"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                
+                <Button 
+                  onClick={handleNext}
+                  disabled={!formData.reason || (formData.reason === 'Others' && !customReason)}
+                  size="lg"
+                >
+                  Next: Select Items
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <AnimatedBackground className="min-h-screen">
-      {/* Navigation Bar with Acrylic Effect - Top Navigation */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/20 shadow-lg">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
+    <div className="pb-8">
+      {/* Progress Steps */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <ChecklistProgressSteps currentStep={currentStep} />
+      </div>
+
+      {/* Navigation Bar */}
+      <div className="sticky top-[80px] z-40 bg-background/95 backdrop-blur-xl border-b shadow-sm mt-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-4">
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep(1)}
-              className="group relative overflow-hidden bg-gradient-to-r from-card/90 to-card/70 border-2 border-border/30 hover:border-primary/40 px-6 py-3 rounded-xl font-medium text-foreground hover:text-primary transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl hover:shadow-primary/10 backdrop-blur-sm"
+              size="lg"
             >
-              {/* Background gradient overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-              
-              {/* Subtle shimmer effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 translate-x-[-100%] group-hover:translate-x-[100%] transition-all duration-700 ease-out"></div>
-              
-              <div className="relative flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-3 group-hover:-translate-x-2 transition-all duration-300 ease-out" />
-                <span className="font-semibold">Back to Information</span>
-              </div>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Back to Information</span>
+              <span className="sm:hidden">Back</span>
             </Button>
             
-            <div className="text-center">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                Create New Checklist
-              </h1>
+            <div className="text-center hidden md:block">
+              <h2 className="text-xl font-bold">Select Checklist Items</h2>
+              <p className="text-sm text-muted-foreground">
+                {formData.selected_items.length} items selected
+              </p>
             </div>
             
             <Button 
-              className="fluent-button bg-primary hover:bg-primary/80 shadow-fluent-sm hover:shadow-fluent-md group"
               onClick={handleComplete}
               disabled={formData.selected_items.length === 0}
+              size="lg"
             >
-              Next: Review Checklist
-              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+              <span className="hidden sm:inline">Review Checklist</span>
+              <span className="sm:hidden">Review</span>
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Progress Steps */}
-      <div className="max-w-7xl mx-auto px-8 py-4">
-        <ChecklistProgressSteps currentStep={currentStep} />
-      </div>
-
-      {/* Content Layer with Fluent Acrylic */}
-      <div className="relative z-10 p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Search Section with Categories */}
-          <Card className="fluent-glassmorphism border-border/30 backdrop-blur-md mb-6">
-            <CardContent className="p-6 space-y-6">
-              {/* Search and Create Item Row */}
-              <div className="flex items-center justify-between space-x-6">
-                <div className="flex items-center space-x-6 flex-1">
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      placeholder="Search checklist items..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Button 
-                    onClick={() => setShowCreateItem(true)}
-                    variant="outline"
-                    className="group relative overflow-hidden border-2 border-dashed border-muted-foreground/30 bg-transparent hover:border-primary hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all duration-300 px-6 py-2.5 rounded-xl font-medium hover:shadow-lg hover:shadow-primary/20 hover:scale-105"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative flex items-center">
-                      <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-                      <span className="group-hover:font-semibold transition-all duration-300">Create Item</span>
-                    </div>
-                  </Button>
-                </div>
-                <div className="text-sm text-muted-foreground font-medium">
-                  {formData.selected_items.length} items selected
-                </div>
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        {/* Search Section with Categories */}
+        <Card className="border-border/50 shadow-lg mb-6">
+          <CardContent className="p-4 sm:p-6 space-y-4">
+            {/* Search and Create Item Row */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search checklist items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-11"
+                />
               </div>
+              <Button 
+                onClick={() => setShowCreateItem(true)}
+                variant="outline"
+                size="lg"
+                className="border-2 border-dashed"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Create Item</span>
+                <span className="sm:hidden">New</span>
+              </Button>
+            </div>
 
-              {/* Category Filters - Compact Two Rows */}
-              <div className="space-y-3">
-                <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-                  {/* First Row */}
-                  <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
-                    <TabsTrigger
-                      value="all"
-                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
-                    >
-                      All
-                    </TabsTrigger>
-                    
-                    <TabsTrigger
-                      value="not_selected"
-                      className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
-                    >
-                      Not Selected
-                    </TabsTrigger>
+            {/* Category Filters */}
+            <div className="space-y-3">
+              <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+                {/* First Row */}
+                <TabsList className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 h-auto p-1 bg-muted/30 w-full gap-1">
+                  <TabsTrigger value="all" className="h-9 text-xs">
+                    All
+                  </TabsTrigger>
+                  
+                  <TabsTrigger value="not_selected" className="h-9 text-xs">
+                    Not Selected
+                  </TabsTrigger>
 
-                    {categories.slice(0, 5).map((category, index) => (
+                  {categories.slice(0, 5).map((category) => (
+                    <TabsTrigger
+                      key={category.id}
+                      value={category.id}
+                      className="h-9 text-xs hidden md:flex"
+                    >
+                      {category.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {/* Second Row */}
+                {categories.length > 5 && (
+                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 h-auto p-1 bg-muted/30 w-full gap-1 mt-1">
+                    {categories.slice(5).map((category) => (
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
-                        className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
+                        className="h-9 text-xs"
                       >
                         {category.name}
                       </TabsTrigger>
                     ))}
+                    {/* Fill remaining slots with empty space */}
+                    {Array.from({ length: 7 - categories.slice(5).length }).map((_, index) => (
+                      <div key={`empty-${index}`} className="h-9"></div>
+                    ))}
                   </TabsList>
-                  
-                  {/* Second Row */}
-                  {categories.length > 5 && (
-                    <TabsList className="grid grid-cols-7 h-auto p-1.5 bg-card/20 border border-border/10 backdrop-blur-sm w-full gap-1">
-                      {categories.slice(5).map((category, index) => (
-                        <TabsTrigger
-                          key={category.id}
-                          value={category.id}
-                          className="h-8 px-3 text-xs font-medium bg-card/40 border border-border/20 hover:bg-card/60 hover:border-primary/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:border-transparent data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/30 transition-all duration-300 rounded-lg data-[state=active]:scale-105"
-                        >
-                          {category.name}
-                        </TabsTrigger>
-                      ))}
-                      {/* Fill remaining slots with empty space */}
-                      {Array.from({ length: 7 - categories.slice(5).length }).map((_, index) => (
-                        <div key={`empty-${index}`} className="h-8"></div>
-                      ))}
-                    </TabsList>
-                  )}
-                </Tabs>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Checklist Items */}
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            {/* All Categories Tab Content */}
-            <TabsContent value="all" className="mt-0">
+                )}
+              </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Checklist Items */}
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+          {/* All Categories Tab Content */}
+          <TabsContent value="all" className="mt-0">
               <div className="space-y-6">
                 {categories.map((category) => {
                   const filteredCategoryItems = filteredItems(category.items);
@@ -948,20 +917,18 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
               </TabsContent>
             ))}
           </Tabs>
-
         </div>
-      </div>
 
-      {/* Detail Modal */}
-      {selectedDetailItem && (
-        <ViewChecklistItemModal
-          item={selectedDetailItem}
-          isOpen={showDetailModal}
-          onClose={handleDetailModalClose}
-        />
-      )}
-    </AnimatedBackground>
-  );
-};
+        {/* Detail Modal */}
+        {selectedDetailItem && (
+          <ViewChecklistItemModal
+            item={selectedDetailItem}
+            isOpen={showDetailModal}
+            onClose={handleDetailModalClose}
+          />
+        )}
+      </div>
+    );
+  };
 
 export default CreateChecklistForm;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 
 interface ChecklistProgressStepsProps {
   currentStep: number;
@@ -6,69 +7,70 @@ interface ChecklistProgressStepsProps {
 
 const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ currentStep }) => {
   const steps = [
-    { number: 1, title: "Step 1", subtitle: "Enter Checklist Information" },
-    { number: 2, title: "Step 2", subtitle: "Select Checklist Items" },
-    { number: 3, title: "Step 3", subtitle: "Review Checklist & Submit" }
+    { number: 1, title: "Checklist Information", subtitle: "Basic details and reason" },
+    { number: 2, title: "Select Items", subtitle: "Choose checklist items" }
   ];
 
   return (
-    <div className="mt-4 mb-3 animate-fade-in">
-      <div className="flex items-center justify-center max-w-2xl mx-auto">
-        {steps.map((step, index) => {
-          const isActive = currentStep >= step.number;
-          const isCurrent = currentStep === step.number;
+    <div className="py-6">
+      <div className="flex items-center justify-between max-w-3xl mx-auto relative">
+        {/* Progress Line Background */}
+        <div className="absolute top-5 left-0 right-0 h-0.5 bg-border/30" style={{ zIndex: 0 }} />
+        
+        {/* Active Progress Line */}
+        <div 
+          className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-700 ease-out"
+          style={{ 
+            width: currentStep === 1 ? '0%' : '100%',
+            zIndex: 1
+          }}
+        />
+
+        {steps.map((step) => {
+          const isCompleted = currentStep > step.number;
+          const isActive = currentStep === step.number;
           
           return (
             <div 
               key={step.number} 
-              className="flex items-center animate-smooth-in"
-              style={{ animationDelay: `${index * 150}ms` }}
+              className="flex flex-col items-center relative z-10"
+              style={{ width: '50%' }}
             >
-              <div className="flex items-center">
-                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ease-out aspect-square ${
-                  isActive 
-                    ? 'bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-2xl ring-4 ring-primary/30 scale-110' 
-                    : 'bg-gradient-to-br from-muted/60 to-muted/40 text-muted-foreground border-2 border-border/30 shadow-sm scale-100'
-                } ${isCurrent ? 'animate-pulse' : ''}`}>
-                  <span className={`font-semibold text-sm z-10 transition-all duration-300 ${
-                    isActive ? 'scale-110' : 'scale-100'
-                  }`}>
+              {/* Step Circle */}
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center 
+                transition-all duration-300 border-2
+                ${isCompleted 
+                  ? 'bg-primary border-primary text-primary-foreground shadow-lg' 
+                  : isActive
+                    ? 'bg-primary border-primary text-primary-foreground shadow-lg scale-110'
+                    : 'bg-background border-border text-muted-foreground'
+                }
+              `}>
+                {isCompleted ? (
+                  <Check className="w-5 h-5" strokeWidth={3} />
+                ) : (
+                  <span className="font-semibold text-sm">
                     {step.number}
                   </span>
-                  {isActive && (
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/40 to-primary/20 animate-pulse"></div>
-                  )}
-                </div>
-                <div className="ml-4 text-left transition-all duration-300">
-                  <span className={`block text-sm font-bold tracking-wide transition-all duration-300 ${
-                    isActive 
-                      ? 'text-foreground scale-105' 
-                      : 'text-muted-foreground/90 scale-100'
-                  }`}>
-                    {step.title}
-                  </span>
-                  <span className={`block text-xs font-medium mt-0.5 transition-all duration-300 ${
-                    isActive 
-                      ? 'text-foreground/80 opacity-100' 
-                      : 'text-muted-foreground/70 opacity-80'
-                  }`}>
-                    {step.subtitle}
-                  </span>
-                </div>
+                )}
               </div>
               
-              {index < steps.length - 1 && (
-                <div className="relative mx-8 min-w-[120px]">
-                  <div className="h-1.5 rounded-full bg-muted transition-all duration-300"></div>
-                  <div 
-                    className={`absolute top-0 left-0 h-1.5 rounded-full transition-all duration-700 ease-out ${
-                      currentStep > step.number 
-                        ? 'bg-gradient-to-r from-primary via-primary/90 to-primary/80 shadow-lg shadow-primary/20 w-full' 
-                        : 'w-0'
-                    }`}
-                  ></div>
+              {/* Step Text */}
+              <div className="mt-3 text-center max-w-[120px]">
+                <div className={`
+                  text-sm font-semibold transition-colors duration-300
+                  ${isActive || isCompleted ? 'text-foreground' : 'text-muted-foreground'}
+                `}>
+                  {step.title}
                 </div>
-              )}
+                <div className={`
+                  text-xs mt-0.5 transition-colors duration-300
+                  ${isActive || isCompleted ? 'text-muted-foreground' : 'text-muted-foreground/60'}
+                `}>
+                  {step.subtitle}
+                </div>
+              </div>
             </div>
           );
         })}
