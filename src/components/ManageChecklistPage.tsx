@@ -480,12 +480,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredAndSortedChecklists.map((checklist, index) => {
                     const colorVariants = [
-                      'from-primary/8 to-primary/3 border-primary/10',
-                      'from-accent/8 to-accent/3 border-accent/10',
-                      'from-emerald-500/8 to-emerald-500/3 border-emerald-500/10',
-                      'from-blue-500/8 to-blue-500/3 border-blue-500/10',
-                      'from-violet-500/8 to-violet-500/3 border-violet-500/10',
-                      'from-amber-500/8 to-amber-500/3 border-amber-500/10'
+                      'from-primary/15 to-primary/8 border-primary/20',
+                      'from-accent/15 to-accent/8 border-accent/20',
+                      'from-emerald-500/15 to-emerald-500/8 border-emerald-500/20',
+                      'from-blue-500/15 to-blue-500/8 border-blue-500/20',
+                      'from-violet-500/15 to-violet-500/8 border-violet-500/20',
+                      'from-amber-500/15 to-amber-500/8 border-amber-500/20'
                     ];
                     const colorClass = colorVariants[index % colorVariants.length];
                     
