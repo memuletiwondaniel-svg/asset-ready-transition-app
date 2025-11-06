@@ -451,7 +451,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         <div className="mb-10 animate-fade-in-up">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground/70 uppercase tracking-wider">
+              <p className="text-xs font-medium text-muted-foreground/50 uppercase tracking-wider">
                 Items Management
               </p>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight fluent-hero-text">
@@ -467,7 +467,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
             
             <div className="flex flex-wrap items-center gap-3">
               {/* Add New Item Button */}
-              <Button onClick={handleCreateItem} className="fluent-button shadow-fluent-sm hover:shadow-fluent-md">
+              <Button onClick={handleCreateItem} className="bg-accent hover:bg-accent/80 text-accent-foreground shadow-fluent-sm hover:shadow-fluent-md transition-all">
                 <Plus className="w-4 h-4 mr-2" />
                 New Item
               </Button>
