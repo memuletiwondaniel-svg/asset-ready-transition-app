@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { TableSkeleton } from '@/components/ui/skeleton-loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -744,32 +745,35 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 )}
               </CardHeader>
               <CardContent className="p-8">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={(event) => handleDragStart(event, 'reason')}
-                  onDragEnd={(event) => handleDragEnd(event, 'reason')}
-                >
-                  <SortableContext
-                    items={allReasons.map(r => r.id)}
-                    strategy={verticalListSortingStrategy}
+                {allReasons.length === 0 ? (
+                  <TableSkeleton rows={5} columns={6} />
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={(event) => handleDragStart(event, 'reason')}
+                    onDragEnd={(event) => handleDragEnd(event, 'reason')}
                   >
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={allReasons.length > 0 && selectedReasons.size === allReasons.length}
-                              onCheckedChange={(checked) => toggleSelectAll('reason', checked as boolean)}
-                            />
-                          </TableHead>
-                          <TableHead className="w-12"></TableHead>
-                          <TableHead>Order</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                    <SortableContext
+                      items={allReasons.map(r => r.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={allReasons.length > 0 && selectedReasons.size === allReasons.length}
+                                onCheckedChange={(checked) => toggleSelectAll('reason', checked as boolean)}
+                              />
+                            </TableHead>
+                            <TableHead className="w-12"></TableHead>
+                            <TableHead>Order</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
                       <TableBody>
                         {allReasons.map((reason) => (
                           <SortableRow key={reason.id} id={reason.id}>
@@ -841,6 +845,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     </Table>
                   </SortableContext>
                 </DndContext>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -928,33 +933,36 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 )}
               </CardHeader>
               <CardContent className="p-8">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={(event) => handleDragStart(event, 'tie-in')}
-                  onDragEnd={(event) => handleDragEnd(event, 'tie-in')}
-                >
-                  <SortableContext
-                    items={allTieInScopes.map(s => s.id)}
-                    strategy={verticalListSortingStrategy}
+                {allTieInScopes.length === 0 ? (
+                  <TableSkeleton rows={5} columns={7} />
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={(event) => handleDragStart(event, 'tie-in')}
+                    onDragEnd={(event) => handleDragEnd(event, 'tie-in')}
                   >
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={allTieInScopes.length > 0 && selectedTieInScopes.size === allTieInScopes.length}
-                              onCheckedChange={(checked) => toggleSelectAll('tie-in', checked as boolean)}
-                            />
-                          </TableHead>
-                          <TableHead className="w-12"></TableHead>
-                          <TableHead>Order</TableHead>
-                          <TableHead>Code</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                    <SortableContext
+                      items={allTieInScopes.map(s => s.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={allTieInScopes.length > 0 && selectedTieInScopes.size === allTieInScopes.length}
+                                onCheckedChange={(checked) => toggleSelectAll('tie-in', checked as boolean)}
+                              />
+                            </TableHead>
+                            <TableHead className="w-12"></TableHead>
+                            <TableHead>Order</TableHead>
+                            <TableHead>Code</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
                       <TableBody>
                         {allTieInScopes.map((scope) => (
                           <SortableRow key={scope.id} id={scope.id}>
@@ -1022,6 +1030,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     </Table>
                   </SortableContext>
                 </DndContext>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1201,6 +1210,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     </Table>
                   </SortableContext>
                 </DndContext>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

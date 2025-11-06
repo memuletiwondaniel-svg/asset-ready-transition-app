@@ -235,6 +235,14 @@ export default {
 					'50%': { filter: 'hue-rotate(180deg)' },
 					'75%': { filter: 'hue-rotate(270deg)' },
 					'100%': { filter: 'hue-rotate(360deg)' }
+				},
+				shimmer: {
+					'0%': { backgroundPosition: '-200% 0' },
+					'100%': { backgroundPosition: '200% 0' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' }
 				}
 			},
 		animation: {
@@ -258,6 +266,8 @@ export default {
 			'gradient-color-morph': 'gradient-color-morph 18s linear infinite',
 			'gradient-color-morph-fast': 'gradient-color-morph 15s linear infinite',
 			'gradient-color-morph-slow': 'gradient-color-morph 22s linear infinite',
+			shimmer: 'shimmer 2s linear infinite',
+			'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
 			// Combined animations for visible background movement
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
 			'gradient-sweep-morph': 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
