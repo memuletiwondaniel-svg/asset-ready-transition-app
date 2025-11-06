@@ -392,8 +392,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
+              {/* Add New Item Button */}
+              <Button onClick={handleCreateItem} className="fluent-button shadow-fluent-sm hover:shadow-fluent-md">
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Item
+              </Button>
+
               {/* Advanced Filters Button */}
-              <Button variant="outline" onClick={() => setShowAdvancedFilters(true)} className="fluent-button shadow-fluent-xs">
+              <Button variant="outline" onClick={() => setShowAdvancedFilters(true)} className="fluent-button-secondary shadow-fluent-xs">
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
                 {(filters.categories?.length || 0) + (filters.topics?.length || 0) + (filters.approvers?.length || 0) + (filters.responsible?.length || 0) > 0 && <Badge variant="secondary" className="ml-2">
@@ -402,30 +408,38 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
               </Button>
 
               {/* Template Management Button */}
-              <Button variant="outline" onClick={() => setShowTemplateManagement(true)} className="fluent-button shadow-fluent-xs">
+              <Button variant="outline" onClick={() => setShowTemplateManagement(true)} className="fluent-button-secondary shadow-fluent-xs">
                 <BookTemplate className="w-4 h-4 mr-2" />
                 Templates
               </Button>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-card/80 backdrop-blur-sm rounded-xl border border-border/40 p-1.5 shadow-fluent-sm">
-                <div className="flex items-center gap-3 px-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Grid3X3 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Cards</span>
-                  </div>
-                  <Switch checked={viewMode === 'table'} onCheckedChange={checked => setViewMode(checked ? 'table' : 'card')} className="data-[state=checked]:bg-primary" />
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Table className="w-4 h-4" />
-                    <span className="hidden sm:inline">Table</span>
-                  </div>
-                </div>
+              {/* View Mode Toggle - Simplified */}
+              <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
+                <Button
+                  variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('card')}
+                  className={`h-8 px-3 transition-all ${
+                    viewMode === 'card' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className={`h-8 px-3 transition-all ${
+                    viewMode === 'table' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Table className="w-4 h-4" />
+                </Button>
               </div>
-              
-              <Button onClick={handleCreateItem} className="fluent-button shadow-fluent-sm hover:shadow-fluent-md">
-                <Plus className="w-4 h-4 mr-2" />
-                New Item
-              </Button>
             </div>
           </div>
         </div>
