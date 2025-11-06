@@ -274,7 +274,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         <div className="container py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Modern Header */}
           <div className="mb-14 animate-smooth-in">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3 bg-gradient-to-r from-foreground/60 to-foreground/40 bg-clip-text text-transparent">
               Checklist Management
             </h1>
             <p className="text-muted-foreground/80 text-sm md:text-base max-w-3xl">
