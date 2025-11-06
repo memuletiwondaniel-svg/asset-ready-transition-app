@@ -67,7 +67,8 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [targetCategory, setTargetCategory] = useState('');
-  const [expandedColumns, setExpandedColumns] = useState(false);
+  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState('items');
   const [editingCell, setEditingCell] = useState<{ itemId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const { toast } = useToast();
@@ -292,6 +293,19 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
     }
   };
 
+  // Column width toggle
+  const toggleColumnWidth = (columnName: string) => {
+    setExpandedColumns(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(columnName)) {
+        newSet.delete(columnName);
+      } else {
+        newSet.add(columnName);
+      }
+      return newSet;
+    });
+  };
+
   // Show edit checklist form
   if (showEditChecklist) {
     return (
@@ -336,76 +350,72 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
           </AdminHeader>
 
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Checklist Overview */}
-        <div className="mb-8 animate-fade-in-up">
-          <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="pb-4">
+        {/* Checklist Overview - Compact Stats */}
+        <div className="mb-6 animate-fade-in-up">
+          <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                <div className="space-y-1">
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                     {checklist.name}
                   </CardTitle>
-                  <CardDescription className="text-base text-muted-foreground">
+                  <CardDescription className="text-sm text-muted-foreground">
                     {checklist.reason}
                   </CardDescription>
                 </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleEditChecklist}
-                    className="shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Checklist
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    className="shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Item
-                  </Button>
-                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleEditChecklist}
+                  className="shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Checklist
+                </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="flex items-center space-x-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-3 rounded-full bg-primary/10">
-                    <FileText className="h-6 w-6 text-primary" />
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div 
+                  className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 hover:scale-[1.02] transition-all duration-200"
+                  onClick={() => setActiveTab('items')}
+                >
+                  <div className="p-2 rounded-full bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-foreground">{checklist.items_count}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Total Items</p>
+                    <p className="text-2xl font-bold text-foreground">{checklist.items_count}</p>
+                    <p className="text-xs text-muted-foreground font-medium">Total Items</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
-                  <div className="p-3 rounded-full bg-green-500/10">
-                    <Activity className="h-6 w-6 text-green-600 dark:text-green-500" />
+                <div 
+                  className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/10 cursor-pointer hover:bg-green-500/10 hover:scale-[1.02] transition-all duration-200"
+                  onClick={() => setActiveTab('pssrs')}
+                >
+                  <div className="p-2 rounded-full bg-green-500/10">
+                    <Activity className="h-5 w-5 text-green-600 dark:text-green-500" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-foreground">{checklist.active_pssr_count}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Active PSSRs</p>
+                    <p className="text-2xl font-bold text-foreground">{checklist.active_pssr_count}</p>
+                    <p className="text-xs text-muted-foreground font-medium">Active PSSRs</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
-                  <div className="p-3 rounded-full bg-blue-500/10">
-                    <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-500" />
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                  <div className="p-2 rounded-full bg-blue-500/10">
+                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-foreground">{new Date(checklist.created_at).toLocaleDateString()}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Created Date</p>
+                    <p className="text-xs text-muted-foreground font-medium">Created Date</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
-                  <div className="p-3 rounded-full bg-purple-500/10">
-                    <User className="h-6 w-6 text-purple-600 dark:text-purple-500" />
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/10">
+                  <div className="p-2 rounded-full bg-purple-500/10">
+                    <User className="h-5 w-5 text-purple-600 dark:text-purple-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-foreground truncate max-w-[120px]">{checklist.created_by}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Created By</p>
+                    <p className="text-sm font-bold text-foreground truncate max-w-[100px]">{checklist.created_by}</p>
+                    <p className="text-xs text-muted-foreground font-medium">Created By</p>
                   </div>
                 </div>
               </div>
@@ -414,7 +424,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
         </div>
 
         {/* Tabs for different views */}
-        <Tabs defaultValue="items" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 backdrop-blur-sm">
             <TabsTrigger value="items" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Checklist Items
@@ -484,18 +494,15 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <List className="h-4 w-4" />
                       </Button>
                     </div>
-                    {/* Column Width Toggle for Table View */}
-                    {viewMode === 'table' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setExpandedColumns(!expandedColumns)}
-                        className="h-11 px-3 transition-all duration-200"
-                      >
-                        {expandedColumns ? <Minimize2 className="h-4 w-4 mr-2" /> : <Maximize2 className="h-4 w-4 mr-2" />}
-                        {expandedColumns ? 'Compact' : 'Expand'}
-                      </Button>
-                    )}
+                    {/* Add Item Button */}
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="h-11 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -661,31 +668,96 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                             />
                           </TableHead>
                           <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[150px]' : 'w-32'}`}
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('id') ? 'min-w-[180px]' : 'w-32'} group`}
                             onClick={() => handleSort('id')}
                           >
-                            Item ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            <div className="flex items-center justify-between">
+                              <span>Item ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleColumnWidth('id');
+                                }}
+                              >
+                                {expandedColumns.has('id') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                              </Button>
+                            </div>
                           </TableHead>
                           <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[400px]' : ''}`}
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('description') ? 'min-w-[500px]' : ''} group`}
                             onClick={() => handleSort('description')}
                           >
-                            Description {sortBy === 'description' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            <div className="flex items-center justify-between">
+                              <span>Description {sortBy === 'description' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleColumnWidth('description');
+                                }}
+                              >
+                                {expandedColumns.has('description') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                              </Button>
+                            </div>
                           </TableHead>
                           <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[200px]' : 'w-40'}`}
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('category') ? 'min-w-[220px]' : 'w-40'} group`}
                             onClick={() => handleSort('category')}
                           >
-                            Category {sortBy === 'category' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            <div className="flex items-center justify-between">
+                              <span>Category {sortBy === 'category' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleColumnWidth('category');
+                                }}
+                              >
+                                {expandedColumns.has('category') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                              </Button>
+                            </div>
                           </TableHead>
-                          <TableHead className={expandedColumns ? 'min-w-[300px]' : 'max-w-xs'}>
-                            Supporting Evidence
+                          <TableHead className={`${expandedColumns.has('evidence') ? 'min-w-[350px]' : 'max-w-xs'} group`}>
+                            <div className="flex items-center justify-between">
+                              <span>Supporting Evidence</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleColumnWidth('evidence');
+                                }}
+                              >
+                                {expandedColumns.has('evidence') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                              </Button>
+                            </div>
                           </TableHead>
                           <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[200px]' : 'w-40'}`}
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('authority') ? 'min-w-[220px]' : 'w-40'} group`}
                             onClick={() => handleSort('authority')}
                           >
-                            Authority {sortBy === 'authority' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            <div className="flex items-center justify-between">
+                              <span>Authority {sortBy === 'authority' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleColumnWidth('authority');
+                                }}
+                              >
+                                {expandedColumns.has('authority') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                              </Button>
+                            </div>
                           </TableHead>
                           <TableHead className="text-right w-32">Actions</TableHead>
                         </TableRow>
@@ -711,7 +783,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                               {item.unique_id}
                             </TableCell>
                             <TableCell 
-                              className={expandedColumns ? '' : 'max-w-md'}
+                              className={expandedColumns.has('description') ? '' : 'max-w-md'}
                             >
                               {editingCell?.itemId === item.unique_id && editingCell?.field === 'description' ? (
                                 <div className="flex items-center gap-2 animate-fade-in">
@@ -743,7 +815,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                                 </div>
                               ) : (
                                 <div 
-                                  className={`${expandedColumns ? 'font-medium' : 'line-clamp-2 font-medium'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
+                                  className={`${expandedColumns.has('description') ? 'font-medium' : 'line-clamp-2 font-medium'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
                                   onDoubleClick={(e) => {
                                     e.stopPropagation();
                                     handleStartEdit(item.unique_id, 'description', item.description);
@@ -807,7 +879,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                               )}
                             </TableCell>
                             <TableCell 
-                              className={expandedColumns ? '' : 'max-w-xs'}
+                              className={expandedColumns.has('evidence') ? '' : 'max-w-xs'}
                             >
                               {editingCell?.itemId === item.unique_id && editingCell?.field === 'evidence' ? (
                                 <div className="flex items-center gap-2 animate-fade-in">
@@ -839,7 +911,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                                 </div>
                               ) : (
                                 <div 
-                                  className={`${expandedColumns ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
+                                  className={`${expandedColumns.has('evidence') ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
                                   onDoubleClick={(e) => {
                                     e.stopPropagation();
                                     handleStartEdit(item.unique_id, 'evidence', item.required_evidence || '');
