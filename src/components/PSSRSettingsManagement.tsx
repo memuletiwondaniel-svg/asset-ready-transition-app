@@ -561,8 +561,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
   return (
     <TooltipProvider delayDuration={200}>
       <AnimatedBackground>
-        {/* Modern Compact Header */}
-        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
+        {/* Modern Fluent Header */}
+        <div className="fluent-navigation sticky top-0 z-50">
           <div className="container flex h-16 items-center justify-between gap-4">
             {/* Left - Breadcrumb Navigation */}
             <div className="flex items-center min-w-0">
@@ -571,24 +571,24 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   <BreadcrumbItem>
                     <BreadcrumbLink 
                       onClick={onBack}
-                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors text-sm"
+                      className="flex items-center gap-2 cursor-pointer hover:text-primary transition-all duration-200 text-sm group"
                     >
-                      <Home className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Home</span>
+                      <Home className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                      <span className="hidden sm:inline font-medium">Home</span>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     <BreadcrumbLink 
                       onClick={onBack}
-                      className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline text-sm"
+                      className="cursor-pointer hover:text-primary transition-colors hidden sm:inline text-sm font-medium"
                     >
                       Administration
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden sm:inline" />
                   <BreadcrumbItem className="hidden sm:inline">
-                    <BreadcrumbPage className="font-medium text-sm">
+                    <BreadcrumbPage className="font-semibold text-sm text-foreground">
                       PSSR Configuration
                     </BreadcrumbPage>
                   </BreadcrumbItem>
@@ -601,8 +601,8 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               <OrshLogo size="medium" />
             </div>
 
-            {/* Right - Theme Toggle, Language, User */}
-            <div className="flex items-center gap-2">
+            {/* Right - Actions */}
+            <div className="flex items-center gap-3">
               <ThemeToggle />
               <LanguageSelector 
                 selectedLanguage={currentLanguage}
@@ -613,149 +613,141 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </div>
         </div>
 
-        <div className="container pt-8 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Compact Modern Header with Inline Search */}
-          <div className="mb-8 animate-fade-in">
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+        <div className="container pt-12 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Modern Hero Header */}
+          <div className="mb-10 animate-fade-in-up">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+              <div className="space-y-2">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight fluent-hero-text">
                   PSSR Configuration
                 </h1>
-                <p className="text-muted-foreground/70 text-xs md:text-sm mt-1">
-                  Manage PSSR reasons, tie-in scopes, and Management of Change options
+                <p className="text-muted-foreground text-base max-w-2xl">
+                  Manage PSSR reasons, tie-in scopes, and Management of Change options for your operations
                 </p>
               </div>
               
-              {/* Inline Search */}
-              <div className="flex-shrink-0 w-80 hidden lg:block">
+              {/* Desktop Search */}
+              <div className="flex-shrink-0 w-full md:w-96">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search settings..."
+                    placeholder="Search configuration..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10 h-10 text-sm border-border/60 bg-card/50 backdrop-blur-sm focus:border-primary/40 focus:ring-primary/20 rounded-xl"
+                    className="pl-12 pr-12 h-12 text-sm bg-card border-border/40 focus:border-primary/60 focus:ring-primary/20 rounded-xl shadow-fluent-sm transition-all duration-200 hover:shadow-fluent-md"
                   />
                   {searchQuery && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-muted rounded-lg"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-lg"
                       onClick={() => setSearchQuery('')}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Mobile Search */}
-            <div className="lg:hidden mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search configuration settings..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 h-11 text-sm border-border/60 bg-card/50 backdrop-blur-sm rounded-xl"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-lg"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
             {searchQuery && (
-              <p className="text-xs text-muted-foreground animate-fade-in">
-                Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'}
-              </p>
+              <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg animate-scale-in">
+                <p className="text-sm text-foreground font-medium">
+                  Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} matching your search
+                </p>
+              </div>
             )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-3 h-11">
+            {/* Modern Tab Navigation */}
+            <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm">
               {showReasonsTab && (
-                <TabsTrigger value="reasons">
+                <TabsTrigger 
+                  value="reasons" 
+                  className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                >
                   PSSR Reasons
                 </TabsTrigger>
               )}
               {showTieInTab && (
-                <TabsTrigger value="tie-in">
+                <TabsTrigger 
+                  value="tie-in"
+                  className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                >
                   Tie-in Scopes
                 </TabsTrigger>
               )}
               {showMOCTab && (
-                <TabsTrigger value="moc">
+                <TabsTrigger 
+                  value="moc"
+                  className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                >
                   MOC Scopes
                 </TabsTrigger>
               )}
             </TabsList>
 
           {/* PSSR Reasons Tab */}
-          <TabsContent value="reasons" className="animate-fade-in">
-            <Card className="border shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl">PSSR Reasons</CardTitle>
-                    <CardDescription className="mt-1">Manage available reasons for creating a PSSR</CardDescription>
+          <TabsContent value="reasons" className="animate-fade-in-up">
+            <Card className="fluent-card border-border/40">
+              <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <CardTitle className="text-2xl font-semibold">PSSR Reasons</CardTitle>
+                    <CardDescription className="text-base">Manage available reasons for creating a PSSR</CardDescription>
                   </div>
                   <Button 
                     onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
-                    size="sm"
+                    className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Reason
                   </Button>
                 </div>
                 {selectedReasons.size > 0 && (
-                  <div className="flex items-center gap-2 mt-4 p-3 bg-muted/30 rounded-md border">
-                    <span className="text-sm text-muted-foreground">
-                      {selectedReasons.size} item(s) selected
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-6 p-4 bg-accent/10 border border-accent/20 rounded-xl animate-scale-in">
+                    <span className="text-sm font-medium text-foreground">
+                      {selectedReasons.size} item{selectedReasons.size !== 1 ? 's' : ''} selected
                     </span>
-                    <div className="flex gap-2 ml-auto">
+                    <div className="flex flex-wrap gap-2 sm:ml-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleBulkToggleActive('reason', true)}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <Check className="h-4 w-4 mr-1" />
+                        <Check className="h-4 w-4 mr-1.5" />
                         Enable
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleBulkToggleActive('reason', false)}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <X className="h-4 w-4 mr-1" />
+                        <X className="h-4 w-4 mr-1.5" />
                         Disable
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => openBulkDeleteDialog('reason')}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <Trash className="h-4 w-4 mr-1" />
+                        <Trash className="h-4 w-4 mr-1.5" />
                         Delete
                       </Button>
                     </div>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-0">
                 {allReasons.length === 0 ? (
-                  <TableSkeleton rows={5} columns={6} />
+                  <div className="p-6">
+                    <TableSkeleton rows={5} columns={6} />
+                  </div>
                 ) : (
                   <DndContext
                     sensors={sensors}
@@ -767,81 +759,101 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       items={allReasons.map(r => r.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">
-                              <Checkbox
-                                checked={allReasons.length > 0 && selectedReasons.size === allReasons.length}
-                                onCheckedChange={(checked) => toggleSelectAll('reason', checked as boolean)}
-                              />
-                            </TableHead>
-                            <TableHead className="w-12"></TableHead>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                      <TableBody>
-                        {allReasons.map((reason) => (
-                          <SortableRow key={reason.id} id={reason.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedReasons.has(reason.id)}
-                                onCheckedChange={() => toggleSelectItem('reason', reason.id)}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">{reason.display_order}</TableCell>
-                            <TableCell>
-                              <InlineEditableCell
-                                value={reason.name}
-                                onSave={(newValue) => handleInlineEdit('reason', reason.id, 'name', newValue)}
-                                placeholder="Enter reason name"
-                                maxLength={100}
-                                validate={validateName}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant={reason.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
-                                    onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
-                                  >
-                                    {reason.is_active ? 'Active' : 'Inactive'}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Click to {reason.is_active ? 'disable' : 'enable'}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
-                                  className="h-8 w-8"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </SortableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-b border-border/40 hover:bg-transparent">
+                              <TableHead className="w-14 pl-6">
+                                <Checkbox
+                                  checked={allReasons.length > 0 && selectedReasons.size === allReasons.length}
+                                  onCheckedChange={(checked) => toggleSelectAll('reason', checked as boolean)}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                              </TableHead>
+                              <TableHead className="w-14"></TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right pr-6">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {allReasons.map((reason, index) => (
+                              <SortableRow key={reason.id} id={reason.id}>
+                                <TableCell className="pl-6">
+                                  <Checkbox
+                                    checked={selectedReasons.has(reason.id)}
+                                    onCheckedChange={() => toggleSelectItem('reason', reason.id)}
+                                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-sm font-semibold text-muted-foreground">
+                                  #{reason.display_order}
+                                </TableCell>
+                                <TableCell className="font-medium text-foreground">
+                                  <InlineEditableCell
+                                    value={reason.name}
+                                    onSave={(newValue) => handleInlineEdit('reason', reason.id, 'name', newValue)}
+                                    placeholder="Enter reason name"
+                                    maxLength={100}
+                                    validate={validateName}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge 
+                                        variant={reason.is_active ? "default" : "secondary"}
+                                        className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shadow-fluent-xs font-medium"
+                                        onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
+                                      >
+                                        {reason.is_active ? 'Active' : 'Inactive'}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-popover border shadow-fluent-md">
+                                      <p className="text-sm">Click to {reason.is_active ? 'disable' : 'enable'}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell className="text-right pr-6">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
+                                          className="h-9 w-9 hover:bg-accent/50 transition-all duration-200"
+                                        >
+                                          <Edit2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="bg-popover border shadow-fluent-md">
+                                        <p className="text-sm">Edit reason</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
+                                          className="h-9 w-9 text-destructive hover:bg-destructive/10 transition-all duration-200"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="bg-popover border shadow-fluent-md">
+                                        <p className="text-sm">Delete reason</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </TableCell>
+                              </SortableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                   </SortableContext>
                 </DndContext>
                 )}
@@ -850,59 +862,64 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </TabsContent>
 
           {/* Tie-in Scopes Tab */}
-          <TabsContent value="tie-in" className="animate-fade-in">
-            <Card className="border shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl">Tie-in Scopes</CardTitle>
-                    <CardDescription className="mt-1">Manage advanced tie-in scope options</CardDescription>
+          <TabsContent value="tie-in" className="animate-fade-in-up">
+            <Card className="fluent-card border-border/40">
+              <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <CardTitle className="text-2xl font-semibold">Tie-in Scopes</CardTitle>
+                    <CardDescription className="text-base">Manage advanced tie-in scope options</CardDescription>
                   </div>
                   <Button 
                     onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}
-                    size="sm"
+                    className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Scope
                   </Button>
                 </div>
                 {selectedTieInScopes.size > 0 && (
-                  <div className="flex items-center gap-2 mt-4 p-3 bg-muted/30 rounded-md border">
-                    <span className="text-sm text-muted-foreground">
-                      {selectedTieInScopes.size} item(s) selected
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-6 p-4 bg-accent/10 border border-accent/20 rounded-xl animate-scale-in">
+                    <span className="text-sm font-medium text-foreground">
+                      {selectedTieInScopes.size} item{selectedTieInScopes.size !== 1 ? 's' : ''} selected
                     </span>
-                    <div className="flex gap-2 ml-auto">
+                    <div className="flex flex-wrap gap-2 sm:ml-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleBulkToggleActive('tie-in', true)}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <Check className="h-4 w-4 mr-1" />
+                        <Check className="h-4 w-4 mr-1.5" />
                         Enable
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleBulkToggleActive('tie-in', false)}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <X className="h-4 w-4 mr-1" />
+                        <X className="h-4 w-4 mr-1.5" />
                         Disable
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => openBulkDeleteDialog('tie-in')}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <Trash className="h-4 w-4 mr-1" />
+                        <Trash className="h-4 w-4 mr-1.5" />
                         Delete
                       </Button>
                     </div>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-0">
                 {allTieInScopes.length === 0 ? (
-                  <TableSkeleton rows={5} columns={7} />
+                  <div className="p-6">
+                    <TableSkeleton rows={5} columns={7} />
+                  </div>
                 ) : (
                   <DndContext
                     sensors={sensors}
@@ -914,92 +931,112 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                       items={allTieInScopes.map(s => s.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">
-                              <Checkbox
-                                checked={allTieInScopes.length > 0 && selectedTieInScopes.size === allTieInScopes.length}
-                                onCheckedChange={(checked) => toggleSelectAll('tie-in', checked as boolean)}
-                              />
-                            </TableHead>
-                            <TableHead className="w-12"></TableHead>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Code</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                      <TableBody>
-                        {allTieInScopes.map((scope) => (
-                          <SortableRow key={scope.id} id={scope.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedTieInScopes.has(scope.id)}
-                                onCheckedChange={() => toggleSelectItem('tie-in', scope.id)}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">{scope.display_order}</TableCell>
-                            <TableCell>
-                              <InlineEditableCell
-                                value={scope.code}
-                                onSave={(newValue) => handleInlineEdit('tie-in', scope.id, 'code', newValue)}
-                                placeholder="Enter code"
-                                maxLength={20}
-                                validate={validateCode}
-                              />
-                            </TableCell>
-                            <TableCell className="max-w-md">
-                              <InlineEditableCell
-                                value={scope.description}
-                                onSave={(newValue) => handleInlineEdit('tie-in', scope.id, 'description', newValue)}
-                                type="textarea"
-                                placeholder="Enter description"
-                                maxLength={500}
-                                validate={validateDescription}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant={scope.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
-                                    onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
-                                  >
-                                    {scope.is_active ? 'Active' : 'Inactive'}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Click to {scope.is_active ? 'disable' : 'enable'}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
-                                  className="h-8 w-8"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </SortableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-b border-border/40 hover:bg-transparent">
+                              <TableHead className="w-14 pl-6">
+                                <Checkbox
+                                  checked={allTieInScopes.length > 0 && selectedTieInScopes.size === allTieInScopes.length}
+                                  onCheckedChange={(checked) => toggleSelectAll('tie-in', checked as boolean)}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                              </TableHead>
+                              <TableHead className="w-14"></TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Code</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</TableHead>
+                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right pr-6">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {allTieInScopes.map((scope) => (
+                              <SortableRow key={scope.id} id={scope.id}>
+                                <TableCell className="pl-6">
+                                  <Checkbox
+                                    checked={selectedTieInScopes.has(scope.id)}
+                                    onCheckedChange={() => toggleSelectItem('tie-in', scope.id)}
+                                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-sm font-semibold text-muted-foreground">
+                                  #{scope.display_order}
+                                </TableCell>
+                                <TableCell className="font-medium text-foreground">
+                                  <InlineEditableCell
+                                    value={scope.code}
+                                    onSave={(newValue) => handleInlineEdit('tie-in', scope.id, 'code', newValue)}
+                                    placeholder="Enter code"
+                                    maxLength={20}
+                                    validate={validateCode}
+                                  />
+                                </TableCell>
+                                <TableCell className="max-w-md">
+                                  <InlineEditableCell
+                                    value={scope.description}
+                                    onSave={(newValue) => handleInlineEdit('tie-in', scope.id, 'description', newValue)}
+                                    type="textarea"
+                                    placeholder="Enter description"
+                                    maxLength={500}
+                                    validate={validateDescription}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge 
+                                        variant={scope.is_active ? "default" : "secondary"}
+                                        className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shadow-fluent-xs font-medium"
+                                        onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
+                                      >
+                                        {scope.is_active ? 'Active' : 'Inactive'}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-popover border shadow-fluent-md">
+                                      <p className="text-sm">Click to {scope.is_active ? 'disable' : 'enable'}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell className="text-right pr-6">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
+                                          className="h-9 w-9 hover:bg-accent/50 transition-all duration-200"
+                                        >
+                                          <Edit2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="bg-popover border shadow-fluent-md">
+                                        <p className="text-sm">Edit scope</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
+                                          className="h-9 w-9 text-destructive hover:bg-destructive/10 transition-all duration-200"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="bg-popover border shadow-fluent-md">
+                                        <p className="text-sm">Delete scope</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </TableCell>
+                              </SortableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                   </SortableContext>
                 </DndContext>
                 )}
@@ -1008,57 +1045,60 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </TabsContent>
 
           {/* MOC Scopes Tab */}
-          <TabsContent value="moc" className="animate-fade-in">
-            <Card className="border shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl">MOC Scopes</CardTitle>
-                    <CardDescription className="mt-1">Manage Management of Change scope options</CardDescription>
+          <TabsContent value="moc" className="animate-fade-in-up">
+            <Card className="fluent-card border-border/40">
+              <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <CardTitle className="text-2xl font-semibold">MOC Scopes</CardTitle>
+                    <CardDescription className="text-base">Manage Management of Change scope options</CardDescription>
                   </div>
                   <Button 
                     onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}
-                    size="sm"
+                    className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Scope
                   </Button>
                 </div>
                 {selectedMOCScopes.size > 0 && (
-                  <div className="flex items-center gap-2 mt-4 p-3 bg-muted/30 rounded-md border">
-                    <span className="text-sm text-muted-foreground">
-                      {selectedMOCScopes.size} item(s) selected
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-6 p-4 bg-accent/10 border border-accent/20 rounded-xl animate-scale-in">
+                    <span className="text-sm font-medium text-foreground">
+                      {selectedMOCScopes.size} item{selectedMOCScopes.size !== 1 ? 's' : ''} selected
                     </span>
-                    <div className="flex gap-2 ml-auto">
+                    <div className="flex flex-wrap gap-2 sm:ml-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleBulkToggleActive('moc', true)}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <Check className="h-4 w-4 mr-1" />
+                        <Check className="h-4 w-4 mr-1.5" />
                         Enable
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleBulkToggleActive('moc', false)}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <X className="h-4 w-4 mr-1" />
+                        <X className="h-4 w-4 mr-1.5" />
                         Disable
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => openBulkDeleteDialog('moc')}
+                        className="fluent-button shadow-fluent-xs"
                       >
-                        <Trash className="h-4 w-4 mr-1" />
+                        <Trash className="h-4 w-4 mr-1.5" />
                         Delete
                       </Button>
                     </div>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-0">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -1069,81 +1109,101 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     items={allMOCScopes.map(s => s.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={allMOCScopes.length > 0 && selectedMOCScopes.size === allMOCScopes.length}
-                              onCheckedChange={(checked) => toggleSelectAll('moc', checked as boolean)}
-                            />
-                          </TableHead>
-                          <TableHead className="w-12"></TableHead>
-                          <TableHead>Order</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {allMOCScopes.map((scope) => (
-                          <SortableRow key={scope.id} id={scope.id}>
-                            <TableCell>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-b border-border/40 hover:bg-transparent">
+                            <TableHead className="w-14 pl-6">
                               <Checkbox
-                                checked={selectedMOCScopes.has(scope.id)}
-                                onCheckedChange={() => toggleSelectItem('moc', scope.id)}
+                                checked={allMOCScopes.length > 0 && selectedMOCScopes.size === allMOCScopes.length}
+                                onCheckedChange={(checked) => toggleSelectAll('moc', checked as boolean)}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                               />
-                            </TableCell>
-                            <TableCell className="font-medium">{scope.display_order}</TableCell>
-                            <TableCell>
-                              <InlineEditableCell
-                                value={scope.name}
-                                onSave={(newValue) => handleInlineEdit('moc', scope.id, 'name', newValue)}
-                                placeholder="Enter MOC scope name"
-                                maxLength={100}
-                                validate={validateName}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant={scope.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
-                                    onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
-                                  >
-                                    {scope.is_active ? 'Active' : 'Inactive'}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Click to {scope.is_active ? 'disable' : 'enable'}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
-                                  className="h-8 w-8"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </SortableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            </TableHead>
+                            <TableHead className="w-14"></TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right pr-6">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {allMOCScopes.map((scope) => (
+                            <SortableRow key={scope.id} id={scope.id}>
+                              <TableCell className="pl-6">
+                                <Checkbox
+                                  checked={selectedMOCScopes.has(scope.id)}
+                                  onCheckedChange={() => toggleSelectItem('moc', scope.id)}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                              </TableCell>
+                              <TableCell className="text-sm font-semibold text-muted-foreground">
+                                #{scope.display_order}
+                              </TableCell>
+                              <TableCell className="font-medium text-foreground">
+                                <InlineEditableCell
+                                  value={scope.name}
+                                  onSave={(newValue) => handleInlineEdit('moc', scope.id, 'name', newValue)}
+                                  placeholder="Enter MOC scope name"
+                                  maxLength={100}
+                                  validate={validateName}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge 
+                                      variant={scope.is_active ? "default" : "secondary"}
+                                      className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shadow-fluent-xs font-medium"
+                                      onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
+                                    >
+                                      {scope.is_active ? 'Active' : 'Inactive'}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="bg-popover border shadow-fluent-md">
+                                    <p className="text-sm">Click to {scope.is_active ? 'disable' : 'enable'}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="text-right pr-6">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
+                                        className="h-9 w-9 hover:bg-accent/50 transition-all duration-200"
+                                      >
+                                        <Edit2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-popover border shadow-fluent-md">
+                                      <p className="text-sm">Edit scope</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
+                                        className="h-9 w-9 text-destructive hover:bg-destructive/10 transition-all duration-200"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-popover border shadow-fluent-md">
+                                      <p className="text-sm">Delete scope</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </TableCell>
+                            </SortableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </SortableContext>
                 </DndContext>
               </CardContent>
@@ -1153,55 +1213,68 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
         {/* Edit/Create Dialog */}
         <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ ...editDialog, open })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editDialog.item?.id ? 'Edit' : 'Add'} {editDialog.type === 'reason' ? 'Reason' : editDialog.type === 'tie-in' ? 'Tie-in Scope' : 'MOC Scope'}
+          <DialogContent className="sm:max-w-lg no-hover-effects">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-semibold">
+                {editDialog.item?.id ? 'Edit' : 'Add New'} {editDialog.type === 'reason' ? 'PSSR Reason' : editDialog.type === 'tie-in' ? 'Tie-in Scope' : 'MOC Scope'}
               </DialogTitle>
-              <DialogDescription>
-                {editDialog.item?.id ? 'Update' : 'Create a new'} {editDialog.type} entry
+              <DialogDescription className="text-base">
+                {editDialog.item?.id ? 'Update the details below to modify this' : 'Fill in the details below to create a new'} {editDialog.type} entry.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className="space-y-5 py-4">
               {editDialog.type === 'tie-in' ? (
                 <>
-                  <div className="space-y-2">
-                    <Label>Code</Label>
+                  <div className="space-y-2.5">
+                    <Label htmlFor="code" className="text-sm font-semibold">Code</Label>
                     <Input
+                      id="code"
                       value={editDialog.item?.code || ''}
                       onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, code: e.target.value } })}
                       placeholder="e.g., MECH, PACO, ELECT"
+                      className="h-11 bg-background/50"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
+                  <div className="space-y-2.5">
+                    <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
                     <Textarea
+                      id="description"
                       value={editDialog.item?.description || ''}
                       onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, description: e.target.value } })}
-                      placeholder="Detailed description of the scope"
+                      placeholder="Provide a detailed description of this scope..."
                       rows={4}
+                      className="bg-background/50 resize-none"
                     />
                   </div>
                 </>
               ) : (
-                <div className="space-y-2">
-                  <Label>Name</Label>
+                <div className="space-y-2.5">
+                  <Label htmlFor="name" className="text-sm font-semibold">Name</Label>
                   <Input
+                    id="name"
                     value={editDialog.item?.name || ''}
                     onChange={(e) => setEditDialog({ ...editDialog, item: { ...editDialog.item, name: e.target.value } })}
-                    placeholder="Enter name"
+                    placeholder="Enter a descriptive name..."
+                    className="h-11 bg-background/50"
                   />
                 </div>
               )}
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditDialog({ open: false, type: '', item: null })}>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setEditDialog({ open: false, type: '', item: null })}
+                className="fluent-button"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleSave}>
-                Save
+              <Button 
+                onClick={handleSave}
+                className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
+              >
+                {editDialog.item?.id ? 'Save Changes' : 'Create'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1209,19 +1282,27 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this item? This action cannot be undone.
+          <DialogContent className="sm:max-w-md no-hover-effects">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-semibold text-destructive">Confirm Deletion</DialogTitle>
+              <DialogDescription className="text-base">
+                Are you sure you want to delete this item? This action cannot be undone and the item will be permanently removed.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialog({ open: false, type: '', id: '' })}>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setDeleteDialog({ open: false, type: '', id: '' })}
+                className="fluent-button"
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                Delete
+              <Button 
+                variant="destructive" 
+                onClick={handleDelete}
+                className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
+              >
+                Delete Permanently
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1229,19 +1310,27 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
         {/* Bulk Delete Confirmation Dialog */}
         <Dialog open={bulkDeleteDialog.open} onOpenChange={(open) => setBulkDeleteDialog({ ...bulkDeleteDialog, open })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Bulk Deletion</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete {bulkDeleteDialog.count} item(s)? This action cannot be undone.
+          <DialogContent className="sm:max-w-md no-hover-effects">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-semibold text-destructive">Confirm Bulk Deletion</DialogTitle>
+              <DialogDescription className="text-base">
+                Are you sure you want to delete <span className="font-semibold text-foreground">{bulkDeleteDialog.count} item{bulkDeleteDialog.count !== 1 ? 's' : ''}</span>? This action cannot be undone and all selected items will be permanently removed.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBulkDeleteDialog({ open: false, type: '', count: 0 })}>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setBulkDeleteDialog({ open: false, type: '', count: 0 })}
+                className="fluent-button"
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleBulkDelete}>
-                Delete {bulkDeleteDialog.count} Item(s)
+              <Button 
+                variant="destructive" 
+                onClick={handleBulkDelete}
+                className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
+              >
+                Delete {bulkDeleteDialog.count} Item{bulkDeleteDialog.count !== 1 ? 's' : ''}
               </Button>
             </DialogFooter>
           </DialogContent>
