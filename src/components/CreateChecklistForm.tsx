@@ -748,7 +748,8 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
               <Button 
                 onClick={() => setShowCreateItem(true)}
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+                variant="outline"
+                className="border-accent text-accent hover:bg-accent/10"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Create Item</span>
