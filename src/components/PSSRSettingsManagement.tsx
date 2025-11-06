@@ -1210,7 +1210,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                     </Table>
                   </SortableContext>
                 </DndContext>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
