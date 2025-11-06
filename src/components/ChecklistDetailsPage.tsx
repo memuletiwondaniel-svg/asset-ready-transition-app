@@ -35,18 +35,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Mechanical': 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30',
   'Instrumentation': 'bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/30',
   'Civil': 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-  'Rotating': 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
+  'Rotating': 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30'
 };
-
 interface ChecklistDetailsPageProps {
   checklist: Checklist;
   onBack: () => void;
   selectedLanguage?: string;
   translations?: any;
 }
-
-const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ 
-  checklist, 
+const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
+  checklist,
   onBack,
   selectedLanguage = "English",
   translations = {}
@@ -69,35 +67,48 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   const [targetCategory, setTargetCategory] = useState('');
   const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('items');
-  const [editingCell, setEditingCell] = useState<{ itemId: string; field: string } | null>(null);
+  const [editingCell, setEditingCell] = useState<{
+    itemId: string;
+    field: string;
+  } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
-  const { toast } = useToast();
-  const { data: allChecklistItems = [], isLoading } = useChecklistItems();
-  const [selectedItems, setSelectedItems] = useState<string[]>(
-    checklist.selected_items || []
-  );
+  const {
+    toast
+  } = useToast();
+  const {
+    data: allChecklistItems = [],
+    isLoading
+  } = useChecklistItems();
+  const [selectedItems, setSelectedItems] = useState<string[]>(checklist.selected_items || []);
 
   // Filter checklist items to show only the ones selected for this checklist
-  const checklistItems = allChecklistItems.filter(item => 
-    selectedItems.includes(item.unique_id)
-  );
+  const checklistItems = allChecklistItems.filter(item => selectedItems.includes(item.unique_id));
 
   // Mock active PSSR data
-  const activePSSRs = [
-    { id: 'PSSR-2024-001', projectName: 'Gas Processing Unit A', status: 'In Progress', progress: 65 },
-    { id: 'PSSR-2024-002', projectName: 'Compression Station B', status: 'Under Review', progress: 85 },
-    { id: 'PSSR-2024-003', projectName: 'Pipeline Section C', status: 'Not Started', progress: 0 }
-  ];
+  const activePSSRs = [{
+    id: 'PSSR-2024-001',
+    projectName: 'Gas Processing Unit A',
+    status: 'In Progress',
+    progress: 65
+  }, {
+    id: 'PSSR-2024-002',
+    projectName: 'Compression Station B',
+    status: 'Under Review',
+    progress: 85
+  }, {
+    id: 'PSSR-2024-003',
+    projectName: 'Pipeline Section C',
+    status: 'Not Started',
+    progress: 0
+  }];
 
   // Filter and sort checklist items
   const filteredItems = useMemo(() => {
     let items = checklistItems.filter(item => {
-      const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (item.required_evidence || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) || (item.required_evidence || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-
     items.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
@@ -118,7 +129,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-
     return items;
   }, [searchQuery, selectedCategory, sortBy, sortOrder, checklistItems, selectedItems]);
 
@@ -134,39 +144,30 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, sortBy, sortOrder]);
-
   const handleEditChecklist = () => {
     setShowEditChecklist(true);
   };
-
   const handleSaveChecklist = (updatedChecklist: Checklist, updatedSelectedItems: string[]) => {
     // Update checklist and selected items
     setSelectedItems(updatedSelectedItems);
     setShowEditChecklist(false);
     // In real app, this would save to database
   };
-
   const handleEditItem = (item: ChecklistItem) => {
     setEditingItem(item);
   };
-
   const handleSaveItem = (updatedItem: ChecklistItem) => {
     // This would trigger a refetch from the server
     setEditingItem(null);
   };
-
   const handleDeleteItem = (itemId: string) => {
     setSelectedItems(prev => prev.filter(id => id !== itemId));
     setEditingItem(null);
   };
-
   const getCategoryStats = (category: string) => {
-    const categoryItems = category === 'all' 
-      ? checklistItems
-      : checklistItems.filter(item => item.category === category);
+    const categoryItems = category === 'all' ? checklistItems : checklistItems.filter(item => item.category === category);
     return categoryItems.length;
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'In Progress':
@@ -181,7 +182,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
-
   const handleSort = (field: string) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -199,7 +199,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       setBulkSelectedItems(new Set());
     }
   };
-
   const handleSelectItem = (itemId: string, checked: boolean) => {
     const newSet = new Set(bulkSelectedItems);
     if (checked) {
@@ -209,7 +208,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
     }
     setBulkSelectedItems(newSet);
   };
-
   const handleBulkDelete = () => {
     Array.from(bulkSelectedItems).forEach(itemId => {
       handleDeleteItem(itemId);
@@ -217,38 +215,35 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
     setBulkSelectedItems(new Set());
     setShowDeleteDialog(false);
   };
-
   const handleBulkMoveCategory = () => {
     if (!targetCategory) return;
-    
+
     // In a real implementation, this would update the items in the database
     Array.from(bulkSelectedItems).forEach(itemId => {
       // Update item category logic here
       console.log(`Moving item ${itemId} to category ${targetCategory}`);
     });
-    
     setBulkSelectedItems(new Set());
     setShowMoveDialog(false);
     setTargetCategory('');
   };
-
   const allSelected = paginatedItems.length > 0 && paginatedItems.every(item => bulkSelectedItems.has(item.unique_id));
   const someSelected = paginatedItems.some(item => bulkSelectedItems.has(item.unique_id)) && !allSelected;
 
   // Inline editing handlers
   const handleStartEdit = (itemId: string, field: string, currentValue: string) => {
-    setEditingCell({ itemId, field });
+    setEditingCell({
+      itemId,
+      field
+    });
     setEditValue(currentValue || '');
   };
-
   const handleCancelEdit = () => {
     setEditingCell(null);
     setEditValue('');
   };
-
   const handleSaveEdit = () => {
     if (!editingCell) return;
-
     const item = paginatedItems.find(i => i.unique_id === editingCell.itemId);
     if (!item) return;
 
@@ -257,28 +252,25 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       toast({
         title: "Validation Error",
         description: "Description cannot be empty",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (editingCell.field === 'description' && editValue.length > 500) {
       toast({
         title: "Validation Error",
         description: "Description must be less than 500 characters",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
 
     // In a real implementation, this would update the item in the database
     console.log(`Updating ${editingCell.field} for item ${editingCell.itemId} to:`, editValue);
-    
     toast({
       title: "Item Updated",
-      description: `Successfully updated ${editingCell.field}`,
+      description: `Successfully updated ${editingCell.field}`
     });
-
     setEditingCell(null);
     setEditValue('');
   };
@@ -308,25 +300,13 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
 
   // Show edit checklist form
   if (showEditChecklist) {
-    return (
-      <EditChecklistForm 
-        checklist={checklist}
-        onBack={() => setShowEditChecklist(false)}
-        onSave={() => setShowEditChecklist(false)}
-      />
-    );
+    return <EditChecklistForm checklist={checklist} onBack={() => setShowEditChecklist(false)} onSave={() => setShowEditChecklist(false)} />;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       <AnimatedBackground>
         <div className="relative z-10">
           {/* Admin Header with Breadcrumb */}
-          <AdminHeader
-            selectedLanguage={currentLanguage}
-            onLanguageChange={setCurrentLanguage}
-            translations={t}
-          >
+          <AdminHeader selectedLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} translations={t}>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -359,16 +339,9 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                   <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                     {checklist.name}
                   </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    {checklist.reason}
-                  </CardDescription>
+                  
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleEditChecklist}
-                  className="shadow-sm hover:shadow-md transition-shadow"
-                >
+                <Button variant="outline" size="sm" onClick={handleEditChecklist} className="shadow-sm hover:shadow-md transition-shadow">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Checklist
                 </Button>
@@ -376,10 +349,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
             </CardHeader>
             <CardContent className="pt-0">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div 
-                  className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 hover:scale-[1.02] transition-all duration-200"
-                  onClick={() => setActiveTab('items')}
-                >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 hover:scale-[1.02] transition-all duration-200" onClick={() => setActiveTab('items')}>
                   <div className="p-2 rounded-full bg-primary/10">
                     <FileText className="h-5 w-5 text-primary" />
                   </div>
@@ -388,10 +358,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                     <p className="text-xs text-muted-foreground font-medium">Total Items</p>
                   </div>
                 </div>
-                <div 
-                  className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/10 cursor-pointer hover:bg-green-500/10 hover:scale-[1.02] transition-all duration-200"
-                  onClick={() => setActiveTab('pssrs')}
-                >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/10 cursor-pointer hover:bg-green-500/10 hover:scale-[1.02] transition-all duration-200" onClick={() => setActiveTab('pssrs')}>
                   <div className="p-2 rounded-full bg-green-500/10">
                     <Activity className="h-5 w-5 text-green-600 dark:text-green-500" />
                   </div>
@@ -442,12 +409,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      placeholder="Search checklist items..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 h-11 bg-background/50 transition-all duration-200 focus:shadow-md"
-                    />
+                    <Input placeholder="Search checklist items..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-11 bg-background/50 transition-all duration-200 focus:shadow-md" />
                   </div>
                   <div className="flex gap-3">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -457,11 +419,9 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Categories ({getCategoryStats('all')})</SelectItem>
-                        {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => (
-                          <SelectItem key={category} value={category}>
+                        {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => <SelectItem key={category} value={category}>
                             {category} ({getCategoryStats(category)})
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Select value={sortBy} onValueChange={setSortBy}>
@@ -477,29 +437,15 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                     </Select>
                     {/* View Toggle */}
                     <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-                      <Button
-                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('grid')}
-                        className="h-9 px-3 transition-all duration-200"
-                      >
+                      <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')} className="h-9 px-3 transition-all duration-200">
                         <Grid3x3 className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant={viewMode === 'table' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('table')}
-                        className="h-9 px-3 transition-all duration-200"
-                      >
+                      <Button variant={viewMode === 'table' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('table')} className="h-9 px-3 transition-all duration-200">
                         <List className="h-4 w-4" />
                       </Button>
                     </div>
                     {/* Add Item Button */}
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      className="h-11 shadow-sm hover:shadow-md transition-shadow"
-                    >
+                    <Button variant="default" size="sm" className="h-11 shadow-sm hover:shadow-md transition-shadow">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Item
                     </Button>
@@ -509,47 +455,32 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
             </Card>
 
             {/* Bulk Actions Toolbar */}
-            {bulkSelectedItems.size > 0 && (
-              <div className="bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4 shadow-lg animate-slide-in-right">
+            {bulkSelectedItems.size > 0 && <div className="bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4 shadow-lg animate-slide-in-right">
                 <div className="flex items-center gap-3">
                   <Badge className="bg-primary text-primary-foreground px-3 py-1.5 text-sm font-semibold shadow-sm">
                     {bulkSelectedItems.size} item{bulkSelectedItems.size !== 1 ? 's' : ''} selected
                   </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setBulkSelectedItems(new Set())}
-                    className="hover:bg-background/50"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setBulkSelectedItems(new Set())} className="hover:bg-background/50">
                     <X className="h-4 w-4 mr-2" />
                     Clear Selection
                   </Button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowMoveDialog(true)}
-                    className="shadow-sm hover:shadow-md transition-shadow"
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setShowMoveDialog(true)} className="shadow-sm hover:shadow-md transition-shadow">
                     <FolderInput className="h-4 w-4 mr-2" />
                     Move to Category
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="shadow-sm hover:shadow-md transition-shadow"
-                  >
+                  <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} className="shadow-sm hover:shadow-md transition-shadow">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Selected
                   </Button>
                 </div>
-              </div>
-            )}
+              </div>}
 
             {/* Items Content - Grid or Table View */}
-            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl animate-fade-in" style={{ animationDelay: '100ms' }}>
+            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl animate-fade-in" style={{
+                animationDelay: '100ms'
+              }}>
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -561,70 +492,43 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-12">
+                {isLoading ? <div className="flex items-center justify-center py-12">
                     <div className="text-center space-y-3">
                       <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
                       <p className="text-muted-foreground">Loading checklist items...</p>
                     </div>
-                  </div>
-                ) : viewMode === 'grid' ? (
-                  /* Grid View */
+                  </div> : viewMode === 'grid' ? (/* Grid View */
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    {paginatedItems.map((item, index) => (
-                      <div 
-                        key={item.unique_id} 
-                        className="group relative p-5 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-xl hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] animate-scale-in cursor-pointer"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                        onClick={() => setViewingItem(item)}
-                      >
+                    {paginatedItems.map((item, index) => <div key={item.unique_id} className="group relative p-5 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-xl hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] animate-scale-in cursor-pointer" style={{
+                      animationDelay: `${index * 50}ms`
+                    }} onClick={() => setViewingItem(item)}>
                         {/* Item Header */}
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <Badge 
-                              variant="outline" 
-                              className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap transition-all duration-200 group-hover:bg-primary/10 group-hover:border-primary/50"
-                            >
+                            <Badge variant="outline" className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap transition-all duration-200 group-hover:bg-primary/10 group-hover:border-primary/50">
                               {item.unique_id}
                             </Badge>
-                            <Badge 
-                              className={`text-xs px-2.5 py-1 font-medium transition-all duration-200 ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}
-                            >
+                            <Badge className={`text-xs px-2.5 py-1 font-medium transition-all duration-200 ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
                               {item.category}
                             </Badge>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setViewingItem(item);
-                              }}
-                              className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110"
-                            >
+                            <Button variant="ghost" size="sm" onClick={e => {
+                            e.stopPropagation();
+                            setViewingItem(item);
+                          }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditItem(item);
-                              }}
-                              className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110"
-                            >
+                            <Button variant="ghost" size="sm" onClick={e => {
+                            e.stopPropagation();
+                            handleEditItem(item);
+                          }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteItem(item.unique_id);
-                              }}
-                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200 hover:scale-110"
-                            >
+                            <Button variant="ghost" size="sm" onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteItem(item.unique_id);
+                          }} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200 hover:scale-110">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -650,76 +554,44 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                             </p>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  /* Table View */
+                      </div>)}
+                  </div>) : (/* Table View */
                   <div className="rounded-lg border border-border/40 overflow-hidden animate-fade-in">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/40">
                           <TableHead className="w-12">
-                            <Checkbox
-                              checked={allSelected}
-                              onCheckedChange={handleSelectAll}
-                              aria-label="Select all items"
-                              className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
-                            />
+                            <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} aria-label="Select all items" className={someSelected ? "data-[state=checked]:bg-primary/50" : ""} />
                           </TableHead>
-                          <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('id') ? 'min-w-[180px]' : 'w-32'} group`}
-                            onClick={() => handleSort('id')}
-                          >
+                          <TableHead className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('id') ? 'min-w-[180px]' : 'w-32'} group`} onClick={() => handleSort('id')}>
                             <div className="flex items-center justify-between">
                               <span>Item ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleColumnWidth('id');
-                                }}
-                              >
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => {
+                                e.stopPropagation();
+                                toggleColumnWidth('id');
+                              }}>
                                 {expandedColumns.has('id') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                               </Button>
                             </div>
                           </TableHead>
-                          <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('description') ? 'min-w-[500px]' : ''} group`}
-                            onClick={() => handleSort('description')}
-                          >
+                          <TableHead className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('description') ? 'min-w-[500px]' : ''} group`} onClick={() => handleSort('description')}>
                             <div className="flex items-center justify-between">
                               <span>Description {sortBy === 'description' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleColumnWidth('description');
-                                }}
-                              >
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => {
+                                e.stopPropagation();
+                                toggleColumnWidth('description');
+                              }}>
                                 {expandedColumns.has('description') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                               </Button>
                             </div>
                           </TableHead>
-                          <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('category') ? 'min-w-[220px]' : 'w-40'} group`}
-                            onClick={() => handleSort('category')}
-                          >
+                          <TableHead className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('category') ? 'min-w-[220px]' : 'w-40'} group`} onClick={() => handleSort('category')}>
                             <div className="flex items-center justify-between">
                               <span>Category {sortBy === 'category' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleColumnWidth('category');
-                                }}
-                              >
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => {
+                                e.stopPropagation();
+                                toggleColumnWidth('category');
+                              }}>
                                 {expandedColumns.has('category') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                               </Button>
                             </div>
@@ -727,34 +599,21 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                           <TableHead className={`${expandedColumns.has('evidence') ? 'min-w-[350px]' : 'max-w-xs'} group`}>
                             <div className="flex items-center justify-between">
                               <span>Supporting Evidence</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleColumnWidth('evidence');
-                                }}
-                              >
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => {
+                                e.stopPropagation();
+                                toggleColumnWidth('evidence');
+                              }}>
                                 {expandedColumns.has('evidence') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                               </Button>
                             </div>
                           </TableHead>
-                          <TableHead 
-                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('authority') ? 'min-w-[220px]' : 'w-40'} group`}
-                            onClick={() => handleSort('authority')}
-                          >
+                          <TableHead className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns.has('authority') ? 'min-w-[220px]' : 'w-40'} group`} onClick={() => handleSort('authority')}>
                             <div className="flex items-center justify-between">
                               <span>Authority {sortBy === 'authority' && (sortOrder === 'asc' ? '↑' : '↓')}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleColumnWidth('authority');
-                                }}
-                              >
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => {
+                                e.stopPropagation();
+                                toggleColumnWidth('authority');
+                              }}>
                                 {expandedColumns.has('authority') ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                               </Button>
                             </div>
@@ -763,276 +622,153 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paginatedItems.map((item, index) => (
-                          <TableRow 
-                            key={item.unique_id} 
-                            className={`hover:bg-muted/20 transition-all duration-200 cursor-pointer animate-fade-in ${bulkSelectedItems.has(item.unique_id) ? 'bg-primary/5' : ''}`}
-                            style={{ animationDelay: `${index * 30}ms` }}
-                          >
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Checkbox
-                                checked={bulkSelectedItems.has(item.unique_id)}
-                                onCheckedChange={(checked) => handleSelectItem(item.unique_id, checked as boolean)}
-                                aria-label={`Select ${item.unique_id}`}
-                              />
+                        {paginatedItems.map((item, index) => <TableRow key={item.unique_id} className={`hover:bg-muted/20 transition-all duration-200 cursor-pointer animate-fade-in ${bulkSelectedItems.has(item.unique_id) ? 'bg-primary/5' : ''}`} style={{
+                          animationDelay: `${index * 30}ms`
+                        }}>
+                            <TableCell onClick={e => e.stopPropagation()}>
+                              <Checkbox checked={bulkSelectedItems.has(item.unique_id)} onCheckedChange={checked => handleSelectItem(item.unique_id, checked as boolean)} aria-label={`Select ${item.unique_id}`} />
                             </TableCell>
-                            <TableCell 
-                              className="font-mono font-medium text-primary"
-                              onClick={() => setViewingItem(item)}
-                            >
+                            <TableCell className="font-mono font-medium text-primary" onClick={() => setViewingItem(item)}>
                               {item.unique_id}
                             </TableCell>
-                            <TableCell 
-                              className={expandedColumns.has('description') ? '' : 'max-w-md'}
-                            >
-                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'description' ? (
-                                <div className="flex items-center gap-2 animate-fade-in">
-                                  <Textarea
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    className="min-h-[60px] text-sm resize-none"
-                                    autoFocus
-                                    maxLength={500}
-                                  />
+                            <TableCell className={expandedColumns.has('description') ? '' : 'max-w-md'}>
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'description' ? <div className="flex items-center gap-2 animate-fade-in">
+                                  <Textarea value={editValue} onChange={e => setEditValue(e.target.value)} onKeyDown={handleKeyDown} className="min-h-[60px] text-sm resize-none" autoFocus maxLength={500} />
                                   <div className="flex flex-col gap-1 shrink-0">
-                                    <Button
-                                      size="sm"
-                                      onClick={handleSaveEdit}
-                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
-                                    >
+                                    <Button size="sm" onClick={handleSaveEdit} className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700">
                                       <Check className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEdit}
-                                      className="h-7 w-7 p-0"
-                                    >
+                                    <Button size="sm" variant="outline" onClick={handleCancelEdit} className="h-7 w-7 p-0">
                                       <XCircle className="h-4 w-4" />
                                     </Button>
                                   </div>
-                                </div>
-                              ) : (
-                                <div 
-                                  className={`${expandedColumns.has('description') ? 'font-medium' : 'line-clamp-2 font-medium'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStartEdit(item.unique_id, 'description', item.description);
-                                  }}
-                                >
+                                </div> : <div className={`${expandedColumns.has('description') ? 'font-medium' : 'line-clamp-2 font-medium'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`} onDoubleClick={e => {
+                              e.stopPropagation();
+                              handleStartEdit(item.unique_id, 'description', item.description);
+                            }}>
                                   {item.description}
                                   <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs text-muted-foreground transition-opacity">
                                     (double-click to edit)
                                   </span>
-                                </div>
-                              )}
+                                </div>}
                             </TableCell>
                             <TableCell>
-                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'category' ? (
-                                <div className="flex items-center gap-2 animate-fade-in">
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'category' ? <div className="flex items-center gap-2 animate-fade-in">
                                   <Select value={editValue} onValueChange={setEditValue}>
                                     <SelectTrigger className="h-9 w-full">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {Array.from(new Set(allChecklistItems.map(i => i.category))).map(cat => (
-                                        <SelectItem key={cat} value={cat}>
+                                      {Array.from(new Set(allChecklistItems.map(i => i.category))).map(cat => <SelectItem key={cat} value={cat}>
                                           {cat}
-                                        </SelectItem>
-                                      ))}
+                                        </SelectItem>)}
                                     </SelectContent>
                                   </Select>
                                   <div className="flex gap-1 shrink-0">
-                                    <Button
-                                      size="sm"
-                                      onClick={handleSaveEdit}
-                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
-                                    >
+                                    <Button size="sm" onClick={handleSaveEdit} className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700">
                                       <Check className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEdit}
-                                      className="h-7 w-7 p-0"
-                                    >
+                                    <Button size="sm" variant="outline" onClick={handleCancelEdit} className="h-7 w-7 p-0">
                                       <XCircle className="h-4 w-4" />
                                     </Button>
                                   </div>
-                                </div>
-                              ) : (
-                                <div 
-                                  className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group inline-block"
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStartEdit(item.unique_id, 'category', item.category);
-                                  }}
-                                >
+                                </div> : <div className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group inline-block" onDoubleClick={e => {
+                              e.stopPropagation();
+                              handleStartEdit(item.unique_id, 'category', item.category);
+                            }}>
                                   <Badge className={`${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
                                     {item.category}
                                   </Badge>
                                   <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs text-muted-foreground transition-opacity">
                                     (double-click)
                                   </span>
-                                </div>
-                              )}
+                                </div>}
                             </TableCell>
-                            <TableCell 
-                              className={expandedColumns.has('evidence') ? '' : 'max-w-xs'}
-                            >
-                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'evidence' ? (
-                                <div className="flex items-center gap-2 animate-fade-in">
-                                  <Textarea
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    className="min-h-[60px] text-sm resize-none"
-                                    autoFocus
-                                    maxLength={300}
-                                  />
+                            <TableCell className={expandedColumns.has('evidence') ? '' : 'max-w-xs'}>
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'evidence' ? <div className="flex items-center gap-2 animate-fade-in">
+                                  <Textarea value={editValue} onChange={e => setEditValue(e.target.value)} onKeyDown={handleKeyDown} className="min-h-[60px] text-sm resize-none" autoFocus maxLength={300} />
                                   <div className="flex flex-col gap-1 shrink-0">
-                                    <Button
-                                      size="sm"
-                                      onClick={handleSaveEdit}
-                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
-                                    >
+                                    <Button size="sm" onClick={handleSaveEdit} className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700">
                                       <Check className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEdit}
-                                      className="h-7 w-7 p-0"
-                                    >
+                                    <Button size="sm" variant="outline" onClick={handleCancelEdit} className="h-7 w-7 p-0">
                                       <XCircle className="h-4 w-4" />
                                     </Button>
                                   </div>
-                                </div>
-                              ) : (
-                                <div 
-                                  className={`${expandedColumns.has('evidence') ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStartEdit(item.unique_id, 'evidence', item.required_evidence || '');
-                                  }}
-                                >
+                                </div> : <div className={`${expandedColumns.has('evidence') ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`} onDoubleClick={e => {
+                              e.stopPropagation();
+                              handleStartEdit(item.unique_id, 'evidence', item.required_evidence || '');
+                            }}>
                                   {item.required_evidence || '-'}
-                                  {item.required_evidence && (
-                                    <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs transition-opacity">
+                                  {item.required_evidence && <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs transition-opacity">
                                       (double-click to edit)
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                                    </span>}
+                                </div>}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'approver' ? (
-                                <div className="flex items-center gap-2 animate-fade-in">
-                                  <Input
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    className="h-9"
-                                    autoFocus
-                                    maxLength={100}
-                                  />
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'approver' ? <div className="flex items-center gap-2 animate-fade-in">
+                                  <Input value={editValue} onChange={e => setEditValue(e.target.value)} onKeyDown={handleKeyDown} className="h-9" autoFocus maxLength={100} />
                                   <div className="flex gap-1 shrink-0">
-                                    <Button
-                                      size="sm"
-                                      onClick={handleSaveEdit}
-                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
-                                    >
+                                    <Button size="sm" onClick={handleSaveEdit} className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700">
                                       <Check className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEdit}
-                                      className="h-7 w-7 p-0"
-                                    >
+                                    <Button size="sm" variant="outline" onClick={handleCancelEdit} className="h-7 w-7 p-0">
                                       <XCircle className="h-4 w-4" />
                                     </Button>
                                   </div>
-                                </div>
-                              ) : (
-                                <div 
-                                  className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group"
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStartEdit(item.unique_id, 'approver', item.Approver || '');
-                                  }}
-                                >
+                                </div> : <div className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group" onDoubleClick={e => {
+                              e.stopPropagation();
+                              handleStartEdit(item.unique_id, 'approver', item.Approver || '');
+                            }}>
                                   {item.Approver || '-'}
                                   <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs text-muted-foreground transition-opacity">
                                     (double-click)
                                   </span>
-                                </div>
-                              )}
+                                </div>}
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
+                            <TableCell onClick={e => e.stopPropagation()}>
                               <div className="flex justify-end gap-1">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setViewingItem(item);
-                                  }}
-                                  className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200"
-                                >
+                                <Button variant="ghost" size="sm" onClick={e => {
+                                e.stopPropagation();
+                                setViewingItem(item);
+                              }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200">
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditItem(item);
-                                  }}
-                                  className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200"
-                                >
+                                <Button variant="ghost" size="sm" onClick={e => {
+                                e.stopPropagation();
+                                handleEditItem(item);
+                              }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200">
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteItem(item.unique_id);
-                                  }}
-                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200"
-                                >
+                                <Button variant="ghost" size="sm" onClick={e => {
+                                e.stopPropagation();
+                                handleDeleteItem(item.unique_id);
+                              }} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
-                          </TableRow>
-                        ))}
+                          </TableRow>)}
                       </TableBody>
                     </Table>
-                  </div>
-                )}
+                  </div>)}
                 
                 {/* Pagination Controls */}
-                {!isLoading && filteredItems.length > 0 && (
-                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/20 animate-fade-in" style={{ animationDelay: '200ms' }}>
+                {!isLoading && filteredItems.length > 0 && <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/20 animate-fade-in" style={{
+                    animationDelay: '200ms'
+                  }}>
                     <div className="text-sm text-muted-foreground">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} items
+                      Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} items
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="transition-all duration-200 hover:scale-105"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="transition-all duration-200 hover:scale-105">
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Previous
                       </Button>
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        {Array.from({
+                          length: Math.min(5, totalPages)
+                        }, (_, i) => {
                           let pageNum;
                           if (totalPages <= 5) {
                             pageNum = i + 1;
@@ -1043,32 +779,17 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                           } else {
                             pageNum = currentPage - 2 + i;
                           }
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={currentPage === pageNum ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setCurrentPage(pageNum)}
-                              className="h-9 w-9 p-0 transition-all duration-200 hover:scale-110"
-                            >
+                          return <Button key={pageNum} variant={currentPage === pageNum ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(pageNum)} className="h-9 w-9 p-0 transition-all duration-200 hover:scale-110">
                               {pageNum}
-                            </Button>
-                          );
+                            </Button>;
                         })}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="transition-all duration-200 hover:scale-105"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="transition-all duration-200 hover:scale-105">
                         Next
                         <ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1084,8 +805,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {activePSSRs.map((pssr) => (
-                    <div key={pssr.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {activePSSRs.map(pssr => <div key={pssr.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <h4 className="font-semibold">{pssr.id}</h4>
                         <p className="text-sm text-muted-foreground">{pssr.projectName}</p>
@@ -1094,10 +814,9 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <div className="text-right">
                           <div className="text-sm font-medium">{pssr.progress}% Complete</div>
                           <div className="w-24 bg-muted rounded-full h-2 mt-1">
-                            <div 
-                              className="bg-primary h-2 rounded-full" 
-                              style={{ width: `${pssr.progress}%` }}
-                            />
+                            <div className="bg-primary h-2 rounded-full" style={{
+                              width: `${pssr.progress}%`
+                            }} />
                           </div>
                         </div>
                         {getStatusBadge(pssr.status)}
@@ -1105,17 +824,14 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                           View PSSR
                         </Button>
                       </div>
-                    </div>
-                  ))}
-                  {activePSSRs.length === 0 && (
-                    <div className="text-center py-8">
+                    </div>)}
+                  {activePSSRs.length === 0 && <div className="text-center py-8">
                       <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-semibold mb-2">No Active PSSRs</h3>
                       <p className="text-muted-foreground">
                         No projects are currently using this checklist for PSSR reviews.
                       </p>
-                    </div>
-                  )}
+                    </div>}
                 </div>
               </CardContent>
             </Card>
@@ -1124,27 +840,13 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       </div>
 
       {/* View Item Modal */}
-      {viewingItem && (
-        <ViewChecklistItemModal 
-          isOpen={true}
-          item={viewingItem}
-          onClose={() => setViewingItem(null)}
-          onEdit={() => {
-            setEditingItem(viewingItem);
-            setViewingItem(null);
-          }}
-        />
-      )}
+      {viewingItem && <ViewChecklistItemModal isOpen={true} item={viewingItem} onClose={() => setViewingItem(null)} onEdit={() => {
+          setEditingItem(viewingItem);
+          setViewingItem(null);
+        }} />}
 
       {/* Edit Item Modal */}
-      {editingItem && (
-        <EditChecklistItemModal 
-          isOpen={true}
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onComplete={handleSaveItem}
-        />
-      )}
+      {editingItem && <EditChecklistItemModal isOpen={true} item={editingItem} onClose={() => setEditingItem(null)} onComplete={handleSaveItem} />}
 
       {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -1159,10 +861,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel className="transition-all duration-200">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBulkDelete}
-              className="bg-destructive hover:bg-destructive/90 transition-all duration-200"
-            >
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90 transition-all duration-200">
               Delete All
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1186,26 +885,17 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                 <SelectValue placeholder="Select a category..." />
               </SelectTrigger>
               <SelectContent>
-                {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => (
-                  <SelectItem key={category} value={category}>
+                {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => <SelectItem key={category} value={category}>
                     {category}
-                  </SelectItem>
-                ))}
+                  </SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <AlertDialogFooter className="gap-2 sm:gap-0">
-            <AlertDialogCancel 
-              onClick={() => setTargetCategory('')}
-              className="transition-all duration-200"
-            >
+            <AlertDialogCancel onClick={() => setTargetCategory('')} className="transition-all duration-200">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBulkMoveCategory}
-              disabled={!targetCategory}
-              className="transition-all duration-200"
-            >
+            <AlertDialogAction onClick={handleBulkMoveCategory} disabled={!targetCategory} className="transition-all duration-200">
               Move Items
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1213,8 +903,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       </AlertDialog>
         </div>
       </AnimatedBackground>
-    </div>
-  );
+    </div>;
 };
-
 export default ChecklistDetailsPage;
