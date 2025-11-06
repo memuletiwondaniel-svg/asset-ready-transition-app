@@ -3,7 +3,7 @@ import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search, Home, Filter, BookTemplate } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search, Home, Filter, BookTemplate, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,9 @@ import { getCurrentTranslations } from '@/utils/translations';
 import { AdvancedFilterSidebar, ChecklistFilters } from './checklist/AdvancedFilterSidebar';
 import { BulkActionsToolbar } from './checklist/BulkActionsToolbar';
 import { TemplateManagement } from './checklist/TemplateManagement';
+import { ChecklistItemPreviewPanel } from './checklist/ChecklistItemPreviewPanel';
+import { useToast } from '@/hooks/use-toast';
+import { useCreateChecklistItem } from '@/hooks/useChecklistItems';
 interface ChecklistManagementPageProps {
   onBack: () => void;
   translations?: any;
@@ -57,6 +60,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showTemplateManagement, setShowTemplateManagement] = useState(false);
   const [filters, setFilters] = useState<ChecklistFilters>({});
+  
+  // Preview panel state
+  const [previewItem, setPreviewItem] = useState<ChecklistItem | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewTimeout, setPreviewTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const { toast } = useToast();
+  const createChecklistItemMutation = useCreateChecklistItem();
   const {
     data: allChecklistItems,
     isLoading: itemsLoading
@@ -226,6 +237,57 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
     setShowCreateForm(false);
   };
 
+  // Hover preview handlers
+  const handleItemMouseEnter = (item: ChecklistItem) => {
+    if (previewTimeout) {
+      clearTimeout(previewTimeout);
+    }
+    const timeout = setTimeout(() => {
+      setPreviewItem(item);
+      setShowPreview(true);
+    }, 500); // 500ms delay before showing preview
+    setPreviewTimeout(timeout);
+  };
+
+  const handleItemMouseLeave = () => {
+    if (previewTimeout) {
+      clearTimeout(previewTimeout);
+      setPreviewTimeout(null);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setShowPreview(false);
+    setPreviewItem(null);
+  };
+
+  // Duplicate item handler
+  const handleDuplicateItem = async (item: ChecklistItem) => {
+    try {
+      const duplicatedItem = {
+        unique_id: `${item.unique_id}_copy`,
+        description: item.description,
+        category: item.category,
+        topic: item.topic,
+        Approver: item.Approver,
+        responsible: item.responsible,
+      };
+
+      await createChecklistItemMutation.mutateAsync(duplicatedItem);
+      
+      toast({
+        title: "Item duplicated",
+        description: `Successfully duplicated item ${item.unique_id}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate item",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Draggable Category Component
   const DraggableCategory = ({
     category,
@@ -298,7 +360,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                   </div> : <div className="space-y-3">
                     <p className="text-sm text-muted-foreground font-medium">{categoryItems.length} item{categoryItems.length !== 1 ? 's' : ''} in this category</p>
                     <div className="space-y-2">
-                      {categoryItems.map(item => <div key={item.unique_id} className="group relative p-4 bg-card/50 backdrop-blur-sm border border-border/40 rounded-lg hover:bg-card hover:border-primary/30 hover:shadow-fluent-sm transition-all duration-200">
+                      {categoryItems.map(item => <div 
+                          key={item.unique_id} 
+                          className="group relative p-4 bg-card/50 backdrop-blur-sm border border-border/40 rounded-lg hover:bg-card hover:border-primary/30 hover:shadow-fluent-sm transition-all duration-200"
+                          onMouseEnter={() => handleItemMouseEnter(item)}
+                          onMouseLeave={handleItemMouseLeave}
+                        >
                           <div className="flex items-center justify-between">
                             <div className="flex items-start gap-3 flex-1">
                               <Checkbox checked={selectedItems.has(item.unique_id || '')} onCheckedChange={checked => {
@@ -340,6 +407,10 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit Item
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDuplicateItem(item)}>
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Duplicate Item
+                                  </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => handleDeleteItem(item)} className="text-destructive focus:text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -380,6 +451,9 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         <div className="mb-10 animate-fade-in-up">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground/70 uppercase tracking-wider">
+                Items Management
+              </p>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight fluent-hero-text">
                 Checklist Items
               </h1>
@@ -395,7 +469,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
               {/* Add New Item Button */}
               <Button onClick={handleCreateItem} className="fluent-button shadow-fluent-sm hover:shadow-fluent-md">
                 <Plus className="w-4 h-4 mr-2" />
-                Add New Item
+                New Item
               </Button>
 
               {/* Advanced Filters Button */}
@@ -511,6 +585,13 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
 
       {/* Template Management */}
       <TemplateManagement isOpen={showTemplateManagement} onClose={() => setShowTemplateManagement(false)} selectedItems={Array.from(selectedItems).map(id => checklistItems?.find(item => item.unique_id === id)).filter(Boolean) as ChecklistItem[]} />
+
+      {/* Quick Preview Panel */}
+      <ChecklistItemPreviewPanel 
+        item={previewItem}
+        isOpen={showPreview}
+        onClose={handleClosePreview}
+      />
     </AnimatedBackground>;
 };
 export default ChecklistManagementPage;
