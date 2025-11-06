@@ -469,7 +469,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
               {/* Add New Item Button */}
               <Button onClick={handleCreateItem} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-fluent-sm hover:shadow-fluent-md">
                 <Plus className="w-4 h-4 mr-2" />
-                + New Item
+                New Item
               </Button>
 
               {/* Advanced Filters Button */}
