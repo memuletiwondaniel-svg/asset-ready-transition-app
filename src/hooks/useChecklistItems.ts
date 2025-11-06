@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 // Define the ChecklistItem type to match the actual database structure but also keep
 // backward-compatible aliases used across the app
@@ -28,6 +29,8 @@ export interface ChecklistItem {
 }
 
 export const useChecklistItems = (language?: string) => {
+  const queryClient = useQueryClient();
+  
   // Map language names/codes to ISO codes used in translations JSON
   const toLangCode = (lang?: string) => {
     if (!lang) return 'en';
@@ -40,6 +43,33 @@ export const useChecklistItems = (language?: string) => {
     return 'en';
   };
   const langCode = toLangCode(language);
+
+  // Set up real-time subscription for checklist items
+  useEffect(() => {
+    const channel = supabase
+      .channel('checklist-items-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'checklist_items'
+        },
+        (payload) => {
+          console.log('Real-time checklist item update:', payload.eventType, payload);
+          
+          // Invalidate all language queries to sync across all views
+          queryClient.invalidateQueries({ queryKey: ['checklist-items'] });
+          queryClient.invalidateQueries({ queryKey: ['checklist-categories-from-items'] });
+          queryClient.invalidateQueries({ queryKey: ['checklist-topics-from-items'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return useQuery({
     queryKey: ['checklist-items', langCode],
