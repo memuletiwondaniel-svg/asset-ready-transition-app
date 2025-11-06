@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ViewChecklistItemModal from './ViewChecklistItemModal';
@@ -56,6 +56,9 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   const [showEditChecklist, setShowEditChecklist] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [viewingItem, setViewingItem] = useState<ChecklistItem | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   const { data: allChecklistItems = [], isLoading } = useChecklistItems();
   const [selectedItems, setSelectedItems] = useState<string[]>(
     checklist.selected_items || []
@@ -105,6 +108,19 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
 
     return items;
   }, [searchQuery, selectedCategory, sortBy, sortOrder, checklistItems, selectedItems]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredItems.slice(startIndex, endIndex);
+  }, [filteredItems, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, sortBy, sortOrder]);
 
   const handleEditChecklist = () => {
     setShowEditChecklist(true);
@@ -297,7 +313,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
           {/* Checklist Items Tab */}
           <TabsContent value="items" className="space-y-6">
             {/* Search and Filter Controls */}
-            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-lg">
+            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-lg animate-fade-in">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 relative">
@@ -306,12 +322,12 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                       placeholder="Search checklist items..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 h-11 bg-background/50"
+                      className="pl-10 h-11 bg-background/50 transition-all duration-200 focus:shadow-md"
                     />
                   </div>
                   <div className="flex gap-3">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-56 h-11 bg-background/50">
+                      <SelectTrigger className="w-56 h-11 bg-background/50 transition-all duration-200 hover:bg-background/70">
                         <Filter className="h-4 w-4 mr-2" />
                         <SelectValue placeholder="Filter by category" />
                       </SelectTrigger>
@@ -325,7 +341,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                       </SelectContent>
                     </Select>
                     <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-48 h-11 bg-background/50">
+                      <SelectTrigger className="w-48 h-11 bg-background/50 transition-all duration-200 hover:bg-background/70">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
@@ -335,19 +351,38 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <SelectItem value="authority">Authority</SelectItem>
                       </SelectContent>
                     </Select>
+                    {/* View Toggle */}
+                    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className="h-9 px-3 transition-all duration-200"
+                      >
+                        <Grid3x3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === 'table' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('table')}
+                        className="h-9 px-3 transition-all duration-200"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Items Grid */}
-            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl">
+            {/* Items Content - Grid or Table View */}
+            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl animate-fade-in" style={{ animationDelay: '100ms' }}>
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-2xl">Checklist Items ({filteredItems.length})</CardTitle>
                     <CardDescription className="mt-1">
-                      Detailed view of all items in this checklist
+                      {viewMode === 'grid' ? 'Card view' : 'Table view'} • Page {currentPage} of {totalPages}
                     </CardDescription>
                   </div>
                 </div>
@@ -360,50 +395,62 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                       <p className="text-muted-foreground">Loading checklist items...</p>
                     </div>
                   </div>
-                ) : (
+                ) : viewMode === 'grid' ? (
+                  /* Grid View */
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    {filteredItems.map((item) => (
+                    {paginatedItems.map((item, index) => (
                       <div 
                         key={item.unique_id} 
-                        className="group relative p-5 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:scale-[1.01]"
+                        className="group relative p-5 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-xl hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] animate-scale-in cursor-pointer"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                        onClick={() => setViewingItem(item)}
                       >
                         {/* Item Header */}
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <Badge 
                               variant="outline" 
-                              className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap"
+                              className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap transition-all duration-200 group-hover:bg-primary/10 group-hover:border-primary/50"
                             >
                               {item.unique_id}
                             </Badge>
                             <Badge 
-                              className={`text-xs px-2.5 py-1 font-medium ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}
+                              className={`text-xs px-2.5 py-1 font-medium transition-all duration-200 ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}
                             >
                               {item.category}
                             </Badge>
                           </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setViewingItem(item)}
-                              className="h-8 w-8 p-0 hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingItem(item);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => handleEditItem(item)}
-                              className="h-8 w-8 p-0 hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditItem(item);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => handleDeleteItem(item.unique_id)}
-                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteItem(item.unique_id);
+                              }}
+                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200 hover:scale-110"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -411,7 +458,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         </div>
                         
                         {/* Description */}
-                        <p className="text-sm font-medium text-foreground mb-3 line-clamp-2 leading-relaxed">
+                        <p className="text-sm font-medium text-foreground mb-3 line-clamp-2 leading-relaxed transition-colors duration-200 group-hover:text-primary">
                           {item.description}
                         </p>
                         
@@ -432,6 +479,163 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  /* Table View */
+                  <div className="rounded-lg border border-border/40 overflow-hidden animate-fade-in">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30 hover:bg-muted/40">
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            onClick={() => handleSort('id')}
+                          >
+                            Item ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            onClick={() => handleSort('description')}
+                          >
+                            Description {sortBy === 'description' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            onClick={() => handleSort('category')}
+                          >
+                            Category {sortBy === 'category' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </TableHead>
+                          <TableHead>Supporting Evidence</TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            onClick={() => handleSort('authority')}
+                          >
+                            Authority {sortBy === 'authority' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedItems.map((item, index) => (
+                          <TableRow 
+                            key={item.unique_id} 
+                            className="hover:bg-muted/20 transition-all duration-200 cursor-pointer animate-fade-in"
+                            style={{ animationDelay: `${index * 30}ms` }}
+                            onClick={() => setViewingItem(item)}
+                          >
+                            <TableCell className="font-mono font-medium text-primary">
+                              {item.unique_id}
+                            </TableCell>
+                            <TableCell className="max-w-md">
+                              <div className="line-clamp-2 font-medium">{item.description}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
+                                {item.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <div className="line-clamp-2 text-sm text-muted-foreground">
+                                {item.required_evidence || '-'}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm">{item.Approver || '-'}</TableCell>
+                            <TableCell>
+                              <div className="flex justify-end gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingItem(item);
+                                  }}
+                                  className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditItem(item);
+                                  }}
+                                  className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteItem(item.unique_id);
+                                  }}
+                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                
+                {/* Pagination Controls */}
+                {!isLoading && filteredItems.length > 0 && (
+                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/20 animate-fade-in" style={{ animationDelay: '200ms' }}>
+                    <div className="text-sm text-muted-foreground">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} items
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="transition-all duration-200 hover:scale-105"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="h-9 w-9 p-0 transition-all duration-200 hover:scale-110"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="transition-all duration-200 hover:scale-105"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
