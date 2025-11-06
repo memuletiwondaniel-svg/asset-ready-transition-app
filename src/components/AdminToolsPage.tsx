@@ -288,14 +288,9 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
     );
   }
   return <div className="min-h-screen bg-background animate-fade-in">
-      <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t} />
-
-      {/* Subtle Divider */}
-      <div className="border-t border-border/50" />
-
-      <div className="container pt-8 pb-8 max-w-7xl mx-auto">
+      <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t}>
         {/* Breadcrumb Navigation */}
-        <Breadcrumb className="mb-10">
+        <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
@@ -309,48 +304,54 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+      </AdminHeader>
 
-        {/* Header Section */}
-        <div className="mb-10">
-          <h1 className="text-2xl font-medium text-foreground/80 mb-2">
-            {t.administration}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {t.adminToolsSubtitle}
-          </p>
-        </div>
+      {/* Subtle Divider */}
+      <div className="border-t border-border/50" />
 
-        {/* Search Bar - Elevated Design */}
-        <div className="mb-12">
-          <div className="relative max-w-xl">
+      <div className="container pt-8 pb-8 max-w-7xl mx-auto">
+        {/* Header Section with Search */}
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h1 className="text-2xl font-medium text-foreground/80 mb-2">
+              {t.administration}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {t.adminToolsSubtitle}
+            </p>
+          </div>
+          
+          {/* Search Bar - Compact Design */}
+          <div className="relative w-96">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg blur-xl" />
             <div className="relative bg-background border-2 border-border/50 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search admin tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-12 h-14 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="pl-10 pr-10 h-10 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               {searchQuery && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-muted"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted"
                   onClick={() => setSearchQuery('')}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3" />
                 </Button>
               )}
             </div>
           </div>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-3 ml-1">
-              Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
-            </p>
-          )}
         </div>
+        
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground mb-6 -mt-6">
+            Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
+          </p>
+        )}
 
         {/* Favorites Section */}
         <TooltipProvider>
@@ -360,37 +361,27 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                 <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                 Favorite Tools
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {favoriteToolsList.map((tool, index) => {
                   const IconComponent = tool.icon;
                   const isFavorite = favoriteTools.includes(tool.id);
                   return (
                     <Card 
                       key={tool.id}
-                      className={`group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in ${tool.height}`}
+                      className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in"
                       style={{ animationDelay: `${index * 100}ms` }}
                       onClick={tool.onClick}
                     >
                       {/* Gradient Background Effect */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                       
-                      {/* Favorite Star Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-4 right-4 h-8 w-8 z-10 hover:bg-background/80"
-                        onClick={(e) => toggleFavorite(tool.id, e)}
-                      >
-                        <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
-                      </Button>
-                      
-                    <CardHeader className="relative space-y-6 p-8 pr-14">
-                      {/* Icon Section */}
-                      <div className="flex items-center justify-between">
+                    <CardHeader className="relative space-y-4 p-6">
+                      {/* Icon and Stats Row */}
+                      <div className="flex items-start justify-between">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
-                              <IconComponent className="h-8 w-8 text-white" />
+                            <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
+                              <IconComponent className="h-6 w-6 text-white" />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="max-w-xs">
@@ -398,24 +389,36 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                           </TooltipContent>
                         </Tooltip>
                       
-                      {/* Stats Badge */}
-                      {tool.stats.total !== undefined && (
-                        <div className="flex flex-col items-end">
-                          <span className={`text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${
-                            tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''
-                          }`}>
-                            {tool.stats.total}
-                          </span>
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                            {tool.stats.label || 'Total'}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          {/* Stats Badge */}
+                          {tool.stats.total !== undefined && (
+                            <div className="flex flex-col items-end">
+                              <span className={`text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${
+                                tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''
+                              }`}>
+                                {tool.stats.total}
+                              </span>
+                              <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                                {tool.stats.label || 'Total'}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Favorite Star Button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-background/80"
+                            onClick={(e) => toggleFavorite(tool.id, e)}
+                          >
+                            <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
+                          </Button>
                         </div>
-                      )}
-                    </div>
+                      </div>
                       
                       {/* Title & Description */}
-                      <div className="space-y-2">
-                        <CardTitle className="text-2xl font-bold group-hover:text-primary transition-colors">
+                      <div className="space-y-1.5">
+                        <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
                           {tool.title}
                         </CardTitle>
                         <CardDescription className="text-sm leading-relaxed">
@@ -438,37 +441,27 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                 All Tools
               </h2>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-[auto] gap-8 md:auto-rows-[minmax(120px,auto)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {nonFavoriteToolsList.map((tool, index) => {
                 const IconComponent = tool.icon;
                 const isFavorite = favoriteTools.includes(tool.id);
                 return (
                   <Card 
                     key={tool.id}
-                    className={`group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in ${tool.height}`}
+                    className="group relative cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden animate-fade-in"
                     style={{ animationDelay: `${index * 100}ms` }}
                     onClick={tool.onClick}
                   >
                     {/* Gradient Background Effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                     
-                    {/* Favorite Star Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-4 right-4 h-8 w-8 z-10 hover:bg-background/80"
-                      onClick={(e) => toggleFavorite(tool.id, e)}
-                    >
-                      <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
-                    </Button>
-                    
-                    <CardHeader className="relative space-y-6 p-8 pr-14">
-                      {/* Icon Section */}
-                      <div className="flex items-center justify-between">
+                    <CardHeader className="relative space-y-4 p-6">
+                      {/* Icon and Stats Row */}
+                      <div className="flex items-start justify-between">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
-                              <IconComponent className="h-8 w-8 text-white" />
+                            <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
+                              <IconComponent className="h-6 w-6 text-white" />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="max-w-xs">
@@ -476,24 +469,36 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                           </TooltipContent>
                         </Tooltip>
                       
-                      {/* Stats Badge */}
-                      {tool.stats.total !== undefined && (
-                        <div className="flex flex-col items-end">
-                          <span className={`text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${
-                            tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''
-                          }`}>
-                            {tool.stats.total}
-                          </span>
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                            {tool.stats.label || 'Total'}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          {/* Stats Badge */}
+                          {tool.stats.total !== undefined && (
+                            <div className="flex flex-col items-end">
+                              <span className={`text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300 ${
+                                tool.stats.isAnimating ? 'animate-[pulse_0.5s_ease-in-out] scale-110' : ''
+                              }`}>
+                                {tool.stats.total}
+                              </span>
+                              <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                                {tool.stats.label || 'Total'}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Favorite Star Button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-background/80"
+                            onClick={(e) => toggleFavorite(tool.id, e)}
+                          >
+                            <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
+                          </Button>
                         </div>
-                      )}
-                    </div>
+                      </div>
                     
                     {/* Title & Description */}
-                    <div className="space-y-2">
-                      <CardTitle className="text-2xl font-bold group-hover:text-primary transition-colors">
+                    <div className="space-y-1.5">
+                      <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
                         {tool.title}
                       </CardTitle>
                       <CardDescription className="text-sm leading-relaxed">
@@ -502,7 +507,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
                     </div>
                     
                     {/* Hover Indicator */}
-                    <div className="flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2">
                       <span>Manage</span>
                       <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
                     </div>
