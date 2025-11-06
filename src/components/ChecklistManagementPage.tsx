@@ -3,7 +3,7 @@ import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search, Home, Filter, BookTemplate, Copy } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Search, Home, Filter, Copy, AlignJustify, TableIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import { ThemeToggle } from './admin/ThemeToggle';
 import LanguageSelector from './admin/LanguageSelector';
 import UserProfileDropdown from './admin/UserProfileDropdown';
 import OrshLogo from './ui/OrshLogo';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getCurrentTranslations } from '@/utils/translations';
 import { AdvancedFilterSidebar, ChecklistFilters } from './checklist/AdvancedFilterSidebar';
 import { BulkActionsToolbar } from './checklist/BulkActionsToolbar';
@@ -544,39 +545,55 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                   </Badge>}
               </Button>
 
-              {/* Template Management Button */}
+              {/* Template Management Button - Without Icon */}
               <Button variant="outline" onClick={() => setShowTemplateManagement(true)} className="fluent-button-secondary shadow-fluent-xs">
-                <BookTemplate className="w-4 h-4 mr-2" />
                 Templates
               </Button>
 
-              {/* View Mode Toggle - Simplified */}
-              <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
-                <Button
-                  variant={viewMode === 'card' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('card')}
-                  className={`h-8 px-3 transition-all ${
-                    viewMode === 'card' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className={`h-8 px-3 transition-all ${
-                    viewMode === 'table' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Table className="w-4 h-4" />
-                </Button>
-              </div>
+              {/* View Mode Toggle - With Distinct Icons and Tooltips */}
+              <TooltipProvider>
+                <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('card')}
+                        className={`h-8 px-3 transition-all ${
+                          viewMode === 'card' 
+                            ? 'bg-background shadow-sm text-foreground' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <AlignJustify className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Grouped View - Items organized by category</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('table')}
+                        className={`h-8 px-3 transition-all ${
+                          viewMode === 'table' 
+                            ? 'bg-background shadow-sm text-foreground' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <TableIcon className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Table View - All items in a sortable table</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </TooltipProvider>
             </div>
           </div>
         </div>
