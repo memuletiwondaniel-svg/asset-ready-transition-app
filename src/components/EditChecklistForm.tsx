@@ -16,6 +16,9 @@ import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/us
 import { useToast } from '@/hooks/use-toast';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemSuccessPage from './ChecklistItemSuccessPage';
+import AdminHeader from './admin/AdminHeader';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EditChecklistFormProps {
   checklist: Checklist;
@@ -28,6 +31,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   onBack, 
   onSave
 }) => {
+  const { language, setLanguage, translations } = useLanguage();
   const [formData, setFormData] = useState({
     reason: checklist.reason,
     selected_items: checklist.selected_items || [],
@@ -185,35 +189,57 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   }
 
   return (
-    <div className="pb-8">
-      {/* Navigation Bar */}
-      <div className="sticky top-[80px] z-40 bg-background/95 backdrop-blur-xl border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <Button variant="outline" onClick={onBack} size="lg">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Cancel</span>
-              <span className="sm:hidden">Back</span>
-            </Button>
-            
-            <div className="text-center hidden md:block">
-              <h2 className="text-xl font-bold">Edit Checklist</h2>
-              <p className="text-sm text-muted-foreground">
-                {formData.selected_items.length} items selected
-              </p>
+    <div className="min-h-screen bg-background">
+      {/* Admin Header with breadcrumb */}
+      <AdminHeader
+        selectedLanguage={language}
+        onLanguageChange={setLanguage}
+        translations={translations}
+      >
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer">
+                Checklists
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Edit Checklist</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </AdminHeader>
+
+      <div className="pb-8">
+        {/* Navigation Bar */}
+        <div className="sticky top-[80px] z-40 bg-background/95 backdrop-blur-xl border-b shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <Button variant="outline" onClick={onBack} size="lg">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Cancel</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
+              
+              <div className="text-center hidden md:block">
+                <h2 className="text-xl font-bold">Edit Checklist</h2>
+                <p className="text-sm text-muted-foreground">
+                  {formData.selected_items.length} items selected
+                </p>
+              </div>
+              
+              <Button 
+                onClick={handleSave}
+                disabled={!formData.reason || (formData.reason === 'Others' && !formData.custom_reason) || isPending}
+                size="lg"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isPending ? 'Saving...' : 'Save'}
+              </Button>
             </div>
-            
-            <Button 
-              onClick={handleSave}
-              disabled={!formData.reason || (formData.reason === 'Others' && !formData.custom_reason) || isPending}
-              size="lg"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isPending ? 'Saving...' : 'Save'}
-            </Button>
           </div>
         </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         {/* Basic Information */}
@@ -679,6 +705,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
