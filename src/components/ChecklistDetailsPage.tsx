@@ -428,16 +428,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                           </SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-48 h-11 bg-background/50 transition-all duration-200 hover:bg-background/70">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="description">Description</SelectItem>
-                        <SelectItem value="category">Category</SelectItem>
-                        <SelectItem value="authority">Authority</SelectItem>
-                      </SelectContent>
-                    </Select>
                     {/* View Toggle */}
                     <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
                       <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')} className="h-9 px-3 transition-all duration-200">
@@ -447,16 +437,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <List className="h-4 w-4" />
                       </Button>
                     </div>
-                    {/* Add Item Button - Modern Design */}
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      className="h-11 px-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group relative overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                      <Plus className="h-4 w-4 mr-2 transition-transform group-hover:rotate-90 duration-300" />
-                      <span className="font-semibold">Add Item</span>
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -909,6 +889,17 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating Action Button */}
+      <Button 
+        variant="default"
+        size="lg"
+        className="fixed bottom-8 right-8 h-16 w-16 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 active:scale-95 group z-50 border-2 border-primary-foreground/20"
+        aria-label="Add new item"
+      >
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+        <Plus className="h-7 w-7 transition-transform group-hover:rotate-90 duration-300 relative z-10" />
+      </Button>
         </div>
       </AnimatedBackground>
     </div>;
