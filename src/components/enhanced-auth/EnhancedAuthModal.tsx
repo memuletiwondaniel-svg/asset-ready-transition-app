@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
+import OrshLogo from '@/components/ui/OrshLogo';
 interface EnhancedAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -178,7 +179,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
               <div className="relative z-10">
                 {/* Sign In Header */}
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-semibold text-foreground mb-1 tracking-tight">Welcome back</h2>
+                  <div className="flex justify-center mb-4">
+                    <OrshLogo className="h-12 w-auto" />
+                  </div>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Sign in to your ORSH account
                   </p>
