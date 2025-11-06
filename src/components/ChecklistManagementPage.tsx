@@ -467,7 +467,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
             
             <div className="flex flex-wrap items-center gap-3">
               {/* Add New Item Button */}
-              <Button onClick={handleCreateItem} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-fluent-sm hover:shadow-fluent-md">
+              <Button onClick={handleCreateItem} className="bg-primary text-primary-foreground hover:bg-primary-hover shadow-fluent-sm hover:shadow-fluent-md transition-all">
                 <Plus className="w-4 h-4 mr-2" />
                 New Item
               </Button>
