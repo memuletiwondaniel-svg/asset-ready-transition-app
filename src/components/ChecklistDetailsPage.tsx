@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight, FolderInput, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ViewChecklistItemModal from './ViewChecklistItemModal';
@@ -56,9 +58,14 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   const [showEditChecklist, setShowEditChecklist] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [viewingItem, setViewingItem] = useState<ChecklistItem | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [bulkSelectedItems, setBulkSelectedItems] = useState<Set<string>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [targetCategory, setTargetCategory] = useState('');
+  const [expandedColumns, setExpandedColumns] = useState(false);
   const { data: allChecklistItems = [], isLoading } = useChecklistItems();
   const [selectedItems, setSelectedItems] = useState<string[]>(
     checklist.selected_items || []
@@ -177,6 +184,50 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       setSortOrder('asc');
     }
   };
+
+  // Bulk selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setBulkSelectedItems(new Set(paginatedItems.map(item => item.unique_id)));
+    } else {
+      setBulkSelectedItems(new Set());
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    const newSet = new Set(bulkSelectedItems);
+    if (checked) {
+      newSet.add(itemId);
+    } else {
+      newSet.delete(itemId);
+    }
+    setBulkSelectedItems(newSet);
+  };
+
+  const handleBulkDelete = () => {
+    Array.from(bulkSelectedItems).forEach(itemId => {
+      handleDeleteItem(itemId);
+    });
+    setBulkSelectedItems(new Set());
+    setShowDeleteDialog(false);
+  };
+
+  const handleBulkMoveCategory = () => {
+    if (!targetCategory) return;
+    
+    // In a real implementation, this would update the items in the database
+    Array.from(bulkSelectedItems).forEach(itemId => {
+      // Update item category logic here
+      console.log(`Moving item ${itemId} to category ${targetCategory}`);
+    });
+    
+    setBulkSelectedItems(new Set());
+    setShowMoveDialog(false);
+    setTargetCategory('');
+  };
+
+  const allSelected = paginatedItems.length > 0 && paginatedItems.every(item => bulkSelectedItems.has(item.unique_id));
+  const someSelected = paginatedItems.some(item => bulkSelectedItems.has(item.unique_id)) && !allSelected;
 
   // Show edit checklist form
   if (showEditChecklist) {
@@ -370,10 +421,62 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <List className="h-4 w-4" />
                       </Button>
                     </div>
+                    {/* Column Width Toggle for Table View */}
+                    {viewMode === 'table' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedColumns(!expandedColumns)}
+                        className="h-11 px-3 transition-all duration-200"
+                      >
+                        {expandedColumns ? <Minimize2 className="h-4 w-4 mr-2" /> : <Maximize2 className="h-4 w-4 mr-2" />}
+                        {expandedColumns ? 'Compact' : 'Expand'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Bulk Actions Toolbar */}
+            {bulkSelectedItems.size > 0 && (
+              <div className="bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4 shadow-lg animate-slide-in-right">
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-primary text-primary-foreground px-3 py-1.5 text-sm font-semibold shadow-sm">
+                    {bulkSelectedItems.size} item{bulkSelectedItems.size !== 1 ? 's' : ''} selected
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setBulkSelectedItems(new Set())}
+                    className="hover:bg-background/50"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Selection
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMoveDialog(true)}
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <FolderInput className="h-4 w-4 mr-2" />
+                    Move to Category
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Items Content - Grid or Table View */}
             <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl animate-fade-in" style={{ animationDelay: '100ms' }}>
@@ -486,60 +589,92 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/40">
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={allSelected}
+                              onCheckedChange={handleSelectAll}
+                              aria-label="Select all items"
+                              className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                            />
+                          </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[150px]' : 'w-32'}`}
                             onClick={() => handleSort('id')}
                           >
                             Item ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[400px]' : ''}`}
                             onClick={() => handleSort('description')}
                           >
                             Description {sortBy === 'description' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[200px]' : 'w-40'}`}
                             onClick={() => handleSort('category')}
                           >
                             Category {sortBy === 'category' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableHead>
-                          <TableHead>Supporting Evidence</TableHead>
+                          <TableHead className={expandedColumns ? 'min-w-[300px]' : 'max-w-xs'}>
+                            Supporting Evidence
+                          </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+                            className={`cursor-pointer hover:bg-muted/50 transition-colors duration-200 ${expandedColumns ? 'min-w-[200px]' : 'w-40'}`}
                             onClick={() => handleSort('authority')}
                           >
                             Authority {sortBy === 'authority' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead className="text-right w-32">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {paginatedItems.map((item, index) => (
                           <TableRow 
                             key={item.unique_id} 
-                            className="hover:bg-muted/20 transition-all duration-200 cursor-pointer animate-fade-in"
+                            className={`hover:bg-muted/20 transition-all duration-200 cursor-pointer animate-fade-in ${bulkSelectedItems.has(item.unique_id) ? 'bg-primary/5' : ''}`}
                             style={{ animationDelay: `${index * 30}ms` }}
-                            onClick={() => setViewingItem(item)}
                           >
-                            <TableCell className="font-mono font-medium text-primary">
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={bulkSelectedItems.has(item.unique_id)}
+                                onCheckedChange={(checked) => handleSelectItem(item.unique_id, checked as boolean)}
+                                aria-label={`Select ${item.unique_id}`}
+                              />
+                            </TableCell>
+                            <TableCell 
+                              className="font-mono font-medium text-primary"
+                              onClick={() => setViewingItem(item)}
+                            >
                               {item.unique_id}
                             </TableCell>
-                            <TableCell className="max-w-md">
-                              <div className="line-clamp-2 font-medium">{item.description}</div>
+                            <TableCell 
+                              className={expandedColumns ? '' : 'max-w-md'}
+                              onClick={() => setViewingItem(item)}
+                            >
+                              <div className={expandedColumns ? 'font-medium' : 'line-clamp-2 font-medium'}>
+                                {item.description}
+                              </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={() => setViewingItem(item)}>
                               <Badge className={`${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
                                 {item.category}
                               </Badge>
                             </TableCell>
-                            <TableCell className="max-w-xs">
-                              <div className="line-clamp-2 text-sm text-muted-foreground">
+                            <TableCell 
+                              className={expandedColumns ? '' : 'max-w-xs'}
+                              onClick={() => setViewingItem(item)}
+                            >
+                              <div className={expandedColumns ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'}>
                                 {item.required_evidence || '-'}
                               </div>
                             </TableCell>
-                            <TableCell className="text-sm">{item.Approver || '-'}</TableCell>
-                            <TableCell>
+                            <TableCell 
+                              className="text-sm"
+                              onClick={() => setViewingItem(item)}
+                            >
+                              {item.Approver || '-'}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                               <div className="flex justify-end gap-1">
                                 <Button 
                                   variant="ghost" 
@@ -714,6 +849,72 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
           onComplete={handleSaveItem}
         />
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-semibold text-destructive">
+              Confirm Bulk Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{bulkSelectedItems.size} item{bulkSelectedItems.size !== 1 ? 's' : ''}</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="transition-all duration-200">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive hover:bg-destructive/90 transition-all duration-200"
+            >
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Move to Category Dialog */}
+      <AlertDialog open={showMoveDialog} onOpenChange={setShowMoveDialog}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-semibold">
+              Move to Category
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Select a category to move <span className="font-semibold text-foreground">{bulkSelectedItems.size} item{bulkSelectedItems.size !== 1 ? 's' : ''}</span> to.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Select value={targetCategory} onValueChange={setTargetCategory}>
+              <SelectTrigger className="h-11 bg-background/50">
+                <SelectValue placeholder="Select a category..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel 
+              onClick={() => setTargetCategory('')}
+              className="transition-all duration-200"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkMoveCategory}
+              disabled={!targetCategory}
+              className="transition-all duration-200"
+            >
+              Move Items
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
         </div>
       </AnimatedBackground>
     </div>
