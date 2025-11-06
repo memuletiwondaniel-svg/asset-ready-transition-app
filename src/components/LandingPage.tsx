@@ -659,12 +659,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
         <div className="text-center animate-fade-in-up" style={{
         animationDelay: '0.8s'
       }}>
-          <div className="inline-flex items-center px-6 py-3 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 shadow-fluent-sm">
-            <div className="w-2 h-2 rounded-full bg-success mr-3 animate-pulse-subtle" />
-            <p className="text-sm text-muted-foreground font-medium">
-              {t.poweredBy}
-            </p>
-          </div>
+          
         </div>
       </div>
     </div>;
