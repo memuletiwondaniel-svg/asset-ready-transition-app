@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableSkeleton } from '@/components/ui/skeleton-loader';
 import { Button } from '@/components/ui/button';
@@ -211,7 +212,68 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
     }
   };
 
-  // Handle edit/create
+  // Inline edit handlers
+  const handleInlineEdit = async (type: string, id: string, field: string, newValue: string) => {
+    const tableName = type === 'reason' ? 'pssr_reasons' 
+      : type === 'tie-in' ? 'pssr_tie_in_scopes' 
+      : 'pssr_moc_scopes';
+
+    try {
+      const updateData = { [field]: newValue.trim() };
+
+      const { error } = await supabase
+        .from(tableName)
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ 
+        queryKey: [type === 'reason' ? 'pssr-reasons-all' : type === 'tie-in' ? 'pssr-tie-in-scopes-all' : 'pssr-moc-scopes-all'] 
+      });
+      toast.success('Updated successfully');
+    } catch (error) {
+      console.error('Error updating:', error);
+      toast.error('Failed to update');
+      throw error;
+    }
+  };
+
+  // Validation functions
+  const validateName = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return { valid: false, error: 'Name cannot be empty' };
+    }
+    if (trimmed.length > 100) {
+      return { valid: false, error: 'Name must be less than 100 characters' };
+    }
+    return { valid: true };
+  };
+
+  const validateCode = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return { valid: false, error: 'Code cannot be empty' };
+    }
+    if (trimmed.length > 20) {
+      return { valid: false, error: 'Code must be less than 20 characters' };
+    }
+    return { valid: true };
+  };
+
+  const validateDescription = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return { valid: false, error: 'Description cannot be empty' };
+    }
+    if (trimmed.length > 500) {
+      return { valid: false, error: 'Description must be less than 500 characters' };
+    }
+    return { valid: true };
+  };
+
+  // Handle edit/create from modal
   const handleSave = async () => {
     const { type, item } = editDialog;
     const tableName = type === 'reason' ? 'pssr_reasons' 
@@ -742,7 +804,15 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                               />
                             </TableCell>
                             <TableCell className="font-medium">{reason.display_order}</TableCell>
-                            <TableCell>{reason.name}</TableCell>
+                            <TableCell>
+                              <InlineEditableCell
+                                value={reason.name}
+                                onSave={(newValue) => handleInlineEdit('reason', reason.id, 'name', newValue)}
+                                placeholder="Enter reason name"
+                                maxLength={100}
+                                validate={validateName}
+                              />
+                            </TableCell>
                             <TableCell>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -882,8 +952,25 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                               />
                             </TableCell>
                             <TableCell className="font-medium">{scope.display_order}</TableCell>
-                            <TableCell className="font-semibold">{scope.code}</TableCell>
-                            <TableCell className="max-w-md truncate">{scope.description}</TableCell>
+                            <TableCell>
+                              <InlineEditableCell
+                                value={scope.code}
+                                onSave={(newValue) => handleInlineEdit('tie-in', scope.id, 'code', newValue)}
+                                placeholder="Enter code"
+                                maxLength={20}
+                                validate={validateCode}
+                              />
+                            </TableCell>
+                            <TableCell className="max-w-md">
+                              <InlineEditableCell
+                                value={scope.description}
+                                onSave={(newValue) => handleInlineEdit('tie-in', scope.id, 'description', newValue)}
+                                type="textarea"
+                                placeholder="Enter description"
+                                maxLength={500}
+                                validate={validateDescription}
+                              />
+                            </TableCell>
                             <TableCell>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -1019,7 +1106,15 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                               />
                             </TableCell>
                             <TableCell className="font-medium">{scope.display_order}</TableCell>
-                            <TableCell>{scope.name}</TableCell>
+                            <TableCell>
+                              <InlineEditableCell
+                                value={scope.name}
+                                onSave={(newValue) => handleInlineEdit('moc', scope.id, 'name', newValue)}
+                                placeholder="Enter MOC scope name"
+                                maxLength={100}
+                                validate={validateName}
+                              />
+                            </TableCell>
                             <TableCell>
                               <Tooltip>
                                 <TooltipTrigger asChild>
