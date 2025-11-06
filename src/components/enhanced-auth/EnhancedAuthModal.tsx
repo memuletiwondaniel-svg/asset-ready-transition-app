@@ -29,6 +29,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(false);
 
   // Form states
   const [signInData, setSignInData] = useState({
@@ -57,6 +58,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     if (!error) {
       onAuthenticated();
       onClose();
+      setLoginFailed(false);
+    } else {
+      setLoginFailed(true);
     }
     setLoading(false);
   };
@@ -160,7 +164,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           
           <div className="w-full max-w-sm relative z-10">
             {/* Modern Fluent Design Card */}
-            <div className="bg-card/80 backdrop-blur-2xl rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
+            <div className="bg-card/80 backdrop-blur-2xl rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-6 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
               {/* Close Button */}
               <Button onClick={onClose} variant="ghost" size="sm" className="absolute top-4 right-4 z-20 w-8 h-8 p-0 hover:bg-muted/20 text-muted-foreground hover:text-foreground transition-colors duration-200">
                 <X className="h-4 w-4" />
@@ -173,17 +177,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
               {/* Content */}
               <div className="relative z-10">
                 {/* Sign In Header */}
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-semibold text-foreground mb-2 tracking-tight">Welcome back</h2>
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-semibold text-foreground mb-1 tracking-tight">Welcome back</h2>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Sign in to your ORSH account
                   </p>
                 </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3.5">
                   {/* Email/Password Sign In */}
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
+                  <form onSubmit={handleSignIn} className="space-y-3.5">
+                    <div className="space-y-1.5">
                       <Label htmlFor="signin-email" className="text-foreground font-medium">Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
@@ -195,7 +199,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label htmlFor="signin-password" className="text-foreground font-medium">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
@@ -203,17 +207,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         ...signInData,
                         password: e.target.value
                       })} className="pl-11 pr-11 h-10 text-sm border-border bg-input" required />
-                        <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </Button>
+                        {signInData.password.length > 0 && (
+                          <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </Button>
+                        )}
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
-                        Forgot password?
-                      </Button>
-                    </div>
+                    {loginFailed && (
+                      <div className="text-right">
+                        <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
+                          Forgot password?
+                        </Button>
+                      </div>
+                    )}
 
                     <Button type="submit" className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground 
                                  shadow-lg hover:shadow-xl transition-all duration-300 ease-out
@@ -227,7 +235,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   </form>
 
                   {/* Divider */}
-                  <div className="relative my-6">
+                  <div className="relative my-4">
                     <div className="absolute inset-0 flex items-center">
                       
                     </div>
@@ -268,7 +276,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   </div>
 
                   {/* New to ORSH Text */}
-                  <div className="text-center text-sm text-muted-foreground mt-6">
+                  <div className="text-center text-sm text-muted-foreground mt-4">
                     New to ORSH?{' '}
                     <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
                       Create your account
