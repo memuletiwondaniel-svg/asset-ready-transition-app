@@ -151,6 +151,34 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
     return map;
   }, [topicsData, langCode]);
 
+  // Calculate category statistics
+  const categoryStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    checklistItems?.forEach(item => {
+      if (item.category) {
+        stats[item.category] = (stats[item.category] || 0) + 1;
+      }
+    });
+    return stats;
+  }, [checklistItems]);
+
+  // Get unique values for filters
+  const availableCategories = useMemo(() => {
+    return Array.from(new Set(allChecklistItems?.map(item => item.category).filter(Boolean) || []));
+  }, [allChecklistItems]);
+
+  const availableTopics = useMemo(() => {
+    return Array.from(new Set(allChecklistItems?.map(item => item.topic).filter(Boolean) || []));
+  }, [allChecklistItems]);
+
+  const availableApprovers = useMemo(() => {
+    return Array.from(new Set(allChecklistItems?.map(item => item.Approver).filter(Boolean) || []));
+  }, [allChecklistItems]);
+
+  const availableResponsible = useMemo(() => {
+    return Array.from(new Set(allChecklistItems?.map(item => item.responsible).filter(Boolean) || []));
+  }, [allChecklistItems]);
+
   // Initialize and update category order when data changes
   React.useEffect(() => {
     if (categoryStats) {
