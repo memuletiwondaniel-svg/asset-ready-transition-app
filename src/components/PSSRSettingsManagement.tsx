@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, CheckCircle, XCircle, Search, X, GripVertical, Trash, Check } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
@@ -632,119 +632,77 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            {/* Compact Modern Tab Navigation with Smooth Transitions */}
-            <div className="flex justify-center animate-smooth-in">
-              <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-md border transition-all duration-300">
-                {showReasonsTab && (
-                  <TabsTrigger 
-                    value="reasons" 
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:scale-105 hover:bg-accent/50 hover:scale-102 active:scale-100"
-                  >
-                    PSSR Reasons
-                  </TabsTrigger>
-                )}
-                {showTieInTab && (
-                  <TabsTrigger 
-                    value="tie-in"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:scale-105 hover:bg-accent/50 hover:scale-102 active:scale-100"
-                  >
-                    Tie-in Scopes
-                  </TabsTrigger>
-                )}
-                {showMOCTab && (
-                  <TabsTrigger 
-                    value="moc"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-2 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=active]:scale-105 hover:bg-accent/50 hover:scale-102 active:scale-100"
-                  >
-                    MOC Scopes
-                  </TabsTrigger>
-                )}
-              </TabsList>
-            </div>
+            {/* Tab Navigation */}
+            <TabsList className="grid w-full grid-cols-3 h-11">
+              {showReasonsTab && (
+                <TabsTrigger value="reasons">
+                  PSSR Reasons
+                </TabsTrigger>
+              )}
+              {showTieInTab && (
+                <TabsTrigger value="tie-in">
+                  Tie-in Scopes
+                </TabsTrigger>
+              )}
+              {showMOCTab && (
+                <TabsTrigger value="moc">
+                  MOC Scopes
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-          {/* PSSR Reasons Tab with Smooth Page Transition */}
-          <TabsContent value="reasons" className="animate-slide-up">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden card-lift">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="animate-smooth-in">
-                    <CardTitle>PSSR Reasons</CardTitle>
-                    <CardDescription>Manage available reasons for creating a PSSR</CardDescription>
+          {/* PSSR Reasons Tab */}
+          <TabsContent value="reasons" className="animate-fade-in">
+            <Card className="border shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl">PSSR Reasons</CardTitle>
+                    <CardDescription className="mt-1">Manage available reasons for creating a PSSR</CardDescription>
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
-                        className="btn-premium bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
-                      >
-                        <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
-                        Add Reason
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="animate-scale-up">
-                      <p>Create a new PSSR reason</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button 
+                    onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Reason
+                  </Button>
                 </div>
                 {selectedReasons.size > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-slide-down">
+                  <div className="flex items-center gap-2 mt-4 p-3 bg-muted/30 rounded-md border">
                     <span className="text-sm text-muted-foreground">
                       {selectedReasons.size} item(s) selected
                     </span>
                     <div className="flex gap-2 ml-auto">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleBulkToggleActive('reason', true)}
-                            className="h-8 transition-all duration-300 hover:scale-105 hover:bg-primary/10"
-                          >
-                            <Check className="h-4 w-4 mr-1 transition-transform duration-300" />
-                            Enable
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="animate-scale-up">
-                          <p>Enable selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleBulkToggleActive('reason', false)}
-                            className="h-8 transition-all duration-300 hover:scale-105 hover:bg-muted"
-                          >
-                            <X className="h-4 w-4 mr-1 transition-transform duration-300" />
-                            Disable
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="animate-scale-up">
-                          <p>Disable selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => openBulkDeleteDialog('reason')}
-                            className="h-8 transition-all duration-300 hover:scale-105"
-                          >
-                            <Trash className="h-4 w-4 mr-1 transition-transform duration-300 hover:rotate-12" />
-                            Delete
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="animate-scale-up">
-                          <p>Delete selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('reason', true)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Enable
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('reason', false)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Disable
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openBulkDeleteDialog('reason')}
+                      >
+                        <Trash className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-6">
                 {allReasons.length === 0 ? (
                   <TableSkeleton rows={5} columns={6} />
                 ) : (
@@ -790,53 +748,35 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                                 <TooltipTrigger asChild>
                                   <Badge 
                                     variant={reason.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95"
+                                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
                                     onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
                                   >
-                                    {reason.is_active ? 
-                                      <CheckCircle className="h-3 w-3 mr-1 transition-transform duration-300" /> : 
-                                      <XCircle className="h-3 w-3 mr-1 transition-transform duration-300" />
-                                    }
                                     {reason.is_active ? 'Active' : 'Inactive'}
                                   </Badge>
                                 </TooltipTrigger>
-                                <TooltipContent className="animate-scale-up">
+                                <TooltipContent>
                                   <p>Click to {reason.is_active ? 'disable' : 'enable'}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
-                                      className="transition-all duration-300 hover:scale-110 hover:bg-primary/10 active:scale-95"
-                                    >
-                                      <Edit2 className="h-4 w-4 transition-transform duration-300 hover:rotate-12" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="animate-scale-up">
-                                    <p>Edit reason</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
-                                      className="transition-all duration-300 hover:scale-110 hover:bg-destructive/10 hover:text-destructive active:scale-95"
-                                    >
-                                      <Trash2 className="h-4 w-4 transition-transform duration-300 hover:rotate-12" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="animate-scale-up">
-                                    <p>Delete reason</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
+                                  className="h-8 w-8"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
+                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </SortableRow>
@@ -850,89 +790,58 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </Card>
           </TabsContent>
 
-          {/* Tie-in Scopes Tab with Smooth Page Transition */}
-          <TabsContent value="tie-in" className="animate-slide-up">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden card-lift">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3">
+          {/* Tie-in Scopes Tab */}
+          <TabsContent value="tie-in" className="animate-fade-in">
+            <Card className="border shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Tie-in Scopes</CardTitle>
-                    <CardDescription>Manage advanced tie-in scope options</CardDescription>
+                    <CardTitle className="text-xl">Tie-in Scopes</CardTitle>
+                    <CardDescription className="mt-1">Manage advanced tie-in scope options</CardDescription>
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Scope
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Create a new tie-in scope</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button 
+                    onClick={() => setEditDialog({ open: true, type: 'tie-in', item: {} })}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Scope
+                  </Button>
                 </div>
                 {selectedTieInScopes.size > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
+                  <div className="flex items-center gap-2 mt-4 p-3 bg-muted/30 rounded-md border">
                     <span className="text-sm text-muted-foreground">
                       {selectedTieInScopes.size} item(s) selected
                     </span>
                     <div className="flex gap-2 ml-auto">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleBulkToggleActive('tie-in', true)}
-                            className="h-8"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Enable
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Enable selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleBulkToggleActive('tie-in', false)}
-                            className="h-8"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Disable
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Disable selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => openBulkDeleteDialog('tie-in')}
-                            className="h-8"
-                          >
-                            <Trash className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Delete selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('tie-in', true)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Enable
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('tie-in', false)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Disable
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openBulkDeleteDialog('tie-in')}
+                      >
+                        <Trash className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-6">
                 {allTieInScopes.length === 0 ? (
                   <TableSkeleton rows={5} columns={7} />
                 ) : (
@@ -980,10 +889,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                                 <TooltipTrigger asChild>
                                   <Badge 
                                     variant={scope.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
                                     onClick={() => handleToggleActive('tie-in', scope.id, scope.is_active)}
                                   >
-                                    {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
                                     {scope.is_active ? 'Active' : 'Inactive'}
                                   </Badge>
                                 </TooltipTrigger>
@@ -993,35 +901,23 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                               </Tooltip>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
-                                    >
-                                      <Edit2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Edit tie-in scope</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete tie-in scope</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditDialog({ open: true, type: 'tie-in', item: scope })}
+                                  className="h-8 w-8"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, type: 'tie-in', id: scope.id })}
+                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </SortableRow>
@@ -1035,89 +931,58 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </Card>
           </TabsContent>
 
-          {/* MOC Scopes Tab with Smooth Page Transition */}
-          <TabsContent value="moc" className="animate-slide-up">
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden card-lift">
-              <CardHeader className="border-b bg-gradient-to-r from-card to-card/50 py-6 px-6 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3">
+          {/* MOC Scopes Tab */}
+          <TabsContent value="moc" className="animate-fade-in">
+            <Card className="border shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>MOC Scopes</CardTitle>
-                    <CardDescription>Manage Management of Change scope options</CardDescription>
+                    <CardTitle className="text-xl">MOC Scopes</CardTitle>
+                    <CardDescription className="mt-1">Manage Management of Change scope options</CardDescription>
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Scope
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Create a new MOC scope</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button 
+                    onClick={() => setEditDialog({ open: true, type: 'moc', item: {} })}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Scope
+                  </Button>
                 </div>
                 {selectedMOCScopes.size > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg animate-fade-in">
+                  <div className="flex items-center gap-2 mt-4 p-3 bg-muted/30 rounded-md border">
                     <span className="text-sm text-muted-foreground">
                       {selectedMOCScopes.size} item(s) selected
                     </span>
                     <div className="flex gap-2 ml-auto">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleBulkToggleActive('moc', true)}
-                            className="h-8"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Enable
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Enable selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleBulkToggleActive('moc', false)}
-                            className="h-8"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Disable
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Disable selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => openBulkDeleteDialog('moc')}
-                            className="h-8"
-                          >
-                            <Trash className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Delete selected items</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('moc', true)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Enable
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkToggleActive('moc', false)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Disable
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openBulkDeleteDialog('moc')}
+                      >
+                        <Trash className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-6">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -1160,10 +1025,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                                 <TooltipTrigger asChild>
                                   <Badge 
                                     variant={scope.is_active ? "default" : "secondary"}
-                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
                                     onClick={() => handleToggleActive('moc', scope.id, scope.is_active)}
                                   >
-                                    {scope.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
                                     {scope.is_active ? 'Active' : 'Inactive'}
                                   </Badge>
                                 </TooltipTrigger>
@@ -1173,35 +1037,23 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                               </Tooltip>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
-                                    >
-                                      <Edit2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Edit MOC scope</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete MOC scope</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditDialog({ open: true, type: 'moc', item: scope })}
+                                  className="h-8 w-8"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, type: 'moc', id: scope.id })}
+                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </SortableRow>
@@ -1264,10 +1116,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               <Button variant="outline" onClick={() => setEditDialog({ open: false, type: '', item: null })}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSave}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
-              >
+              <Button onClick={handleSave}>
                 Save
               </Button>
             </DialogFooter>
