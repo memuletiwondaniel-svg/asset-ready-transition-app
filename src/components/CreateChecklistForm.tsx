@@ -776,7 +776,12 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                   </TabsTrigger>
                   
                   <TabsTrigger value="not_selected" className="h-9 text-xs">
-                    Not Selected
+                    <span className="flex items-center gap-1.5">
+                      Not Selected
+                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium">
+                        {unselectedItems.length}
+                      </Badge>
+                    </span>
                   </TabsTrigger>
 
                   {categories.slice(0, 4).map((category) => (
