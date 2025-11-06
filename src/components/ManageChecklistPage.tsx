@@ -30,7 +30,6 @@ import OrshLogo from './ui/OrshLogo';
 import LanguageSelector from '@/components/admin/LanguageSelector';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import { getCurrentTranslations } from '@/utils/translations';
-
 interface ManageChecklistPageProps {
   onBack: () => void;
   selectedLanguage?: string;
@@ -47,15 +46,14 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   translations = {}
 }) => {
   const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
-  
+
   // Update current language when selectedLanguage prop changes
   React.useEffect(() => {
     setCurrentLanguage(selectedLanguage);
   }, [selectedLanguage]);
-  
+
   // Get current translations based on selected language
   const t = getCurrentTranslations(currentLanguage);
-  
   const [activeTab, setActiveTab] = useState('checklists');
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -206,8 +204,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     setSelectedChecklist(checklist);
   };
   if (showCreateForm) {
-    return (
-      <AnimatedBackground>
+    return <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
             <div className="container flex h-20 items-center justify-between gap-4">
@@ -216,29 +213,20 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
-                      <BreadcrumbLink 
-                        onClick={() => setShowCreateForm(false)}
-                        className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
-                      >
+                      <BreadcrumbLink onClick={() => setShowCreateForm(false)} className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors">
                         <Home className="h-4 w-4 flex-shrink-0" />
                         <span className="hidden sm:inline">Home</span>
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink 
-                        onClick={() => setShowCreateForm(false)}
-                        className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[120px]"
-                      >
+                      <BreadcrumbLink onClick={() => setShowCreateForm(false)} className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[120px]">
                         Administration
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem className="hidden lg:block">
-                      <BreadcrumbLink 
-                        onClick={() => setShowCreateForm(false)}
-                        className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[150px]"
-                      >
+                      <BreadcrumbLink onClick={() => setShowCreateForm(false)} className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[150px]">
                         Checklist Management
                       </BreadcrumbLink>
                     </BreadcrumbItem>
@@ -254,28 +242,18 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               <div className="flex items-center gap-2">
                 <OrshLogo />
                 <ThemeToggle />
-                <LanguageSelector 
-                  selectedLanguage={currentLanguage}
-                  onLanguageChange={setCurrentLanguage}
-                />
+                <LanguageSelector selectedLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} />
                 <UserProfileDropdown translations={t} />
               </div>
             </div>
           </div>
 
-          <CreateChecklistForm 
-            onBack={() => setShowCreateForm(false)} 
-            onComplete={handleCreateComplete}
-            selectedLanguage={currentLanguage}
-            translations={t}
-          />
+          <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} selectedLanguage={currentLanguage} translations={t} />
         </div>
-      </AnimatedBackground>
-    );
+      </AnimatedBackground>;
   }
   if (showEditForm && editingChecklist) {
-    return (
-      <AnimatedBackground>
+    return <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
             <div className="container flex h-20 items-center justify-between gap-4">
@@ -283,20 +261,29 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
-                      <BreadcrumbLink onClick={() => { setShowEditForm(false); setEditingChecklist(null); }} className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors">
+                      <BreadcrumbLink onClick={() => {
+                      setShowEditForm(false);
+                      setEditingChecklist(null);
+                    }} className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors">
                         <Home className="h-4 w-4 flex-shrink-0" />
                         <span className="hidden sm:inline">Home</span>
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink onClick={() => { setShowEditForm(false); setEditingChecklist(null); }} className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[120px]">
+                      <BreadcrumbLink onClick={() => {
+                      setShowEditForm(false);
+                      setEditingChecklist(null);
+                    }} className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[120px]">
                         Administration
                       </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem className="hidden lg:block">
-                      <BreadcrumbLink onClick={() => { setShowEditForm(false); setEditingChecklist(null); }} className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[150px]">
+                      <BreadcrumbLink onClick={() => {
+                      setShowEditForm(false);
+                      setEditingChecklist(null);
+                    }} className="cursor-pointer hover:text-foreground transition-colors truncate max-w-[150px]">
                         Checklist Management
                       </BreadcrumbLink>
                     </BreadcrumbItem>
@@ -315,14 +302,15 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </div>
             </div>
           </div>
-          <EditChecklistForm checklist={editingChecklist} onBack={() => { setShowEditForm(false); setEditingChecklist(null); }} onSave={handleEditComplete} />
+          <EditChecklistForm checklist={editingChecklist} onBack={() => {
+          setShowEditForm(false);
+          setEditingChecklist(null);
+        }} onSave={handleEditComplete} />
         </div>
-      </AnimatedBackground>
-    );
+      </AnimatedBackground>;
   }
   if (showSuccessPage) {
-    return (
-      <AnimatedBackground>
+    return <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
             <div className="container flex h-20 items-center justify-between gap-4">
@@ -350,18 +338,15 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </div>
             </div>
           </div>
-          <ChecklistSuccessPage checklistName={createdChecklistName} onViewChecklists={handleBackToChecklists} onCreateAnother={() => { setShowSuccessPage(false); setShowCreateForm(true); }} />
+          <ChecklistSuccessPage checklistName={createdChecklistName} onViewChecklists={handleBackToChecklists} onCreateAnother={() => {
+          setShowSuccessPage(false);
+          setShowCreateForm(true);
+        }} />
         </div>
-      </AnimatedBackground>
-    );
+      </AnimatedBackground>;
   }
   if (selectedChecklist) {
-    return <ChecklistDetailsPage 
-      checklist={selectedChecklist} 
-      onBack={() => setSelectedChecklist(null)}
-      selectedLanguage={currentLanguage}
-      translations={t}
-    />;
+    return <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} selectedLanguage={currentLanguage} translations={t} />;
   }
   return <AnimatedBackground>
       <div className="relative z-10">
@@ -372,20 +357,14 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink 
-                      onClick={onBack}
-                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
-                    >
+                    <BreadcrumbLink onClick={onBack} className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors">
                       <Home className="h-4 w-4" />
                       <span className="hidden sm:inline">Home</span>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink 
-                      onClick={onBack}
-                      className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
-                    >
+                    <BreadcrumbLink onClick={onBack} className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline">
                       Administration
                     </BreadcrumbLink>
                   </BreadcrumbItem>
@@ -403,10 +382,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <div className="flex items-center gap-3 justify-end flex-1">
               <OrshLogo size="medium" />
               <ThemeToggle />
-              <LanguageSelector 
-                selectedLanguage={currentLanguage}
-                onLanguageChange={setCurrentLanguage}
-              />
+              <LanguageSelector selectedLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} />
               <UserProfileDropdown translations={t} />
             </div>
           </div>
@@ -479,20 +455,11 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   <p className="text-muted-foreground">{t.createFirstChecklist}</p>
                 </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredAndSortedChecklists.map((checklist, index) => {
-                    const colorVariants = [
-                      'from-primary/15 to-primary/8 border-primary/20',
-                      'from-accent/15 to-accent/8 border-accent/20',
-                      'from-emerald-500/15 to-emerald-500/8 border-emerald-500/20',
-                      'from-blue-500/15 to-blue-500/8 border-blue-500/20',
-                      'from-violet-500/15 to-violet-500/8 border-violet-500/20',
-                      'from-amber-500/15 to-amber-500/8 border-amber-500/20'
-                    ];
-                    const colorClass = colorVariants[index % colorVariants.length];
-                    
-                    return (
-                      <Card key={checklist.id} className={`group cursor-pointer card-lift border bg-gradient-to-br backdrop-blur overflow-hidden animate-smooth-in ${colorClass}`} style={{
-                        animationDelay: `${index * 50}ms`
-                      }} onClick={() => handleChecklistClick(checklist)}>
+                const colorVariants = ['from-primary/15 to-primary/8 border-primary/20', 'from-accent/15 to-accent/8 border-accent/20', 'from-emerald-500/15 to-emerald-500/8 border-emerald-500/20', 'from-blue-500/15 to-blue-500/8 border-blue-500/20', 'from-violet-500/15 to-violet-500/8 border-violet-500/20', 'from-amber-500/15 to-amber-500/8 border-amber-500/20'];
+                const colorClass = colorVariants[index % colorVariants.length];
+                return <Card key={checklist.id} className={`group cursor-pointer card-lift border bg-gradient-to-br backdrop-blur overflow-hidden animate-smooth-in ${colorClass}`} style={{
+                  animationDelay: `${index * 50}ms`
+                }} onClick={() => handleChecklistClick(checklist)}>
                         {/* Gradient Background Effect */}
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
@@ -500,7 +467,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors duration-300">{checklist.name}</CardTitle>
-                            <CardDescription className="line-clamp-2">{checklist.reason}</CardDescription>
+                            
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
@@ -510,16 +477,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="animate-scale-up">
                               <DropdownMenuItem onClick={e => {
-                          e.stopPropagation();
-                          handleEditChecklist(checklist);
-                        }} className="transition-all duration-200 hover:bg-primary/10">
+                            e.stopPropagation();
+                            handleEditChecklist(checklist);
+                          }} className="transition-all duration-200 hover:bg-primary/10">
                                 <Edit3 className="h-4 w-4 mr-2 transition-transform duration-300 hover:rotate-12" />
                                 {t.edit}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={e => {
-                          e.stopPropagation();
-                          handleDeleteChecklist(checklist);
-                        }} className="text-destructive transition-all duration-200 hover:bg-destructive/10">
+                            e.stopPropagation();
+                            handleDeleteChecklist(checklist);
+                          }} className="text-destructive transition-all duration-200 hover:bg-destructive/10">
                                 <Trash2 className="h-4 w-4 mr-2 transition-transform duration-300 hover:rotate-12" />
                                 {t.delete}
                               </DropdownMenuItem>
@@ -536,9 +503,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                    );
-                  })}
+                    </Card>;
+              })}
                 </div>}
             </TabsContent>
 
