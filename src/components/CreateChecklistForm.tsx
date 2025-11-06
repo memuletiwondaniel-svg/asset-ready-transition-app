@@ -43,6 +43,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const { mutate: updateChecklistItem } = useUpdateChecklistItem();
   const { toast } = useToast();
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [bulkSelectedItems, setBulkSelectedItems] = useState<Set<string>>(new Set());
   
   const { data: checklistItems = [], isLoading } = useChecklistItems();
   const { data: availableCategories = [] } = useChecklistCategoriesFromItems();
@@ -271,6 +272,84 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
     // Note: For database items, you would typically make an API call here
   };
 
+  // Bulk action handlers
+  const handleBulkSelect = (itemId: string, checked: boolean) => {
+    setBulkSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (items: DBChecklistItem[]) => {
+    const itemIds = items.map(item => item.unique_id);
+    setBulkSelectedItems(new Set(itemIds));
+  };
+
+  const handleClearBulkSelection = () => {
+    setBulkSelectedItems(new Set());
+  };
+
+  const handleBulkEnable = () => {
+    const itemsToEnable = Array.from(bulkSelectedItems);
+    setFormData(prev => ({
+      ...prev,
+      selected_items: Array.from(new Set([...prev.selected_items, ...itemsToEnable]))
+    }));
+    toast({
+      title: "Items Enabled",
+      description: `Successfully enabled ${itemsToEnable.length} item${itemsToEnable.length !== 1 ? 's' : ''}.`,
+    });
+    setBulkSelectedItems(new Set());
+  };
+
+  const handleBulkDisable = () => {
+    const itemsToDisable = Array.from(bulkSelectedItems);
+    setFormData(prev => ({
+      ...prev,
+      selected_items: prev.selected_items.filter(id => !itemsToDisable.includes(id))
+    }));
+    toast({
+      title: "Items Disabled",
+      description: `Successfully disabled ${itemsToDisable.length} item${itemsToDisable.length !== 1 ? 's' : ''}.`,
+    });
+    setBulkSelectedItems(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    const itemsToDelete = Array.from(bulkSelectedItems);
+    // Only allow deletion of custom items
+    const customItemsToDelete = itemsToDelete.filter(id => id.startsWith('CUST-'));
+    
+    if (customItemsToDelete.length === 0) {
+      toast({
+        title: "Cannot Delete",
+        description: "Only custom items can be deleted. Standard library items can only be disabled.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Remove custom items
+    setCustomChecklistItems(prev => prev.filter(item => !customItemsToDelete.includes(item.unique_id)));
+    
+    // Remove from selected items
+    setFormData(prev => ({
+      ...prev,
+      selected_items: prev.selected_items.filter(id => !customItemsToDelete.includes(id))
+    }));
+
+    toast({
+      title: "Items Deleted",
+      description: `Successfully deleted ${customItemsToDelete.length} custom item${customItemsToDelete.length !== 1 ? 's' : ''}.`,
+    });
+    setBulkSelectedItems(new Set());
+  };
+
   const handleNext = () => {
     if (currentStep === 1 && formData.reason) {
       // Check if plant change type is required and selected
@@ -363,6 +442,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
   // Component to render individual checklist items
   const ChecklistItemCard = ({ item }: { item: DBChecklistItem }) => {
     const isSelected = formData.selected_items.includes(item.unique_id);
+    const isBulkSelected = bulkSelectedItems.has(item.unique_id);
     return (
       <div
         key={item.unique_id}
@@ -370,7 +450,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
           isSelected 
             ? 'border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 shadow-lg shadow-primary/20' 
             : 'border-border/20 bg-gradient-to-r from-card/80 to-card/60 hover:shadow-lg hover:shadow-primary/5'
-        }`}
+        } ${isBulkSelected ? 'ring-2 ring-blue-500/50' : ''}`}
         onClick={(e) => {
           // Only open details if not clicking on checkbox
           if (!(e.target as HTMLElement).closest('[role="checkbox"]')) {
@@ -394,7 +474,16 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         
         <div className="relative p-4">
           <div className="flex items-center space-x-6">
-            {/* Checkbox */}
+            {/* Bulk Selection Checkbox */}
+            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={isBulkSelected}
+                onCheckedChange={(checked) => handleBulkSelect(item.unique_id, checked as boolean)}
+                className="h-5 w-5"
+              />
+            </div>
+            
+            {/* Enable/Disable Checkbox */}
             <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 checked={isSelected}
@@ -734,6 +823,55 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         {/* Search Section with Categories */}
         <Card className="border-border/50 shadow-lg mb-6">
           <CardContent className="p-4 sm:p-6 space-y-4">
+            {/* Bulk Actions Toolbar */}
+            {bulkSelectedItems.size > 0 && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-500 text-white px-3 py-1">
+                    {bulkSelectedItems.size} selected
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearBulkSelection}
+                    className="h-8"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkEnable}
+                    className="h-8"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Enable
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkDisable}
+                    className="h-8"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Disable
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8"
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Search and Create Item Row */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative flex-1">
