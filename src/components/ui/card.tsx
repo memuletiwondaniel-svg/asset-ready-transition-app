@@ -1,20 +1,34 @@
 import * as React from "react"
+import { useRipple } from "@/hooks/useRipple"
 
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
+  React.HTMLAttributes<HTMLDivElement> & { interactive?: boolean }
+>(({ className, interactive = false, onClick, ...props }, ref) => {
+  const createRipple = useRipple()
+  
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (interactive || onClick) {
+      createRipple(e)
+    }
+    onClick?.(e)
+  }
+  
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-lg border bg-card text-card-foreground shadow-sm",
+        (interactive || onClick) && "relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99]",
+        className
+      )}
+      onClick={handleClick}
+      {...props}
+    />
+  )
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
