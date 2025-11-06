@@ -27,9 +27,22 @@ export interface ChecklistItem {
   approving_authority?: string | null; // alias of Approver
 }
 
-export const useChecklistItems = () => {
+export const useChecklistItems = (language?: string) => {
+  // Map language names/codes to ISO codes used in translations JSON
+  const toLangCode = (lang?: string) => {
+    if (!lang) return 'en';
+    const normalized = lang.toLowerCase();
+    if (['en', 'english'].includes(normalized)) return 'en';
+    if (['ar', 'arabic', 'العربية'].includes(normalized)) return 'ar';
+    if (['fr', 'french', 'français'].includes(normalized)) return 'fr';
+    if (['ms', 'malay', 'bahasa melayu'].includes(normalized)) return 'ms';
+    if (['ru', 'russian', 'русский'].includes(normalized)) return 'ru';
+    return 'en';
+  };
+  const langCode = toLangCode(language);
+
   return useQuery({
-    queryKey: ['checklist-items'],
+    queryKey: ['checklist-items', langCode],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('checklist_items')
@@ -40,14 +53,18 @@ export const useChecklistItems = () => {
 
       if (error) throw error;
 
-      // Map DB rows to include backward-compatible aliases
-      return (data || []).map((row: any) => ({
-        ...row,
-        id: row.unique_id,
-        supporting_evidence: row.required_evidence ?? null,
-        responsible_party: row.responsible ?? null,
-        approving_authority: row.Approver ?? null,
-      })) as ChecklistItem[];
+      // Map DB rows and apply language translations when available
+      return (data || []).map((row: any) => {
+        const translatedDescription = row?.translations?.[langCode]?.description ?? row.description;
+        return {
+          ...row,
+          description: translatedDescription,
+          id: row.unique_id,
+          supporting_evidence: row.required_evidence ?? null,
+          responsible_party: row.responsible ?? null,
+          approving_authority: row.Approver ?? null,
+        } as ChecklistItem;
+      });
     },
   });
 };

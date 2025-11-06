@@ -14,6 +14,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
+import { useChecklistCategories } from '@/hooks/useChecklistCategories';
+import { useChecklistTopics } from '@/hooks/useChecklistTopics';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
 import ViewChecklistItemModal from './ViewChecklistItemModal';
 import EditChecklistItemModal from './EditChecklistItemModal';
@@ -77,7 +79,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   const {
     data: allChecklistItems,
     isLoading: itemsLoading
-  } = useChecklistItems();
+  } = useChecklistItems(currentLanguage);
 
   // Apply filters to checklist items
   const checklistItems = useMemo(() => {
@@ -115,15 +117,39 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
     return filtered;
   }, [allChecklistItems, searchTerm, filters]);
 
-  // Get unique values for filters
-  const availableCategories = useMemo(() => [...new Set(allChecklistItems?.map(item => item.category).filter(Boolean))].sort(), [allChecklistItems]);
-  const availableTopics = useMemo(() => [...new Set(allChecklistItems?.map(item => item.topic).filter(Boolean))].sort(), [allChecklistItems]);
-  const availableApprovers = useMemo(() => [...new Set(allChecklistItems?.map(item => item.Approver).filter(Boolean))].sort(), [allChecklistItems]);
-  const availableResponsible = useMemo(() => [...new Set(allChecklistItems?.map(item => item.responsible).filter(Boolean))].sort(), [allChecklistItems]);
-  const categoryStats = checklistItems?.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Build language code and maps for category/topic display
+  const toLangCode = (lang?: string) => {
+    if (!lang) return 'en';
+    const normalized = lang.toLowerCase();
+    if (['en', 'english'].includes(normalized)) return 'en';
+    if (['ar', 'arabic', 'العربية'].includes(normalized)) return 'ar';
+    if (['fr', 'french', 'français'].includes(normalized)) return 'fr';
+    if (['ms', 'malay', 'bahasa melayu'].includes(normalized)) return 'ms';
+    if (['ru', 'russian', 'русский'].includes(normalized)) return 'ru';
+    return 'en';
+  };
+  const langCode = toLangCode(currentLanguage);
+
+  const { data: categoriesData } = useChecklistCategories();
+  const { data: topicsData } = useChecklistTopics();
+
+  const categoryNameMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    (categoriesData as any[] | undefined)?.forEach((c: any) => {
+      const localized = c?.translations?.[langCode]?.name;
+      if (c?.name) map[c.name] = localized || c.name;
+    });
+    return map;
+  }, [categoriesData, langCode]);
+
+  const topicNameMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    (topicsData as any[] | undefined)?.forEach((t: any) => {
+      const localized = t?.translations?.[langCode]?.name;
+      if (t?.name) map[t.name] = localized || t.name;
+    });
+    return map;
+  }, [topicsData, langCode]);
 
   // Initialize and update category order when data changes
   React.useEffect(() => {
