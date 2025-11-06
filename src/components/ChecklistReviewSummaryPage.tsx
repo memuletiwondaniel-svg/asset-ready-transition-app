@@ -5,24 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import { 
-  ArrowLeft, 
-  CheckCircle, 
-  X, 
-  FileText, 
-  Users, 
-  Shield, 
-  Heart, 
-  ClipboardCheck, 
-  Cog,
-  AlertTriangle,
-  Eye,
-  Calendar,
-  User
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle, X, FileText, Users, Shield, Heart, ClipboardCheck, Cog, AlertTriangle, Eye, Calendar, User } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import { useToast } from '@/hooks/use-toast';
-
 interface ChecklistReviewSummaryPageProps {
   checklistData: {
     reason: string;
@@ -33,20 +18,21 @@ interface ChecklistReviewSummaryPageProps {
   onConfirm: (checklistData: any) => void;
   onCancel: () => void;
 }
-
 const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
   checklistData,
   onBack,
   onConfirm,
   onCancel
 }) => {
-  const { toast } = useToast();
-  const { data: allChecklistItems = [] } = useChecklistItems();
-  
+  const {
+    toast
+  } = useToast();
+  const {
+    data: allChecklistItems = []
+  } = useChecklistItems();
+
   // Get selected items
-  const selectedItems = allChecklistItems.filter(item => 
-    checklistData.selected_items.includes(item.id)
-  );
+  const selectedItems = allChecklistItems.filter(item => checklistData.selected_items.includes(item.id));
 
   // Group selected items by category
   const itemsByCategory = selectedItems.reduce((acc, item) => {
@@ -56,7 +42,6 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
     acc[item.category].push(item);
     return acc;
   }, {} as Record<string, ChecklistItem[]>);
-
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'General':
@@ -80,7 +65,6 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
         return <FileText className="h-5 w-5" />;
     }
   };
-
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'General':
@@ -104,33 +88,25 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
         return 'from-gray-500 to-gray-600';
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Navigation Header */}
       <div className="fluent-navigation sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <div className="fluent-reveal">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-12 w-auto animate-float" 
-                />
+                
               </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="animate-fade-in-up" style={{
+              animationDelay: '0.2s'
+            }}>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                   Review Checklist
                 </h1>
-                <p className="text-sm text-muted-foreground font-medium">Review your checklist details before creation</p>
+                
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={onBack}
-              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-            >
+            <Button variant="outline" onClick={onBack} className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group">
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
               Back to Selection
             </Button>
@@ -162,10 +138,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                     <div className="flex-1">
                       <Label className="text-sm font-medium text-muted-foreground">Checklist Name</Label>
                       <p className="text-sm font-semibold mt-1">
-                        {checklistData.reason === 'Others' 
-                          ? checklistData.custom_reason 
-                          : checklistData.reason
-                        }
+                        {checklistData.reason === 'Others' ? checklistData.custom_reason : checklistData.reason}
                       </p>
                     </div>
                   </div>
@@ -192,8 +165,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                 {/* Categories Summary */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium text-muted-foreground">Category Breakdown</Label>
-                  {Object.entries(itemsByCategory).map(([category, items]) => (
-                    <div key={category} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  {Object.entries(itemsByCategory).map(([category, items]) => <div key={category} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className={`w-8 h-8 bg-gradient-to-br ${getCategoryColor(category)} rounded-lg flex items-center justify-center text-white`}>
                           {getCategoryIcon(category)}
@@ -203,26 +175,18 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                       <Badge variant="secondary" className="text-xs">
                         {items.length} items
                       </Badge>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
                 {/* Action Buttons */}
                 <div className="pt-4 space-y-3">
-                  <Button 
-                    onClick={() => {
-                      onConfirm(checklistData);
-                    }}
-                    className="w-full fluent-button bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl"
-                  >
+                  <Button onClick={() => {
+                  onConfirm(checklistData);
+                }} className="w-full fluent-button bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Create Checklist
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={onCancel}
-                    className="w-full border-destructive/20 text-destructive hover:bg-destructive/10"
-                  >
+                  <Button variant="outline" onClick={onCancel} className="w-full border-destructive/20 text-destructive hover:bg-destructive/10">
                     <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
@@ -248,8 +212,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
               <CardContent>
                 <ScrollArea className="h-[600px] pr-4">
                   <div className="space-y-6">
-                    {Object.entries(itemsByCategory).map(([category, items]) => (
-                      <div key={category} className="space-y-4">
+                    {Object.entries(itemsByCategory).map(([category, items]) => <div key={category} className="space-y-4">
                         {/* Category Header */}
                         <div className="flex items-center space-x-4 p-4 bg-muted/20 rounded-xl border border-border/10">
                           <div className={`w-12 h-12 bg-gradient-to-br ${getCategoryColor(category)} rounded-xl flex items-center justify-center text-white shadow-lg`}>
@@ -263,11 +226,7 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
 
                         {/* Category Items */}
                         <div className="grid gap-3">
-                          {items.map((item, index) => (
-                            <div
-                              key={item.id}
-                              className="group p-4 bg-white/50 border border-border/20 rounded-lg hover:shadow-md transition-all duration-200 hover:bg-white/80"
-                            >
+                          {items.map((item, index) => <div key={item.id} className="group p-4 bg-white/50 border border-border/20 rounded-lg hover:shadow-md transition-all duration-200 hover:bg-white/80">
                               <div className="flex items-start space-x-4">
                                 <div className="flex-shrink-0">
                                   <div className="w-10 h-10 bg-gradient-to-br from-muted to-muted/60 rounded-lg flex items-center justify-center border border-border/30">
@@ -279,27 +238,21 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                                     {item.description}
                                   </p>
                                   
-                                  {item.supporting_evidence && (
-                                    <div className="mt-2 p-2 bg-blue-50/50 rounded border border-blue-100/50">
+                                  {item.supporting_evidence && <div className="mt-2 p-2 bg-blue-50/50 rounded border border-blue-100/50">
                                       <p className="text-xs text-blue-700 font-medium">Evidence Required:</p>
                                       <p className="text-xs text-blue-600 mt-1 line-clamp-1">{item.supporting_evidence}</p>
-                                    </div>
-                                  )}
+                                    </div>}
                                   
                                   <div className="flex items-center justify-between mt-3">
                                     <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                      {item.responsible_party && (
-                                        <div className="flex items-center space-x-1">
+                                      {item.responsible_party && <div className="flex items-center space-x-1">
                                           <Users className="h-3 w-3" />
                                           <span>{item.responsible_party}</span>
-                                        </div>
-                                      )}
-                                      {item.approving_authority && (
-                                        <div className="flex items-center space-x-1">
+                                        </div>}
+                                      {item.approving_authority && <div className="flex items-center space-x-1">
                                           <CheckCircle className="h-3 w-3" />
                                           <span>{item.approving_authority}</span>
-                                        </div>
-                                      )}
+                                        </div>}
                                     </div>
                                     <Badge variant="secondary" className="text-xs">
                                       v{item.version}
@@ -307,11 +260,9 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            </div>)}
                         </div>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
                 </ScrollArea>
               </CardContent>
@@ -319,8 +270,6 @@ const ChecklistReviewSummaryPage: React.FC<ChecklistReviewSummaryPageProps> = ({
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ChecklistReviewSummaryPage;
