@@ -65,7 +65,10 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [targetCategory, setTargetCategory] = useState('');
-  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
+  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('checklist-expanded-columns');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [activeTab, setActiveTab] = useState('items');
   const [editingCell, setEditingCell] = useState<{
     itemId: string;
@@ -294,6 +297,7 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       } else {
         newSet.add(columnName);
       }
+      localStorage.setItem('checklist-expanded-columns', JSON.stringify(Array.from(newSet)));
       return newSet;
     });
   };
