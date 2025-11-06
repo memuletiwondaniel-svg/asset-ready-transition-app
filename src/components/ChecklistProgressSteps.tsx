@@ -16,11 +16,11 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
     <div className="py-6">
       <div className="flex items-center justify-between max-w-3xl mx-auto relative">
         {/* Progress Line Background */}
-        <div className="absolute top-5 left-0 right-0 h-0.5 bg-border/30" style={{ zIndex: 0 }} />
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-0.5 bg-border/30" style={{ zIndex: 0 }} />
         
         {/* Active Progress Line */}
         <div 
-          className="absolute top-5 left-0 h-0.5 bg-green-500 transition-all duration-700 ease-out"
+          className="absolute top-1/2 -translate-y-1/2 left-0 h-0.5 bg-green-500 transition-all duration-700 ease-out"
           style={{ 
             width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%',
             zIndex: 1
