@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,31 +11,33 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import ChecklistItemDeletionModal from './ChecklistItemDeletionModal';
 import ViewChecklistItemModal from './ViewChecklistItemModal';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
 import ChecklistItemsTableView from './ChecklistItemsTableView';
+import { ThemeToggle } from './admin/ThemeToggle';
+import LanguageSelector from './admin/LanguageSelector';
+import UserProfileDropdown from './admin/UserProfileDropdown';
+import OrshLogo from './ui/OrshLogo';
+import { getCurrentTranslations } from '@/utils/translations';
+
 interface ChecklistManagementPageProps {
   onBack: () => void;
   translations?: any;
+  selectedLanguage?: string;
 }
+
 const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   onBack,
-  translations
+  translations,
+  selectedLanguage = 'English'
 }) => {
-  const t = translations || {
-    search: 'Search',
-    items: 'Items',
-    edit: 'Edit',
-    delete: 'Delete',
-    view: 'View',
-    save: 'Save',
-    cancel: 'Cancel',
-    create: 'Create',
-    add: 'Add'
-  };
+  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
+  const t = translations || getCurrentTranslations(currentLanguage);
+
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -47,6 +50,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   const [showEditForm, setShowEditForm] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [searchTerm, setSearchTerm] = useState('');
+
   const {
     data: checklistItems,
     isLoading: itemsLoading
@@ -207,88 +211,63 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       transition
     };
     const categoryItems = getItemsByCategory(category);
-    return <div ref={setNodeRef} style={style} className={`${isDragging ? 'opacity-50 scale-105 z-50' : ''} transition-all duration-200`} {...attributes}>
+    return <div ref={setNodeRef} style={style} className={`${isDragging ? 'opacity-50 z-50' : ''} transition-all duration-200`} {...attributes}>
         <AccordionItem value={category} className="border-0 mb-4">
-          <div className={`group relative overflow-hidden rounded-2xl backdrop-blur-xl border shadow-lg transition-all duration-500 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 ${isOpen ? 'bg-primary/5 border-primary/30 ring-2 ring-primary/30' : 'bg-white/70 border-white/20'}`}>
-            {/* Microsoft Fluent Design Acrylic Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/90 via-white/60 to-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            {/* Animated mesh gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            {/* Microsoft Reveal Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out"></div>
-            {/* Floating particles effect */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-              <div className="absolute top-4 right-8 w-2 h-2 bg-blue-400/40 rounded-full animate-pulse"></div>
-              <div className="absolute top-16 right-16 w-1 h-1 bg-purple-400/50 rounded-full animate-pulse" style={{
-              animationDelay: '0.5s'
-            }}></div>
-              <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-400/30 rounded-full animate-pulse" style={{
-              animationDelay: '1s'
-            }}></div>
-            </div>
-
+          <div className={`fluent-card group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-fluent-lg ${isOpen ? 'bg-accent/10 border-primary/20 shadow-fluent-md' : 'border-border/40'}`}>
+            
             {/* Category Header */}
-            <AccordionTrigger className={`hover:no-underline px-8 py-5 relative z-10 transition-all duration-500 ${isOpen ? 'bg-primary/5' : 'group-hover:bg-white/20'}`}>
+            <AccordionTrigger className={`hover:no-underline px-6 py-5 relative z-10 transition-all duration-300 ${isOpen ? 'bg-accent/5' : 'group-hover:bg-muted/30'}`}>
               <div className="flex items-center justify-between w-full">
-                <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-5">
                   {/* Drag Handle */}
-                  <div {...listeners} className="cursor-grab active:cursor-grabbing p-2 rounded-2xl hover:bg-white/80 transition-all duration-300 group-hover:bg-white/60 backdrop-blur-sm border border-white/30 group-hover:border-white/50 shadow-lg hover:shadow-xl" title="Drag to reorder">
-                    <GripVertical className="w-5 h-5 text-gray-400 hover:text-blue-600 transition-colors duration-300" />
+                  <div {...listeners} className="cursor-grab active:cursor-grabbing p-2 rounded-lg hover:bg-accent/50 transition-all duration-200 border border-transparent hover:border-border/40" title="Drag to reorder">
+                    <GripVertical className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors duration-200" />
                   </div>
 
                   <div className="relative">
-                    {/* Icon with glow */}
-                    <div className="absolute -inset-4 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="absolute -inset-2 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-400" style={{
-                    animationDelay: '0.1s'
-                  }}></div>
-                    <div className="relative w-16 h-16 bg-gradient-to-br from-blue-100/80 to-purple-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-blue-200/60 group-hover:border-blue-300/80 group-hover:shadow-2xl transition-all duration-500 group-hover:scale-110">
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative">{getCategoryIcon(category)}</div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg flex items-center justify-center border border-border/40 group-hover:border-primary/40 group-hover:shadow-fluent-sm transition-all duration-300">
+                      {getCategoryIcon(category)}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <h4 className={`text-xl font-bold bg-gradient-to-r bg-clip-text text-transparent transition-all duration-500 ${isOpen ? 'from-blue-700 via-purple-700 to-blue-700' : 'from-gray-900 via-blue-900 to-gray-900 group-hover:from-blue-700 group-hover:via-purple-700 group-hover:to-blue-700'}`}>
+                  <div className="space-y-1">
+                    <h4 className={`text-lg font-semibold transition-all duration-300 ${isOpen ? 'text-primary' : 'text-foreground group-hover:text-primary'}`}>
                       {category}
                     </h4>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <Badge className="bg-gradient-to-r from-blue-50/90 to-purple-50/90 text-blue-700 border border-blue-200/60 group-hover:from-blue-100/90 group-hover:to-purple-100/90 group-hover:border-blue-300/80 group-hover:shadow-lg transition-all duration-500 backdrop-blur-sm px-4 py-2 text-sm font-medium">
+                <div className="flex items-center space-x-3">
+                  <Badge className={`${isOpen ? 'bg-primary/10 text-primary border-primary/30' : 'bg-muted text-muted-foreground border-border/40'} group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30 transition-all duration-300 px-3 py-1 text-sm font-medium shadow-fluent-xs`}>
                     <span>{count} items</span>
                   </Badge>
-                  {/* Chevron icon removed */}
                 </div>
               </div>
             </AccordionTrigger>
 
             {/* Accordion Content */}
-            <AccordionContent className="px-8 pb-8 relative z-10">
-              <div className="space-y-6 animate-fade-in">
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent"></div>
+            <AccordionContent className="px-6 pb-6 relative z-10">
+              <div className="space-y-4 animate-fade-in-up">
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
 
                 {categoryItems.length === 0 ? <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Items Available</h3>
-                    <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                      This category currently contains no checklist items. Items will appear here once they are created.
+                    <h3 className="text-base font-semibold text-muted-foreground mb-2">No Items Available</h3>
+                    <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto">
+                      This category currently contains no checklist items.
                     </p>
-                  </div> : <div className="space-y-4">
-                    <p className="text-sm text-gray-600 mb-4">{categoryItems.length} items in this category</p>
-                    <div className="space-y-3">
-                      {categoryItems.map(item => <div key={item.unique_id} className="group relative p-4 bg-white/70 backdrop-blur-sm border border-gray-200/60 rounded-2xl hover:bg-white/90 hover:border-blue-300/60 hover:shadow-lg transition-all duration-300">
+                  </div> : <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground font-medium">{categoryItems.length} item{categoryItems.length !== 1 ? 's' : ''} in this category</p>
+                    <div className="space-y-2">
+                      {categoryItems.map(item => <div key={item.unique_id} className="group relative p-4 bg-card/50 backdrop-blur-sm border border-border/40 rounded-lg hover:bg-card hover:border-primary/30 hover:shadow-fluent-sm transition-all duration-200">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center space-x-3">
-                                <div className="px-3 py-1 bg-blue-100/80 text-blue-700 text-xs font-medium rounded-full border border-blue-200/60">
+                                <Badge variant="secondary" className="font-mono text-xs shadow-fluent-xs">
                                   {item.unique_id}
-                                </div>
-                                <div className="text-sm font-medium text-gray-600">
-                                  {item.topic && <span className="text-purple-600">{item.topic}</span>}
-                                </div>
+                                </Badge>
+                                {item.topic && <span className="text-sm font-medium text-primary">{item.topic}</span>}
                               </div>
-                              <div className="text-sm text-gray-800 line-clamp-2">
+                              <div className="text-sm text-foreground/90 line-clamp-2">
                                 {item.description}
                               </div>
                             </div>
@@ -296,7 +275,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                             <div className="flex items-center space-x-2">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg">
                                     <span className="sr-only">Open menu</span>
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
@@ -311,7 +290,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                                     Edit Item
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleDeleteItem(item)} className="text-red-600 focus:text-red-600">
+                                  <DropdownMenuItem onClick={() => handleDeleteItem(item)} className="text-destructive focus:text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete Item
                                   </DropdownMenuItem>
@@ -328,76 +307,121 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         </AccordionItem>
       </div>;
   };
-  if (itemsLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600 font-medium">Loading checklist items...</p>
-        </div>
-      </div>;
-  }
-  return <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
 
-      {/* Microsoft Fluent Design Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-white/90 via-white/80 to-white/90 backdrop-blur-xl border-b border-gray-200/60 shadow-lg">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmMGY5ZmYiIGZpbGwtb3BhY2l0eT0iMC40Ij48cGF0aCBkPSJtMzYgMzRjMC0yLjIwOTEzOSAxLjc5MDg2MS00IDQtNCBoMTZjMi4yMDkxMzkgMCA0IDEuNzkwODYxIDQgNHYxNmMwIDIuMjA5MTM5LTEuNzkwODYxIDQtNCA0aC0xNmMtMi4yMDkxMzktNGUtMy00LTEuNzkwODYxLTQtNHptMC0zNmMwLTIuMjA5MTM5IDEuNzkwODYxLTQgNC00aDE2YzIuMjA5MTM5IDAgNCAxLjc5MDg2MSA0IDR2MTZjMCAyLjIwOTEzOS0xLjc5MDg2MSA0LTQgNGgtMTZjLTIuMjA5MTM5LTRlLTMtNC0xLjc5MDg2MS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center space-x-6">
-                <div className="space-y-1">
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">Checklist Items</h1>
-                  
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 mx-0">
-                {/* View Mode Toggle */}
-                <div className="relative flex items-center bg-gradient-to-r from-card/90 to-muted/80 backdrop-blur-lg rounded-2xl border border-border/50 p-1 shadow-fluent hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-center gap-3 px-3 py-2 mx-0">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Grid3X3 className="w-4 h-4" />
-                      <span>Cards</span>
-                    </div>
-                    <Switch checked={viewMode === 'table'} onCheckedChange={checked => setViewMode(checked ? 'table' : 'card')} className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-secondary/30 border-2 border-border/20 shadow-inner" />
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Table className="w-4 h-4" />
-                      <span>Table</span>
-                    </div>
-                  </div>
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 via-secondary/10 to-primary/5 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                </div>
-                
-                <Button onClick={handleCreateItem} className="fluent-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Checklist Item
-                </Button>
-              </div>
-            </div>
+  if (itemsLoading) {
+    return <AnimatedBackground className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
+          <p className="text-foreground font-medium">Loading checklist items...</p>
+        </div>
+      </AnimatedBackground>;
+  }
+
+  return <AnimatedBackground className="min-h-screen">
+      {/* Modern Fluent Header */}
+      <div className="fluent-navigation sticky top-0 z-50">
+        <div className="container flex h-16 items-center justify-between gap-4">
+          {/* Left - Breadcrumb Navigation */}
+          <div className="flex items-center min-w-0">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack}
+                    className="flex items-center gap-2 cursor-pointer hover:text-primary transition-all duration-200 text-sm group"
+                  >
+                    <Home className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="hidden sm:inline font-medium">Home</span>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-semibold text-sm text-foreground">
+                    Checklist Items
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+
+          {/* Center - ORSH Logo */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <OrshLogo size="medium" />
+          </div>
+
+          {/* Right - Actions */}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <LanguageSelector 
+              selectedLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
+            />
+            <UserProfileDropdown translations={t} />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        {!categoryStats || Object.keys(categoryStats).length === 0 ? <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-lg">
-              <FileText className="w-12 h-12 text-blue-600" />
+      <div className="container pt-12 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Modern Hero Header */}
+        <div className="mb-10 animate-fade-in-up">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight fluent-hero-text">
+                Checklist Items
+              </h1>
+              <p className="text-muted-foreground text-base max-w-2xl">
+                Manage and organize your checklist items across different categories
+              </p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Checklist Items</h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            
+            <div className="flex items-center gap-3">
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-card/80 backdrop-blur-sm rounded-xl border border-border/40 p-1.5 shadow-fluent-sm">
+                <div className="flex items-center gap-3 px-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Grid3X3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Cards</span>
+                  </div>
+                  <Switch 
+                    checked={viewMode === 'table'} 
+                    onCheckedChange={checked => setViewMode(checked ? 'table' : 'card')} 
+                    className="data-[state=checked]:bg-primary" 
+                  />
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Table className="w-4 h-4" />
+                    <span className="hidden sm:inline">Table</span>
+                  </div>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleCreateItem} 
+                className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Item
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {!categoryStats || Object.keys(categoryStats).length === 0 ? <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center shadow-fluent-md">
+              <FileText className="w-12 h-12 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No Checklist Items</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               No checklist items are currently available. Items will appear here once they are created.
             </p>
           </div> : viewMode === 'table' ? <ChecklistItemsTableView items={checklistItems || []} onViewItem={handleViewItem} onEditItem={handleEditItem} onDeleteItem={handleDeleteItem} /> : <div className="space-y-6">
             {/* Search Bar for Cards View */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Search by ID, description, topic, category, approver, or responsible..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/60 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="pl-12 h-12 bg-card border-border/40 focus:border-primary/60 focus:ring-primary/20 rounded-xl shadow-fluent-sm"
               />
             </div>
             
@@ -409,16 +433,16 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
             </SortableContext>
 
             <DragOverlay>
-              {activeDragId ? <div className="rounded-xl bg-white shadow-xl border border-gray-200 opacity-90">
+              {activeDragId ? <div className="fluent-card rounded-xl shadow-fluent-xl border-border/40 opacity-90">
                   <div className="px-6 py-4">
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl flex items-center justify-center border border-blue-200/50">
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg flex items-center justify-center border border-border/40">
                         {getCategoryIcon(activeDragId)}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">{activeDragId}</h4>
-                        <p className="text-sm text-gray-500">
-                          {categoryStats[activeDragId] || 0} checklist items
+                        <h4 className="font-semibold text-foreground">{activeDragId}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {categoryStats[activeDragId] || 0} checklist item{(categoryStats[activeDragId] || 0) !== 1 ? 's' : ''}
                         </p>
                       </div>
                     </div>
@@ -461,6 +485,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
 
       {/* Create Checklist Item Form */}
       {showCreateForm && <CreateChecklistItemForm onBack={handleCreateCancel} onComplete={handleCreateComplete} />}
-    </div>;
+    </AnimatedBackground>;
 };
 export default ChecklistManagementPage;
