@@ -48,6 +48,11 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 }) => {
   const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
   
+  // Update current language when selectedLanguage prop changes
+  React.useEffect(() => {
+    setCurrentLanguage(selectedLanguage);
+  }, [selectedLanguage]);
+  
   // Get current translations based on selected language
   const t = getCurrentTranslations(currentLanguage);
   

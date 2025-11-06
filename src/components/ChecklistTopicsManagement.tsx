@@ -63,7 +63,14 @@ interface TopicFormData {
   display_order?: number;
 }
 
-const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ onBack, translations }) => {
+const ChecklistTopicsManagement: React.FC<ChecklistTopicsManagementProps> = ({ onBack, translations, selectedLanguage = 'English' }) => {
+  const [currentLanguage, setCurrentLanguage] = React.useState(selectedLanguage);
+  
+  // Update current language when selectedLanguage prop changes
+  React.useEffect(() => {
+    setCurrentLanguage(selectedLanguage);
+  }, [selectedLanguage]);
+  
   const t = translations || {
     search: 'Search',
     topics: 'Topics',

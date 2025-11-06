@@ -63,7 +63,14 @@ interface CategoryFormData {
   display_order?: number;
 }
 
-const ChecklistCategoriesManagement: React.FC<ChecklistCategoriesManagementProps> = ({ onBack, translations }) => {
+const ChecklistCategoriesManagement: React.FC<ChecklistCategoriesManagementProps> = ({ onBack, translations, selectedLanguage = 'English' }) => {
+  const [currentLanguage, setCurrentLanguage] = React.useState(selectedLanguage);
+  
+  // Update current language when selectedLanguage prop changes
+  React.useEffect(() => {
+    setCurrentLanguage(selectedLanguage);
+  }, [selectedLanguage]);
+  
   const t = translations || {
     search: 'Search',
     categories: 'Categories',

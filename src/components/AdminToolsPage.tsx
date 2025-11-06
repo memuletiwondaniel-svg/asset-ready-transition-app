@@ -14,15 +14,16 @@ import PSSRSettingsManagement from "./PSSRSettingsManagement";
 import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
-import { getCurrentTranslations } from '@/utils/translations';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 interface AdminToolsPageProps {
   onBack: () => void;
 }
-const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
+
+const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   onBack
 }) => {
+  const { language, setLanguage, translations: t } = useLanguage();
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings' | 'activity-log'>('dashboard');
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [userStatsAnimating, setUserStatsAnimating] = useState(false);
@@ -167,9 +168,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       return updated;
     });
   };
-
-  // Get current translations
-  const t = getCurrentTranslations(selectedLanguage);
   
   const adminTools = [{
     id: 'users',
@@ -256,40 +254,40 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
   if (activeView === 'users') {
     return (
       <div className="animate-fade-in">
-        <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+        <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
       </div>
     );
   }
   if (activeView === 'checklist') {
     return (
       <div className="animate-fade-in">
-        <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+        <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
       </div>
     );
   }
   if (activeView === 'pssr-settings') {
     return (
       <div className="animate-fade-in">
-        <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+        <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
       </div>
     );
   }
   if (activeView === 'projects') {
     return (
       <div className="animate-fade-in">
-        <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} translations={t} />
+        <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
       </div>
     );
   }
   if (activeView === 'activity-log') {
     return (
       <div className="animate-fade-in">
-        <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={selectedLanguage} />
+        <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
       </div>
     );
   }
   return <AnimatedBackground>
-      <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t}>
+      <AdminHeader selectedLanguage={language} onLanguageChange={setLanguage} translations={t}>
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
           <BreadcrumbList>
@@ -537,4 +535,13 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       </div>
     </AnimatedBackground>;
 };
+
+const AdminToolsPage: React.FC<AdminToolsPageProps> = (props) => {
+  return (
+    <LanguageProvider>
+      <AdminToolsPageContent {...props} />
+    </LanguageProvider>
+  );
+};
+
 export default AdminToolsPage;
