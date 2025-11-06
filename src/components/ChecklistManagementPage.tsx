@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search, Home } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Table, Search, Home, Filter, BookTemplate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -23,6 +24,9 @@ import LanguageSelector from './admin/LanguageSelector';
 import UserProfileDropdown from './admin/UserProfileDropdown';
 import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
+import { AdvancedFilterSidebar, ChecklistFilters } from './checklist/AdvancedFilterSidebar';
+import { BulkActionsToolbar } from './checklist/BulkActionsToolbar';
+import { TemplateManagement } from './checklist/TemplateManagement';
 
 interface ChecklistManagementPageProps {
   onBack: () => void;
@@ -50,11 +54,81 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   const [showEditForm, setShowEditForm] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // New state for batch operations and filters
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showTemplateManagement, setShowTemplateManagement] = useState(false);
+  const [filters, setFilters] = useState<ChecklistFilters>({});
 
   const {
-    data: checklistItems,
+    data: allChecklistItems,
     isLoading: itemsLoading
   } = useChecklistItems();
+
+  // Apply filters to checklist items
+  const checklistItems = useMemo(() => {
+    if (!allChecklistItems) return [];
+    
+    let filtered = [...allChecklistItems];
+
+    // Apply search term
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.unique_id?.toLowerCase().includes(searchLower) ||
+        item.description?.toLowerCase().includes(searchLower) ||
+        item.topic?.toLowerCase().includes(searchLower) ||
+        item.category?.toLowerCase().includes(searchLower) ||
+        item.Approver?.toLowerCase().includes(searchLower) ||
+        item.responsible?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply advanced filters
+    if (filters.categories && filters.categories.length > 0) {
+      filtered = filtered.filter(item => filters.categories!.includes(item.category));
+    }
+    if (filters.topics && filters.topics.length > 0) {
+      filtered = filtered.filter(item => item.topic && filters.topics!.includes(item.topic));
+    }
+    if (filters.approvers && filters.approvers.length > 0) {
+      filtered = filtered.filter(item => item.Approver && filters.approvers!.includes(item.Approver));
+    }
+    if (filters.responsible && filters.responsible.length > 0) {
+      filtered = filtered.filter(item => item.responsible && filters.responsible!.includes(item.responsible));
+    }
+    if (filters.dateFrom || filters.dateTo) {
+      filtered = filtered.filter(item => {
+        if (!item.created_at) return false;
+        const itemDate = new Date(item.created_at);
+        if (filters.dateFrom && itemDate < new Date(filters.dateFrom)) return false;
+        if (filters.dateTo && itemDate > new Date(filters.dateTo)) return false;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [allChecklistItems, searchTerm, filters]);
+
+  // Get unique values for filters
+  const availableCategories = useMemo(() => 
+    [...new Set(allChecklistItems?.map(item => item.category).filter(Boolean))].sort(),
+    [allChecklistItems]
+  );
+  const availableTopics = useMemo(() => 
+    [...new Set(allChecklistItems?.map(item => item.topic).filter(Boolean))].sort(),
+    [allChecklistItems]
+  );
+  const availableApprovers = useMemo(() => 
+    [...new Set(allChecklistItems?.map(item => item.Approver).filter(Boolean))].sort(),
+    [allChecklistItems]
+  );
+  const availableResponsible = useMemo(() => 
+    [...new Set(allChecklistItems?.map(item => item.responsible).filter(Boolean))].sort(),
+    [allChecklistItems]
+  );
+
   const categoryStats = checklistItems?.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
@@ -260,15 +334,30 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                     <div className="space-y-2">
                       {categoryItems.map(item => <div key={item.unique_id} className="group relative p-4 bg-card/50 backdrop-blur-sm border border-border/40 rounded-lg hover:bg-card hover:border-primary/30 hover:shadow-fluent-sm transition-all duration-200">
                           <div className="flex items-center justify-between">
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center space-x-3">
-                                <Badge variant="secondary" className="font-mono text-xs shadow-fluent-xs">
-                                  {item.unique_id}
-                                </Badge>
-                                {item.topic && <span className="text-sm font-medium text-primary">{item.topic}</span>}
-                              </div>
-                              <div className="text-sm text-foreground/90 line-clamp-2">
-                                {item.description}
+                            <div className="flex items-start gap-3 flex-1">
+                              <Checkbox
+                                checked={selectedItems.has(item.unique_id || '')}
+                                onCheckedChange={(checked) => {
+                                  const newSelected = new Set(selectedItems);
+                                  if (checked) {
+                                    newSelected.add(item.unique_id || '');
+                                  } else {
+                                    newSelected.delete(item.unique_id || '');
+                                  }
+                                  setSelectedItems(newSelected);
+                                }}
+                                className="mt-1"
+                              />
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center space-x-3">
+                                  <Badge variant="secondary" className="font-mono text-xs shadow-fluent-xs">
+                                    {item.unique_id}
+                                  </Badge>
+                                  {item.topic && <span className="text-sm font-medium text-primary">{item.topic}</span>}
+                                </div>
+                                <div className="text-sm text-foreground/90 line-clamp-2">
+                                  {item.description}
+                                </div>
                               </div>
                             </div>
                             
@@ -361,6 +450,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         </div>
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      <BulkActionsToolbar
+        selectedItems={selectedItems}
+        items={checklistItems || []}
+        onClearSelection={() => setSelectedItems(new Set())}
+        availableCategories={availableCategories}
+      />
+
       <div className="container pt-12 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Modern Hero Header */}
         <div className="mb-10 animate-fade-in-up">
@@ -372,9 +469,39 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
               <p className="text-muted-foreground text-base max-w-2xl">
                 Manage and organize your checklist items across different categories
               </p>
+              {selectedItems.size > 0 && (
+                <Badge className="mt-2">
+                  {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected
+                </Badge>
+              )}
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Advanced Filters Button */}
+              <Button
+                variant="outline"
+                onClick={() => setShowAdvancedFilters(true)}
+                className="fluent-button shadow-fluent-xs"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+                {(filters.categories?.length || 0) + (filters.topics?.length || 0) + (filters.approvers?.length || 0) + (filters.responsible?.length || 0) > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {(filters.categories?.length || 0) + (filters.topics?.length || 0) + (filters.approvers?.length || 0) + (filters.responsible?.length || 0)}
+                  </Badge>
+                )}
+              </Button>
+
+              {/* Template Management Button */}
+              <Button
+                variant="outline"
+                onClick={() => setShowTemplateManagement(true)}
+                className="fluent-button shadow-fluent-xs"
+              >
+                <BookTemplate className="w-4 h-4 mr-2" />
+                Templates
+              </Button>
+
               {/* View Mode Toggle */}
               <div className="flex items-center bg-card/80 backdrop-blur-sm rounded-xl border border-border/40 p-1.5 shadow-fluent-sm">
                 <div className="flex items-center gap-3 px-3">
@@ -485,6 +612,25 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
 
       {/* Create Checklist Item Form */}
       {showCreateForm && <CreateChecklistItemForm onBack={handleCreateCancel} onComplete={handleCreateComplete} />}
+
+      {/* Advanced Filters Sidebar */}
+      <AdvancedFilterSidebar
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        filters={filters}
+        onFiltersChange={setFilters}
+        availableCategories={availableCategories}
+        availableTopics={availableTopics}
+        availableApprovers={availableApprovers}
+        availableResponsible={availableResponsible}
+      />
+
+      {/* Template Management */}
+      <TemplateManagement
+        isOpen={showTemplateManagement}
+        onClose={() => setShowTemplateManagement(false)}
+        selectedItems={Array.from(selectedItems).map(id => checklistItems?.find(item => item.unique_id === id)).filter(Boolean) as ChecklistItem[]}
+      />
     </AnimatedBackground>;
 };
 export default ChecklistManagementPage;
