@@ -8,7 +8,8 @@ interface ChecklistProgressStepsProps {
 const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ currentStep }) => {
   const steps = [
     { number: 1, title: "Checklist Information", subtitle: "Basic details and reason" },
-    { number: 2, title: "Select Items", subtitle: "Choose checklist items" }
+    { number: 2, title: "Select Items", subtitle: "Choose checklist items" },
+    { number: 3, title: "Review Checklist", subtitle: "Review and submit" }
   ];
 
   return (
@@ -19,9 +20,9 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
         
         {/* Active Progress Line */}
         <div 
-          className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-700 ease-out"
+          className="absolute top-5 left-0 h-0.5 bg-green-500 transition-all duration-700 ease-out"
           style={{ 
-            width: currentStep === 1 ? '0%' : '100%',
+            width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%',
             zIndex: 1
           }}
         />
@@ -34,14 +35,14 @@ const ChecklistProgressSteps: React.FC<ChecklistProgressStepsProps> = ({ current
             <div 
               key={step.number} 
               className="flex flex-col items-center relative z-10"
-              style={{ width: '50%' }}
+              style={{ width: `${100 / steps.length}%` }}
             >
               {/* Step Circle */}
               <div className={`
                 w-10 h-10 rounded-full flex items-center justify-center 
                 transition-all duration-300 border-2
                 ${isCompleted 
-                  ? 'bg-primary border-primary text-primary-foreground shadow-lg' 
+                  ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/30' 
                   : isActive
                     ? 'bg-primary border-primary text-primary-foreground shadow-lg scale-110'
                     : 'bg-background border-border text-muted-foreground'

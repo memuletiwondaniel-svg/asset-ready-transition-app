@@ -747,9 +747,8 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
               </div>
               <Button 
                 onClick={() => setShowCreateItem(true)}
-                variant="outline"
                 size="lg"
-                className="border-2 border-dashed"
+                className="bg-purple-600 hover:bg-purple-700 text-white border-0"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Create Item</span>
@@ -766,11 +765,15 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                     All
                   </TabsTrigger>
                   
+                  <TabsTrigger value="selected" className="h-9 text-xs">
+                    Selected
+                  </TabsTrigger>
+                  
                   <TabsTrigger value="not_selected" className="h-9 text-xs">
                     Not Selected
                   </TabsTrigger>
 
-                  {categories.slice(0, 5).map((category) => (
+                  {categories.slice(0, 4).map((category) => (
                     <TabsTrigger
                       key={category.id}
                       value={category.id}
@@ -782,9 +785,9 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                 </TabsList>
                 
                 {/* Second Row */}
-                {categories.length > 5 && (
+                {categories.length > 4 && (
                   <TabsList className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 h-auto p-1 bg-muted/30 w-full gap-1 mt-1">
-                    {categories.slice(5).map((category) => (
+                    {categories.slice(4).map((category) => (
                       <TabsTrigger
                         key={category.id}
                         value={category.id}
@@ -794,7 +797,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                       </TabsTrigger>
                     ))}
                     {/* Fill remaining slots with empty space */}
-                    {Array.from({ length: 7 - categories.slice(5).length }).map((_, index) => (
+                    {Array.from({ length: 7 - categories.slice(4).length }).map((_, index) => (
                       <div key={`empty-${index}`} className="h-9"></div>
                     ))}
                   </TabsList>
@@ -843,6 +846,48 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                   );
                 })}
               </div>
+            </TabsContent>
+
+            {/* Selected Tab Content */}
+            <TabsContent value="selected" className="mt-0">
+              <Card className="border-border/50 shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <CardTitle className="text-2xl font-bold">Selected Items</CardTitle>
+                        <CardDescription>
+                          Items currently selected for your checklist
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {formData.selected_items.length}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        items selected
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[600px]">
+                    <div className="grid gap-3">
+                      {allChecklistItems
+                        .filter(item => formData.selected_items.includes(item.unique_id))
+                        .map((item) => (
+                          <ChecklistItemCard key={item.id} item={item} />
+                        ))}
+                      {formData.selected_items.length === 0 && (
+                        <div className="text-center py-12 text-muted-foreground">
+                          No items selected yet. Select items from other categories to add them here.
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Not Selected Tab Content */}
