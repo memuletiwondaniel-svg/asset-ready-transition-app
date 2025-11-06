@@ -665,13 +665,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             </Breadcrumb>
           </div>
 
-          {/* Center - ORSH Logo */}
-          <div className="flex-shrink-0">
-            <OrshLogo size="medium" />
-          </div>
-
           {/* Right - Controls */}
           <div className="flex items-center gap-3 justify-end flex-1">
+            <OrshLogo size="medium" />
             <ThemeToggle />
             <LanguageSelector 
               selectedLanguage="English"

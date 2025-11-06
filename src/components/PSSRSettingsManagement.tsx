@@ -596,13 +596,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               </Breadcrumb>
             </div>
 
-            {/* Center - ORSH Logo */}
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <OrshLogo size="medium" />
-            </div>
-
             {/* Right - Actions */}
             <div className="flex items-center gap-3">
+              <OrshLogo size="medium" />
               <ThemeToggle />
               <LanguageSelector 
                 selectedLanguage={currentLanguage}

@@ -21,17 +21,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       <div className="container flex h-20 items-center">
         {/* Left side - Navigation content (back button, etc.) */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 flex-1">
           {children}
         </div>
         
-        {/* Center - ORSH Logo */}
-        <div className="flex-1 flex justify-center">
-          <OrshLogo size="medium" />
-        </div>
-        
-        {/* Right side - Theme toggle, Language selector and User profile */}
+        {/* Right side - ORSH Logo, Theme toggle, Language selector and User profile */}
         <div className="flex items-center space-x-3">
+          <OrshLogo size="medium" />
           <ThemeToggle />
           <LanguageSelector 
             selectedLanguage={selectedLanguage}

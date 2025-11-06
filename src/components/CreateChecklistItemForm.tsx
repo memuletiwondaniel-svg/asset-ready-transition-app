@@ -695,13 +695,10 @@ const CreateChecklistItemForm: React.FC<CreateChecklistItemFormProps> = ({
               Back to Manage Checklist
             </Button>
             
-            {/* ORSH Logo Center */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
+            {/* Right - ORSH Logo */}
+            <div className="flex items-center gap-3">
               <OrshLogo size="medium" />
             </div>
-            
-            {/* Empty div for layout balance */}
-            <div className="w-48"></div>
           </div>
         </div>
       </div>

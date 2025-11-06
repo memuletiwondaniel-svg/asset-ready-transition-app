@@ -250,13 +250,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 </Breadcrumb>
               </div>
 
-              {/* Center - Logo */}
-              <div className="hidden md:flex flex-shrink-0">
-                <OrshLogo />
-              </div>
-
               {/* Right - Settings Controls */}
               <div className="flex items-center gap-2">
+                <OrshLogo />
                 <ThemeToggle />
                 <LanguageSelector 
                   selectedLanguage={currentLanguage}
@@ -309,10 +305,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>
-              <div className="hidden md:flex flex-shrink-0">
-                <OrshLogo />
-              </div>
               <div className="flex items-center gap-2">
+                <OrshLogo />
                 <ThemeToggle />
                 <LanguageSelector selectedLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} />
                 <UserProfileDropdown translations={t} />
@@ -346,10 +340,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>
-              <div className="hidden md:flex flex-shrink-0">
-                <OrshLogo />
-              </div>
               <div className="flex items-center gap-2">
+                <OrshLogo />
                 <ThemeToggle />
                 <LanguageSelector selectedLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} />
                 <UserProfileDropdown translations={t} />
@@ -400,13 +392,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </Breadcrumb>
             </div>
 
-            {/* Center - ORSH Logo */}
-            <div className="flex-shrink-0">
-              <OrshLogo size="medium" />
-            </div>
-
             {/* Right - Controls */}
             <div className="flex items-center gap-3 justify-end flex-1">
+              <OrshLogo size="medium" />
               <ThemeToggle />
               <LanguageSelector 
                 selectedLanguage={currentLanguage}
