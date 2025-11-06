@@ -265,7 +265,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
           <CreateChecklistForm 
             onBack={() => setShowCreateForm(false)} 
-            onComplete={handleCreateComplete} 
+            onComplete={handleCreateComplete}
+            selectedLanguage={currentLanguage}
+            translations={t}
           />
         </div>
       </AnimatedBackground>
@@ -354,7 +356,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     );
   }
   if (selectedChecklist) {
-    return <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} />;
+    return <ChecklistDetailsPage 
+      checklist={selectedChecklist} 
+      onBack={() => setSelectedChecklist(null)}
+      selectedLanguage={currentLanguage}
+      translations={t}
+    />;
   }
   return <AnimatedBackground>
       <div className="relative z-10">

@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User, Home } from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories as useChecklistCategoriesFromItems, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
 import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
@@ -19,10 +19,15 @@ import ViewChecklistItemModal from './ViewChecklistItemModal';
 import ChecklistReviewSummaryPage from './ChecklistReviewSummaryPage';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import AdminHeader from '@/components/admin/AdminHeader';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { getCurrentTranslations } from '@/utils/translations';
 
 interface CreateChecklistFormProps {
   onBack: () => void;
   onComplete: (checklist: NewChecklistData) => void;
+  selectedLanguage?: string;
+  translations?: any;
 }
 
 interface NewChecklistData {
@@ -31,7 +36,14 @@ interface NewChecklistData {
   custom_reason?: string;
 }
 
-const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ onBack, onComplete }) => {
+const CreateChecklistForm: React.FC<CreateChecklistFormProps> = ({ 
+  onBack, 
+  onComplete,
+  selectedLanguage = "English",
+  translations = {}
+}) => {
+  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
+  const t = getCurrentTranslations(currentLanguage);
   const [currentStep, setCurrentStep] = useState(1);
   const [showCreateItem, setShowCreateItem] = useState(false);
   const [showItemSuccess, setShowItemSuccess] = useState(false);
@@ -589,9 +601,36 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
 
   if (currentStep === 1) {
     return (
-      <div className="pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <AnimatedBackground>
+          <div className="relative z-10">{/* Wrapper for content */}</div>
+        </AnimatedBackground>
+        
+        {/* Admin Header with Breadcrumb */}
+        <AdminHeader
+          selectedLanguage={currentLanguage}
+          onLanguageChange={setCurrentLanguage}
+          translations={t}
+        >
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
+                  <Home className="h-4 w-4" />
+                  Dashboard
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Create New Checklist</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </AdminHeader>
+
+        <div className="relative z-10 pb-8">
         {/* Progress Steps */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <ChecklistProgressSteps currentStep={currentStep} />
         </div>
 
@@ -773,12 +812,35 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
             </CardContent>
           </Card>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="pb-8">
+      {/* Admin Header with Breadcrumb */}
+      <AdminHeader
+        selectedLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+        translations={t}
+      >
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
+                <Home className="h-4 w-4" />
+                Dashboard
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Select Checklist Items</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </AdminHeader>
+      
       {/* Progress Steps */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <ChecklistProgressSteps currentStep={currentStep} />

@@ -6,19 +6,31 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home } from 'lucide-react';
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ViewChecklistItemModal from './ViewChecklistItemModal';
 import { Checklist } from '@/hooks/useChecklists';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
+import AdminHeader from '@/components/admin/AdminHeader';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { getCurrentTranslations } from '@/utils/translations';
 
 interface ChecklistDetailsPageProps {
   checklist: Checklist;
   onBack: () => void;
+  selectedLanguage?: string;
+  translations?: any;
 }
 
-const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, onBack }) => {
+const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ 
+  checklist, 
+  onBack,
+  selectedLanguage = "English",
+  translations = {}
+}) => {
+  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
+  const t = getCurrentTranslations(currentLanguage);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('id');
@@ -145,36 +157,33 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({ checklist, 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      {/* Navigation Bar */}
-      <div className="fluent-navigation sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="fluent-reveal">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-12 w-auto animate-float" 
-                />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  {checklist.name}
-                </h1>
-                <p className="text-sm text-muted-foreground font-medium">Checklist Details • PSSR Microservice</p>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={onBack}
-              className="fluent-button hover:bg-secondary/80 hover:border-primary/20 shadow-fluent-sm hover:shadow-fluent-md group"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-              Back to Checklists
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Admin Header with Breadcrumb */}
+      <AdminHeader
+        selectedLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+        translations={t}
+      >
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
+                <Home className="h-4 w-4" />
+                Dashboard
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={onBack} className="cursor-pointer">
+                Checklists
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{checklist.name}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </AdminHeader>
 
       <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Checklist Overview */}
