@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ShieldCheck, Settings, BarChart3, Users, ClipboardList, AlertTriangle, CheckCircle, Clock, ArrowRight, Search, Filter, Eye, EyeOff, KeyRound, Languages, ChevronDown, User, LogOut, GripVertical, Pin, PinOff, ArrowLeft, Grid3X3, List } from 'lucide-react';
 import DraggableTaskCard from './DraggableTaskCard';
 import DraggableTaskList from './DraggableTaskList';
+import { AnimatedParticles } from './ui/AnimatedParticles';
 interface LandingPageProps {
   onBack: () => void;
   onNavigate: (section: string) => void;
@@ -412,7 +413,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
   // Filter sections based on user role
   const availableSections = allSections.filter(section => section.allowedRoles.includes(userRole));
-  return <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background relative overflow-hidden">
+      {/* Animated Particles Background */}
+      <AnimatedParticles />
+      
       {/* Enhanced Navigation Bar */}
       <div className="fluent-navigation sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-8 py-6">
