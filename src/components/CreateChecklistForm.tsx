@@ -767,7 +767,12 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                   </TabsTrigger>
                   
                   <TabsTrigger value="selected" className="h-9 text-xs">
-                    Selected
+                    <span className="flex items-center gap-1.5">
+                      Selected
+                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium bg-accent text-accent-foreground">
+                        {formData.selected_items.length}
+                      </Badge>
+                    </span>
                   </TabsTrigger>
                   
                   <TabsTrigger value="not_selected" className="h-9 text-xs">
