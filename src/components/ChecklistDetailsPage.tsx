@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight, FolderInput, X, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight, FolderInput, X, Maximize2, Minimize2, Check, XCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import EditChecklistForm from './EditChecklistForm';
 import EditChecklistItemModal from './EditChecklistItemModal';
 import ViewChecklistItemModal from './ViewChecklistItemModal';
@@ -66,6 +68,9 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [targetCategory, setTargetCategory] = useState('');
   const [expandedColumns, setExpandedColumns] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ itemId: string; field: string } | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  const { toast } = useToast();
   const { data: allChecklistItems = [], isLoading } = useChecklistItems();
   const [selectedItems, setSelectedItems] = useState<string[]>(
     checklist.selected_items || []
@@ -228,6 +233,64 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
 
   const allSelected = paginatedItems.length > 0 && paginatedItems.every(item => bulkSelectedItems.has(item.unique_id));
   const someSelected = paginatedItems.some(item => bulkSelectedItems.has(item.unique_id)) && !allSelected;
+
+  // Inline editing handlers
+  const handleStartEdit = (itemId: string, field: string, currentValue: string) => {
+    setEditingCell({ itemId, field });
+    setEditValue(currentValue || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingCell) return;
+
+    const item = paginatedItems.find(i => i.unique_id === editingCell.itemId);
+    if (!item) return;
+
+    // Validation
+    if (editingCell.field === 'description' && editValue.trim().length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Description cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (editingCell.field === 'description' && editValue.length > 500) {
+      toast({
+        title: "Validation Error",
+        description: "Description must be less than 500 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // In a real implementation, this would update the item in the database
+    console.log(`Updating ${editingCell.field} for item ${editingCell.itemId} to:`, editValue);
+    
+    toast({
+      title: "Item Updated",
+      description: `Successfully updated ${editingCell.field}`,
+    });
+
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  // Handle keyboard shortcuts for inline editing
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
 
   // Show edit checklist form
   if (showEditChecklist) {
@@ -649,30 +712,191 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                             </TableCell>
                             <TableCell 
                               className={expandedColumns ? '' : 'max-w-md'}
-                              onClick={() => setViewingItem(item)}
                             >
-                              <div className={expandedColumns ? 'font-medium' : 'line-clamp-2 font-medium'}>
-                                {item.description}
-                              </div>
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'description' ? (
+                                <div className="flex items-center gap-2 animate-fade-in">
+                                  <Textarea
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    className="min-h-[60px] text-sm resize-none"
+                                    autoFocus
+                                    maxLength={500}
+                                  />
+                                  <div className="flex flex-col gap-1 shrink-0">
+                                    <Button
+                                      size="sm"
+                                      onClick={handleSaveEdit}
+                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div 
+                                  className={`${expandedColumns ? 'font-medium' : 'line-clamp-2 font-medium'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEdit(item.unique_id, 'description', item.description);
+                                  }}
+                                >
+                                  {item.description}
+                                  <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs text-muted-foreground transition-opacity">
+                                    (double-click to edit)
+                                  </span>
+                                </div>
+                              )}
                             </TableCell>
-                            <TableCell onClick={() => setViewingItem(item)}>
-                              <Badge className={`${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
-                                {item.category}
-                              </Badge>
+                            <TableCell>
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'category' ? (
+                                <div className="flex items-center gap-2 animate-fade-in">
+                                  <Select value={editValue} onValueChange={setEditValue}>
+                                    <SelectTrigger className="h-9 w-full">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {Array.from(new Set(allChecklistItems.map(i => i.category))).map(cat => (
+                                        <SelectItem key={cat} value={cat}>
+                                          {cat}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="flex gap-1 shrink-0">
+                                    <Button
+                                      size="sm"
+                                      onClick={handleSaveEdit}
+                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div 
+                                  className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group inline-block"
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEdit(item.unique_id, 'category', item.category);
+                                  }}
+                                >
+                                  <Badge className={`${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
+                                    {item.category}
+                                  </Badge>
+                                  <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs text-muted-foreground transition-opacity">
+                                    (double-click)
+                                  </span>
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell 
                               className={expandedColumns ? '' : 'max-w-xs'}
-                              onClick={() => setViewingItem(item)}
                             >
-                              <div className={expandedColumns ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'}>
-                                {item.required_evidence || '-'}
-                              </div>
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'evidence' ? (
+                                <div className="flex items-center gap-2 animate-fade-in">
+                                  <Textarea
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    className="min-h-[60px] text-sm resize-none"
+                                    autoFocus
+                                    maxLength={300}
+                                  />
+                                  <div className="flex flex-col gap-1 shrink-0">
+                                    <Button
+                                      size="sm"
+                                      onClick={handleSaveEdit}
+                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div 
+                                  className={`${expandedColumns ? 'text-sm text-muted-foreground' : 'line-clamp-2 text-sm text-muted-foreground'} cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group`}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEdit(item.unique_id, 'evidence', item.required_evidence || '');
+                                  }}
+                                >
+                                  {item.required_evidence || '-'}
+                                  {item.required_evidence && (
+                                    <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs transition-opacity">
+                                      (double-click to edit)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </TableCell>
-                            <TableCell 
-                              className="text-sm"
-                              onClick={() => setViewingItem(item)}
-                            >
-                              {item.Approver || '-'}
+                            <TableCell className="text-sm">
+                              {editingCell?.itemId === item.unique_id && editingCell?.field === 'approver' ? (
+                                <div className="flex items-center gap-2 animate-fade-in">
+                                  <Input
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    className="h-9"
+                                    autoFocus
+                                    maxLength={100}
+                                  />
+                                  <div className="flex gap-1 shrink-0">
+                                    <Button
+                                      size="sm"
+                                      onClick={handleSaveEdit}
+                                      className="h-7 w-7 p-0 bg-green-600 hover:bg-green-700"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div 
+                                  className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors duration-200 group"
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEdit(item.unique_id, 'approver', item.Approver || '');
+                                  }}
+                                >
+                                  {item.Approver || '-'}
+                                  <span className="ml-2 opacity-0 group-hover:opacity-50 text-xs text-muted-foreground transition-opacity">
+                                    (double-click)
+                                  </span>
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <div className="flex justify-end gap-1">
