@@ -15,6 +15,24 @@ import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { getCurrentTranslations } from '@/utils/translations';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+
+// Category color mapping
+const CATEGORY_COLORS: Record<string, string> = {
+  'General': 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
+  'Hardware Integrity': 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30',
+  'Process Safety': 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30',
+  'Documentation': 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-500/30',
+  'Organization': 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30',
+  'Health & Safety': 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
+  'Emergency Response': 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30',
+  'HSE': 'bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/30',
+  'Electrical': 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
+  'Mechanical': 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30',
+  'Instrumentation': 'bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/30',
+  'Civil': 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+  'Rotating': 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
+};
 
 interface ChecklistDetailsPageProps {
   checklist: Checklist;
@@ -156,53 +174,66 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      {/* Admin Header with Breadcrumb */}
-      <AdminHeader
-        selectedLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-        translations={t}
-      >
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
-                <Home className="h-4 w-4" />
-                Dashboard
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer">
-                Checklists
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{checklist.name}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </AdminHeader>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <AnimatedBackground>
+        <div className="relative z-10">
+          {/* Admin Header with Breadcrumb */}
+          <AdminHeader
+            selectedLanguage={currentLanguage}
+            onLanguageChange={setCurrentLanguage}
+            translations={t}
+          >
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
+                    <Home className="h-4 w-4" />
+                    Dashboard
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink onClick={onBack} className="cursor-pointer">
+                    Checklists
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{checklist.name}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </AdminHeader>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Checklist Overview */}
         <div className="mb-8 animate-fade-in-up">
-          <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
-            <CardHeader>
+          <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-shadow duration-300">
+            <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-2xl">{checklist.name}</CardTitle>
-                  <CardDescription className="mt-2 text-base">
+                <div className="space-y-2">
+                  <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                    {checklist.name}
+                  </CardTitle>
+                  <CardDescription className="text-base text-muted-foreground">
                     {checklist.reason}
                   </CardDescription>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={handleEditChecklist}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleEditChecklist}
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Checklist
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
@@ -211,32 +242,40 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-8 w-8 text-primary" />
+                <div className="flex items-center space-x-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
                   <div>
-                    <p className="text-2xl font-bold">{checklist.items_count}</p>
-                    <p className="text-sm text-muted-foreground">Total Items</p>
+                    <p className="text-3xl font-bold text-foreground">{checklist.items_count}</p>
+                    <p className="text-sm text-muted-foreground font-medium">Total Items</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Activity className="h-8 w-8 text-green-600" />
+                <div className="flex items-center space-x-4 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
+                  <div className="p-3 rounded-full bg-green-500/10">
+                    <Activity className="h-6 w-6 text-green-600 dark:text-green-500" />
+                  </div>
                   <div>
-                    <p className="text-2xl font-bold">{checklist.active_pssr_count}</p>
-                    <p className="text-sm text-muted-foreground">Active PSSRs</p>
+                    <p className="text-3xl font-bold text-foreground">{checklist.active_pssr_count}</p>
+                    <p className="text-sm text-muted-foreground font-medium">Active PSSRs</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-8 w-8 text-blue-600" />
+                <div className="flex items-center space-x-4 p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                  <div className="p-3 rounded-full bg-blue-500/10">
+                    <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-500" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold">{new Date(checklist.created_at).toLocaleDateString()}</p>
-                    <p className="text-sm text-muted-foreground">Created Date</p>
+                    <p className="text-sm font-bold text-foreground">{new Date(checklist.created_at).toLocaleDateString()}</p>
+                    <p className="text-sm text-muted-foreground font-medium">Created Date</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <User className="h-8 w-8 text-purple-600" />
+                <div className="flex items-center space-x-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
+                  <div className="p-3 rounded-full bg-purple-500/10">
+                    <User className="h-6 w-6 text-purple-600 dark:text-purple-500" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold">{checklist.created_by}</p>
-                    <p className="text-sm text-muted-foreground">Created By</p>
+                    <p className="text-sm font-bold text-foreground truncate max-w-[120px]">{checklist.created_by}</p>
+                    <p className="text-sm text-muted-foreground font-medium">Created By</p>
                   </div>
                 </div>
               </div>
@@ -246,149 +285,155 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
 
         {/* Tabs for different views */}
         <Tabs defaultValue="items" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="items">Checklist Items</TabsTrigger>
-            <TabsTrigger value="pssrs">Active PSSRs</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 backdrop-blur-sm">
+            <TabsTrigger value="items" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              Checklist Items
+            </TabsTrigger>
+            <TabsTrigger value="pssrs" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              Active PSSRs
+            </TabsTrigger>
           </TabsList>
 
           {/* Checklist Items Tab */}
           <TabsContent value="items" className="space-y-6">
             {/* Search and Filter Controls */}
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search checklist items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search checklist items..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-11 bg-background/50"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-56 h-11 bg-background/50">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Filter by category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories ({getCategoryStats('all')})</SelectItem>
+                        {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => (
+                          <SelectItem key={category} value={category}>
+                            {category} ({getCategoryStats(category)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-48 h-11 bg-background/50">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="id">Item ID</SelectItem>
+                        <SelectItem value="description">Description</SelectItem>
+                        <SelectItem value="category">Category</SelectItem>
+                        <SelectItem value="authority">Authority</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="flex gap-4">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-48">
-                      <Filter className="h-4 w-4 mr-2" />
-                      <SelectValue placeholder="Filter by category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories ({getCategoryStats('all')})</SelectItem>
-                      {Array.from(new Set(allChecklistItems.map(item => item.category))).map(category => (
-                        <SelectItem key={category} value={category}>
-                          {category} ({getCategoryStats(category)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="id">Item ID</SelectItem>
-                      <SelectItem value="description">Description</SelectItem>
-                      <SelectItem value="category">Category</SelectItem>
-                      <SelectItem value="authority">Authority</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Items Table */}
-            <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Checklist Items ({filteredItems.length})</CardTitle>
-                <CardDescription>
-                  Detailed view of all items in this checklist
-                </CardDescription>
+            {/* Items Grid */}
+            <Card className="border-border/40 bg-card/95 backdrop-blur-xl shadow-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl">Checklist Items ({filteredItems.length})</CardTitle>
+                    <CardDescription className="mt-1">
+                      Detailed view of all items in this checklist
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort('id')}
-                        >
-                          Item ID {sortBy === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort('description')}
-                        >
-                          Description {sortBy === 'description' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort('category')}
-                        >
-                          Category {sortBy === 'category' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead>Supporting Evidence</TableHead>
-                        <TableHead 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort('authority')}
-                        >
-                          Approving Authority {sortBy === 'authority' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8">
-                            Loading checklist items...
-                          </TableCell>
-                        </TableRow>
-                      ) : filteredItems.map((item) => (
-                        <TableRow key={item.unique_id} className="hover:bg-muted/20">
-                          <TableCell className="font-medium">{item.unique_id}</TableCell>
-                          <TableCell className="max-w-md">
-                            <div className="line-clamp-3">{item.description}</div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{item.category}</Badge>
-                          </TableCell>
-                          <TableCell className="max-w-xs">
-                            <div className="line-clamp-2 text-sm text-muted-foreground">
-                              {item.required_evidence || '-'}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">{item.Approver || '-'}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setViewingItem(item)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditItem(item)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDeleteItem(item.unique_id)}
-                                className="text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center space-y-3">
+                      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+                      <p className="text-muted-foreground">Loading checklist items...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {filteredItems.map((item) => (
+                      <div 
+                        key={item.unique_id} 
+                        className="group relative p-5 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:scale-[1.01]"
+                      >
+                        {/* Item Header */}
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <Badge 
+                              variant="outline" 
+                              className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap"
+                            >
+                              {item.unique_id}
+                            </Badge>
+                            <Badge 
+                              className={`text-xs px-2.5 py-1 font-medium ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}
+                            >
+                              {item.category}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setViewingItem(item)}
+                              className="h-8 w-8 p-0 hover:bg-primary/10"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditItem(item)}
+                              className="h-8 w-8 p-0 hover:bg-primary/10"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteItem(item.unique_id)}
+                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Description */}
+                        <p className="text-sm font-medium text-foreground mb-3 line-clamp-2 leading-relaxed">
+                          {item.description}
+                        </p>
+                        
+                        {/* Footer Info */}
+                        <div className="flex items-center justify-between gap-4 pt-3 border-t border-border/20">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-muted-foreground mb-1">Supporting Evidence</p>
+                            <p className="text-xs font-medium text-foreground truncate">
+                              {item.required_evidence || 'No evidence required'}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-xs text-muted-foreground mb-1">Authority</p>
+                            <p className="text-xs font-medium text-foreground">
+                              {item.Approver || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -465,6 +510,8 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
           onComplete={handleSaveItem}
         />
       )}
+        </div>
+      </AnimatedBackground>
     </div>
   );
 };
