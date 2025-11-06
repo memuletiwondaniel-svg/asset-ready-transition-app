@@ -27,13 +27,11 @@ import { getCurrentTranslations } from '@/utils/translations';
 import { AdvancedFilterSidebar, ChecklistFilters } from './checklist/AdvancedFilterSidebar';
 import { BulkActionsToolbar } from './checklist/BulkActionsToolbar';
 import { TemplateManagement } from './checklist/TemplateManagement';
-
 interface ChecklistManagementPageProps {
   onBack: () => void;
   translations?: any;
   selectedLanguage?: string;
 }
-
 const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   onBack,
   translations,
@@ -41,7 +39,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
 }) => {
   const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
   const t = translations || getCurrentTranslations(currentLanguage);
-
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -54,13 +51,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   const [showEditForm, setShowEditForm] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // New state for batch operations and filters
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showTemplateManagement, setShowTemplateManagement] = useState(false);
   const [filters, setFilters] = useState<ChecklistFilters>({});
-
   const {
     data: allChecklistItems,
     isLoading: itemsLoading
@@ -69,20 +65,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   // Apply filters to checklist items
   const checklistItems = useMemo(() => {
     if (!allChecklistItems) return [];
-    
     let filtered = [...allChecklistItems];
 
     // Apply search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.unique_id?.toLowerCase().includes(searchLower) ||
-        item.description?.toLowerCase().includes(searchLower) ||
-        item.topic?.toLowerCase().includes(searchLower) ||
-        item.category?.toLowerCase().includes(searchLower) ||
-        item.Approver?.toLowerCase().includes(searchLower) ||
-        item.responsible?.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter(item => item.unique_id?.toLowerCase().includes(searchLower) || item.description?.toLowerCase().includes(searchLower) || item.topic?.toLowerCase().includes(searchLower) || item.category?.toLowerCase().includes(searchLower) || item.Approver?.toLowerCase().includes(searchLower) || item.responsible?.toLowerCase().includes(searchLower));
     }
 
     // Apply advanced filters
@@ -107,28 +95,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         return true;
       });
     }
-
     return filtered;
   }, [allChecklistItems, searchTerm, filters]);
 
   // Get unique values for filters
-  const availableCategories = useMemo(() => 
-    [...new Set(allChecklistItems?.map(item => item.category).filter(Boolean))].sort(),
-    [allChecklistItems]
-  );
-  const availableTopics = useMemo(() => 
-    [...new Set(allChecklistItems?.map(item => item.topic).filter(Boolean))].sort(),
-    [allChecklistItems]
-  );
-  const availableApprovers = useMemo(() => 
-    [...new Set(allChecklistItems?.map(item => item.Approver).filter(Boolean))].sort(),
-    [allChecklistItems]
-  );
-  const availableResponsible = useMemo(() => 
-    [...new Set(allChecklistItems?.map(item => item.responsible).filter(Boolean))].sort(),
-    [allChecklistItems]
-  );
-
+  const availableCategories = useMemo(() => [...new Set(allChecklistItems?.map(item => item.category).filter(Boolean))].sort(), [allChecklistItems]);
+  const availableTopics = useMemo(() => [...new Set(allChecklistItems?.map(item => item.topic).filter(Boolean))].sort(), [allChecklistItems]);
+  const availableApprovers = useMemo(() => [...new Set(allChecklistItems?.map(item => item.Approver).filter(Boolean))].sort(), [allChecklistItems]);
+  const availableResponsible = useMemo(() => [...new Set(allChecklistItems?.map(item => item.responsible).filter(Boolean))].sort(), [allChecklistItems]);
   const categoryStats = checklistItems?.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
@@ -147,7 +121,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       // Add any categories that exist in data but not in our default order
       const remainingCategories = existingCategories.filter(cat => !defaultOrder.includes(cat));
       const newCategoryOrder = [...orderedExistingCategories, ...remainingCategories];
-      
+
       // Only update if the order has actually changed
       if (JSON.stringify(newCategoryOrder) !== JSON.stringify(categoryOrder)) {
         setCategoryOrder(newCategoryOrder);
@@ -197,20 +171,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   };
   const getItemsByCategory = (category: string) => {
     let filtered = checklistItems?.filter(item => item.category === category) || [];
-    
+
     // Apply search filter
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(item => 
-        item.unique_id?.toLowerCase().includes(searchLower) ||
-        item.description?.toLowerCase().includes(searchLower) ||
-        item.topic?.toLowerCase().includes(searchLower) ||
-        item.category?.toLowerCase().includes(searchLower) ||
-        item.Approver?.toLowerCase().includes(searchLower) ||
-        item.responsible?.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter(item => item.unique_id?.toLowerCase().includes(searchLower) || item.description?.toLowerCase().includes(searchLower) || item.topic?.toLowerCase().includes(searchLower) || item.category?.toLowerCase().includes(searchLower) || item.Approver?.toLowerCase().includes(searchLower) || item.responsible?.toLowerCase().includes(searchLower));
     }
-    
     return filtered;
   };
   const handleViewItem = (item: ChecklistItem) => {
@@ -335,19 +301,15 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                       {categoryItems.map(item => <div key={item.unique_id} className="group relative p-4 bg-card/50 backdrop-blur-sm border border-border/40 rounded-lg hover:bg-card hover:border-primary/30 hover:shadow-fluent-sm transition-all duration-200">
                           <div className="flex items-center justify-between">
                             <div className="flex items-start gap-3 flex-1">
-                              <Checkbox
-                                checked={selectedItems.has(item.unique_id || '')}
-                                onCheckedChange={(checked) => {
-                                  const newSelected = new Set(selectedItems);
-                                  if (checked) {
-                                    newSelected.add(item.unique_id || '');
-                                  } else {
-                                    newSelected.delete(item.unique_id || '');
-                                  }
-                                  setSelectedItems(newSelected);
-                                }}
-                                className="mt-1"
-                              />
+                              <Checkbox checked={selectedItems.has(item.unique_id || '')} onCheckedChange={checked => {
+                          const newSelected = new Set(selectedItems);
+                          if (checked) {
+                            newSelected.add(item.unique_id || '');
+                          } else {
+                            newSelected.delete(item.unique_id || '');
+                          }
+                          setSelectedItems(newSelected);
+                        }} className="mt-1" />
                               <div className="flex-1 space-y-2">
                                 <div className="flex items-center space-x-3">
                                   <Badge variant="secondary" className="font-mono text-xs shadow-fluent-xs">
@@ -396,7 +358,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         </AccordionItem>
       </div>;
   };
-
   if (itemsLoading) {
     return <AnimatedBackground className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -405,58 +366,14 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
         </div>
       </AnimatedBackground>;
   }
-
   return <AnimatedBackground className="min-h-screen">
       {/* Modern Fluent Header */}
       <div className="fluent-navigation sticky top-0 z-50">
-        <div className="container flex h-16 items-center justify-between gap-4">
-          {/* Left - Breadcrumb Navigation */}
-          <div className="flex items-center min-w-0">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink 
-                    onClick={onBack}
-                    className="flex items-center gap-2 cursor-pointer hover:text-primary transition-all duration-200 text-sm group"
-                  >
-                    <Home className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    <span className="hidden sm:inline font-medium">Home</span>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="font-semibold text-sm text-foreground">
-                    Checklist Items
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-
-          {/* Center - ORSH Logo */}
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <OrshLogo size="medium" />
-          </div>
-
-          {/* Right - Actions */}
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <LanguageSelector 
-              selectedLanguage={currentLanguage}
-              onLanguageChange={setCurrentLanguage}
-            />
-            <UserProfileDropdown translations={t} />
-          </div>
-        </div>
+        
       </div>
 
       {/* Bulk Actions Toolbar */}
-      <BulkActionsToolbar
-        selectedItems={selectedItems}
-        items={checklistItems || []}
-        onClearSelection={() => setSelectedItems(new Set())}
-        availableCategories={availableCategories}
-      />
+      <BulkActionsToolbar selectedItems={selectedItems} items={checklistItems || []} onClearSelection={() => setSelectedItems(new Set())} availableCategories={availableCategories} />
 
       <div className="container pt-12 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Modern Hero Header */}
@@ -469,35 +386,23 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
               <p className="text-muted-foreground text-base max-w-2xl">
                 Manage and organize your checklist items across different categories
               </p>
-              {selectedItems.size > 0 && (
-                <Badge className="mt-2">
+              {selectedItems.size > 0 && <Badge className="mt-2">
                   {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected
-                </Badge>
-              )}
+                </Badge>}
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
               {/* Advanced Filters Button */}
-              <Button
-                variant="outline"
-                onClick={() => setShowAdvancedFilters(true)}
-                className="fluent-button shadow-fluent-xs"
-              >
+              <Button variant="outline" onClick={() => setShowAdvancedFilters(true)} className="fluent-button shadow-fluent-xs">
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
-                {(filters.categories?.length || 0) + (filters.topics?.length || 0) + (filters.approvers?.length || 0) + (filters.responsible?.length || 0) > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                {(filters.categories?.length || 0) + (filters.topics?.length || 0) + (filters.approvers?.length || 0) + (filters.responsible?.length || 0) > 0 && <Badge variant="secondary" className="ml-2">
                     {(filters.categories?.length || 0) + (filters.topics?.length || 0) + (filters.approvers?.length || 0) + (filters.responsible?.length || 0)}
-                  </Badge>
-                )}
+                  </Badge>}
               </Button>
 
               {/* Template Management Button */}
-              <Button
-                variant="outline"
-                onClick={() => setShowTemplateManagement(true)}
-                className="fluent-button shadow-fluent-xs"
-              >
+              <Button variant="outline" onClick={() => setShowTemplateManagement(true)} className="fluent-button shadow-fluent-xs">
                 <BookTemplate className="w-4 h-4 mr-2" />
                 Templates
               </Button>
@@ -509,11 +414,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                     <Grid3X3 className="w-4 h-4" />
                     <span className="hidden sm:inline">Cards</span>
                   </div>
-                  <Switch 
-                    checked={viewMode === 'table'} 
-                    onCheckedChange={checked => setViewMode(checked ? 'table' : 'card')} 
-                    className="data-[state=checked]:bg-primary" 
-                  />
+                  <Switch checked={viewMode === 'table'} onCheckedChange={checked => setViewMode(checked ? 'table' : 'card')} className="data-[state=checked]:bg-primary" />
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Table className="w-4 h-4" />
                     <span className="hidden sm:inline">Table</span>
@@ -521,10 +422,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
                 </div>
               </div>
               
-              <Button 
-                onClick={handleCreateItem} 
-                className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
-              >
+              <Button onClick={handleCreateItem} className="fluent-button shadow-fluent-sm hover:shadow-fluent-md">
                 <Plus className="w-4 h-4 mr-2" />
                 New Item
               </Button>
@@ -544,12 +442,7 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
             {/* Search Bar for Cards View */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by ID, description, topic, category, approver, or responsible..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 bg-card border-border/40 focus:border-primary/60 focus:ring-primary/20 rounded-xl shadow-fluent-sm"
-              />
+              <Input placeholder="Search by ID, description, topic, category, approver, or responsible..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-12 h-12 bg-card border-border/40 focus:border-primary/60 focus:ring-primary/20 rounded-xl shadow-fluent-sm" />
             </div>
             
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -581,30 +474,16 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       </div>
       
       {/* Detail Modal */}
-      {showDetailModal && viewingItem && detailModalMode === 'view' && (
-        <ViewChecklistItemModal 
-          isOpen={showDetailModal} 
-          onClose={handleCloseDetailModal} 
-          item={viewingItem}
-          onEdit={() => {
-            setShowEditForm(true);
-            setShowDetailModal(false);
-          }}
-        />
-      )}
+      {showDetailModal && viewingItem && detailModalMode === 'view' && <ViewChecklistItemModal isOpen={showDetailModal} onClose={handleCloseDetailModal} item={viewingItem} onEdit={() => {
+      setShowEditForm(true);
+      setShowDetailModal(false);
+    }} />}
       
       {/* Edit Modal */}
-      {showEditForm && viewingItem && (
-        <EditChecklistItemModal 
-          isOpen={showEditForm} 
-          onClose={() => setShowEditForm(false)} 
-          item={viewingItem}
-          onComplete={() => {
-            setShowEditForm(false);
-            setViewingItem(null);
-          }}
-        />
-      )}
+      {showEditForm && viewingItem && <EditChecklistItemModal isOpen={showEditForm} onClose={() => setShowEditForm(false)} item={viewingItem} onComplete={() => {
+      setShowEditForm(false);
+      setViewingItem(null);
+    }} />}
 
 
       {/* Delete Modal */}
@@ -614,23 +493,10 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       {showCreateForm && <CreateChecklistItemForm onBack={handleCreateCancel} onComplete={handleCreateComplete} />}
 
       {/* Advanced Filters Sidebar */}
-      <AdvancedFilterSidebar
-        isOpen={showAdvancedFilters}
-        onClose={() => setShowAdvancedFilters(false)}
-        filters={filters}
-        onFiltersChange={setFilters}
-        availableCategories={availableCategories}
-        availableTopics={availableTopics}
-        availableApprovers={availableApprovers}
-        availableResponsible={availableResponsible}
-      />
+      <AdvancedFilterSidebar isOpen={showAdvancedFilters} onClose={() => setShowAdvancedFilters(false)} filters={filters} onFiltersChange={setFilters} availableCategories={availableCategories} availableTopics={availableTopics} availableApprovers={availableApprovers} availableResponsible={availableResponsible} />
 
       {/* Template Management */}
-      <TemplateManagement
-        isOpen={showTemplateManagement}
-        onClose={() => setShowTemplateManagement(false)}
-        selectedItems={Array.from(selectedItems).map(id => checklistItems?.find(item => item.unique_id === id)).filter(Boolean) as ChecklistItem[]}
-      />
+      <TemplateManagement isOpen={showTemplateManagement} onClose={() => setShowTemplateManagement(false)} selectedItems={Array.from(selectedItems).map(id => checklistItems?.find(item => item.unique_id === id)).filter(Boolean) as ChecklistItem[]} />
     </AnimatedBackground>;
 };
 export default ChecklistManagementPage;
