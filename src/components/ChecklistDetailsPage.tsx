@@ -437,6 +437,16 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                         <List className="h-4 w-4" />
                       </Button>
                     </div>
+                    {/* Add Item Button */}
+                    <Button 
+                      variant="default"
+                      size="default"
+                      className="h-11 px-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                      <Plus className="h-5 w-5 mr-2 transition-transform group-hover:rotate-90 duration-300 relative z-10" />
+                      <span className="relative z-10">Add Item</span>
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -890,16 +900,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Floating Action Button */}
-      <Button 
-        variant="default"
-        size="lg"
-        className="fixed bottom-8 right-8 h-16 w-16 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 active:scale-95 group z-50 border-2 border-primary-foreground/20"
-        aria-label="Add new item"
-      >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-        <Plus className="h-7 w-7 transition-transform group-hover:rotate-90 duration-300 relative z-10" />
-      </Button>
         </div>
       </AnimatedBackground>
     </div>;
