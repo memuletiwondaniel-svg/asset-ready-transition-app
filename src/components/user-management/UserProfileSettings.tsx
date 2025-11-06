@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BackgroundThemeSelector } from '@/components/BackgroundThemeSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -241,10 +242,11 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -574,6 +576,10 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="appearance" className="space-y-6">
+            <BackgroundThemeSelector />
           </TabsContent>
         </Tabs>
       </DialogContent>

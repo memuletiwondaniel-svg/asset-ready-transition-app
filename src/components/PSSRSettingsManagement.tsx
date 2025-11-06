@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableSkeleton } from '@/components/ui/skeleton-loader';
 import { Button } from '@/components/ui/button';
@@ -559,19 +560,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden animate-smooth-in">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l from-primary/10 to-emerald-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
-          animationDelay: '700ms'
-        }} />
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t from-emerald-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
-          animationDelay: '1400ms'
-        }} />
-      </div>
-
-      <div className="relative z-10">
+      <AnimatedBackground>
         {/* Modern Compact Header */}
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
           <div className="container flex h-16 items-center justify-between gap-4">
@@ -1258,8 +1247,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           </DialogContent>
         </Dialog>
         </div>
-      </div>
-    </div>
+      </AnimatedBackground>
     </TooltipProvider>
   );
 };

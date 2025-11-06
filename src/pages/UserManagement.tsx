@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -152,8 +153,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
   const projects = ["Project Alpha", "Project Beta", "Project Gamma"]; // Mock projects
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <AnimatedBackground>
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -465,7 +466,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
           onReject={handleRejectUser}
         />
       )}
-    </div>
+    </AnimatedBackground>
   );
 };
 

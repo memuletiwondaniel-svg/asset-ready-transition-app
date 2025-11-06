@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -287,19 +288,7 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
       </div>
     );
   }
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden animate-smooth-in">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r from-primary/10 to-emerald-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l from-emerald-500/10 to-orange-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
-          animationDelay: '700ms'
-        }} />
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t from-orange-500/10 to-primary/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{
-          animationDelay: '1400ms'
-        }} />
-      </div>
-      
-      <div className="relative z-10">
+  return <AnimatedBackground>
       <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} translations={t}>
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
@@ -546,7 +535,6 @@ const AdminToolsPage: React.FC<AdminToolsPageProps> = ({
         )}
       </TooltipProvider>
       </div>
-      </div>
-    </div>;
+    </AnimatedBackground>;
 };
 export default AdminToolsPage;
