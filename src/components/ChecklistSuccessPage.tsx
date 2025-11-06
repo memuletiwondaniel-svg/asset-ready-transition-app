@@ -14,23 +14,23 @@ export const ChecklistSuccessPage = ({
   onCreateAnother 
 }: ChecklistSuccessPageProps) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+      <Card className="w-full max-w-2xl border-border/50 shadow-2xl">
+        <CardHeader className="text-center pb-6 pt-12">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center ring-8 ring-green-500/20">
+              <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" strokeWidth={2.5} />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-primary">
+          <CardTitle className="text-3xl font-bold">
             Checklist Created Successfully!
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          <div className="text-center space-y-2">
+        <CardContent className="space-y-6 pb-12">
+          <div className="text-center space-y-4">
             <p className="text-lg font-medium">
-              "{checklistName}" has been created successfully.
+              "<span className="text-primary">{checklistName}</span>" has been created.
             </p>
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -40,9 +40,10 @@ export const ChecklistSuccessPage = ({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6">
             <Button 
               onClick={onViewChecklists}
+              size="lg"
               className="flex-1 sm:flex-none"
             >
               View All Checklists
@@ -50,9 +51,10 @@ export const ChecklistSuccessPage = ({
             <Button 
               variant="outline" 
               onClick={onCreateAnother}
+              size="lg"
               className="flex-1 sm:flex-none"
             >
-              Create Another Checklist
+              Create Another
             </Button>
           </div>
         </CardContent>

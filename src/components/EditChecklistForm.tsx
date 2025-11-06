@@ -185,51 +185,39 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+    <div className="pb-8">
       {/* Navigation Bar */}
-      <div className="fluent-navigation sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="fluent-reveal">
-                <img 
-                  src="/lovable-uploads/70145c9c-2a08-4847-8e11-a13dc6eeb723.png" 
-                  alt="BGC Logo" 
-                  className="h-12 w-auto animate-float" 
-                />
-              </div>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                  Edit Checklist
-                </h1>
-                <p className="text-sm text-muted-foreground font-medium">Modify checklist details and items</p>
-              </div>
+      <div className="sticky top-[80px] z-40 bg-background/95 backdrop-blur-xl border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <Button variant="outline" onClick={onBack} size="lg">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Cancel</span>
+              <span className="sm:hidden">Back</span>
+            </Button>
+            
+            <div className="text-center hidden md:block">
+              <h2 className="text-xl font-bold">Edit Checklist</h2>
+              <p className="text-sm text-muted-foreground">
+                {formData.selected_items.length} items selected
+              </p>
             </div>
-            <div className="flex space-x-3">
-              <Button 
-                variant="outline" 
-                onClick={onBack}
-                className="fluent-button hover:bg-secondary/80 hover:border-primary/20"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave}
-                disabled={isPending || !formData.reason || (formData.reason === 'Others' && !formData.custom_reason)}
-                className="fluent-button bg-primary hover:bg-primary-hover"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
+            
+            <Button 
+              onClick={handleSave}
+              disabled={!formData.reason || (formData.reason === 'Others' && !formData.custom_reason) || isPending}
+              size="lg"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isPending ? 'Saving...' : 'Save'}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         {/* Basic Information */}
-        <Card className="border border-border/20 bg-card/90 backdrop-blur-sm">
+        <Card className="border-border/50 shadow-xl mb-6">
           <CardHeader>
             <CardTitle>Checklist Information</CardTitle>
             <CardDescription>
