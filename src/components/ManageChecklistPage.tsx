@@ -278,7 +278,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               Checklist Management
             </h1>
             <p className="text-muted-foreground/80 text-sm md:text-base max-w-3xl">
-              Manage your checklists, items, categories, topics, and translations in one centralized location
+              Manage your checklists, items, categories, and topics in one centralized location
             </p>
           </div>
 
@@ -301,10 +301,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 <TabsTrigger value="topics" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:scale-105 gap-2 hover:bg-accent/50 hover:scale-102 active:scale-100">
                   <BookOpen className="h-4 w-4 transition-transform duration-300" />
                   <span className="hidden sm:inline">{t.topics}</span>
-                </TabsTrigger>
-                <TabsTrigger value="translations" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:scale-105 gap-2 hover:bg-accent/50 hover:scale-102 active:scale-100">
-                  <Languages className="h-4 w-4 transition-transform duration-300" />
-                  <span className="hidden sm:inline">Translations</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -393,27 +389,22 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
             <TabsContent value="items" className="animate-slide-up mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
-                <ChecklistManagementPage onBack={() => {}} translations={t} />
+                <ChecklistManagementPage onBack={() => {}} translations={t} selectedLanguage={currentLanguage} />
               </div>
             </TabsContent>
 
             <TabsContent value="categories" className="animate-slide-up mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
-                <ChecklistCategoriesManagement onBack={() => {}} translations={t} />
+                <ChecklistCategoriesManagement onBack={() => {}} translations={t} selectedLanguage={currentLanguage} />
               </div>
             </TabsContent>
 
             <TabsContent value="topics" className="animate-slide-up mt-0">
               <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
-                <ChecklistTopicsManagement onBack={() => {}} translations={t} />
+                <ChecklistTopicsManagement onBack={() => {}} translations={t} selectedLanguage={currentLanguage} />
               </div>
             </TabsContent>
 
-            <TabsContent value="translations" className="animate-slide-up mt-0">
-              <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
-                <TranslationManagement onBack={() => {}} translations={t} />
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
       </div>

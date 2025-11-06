@@ -54,6 +54,7 @@ import { useToast } from '@/hooks/use-toast';
 interface ChecklistCategoriesManagementProps {
   onBack: () => void;
   translations?: any;
+  selectedLanguage?: string;
 }
 
 interface CategoryFormData {
