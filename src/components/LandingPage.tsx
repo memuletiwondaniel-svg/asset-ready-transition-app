@@ -540,9 +540,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       size="icon" 
                       onClick={handleSend} 
                       disabled={isLoadingAI || (!userInput.trim() && uploadedImages.length === 0)} 
-                      className="rounded-full bg-muted/60 h-9 w-9 hover:bg-muted/80 hover:scale-105 transition-all duration-300"
+                      className={`rounded-full h-9 w-9 hover:scale-105 transition-all duration-300 ${
+                        userInput.trim() || uploadedImages.length > 0
+                          ? 'bg-gradient-to-br from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl'
+                          : 'bg-muted/60 hover:bg-muted/80'
+                      }`}
                     >
-                      <Send className="w-4 h-4 text-muted-foreground" />
+                      <Send className={`w-4 h-4 ${userInput.trim() || uploadedImages.length > 0 ? 'text-white' : 'text-muted-foreground'}`} />
                     </Button>
                   </div>
                 </div>
