@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from './admin/ThemeToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
+import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { 
   Home, Settings, ClipboardList, KeyRound, ChevronDown, ChevronLeft, ChevronRight, 
   Languages, Check, User, Shield, Bell, LogOut, Eye, EyeOff, GripVertical,
@@ -103,6 +104,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const { toast } = useToast();
 
   // Navigation items configuration with visibility and order
@@ -269,9 +271,9 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           <DropdownMenuContent align="start" className="w-64 bg-background z-50">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setProfileModalOpen(true)}>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Edit Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
@@ -500,6 +502,16 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           </>
         )}
       </div>
+
+      {/* Profile Editor Modal */}
+      <UserProfileModal
+        open={profileModalOpen}
+        onOpenChange={setProfileModalOpen}
+        onProfileUpdated={() => {
+          // Force parent component to refresh profile data
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

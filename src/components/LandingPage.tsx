@@ -100,37 +100,37 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     avatar_url: string;
   } | null>(null);
 
-  React.useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, position, avatar_url')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          // Construct full avatar URL if needed
-          let avatarUrl = profile.avatar_url;
-          if (avatarUrl && !avatarUrl.startsWith('http')) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('user-avatars')
-              .getPublicUrl(avatarUrl);
-            avatarUrl = publicUrl;
-          }
-          
-          setUserProfile({
-            full_name: profile.full_name || 'User',
-            position: profile.position || 'Team Member',
-            avatar_url: avatarUrl || ''
-          });
+  const fetchUserProfile = React.useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, position, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile) {
+        // Construct full avatar URL if needed
+        let avatarUrl = profile.avatar_url;
+        if (avatarUrl && !avatarUrl.startsWith('http')) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('user-avatars')
+            .getPublicUrl(avatarUrl);
+          avatarUrl = publicUrl;
         }
+        
+        setUserProfile({
+          full_name: profile.full_name || 'User',
+          position: profile.position || 'Team Member',
+          avatar_url: avatarUrl || ''
+        });
       }
-    };
-    
-    fetchUserProfile();
+    }
   }, []);
+
+  React.useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
   const handleVoiceInput = () => {
     if (isListening) {
       stopListening();
