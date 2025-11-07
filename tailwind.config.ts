@@ -243,6 +243,11 @@ export default {
 				'pulse-glow': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.5' }
+				},
+				'micro-press': {
+					'0%': { transform: 'scale(1) rotate(0deg)' },
+					'50%': { transform: 'scale(0.95) rotate(1deg)' },
+					'100%': { transform: 'scale(1) rotate(0deg)' }
 				}
 			},
 		animation: {
@@ -268,6 +273,7 @@ export default {
 			'gradient-color-morph-slow': 'gradient-color-morph 22s linear infinite',
 			shimmer: 'shimmer 2s linear infinite',
 			'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+			'micro-press': 'micro-press 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
 			// Combined animations for visible background movement
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
 			'gradient-sweep-morph': 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
