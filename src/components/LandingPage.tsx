@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListTodo, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2 } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListTodo, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -660,11 +660,21 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
             {/* AI Assistant Panel */}
             {aiPanelVisible && (
-              <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }}>
+              <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in group ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }}>
                 <CardHeader className="flex-shrink-0 py-4 pb-3 flex flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-2xl font-bold">
-                    Welcome {userProfile?.full_name || 'User'}
-                  </CardTitle>
+                  <div className="flex items-center gap-2 flex-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Drag to reposition (coming soon)"
+                    >
+                      <GripVertical className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                    <CardTitle className="text-2xl font-bold">
+                      Welcome {userProfile?.full_name || 'User'}
+                    </CardTitle>
+                  </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button size="icon" variant="ghost" className="h-8 w-8">
@@ -908,11 +918,19 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
           {/* Tasks Panel */}
           {tasksPanelVisible && (
-            <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-80'}`} data-tour="tasks">
+            <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 group ${isTasksPanelCollapsed ? 'w-16' : 'w-80'}`} data-tour="tasks">
               <CardHeader className="border-b border-border/40 py-4">
                 <div className="flex items-center justify-between">
                   {!isTasksPanelCollapsed && (
                     <div className="flex items-center gap-3 flex-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        title="Drag to reposition (coming soon)"
+                      >
+                        <GripVertical className="w-4 h-4 text-muted-foreground" />
+                      </Button>
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/80 to-accent flex items-center justify-center shadow-lg">
                         <ListTodo className="w-5 h-5 text-white" />
                       </div>
