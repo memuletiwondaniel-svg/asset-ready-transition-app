@@ -68,17 +68,23 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children, onSet
       className={`overflow-hidden transition-all group ${isDragging ? 'opacity-50' : ''} ${widget.is_visible ? '' : 'hidden'}`}
     >
       <div className="relative">
+        {/* Always visible drag handle */}
+        <div className="absolute top-2 left-2 z-10">
+          <Button
+            {...attributes}
+            {...listeners}
+            variant="ghost"
+            size="sm"
+            className="cursor-grab active:cursor-grabbing h-8 w-8 p-0 hover:bg-accent/50 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Drag to reposition"
+          >
+            <GripVertical className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {/* Settings and delete only in customize mode */}
         {customizeMode && (
           <div className="absolute top-2 right-2 z-10 flex gap-1">
-            <Button
-              {...attributes}
-              {...listeners}
-              variant="ghost"
-              size="sm"
-              className="cursor-grab active:cursor-grabbing h-8 w-8 p-0 hover:bg-accent/50"
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
             <Button
               variant="ghost"
               size="sm"
