@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { User, Settings, Shield, LogOut, ChevronDown, Key, Bell, UserCog } from 'lucide-react';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { NotificationPreferencesPanel } from '@/components/NotificationPreferencesPanel';
 
 interface UserProfileDropdownProps {
   className?: string;
@@ -18,6 +19,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
 }) => {
   const { session, signOut } = useAuth();
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   
   // Mock user data - in real app this would come from session/profile
   const user = {
@@ -113,7 +115,10 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
               <span className="font-medium">{t.security}</span>
             </DropdownMenuItem>
             
-            <DropdownMenuItem className="cursor-pointer p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <DropdownMenuItem 
+              className="cursor-pointer p-3 rounded-lg hover:bg-accent/50 transition-colors"
+              onClick={() => setShowNotificationsModal(true)}
+            >
               <Bell className="h-4 w-4 mr-3 text-muted-foreground" />
               <span className="font-medium">{t.notifications}</span>
             </DropdownMenuItem>
@@ -171,6 +176,19 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
               <p className="text-xs text-green-600 mt-1">Last login: Today at 2:45 PM</p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notification Preferences Modal */}
+      <Dialog open={showNotificationsModal} onOpenChange={setShowNotificationsModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Bell className="h-5 w-5 mr-2 text-primary" />
+              Notification Preferences
+            </DialogTitle>
+          </DialogHeader>
+          <NotificationPreferencesPanel />
         </DialogContent>
       </Dialog>
     </>
