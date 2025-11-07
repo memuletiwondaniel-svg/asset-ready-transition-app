@@ -10,6 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
+import { OnboardingTour } from '@/components/OnboardingTour';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -41,7 +43,20 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [taskFilterType, setTaskFilterType] = useState<string>('all');
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Check if user has seen the tour before
+  React.useEffect(() => {
+    const hasSeenTour = localStorage.getItem('hasSeenTour');
+    if (!hasSeenTour) {
+      // Show tour after a brief delay
+      const timer = setTimeout(() => {
+        setShowOnboarding(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const {
     tasks,
     loading: tasksLoading,
@@ -265,6 +280,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     bgTone: 'bg-orange-500/5'
   }];
   return <AnimatedBackground>
+      {/* Particle Effects */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <AnimatedParticles />
+      </div>
+      
       <AdminHeader selectedLanguage={language} onLanguageChange={setLanguage} translations={t}>
         <Breadcrumb>
           <BreadcrumbList>
@@ -294,7 +314,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </CardHeader>
             <CardContent className="p-6 flex flex-col flex-1 overflow-hidden">
               <div className="space-y-3 flex-shrink-0">
-                <div className="relative group">
+                <div className="relative group" data-tour="ai-input">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Textarea 
                     value={userInput} 
@@ -333,15 +353,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 animate-smooth-in stagger-1">
+                <div className="flex items-center gap-3 animate-smooth-in stagger-1" data-tour="quick-actions">
                   <Button 
-                    size="sm" 
+                    size="icon"
                     variant="outline" 
                     onClick={() => setShowHistory(!showHistory)} 
-                    className="text-xs h-8 px-4 border-border/40 bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 transition-all duration-300 backdrop-blur-sm"
+                    className="h-8 w-8 border-border/40 bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 transition-all duration-300 backdrop-blur-sm"
+                    title="View search history"
                   >
-                    <History className="w-3.5 h-3.5 mr-2" />
-                    History
+                    <History className="w-4 h-4" />
                   </Button>
                   <div className="flex flex-wrap gap-2">
                     {quickActions.map((action, idx) => <Button 
@@ -414,7 +434,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </Card>
 
           {/* Workspaces Section */}
-          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }}>
+          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }} data-tour="workspaces">
             <CardHeader className="border-b border-border/40 py-4 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
               <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
               <CardDescription className="text-sm">Select a workspace to get started</CardDescription>
@@ -453,7 +473,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         </div>
 
         {/* Tasks Panel */}
-        <Card className={`border-border/40 shadow-xl transition-all duration-500 backdrop-blur-xl bg-card/95 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`}>
+        <Card className={`border-border/40 shadow-xl transition-all duration-500 backdrop-blur-xl bg-card/95 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
           <CardHeader className="border-b border-border/40 py-4 bg-gradient-to-r from-primary/5 to-accent/5">
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
@@ -607,6 +627,16 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           )}
         </Card>
       </div>
+
+      {/* Onboarding Tour */}
+      {showOnboarding && (
+        <OnboardingTour 
+          onComplete={() => {
+            setShowOnboarding(false);
+            localStorage.setItem('hasSeenTour', 'true');
+          }}
+        />
+      )}
 
       {/* Task Action Confirmation Dialog */}
       <AlertDialog open={!!taskToDelete} onOpenChange={(open) => !open && setTaskToDelete(null)}>
