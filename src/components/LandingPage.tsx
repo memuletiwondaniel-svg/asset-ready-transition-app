@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,6 +37,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
     content: string;
+    imageUrl?: string;
   }>>([]);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isTasksPanelCollapsed, setIsTasksPanelCollapsed] = useState(false);
@@ -48,6 +50,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
 
   // Check if user has seen the tour before
@@ -95,8 +100,104 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       });
     }
   };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Image too large",
+        description: "Please select an image smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a JPEG, PNG, WebP, or GIF image",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadedImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    toast({
+      title: "Image attached",
+      description: "Image will be sent with your message"
+    });
+  };
+
+  const uploadImageToStorage = async (file: File): Promise<string | null> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to upload images",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from('ai-query-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('ai-query-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const clearImage = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
   const sendMessageToAI = async (message: string) => {
-    if (!message.trim()) return;
+    if (!message.trim() && !uploadedImage) return;
+    
+    let imageUrl: string | null = null;
+    
+    // Upload image if present
+    if (uploadedImage) {
+      imageUrl = await uploadImageToStorage(uploadedImage);
+      if (!imageUrl && uploadedImage) {
+        // Upload failed, don't proceed
+        return;
+      }
+    }
     
     // Add to search history
     setSearchHistory(prev => {
@@ -106,10 +207,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     
     const userMessage = {
       role: 'user' as const,
-      content: message
+      content: message || 'Analyzing attached image...',
+      imageUrl: imageUrl || undefined
     };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
+    clearImage();
     setIsLoadingAI(true);
     setShowHistory(false);
     let assistantContent = '';
@@ -323,6 +426,23 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </CardHeader>
             <CardContent className="p-6 pt-3 flex flex-col flex-1 overflow-hidden">
               <div className="space-y-2 flex-shrink-0">
+                {imagePreview && (
+                  <div className="relative inline-block">
+                    <img 
+                      src={imagePreview} 
+                      alt="Upload preview" 
+                      className="max-h-32 rounded-lg border border-border/40"
+                    />
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={clearImage}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
                 <div className="relative group" data-tour="ai-input">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Textarea 
@@ -346,16 +466,24 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <Button 
                       size="icon" 
                       variant="ghost" 
-                      disabled 
-                      className="h-9 w-9 hover:bg-primary/10 transition-all duration-300 opacity-40 cursor-not-allowed"
-                      title="Image upload coming soon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoadingAI}
+                      className="h-9 w-9 hover:bg-primary/10 transition-all duration-300"
+                      title="Attach image"
                     >
                       <ImagePlus className="w-4 h-4 text-muted-foreground" />
                     </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={handleImageSelect}
+                    />
                     <Button 
                       size="icon" 
                       onClick={handleSend} 
-                      disabled={isLoadingAI || !userInput.trim()} 
+                      disabled={isLoadingAI || (!userInput.trim() && !uploadedImage)} 
                       className="rounded-full bg-gradient-to-br from-primary/80 to-accent/80 h-9 w-9 hover:from-primary hover:to-accent hover:scale-110 transition-all duration-300 shadow-md hover:shadow-lg"
                     >
                       <Send className="w-4 h-4" />
@@ -466,6 +594,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             ? 'bg-gradient-to-br from-primary to-accent text-primary-foreground' 
                             : 'bg-gradient-to-br from-muted/80 to-muted/60 border border-border/40'
                         }`}>
+                          {msg.imageUrl && (
+                            <img 
+                              src={msg.imageUrl} 
+                              alt="User uploaded" 
+                              className="max-w-full rounded-lg mb-2 max-h-64 object-contain"
+                            />
+                          )}
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                         </div>
                       </div>
