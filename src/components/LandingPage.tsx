@@ -1010,33 +1010,41 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       <SelectItem value="all">
                         <div className="flex items-center justify-between w-full">
                           <span>All</span>
-                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                            {taskCounts.all}
-                          </Badge>
+                          {taskCounts.all > 0 && (
+                            <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.all}
+                            </Badge>
+                          )}
                         </div>
                       </SelectItem>
                       <SelectItem value="approval">
                         <div className="flex items-center justify-between w-full">
                           <span>Approval</span>
-                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                            {taskCounts.approval}
-                          </Badge>
+                          {taskCounts.approval > 0 && (
+                            <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.approval}
+                            </Badge>
+                          )}
                         </div>
                       </SelectItem>
                       <SelectItem value="review">
                         <div className="flex items-center justify-between w-full">
                           <span>Review</span>
-                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                            {taskCounts.review}
-                          </Badge>
+                          {taskCounts.review > 0 && (
+                            <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.review}
+                            </Badge>
+                          )}
                         </div>
                       </SelectItem>
                       <SelectItem value="action">
                         <div className="flex items-center justify-between w-full">
                           <span>Action</span>
-                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                            {taskCounts.action}
-                          </Badge>
+                          {taskCounts.action > 0 && (
+                            <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.action}
+                            </Badge>
+                          )}
                         </div>
                       </SelectItem>
                     </SelectContent>
