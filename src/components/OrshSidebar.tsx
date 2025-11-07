@@ -183,7 +183,21 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   };
 
   return (
-    <div className={`border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
+    <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
+      {/* Collapse/Expand Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        className="absolute -right-3 top-6 z-50 h-6 w-6 rounded-full border border-border bg-background shadow-md hover:bg-muted"
+      >
+        {isSidebarCollapsed ? (
+          <ChevronRight className="h-3 w-3" />
+        ) : (
+          <ChevronLeft className="h-3 w-3" />
+        )}
+      </Button>
+
       {/* ORSH Branding & Header */}
       <div className="p-6 border-b border-border/40">
         <div className="flex items-center gap-3 mb-4">
