@@ -89,11 +89,11 @@ export default {
 			},
 			borderRadius: {
 				'none': '0px',
-				'sm': '0.25rem',    /* 4px */
-				'DEFAULT': '0.375rem', /* 6px */
-				'md': '0.5rem',     /* 8px */
-				'lg': '0.75rem',    /* 12px */
-				'xl': '1rem',       /* 16px */
+				'sm': '0.375rem',   /* 6px */
+				'DEFAULT': '0.5rem', /* 8px */
+				'md': '0.75rem',    /* 12px */
+				'lg': '1rem',       /* 16px */
+				'xl': '1.25rem',    /* 20px */
 				'2xl': '1.5rem',    /* 24px */
 				'3xl': '2rem',      /* 32px */
 				'full': '9999px'
@@ -120,11 +120,11 @@ export default {
 			},
 			boxShadow: {
 				'fluent-xs': '0 1px 2px rgba(0, 0, 0, 0.04)',
-				'fluent-sm': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
-				'fluent-md': '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
-				'fluent-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
-				'fluent-xl': '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
-				'fluent-2xl': '0 25px 50px rgba(0, 0, 0, 0.15)',
+				'fluent-sm': '0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+				'fluent-md': '0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
+				'fluent-lg': '0 8px 16px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+				'fluent-xl': '0 12px 24px rgba(0, 0, 0, 0.12), 0 8px 12px rgba(0, 0, 0, 0.06)',
+				'fluent-2xl': '0 20px 40px rgba(0, 0, 0, 0.15)',
 			},
 			backdropBlur: {
 				'fluent': '30px',

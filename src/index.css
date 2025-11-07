@@ -33,21 +33,21 @@
 
 @layer base {
   :root {
-    /* Microsoft Fluent Design System - ORSH Theme */
-    --background: 0 0% 98%;            /* Neutral light gray */
-    --foreground: 0 0% 9%;             /* Dark text */
+    /* Modern Design System - ORSH Theme */
+    --background: 240 10% 98%;         /* Subtle cool white */
+    --foreground: 240 6% 10%;          /* Rich dark text */
 
     --card: 0 0% 100%;                 /* Pure white cards */
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 240 6% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 240 6% 10%;
 
-    /* Subtle Blue - Primary Brand Colors */
-    --primary: 215 25% 45%;            /* Muted blue-gray */
+    /* Modern Primary - Vibrant Blue */
+    --primary: 217 91% 60%;            /* Modern bright blue */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 215 28% 40%;      /* Darker muted blue */
-    --primary-pressed: 215 30% 35%;    /* Even darker */
+    --primary-hover: 217 91% 55%;      /* Slightly darker */
+    --primary-pressed: 217 91% 50%;    /* Pressed state */
 
     /* BGC Brand Color */
     --bgc-blue: 200 95% 35%;           /* Dark blue for BGC */
@@ -61,31 +61,31 @@
     --google-gray: 0 0% 95%;           /* Light gray for Google */
     --google-gray-foreground: 0 0% 20%;
 
-    /* Microsoft Neutral Palette */
-    --secondary: 0 0% 96%;             /* #F5F5F5 */
-    --secondary-foreground: 0 0% 9%;
-    --secondary-hover: 0 0% 92%;       /* #EBEBEB */
+    /* Modern Neutral Palette */
+    --secondary: 240 5% 96%;           /* Cool light gray */
+    --secondary-foreground: 240 6% 10%;
+    --secondary-hover: 240 5% 92%;     /* Hover state */
 
-    --muted: 0 0% 97%;                 /* #FAFAFA */
-    --muted-foreground: 0 0% 50%;      /* #808080 */
+    --muted: 240 5% 96%;               /* Muted background */
+    --muted-foreground: 240 4% 46%;    /* Muted text */
 
-    --accent: 215 20% 50%;             /* Subtle blue-gray */
-    --accent-foreground: 0 0% 100%;
+    --accent: 270 95% 75%;             /* Modern purple accent */
+    --accent-foreground: 240 6% 10%;
 
-    /* Microsoft System Colors */
-    --destructive: 4 90% 58%;          /* #D13438 */
+    /* Modern System Colors */
+    --destructive: 0 84% 60%;          /* Modern red */
     --destructive-foreground: 0 0% 100%;
     
-    --warning: 37 100% 50%;            /* #FF8C00 */
+    --warning: 38 92% 50%;             /* Modern orange */
     --warning-foreground: 0 0% 100%;
     
-    --success: 107 76% 39%;            /* #107C10 */
+    --success: 142 76% 36%;            /* Modern green */
     --success-foreground: 0 0% 100%;
 
     /* Surface and Border Colors */
-    --border: 0 0% 88%;                /* #E1E1E1 */
-    --input: 0 0% 96%;                 /* Light input background */
-    --ring: 215 25% 45%;
+    --border: 240 6% 90%;              /* Modern border */
+    --input: 240 5% 96%;               /* Light input background */
+    --ring: 217 91% 60%;
 
     /* ORSH Brand Colors */
     --orsh-primary: 200 100% 50%;
@@ -103,21 +103,21 @@
     /* ORSH Gradient Background */
     --orsh-gradient: linear-gradient(135deg, #F5F5F5 0%, #FAFAFA 50%, #F8F8F8 100%);
     
-    /* Modern Microsoft Fluent Dynamic Gradients - Light Mode */
-    --gradient-fluent-mesh: radial-gradient(at 20% 30%, hsl(220, 15%, 85%) 0%, transparent 50%),
-                            radial-gradient(at 80% 20%, hsl(240, 12%, 88%) 0%, transparent 50%),
-                            radial-gradient(at 40% 80%, hsl(210, 14%, 86%) 0%, transparent 50%),
-                            radial-gradient(at 90% 70%, hsl(230, 13%, 87%) 0%, transparent 50%);
+    /* Modern Dynamic Gradients - Light Mode */
+    --gradient-fluent-mesh: radial-gradient(at 20% 30%, hsl(217, 91%, 92%) 0%, transparent 50%),
+                            radial-gradient(at 80% 20%, hsl(270, 95%, 90%) 0%, transparent 50%),
+                            radial-gradient(at 40% 80%, hsl(200, 95%, 90%) 0%, transparent 50%),
+                            radial-gradient(at 90% 70%, hsl(142, 76%, 88%) 0%, transparent 50%);
 
     /* Modern Corner Radius */
     --radius: 0.375rem;                /* 6px */
     --radius-lg: 0.5rem;               /* 8px */
     --radius-xl: 0.75rem;              /* 12px */
 
-    /* Fluent Design Elevations */
-    --elevation-shadow-rest: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.12), 0 0 0 0.0625rem rgba(0, 0, 0, 0.08);
-    --elevation-shadow-hover: 0 0.5rem 1rem rgba(0, 0, 0, 0.18), 0 0 0 0.0625rem rgba(0, 0, 0, 0.08);
-    --elevation-shadow-pressed: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.12), 0 0 0 0.0625rem rgba(0, 0, 0, 0.08);
+    /* Modern Elevations */
+    --elevation-shadow-rest: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --elevation-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+    --elevation-shadow-pressed: 0 1px 2px rgba(0, 0, 0, 0.06);
     
     /* Acrylic Effects */
     --fluent-acrylic-background: rgba(243, 243, 243, 0.8);
@@ -136,20 +136,20 @@
   }
 
   .dark {
-    /* Microsoft Dark Theme - ORSH */
-    --background: 0 0% 11%;
-    --foreground: 0 0% 95%;
+    /* Modern Dark Theme - ORSH */
+    --background: 240 10% 8%;
+    --foreground: 240 5% 96%;
 
-    --card: 0 0% 15%;
-    --card-foreground: 0 0% 95%;
+    --card: 240 10% 12%;
+    --card-foreground: 240 5% 96%;
 
-    --popover: 0 0% 15%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 240 10% 12%;
+    --popover-foreground: 240 5% 96%;
 
-    --primary: 215 30% 55%;              /* Lighter muted blue for dark mode */
-    --primary-foreground: 0 0% 11%;
-    --primary-hover: 215 32% 60%;
-    --primary-pressed: 215 28% 50%;
+    --primary: 217 91% 60%;              /* Same vibrant blue */
+    --primary-foreground: 240 10% 8%;
+    --primary-hover: 217 91% 65%;
+    --primary-pressed: 217 91% 55%;
 
     --bgc-blue: 200 95% 45%;
     --bgc-blue-foreground: 0 0% 100%;
@@ -160,30 +160,30 @@
     --google-gray: 0 0% 20%;
     --google-gray-foreground: 0 0% 90%;
 
-    --secondary: 0 0% 20%;              /* #333333 */
-    --secondary-foreground: 0 0% 95%;
-    --secondary-hover: 0 0% 25%;        /* #404040 */
+    --secondary: 240 5% 18%;
+    --secondary-foreground: 240 5% 96%;
+    --secondary-hover: 240 5% 22%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;       /* #A6A6A6 */
+    --muted: 240 5% 16%;
+    --muted-foreground: 240 4% 64%;
 
-    --accent: 215 25% 55%;
-    --accent-foreground: 0 0% 11%;
+    --accent: 270 95% 75%;
+    --accent-foreground: 240 10% 8%;
 
-    --destructive: 4 90% 65%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 215 30% 55%;
+    --border: 240 6% 20%;
+    --input: 240 5% 18%;
+    --ring: 217 91% 60%;
 
     --orsh-gradient: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 50%, #1F1F1F 100%);
     
-    /* Modern Microsoft Fluent Dynamic Gradients - Dark Mode */
-    --gradient-fluent-mesh: radial-gradient(at 20% 30%, hsl(220, 15%, 22%) 0%, transparent 50%),
-                            radial-gradient(at 80% 20%, hsl(240, 12%, 24%) 0%, transparent 50%),
-                            radial-gradient(at 40% 80%, hsl(210, 14%, 23%) 0%, transparent 50%),
-                            radial-gradient(at 90% 70%, hsl(230, 13%, 25%) 0%, transparent 50%);
+    /* Modern Dynamic Gradients - Dark Mode */
+    --gradient-fluent-mesh: radial-gradient(at 20% 30%, hsl(217, 91%, 18%) 0%, transparent 50%),
+                            radial-gradient(at 80% 20%, hsl(270, 95%, 20%) 0%, transparent 50%),
+                            radial-gradient(at 40% 80%, hsl(200, 95%, 18%) 0%, transparent 50%),
+                            radial-gradient(at 90% 70%, hsl(142, 76%, 20%) 0%, transparent 50%);
 
     --fluent-acrylic-background: rgba(44, 44, 44, 0.8);
     --fluent-acrylic-border: rgba(255, 255, 255, 0.1);
@@ -214,34 +214,37 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Microsoft Fluent Design Components */
+  /* Modern Design Components */
   .fluent-card {
-    @apply bg-card border border-border rounded-xl transition-all duration-300 ease-out;
+    @apply bg-card border border-border/60 rounded-2xl transition-all duration-200 ease-out;
     box-shadow: var(--elevation-shadow-rest);
-    backdrop-filter: blur(30px) saturate(120%);
+    backdrop-filter: blur(20px) saturate(180%);
   }
 
   .fluent-card:hover {
     box-shadow: var(--elevation-shadow-hover);
-    transform: translateY(-2px) scale(1.02);
+    transform: translateY(-1px);
+    border-color: hsl(var(--border));
   }
 
   .fluent-card:active {
     box-shadow: var(--elevation-shadow-pressed);
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 
   .fluent-button {
-    @apply transition-all duration-200 ease-out font-medium;
+    @apply transition-all duration-150 ease-out font-medium;
     backdrop-filter: blur(8px);
   }
 
   .fluent-button:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .fluent-button:active {
     transform: translateY(0);
+    box-shadow: none;
   }
 
   /* Disable hover transforms within containers that opt-out (e.g., modals) */
