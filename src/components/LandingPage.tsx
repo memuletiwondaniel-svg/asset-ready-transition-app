@@ -3,11 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ShieldCheck, Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Sparkles, ArrowRight, Clock, FileText, CheckCircle, Home } from 'lucide-react';
+import { ShieldCheck, Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Sparkles, Clock, FileText, CheckCircle, Home, Loader2 } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
+import { useUserTasks } from '@/hooks/useUserTasks';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { useToast } from '@/components/ui/use-toast';
+import { formatDistanceToNow } from 'date-fns';
 
 interface LandingPageProps {
   onBack: () => void;
@@ -20,10 +24,124 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 }) => {
   const { language, setLanguage, translations: t } = useLanguage();
   const [userInput, setUserInput] = useState('');
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const { tasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
+  const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
+  const { toast } = useToast();
 
-  // Mock user data - in a real app, this would come from authentication context
   const userName = 'Daniel';
 
+  const handleVoiceInput = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening((transcript) => {
+        setUserInput(transcript);
+        toast({
+          title: "Voice Input Received",
+          description: transcript,
+        });
+      });
+    }
+  };
+
+  const sendMessageToAI = async (message: string) => {
+    if (!message.trim()) return;
+
+    const userMessage = { role: 'user' as const, content: message };
+    setMessages(prev => [...prev, userMessage]);
+    setUserInput('');
+    setIsLoadingAI(true);
+
+    let assistantContent = '';
+
+    try {
+      const response = await fetch(
+        'https://kgnrjqjbonuvpxxfvfjq.supabase.co/functions/v1/ai-chat',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ messages: [...messages, userMessage] }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get AI response');
+      }
+
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        let newlineIndex: number;
+
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => {
+                const lastMsg = prev[prev.length - 1];
+                if (lastMsg?.role === 'assistant') {
+                  return prev.map((m, i) =>
+                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                  );
+                }
+                return [...prev, { role: 'assistant', content: assistantContent }];
+              });
+            }
+          } catch {
+            buffer = line + '\n' + buffer;
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('AI Error:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to get AI response',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  const handleSend = () => {
+    if (userInput.trim()) {
+      sendMessageToAI(userInput);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   const quickActions = [
     {
@@ -67,40 +185,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     }
   ];
 
-  const pendingTasks = [
-    {
-      id: 1,
-      title: 'Review DP300 PSSR',
-      dueDate: 'Due: Today',
-      priority: 'High',
-      type: 'approval'
-    },
-    {
-      id: 2,
-      title: 'Complete P2A Checklist',
-      dueDate: 'Due: Tomorrow',
-      priority: 'Medium',
-      type: 'task'
-    },
-    {
-      id: 3,
-      title: 'Update Safety Protocols',
-      dueDate: 'Due: 3 days',
-      priority: 'Low',
-      type: 'update'
-    },
-    {
-      id: 4,
-      title: 'Approve Team Member Access',
-      dueDate: 'Due: Today',
-      priority: 'High',
-      type: 'approval'
-    }
-  ];
-
   return (
     <AnimatedBackground>
-      {/* ORSH Header */}
       <AdminHeader selectedLanguage={language} onLanguageChange={setLanguage} translations={t}>
         <Breadcrumb>
           <BreadcrumbList>
@@ -118,13 +204,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         </Breadcrumb>
       </AdminHeader>
 
-      {/* Main 3-Section Layout */}
       <div className="h-[calc(100vh-5rem)] flex gap-4 p-4">
-        {/* Left Side - Two Horizontal Panels Stacked */}
         <div className="flex-1 flex flex-col gap-4">
-          {/* Top Panel - AI Agent Interface */}
-          <Card className="flex-1 border-border/40 shadow-lg overflow-hidden">
-            <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
+          <Card className="flex-1 border-border/40 shadow-lg overflow-hidden flex flex-col">
+            <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-primary-foreground" />
@@ -135,39 +218,70 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6 flex flex-col h-full">
-              <div className="flex-1 mb-4 space-y-3">
-                {/* Quick Actions */}
-                <div className="grid grid-cols-3 gap-2">
-                  {quickActions.map((action) => {
-                    const Icon = action.icon;
-                    return (
-                      <Button
-                        key={action.id}
-                        variant="outline"
-                        className="h-auto p-3 border-border/40 hover:bg-accent/20 hover:scale-105 transition-all"
+            <CardContent className="p-6 flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 mb-4 overflow-y-auto">
+                {messages.length === 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {quickActions.map((action) => {
+                      const Icon = action.icon;
+                      return (
+                        <Button
+                          key={action.id}
+                          variant="outline"
+                          className="h-auto p-3 border-border/40 hover:bg-accent/20 hover:scale-105 transition-all"
+                          onClick={() => setUserInput(action.label)}
+                        >
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <Icon className="w-5 h-5 text-primary" />
+                            <span className="text-xs font-medium">{action.label}</span>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className="flex flex-col items-center gap-2 text-center">
-                          <Icon className="w-5 h-5 text-primary" />
-                          <span className="text-xs font-medium">{action.label}</span>
+                        <div
+                          className={`max-w-[80%] rounded-lg p-3 ${
+                            msg.role === 'user'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                         </div>
-                      </Button>
-                    );
-                  })}
-                </div>
+                      </div>
+                    ))}
+                    {isLoadingAI && (
+                      <div className="flex justify-start">
+                        <div className="bg-muted rounded-lg p-3">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Input Area */}
-              <div className="space-y-3">
+              <div className="space-y-3 flex-shrink-0">
                 <div className="relative">
                   <Textarea
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     placeholder="Ask a question or describe what you need..."
                     className="min-h-[100px] resize-none border-border/40 pr-12"
+                    disabled={isLoadingAI}
                   />
                   <Button
                     size="icon"
+                    onClick={handleSend}
+                    disabled={isLoadingAI || !userInput.trim()}
                     className="absolute bottom-3 right-3 rounded-full bg-gradient-to-br from-primary to-accent"
                   >
                     <Send className="w-4 h-4" />
@@ -176,21 +290,29 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 
                 <div className="flex items-center justify-between">
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="gap-2">
+                    <Button variant="ghost" size="sm" className="gap-2" disabled>
                       <ImagePlus className="w-4 h-4" />
                       <span className="text-xs">Image</span>
                     </Button>
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <Mic className="w-4 h-4" />
-                      <span className="text-xs">Voice</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleVoiceInput}
+                      disabled={!isSupported || isLoadingAI}
+                    >
+                      <Mic className={`w-4 h-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
+                      <span className="text-xs">{isListening ? 'Listening...' : 'Voice'}</span>
                     </Button>
                   </div>
+                  <span className="text-xs text-muted-foreground">
+                    Press Enter to send
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Bottom Panel - Workspace Cards */}
           <Card className="flex-1 border-border/40 shadow-lg">
             <CardHeader className="border-b border-border/40">
               <CardTitle className="text-lg">Workspaces</CardTitle>
@@ -227,7 +349,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </Card>
         </div>
 
-        {/* Right Side - User Dashboard (Pending Tasks) */}
         <Card className="w-80 border-border/40 shadow-lg">
           <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -237,31 +358,60 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <CardDescription className="text-xs">Your action items</CardDescription>
           </CardHeader>
           <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-12rem)]">
-            {pendingTasks.map((task) => (
-              <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md">
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-medium text-sm flex-1">{task.title}</h4>
-                    <Badge 
-                      variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {task.priority}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    <span>{task.dueDate}</span>
-                  </div>
-                  {task.type === 'approval' && (
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" className="flex-1 h-7 text-xs">Approve</Button>
-                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs">Reject</Button>
+            {tasksLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : tasks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No pending tasks</p>
+              </div>
+            ) : (
+              tasks.map((task) => (
+                <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md">
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h4 className="font-medium text-sm flex-1">{task.title}</h4>
+                      <Badge 
+                        variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {task.priority}
+                      </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    {task.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      <span>
+                        Due: {task.due_date ? formatDistanceToNow(new Date(task.due_date), { addSuffix: true }) : 'No deadline'}
+                      </span>
+                    </div>
+                    {task.type === 'approval' && (
+                      <div className="flex gap-2 pt-2">
+                        <Button 
+                          size="sm" 
+                          className="flex-1 h-7 text-xs"
+                          onClick={() => updateTaskStatus(task.id, 'completed')}
+                        >
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 h-7 text-xs"
+                          onClick={() => updateTaskStatus(task.id, 'cancelled')}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
