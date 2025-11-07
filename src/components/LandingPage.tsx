@@ -314,8 +314,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
           <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
-            <CardHeader className="border-b border-border/40 flex-shrink-0 py-5 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
-              <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+            <CardHeader className="border-b border-border/40 flex-shrink-0 py-5">
+              <CardTitle className="text-4xl font-bold">
                 Welcome, {userName}
               </CardTitle>
             </CardHeader>
