@@ -25,6 +25,9 @@ import { Label } from '@/components/ui/label';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
+import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
+import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
+import { WorkspacesWidget } from '@/components/widgets/WorkspacesWidget';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -640,7 +643,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className={`w-full p-3 h-auto hover:bg-muted/50 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
                 >
                   <Avatar className={`h-10 w-10 flex-shrink-0 ${isSidebarCollapsed ? '' : 'mr-3'}`}>
-                    <AvatarImage src="" alt={userName} />
+                    <AvatarImage src="/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png" alt={userName} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
                       {userName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -649,7 +652,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <>
                       <div className="flex-1 text-left animate-fade-in">
                         <p className="text-sm font-medium">{userName}</p>
-                        <p className="text-xs text-muted-foreground">Operations Manager</p>
+                        <p className="text-xs text-muted-foreground">ORA Engr.</p>
                       </div>
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     </>
@@ -725,30 +728,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 );
               })}
             </div>
-
-            {/* Quick Actions Section */}
-            {!isSidebarCollapsed && (
-              <div className="mt-6 pt-6 border-t border-border/40 animate-fade-in">
-                <p className="text-xs font-semibold text-muted-foreground px-4 mb-3 uppercase tracking-wide">Quick Actions</p>
-                <div className="space-y-1">
-                  {quickActions.map((action) => {
-                    const Icon = action.icon;
-                    return (
-                      <Button
-                        key={action.id}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setUserInput(action.label)}
-                        className="w-full justify-start h-9 px-4 text-xs hover:bg-muted/50"
-                      >
-                        <Icon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-                        {action.label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Search History Section */}
             {searchHistory.length > 0 && !isSidebarCollapsed && (
@@ -929,19 +908,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           ) : (
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
             {/* AI Assistant Panel */}
-            <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '55%' : '35%' }}>
-              <CardHeader className="flex-shrink-0 py-3 pb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <CardTitle className="text-2xl font-bold">
-                    AI Assistant
-                  </CardTitle>
-                </div>
-                <CardDescription className="mt-2">
-                  Ask questions, get insights, and manage your operations
-                </CardDescription>
+            <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '50%' : '30%' }}>
+              <CardHeader className="flex-shrink-0 py-4 pb-3">
+                <CardTitle className="text-2xl font-bold">
+                  Welcome Daniel
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
                 <div className="space-y-1.5 flex-shrink-0">
@@ -1080,76 +1051,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </CardContent>
             </Card>
 
-            {/* Recent Activity / Stats Cards */}
-            <div className="grid grid-cols-2 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '43%' : '63%' }}>
-              <Card className="glass-card glass-card-hover overflow-hidden" data-tour="workspaces">
-                <CardHeader className="border-b border-border/40 py-3">
-                  <CardTitle className="text-lg font-bold">Overview</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                          <ClipboardList className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Active PSSRs</p>
-                          <p className="text-lg font-bold">12</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-green-600/5 border border-green-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                          <CheckCircle className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Completed</p>
-                          <p className="text-lg font-bold">28</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/5 border border-orange-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                          <Clock className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Pending</p>
-                          <p className="text-lg font-bold">5</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card glass-card-hover overflow-hidden">
-                <CardHeader className="border-b border-border/40 py-3">
-                  <CardTitle className="text-lg font-bold">Quick Access</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {workspaceCards.map((workspace) => {
-                      const Icon = workspace.icon;
-                      return (
-                        <Button
-                          key={workspace.id}
-                          variant="outline"
-                          onClick={() => onNavigate(workspace.id)}
-                          className="h-auto flex flex-col items-center gap-2 p-4 hover:bg-muted/50 group"
-                        >
-                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                            <Icon className="w-6 h-6 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-center">{workspace.title}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Widgets Section */}
+            <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
+              <OverviewStatsWidget />
+              <QuickActionsWidget onActionClick={setUserInput} />
+              <WorkspacesWidget onNavigate={onNavigate} />
             </div>
           </div>
           )}
