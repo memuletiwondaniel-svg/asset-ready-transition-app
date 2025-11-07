@@ -18,6 +18,35 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Transform messages to support vision
+    const transformedMessages = messages.map((msg: any) => {
+      if (msg.imageUrl) {
+        // For messages with images, use the vision-compatible format
+        return {
+          role: msg.role,
+          content: [
+            {
+              type: "text",
+              text: msg.content
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: msg.imageUrl
+              }
+            }
+          ]
+        };
+      }
+      // Regular text-only messages
+      return {
+        role: msg.role,
+        content: msg.content
+      };
+    });
+
+    console.log("Transformed messages:", JSON.stringify(transformedMessages, null, 2));
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -29,9 +58,9 @@ serve(async (req) => {
         messages: [
           { 
             role: "system", 
-            content: "You are an AI assistant for ORSH (Operation Readiness Start-Up & Handover) platform. Help users with PSSR (Pre-Start Up Safety Review) processes, project handovers, safety checklists, and administrative tasks. Be concise and professional." 
+            content: "You are an AI assistant for ORSH (Operation Readiness Start-Up & Handover) platform. Help users with PSSR (Pre-Start Up Safety Review) processes, project handovers, safety checklists, and administrative tasks. When analyzing images, provide detailed insights about safety concerns, equipment status, compliance issues, or any relevant information visible in the image. Be concise and professional." 
           },
-          ...messages,
+          ...transformedMessages,
         ],
         stream: true,
       }),
