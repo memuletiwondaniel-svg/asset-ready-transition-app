@@ -48,6 +48,7 @@ import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
 import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
+import { OrshSidebar } from './OrshSidebar';
 
 interface SafeStartupSummaryPageProps {
   onBack: () => void;
@@ -395,7 +396,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen flex w-full relative overflow-hidden">
       {/* Modern Gradient Background */}
       <div className="absolute inset-0 bg-background">
         {/* Main layer */}
@@ -429,7 +430,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         />
       </div>
       
-      <div className="relative z-10">
+      {/* ORSH Sidebar */}
+      <OrshSidebar 
+        userName="Daniel"
+        userTitle="ORA Engr."
+        language="en"
+      />
+      
+      <div className="flex-1 relative z-10 overflow-auto">
       {/* Header */}
       <header className="fluent-navigation sticky top-0 z-50 border-b border-border/50">
         <div className="max-w-7xl mx-auto px-8 py-6">
