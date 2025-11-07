@@ -761,7 +761,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   if (panelId === 'ai-assistant' && aiPanelVisible) {
                     return (
                       <SortablePanelWrapper key="ai-assistant" id="ai-assistant">
-                        <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in group ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }}>
+                        <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in group ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }} dragAttributes={undefined} dragListeners={undefined}>
                           <CardHeader className="flex-shrink-0 py-4 pb-3 flex flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-2 flex-1">
                     <Button
@@ -942,14 +942,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 )}
               </CardContent>
               </Card>
-                        </SortablePanelWrapper>
-                      );
-                    }
-                    
-                    if (panelId === 'widgets-section' && !aiPanelExpanded) {
-                      return (
-                        <React.Fragment key="widgets-section">
-                          {/* Widgets Section with Drag and Drop */}
+            )}
+
+            {/* Widgets Section with Drag and Drop */}
+            {!aiPanelExpanded && (
+              <>
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-lg font-semibold">Dashboard Widgets</h2>
                   <div className="flex gap-2">
@@ -1015,16 +1012,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       ))}
                     </div>
                   </SortableContext>
-                  </DndContext>
-                        </React.Fragment>
-                      );
-                    }
-                    
-                    return null;
-                  })}
-                </div>
-              </SortableContext>
-            </DndContext>
+                </DndContext>
+              </>
+            )}
+          </div>
 
           {/* Tasks Panel */}
           {tasksPanelVisible && (
@@ -1254,7 +1245,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </AnimatedBackground>
+    </AnimatedBackground>;
 };
 const LandingPage: React.FC<LandingPageProps> = props => {
   return <LanguageProvider>
