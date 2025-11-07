@@ -129,10 +129,7 @@ export const DashboardWidgets: React.FC = () => {
 
   const handleSettingsSave = async (settings: Record<string, any>, size: 'small' | 'medium' | 'large') => {
     if (!settingsWidget) return;
-    await updateWidgetSettings(settingsWidget.id, settings);
-    if (settingsWidget.size !== size) {
-      await updateWidgetSettings(settingsWidget.id, { ...settings, size });
-    }
+    await updateWidgetSettings(settingsWidget.id, settings, size);
   };
 
   const handleDelete = async (widgetId: string) => {

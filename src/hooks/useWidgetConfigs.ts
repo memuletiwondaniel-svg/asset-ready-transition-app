@@ -114,17 +114,22 @@ export const useWidgetConfigs = () => {
     }
   };
 
-  const updateWidgetSettings = async (widgetId: string, settings: Record<string, any>) => {
+  const updateWidgetSettings = async (widgetId: string, settings: Record<string, any>, size?: 'small' | 'medium' | 'large') => {
     try {
+      const updateData: any = { settings };
+      if (size) {
+        updateData.size = size;
+      }
+
       const { error } = await supabase
         .from('user_widget_configs')
-        .update({ settings })
+        .update(updateData)
         .eq('id', widgetId);
 
       if (error) throw error;
 
       setWidgets(prev =>
-        prev.map(w => w.id === widgetId ? { ...w, settings } : w)
+        prev.map(w => w.id === widgetId ? { ...w, settings, ...(size && { size }) } : w)
       );
     } catch (error) {
       console.error('Error updating widget settings:', error);
