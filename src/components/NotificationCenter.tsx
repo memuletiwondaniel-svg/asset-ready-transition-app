@@ -1,5 +1,5 @@
-import React from 'react';
-import { Bell, Check, Loader2, CheckCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Check, Loader2, CheckCheck, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +7,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
+import { NotificationPreferencesPanel } from './NotificationPreferencesPanel';
 
 export const NotificationCenter: React.FC = () => {
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
+  const [showPreferences, setShowPreferences] = useState(false);
 
   return (
+    <>
     <Popover>
       <PopoverTrigger asChild>
         <Button 
@@ -37,17 +40,27 @@ export const NotificationCenter: React.FC = () => {
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 py-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold">Notifications</CardTitle>
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={markAllAsRead}
-                className="text-xs h-7 px-3 hover:bg-primary/10"
+                onClick={() => setShowPreferences(true)}
+                className="h-7 w-7 p-0 hover:bg-primary/10"
               >
-                <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
-                Mark all read
+                <Settings className="w-4 h-4" />
               </Button>
-            )}
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="text-xs h-7 px-3 hover:bg-primary/10"
+                >
+                  <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
+                  Mark all read
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
 
@@ -117,5 +130,11 @@ export const NotificationCenter: React.FC = () => {
         </ScrollArea>
       </PopoverContent>
     </Popover>
+
+    <NotificationPreferencesPanel
+      open={showPreferences}
+      onOpenChange={setShowPreferences}
+    />
+    </>
   );
 };

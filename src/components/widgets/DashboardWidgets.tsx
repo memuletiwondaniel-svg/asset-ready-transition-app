@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { Card } from '@/components/ui/card';
@@ -10,13 +10,15 @@ import { QuickStatsWidget } from './QuickStatsWidget';
 import { RecentActivityWidget } from './RecentActivityWidget';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { WidgetConfigModal } from '../WidgetConfigModal';
 
 interface SortableWidgetProps {
   widget: WidgetConfig;
   children: React.ReactNode;
+  onConfigure: (widget: WidgetConfig) => void;
 }
 
-const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children }) => {
+const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children, onConfigure }) => {
   const {
     attributes,
     listeners,
@@ -66,6 +68,7 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children }) => 
             size="icon"
             variant="ghost"
             className="h-7 w-7 hover:bg-primary/10"
+            onClick={() => onConfigure(widget)}
           >
             <Settings className="w-4 h-4" />
           </Button>
@@ -78,7 +81,8 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children }) => 
 };
 
 export const DashboardWidgets: React.FC = () => {
-  const { widgets, loading, reorderWidgets } = useWidgetConfigs();
+  const { widgets, loading, reorderWidgets, updateWidgetSettings } = useWidgetConfigs();
+  const [configWidget, setConfigWidget] = useState<WidgetConfig | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -96,6 +100,14 @@ export const DashboardWidgets: React.FC = () => {
       const reordered = arrayMove(widgets, oldIndex, newIndex);
       reorderWidgets(reordered);
     }
+  };
+
+  const handleSaveWidgetConfig = async (
+    widgetId: string,
+    size: 'small' | 'medium' | 'large',
+    settings: Record<string, any>
+  ) => {
+    await updateWidgetSettings(widgetId, settings);
   };
 
   const renderWidget = (widget: WidgetConfig) => {
@@ -124,6 +136,7 @@ export const DashboardWidgets: React.FC = () => {
   }
 
   return (
+    <>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
@@ -132,12 +145,20 @@ export const DashboardWidgets: React.FC = () => {
       <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-3 gap-6 p-6">
           {widgets.map(widget => (
-            <SortableWidget key={widget.id} widget={widget}>
+            <SortableWidget key={widget.id} widget={widget} onConfigure={setConfigWidget}>
               {renderWidget(widget)}
             </SortableWidget>
           ))}
         </div>
       </SortableContext>
     </DndContext>
+
+    <WidgetConfigModal
+      open={configWidget !== null}
+      onOpenChange={(open) => !open && setConfigWidget(null)}
+      widget={configWidget}
+      onSave={handleSaveWidgetConfig}
+    />
+    </>
   );
 };
