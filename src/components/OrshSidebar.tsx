@@ -201,6 +201,92 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Navigation Menu - Removed, only widgets on main page */}
       <ScrollArea className="flex-1 p-4">
+        {/* Quick Actions */}
+        <div className="space-y-2">
+          {/* Theme Toggle Row */}
+          <Button
+            variant="outline"
+            size={isSidebarCollapsed ? "icon" : "sm"}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
+            title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-4 h-4" />
+                {!isSidebarCollapsed && <span className="ml-2">Light Mode</span>}
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4" />
+                {!isSidebarCollapsed && <span className="ml-2">Dark Mode</span>}
+              </>
+            )}
+          </Button>
+
+          {/* Notifications Row */}
+          <Button
+            variant="outline"
+            size={isSidebarCollapsed ? "icon" : "sm"}
+            className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
+            title="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+            {!isSidebarCollapsed && <span className="ml-2">Notifications</span>}
+          </Button>
+
+          {/* Language Selector Row */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size={isSidebarCollapsed ? "icon" : "sm"}
+                className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
+                title="Language"
+              >
+                <Languages className="w-4 h-4" />
+                {!isSidebarCollapsed && <span className="ml-2">Language</span>}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+              <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
+                English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
+                Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
+                Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Widgets Row */}
+          <Button
+            variant="outline"
+            size={isSidebarCollapsed ? "icon" : "sm"}
+            onClick={onShowWidgets}
+            className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
+            title="Widgets"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            {!isSidebarCollapsed && <span className="ml-2">Widgets</span>}
+          </Button>
+
+          {/* Take Tour Row */}
+          <Button
+            variant="outline"
+            size={isSidebarCollapsed ? "icon" : "sm"}
+            onClick={onShowOnboarding}
+            className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
+            title="Take Tour"
+          >
+            <Clock className="w-4 h-4" />
+            {!isSidebarCollapsed && <span className="ml-2">Take Tour</span>}
+          </Button>
+        </div>
 
         {/* Search History Section */}
         {searchHistory.length > 0 && !isSidebarCollapsed && (
@@ -238,94 +324,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-border/40 space-y-2">
-        {/* Theme Toggle Row */}
-        <Button
-          variant="outline"
-          size={isSidebarCollapsed ? "icon" : "sm"}
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
-          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-        >
-          {theme === 'dark' ? (
-            <>
-              <Sun className="w-4 h-4" />
-              {!isSidebarCollapsed && <span className="ml-2">Light Mode</span>}
-            </>
-          ) : (
-            <>
-              <Moon className="w-4 h-4" />
-              {!isSidebarCollapsed && <span className="ml-2">Dark Mode</span>}
-            </>
-          )}
-        </Button>
-
-        {/* Notifications Row */}
-        <Button
-          variant="outline"
-          size={isSidebarCollapsed ? "icon" : "sm"}
-          className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          {!isSidebarCollapsed && <span className="ml-2">Notifications</span>}
-        </Button>
-
-        {/* Language Selector Row */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size={isSidebarCollapsed ? "icon" : "sm"}
-              className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
-              title="Language"
-            >
-              <Languages className="w-4 h-4" />
-              {!isSidebarCollapsed && <span className="ml-2">Language</span>}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48 bg-background z-50">
-            <DropdownMenuLabel>Select Language</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
-              English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
-              Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
-              Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Separator />
-
-        {/* Widgets Row */}
-        <Button
-          variant="outline"
-          size={isSidebarCollapsed ? "icon" : "sm"}
-          onClick={onShowWidgets}
-          className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
-          title="Widgets"
-        >
-          <LayoutGrid className="w-4 h-4" />
-          {!isSidebarCollapsed && <span className="ml-2">Widgets</span>}
-        </Button>
-
-        {/* Take Tour Row */}
-        <Button
-          variant="outline"
-          size={isSidebarCollapsed ? "icon" : "sm"}
-          onClick={onShowOnboarding}
-          className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`}
-          title="Take Tour"
-        >
-          <Clock className="w-4 h-4" />
-          {!isSidebarCollapsed && <span className="ml-2">Take Tour</span>}
-        </Button>
-
-        <Separator />
-
         {/* Logout Row */}
         <Button
           variant="outline"
