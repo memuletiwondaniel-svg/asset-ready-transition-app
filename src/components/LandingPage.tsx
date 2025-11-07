@@ -92,7 +92,45 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const {
     toast
   } = useToast();
-  const userName = 'Daniel';
+
+  // Fetch current user profile
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    position: string;
+    avatar_url: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, position, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profile) {
+          // Construct full avatar URL if needed
+          let avatarUrl = profile.avatar_url;
+          if (avatarUrl && !avatarUrl.startsWith('http')) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('user-avatars')
+              .getPublicUrl(avatarUrl);
+            avatarUrl = publicUrl;
+          }
+          
+          setUserProfile({
+            full_name: profile.full_name || 'User',
+            position: profile.position || 'Team Member',
+            avatar_url: avatarUrl || ''
+          });
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, []);
   const handleVoiceInput = () => {
     if (isListening) {
       stopListening();
@@ -442,9 +480,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       <div className="h-screen flex">
         {/* ORSH Sidebar Component */}
         <OrshSidebar
-          userName={userName}
-          userTitle="ORA Engr."
-          userAvatar="/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png"
+          userName={userProfile?.full_name || 'User'}
+          userTitle={userProfile?.position || 'Team Member'}
+          userAvatar={userProfile?.avatar_url || ''}
           language={language}
           onLanguageChange={setLanguage}
           onNavigate={onNavigate}
@@ -473,7 +511,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '50%' : '30%' }}>
               <CardHeader className="flex-shrink-0 py-4 pb-3">
                 <CardTitle className="text-2xl font-bold">
-                  Welcome Daniel
+                  Welcome {userProfile?.full_name || 'User'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
