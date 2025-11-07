@@ -32,7 +32,6 @@ import {
   Search, 
   Filter, 
   Settings,
-  Rocket,
   BarChart3,
   Users,
   Calendar as CalendarIcon,
@@ -46,14 +45,13 @@ import {
   FolderOpen,
   GripVertical,
   Columns3,
-  CalendarDays,
-  Bell
+  Bell,
+  Rocket
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import PSSRTableView from './PSSRTableView';
 import PSSRKanbanBoard from './PSSRKanbanBoard';
-import PSSRTimelineView from './PSSRTimelineView';
 import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
@@ -108,7 +106,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
@@ -837,17 +835,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                     Kanban
                   </button>
                   <button
-                    onClick={() => setViewMode('timeline')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      viewMode === 'timeline' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <CalendarDays className="h-3.5 w-3.5 inline mr-1.5" />
-                    Timeline
-                  </button>
-                  <button
                     onClick={() => setViewMode('table')}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                       viewMode === 'table' 
@@ -890,11 +877,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               onStatusChange={(pssrId, newStatus) => {
                 toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
               }}
-            />
-          ) : viewMode === 'timeline' ? (
-            <PSSRTimelineView
-              pssrs={filteredPSSRs}
-              onViewDetails={handleViewDetails}
             />
           ) : (
             <DndContext
