@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -40,6 +41,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [isTasksPanelCollapsed, setIsTasksPanelCollapsed] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'due_date' | 'type'>('priority');
   const [taskFilterType, setTaskFilterType] = useState<string>('all');
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
@@ -405,6 +407,48 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Prompt Templates Section */}
+                <Collapsible open={showTemplates} onOpenChange={setShowTemplates}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-between text-xs h-7 px-3 hover:bg-primary/5 transition-all duration-300"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-muted-foreground">Prompt Templates</span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${showTemplates ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-1 pt-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: "Create new PSSR", prompt: "I need to create a new Pre-Startup Safety Review for the upcoming project" },
+                        { label: "Review checklist", prompt: "Show me the latest checklist items that need my review" },
+                        { label: "Project status", prompt: "What's the current status of all my projects?" },
+                        { label: "Generate report", prompt: "Generate a summary report of completed tasks this week" },
+                        { label: "Safety compliance", prompt: "Check safety compliance status for current projects" },
+                        { label: "Team updates", prompt: "Show me recent updates from my team members" }
+                      ].map((template, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-auto py-2 px-3 border-border/40 bg-gradient-to-r from-muted/30 to-muted/20 hover:from-muted/50 hover:to-muted/40 transition-all duration-300 backdrop-blur-sm text-left justify-start"
+                          onClick={() => {
+                            setUserInput(template.prompt);
+                            setShowTemplates(false);
+                          }}
+                        >
+                          <span className="truncate">{template.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
               
               {/* AI Conversation Display */}
