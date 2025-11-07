@@ -56,6 +56,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [showWidgets, setShowWidgets] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_IMAGES = 5;
@@ -439,79 +440,89 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       <div className="h-screen flex">
         {/* ORSH Sidebar Panel */}
-        <div className="w-80 border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col">
+        <div className={`border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
           {/* ORSH Branding & Header */}
           <div className="p-6 border-b border-border/40">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg flex-shrink-0">
                 <span className="text-xl font-bold text-white">OR</span>
               </div>
-              <div>
-                <h2 className="font-bold text-lg">ORSH</h2>
-                <p className="text-xs text-muted-foreground">Operations Hub</p>
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="animate-fade-in">
+                  <h2 className="font-bold text-lg">ORSH</h2>
+                  <p className="text-xs text-muted-foreground">Operations Hub</p>
+                </div>
+              )}
             </div>
 
-            {/* Breadcrumb Navigation */}
-            <div className="mb-4">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
-                      <Home className="h-3.5 w-3.5" />
-                      Home
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
+            {!isSidebarCollapsed && (
+              <>
+                {/* Breadcrumb Navigation */}
+                <div className="mb-4 animate-fade-in">
+                  <Breadcrumb>
+                    <BreadcrumbList>
+                      <BreadcrumbItem>
+                        <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
+                          <Home className="h-3.5 w-3.5" />
+                          Home
+                        </BreadcrumbPage>
+                      </BreadcrumbItem>
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                </div>
 
-            {/* Settings Row - Theme, Notifications, Language */}
-            <div className="flex items-center gap-2 mb-4 p-2 rounded-lg bg-muted/20">
-              <ThemeToggle />
-              <NotificationCenter />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <Languages className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuLabel>Select Language</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setLanguage('en')}>
-                    English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLanguage('es')}>
-                    Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLanguage('fr')}>
-                    Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                {/* Settings Row - Theme, Notifications, Language */}
+                <div className="flex items-center gap-2 mb-4 p-2 rounded-lg bg-muted/20 animate-fade-in">
+                  <ThemeToggle />
+                  <NotificationCenter />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9">
+                        <Languages className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setLanguage('en')}>
+                        English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLanguage('es')}>
+                        Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLanguage('fr')}>
+                        Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-            <Separator className="mb-4" />
+                <Separator className="mb-4" />
+              </>
+            )}
             
             {/* User Profile Section */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start p-3 h-auto hover:bg-muted/50"
+                  className={`w-full p-3 h-auto hover:bg-muted/50 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
                 >
-                  <Avatar className="h-10 w-10 mr-3">
+                  <Avatar className={`h-10 w-10 flex-shrink-0 ${isSidebarCollapsed ? '' : 'mr-3'}`}>
                     <AvatarImage src="" alt={userName} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
                       {userName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium">{userName}</p>
-                    <p className="text-xs text-muted-foreground">Operations Manager</p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  {!isSidebarCollapsed && (
+                    <>
+                      <div className="flex-1 text-left animate-fade-in">
+                        <p className="text-sm font-medium">{userName}</p>
+                        <p className="text-xs text-muted-foreground">Operations Manager</p>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
@@ -547,10 +558,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <div className="space-y-2">
               <Button
                 variant="ghost"
-                className="w-full justify-start h-11 px-4 bg-primary/10 text-primary hover:bg-primary/20"
+                className={`w-full h-11 px-4 bg-primary/10 text-primary hover:bg-primary/20 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
               >
-                <Home className="w-4 h-4 mr-3" />
-                Dashboard
+                <Home className={`w-4 h-4 ${isSidebarCollapsed ? '' : 'mr-3'} flex-shrink-0`} />
+                {!isSidebarCollapsed && <span className="animate-fade-in">Dashboard</span>}
               </Button>
 
               {workspaceCards.map((workspace) => {
@@ -560,44 +571,48 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     key={workspace.id}
                     variant="ghost"
                     onClick={() => onNavigate(workspace.id)}
-                    className="w-full justify-start h-11 px-4 hover:bg-muted/50 transition-all group"
+                    className={`w-full h-11 px-4 hover:bg-muted/50 transition-all group ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspace.gradient} flex items-center justify-center mr-3 group-hover:scale-110 transition-transform`}>
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspace.gradient} flex items-center justify-center ${isSidebarCollapsed ? '' : 'mr-3'} group-hover:scale-110 transition-transform flex-shrink-0`}>
                       <Icon className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium">{workspace.title}</p>
-                    </div>
+                    {!isSidebarCollapsed && (
+                      <div className="flex-1 text-left animate-fade-in">
+                        <p className="text-sm font-medium">{workspace.title}</p>
+                      </div>
+                    )}
                   </Button>
                 );
               })}
             </div>
 
             {/* Quick Actions Section */}
-            <div className="mt-6 pt-6 border-t border-border/40">
-              <p className="text-xs font-semibold text-muted-foreground px-4 mb-3 uppercase tracking-wide">Quick Actions</p>
-              <div className="space-y-1">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Button
-                      key={action.id}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setUserInput(action.label)}
-                      className="w-full justify-start h-9 px-4 text-xs hover:bg-muted/50"
-                    >
-                      <Icon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-                      {action.label}
-                    </Button>
-                  );
-                })}
+            {!isSidebarCollapsed && (
+              <div className="mt-6 pt-6 border-t border-border/40 animate-fade-in">
+                <p className="text-xs font-semibold text-muted-foreground px-4 mb-3 uppercase tracking-wide">Quick Actions</p>
+                <div className="space-y-1">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Button
+                        key={action.id}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setUserInput(action.label)}
+                        className="w-full justify-start h-9 px-4 text-xs hover:bg-muted/50"
+                      >
+                        <Icon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                        {action.label}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Search History Section */}
-            {searchHistory.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-border/40">
+            {searchHistory.length > 0 && !isSidebarCollapsed && (
+              <div className="mt-6 pt-6 border-t border-border/40 animate-fade-in">
                 <div className="flex items-center justify-between px-4 mb-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</p>
                   <Button
@@ -634,24 +649,45 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
           {/* Footer Actions */}
           <div className="p-4 border-t border-border/40 space-y-2">
+            {/* Sidebar Toggle Button */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowWidgets(!showWidgets)}
-              className="w-full justify-start h-9"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'}`}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {showWidgets ? 'Hide Widgets' : 'Show Widgets'}
+              {isSidebarCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <>
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  <span className="animate-fade-in">Collapse</span>
+                </>
+              )}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowOnboarding(true)}
-              className="w-full justify-start h-9"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              Take Tour
-            </Button>
+            
+            {!isSidebarCollapsed && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowWidgets(!showWidgets)}
+                  className="w-full justify-start h-9 animate-fade-in"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {showWidgets ? 'Hide Widgets' : 'Show Widgets'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowOnboarding(true)}
+                  className="w-full justify-start h-9 animate-fade-in"
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  Take Tour
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
