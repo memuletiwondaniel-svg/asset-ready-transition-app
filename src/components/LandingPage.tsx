@@ -906,7 +906,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
           {/* Tasks Panel */}
           {tasksPanelVisible && (
-            <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
+            <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-80'}`} data-tour="tasks">
               <CardHeader className="border-b border-border/40 py-4">
                 <div className="flex items-center justify-between">
                   {!isTasksPanelCollapsed && (
