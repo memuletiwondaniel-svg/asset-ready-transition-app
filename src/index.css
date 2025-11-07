@@ -391,56 +391,6 @@
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
-  /* Subtle Hover Animations */
-  .hover-lift {
-    @apply transition-all duration-300 ease-out;
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .hover-scale {
-    @apply transition-transform duration-200 ease-out;
-  }
-
-  .hover-scale:hover {
-    transform: scale(1.05);
-  }
-
-  .hover-scale-sm {
-    @apply transition-transform duration-200 ease-out;
-  }
-
-  .hover-scale-sm:hover {
-    transform: scale(1.02);
-  }
-
-  .hover-glow {
-    @apply transition-all duration-300 ease-out;
-  }
-
-  .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
-  }
-
-  .hover-border {
-    @apply transition-all duration-200 ease-out;
-  }
-
-  .hover-border:hover {
-    border-color: hsl(var(--primary) / 0.5);
-  }
-
-  .hover-color-shift {
-    @apply transition-colors duration-200 ease-out;
-  }
-
-  .hover-color-shift:hover {
-    color: hsl(var(--primary));
-  }
-
   /* Premium Micro-animations */
   .animate-smooth-in {
     animation: smoothIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);

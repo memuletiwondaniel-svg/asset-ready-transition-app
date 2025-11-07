@@ -33,7 +33,6 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
 }) => {
   const { language, setLanguage, translations } = useLanguage();
   const [formData, setFormData] = useState({
-    name: checklist.name,
     reason: checklist.reason,
     selected_items: checklist.selected_items || [],
     custom_reason: checklist.custom_reason || '',
@@ -82,7 +81,7 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     updateChecklist({
       checklistId: checklist.id,
       checklistData: {
-        name: formData.name,
+        name: formData.reason, // Set name as reason
         reason: formData.reason,
         selected_items: formData.selected_items,
         custom_reason: formData.reason === 'Others' ? formData.custom_reason : undefined,
@@ -252,20 +251,6 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-
-            <div className="space-y-2">
-              <Label htmlFor="checklistName">Checklist Name *</Label>
-              <Input
-                id="checklistName"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter checklist name"
-                maxLength={100}
-              />
-              <p className="text-xs text-muted-foreground">
-                Give this checklist a unique, descriptive name to easily identify it later.
-              </p>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="reason">Reason for Checklist *</Label>

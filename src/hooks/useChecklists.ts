@@ -200,7 +200,9 @@ export const useDeleteChecklist = () => {
 
   return useMutation({
     mutationFn: async (checklistId: string) => {
-      // Allow deletion without authentication (temporary - should be secured later)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('checklists')
         .delete()
