@@ -62,12 +62,14 @@ const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({ id, child
   return (
     <div 
       ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners} 
-      className={`cursor-grab active:cursor-grabbing ${isExpanded ? 'col-span-full' : ''}`}
+      style={style}
+      className={`${isExpanded ? 'col-span-full' : ''}`}
     >
-      {children}
+      {/* Clone children and pass drag attributes only to header */}
+      {React.cloneElement(children as React.ReactElement, {
+        dragAttributes: attributes,
+        dragListeners: listeners
+      })}
     </div>
   );
 };

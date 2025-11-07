@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Eye, EyeOff, Maximize2, Minimize2, Settings } from 'lucide-react';
+import { MoreVertical, Eye, EyeOff, Maximize2, Minimize2, Settings, GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface WidgetCardProps {
   title: string;
@@ -12,6 +13,8 @@ interface WidgetCardProps {
   onToggleVisibility?: () => void;
   onToggleExpand?: () => void;
   onSettings?: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const WidgetCard: React.FC<WidgetCardProps> = ({
@@ -22,17 +25,32 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   isVisible = true,
   onToggleVisibility,
   onToggleExpand,
-  onSettings
+  onSettings,
+  dragAttributes,
+  dragListeners
 }) => {
   if (!isVisible) return null;
 
   return (
     <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 ${isExpanded ? 'col-span-full' : ''} ${className}`}>
       <CardHeader className="border-b border-border/40 pb-4 flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <div className="flex items-center gap-2 flex-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted"
+            {...dragAttributes}
+            {...dragListeners}
+          >
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </Button>
+          <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        </div>
         <DropdownMenu>
-          <DropdownMenuTrigger className="p-1 hover:bg-accent rounded-md transition-colors">
-            <MoreVertical className="w-4 h-4 text-muted-foreground" />
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="w-4 h-4 text-muted-foreground" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-50 bg-background">
             {onToggleExpand && (
