@@ -1,6 +1,6 @@
 import React from 'react';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { TrendingUp, ListTodo, Clock, AlertCircle } from 'lucide-react';
 import { useUserTasks } from '@/hooks/useUserTasks';
 
 interface QuickStatsWidgetProps {
@@ -14,8 +14,8 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({ settings }) 
     {
       label: 'Total Tasks',
       value: tasks.length,
-      icon: CheckCircle,
-      color: 'text-primary'
+      icon: ListTodo,
+      color: 'text-accent'
     },
     {
       label: 'High Priority',

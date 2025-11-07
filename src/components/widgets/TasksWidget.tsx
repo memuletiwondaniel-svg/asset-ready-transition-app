@@ -1,7 +1,7 @@
 import React from 'react';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock } from 'lucide-react';
+import { ListTodo, Clock } from 'lucide-react';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -17,7 +17,7 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({ settings }) => {
     <>
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-primary" />
+          <ListTodo className="w-5 h-5 text-accent" />
           Recent Tasks
         </CardTitle>
         <CardDescription className="text-xs">Your latest action items</CardDescription>
@@ -31,7 +31,7 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({ settings }) => {
           </div>
         ) : displayTasks.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
+            <ListTodo className="w-12 h-12 mx-auto mb-2 opacity-30" />
             <p className="text-sm">No tasks</p>
           </div>
         ) : (
