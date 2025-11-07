@@ -455,7 +455,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         ) : (
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
-          <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
+          <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: '40%' }}>
             <CardHeader className="flex-shrink-0 py-3 pb-2">
               <CardTitle className="text-4xl font-bold">
                 Welcome, {userName}
@@ -692,7 +692,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 return <Card 
                   key={workspace.id} 
                   onClick={() => onNavigate(workspace.id)} 
-                  className={`cursor-pointer border-border/40 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:scale-105 group backdrop-blur-sm overflow-hidden animate-smooth-in ${workspace.bgTone}`}
+                  className={`glass-card glass-card-hover cursor-pointer group overflow-hidden animate-smooth-in ${workspace.bgTone}`}
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                       {/* Gradient overlay on hover */}
@@ -720,7 +720,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         )}
 
         {/* Tasks Panel */}
-        <Card className={`border-border/40 shadow-xl transition-all duration-500 backdrop-blur-xl bg-card/95 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
+        <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
           <CardHeader className="border-b border-border/40 py-4">
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
@@ -801,7 +801,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-16rem)]">
                 {tasksLoading ? <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md group relative">
+                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="glass-subtle hover:shadow-lg transition-all cursor-pointer group relative">
                       <CardContent className="p-3 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-medium text-sm flex-1">{task.title}</h4>

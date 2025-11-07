@@ -256,6 +256,52 @@
     transform: none;
   }
 
+  /* Glassmorphism Effects */
+  .glass-card {
+    @apply bg-card/40 border border-border/20;
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+  }
+
+  .glass-card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .glass-card-hover:hover {
+    backdrop-filter: blur(32px) saturate(200%);
+    box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.2);
+  }
+
+  .glass-panel {
+    @apply bg-background/60 border border-border/30;
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .glass-subtle {
+    @apply bg-card/20 border border-border/10;
+    backdrop-filter: blur(16px) saturate(120%);
+  }
+
   .fluent-acrylic {
     background: var(--fluent-acrylic-background);
     backdrop-filter: blur(30px) saturate(120%);
