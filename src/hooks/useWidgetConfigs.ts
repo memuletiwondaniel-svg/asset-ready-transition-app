@@ -151,12 +151,114 @@ export const useWidgetConfigs = () => {
     }
   };
 
+  const addWidget = async (widgetType: string, size: 'small' | 'medium' | 'large' = 'medium') => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const newPosition = widgets.length;
+      const { data, error } = await supabase
+        .from('user_widget_configs')
+        .insert({
+          user_id: user.id,
+          widget_type: widgetType,
+          position: newPosition,
+          size,
+          settings: {},
+          is_visible: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setWidgets(prev => [...prev, data as WidgetConfig].sort((a, b) => a.position - b.position));
+      toast({
+        title: "Widget Added",
+        description: `${widgetType} widget has been added to your dashboard.`,
+      });
+    } catch (error) {
+      console.error('Error adding widget:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add widget",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeWidget = async (widgetId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_widget_configs')
+        .delete()
+        .eq('id', widgetId);
+
+      if (error) throw error;
+
+      setWidgets(prev => prev.filter(w => w.id !== widgetId));
+      toast({
+        title: "Widget Removed",
+        description: "Widget has been removed from your dashboard.",
+      });
+    } catch (error) {
+      console.error('Error removing widget:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove widget",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const duplicateWidget = async (widgetId: string) => {
+    try {
+      const widget = widgets.find(w => w.id === widgetId);
+      if (!widget) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const newPosition = widgets.length;
+      const { data, error } = await supabase
+        .from('user_widget_configs')
+        .insert({
+          user_id: user.id,
+          widget_type: widget.widget_type,
+          position: newPosition,
+          size: widget.size,
+          settings: widget.settings,
+          is_visible: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setWidgets(prev => [...prev, data as WidgetConfig].sort((a, b) => a.position - b.position));
+      toast({
+        title: "Widget Duplicated",
+        description: "Widget has been duplicated successfully.",
+      });
+    } catch (error) {
+      console.error('Error duplicating widget:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate widget",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     widgets,
     loading,
     updateWidgetPosition,
     toggleWidgetVisibility,
     updateWidgetSettings,
-    reorderWidgets
+    reorderWidgets,
+    addWidget,
+    removeWidget,
+    duplicateWidget
   };
 };

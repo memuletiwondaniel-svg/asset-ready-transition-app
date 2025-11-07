@@ -1,84 +1,109 @@
-import React from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, GripVertical } from 'lucide-react';
-import { useWidgetConfigs, WidgetConfig } from '@/hooks/useWidgetConfigs';
+import { Settings, GripVertical, Plus, X, Layout } from 'lucide-react';
 import { TasksWidget } from './TasksWidget';
 import { QuickStatsWidget } from './QuickStatsWidget';
 import { RecentActivityWidget } from './RecentActivityWidget';
-import { useSortable } from '@dnd-kit/sortable';
+import { CalendarWidget } from './CalendarWidget';
+import { ProjectsOverviewWidget } from './ProjectsOverviewWidget';
+import { NotificationsWidget } from './NotificationsWidget';
+import { AIAssistantWidget } from './AIAssistantWidget';
+import { WidgetLibrary } from './WidgetLibrary';
+import { WidgetSettingsModal } from './WidgetSettingsModal';
+import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { WidgetConfig } from '@/hooks/useWidgetConfigs';
 
 interface SortableWidgetProps {
   widget: WidgetConfig;
   children: React.ReactNode;
+  onSettings: (widget: WidgetConfig) => void;
+  onDelete: (widgetId: string) => void;
+  customizeMode: boolean;
 }
 
-const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children }) => {
+const SortableWidget: React.FC<SortableWidgetProps> = ({ widget, children, onSettings, onDelete, customizeMode }) => {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
   } = useSortable({ id: widget.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const sizeClasses = {
-    small: 'col-span-1',
-    medium: 'col-span-2',
-    large: 'col-span-3'
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`${sizeClasses[widget.size]} animate-smooth-in`}
+    <Card 
+      ref={setNodeRef} 
+      style={{
+        ...style,
+        gridColumn: widget.size === 'large' ? 'span 3' : widget.size === 'medium' ? 'span 2' : 'span 1'
+      }}
+      className={`overflow-hidden transition-all group ${isDragging ? 'opacity-50' : ''} ${widget.is_visible ? '' : 'hidden'}`}
     >
-      <Card className="h-full border-border/40 backdrop-blur-xl bg-card/95 shadow-xl hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10"
-        >
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 hover:bg-primary/10"
-          >
-            <GripVertical className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Settings Button */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 hover:bg-primary/10"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-        </div>
-
+      <div className="relative">
+        {customizeMode && (
+          <div className="absolute top-2 right-2 z-10 flex gap-1">
+            <Button
+              {...attributes}
+              {...listeners}
+              variant="ghost"
+              size="sm"
+              className="cursor-grab active:cursor-grabbing h-8 w-8 p-0 hover:bg-accent/50"
+            >
+              <GripVertical className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-accent/50"
+              onClick={() => onSettings(widget)}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-destructive/50 text-destructive"
+              onClick={() => onDelete(widget.id)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         {children}
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 };
 
 export const DashboardWidgets: React.FC = () => {
-  const { widgets, loading, reorderWidgets } = useWidgetConfigs();
+  const { widgets, loading, reorderWidgets, addWidget, removeWidget, updateWidgetSettings } = useWidgetConfigs();
+  const [customizeMode, setCustomizeMode] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [settingsWidget, setSettingsWidget] = useState<WidgetConfig | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -91,16 +116,26 @@ export const DashboardWidgets: React.FC = () => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = widgets.findIndex(w => w.id === active.id);
-      const newIndex = widgets.findIndex(w => w.id === over.id);
+      const oldIndex = widgets.findIndex((w) => w.id === active.id);
+      const newIndex = widgets.findIndex((w) => w.id === over.id);
       const reordered = arrayMove(widgets, oldIndex, newIndex);
       reorderWidgets(reordered);
     }
   };
 
-  const renderWidget = (widget: WidgetConfig) => {
-    if (!widget.is_visible) return null;
+  const handleSettingsSave = async (settings: Record<string, any>, size: 'small' | 'medium' | 'large') => {
+    if (!settingsWidget) return;
+    await updateWidgetSettings(settingsWidget.id, settings);
+    if (settingsWidget.size !== size) {
+      await updateWidgetSettings(settingsWidget.id, { ...settings, size });
+    }
+  };
 
+  const handleDelete = async (widgetId: string) => {
+    await removeWidget(widgetId);
+  };
+
+  const renderWidget = (widget: WidgetConfig) => {
     switch (widget.widget_type) {
       case 'tasks':
         return <TasksWidget settings={widget.settings} />;
@@ -108,36 +143,111 @@ export const DashboardWidgets: React.FC = () => {
         return <QuickStatsWidget settings={widget.settings} />;
       case 'recent-activity':
         return <RecentActivityWidget settings={widget.settings} />;
+      case 'calendar':
+        return <CalendarWidget settings={widget.settings} />;
+      case 'projects':
+        return <ProjectsOverviewWidget settings={widget.settings} />;
+      case 'notifications':
+        return <NotificationsWidget settings={widget.settings} />;
+      case 'ai-assistant':
+        return <AIAssistantWidget settings={widget.settings} />;
       default:
         return null;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-3 gap-6 p-6">
-        {[1, 2, 3].map(i => (
-          <Card key={i} className="h-64 animate-pulse bg-muted/20" />
-        ))}
-      </div>
-    );
-  }
+  const visibleWidgets = widgets.filter(w => w.is_visible);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-3 gap-6 p-6">
-          {widgets.map(widget => (
-            <SortableWidget key={widget.id} widget={widget}>
-              {renderWidget(widget)}
-            </SortableWidget>
-          ))}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Dashboard</h2>
+        <div className="flex gap-2">
+          <Button
+            variant={customizeMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCustomizeMode(!customizeMode)}
+          >
+            <Layout className="w-4 h-4 mr-2" />
+            {customizeMode ? 'Done' : 'Customize'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLibraryOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Widget
+          </Button>
         </div>
-      </SortableContext>
-    </DndContext>
+      </div>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="h-64 animate-pulse bg-muted/20" />
+            ))}
+          </div>
+        ) : visibleWidgets.length === 0 ? (
+          <Card className="p-12 text-center">
+            <div className="max-w-md mx-auto space-y-4">
+              <Layout className="w-16 h-16 mx-auto text-muted-foreground/50" />
+              <h3 className="text-xl font-semibold">No Widgets Yet</h3>
+              <p className="text-muted-foreground">
+                Add widgets to customize your dashboard and view important information at a glance.
+              </p>
+              <Button onClick={() => setLibraryOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your First Widget
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <SortableContext
+            items={visibleWidgets.map(w => w.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+              {visibleWidgets.map((widget) => (
+                <SortableWidget 
+                  key={widget.id} 
+                  widget={widget}
+                  onSettings={setSettingsWidget}
+                  onDelete={handleDelete}
+                  customizeMode={customizeMode}
+                >
+                  {renderWidget(widget)}
+                </SortableWidget>
+              ))}
+            </div>
+          </SortableContext>
+        )}
+      </DndContext>
+
+      <WidgetLibrary
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onAddWidget={addWidget}
+        existingWidgets={widgets.map(w => w.widget_type)}
+      />
+
+      <WidgetSettingsModal
+        widget={settingsWidget}
+        open={!!settingsWidget}
+        onOpenChange={(open) => !open && setSettingsWidget(null)}
+        onSave={handleSettingsSave}
+        onDelete={() => {
+          if (settingsWidget) {
+            handleDelete(settingsWidget.id);
+            setSettingsWidget(null);
+          }
+        }}
+      />
+    </div>
   );
 };
