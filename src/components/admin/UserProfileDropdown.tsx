@@ -7,20 +7,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { User, Settings, Shield, LogOut, ChevronDown, Key, Bell, UserCog } from 'lucide-react';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { NotificationPreferencesPanel } from '@/components/NotificationPreferencesPanel';
-
 interface UserProfileDropdownProps {
   className?: string;
   translations: any;
 }
-
 const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
   className = "",
   translations
 }) => {
-  const { session, signOut } = useAuth();
+  const {
+    session,
+    signOut
+  } = useAuth();
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-  
+
   // Mock user data - in real app this would come from session/profile
   const user = {
     name: session?.user?.email?.split('@')[0] || 'Admin User',
@@ -31,7 +32,6 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
     company: 'Basrah Gas Company',
     department: 'ORSH Operations'
   };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -39,7 +39,6 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
       console.error('Error signing out:', error);
     }
   };
-
   const t = translations || {
     profile: 'Profile',
     settings: 'Settings',
@@ -48,15 +47,10 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
     notifications: 'Notifications',
     accountSettings: 'Account Settings'
   };
-
-  return (
-    <>
+  return <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className={`h-9 w-9 p-0 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 ${className}`}
-          >
+          <Button variant="ghost" className={`h-9 w-9 p-0 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 ${className}`}>
             <Avatar className="h-8 w-8">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">
@@ -66,10 +60,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
           </Button>
         </DropdownMenuTrigger>
         
-        <DropdownMenuContent 
-          align="end" 
-          className="w-72 bg-background/95 backdrop-blur-xl border border-border/50 shadow-xl p-0"
-        >
+        <DropdownMenuContent align="end" className="w-72 bg-background/95 backdrop-blur-xl border border-border/50 shadow-xl p-0">
           {/* User Info Header */}
           <div className="p-4 border-b border-border/50">
             <div className="flex items-center space-x-3">
@@ -89,10 +80,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
                 </div>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-border/30">
-              <p className="text-xs text-muted-foreground">{user.company}</p>
-              <p className="text-xs text-muted-foreground">{user.department}</p>
-            </div>
+            
           </div>
 
           {/* Menu Items */}
@@ -107,28 +95,19 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
               <span className="font-medium">{t.accountSettings}</span>
             </DropdownMenuItem>
             
-            <DropdownMenuItem 
-              className="cursor-pointer p-3 rounded-lg hover:bg-accent/50 transition-colors"
-              onClick={() => setShowSecurityModal(true)}
-            >
+            <DropdownMenuItem className="cursor-pointer p-3 rounded-lg hover:bg-accent/50 transition-colors" onClick={() => setShowSecurityModal(true)}>
               <Shield className="h-4 w-4 mr-3 text-muted-foreground" />
               <span className="font-medium">{t.security}</span>
             </DropdownMenuItem>
             
-            <DropdownMenuItem 
-              className="cursor-pointer p-3 rounded-lg hover:bg-accent/50 transition-colors"
-              onClick={() => setShowNotificationsModal(true)}
-            >
+            <DropdownMenuItem className="cursor-pointer p-3 rounded-lg hover:bg-accent/50 transition-colors" onClick={() => setShowNotificationsModal(true)}>
               <Bell className="h-4 w-4 mr-3 text-muted-foreground" />
               <span className="font-medium">{t.notifications}</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator className="my-1" />
             
-            <DropdownMenuItem 
-              className="cursor-pointer p-3 rounded-lg hover:bg-destructive/10 text-destructive hover:text-destructive transition-colors"
-              onClick={handleSignOut}
-            >
+            <DropdownMenuItem className="cursor-pointer p-3 rounded-lg hover:bg-destructive/10 text-destructive hover:text-destructive transition-colors" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-3" />
               <span className="font-medium">{t.signOut}</span>
             </DropdownMenuItem>
@@ -191,8 +170,6 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
           <NotificationPreferencesPanel />
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
-
 export default UserProfileDropdown;
