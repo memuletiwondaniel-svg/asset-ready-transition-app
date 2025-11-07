@@ -7,14 +7,11 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
@@ -50,10 +47,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
-import DraggablePSSRCard from './DraggablePSSRCard';
-import CompactPSSRCard from './CompactPSSRCard';
-import PSSRTableView from './PSSRTableView';
-import PSSRKanbanBoard from './PSSRKanbanBoard';
+import PSSRCardsWidget, { CardDensity, ViewMode } from './widgets/PSSRCardsWidget';
 import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
@@ -108,14 +102,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'compact'>('card');
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
+  const [cardDensity, setCardDensity] = useState<CardDensity>('comfortable');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
   const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [dateRangeFilters, setDateRangeFilters] = useState<DateRangeFilter>({});
   const [filters, setFilters] = useState({
@@ -129,8 +123,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const [widgets, setWidgets] = useState<SafeStartupWidgetConfig[]>([
     { id: 'pssr-stats', title: 'PSSR Statistics', isVisible: true, isExpanded: false },
     { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
+    { id: 'pssr-cards', title: 'PSSR Reviews', isVisible: true, isExpanded: false },
   ]);
-  const [widgetOrder, setWidgetOrder] = useState<string[]>(['pssr-stats', 'quick-actions']);
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(['pssr-stats', 'quick-actions', 'pssr-cards']);
 
   // Mock PSSR data - starts empty but can be populated
   const pssrList: PSSR[] = [
@@ -227,7 +222,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     }
   }, [pssrOrder.length]);
 
-  // Drag and drop sensors
+  // Drag and drop sensors for widgets
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -238,28 +233,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveDragId(event.active.id as string);
-  };
-
-  // Handle drag end for PSSRs
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveDragId(null);
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    setPssrOrder((items) => {
-      const oldIndex = items.indexOf(active.id as string);
-      const newIndex = items.indexOf(over.id as string);
-
-      return arrayMove(items, oldIndex, newIndex);
-    });
-  };
 
   // Handle drag end for widgets
   const handleWidgetDragEnd = (event: DragEndEvent) => {
@@ -300,8 +273,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     setWidgets([
       { id: 'pssr-stats', title: 'PSSR Statistics', isVisible: true, isExpanded: false },
       { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
+      { id: 'pssr-cards', title: 'PSSR Reviews', isVisible: true, isExpanded: false },
     ]);
-    setWidgetOrder(['pssr-stats', 'quick-actions']);
+    setWidgetOrder(['pssr-stats', 'quick-actions', 'pssr-cards']);
   };
 
   // Get unique values for filter options
@@ -687,339 +661,191 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
           </div>
         </header>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
-        {/* Stats and Quick Actions Row - Draggable Widgets */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleWidgetDragEnd}
-        >
-          <SortableContext
-            items={widgetOrder}
-            strategy={rectSortingStrategy}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {widgetOrder.map((widgetId) => {
-                const widget = widgets.find(w => w.id === widgetId);
-                if (!widget || !widget.isVisible) return null;
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
+        <div className="flex gap-6">
+          {/* Left Side - Widgets and Filters */}
+          <div className="flex-1 space-y-6">
+            {/* Stats and Quick Actions Row - Draggable Widgets */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleWidgetDragEnd}
+            >
+              <SortableContext
+                items={widgetOrder.filter(id => id !== 'pssr-cards')}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {widgetOrder.filter(id => id !== 'pssr-cards').map((widgetId) => {
+                    const widget = widgets.find(w => w.id === widgetId);
+                    if (!widget || !widget.isVisible) return null;
 
-                if (widgetId === 'pssr-stats') {
-                  return (
-                    <DraggableWidgetCard
-                      key={widgetId}
-                      id={widgetId}
-                      title="PSSR Statistics"
-                      isExpanded={widget.isExpanded}
-                      onToggleExpand={() => toggleWidgetExpansion(widgetId)}
-                      onHide={() => hideWidget(widgetId)}
-                      colSpan="lg:col-span-1"
-                    >
-                      <PSSRStatsWidget stats={stats} />
-                    </DraggableWidgetCard>
-                  );
-                }
+                    if (widgetId === 'pssr-stats') {
+                      return (
+                        <DraggableWidgetCard
+                          key={widgetId}
+                          id={widgetId}
+                          title="PSSR Statistics"
+                          isExpanded={widget.isExpanded}
+                          onToggleExpand={() => toggleWidgetExpansion(widgetId)}
+                          onHide={() => hideWidget(widgetId)}
+                          colSpan="lg:col-span-1"
+                        >
+                          <PSSRStatsWidget stats={stats} />
+                        </DraggableWidgetCard>
+                      );
+                    }
 
-                if (widgetId === 'quick-actions') {
-                  return (
-                    <DraggableWidgetCard
-                      key={widgetId}
-                      id={widgetId}
-                      title="Quick Actions"
-                      isExpanded={widget.isExpanded}
-                      onToggleExpand={() => toggleWidgetExpansion(widgetId)}
-                      onHide={() => hideWidget(widgetId)}
-                      colSpan="lg:col-span-2"
-                    >
-                      <div>
-                        <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <Button 
-                            variant="outline"
-                            onClick={() => setActiveView('create')}
-                            className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
-                          >
-                            <Plus className="h-5 w-5 text-primary" />
-                            <div>
-                              <p className="font-semibold text-sm">Create New PSSR</p>
-                              <p className="text-xs text-muted-foreground">Start a new safety review</p>
+                    if (widgetId === 'quick-actions') {
+                      return (
+                        <DraggableWidgetCard
+                          key={widgetId}
+                          id={widgetId}
+                          title="Quick Actions"
+                          isExpanded={widget.isExpanded}
+                          onToggleExpand={() => toggleWidgetExpansion(widgetId)}
+                          onHide={() => hideWidget(widgetId)}
+                          colSpan="lg:col-span-2"
+                        >
+                          <div>
+                            <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <Button 
+                                variant="outline"
+                                onClick={() => setActiveView('create')}
+                                className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                              >
+                                <Plus className="h-5 w-5 text-primary" />
+                                <div>
+                                  <p className="font-semibold text-sm">Create New PSSR</p>
+                                  <p className="text-xs text-muted-foreground">Start a new safety review</p>
+                                </div>
+                              </Button>
+                              {userRole === 'admin' && (
+                                <Button 
+                                  variant="outline"
+                                  onClick={() => setActiveView('manage-checklist')}
+                                  className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                                >
+                                  <Settings className="h-5 w-5 text-primary" />
+                                  <div>
+                                    <p className="font-semibold text-sm">Manage Checklists</p>
+                                    <p className="text-xs text-muted-foreground">Configure PSSR templates</p>
+                                  </div>
+                                </Button>
+                              )}
                             </div>
-                          </Button>
-                          {userRole === 'admin' && (
-                            <Button 
-                              variant="outline"
-                              onClick={() => setActiveView('manage-checklist')}
-                              className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
-                            >
-                              <Settings className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="font-semibold text-sm">Manage Checklists</p>
-                                <p className="text-xs text-muted-foreground">Configure PSSR templates</p>
-                              </div>
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </DraggableWidgetCard>
-                  );
-                }
+                          </div>
+                        </DraggableWidgetCard>
+                      );
+                    }
 
-                return null;
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
+                    return null;
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
 
-        {/* Modern Search and Filters */}
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-5">
-            <div className="flex flex-col lg:flex-row gap-4 items-center">
-              <PSSRAdvancedSearch
-                pssrs={pssrList}
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onSelectPSSR={handleViewDetails}
-                placeholder="Search by Project ID, Name, Asset, Lead..."
-              />
-              
-              <div className="flex items-center gap-3 w-full lg:w-auto">
-                <PSSRFilters
-                  filters={filters}
-                  onToggleFilter={toggleFilter}
-                  onClearFilters={clearAllFilters}
-                  uniquePlants={uniquePlants}
-                  uniqueStatuses={uniqueStatuses}
-                  uniqueLeads={uniqueLeads}
-                />
-                
-                {/* Date Range Filter */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
+            {/* Modern Search and Filters */}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-5">
+                <div className="flex flex-col lg:flex-row gap-4 items-center">
+                  <PSSRAdvancedSearch
+                    pssrs={pssrList}
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onSelectPSSR={handleViewDetails}
+                    placeholder="Search by Project ID, Name, Asset, Lead..."
+                  />
+                  
+                  <div className="flex items-center gap-3 w-full lg:w-auto">
+                    <PSSRFilters
+                      filters={filters}
+                      onToggleFilter={toggleFilter}
+                      onClearFilters={clearAllFilters}
+                      uniquePlants={uniquePlants}
+                      uniqueStatuses={uniqueStatuses}
+                      uniqueLeads={uniqueLeads}
+                    />
+                    
+                    {/* Date Range Filter */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className={`gap-2 ${
+                            dateRangeFilters.created || dateRangeFilters.nextReview || dateRangeFilters.completed
+                              ? 'border-primary bg-primary/5'
+                              : ''
+                          }`}
+                        >
+                          <CalendarIcon className="h-4 w-4" />
+                          <span className="hidden md:inline">Dates</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-80">
+                        <PSSRDateRangeFilter value={dateRangeFilters} onChange={setDateRangeFilters} />
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Activity Feed Toggle */}
+                    <Button
+                      variant="outline"
                       size="sm"
-                      className={`gap-2 ${
-                        dateRangeFilters.created || dateRangeFilters.nextReview || dateRangeFilters.completed
-                          ? 'border-primary bg-primary/5'
-                          : ''
-                      }`}
+                      onClick={() => setShowActivityFeed(!showActivityFeed)}
+                      className="gap-2"
                     >
-                      <CalendarIcon className="h-4 w-4" />
-                      <span className="hidden md:inline">Dates</span>
+                      <Bell className="h-4 w-4" />
+                      <span className="hidden md:inline">Activity</span>
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-80">
-                    <PSSRDateRangeFilter value={dateRangeFilters} onChange={setDateRangeFilters} />
-                  </PopoverContent>
-                </Popover>
-
-                {/* Activity Feed Toggle */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowActivityFeed(!showActivityFeed)}
-                  className="gap-2"
-                >
-                  <Bell className="h-4 w-4" />
-                  <span className="hidden md:inline">Activity</span>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* PSSR List Header and Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content Area */}
-          <div className={`space-y-5 ${showActivityFeed ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Reviews <span className="text-muted-foreground">({filteredPSSRs.length})</span>
-                </h2>
-                
-                {/* View Mode Toggle */}
-                <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
-                  <button
-                    onClick={() => setViewMode('card')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      viewMode === 'card' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
-                    Cards
-                  </button>
-                  <button
-                    onClick={() => setViewMode('compact')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      viewMode === 'compact' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
-                    Compact
-                  </button>
-                  <button
-                    onClick={() => setViewMode('kanban')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      viewMode === 'kanban' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Columns3 className="h-3.5 w-3.5 inline mr-1.5" />
-                    Kanban
-                  </button>
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      viewMode === 'table' 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
-                    Table
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>{filteredPSSRs.length} of {stats.total}</span>
-                {filteredPSSRs.length > 0 && (viewMode === 'card' || viewMode === 'kanban' || viewMode === 'compact') && (
-                  <span className="hidden lg:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
-                    <GripVertical className="h-3 w-3" />
-                    Drag to reorder
-                  </span>
-                )}
-              </div>
-            </div>
-
-          {viewMode === 'table' ? (
-            <PSSRTableView 
-              pssrs={filteredPSSRs}
-              onViewDetails={handleViewDetails}
-            />
-          ) : viewMode === 'kanban' ? (
-            <PSSRKanbanBoard
-              pssrs={filteredPSSRs}
-              onViewDetails={handleViewDetails}
-              getPriorityColor={getPriorityColor}
-              getStatusIcon={getStatusIcon}
-              getTeamStatusColor={getTeamStatusColor}
-              getRiskLevelColor={getRiskLevelColor}
-              pinnedPSSRs={new Set(pinnedPSSRs)}
-              onTogglePin={handleTogglePin}
-              onStatusChange={(pssrId, newStatus) => {
-                toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
-              }}
-            />
-          ) : viewMode === 'compact' ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={filteredPSSRs.map(pssr => pssr.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
-                  {filteredPSSRs.map((pssr) => (
-                    <CompactPSSRCard
-                      key={pssr.id}
-                      pssr={pssr}
-                      onViewDetails={handleViewDetails}
-                      getTeamStatusColor={getTeamStatusColor}
-                      isPinned={pinnedPSSRs.includes(pssr.id)}
-                      onTogglePin={handleTogglePin}
-                      onEdit={handleEditPSSR}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-
-              <DragOverlay>
-                {activeDragId ? (
-                  <Card className="p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
-                    <div className="text-center">
-                      <Rocket className="h-8 w-8 text-primary mx-auto mb-2" />
-                      <p className="font-semibold text-foreground">Moving PSSR...</p>
-                      <p className="text-sm text-muted-foreground">
-                        {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
-                      </p>
-                    </div>
-                  </Card>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={filteredPSSRs.map(pssr => pssr.id)} strategy={verticalListSortingStrategy}>
-                <div className="grid gap-4">
-                  {filteredPSSRs.map((pssr, index) => (
-                    <DraggablePSSRCard
-                      key={pssr.id}
-                      pssr={pssr}
-                      index={index}
-                      onViewDetails={handleViewDetails}
-                      getPriorityColor={getPriorityColor}
-                      getStatusIcon={getStatusIcon}
-                      getTeamStatusColor={getTeamStatusColor}
-                      getRiskLevelColor={getRiskLevelColor}
-                      isPinned={pinnedPSSRs.includes(pssr.id)}
-                      onTogglePin={handleTogglePin}
-                      onEdit={handleEditPSSR}
-                      onDuplicate={handleDuplicatePSSR}
-                      onArchive={handleArchivePSSR}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-
-              <DragOverlay>
-                {activeDragId ? (
-                  <Card className="p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
-                    <div className="text-center">
-                      <Rocket className="h-8 w-8 text-primary mx-auto mb-2" />
-                      <p className="font-semibold text-foreground">Moving PSSR...</p>
-                      <p className="text-sm text-muted-foreground">
-                        {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
-                      </p>
-                    </div>
-                  </Card>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          )}
-
-          {filteredPSSRs.length === 0 && (
-            <Card className="border-border/50 bg-card/30">
-              <CardContent className="py-16">
-                <div className="text-center max-w-md mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/20 mb-4">
-                    <Rocket className="h-8 w-8 text-muted-foreground/50" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">No Reviews Found</h3>
-                  <p className="text-sm text-muted-foreground mb-6">Try adjusting your filters</p>
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Right Side - PSSR Cards Widget */}
+          {widgets.find(w => w.id === 'pssr-cards')?.isVisible && (
+            <div className="w-full lg:w-[500px] xl:w-[600px] flex-shrink-0">
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-280px)] sticky top-[180px]">
+                <CardContent className="p-5 h-full flex flex-col">
+                  <PSSRCardsWidget
+                    pssrs={filteredPSSRs}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    cardDensity={cardDensity}
+                    onCardDensityChange={setCardDensity}
+                    onViewDetails={handleViewDetails}
+                    getPriorityColor={getPriorityColor}
+                    getStatusIcon={getStatusIcon}
+                    getTeamStatusColor={getTeamStatusColor}
+                    getRiskLevelColor={getRiskLevelColor}
+                    pinnedPSSRs={pinnedPSSRs}
+                    onTogglePin={handleTogglePin}
+                    onEdit={handleEditPSSR}
+                    onDuplicate={handleDuplicatePSSR}
+                    onArchive={handleArchivePSSR}
+                    pssrOrder={pssrOrder}
+                    onPssrOrderChange={setPssrOrder}
+                    totalCount={stats.total}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
 
-        {/* Activity Feed Sidebar */}
+        {/* Activity Feed - Absolutely positioned when open */}
         {showActivityFeed && (
-          <div className="lg:col-span-1">
-            <PSSRActivityFeed maxHeight="calc(100vh - 24rem)" />
+          <div className="fixed right-6 top-[180px] w-[350px] h-[calc(100vh-220px)] z-40">
+            <Card className="border-border/50 bg-card/95 backdrop-blur-md shadow-xl h-full">
+              <CardContent className="p-5 h-full overflow-y-auto">
+                <PSSRActivityFeed />
+              </CardContent>
+            </Card>
           </div>
         )}
-      </div>
       </main>
       </div>
 
