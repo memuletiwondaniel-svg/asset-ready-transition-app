@@ -681,32 +681,32 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </Card>
 
           {/* Workspaces Section */}
-          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }} data-tour="workspaces">
-            <CardHeader className="border-b border-border/40 py-4">
-              <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
+          <Card className="border-border/20 shadow-sm backdrop-blur-sm bg-card/60 animate-smooth-in stagger-2 opacity-80" style={{ height: '58%' }} data-tour="workspaces">
+            <CardHeader className="border-b border-border/20 py-3">
+              <CardTitle className="text-lg font-medium text-muted-foreground">Workspaces</CardTitle>
             </CardHeader>
-            <CardContent className="p-6 h-[calc(100%-6rem)] overflow-auto">
-              <div className="grid grid-cols-3 gap-6 h-full">
+            <CardContent className="p-6 h-[calc(100%-5rem)] overflow-auto">
+              <div className="grid grid-cols-3 gap-4 h-full">
                 {workspaceCards.map((workspace, idx) => {
                 const Icon = workspace.icon;
                 return <Card 
                   key={workspace.id} 
                   onClick={() => onNavigate(workspace.id)} 
-                  className={`cursor-pointer border-border/40 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:scale-105 group backdrop-blur-sm overflow-hidden animate-smooth-in ${workspace.bgTone}`}
+                  className={`cursor-pointer border-border/20 hover:border-border/40 transition-all duration-300 hover:shadow-md hover:scale-[1.02] group backdrop-blur-sm overflow-hidden animate-smooth-in bg-muted/10`}
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                       {/* Gradient overlay on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/3 group-hover:to-accent/3 transition-all duration-300" />
                       
-                      <CardContent className="p-8 flex flex-col items-center justify-center h-full text-center space-y-5 relative z-10">
-                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
-                          <Icon className="w-10 h-10 text-white drop-shadow-lg" />
+                      <CardContent className="p-6 flex flex-col items-center justify-center h-full text-center space-y-4 relative z-10">
+                        <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${workspace.gradient} opacity-60 group-hover:opacity-80 flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-md`}>
+                          <Icon className="w-8 h-8 text-white/90" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
+                          <h4 className="font-semibold text-base mb-1.5 text-muted-foreground group-hover:text-foreground transition-colors duration-300">
                             {workspace.title}
                           </h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
                             {workspace.description}
                           </p>
                         </div>
