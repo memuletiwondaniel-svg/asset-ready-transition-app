@@ -562,7 +562,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       key={action.id} 
                       variant="outline" 
                       size="sm" 
-                      className={`text-xs h-8 px-4 border-border/40 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
+                      className={`text-xs h-8 px-4 hover-lift hover-border hover:bg-muted/70 text-muted-foreground hover:text-foreground backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
                       onClick={() => setUserInput(action.label)}
                     >
                       {action.label}
@@ -579,7 +579,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                           key={idx}
                           variant="ghost"
                           size="sm"
-                          className="w-full justify-start text-xs h-8 px-3 hover:bg-primary/10 transition-all duration-300"
+                          className="w-full justify-start text-xs h-8 px-3 hover-scale-sm hover:bg-primary/10 hover:text-primary"
                           onClick={() => {
                             setUserInput(item);
                             setShowHistory(false);
@@ -599,7 +599,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between text-xs h-7 px-3 hover:bg-primary/5 transition-all duration-300"
+                      className="w-full justify-between text-xs h-7 px-3 hover-scale-sm hover:bg-primary/5"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Prompt Templates</span>
@@ -621,7 +621,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                           key={idx}
                           variant="outline"
                           size="sm"
-                          className="text-xs h-auto py-2 px-3 border-border/40 bg-gradient-to-r from-muted/30 to-muted/20 hover:from-muted/50 hover:to-muted/40 transition-all duration-300 backdrop-blur-sm text-left justify-start whitespace-normal"
+                          className="text-xs h-auto py-2 px-3 hover-lift hover-border bg-gradient-to-r from-muted/30 to-muted/20 hover:from-muted/50 hover:to-muted/40 backdrop-blur-sm text-left justify-start whitespace-normal"
                           onClick={() => {
                             setUserInput(template.prompt);
                             setShowTemplates(false);
@@ -699,7 +699,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-500" />
                       
                       <CardContent className="p-8 flex flex-col items-center justify-center h-full text-center space-y-5 relative z-10">
-                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
+                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl hover-glow`}>
                           <Icon className="w-10 h-10 text-white drop-shadow-lg" />
                         </div>
                         <div>
@@ -801,7 +801,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-16rem)]">
                 {tasksLoading ? <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="glass-subtle hover:shadow-lg transition-all cursor-pointer group relative">
+                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="glass-subtle hover-lift hover-border cursor-pointer group relative">
                       <CardContent className="p-3 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-medium text-sm flex-1">{task.title}</h4>
@@ -821,13 +821,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                         <div className="flex gap-2 pt-2">
                           {task.type === 'approval' ? (
                             <>
-                              <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
+                              <Button size="sm" className="flex-1 h-7 text-xs hover-lift" onClick={() => updateTaskStatus(task.id, 'completed')}>
                                 Approve
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="flex-1 h-8 text-xs font-medium hover:bg-destructive/10 transition-all" 
+                                className="flex-1 h-8 text-xs font-medium hover-lift hover:bg-destructive/10 hover:text-destructive" 
                                 onClick={() => updateTaskStatus(task.id, 'cancelled')}
                               >
                                 Reject
@@ -838,7 +838,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               <Button 
                                 size="sm" 
                                 variant="default" 
-                                className="flex-1 h-8 text-xs font-medium shadow-sm hover:shadow-md transition-all" 
+                                className="flex-1 h-8 text-xs font-medium hover-lift hover-glow" 
                                 onClick={() => {
                                   setTaskToDelete(task.id);
                                   setTaskAction('complete');
@@ -850,7 +850,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="flex-1 h-8 text-xs font-medium hover:bg-destructive/10 transition-all" 
+                                className="flex-1 h-8 text-xs font-medium hover-lift hover:bg-destructive/10 hover:text-destructive" 
                                 onClick={() => {
                                   setTaskToDelete(task.id);
                                   setTaskAction('dismiss');
