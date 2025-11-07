@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardList, KeyRound, Settings, ArrowRight } from 'lucide-react';
+import { Sparkles, Package, Sliders } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -12,28 +12,28 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       id: 'safe-startup',
       title: 'Safe Start-Up',
       description: 'PSSR & Safety Checklists',
-      icon: ClipboardList,
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10',
-      hoverBg: 'hover:bg-blue-500/20'
+      icon: Sparkles,
+      gradient: 'from-blue-500/20 to-cyan-500/20',
+      iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+      iconColor: 'text-white'
     },
     {
       id: 'p2o',
       title: 'P2O Handover',
       description: 'Project-to-Operations Transition',
-      icon: KeyRound,
-      color: 'text-purple-500',
-      bg: 'bg-purple-500/10',
-      hoverBg: 'hover:bg-purple-500/20'
+      icon: Package,
+      gradient: 'from-purple-500/20 to-pink-500/20',
+      iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
+      iconColor: 'text-white'
     },
     {
       id: 'admin-tools',
       title: 'Admin Tools',
       description: 'Users, Roles & Permissions',
-      icon: Settings,
-      color: 'text-orange-500',
-      bg: 'bg-orange-500/10',
-      hoverBg: 'hover:bg-orange-500/20'
+      icon: Sliders,
+      gradient: 'from-orange-500/20 to-amber-500/20',
+      iconBg: 'bg-gradient-to-br from-orange-500 to-amber-500',
+      iconColor: 'text-white'
     }
   ];
 
@@ -46,17 +46,26 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
             <button
               key={workspace.id}
               onClick={() => onNavigate?.(workspace.id)}
-              className={`relative w-full p-4 rounded-xl ${workspace.bg} ${workspace.hoverBg} transition-all duration-300 group border border-transparent hover:border-border/60 hover:shadow-md animate-fade-in`}
+              className={`relative w-full p-4 rounded-xl backdrop-blur-sm border border-border/40 bg-gradient-to-br ${workspace.gradient} hover:border-primary/30 transition-all duration-300 group overflow-hidden animate-fade-in shadow-sm hover:shadow-md`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg bg-background/50 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`w-6 h-6 ${workspace.color}`} />
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              
+              <div className="flex items-center gap-4 relative z-10">
+                {/* Modern icon with gradient */}
+                <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${workspace.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                  <Icon className={`w-6 h-6 ${workspace.iconColor}`} />
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="text-sm font-semibold">{workspace.title}</h3>
+                
+                {/* Content */}
+                <div className="flex-1 text-left min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground mb-0.5 group-hover:translate-x-1 transition-transform duration-300">{workspace.title}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{workspace.description}</p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
+                
+                {/* Modern hover indicator */}
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-hover:animate-pulse" />
               </div>
             </button>
           );
