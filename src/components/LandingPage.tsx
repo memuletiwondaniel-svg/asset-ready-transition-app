@@ -19,6 +19,7 @@ import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WorkspacesWidget } from '@/components/widgets/WorkspacesWidget';
 import { RecentActivityWidget } from '@/components/widgets/RecentActivityWidget';
 import { WidgetCard } from '@/components/widgets/WidgetCard';
+import { WidgetManagement } from '@/components/WidgetManagement';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
@@ -101,7 +102,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showWidgets, setShowWidgets] = useState(false);
+  const [showWidgetManagement, setShowWidgetManagement] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -199,6 +200,17 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       title: 'All widgets visible',
       description: 'All widgets have been restored to your dashboard'
     });
+  };
+
+  const handleResetWidgets = () => {
+    const defaultWidgets = [
+      { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
+      { id: 'workspaces', title: 'Workspaces', isVisible: true, isExpanded: false },
+      { id: 'recent-activity', title: 'Recent Activity', isVisible: true, isExpanded: false }
+    ];
+    setWidgets(defaultWidgets);
+    setAiPanelVisible(true);
+    setTasksPanelVisible(true);
   };
 
   const hasHiddenWidgets = widgets.some((w) => !w.isVisible);
@@ -628,9 +640,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           language={language}
           onLanguageChange={setLanguage}
           onNavigate={onNavigate}
-          onShowWidgets={() => setShowWidgets(!showWidgets)}
+          onShowWidgets={() => setShowWidgetManagement(true)}
           onShowOnboarding={() => setShowOnboarding(true)}
-          showWidgets={showWidgets}
+          showWidgets={showWidgetManagement}
           currentPage="dashboard"
           searchHistory={searchHistory}
           onSearchHistoryClick={(item) => {
@@ -643,11 +655,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
         {/* Main Content Area */}
         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-          {showWidgets ? (
-            <div className="flex-1 animate-fade-in">
-              <DashboardWidgets />
-            </div>
-          ) : (
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
             {/* AI Assistant Panel */}
             {aiPanelVisible && (
@@ -896,7 +903,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </>
             )}
           </div>
-          )}
 
           {/* Tasks Panel */}
           {tasksPanelVisible && (
@@ -1067,6 +1073,25 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Widget Management Dialog */}
+      <WidgetManagement
+        open={showWidgetManagement}
+        onOpenChange={setShowWidgetManagement}
+        widgets={widgets}
+        onToggleWidget={handleToggleVisibility}
+        onResetWidgets={handleResetWidgets}
+        aiPanelVisible={aiPanelVisible}
+        tasksPanelVisible={tasksPanelVisible}
+        onToggleAiPanel={() => {
+          setAiPanelVisible(!aiPanelVisible);
+          toast({ title: aiPanelVisible ? 'AI Assistant hidden' : 'AI Assistant shown' });
+        }}
+        onToggleTasksPanel={() => {
+          setTasksPanelVisible(!tasksPanelVisible);
+          toast({ title: tasksPanelVisible ? 'Tasks panel hidden' : 'Tasks panel shown' });
+        }}
+      />
 
       {/* Onboarding Tour */}
       {showOnboarding && (

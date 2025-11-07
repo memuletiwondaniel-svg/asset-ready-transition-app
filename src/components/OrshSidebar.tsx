@@ -8,11 +8,13 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/co
 import { ThemeToggle } from './admin/ThemeToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
 import { 
   Home, Settings, ChevronDown, ChevronLeft, ChevronRight, 
-  Languages, Check, User, Shield, Bell, LogOut, Clock, History, Sparkles
+  Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun
 } from 'lucide-react';
+import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
 
 interface OrshSidebarProps {
@@ -48,10 +50,12 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
   return (
-    <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
+    <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
       {/* Collapse/Expand Button */}
       <Button
         variant="ghost"
@@ -92,39 +96,13 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
               </Breadcrumb>
             </div>
 
-            {/* Settings Row - Theme, Notifications, Language */}
-            <div className="flex items-center gap-2 mb-4 p-2 rounded-lg bg-muted/20 animate-fade-in">
-              <ThemeToggle />
-              <NotificationCenter />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <Languages className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-background z-50">
-                  <DropdownMenuLabel>Select Language</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
-                    English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
-                    Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
-                    Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
             <Separator className="mb-4" />
           </>
         )}
         
         {/* User Profile Section */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Collapsible open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+          <CollapsibleTrigger asChild>
             <Button 
               variant="ghost" 
               className={`w-full p-3 h-auto hover:bg-muted/50 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
@@ -141,37 +119,50 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                     <p className="text-sm font-medium">{userName}</p>
                     <p className="text-xs text-muted-foreground">{userTitle}</p>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </>
               )}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64 bg-background z-50">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setProfileModalOpen(true)}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Edit Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Account Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Shield className="mr-2 h-4 w-4" />
-              <span>Security</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Bell className="mr-2 h-4 w-4" />
-              <span>Notifications</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log Out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </CollapsibleTrigger>
+          {!isSidebarCollapsed && (
+            <CollapsibleContent className="space-y-1 mt-1 animate-fade-in">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setProfileModalOpen(true)}
+                className="w-full justify-start h-9 pl-10"
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>Edit Profile</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="w-full justify-start h-9 pl-10"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Account Settings</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="w-full justify-start h-9 pl-10"
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                <span>Security</span>
+              </Button>
+              <Separator className="my-2" />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="w-full justify-start h-9 pl-10 text-destructive hover:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log Out</span>
+              </Button>
+            </CollapsibleContent>
+          )}
+        </Collapsible>
       </div>
 
       {/* Navigation Menu - Removed, only widgets on main page */}
@@ -213,6 +204,91 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-border/40 space-y-2">
+        {!isSidebarCollapsed && (
+          <>
+            {/* Theme Toggle Row */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="w-full justify-start h-9 animate-fade-in"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-4 h-4 mr-2" />
+                  Light Mode
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 mr-2" />
+                  Dark Mode
+                </>
+              )}
+            </Button>
+
+            {/* Notifications Row */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start h-9 animate-fade-in"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Notifications
+            </Button>
+
+            {/* Language Selector Row */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start h-9 animate-fade-in"
+                >
+                  <Languages className="w-4 h-4 mr-2" />
+                  Language
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
+                  English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
+                  Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
+                  Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Separator />
+
+            {/* Widgets Row */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onShowWidgets}
+              className="w-full justify-start h-9 animate-fade-in"
+            >
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              Widgets
+            </Button>
+
+            {/* Take Tour Row */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onShowOnboarding}
+              className="w-full justify-start h-9 animate-fade-in"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Take Tour
+            </Button>
+          </>
+        )}
+        
         {/* Sidebar Toggle Button */}
         <Button
           variant="outline"
@@ -229,29 +305,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
             </>
           )}
         </Button>
-        
-        {!isSidebarCollapsed && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onShowWidgets}
-              className="w-full justify-start h-9 animate-fade-in"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {showWidgets ? 'Hide Widgets' : 'Show Widgets'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onShowOnboarding}
-              className="w-full justify-start h-9 animate-fade-in"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              Take Tour
-            </Button>
-          </>
-        )}
       </div>
 
       {/* Profile Editor Modal */}
