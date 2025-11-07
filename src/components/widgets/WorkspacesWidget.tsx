@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Package, Sliders } from 'lucide-react';
+import { AlertTriangle, Package, Sliders } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -12,9 +12,9 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       id: 'safe-startup',
       title: 'Safe Start-Up',
       description: 'PSSR & Safety Checklists',
-      icon: Sparkles,
-      gradient: 'from-blue-500/20 to-cyan-500/20',
-      iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+      icon: AlertTriangle,
+      gradient: 'from-amber-500/20 to-orange-500/20',
+      iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
       iconColor: 'text-white'
     },
     {
