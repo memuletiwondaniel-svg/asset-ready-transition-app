@@ -314,13 +314,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
           <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
-            <CardHeader className="flex-shrink-0 py-5">
+            <CardHeader className="flex-shrink-0 py-3 pb-2">
               <CardTitle className="text-4xl font-bold">
                 Welcome, {userName}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 flex flex-col flex-1 overflow-hidden">
-              <div className="space-y-3 flex-shrink-0">
+            <CardContent className="p-6 pt-3 flex flex-col flex-1 overflow-hidden">
+              <div className="space-y-2 flex-shrink-0">
                 <div className="relative group" data-tour="ai-input">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Textarea 
@@ -328,7 +328,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     onChange={e => setUserInput(e.target.value)} 
                     onKeyPress={handleKeyPress} 
                     placeholder="Ask a question or describe what you need..." 
-                    className="min-h-[100px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-background/50 focus:bg-background/80 transition-all duration-300" 
+                    className="min-h-[120px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-background/50 focus:bg-background/80 transition-all duration-300" 
                     disabled={isLoadingAI} 
                   />
                   <div className="absolute bottom-3 right-3 flex gap-2">
