@@ -679,7 +679,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                 items={widgetOrder.filter(id => id !== 'pssr-cards')}
                 strategy={rectSortingStrategy}
               >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {widgetOrder.filter(id => id !== 'pssr-cards').map((widgetId) => {
                     const widget = widgets.find(w => w.id === widgetId);
                     if (!widget || !widget.isVisible) return null;
@@ -693,7 +693,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                           isExpanded={widget.isExpanded}
                           onToggleExpand={() => toggleWidgetExpansion(widgetId)}
                           onHide={() => hideWidget(widgetId)}
-                          colSpan="lg:col-span-1"
+                          colSpan="col-span-1"
                         >
                           <PSSRStatsWidget stats={stats} />
                         </DraggableWidgetCard>
@@ -709,7 +709,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                           isExpanded={widget.isExpanded}
                           onToggleExpand={() => toggleWidgetExpansion(widgetId)}
                           onHide={() => hideWidget(widgetId)}
-                          colSpan="lg:col-span-2"
+                          colSpan="col-span-1"
                         >
                           <div>
                             <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
@@ -750,68 +750,11 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               </SortableContext>
             </DndContext>
 
-            {/* Modern Search and Filters */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-5">
-                <div className="flex flex-col lg:flex-row gap-4 items-center">
-                  <PSSRAdvancedSearch
-                    pssrs={pssrList}
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    onSelectPSSR={handleViewDetails}
-                    placeholder="Search by Project ID, Name, Asset, Lead..."
-                  />
-                  
-                  <div className="flex items-center gap-3 w-full lg:w-auto">
-                    <PSSRFilters
-                      filters={filters}
-                      onToggleFilter={toggleFilter}
-                      onClearFilters={clearAllFilters}
-                      uniquePlants={uniquePlants}
-                      uniqueStatuses={uniqueStatuses}
-                      uniqueLeads={uniqueLeads}
-                    />
-                    
-                    {/* Date Range Filter */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className={`gap-2 ${
-                            dateRangeFilters.created || dateRangeFilters.nextReview || dateRangeFilters.completed
-                              ? 'border-primary bg-primary/5'
-                              : ''
-                          }`}
-                        >
-                          <CalendarIcon className="h-4 w-4" />
-                          <span className="hidden md:inline">Dates</span>
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-80">
-                        <PSSRDateRangeFilter value={dateRangeFilters} onChange={setDateRangeFilters} />
-                      </PopoverContent>
-                    </Popover>
-
-                    {/* Activity Feed Toggle */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowActivityFeed(!showActivityFeed)}
-                      className="gap-2"
-                    >
-                      <Bell className="h-4 w-4" />
-                      <span className="hidden md:inline">Activity</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Right Side - PSSR Cards Widget */}
           {widgets.find(w => w.id === 'pssr-cards')?.isVisible && (
-            <div className="w-full lg:w-[500px] xl:w-[600px] flex-shrink-0">
+            <div className="w-full lg:w-[600px] xl:w-[700px] flex-shrink-0">
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-180px)] sticky top-[120px]">
                 <CardContent className="p-5 h-full flex flex-col">
                   <PSSRCardsWidget
@@ -841,6 +784,16 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                     onFilterPriorityChange={setFilterPriority}
                     filterTier={filterTier}
                     onFilterTierChange={setFilterTier}
+                    filters={filters}
+                    onToggleFilter={toggleFilter}
+                    onClearFilters={clearAllFilters}
+                    uniquePlants={uniquePlants}
+                    uniqueStatuses={uniqueStatuses}
+                    uniqueLeads={uniqueLeads}
+                    dateRangeFilters={dateRangeFilters}
+                    onDateRangeFiltersChange={setDateRangeFilters}
+                    showActivityFeed={showActivityFeed}
+                    onToggleActivityFeed={() => setShowActivityFeed(!showActivityFeed)}
                   />
                 </CardContent>
               </Card>

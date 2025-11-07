@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   LayoutGrid, 
   TableIcon,
@@ -30,13 +31,17 @@ import {
   Settings2,
   Search,
   Filter,
-  X
+  X,
+  Calendar as CalendarIcon,
+  Bell
 } from 'lucide-react';
 import DraggablePSSRCard from '../DraggablePSSRCard';
 import CompactPSSRCard from '../CompactPSSRCard';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
 import SimplePSSRFilters from './SimplePSSRFilters';
+import PSSRFilters from '../PSSRFilters';
+import PSSRDateRangeFilter from '../PSSRDateRangeFilter';
 import { toast } from 'sonner';
 
 export type CardDensity = 'minimal' | 'comfortable' | 'detailed';
@@ -91,6 +96,21 @@ interface PSSRCardsWidgetProps {
   onFilterPriorityChange: (priority: string) => void;
   filterTier: string;
   onFilterTierChange: (tier: string) => void;
+  // Additional filter props
+  filters: {
+    plant: string[];
+    status: string[];
+    lead: string[];
+  };
+  onToggleFilter: (category: 'plant' | 'status' | 'lead', value: string) => void;
+  onClearFilters: () => void;
+  uniquePlants: string[];
+  uniqueStatuses: string[];
+  uniqueLeads: string[];
+  dateRangeFilters: any;
+  onDateRangeFiltersChange: (filters: any) => void;
+  showActivityFeed: boolean;
+  onToggleActivityFeed: () => void;
 }
 
 const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
@@ -120,9 +140,20 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
   onFilterPriorityChange,
   filterTier,
   onFilterTierChange,
+  filters,
+  onToggleFilter,
+  onClearFilters,
+  uniquePlants,
+  uniqueStatuses,
+  uniqueLeads,
+  dateRangeFilters,
+  onDateRangeFiltersChange,
+  showActivityFeed,
+  onToggleActivityFeed,
 }) => {
   const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -248,6 +279,47 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
           </div>
         )}
 
+        {/* Advanced Filters Bar */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <PSSRFilters
+            filters={filters}
+            onToggleFilter={onToggleFilter}
+            onClearFilters={onClearFilters}
+            uniquePlants={uniquePlants}
+            uniqueStatuses={uniqueStatuses}
+            uniqueLeads={uniqueLeads}
+          />
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className={`gap-2 ${
+                  dateRangeFilters.created || dateRangeFilters.nextReview || dateRangeFilters.completed
+                    ? 'border-primary bg-primary/5'
+                    : ''
+                }`}
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span className="text-xs">Dates</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80">
+              <PSSRDateRangeFilter value={dateRangeFilters} onChange={onDateRangeFiltersChange} />
+            </PopoverContent>
+          </Popover>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggleActivityFeed}
+            className={`gap-2 ${showActivityFeed ? 'bg-primary/5 border-primary' : ''}`}
+          >
+            <Bell className="h-3.5 w-3.5" />
+            <span className="text-xs">Activity</span>
+          </Button>
+        </div>
 
         {/* Drag to reorder hint */}
         {pssrs.length > 0 && (viewMode === 'card' || viewMode === 'compact') && (
