@@ -206,15 +206,18 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-3">
-          <div className="space-y-2">
-            {/* Header Row */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0">
-                    {pssr.projectId}
-                  </Badge>
+        <CardContent className="p-3 pr-10">
+          <div className="space-y-1.5">
+            {/* Header Row - Compact */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0 flex-shrink-0">
+                  {pssr.projectId}
+                </Badge>
+                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1 flex-1 min-w-0">
+                  {pssr.projectName}
+                </h3>
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <Badge 
                     variant="outline" 
                     className={`text-[9px] px-1 py-0 ${
@@ -234,49 +237,44 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                     </Badge>
                   )}
                 </div>
-                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors mb-0.5 line-clamp-1">
-                  {pssr.projectName}
-                </h3>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-0.5">
-                    <MapPin className="h-2.5 w-2.5" />
-                    {pssr.asset}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-0.5">
-                    <Calendar className="h-2.5 w-2.5" />
-                    {pssr.lastActivity}
-                  </span>
-                </div>
               </div>
             </div>
 
-            {/* Simple Progress Percentage */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Progress</span>
-              <span className="text-lg font-bold text-primary">{pssr.progress}%</span>
+            {/* Location and Activity Row */}
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-0.5">
+                <MapPin className="h-2.5 w-2.5" />
+                {pssr.asset}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-0.5">
+                <Calendar className="h-2.5 w-2.5" />
+                {pssr.lastActivity}
+              </span>
             </div>
 
-            {/* Footer Row */}
-            <div className="flex items-center justify-between">
-              {/* Lead Info - Compact */}
-              <div className="flex items-center gap-1.5">
+            {/* Progress and Footer Row */}
+            <div className="flex items-center justify-between pt-1">
+              {/* Progress */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Progress:</span>
+                <span className="text-base font-bold text-primary">{pssr.progress}%</span>
+              </div>
+
+              {/* Lead and Team */}
+              <div className="flex items-center gap-2">
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
                   className="w-5 h-5 rounded-full border border-primary/20"
                 />
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <span className="font-medium text-foreground truncate max-w-[100px]">{pssr.pssrLead}</span>
-                  <div className="flex items-center gap-0.5 text-muted-foreground">
-                    <Users className="h-2.5 w-2.5" />
-                    <span className="font-medium">{pssr.teamMembers}</span>
-                  </div>
+                <span className="text-[10px] font-medium text-foreground truncate max-w-[80px]">{pssr.pssrLead}</span>
+                <div className="flex items-center gap-0.5 text-muted-foreground">
+                  <Users className="h-2.5 w-2.5" />
+                  <span className="text-[10px] font-medium">{pssr.teamMembers}</span>
                 </div>
+                <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background shadow-sm`} />
               </div>
-
-              {/* Team Status Indicator */}
-              <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background shadow-sm`} />
             </div>
           </div>
         </CardContent>

@@ -545,7 +545,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   }
 
   return (
-    <div className="min-h-screen flex w-full relative overflow-hidden ml-64">
+    <div className="min-h-screen w-full relative overflow-x-hidden ml-64">
       {/* Dynamic Color Modeled Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background">
         {/* Animated gradient orbs */}
@@ -665,10 +665,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
           </div>
         </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
-        <div className="flex gap-6">
-          {/* Left Side - Widgets and Filters */}
-          <div className="flex-1 space-y-6">
+      <main className="max-w-full mx-auto px-6 py-8">
+        <div className="flex gap-4 max-w-[calc(100vw-17rem)]">
+          {/* Left Side - Widgets (Reduced Width) */}
+          <div className="w-80 flex-shrink-0 space-y-4">
             {/* Stats and Quick Actions Row - Draggable Widgets */}
             <DndContext
               sensors={sensors}
@@ -754,7 +754,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
           {/* Right Side - PSSR Cards Widget */}
           {widgets.find(w => w.id === 'pssr-cards')?.isVisible && (
-            <div className="w-full lg:w-[700px] xl:w-[800px] flex-shrink-0">
+            <div className="flex-1 min-w-0">
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-180px)] sticky top-[120px]">
                 <CardContent className="p-5 h-full flex flex-col">
                   <PSSRCardsWidget
