@@ -31,8 +31,8 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       title: 'Admin Tools',
       description: 'Users, Roles & Permissions',
       icon: Sliders,
-      gradient: 'from-orange-500/20 to-amber-500/20',
-      iconBg: 'bg-gradient-to-br from-orange-500 to-amber-500',
+      gradient: 'from-slate-500/20 to-gray-600/20',
+      iconBg: 'bg-gradient-to-br from-slate-600 to-gray-700',
       iconColor: 'text-white'
     }
   ];
