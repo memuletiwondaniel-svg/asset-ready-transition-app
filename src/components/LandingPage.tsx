@@ -551,22 +551,22 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 animate-smooth-in stagger-1 mt-4" data-tour="quick-actions">
+                <div className="flex items-center gap-3 animate-smooth-in stagger-1 mt-6" data-tour="quick-actions">
                   <Button 
                     size="icon"
                     variant="outline" 
                     onClick={() => setShowHistory(!showHistory)} 
-                    className="h-8 w-8 border-border/40 bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 transition-all duration-300 backdrop-blur-sm"
+                    className="h-7 w-7 border-border/40 bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 transition-all duration-300 backdrop-blur-sm"
                     title="View search history"
                   >
-                    <History className="w-4 h-4" />
+                    <History className="w-3.5 h-3.5" />
                   </Button>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {quickActions.map((action, idx) => <Button 
                       key={action.id} 
                       variant="outline" 
                       size="sm" 
-                      className={`text-xs h-8 px-4 border-border/40 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
+                      className={`text-xs h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
                       onClick={() => setUserInput(action.label)}
                     >
                       {action.label}
