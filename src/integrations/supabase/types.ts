@@ -424,6 +424,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          checklist_items: boolean | null
+          created_at: string
+          email_digest_frequency: string | null
+          email_notifications: boolean | null
+          id: string
+          pssr_updates: boolean | null
+          security_alerts: boolean | null
+          system_alerts: boolean | null
+          team_messages: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checklist_items?: boolean | null
+          created_at?: string
+          email_digest_frequency?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          pssr_updates?: boolean | null
+          security_alerts?: boolean | null
+          system_alerts?: boolean | null
+          team_messages?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checklist_items?: boolean | null
+          created_at?: string
+          email_digest_frequency?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          pssr_updates?: boolean | null
+          security_alerts?: boolean | null
+          system_alerts?: boolean | null
+          team_messages?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           checklist_item_id: string | null
