@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ShieldCheck, Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Sparkles, Clock, FileText, CheckCircle, Home, Loader2 } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2 } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
@@ -166,7 +166,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       id: 'safe-startup',
       title: 'Safe Start-Up',
       description: 'Manage PSSR processes and safety checklists',
-      icon: ShieldCheck,
+      icon: ClipboardList,
       gradient: 'from-blue-500 to-blue-600'
     },
     {
@@ -208,36 +208,67 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <div className="flex-1 flex flex-col gap-4">
           <Card className="flex-1 border-border/40 shadow-lg overflow-hidden flex flex-col">
             <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Welcome, {userName}</CardTitle>
-                  <CardDescription className="text-xs">What can I help you with today?</CardDescription>
-                </div>
-              </div>
+              <CardTitle className="text-2xl font-bold">Welcome, {userName}</CardTitle>
             </CardHeader>
             <CardContent className="p-6 flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 mb-4 overflow-y-auto">
+              <div className="space-y-3 flex-shrink-0 mb-4">
+                <div className="relative">
+                  <Textarea
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask a question or describe what you need..."
+                    className="min-h-[100px] resize-none border-border/40 pr-24"
+                    disabled={isLoadingAI}
+                  />
+                  <div className="absolute bottom-3 right-3 flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={handleVoiceInput}
+                      disabled={!isSupported || isLoadingAI}
+                      className="h-8 w-8"
+                    >
+                      <Mic className={`w-4 h-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      disabled
+                      className="h-8 w-8"
+                    >
+                      <ImagePlus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={handleSend}
+                      disabled={isLoadingAI || !userInput.trim()}
+                      className="rounded-full bg-gradient-to-br from-primary to-accent h-8 w-8"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {quickActions.map((action) => (
+                    <Button
+                      key={action.id}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs border-border/40 hover:bg-accent/20"
+                      onClick={() => setUserInput(action.label)}
+                    >
+                      {action.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
                 {messages.length === 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {quickActions.map((action) => {
-                      const Icon = action.icon;
-                      return (
-                        <Button
-                          key={action.id}
-                          variant="outline"
-                          className="h-auto p-3 border-border/40 hover:bg-accent/20 hover:scale-105 transition-all"
-                          onClick={() => setUserInput(action.label)}
-                        >
-                          <div className="flex flex-col items-center gap-2 text-center">
-                            <Icon className="w-5 h-5 text-primary" />
-                            <span className="text-xs font-medium">{action.label}</span>
-                          </div>
-                        </Button>
-                      );
-                    })}
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    Start a conversation or select a quick action above
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -266,49 +297,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     )}
                   </div>
                 )}
-              </div>
-
-              <div className="space-y-3 flex-shrink-0">
-                <div className="relative">
-                  <Textarea
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ask a question or describe what you need..."
-                    className="min-h-[100px] resize-none border-border/40 pr-12"
-                    disabled={isLoadingAI}
-                  />
-                  <Button
-                    size="icon"
-                    onClick={handleSend}
-                    disabled={isLoadingAI || !userInput.trim()}
-                    className="absolute bottom-3 right-3 rounded-full bg-gradient-to-br from-primary to-accent"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="gap-2" disabled>
-                      <ImagePlus className="w-4 h-4" />
-                      <span className="text-xs">Image</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2"
-                      onClick={handleVoiceInput}
-                      disabled={!isSupported || isLoadingAI}
-                    >
-                      <Mic className={`w-4 h-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
-                      <span className="text-xs">{isListening ? 'Listening...' : 'Voice'}</span>
-                    </Button>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    Press Enter to send
-                  </span>
-                </div>
               </div>
             </CardContent>
           </Card>
