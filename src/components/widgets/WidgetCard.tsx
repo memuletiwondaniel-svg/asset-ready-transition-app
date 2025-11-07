@@ -33,22 +33,25 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
 
   return (
     <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} ${className}`}>
-      <CardHeader className="border-b border-border/40 pb-4 flex flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-2 flex-1">
+      <CardHeader className="border-b border-border/40 pb-4 flex flex-row items-center justify-between space-y-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent relative overflow-hidden">
+        {/* Subtle shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+        
+        <div className="flex items-center gap-3 flex-1 relative z-10">
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
             {...dragAttributes}
             {...dragListeners}
           >
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <CardTitle className="text-base font-semibold">{title}</CardTitle>
+          <CardTitle className="text-lg font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">{title}</CardTitle>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 relative z-10">
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
