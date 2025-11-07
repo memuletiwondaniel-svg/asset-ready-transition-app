@@ -1066,14 +1066,46 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-16rem)]">
                 {tasksLoading ? <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="glass-subtle hover:shadow-lg transition-all cursor-pointer group relative">
-                      <CardContent className="p-3 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-medium text-sm flex-1">{task.title}</h4>
-                          <Badge variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'} className="text-xs">
-                            {task.priority}
-                          </Badge>
-                        </div>
+                  </div> : filteredAndSortedTasks.map(task => {
+                    // Priority color coding
+                    const priorityColors = {
+                      High: {
+                        border: 'border-l-red-500',
+                        bg: 'bg-red-500/5',
+                        dot: 'bg-red-500',
+                        badge: 'bg-red-500/10 text-red-600 border-red-500/20'
+                      },
+                      Medium: {
+                        border: 'border-l-yellow-500',
+                        bg: 'bg-yellow-500/5',
+                        dot: 'bg-yellow-500',
+                        badge: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+                      },
+                      Low: {
+                        border: 'border-l-green-500',
+                        bg: 'bg-green-500/5',
+                        dot: 'bg-green-500',
+                        badge: 'bg-green-500/10 text-green-600 border-green-500/20'
+                      }
+                    };
+                    const colors = priorityColors[task.priority as keyof typeof priorityColors] || priorityColors.Low;
+                    
+                    return (
+                      <Card key={task.id} className={`glass-subtle hover:shadow-lg transition-all cursor-pointer group relative border-l-4 ${colors.border} ${colors.bg} overflow-hidden`}>
+                        {/* Animated accent line */}
+                        <div className={`absolute top-0 left-0 w-1 h-full ${colors.dot} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                        
+                        <CardContent className="p-3 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1">
+                              {/* Priority dot indicator */}
+                              <div className={`w-2 h-2 rounded-full ${colors.dot} flex-shrink-0 animate-pulse`} />
+                              <h4 className="font-medium text-sm flex-1">{task.title}</h4>
+                            </div>
+                            <Badge className={`text-xs border ${colors.badge}`}>
+                              {task.priority}
+                            </Badge>
+                          </div>
                         {task.description && <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="w-3 h-3" />
@@ -1128,7 +1160,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                           )}
                         </div>
                       </CardContent>
-                    </Card>)}
+                    </Card>
+                  );
+                })}
               </CardContent>
             </>
           )}
