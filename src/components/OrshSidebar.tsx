@@ -8,6 +8,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/co
 import { ThemeToggle } from './admin/ThemeToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
+import OrshLogo from '@/components/ui/OrshLogo';
 import { 
   Home, Settings, ChevronDown, ChevronLeft, ChevronRight, 
   Languages, Check, User, Shield, Bell, LogOut, Clock, History, Sparkles
@@ -34,7 +35,7 @@ interface OrshSidebarProps {
 export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   userName = 'Daniel',
   userTitle = 'ORA Engr.',
-  userAvatar = '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
+  userAvatar = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
   language = 'en',
   onLanguageChange,
   onShowWidgets,
@@ -67,15 +68,11 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* ORSH Branding & Header */}
       <div className="p-6 border-b border-border/40">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg flex-shrink-0">
-            <span className="text-xl font-bold text-white">OR</span>
-          </div>
-          {!isSidebarCollapsed && (
-            <div className="animate-fade-in">
-              <h2 className="font-bold text-lg">ORSH</h2>
-              <p className="text-xs text-muted-foreground">Operations Hub</p>
-            </div>
+        <div className="flex items-center justify-center mb-4">
+          {!isSidebarCollapsed ? (
+            <OrshLogo size="medium" className="animate-fade-in" />
+          ) : (
+            <OrshLogo size="small" />
           )}
         </div>
 

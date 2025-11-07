@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ClipboardList, KeyRound, Settings } from 'lucide-react';
+import { ClipboardList, KeyRound, Settings, ArrowUpRight } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -12,47 +11,49 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate }
     {
       id: 'safe-startup',
       title: 'Safe Start-Up',
-      description: 'Manage PSSR processes and safety checklists',
+      description: 'PSSR & Safety',
       icon: ClipboardList,
-      gradient: 'from-blue-500 to-blue-600'
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10 hover:bg-blue-500/20'
     },
     {
       id: 'p2o',
-      title: 'Project-to-Operations',
-      description: 'Manage seamless project handovers',
+      title: 'P2O Handover',
+      description: 'Project Transition',
       icon: KeyRound,
-      gradient: 'from-purple-500 to-purple-600'
+      color: 'text-purple-500',
+      bg: 'bg-purple-500/10 hover:bg-purple-500/20'
     },
     {
       id: 'admin-tools',
-      title: 'Admin & Tools',
-      description: 'Manage users, roles, and permissions',
+      title: 'Admin Tools',
+      description: 'Users & Settings',
       icon: Settings,
-      gradient: 'from-orange-500 to-orange-600'
+      color: 'text-orange-500',
+      bg: 'bg-orange-500/10 hover:bg-orange-500/20'
     }
   ];
 
   return (
-    <Card className="glass-card glass-card-hover overflow-hidden">
-      <CardHeader className="border-b border-border/40 py-3">
-        <CardTitle className="text-lg font-bold">Workspaces</CardTitle>
+    <Card className="glass-card overflow-hidden border-border/40">
+      <CardHeader className="border-b border-border/40 pb-4">
+        <CardTitle className="text-base font-semibold">Workspaces</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-3 gap-3">
+      <CardContent className="p-6">
+        <div className="grid grid-cols-3 gap-4">
           {workspaces.map((workspace) => {
             const Icon = workspace.icon;
             return (
-              <Button
+              <button
                 key={workspace.id}
-                variant="outline"
                 onClick={() => onNavigate?.(workspace.id)}
-                className="h-auto flex flex-col items-center gap-2 p-4 hover:bg-muted/50 group"
+                className={`relative p-4 rounded-xl ${workspace.bg} transition-all group border border-transparent hover:border-border/60`}
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xs font-medium text-center">{workspace.title}</span>
-              </Button>
+                <Icon className={`w-8 h-8 ${workspace.color} mb-3`} />
+                <h3 className="text-sm font-semibold mb-1 text-left">{workspace.title}</h3>
+                <p className="text-xs text-muted-foreground text-left">{workspace.description}</p>
+                <ArrowUpRight className="w-4 h-4 absolute top-3 right-3 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              </button>
             );
           })}
         </div>

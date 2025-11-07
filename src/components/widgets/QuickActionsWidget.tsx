@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, CheckCircle, FileText } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface QuickActionsWidgetProps {
   onActionClick?: (action: string) => void;
@@ -11,47 +11,43 @@ export const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ onAction
   const quickActions = [
     {
       id: 'create-pssr',
-      label: 'Create a PSSR',
-      icon: ClipboardList,
-      gradient: 'from-blue-500 to-blue-600'
+      label: 'Create PSSR',
+      description: 'Start a new safety review'
     },
     {
       id: 'approve-pssr',
-      label: 'Approve a PSSR',
-      icon: CheckCircle,
-      gradient: 'from-green-500 to-green-600'
+      label: 'Approve PSSR',
+      description: 'Review pending requests'
     },
     {
       id: 'develop-p2a',
-      label: 'Develop a P2A Plan',
-      icon: FileText,
-      gradient: 'from-purple-500 to-purple-600'
+      label: 'Develop P2A',
+      description: 'Create handover plan'
     }
   ];
 
   return (
-    <Card className="glass-card glass-card-hover overflow-hidden">
-      <CardHeader className="border-b border-border/40 py-3">
-        <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
+    <Card className="glass-card overflow-hidden border-border/40">
+      <CardHeader className="border-b border-border/40 pb-4">
+        <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 gap-3">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Button
-                key={action.id}
-                variant="outline"
-                onClick={() => onActionClick?.(action.label)}
-                className="h-auto flex items-center justify-start gap-3 p-4 hover:bg-muted/50 group"
-              >
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0`}>
-                  <Icon className="w-5 h-5 text-white" />
+      <CardContent className="p-6">
+        <div className="space-y-3">
+          {quickActions.map((action) => (
+            <button
+              key={action.id}
+              onClick={() => onActionClick?.(action.label)}
+              className="w-full text-left p-4 rounded-lg border border-border/40 hover:border-primary/40 hover:bg-muted/30 transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm mb-1">{action.label}</p>
+                  <p className="text-xs text-muted-foreground">{action.description}</p>
                 </div>
-                <span className="text-sm font-medium">{action.label}</span>
-              </Button>
-            );
-          })}
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </div>
+            </button>
+          ))}
         </div>
       </CardContent>
     </Card>

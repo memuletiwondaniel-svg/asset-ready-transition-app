@@ -14,7 +14,6 @@ import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
-import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WorkspacesWidget } from '@/components/widgets/WorkspacesWidget';
 import { OrshSidebar } from '@/components/OrshSidebar';
@@ -652,8 +651,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </Card>
 
             {/* Widgets Section */}
-            <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
-              <OverviewStatsWidget />
+            <div className="grid grid-cols-2 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
               <QuickActionsWidget onActionClick={setUserInput} />
               <WorkspacesWidget onNavigate={onNavigate} />
             </div>
