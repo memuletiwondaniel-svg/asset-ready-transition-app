@@ -74,6 +74,43 @@ const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({ id, child
   );
 };
 
+// Sortable wrapper for column panels (AI Assistant, Tasks, etc.)
+interface SortablePanelWrapperProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+const SortablePanelWrapper: React.FC<SortablePanelWrapperProps> = ({ id, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={isDragging ? 'z-50' : ''}
+    >
+      {/* Clone children and pass drag attributes to be applied to drag handle */}
+      {React.cloneElement(children as React.ReactElement, {
+        dragAttributes: attributes,
+        dragListeners: listeners
+      })}
+    </div>
+  );
+};
+
 interface LandingPageProps {
   onBack: () => void;
   onNavigate: (section: string) => void;
@@ -119,6 +156,18 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     ];
   });
 
+  // Left column items order (AI Assistant and widgets section)
+  const [leftColumnOrder, setLeftColumnOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem('leftColumnOrder');
+    return saved ? JSON.parse(saved) : ['ai-assistant', 'widgets-section'];
+  });
+
+  // Right column items order (Tasks panel and future additions)
+  const [rightColumnOrder, setRightColumnOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem('rightColumnOrder');
+    return saved ? JSON.parse(saved) : ['tasks-panel'];
+  });
+
   // AI Panel and Tasks Panel state
   const [aiPanelVisible, setAiPanelVisible] = useState(() => {
     const saved = localStorage.getItem('aiPanelVisible');
@@ -143,6 +192,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     localStorage.setItem('dashboardWidgetConfig', JSON.stringify(widgets));
   }, [widgets]);
 
+  // Save column orders to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('leftColumnOrder', JSON.stringify(leftColumnOrder));
+  }, [leftColumnOrder]);
+
+  React.useEffect(() => {
+    localStorage.setItem('rightColumnOrder', JSON.stringify(rightColumnOrder));
+  }, [rightColumnOrder]);
+
   // Save panel states to localStorage
   React.useEffect(() => {
     localStorage.setItem('aiPanelVisible', JSON.stringify(aiPanelVisible));
@@ -156,7 +214,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     localStorage.setItem('tasksPanelVisible', JSON.stringify(tasksPanelVisible));
   }, [tasksPanelVisible]);
 
-  // Drag and drop sensors for widgets
+  // Drag and drop sensors for all draggable areas
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor)
@@ -170,6 +228,40 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Handle drag end for left column items
+  const handleLeftColumnDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setLeftColumnOrder((items) => {
+        const oldIndex = items.findIndex((id) => id === active.id);
+        const newIndex = items.findIndex((id) => id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      toast({
+        title: 'Layout updated',
+        description: 'Left column panels reordered'
+      });
+    }
+  };
+
+  // Handle drag end for right column items
+  const handleRightColumnDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setRightColumnOrder((items) => {
+        const oldIndex = items.findIndex((id) => id === active.id);
+        const newIndex = items.findIndex((id) => id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      toast({
+        title: 'Layout updated',
+        description: 'Right column panels reordered'
       });
     }
   };
@@ -657,11 +749,20 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
         {/* Main Content Area */}
         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-          <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-            {/* AI Assistant Panel */}
-            {aiPanelVisible && (
-              <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in group ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }}>
-                <CardHeader className="flex-shrink-0 py-4 pb-3 flex flex-row items-center justify-between space-y-0">
+          {/* Left Column with Draggable Panels */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleLeftColumnDragEnd}
+          >
+            <SortableContext items={leftColumnOrder} strategy={rectSortingStrategy}>
+              <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+                {leftColumnOrder.map((panelId) => {
+                  if (panelId === 'ai-assistant' && aiPanelVisible) {
+                    return (
+                      <SortablePanelWrapper key="ai-assistant" id="ai-assistant">
+                        <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in group ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }} dragAttributes={undefined} dragListeners={undefined}>
+                          <CardHeader className="flex-shrink-0 py-4 pb-3 flex flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-2 flex-1">
                     <Button
                       variant="ghost"
