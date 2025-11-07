@@ -504,7 +504,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     onChange={e => setUserInput(e.target.value)} 
                     onKeyPress={handleKeyPress} 
                     placeholder="Ask a question or describe what you need..." 
-                    className="min-h-[120px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-background/50 focus:bg-background/80 transition-all duration-300" 
+                    className="min-h-[120px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-gradient-to-r from-primary/5 to-accent/5 focus:from-primary/10 focus:to-accent/10 transition-all duration-300" 
                     disabled={isLoadingAI} 
                   />
                   <div className="absolute bottom-3 right-3 flex gap-2">
