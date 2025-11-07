@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, MoreVertical, Trash2, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, MoreVertical, Trash2, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home, Copy } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -36,9 +36,14 @@ interface ManageChecklistPageProps {
   translations?: any;
 }
 interface NewChecklistData {
+  name: string;
   reason: string;
   selected_items: string[];
   custom_reason?: string;
+  plant_change_type?: string;
+  selected_tie_in_scopes?: string[];
+  moc_number?: string;
+  selected_moc_scopes?: string[];
 }
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   onBack,
@@ -110,6 +115,36 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       }
     });
   };
+
+  const handleDuplicateChecklist = (checklist: Checklist) => {
+    const duplicateData: NewChecklistData = {
+      name: `${checklist.name} (Copy)`,
+      reason: checklist.reason,
+      selected_items: checklist.selected_items || [],
+      custom_reason: checklist.custom_reason,
+      plant_change_type: (checklist as any).plant_change_type,
+      selected_tie_in_scopes: (checklist as any).selected_tie_in_scopes,
+      moc_number: (checklist as any).moc_number,
+      selected_moc_scopes: (checklist as any).selected_moc_scopes
+    };
+
+    createChecklist(duplicateData, {
+      onSuccess: newChecklist => {
+        toast({
+          title: "Checklist duplicated",
+          description: `"${newChecklist.name}" has been created successfully.`
+        });
+      },
+      onError: error => {
+        console.error('Failed to duplicate checklist:', error);
+        toast({
+          title: "Failed to duplicate checklist",
+          description: error?.message || "Please try again.",
+          variant: "destructive"
+        });
+      }
+    });
+  };
   const handleBackToChecklists = () => {
     setShowSuccessPage(false);
     setShowCreateForm(false);
@@ -168,8 +203,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   }, [error, toast]);
   const filteredAndSortedChecklists = useMemo(() => {
     let filtered = checklists.filter(checklist => {
-      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) || checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
+      const matchesSearch = checklist.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           checklist.reason.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = filterCategory === 'all' || checklist.status === filterCategory;
+      
+      return matchesSearch && matchesCategory;
     });
     return [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -430,11 +469,22 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 </Button>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1 relative">
+              <div className="flex gap-4 flex-wrap">
+                <div className="flex-1 min-w-[250px] relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input placeholder={t.searchChecklists} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-11 rounded-xl border-border/60 bg-background/60 backdrop-blur-sm focus:border-primary/40 focus:ring-primary/20" />
                 </div>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-44 h-11 rounded-xl border-border/60 bg-background/60 backdrop-blur-sm">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                    <SelectItem value="Archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-44 h-11 rounded-xl border-border/60 bg-background/60 backdrop-blur-sm">
                     <SelectValue placeholder={t.sortBy} />
@@ -489,6 +539,13 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                           }} className="transition-all duration-200 hover:bg-primary/10">
                                 <Edit3 className="h-4 w-4 mr-2 transition-transform duration-300 hover:rotate-12" />
                                 {t.edit}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={e => {
+                            e.stopPropagation();
+                            handleDuplicateChecklist(checklist);
+                          }} className="transition-all duration-200 hover:bg-primary/10">
+                                <Copy className="h-4 w-4 mr-2 transition-transform duration-300 hover:scale-110" />
+                                Duplicate
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={e => {
                             e.stopPropagation();
