@@ -321,13 +321,7 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
           </Button>
         </div>
 
-        {/* Drag to reorder hint */}
-        {pssrs.length > 0 && (viewMode === 'card' || viewMode === 'compact') && (
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/30 px-2 py-1 rounded-md">
-            <GripVertical className="h-3 w-3" />
-            Drag to reorder
-          </div>
-        )}
+        {/* Drag to reorder hint - REMOVED */}
       </div>
 
       {/* PSSR Content */}

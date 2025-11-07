@@ -207,74 +207,67 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
         </div>
 
         <CardContent className="p-3 pr-10">
-          <div className="space-y-1.5">
-            {/* Header Row - Compact */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0 flex-shrink-0">
-                  {pssr.projectId}
-                </Badge>
-                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1 flex-1 min-w-0">
+          <div className="flex items-center gap-3">
+            {/* Column 1: Project ID + Name + Asset */}
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0 flex-shrink-0 w-16 text-center">
+                {pssr.projectId}
+              </Badge>
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
                   {pssr.projectName}
                 </h3>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Badge 
-                    variant="outline" 
-                    className={`text-[9px] px-1 py-0 ${
-                      pssr.tier === 1 ? 'border-rose-500/60 text-rose-600 dark:text-rose-400 bg-rose-500/10' :
-                      pssr.tier === 2 ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
-                      'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
-                    }`}
-                  >
-                    T{pssr.tier}
-                  </Badge>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0">
-                    {pssr.status}
-                  </Badge>
-                  {pssr.pendingApprovals > 0 && (
-                    <Badge variant="destructive" className="text-[9px] px-1 py-0">
-                      {pssr.pendingApprovals}
-                    </Badge>
-                  )}
-                </div>
+                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 flex-shrink-0">
+                  <MapPin className="h-2.5 w-2.5" />
+                  {pssr.asset}
+                </span>
               </div>
             </div>
 
-            {/* Location and Activity Row */}
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-0.5">
-                <MapPin className="h-2.5 w-2.5" />
-                {pssr.asset}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-0.5">
-                <Calendar className="h-2.5 w-2.5" />
-                {pssr.lastActivity}
-              </span>
+            {/* Column 2: Status (Fixed Width) */}
+            <div className="w-24 flex-shrink-0">
+              <Badge variant="outline" className="text-[9px] px-2 py-0.5 w-full justify-center">
+                {pssr.status}
+              </Badge>
             </div>
 
-            {/* Progress and Footer Row */}
-            <div className="flex items-center justify-between pt-1">
-              {/* Progress */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Progress:</span>
-                <span className="text-base font-bold text-primary">{pssr.progress}%</span>
-              </div>
+            {/* Column 3: Progress (Left Aligned) */}
+            <div className="w-16 flex-shrink-0">
+              <span className="text-sm font-bold text-primary">{pssr.progress}%</span>
+            </div>
 
-              {/* Lead and Team */}
-              <div className="flex items-center gap-2">
-                <img 
-                  src={pssr.pssrLeadAvatar} 
-                  alt={pssr.pssrLead}
-                  className="w-5 h-5 rounded-full border border-primary/20"
-                />
-                <span className="text-[10px] font-medium text-foreground truncate max-w-[80px]">{pssr.pssrLead}</span>
-                <div className="flex items-center gap-0.5 text-muted-foreground">
-                  <Users className="h-2.5 w-2.5" />
-                  <span className="text-[10px] font-medium">{pssr.teamMembers}</span>
-                </div>
-                <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background shadow-sm`} />
+            {/* Column 4: PSSR Lead (Left Aligned) */}
+            <div className="w-32 flex-shrink-0 flex items-center gap-1.5">
+              <img 
+                src={pssr.pssrLeadAvatar} 
+                alt={pssr.pssrLead}
+                className="w-5 h-5 rounded-full border border-primary/20 flex-shrink-0"
+              />
+              <span className="text-[10px] font-medium text-foreground truncate">{pssr.pssrLead}</span>
+            </div>
+
+            {/* Column 5: Tier + Team + Status */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Badge 
+                variant="outline" 
+                className={`text-[9px] px-1 py-0 ${
+                  pssr.tier === 1 ? 'border-rose-500/60 text-rose-600 dark:text-rose-400 bg-rose-500/10' :
+                  pssr.tier === 2 ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
+                  'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                }`}
+              >
+                T{pssr.tier}
+              </Badge>
+              {pssr.pendingApprovals > 0 && (
+                <Badge variant="destructive" className="text-[9px] px-1 py-0">
+                  {pssr.pendingApprovals}
+                </Badge>
+              )}
+              <div className="flex items-center gap-0.5 text-muted-foreground">
+                <Users className="h-2.5 w-2.5" />
+                <span className="text-[10px] font-medium">{pssr.teamMembers}</span>
               </div>
+              <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background shadow-sm`} />
             </div>
           </div>
         </CardContent>

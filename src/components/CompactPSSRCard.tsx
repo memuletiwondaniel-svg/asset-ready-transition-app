@@ -100,19 +100,43 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
         {/* Status Indicator */}
         <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background`} />
 
-        {/* Project Info - Compact Single Row */}
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          {/* ID & Name together */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0 font-semibold flex-shrink-0">
+        {/* Column Layout - Aligned */}
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          {/* Column 1: Project ID + Name + Asset */}
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0 font-semibold flex-shrink-0 w-16 text-center">
               {pssr.projectId}
             </Badge>
-            <h3 className="text-xs font-bold truncate text-foreground group-hover:text-primary transition-colors flex-1 min-w-0">
-              {pssr.projectName}
-            </h3>
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <h3 className="text-xs font-bold truncate text-foreground group-hover:text-primary transition-colors">
+                {pssr.projectName}
+              </h3>
+              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground flex-shrink-0">
+                <MapPin className="h-2.5 w-2.5" />
+                {pssr.asset}
+              </span>
+            </div>
           </div>
 
-          {/* Tier Badge */}
+          {/* Column 2: Status (Fixed Width) */}
+          <div className="w-24 flex-shrink-0">
+            <Badge variant="outline" className="text-[9px] px-2 py-0.5 w-full justify-center">
+              {pssr.status}
+            </Badge>
+          </div>
+
+          {/* Column 3: Progress (Left Aligned) */}
+          <div className="w-16 flex-shrink-0">
+            <span className="text-sm font-bold text-primary">{pssr.progress}%</span>
+          </div>
+
+          {/* Column 4: Team Count */}
+          <div className="w-12 flex-shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Users className="h-3 w-3" />
+            <span className="font-medium">{pssr.teamMembers}</span>
+          </div>
+
+          {/* Column 5: Tier */}
           <Badge 
             variant="outline" 
             className={`text-[9px] px-1 py-0 flex-shrink-0 ${
@@ -123,23 +147,6 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
           >
             T{pssr.tier}
           </Badge>
-
-          {/* Asset */}
-          <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground flex-shrink-0">
-            <MapPin className="h-2.5 w-2.5" />
-            {pssr.asset}
-          </span>
-
-          {/* Progress Percentage */}
-          <div className="min-w-[50px] text-right flex-shrink-0">
-            <span className="text-sm font-bold text-primary">{pssr.progress}%</span>
-          </div>
-
-          {/* Team Count */}
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground flex-shrink-0">
-            <Users className="h-3 w-3" />
-            <span className="font-medium">{pssr.teamMembers}</span>
-          </div>
         </div>
 
         {/* Pinned Indicator */}

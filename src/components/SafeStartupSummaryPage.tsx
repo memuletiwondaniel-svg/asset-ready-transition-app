@@ -665,8 +665,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
           </div>
         </header>
 
-      <main className="max-w-full mx-auto px-6 py-8">
-        <div className="flex gap-4 max-w-[calc(100vw-17rem)]">
+      <main className="w-full px-6 py-8 overflow-x-hidden">
+        <div className="flex gap-4">
           {/* Left Side - Widgets (Reduced Width) */}
           <div className="w-80 flex-shrink-0 space-y-4">
             {/* Stats and Quick Actions Row - Draggable Widgets */}
@@ -754,7 +754,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
           {/* Right Side - PSSR Cards Widget */}
           {widgets.find(w => w.id === 'pssr-cards')?.isVisible && (
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 max-w-[calc(100vw-25rem)]">
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-180px)] sticky top-[120px]">
                 <CardContent className="p-5 h-full flex flex-col">
                   <PSSRCardsWidget
