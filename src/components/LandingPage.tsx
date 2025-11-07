@@ -437,14 +437,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
+              <BreadcrumbPage className="flex items-center gap-1.5">
                 <Home className="h-4 w-4" />
                 Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>AI Assistant</BreadcrumbPage>
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -497,14 +493,14 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     )}
                   </div>
                 )}
-                <div className="relative group" data-tour="ai-input">
+                  <div className="relative group" data-tour="ai-input">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Textarea 
                     value={userInput} 
                     onChange={e => setUserInput(e.target.value)} 
                     onKeyPress={handleKeyPress} 
                     placeholder="Ask a question or describe what you need..." 
-                    className="min-h-[120px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-gradient-to-r from-primary/5 to-accent/5 focus:from-primary/10 focus:to-accent/10 transition-all duration-300" 
+                    className="min-h-[120px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-muted/20 focus:bg-muted/30 transition-all duration-300" 
                     disabled={isLoadingAI} 
                   />
                   <div className="absolute bottom-3 right-3 flex gap-2">
@@ -566,7 +562,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       key={action.id} 
                       variant="outline" 
                       size="sm" 
-                      className={`text-xs h-8 px-4 border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
+                      className={`text-xs h-8 px-4 border-border/40 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
                       onClick={() => setUserInput(action.label)}
                     >
                       {action.label}
@@ -686,9 +682,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
           {/* Workspaces Section */}
           <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }} data-tour="workspaces">
-            <CardHeader className="border-b border-border/40 py-4 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
+            <CardHeader className="border-b border-border/40 py-4">
               <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
-              <CardDescription className="text-sm">Select a workspace to get started</CardDescription>
             </CardHeader>
             <CardContent className="p-6 h-[calc(100%-6rem)] overflow-auto">
               <div className="grid grid-cols-3 gap-6 h-full">
@@ -726,7 +721,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
         {/* Tasks Panel */}
         <Card className={`border-border/40 shadow-xl transition-all duration-500 backdrop-blur-xl bg-card/95 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
-          <CardHeader className="border-b border-border/40 py-4 bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardHeader className="border-b border-border/40 py-4">
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
                 <div className="flex items-center gap-3 flex-1">
@@ -735,7 +730,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </div>
                   <div className="flex-1">
                     <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
-                    <CardDescription className="text-sm">Your action items</CardDescription>
                   </div>
                 </div>
               )}
