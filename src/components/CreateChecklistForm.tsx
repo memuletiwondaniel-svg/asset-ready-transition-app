@@ -601,35 +601,9 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
   }
 
   if (currentStep === 1) {
+    console.log('CreateChecklistForm step 1 rendering, formData:', formData);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <AnimatedBackground>
-          <div className="relative z-10">{/* Wrapper for content */}</div>
-        </AnimatedBackground>
-        
-        {/* Admin Header with Breadcrumb */}
-        <AdminHeader
-          selectedLanguage={currentLanguage}
-          onLanguageChange={setCurrentLanguage}
-          translations={t}
-        >
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
-                  <Home className="h-4 w-4" />
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Create New Checklist</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </AdminHeader>
-
-        <div className="relative z-10 pb-8">
+      <div className="pb-8">
         {/* Progress Steps */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <ChecklistProgressSteps currentStep={currentStep} />
@@ -829,7 +803,6 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
               </div>
             </CardContent>
           </Card>
-        </div>
         </div>
       </div>
     );
