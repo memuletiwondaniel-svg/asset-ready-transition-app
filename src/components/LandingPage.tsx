@@ -314,15 +314,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
           <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
-            <CardHeader className="pb-6">
-              <div className="space-y-2">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  Welcome to ORSH AI Assistant
-                </h2>
-                <p className="text-muted-foreground text-lg">
-                  Ask a question or describe what you need
-                </p>
-              </div>
+            <CardHeader className="border-b border-border/40 flex-shrink-0 py-5 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
+              <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                Welcome, {userName}
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-6 flex flex-col flex-1 overflow-hidden">
               <div className="space-y-3 flex-shrink-0">
@@ -332,8 +327,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     value={userInput} 
                     onChange={e => setUserInput(e.target.value)} 
                     onKeyPress={handleKeyPress} 
-                    placeholder="Type your question or request here..." 
-                    className="min-h-[120px] resize-none bg-background border-2 border-primary/40 focus:border-primary transition-all duration-300 text-base shadow-lg pr-24 relative" 
+                    placeholder="Ask a question or describe what you need..." 
+                    className="min-h-[140px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-background/50 focus:bg-background/80 transition-all duration-300" 
                     disabled={isLoadingAI} 
                   />
                   <div className="absolute bottom-3 right-3 flex gap-2">
