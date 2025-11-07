@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo, Bell, User, LogOut, Shield, Languages } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo, Bell, User, LogOut, Shield, Languages, GripVertical, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -16,6 +16,12 @@ import { NotificationCenter } from '@/components/NotificationCenter';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
@@ -28,6 +34,55 @@ interface LandingPageProps {
   onBack: () => void;
   onNavigate: (section: string) => void;
 }
+
+// Sortable Item Component for Navigation Settings
+interface SortableNavItemProps {
+  item: {
+    id: string;
+    label: string;
+    icon: string;
+    visible: boolean;
+    gradient?: string;
+  };
+}
+
+const SortableNavItem: React.FC<SortableNavItemProps> = ({ item }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card hover:bg-muted/30 transition-colors"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+      <span className="text-sm font-medium flex-1">{item.label}</span>
+      {!item.visible && (
+        <Badge variant="secondary" className="text-xs">Hidden</Badge>
+      )}
+    </div>
+  );
+};
+
 const LandingPageContent: React.FC<LandingPageProps> = ({
   onBack,
   onNavigate
@@ -57,7 +112,27 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Navigation items configuration with visibility and order
+  const [navItems, setNavItems] = useState(() => {
+    const saved = localStorage.getItem('sidebarNavConfig');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [
+      { id: 'dashboard', label: 'Dashboard', icon: 'Home', visible: true },
+      { id: 'safe-startup', label: 'Safe Start-Up', icon: 'ClipboardList', gradient: 'from-blue-500 to-blue-600', visible: true },
+      { id: 'p2o', label: 'Project-to-Operations', icon: 'KeyRound', gradient: 'from-purple-500 to-purple-600', visible: true },
+      { id: 'admin-tools', label: 'Admin & Tools', icon: 'Settings', gradient: 'from-orange-500 to-orange-600', visible: true }
+    ];
+  });
+
+  // Save navigation config to localStorage whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem('sidebarNavConfig', JSON.stringify(navItems));
+  }, [navItems]);
 
   const MAX_IMAGES = 5;
   const chatEndRef = React.useRef<HTMLDivElement>(null);
@@ -410,6 +485,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     label: 'Develop a P2A Plan',
     icon: FileText
   }];
+  
   const workspaceCards = [{
     id: 'safe-startup',
     title: 'Safe Start-Up',
@@ -432,6 +508,61 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     gradient: 'from-orange-500 to-orange-600',
     bgTone: 'bg-orange-500/5'
   }];
+
+  // Icon mapping helper
+  const getIconComponent = (iconName: string) => {
+    const icons: Record<string, any> = {
+      Home, ClipboardList, KeyRound, Settings
+    };
+    return icons[iconName] || Home;
+  };
+
+  // Get workspace data by id
+  const getWorkspaceData = (id: string) => {
+    return workspaceCards.find(w => w.id === id);
+  };
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setNavItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const toggleNavItemVisibility = (id: string) => {
+    setNavItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, visible: !item.visible } : item
+      )
+    );
+  };
+
+  const resetNavConfig = () => {
+    const defaultConfig = [
+      { id: 'dashboard', label: 'Dashboard', icon: 'Home', visible: true },
+      { id: 'safe-startup', label: 'Safe Start-Up', icon: 'ClipboardList', gradient: 'from-blue-500 to-blue-600', visible: true },
+      { id: 'p2o', label: 'Project-to-Operations', icon: 'KeyRound', gradient: 'from-purple-500 to-purple-600', visible: true },
+      { id: 'admin-tools', label: 'Admin & Tools', icon: 'Settings', gradient: 'from-orange-500 to-orange-600', visible: true }
+    ];
+    setNavItems(defaultConfig);
+    toast({
+      title: "Settings Reset",
+      description: "Navigation menu restored to default configuration"
+    });
+  };
   return <AnimatedBackground>
       {/* Particle Effects */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
@@ -481,7 +612,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                         <Languages className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuContent align="start" className="w-48 bg-background z-50">
                       <DropdownMenuLabel>Select Language</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setLanguage('en')}>
@@ -525,7 +656,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
+              <DropdownMenuContent align="start" className="w-64 bg-background z-50">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
@@ -556,29 +687,38 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           {/* Navigation Menu */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-2">
-              <Button
-                variant="ghost"
-                className={`w-full h-11 px-4 bg-primary/10 text-primary hover:bg-primary/20 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-              >
-                <Home className={`w-4 h-4 ${isSidebarCollapsed ? '' : 'mr-3'} flex-shrink-0`} />
-                {!isSidebarCollapsed && <span className="animate-fade-in">Dashboard</span>}
-              </Button>
+              {navItems.filter(item => item.visible).map((navItem) => {
+                const IconComponent = getIconComponent(navItem.icon);
+                const workspaceData = getWorkspaceData(navItem.id);
+                
+                if (navItem.id === 'dashboard') {
+                  return (
+                    <Button
+                      key={navItem.id}
+                      variant="ghost"
+                      className={`w-full h-11 px-4 bg-primary/10 text-primary hover:bg-primary/20 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
+                    >
+                      <IconComponent className={`w-4 h-4 ${isSidebarCollapsed ? '' : 'mr-3'} flex-shrink-0`} />
+                      {!isSidebarCollapsed && <span className="animate-fade-in">{navItem.label}</span>}
+                    </Button>
+                  );
+                }
 
-              {workspaceCards.map((workspace) => {
-                const Icon = workspace.icon;
                 return (
                   <Button
-                    key={workspace.id}
+                    key={navItem.id}
                     variant="ghost"
-                    onClick={() => onNavigate(workspace.id)}
+                    onClick={() => onNavigate(navItem.id)}
                     className={`w-full h-11 px-4 hover:bg-muted/50 transition-all group ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspace.gradient} flex items-center justify-center ${isSidebarCollapsed ? '' : 'mr-3'} group-hover:scale-110 transition-transform flex-shrink-0`}>
-                      <Icon className="w-4 h-4 text-white" />
-                    </div>
+                    {workspaceData && (
+                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspaceData.gradient} flex items-center justify-center ${isSidebarCollapsed ? '' : 'mr-3'} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                        <IconComponent className="w-4 h-4 text-white" />
+                      </div>
+                    )}
                     {!isSidebarCollapsed && (
                       <div className="flex-1 text-left animate-fade-in">
-                        <p className="text-sm font-medium">{workspace.title}</p>
+                        <p className="text-sm font-medium">{navItem.label}</p>
                       </div>
                     )}
                   </Button>
@@ -649,6 +789,95 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
           {/* Footer Actions */}
           <div className="p-4 border-t border-border/40 space-y-2">
+            {/* Sidebar Settings Button */}
+            {!isSidebarCollapsed && (
+              <Sheet open={sidebarSettingsOpen} onOpenChange={setSidebarSettingsOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start h-9 animate-fade-in"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Customize Menu
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-full sm:max-w-md bg-background z-[100]">
+                  <SheetHeader>
+                    <SheetTitle>Navigation Menu Settings</SheetTitle>
+                    <SheetDescription>
+                      Customize which sections appear and their order in the sidebar
+                    </SheetDescription>
+                  </SheetHeader>
+                  
+                  <div className="mt-6 space-y-6">
+                    {/* Visibility Toggles */}
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3">Section Visibility</h3>
+                      <div className="space-y-3">
+                        {navItems.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-muted/20">
+                            <div className="flex items-center gap-3">
+                              {item.visible ? (
+                                <Eye className="w-4 h-4 text-primary" />
+                              ) : (
+                                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                              )}
+                              <Label htmlFor={`toggle-${item.id}`} className="cursor-pointer">
+                                {item.label}
+                              </Label>
+                            </div>
+                            <Switch
+                              id={`toggle-${item.id}`}
+                              checked={item.visible}
+                              onCheckedChange={() => toggleNavItemVisibility(item.id)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Drag to Reorder */}
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3">Reorder Sections</h3>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Drag to change the order of navigation items
+                      </p>
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={navItems.map(item => item.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-2">
+                            {navItems.map((item) => (
+                              <SortableNavItem key={item.id} item={item} />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    </div>
+
+                    <Separator />
+
+                    {/* Reset Button */}
+                    <Button
+                      variant="outline"
+                      onClick={resetNavConfig}
+                      className="w-full"
+                    >
+                      Reset to Default
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
+
             {/* Sidebar Toggle Button */}
             <Button
               variant="outline"
