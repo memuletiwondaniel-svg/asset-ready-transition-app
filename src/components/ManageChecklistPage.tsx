@@ -473,8 +473,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                       <CardHeader className="relative">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors duration-300">{checklist.name}</CardTitle>
-                            
+                            <CardTitle className="text-lg mb-1 group-hover:text-primary transition-colors duration-300">{checklist.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground/80">{checklist.reason}</p>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>

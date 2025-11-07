@@ -31,6 +31,7 @@ interface CreateChecklistFormProps {
 }
 
 interface NewChecklistData {
+  name: string;
   reason: string;
   selected_items: string[];
   custom_reason?: string;
@@ -64,6 +65,7 @@ const [selectedDetailItem, setSelectedDetailItem] = useState<DBChecklistItem | n
   const { data: mocScopes = [] } = usePSSRMOCScopes();
   
   const [formData, setFormData] = useState<NewChecklistData>({
+    name: '',
     reason: '',
     selected_items: [],
   });
@@ -412,7 +414,6 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
   const handleConfirmChecklist = (checklistData: any) => {
     const finalData = {
       ...formData,
-      name: formData.reason, // Set name as reason
       custom_reason: formData.reason === 'Others' ? customReason : undefined,
       plant_change_type: formData.reason === 'Restart following plant changes or modifications' ? plantChangeType : undefined,
       selected_tie_in_scopes: plantChangeType === 'tie_in' ? selectedTieInScopes : undefined,
@@ -644,6 +645,23 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
             </CardHeader>
             <CardContent className="space-y-6">
 
+              {/* Checklist Name */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Checklist Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  placeholder="Enter a descriptive name for this checklist"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="h-11"
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Give this checklist a unique, descriptive name to easily identify it later.
+                </p>
+              </div>
+
               {/* Reason for Checklist */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
@@ -802,7 +820,7 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
                 
                 <Button 
                   onClick={handleNext}
-                  disabled={!formData.reason || (formData.reason === 'Others' && !customReason)}
+                  disabled={!formData.name?.trim() || !formData.reason || (formData.reason === 'Others' && !customReason)}
                   size="lg"
                 >
                   Next: Select Items
