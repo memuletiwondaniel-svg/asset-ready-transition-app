@@ -7,14 +7,14 @@ import { ShieldCheck, Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, S
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 
 interface LandingPageProps {
   onBack: () => void;
   onNavigate: (section: string) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({
+const LandingPageContent: React.FC<LandingPageProps> = ({
   onBack,
   onNavigate
 }) => {
@@ -266,6 +266,14 @@ const LandingPage: React.FC<LandingPageProps> = ({
         </Card>
       </div>
     </AnimatedBackground>
+  );
+};
+
+const LandingPage: React.FC<LandingPageProps> = (props) => {
+  return (
+    <LanguageProvider>
+      <LandingPageContent {...props} />
+    </LanguageProvider>
   );
 };
 
