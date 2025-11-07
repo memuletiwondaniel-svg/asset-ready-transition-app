@@ -18,24 +18,30 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Transform messages to support vision
+    // Transform messages to support vision with multiple images
     const transformedMessages = messages.map((msg: any) => {
-      if (msg.imageUrl) {
-        // For messages with images, use the vision-compatible format
+      if (msg.imageUrls && msg.imageUrls.length > 0) {
+        // For messages with multiple images, create content array with text and all images
+        const content: any[] = [
+          {
+            type: "text",
+            text: msg.content
+          }
+        ];
+
+        // Add all images to the content array
+        msg.imageUrls.forEach((url: string) => {
+          content.push({
+            type: "image_url",
+            image_url: {
+              url: url
+            }
+          });
+        });
+
         return {
           role: msg.role,
-          content: [
-            {
-              type: "text",
-              text: msg.content
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: msg.imageUrl
-              }
-            }
-          ]
+          content: content
         };
       }
       // Regular text-only messages
@@ -45,7 +51,7 @@ serve(async (req) => {
       };
     });
 
-    console.log("Transformed messages:", JSON.stringify(transformedMessages, null, 2));
+    console.log("Transformed messages with images:", JSON.stringify(transformedMessages, null, 2));
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -58,7 +64,7 @@ serve(async (req) => {
         messages: [
           { 
             role: "system", 
-            content: "You are an AI assistant for ORSH (Operation Readiness Start-Up & Handover) platform. Help users with PSSR (Pre-Start Up Safety Review) processes, project handovers, safety checklists, and administrative tasks. When analyzing images, provide detailed insights about safety concerns, equipment status, compliance issues, or any relevant information visible in the image. Be concise and professional." 
+            content: "You are an AI assistant for ORSH (Operation Readiness Start-Up & Handover) platform. Help users with PSSR (Pre-Start Up Safety Review) processes, project handovers, safety checklists, and administrative tasks. When analyzing images, provide detailed insights about safety concerns, equipment status, compliance issues, hazards, protective equipment usage, and any relevant safety observations visible in the images. For multiple images, compare and contrast findings across all images. Be thorough, specific, and professional in your analysis." 
           },
           ...transformedMessages,
         ],

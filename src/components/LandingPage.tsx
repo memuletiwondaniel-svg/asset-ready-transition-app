@@ -37,7 +37,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
     content: string;
-    imageUrl?: string;
+    imageUrls?: string[];
   }>>([]);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isTasksPanelCollapsed, setIsTasksPanelCollapsed] = useState(false);
@@ -50,9 +50,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_IMAGES = 5;
   const chatEndRef = React.useRef<HTMLDivElement>(null);
 
   // Check if user has seen the tour before
@@ -102,46 +104,70 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   };
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
+    // Check if adding these files would exceed the limit
+    if (uploadedImages.length + files.length > MAX_IMAGES) {
       toast({
-        title: "Image too large",
-        description: "Please select an image smaller than 5MB",
+        title: "Too many images",
+        description: `You can only attach up to ${MAX_IMAGES} images per query`,
         variant: "destructive"
       });
       return;
     }
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select a JPEG, PNG, WebP, or GIF image",
-        variant: "destructive"
+    // Validate all files
+    const validFiles: File[] = [];
+    const validPreviews: string[] = [];
+
+    for (const file of files) {
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Image too large",
+          description: `${file.name} is larger than 5MB`,
+          variant: "destructive"
+        });
+        continue;
+      }
+
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a valid image format`,
+          variant: "destructive"
+        });
+        continue;
+      }
+
+      validFiles.push(file);
+
+      // Create preview
+      const reader = new FileReader();
+      await new Promise<void>((resolve) => {
+        reader.onloadend = () => {
+          validPreviews.push(reader.result as string);
+          resolve();
+        };
+        reader.readAsDataURL(file);
       });
-      return;
     }
 
-    setUploadedImage(file);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    toast({
-      title: "Image attached",
-      description: "Image will be sent with your message"
-    });
+    if (validFiles.length > 0) {
+      setUploadedImages(prev => [...prev, ...validFiles]);
+      setImagePreviews(prev => [...prev, ...validPreviews]);
+      
+      toast({
+        title: `${validFiles.length} image${validFiles.length > 1 ? 's' : ''} attached`,
+        description: `${uploadedImages.length + validFiles.length}/${MAX_IMAGES} images selected`
+      });
+    }
   };
 
-  const uploadImageToStorage = async (file: File): Promise<string | null> => {
+  const uploadImagesToStorage = async (files: File[]): Promise<string[]> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -150,50 +176,65 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           description: "Please sign in to upload images",
           variant: "destructive"
         });
-        return null;
+        return [];
       }
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError, data } = await supabase.storage
-        .from('ai-query-images')
-        .upload(fileName, file);
+      const uploadPromises = files.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('ai-query-images')
+          .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('ai-query-images')
-        .getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage
+          .from('ai-query-images')
+          .getPublicUrl(fileName);
 
-      return publicUrl;
+        return publicUrl;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      return urls;
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading images:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        description: "Failed to upload one or more images. Please try again.",
         variant: "destructive"
       });
-      return null;
+      return [];
     }
   };
 
-  const clearImage = () => {
-    setUploadedImage(null);
-    setImagePreview(null);
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    
+    toast({
+      title: "Image removed",
+      description: `${uploadedImages.length - 1}/${MAX_IMAGES} images selected`
+    });
+  };
+
+  const clearImages = () => {
+    setUploadedImages([]);
+    setImagePreviews([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
   const sendMessageToAI = async (message: string) => {
-    if (!message.trim() && !uploadedImage) return;
+    if (!message.trim() && uploadedImages.length === 0) return;
     
-    let imageUrl: string | null = null;
+    let imageUrls: string[] = [];
     
-    // Upload image if present
-    if (uploadedImage) {
-      imageUrl = await uploadImageToStorage(uploadedImage);
-      if (!imageUrl && uploadedImage) {
+    // Upload images if present
+    if (uploadedImages.length > 0) {
+      imageUrls = await uploadImagesToStorage(uploadedImages);
+      if (imageUrls.length === 0 && uploadedImages.length > 0) {
         // Upload failed, don't proceed
         return;
       }
@@ -207,12 +248,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     
     const userMessage = {
       role: 'user' as const,
-      content: message || 'Analyzing attached image...',
-      imageUrl: imageUrl || undefined
+      content: message || `Analyzing ${imageUrls.length} image${imageUrls.length > 1 ? 's' : ''} for safety review...`,
+      imageUrls: imageUrls.length > 0 ? imageUrls : undefined
     };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
-    clearImage();
+    clearImages();
     setIsLoadingAI(true);
     setShowHistory(false);
     let assistantContent = '';
@@ -426,21 +467,34 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </CardHeader>
             <CardContent className="p-6 pt-3 flex flex-col flex-1 overflow-hidden">
               <div className="space-y-2 flex-shrink-0">
-                {imagePreview && (
-                  <div className="relative inline-block">
-                    <img 
-                      src={imagePreview} 
-                      alt="Upload preview" 
-                      className="max-h-32 rounded-lg border border-border/40"
-                    />
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                      onClick={clearImage}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
+                {imagePreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative inline-block">
+                        <img 
+                          src={preview} 
+                          alt={`Upload preview ${index + 1}`} 
+                          className="h-20 w-20 rounded-lg border border-border/40 object-cover"
+                        />
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
+                          onClick={() => removeImage(index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    {imagePreviews.length < MAX_IMAGES && (
+                      <Button
+                        variant="outline"
+                        className="h-20 w-20 border-dashed border-2 hover:bg-primary/5"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="w-6 h-6 text-muted-foreground" />
+                      </Button>
+                    )}
                   </div>
                 )}
                 <div className="relative group" data-tour="ai-input">
@@ -467,23 +521,29 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       size="icon" 
                       variant="ghost" 
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isLoadingAI}
+                      disabled={isLoadingAI || uploadedImages.length >= MAX_IMAGES}
                       className="h-9 w-9 hover:bg-primary/10 transition-all duration-300"
-                      title="Attach image"
+                      title={uploadedImages.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images` : "Attach images"}
                     >
                       <ImagePlus className="w-4 h-4 text-muted-foreground" />
+                      {uploadedImages.length > 0 && (
+                        <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
+                          {uploadedImages.length}
+                        </Badge>
+                      )}
                     </Button>
                     <input
                       ref={fileInputRef}
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
                       className="hidden"
                       onChange={handleImageSelect}
                     />
                     <Button 
                       size="icon" 
                       onClick={handleSend} 
-                      disabled={isLoadingAI || (!userInput.trim() && !uploadedImage)} 
+                      disabled={isLoadingAI || (!userInput.trim() && uploadedImages.length === 0)} 
                       className="rounded-full bg-gradient-to-br from-primary/80 to-accent/80 h-9 w-9 hover:from-primary hover:to-accent hover:scale-110 transition-all duration-300 shadow-md hover:shadow-lg"
                     >
                       <Send className="w-4 h-4" />
@@ -594,12 +654,17 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             ? 'bg-gradient-to-br from-primary to-accent text-primary-foreground' 
                             : 'bg-gradient-to-br from-muted/80 to-muted/60 border border-border/40'
                         }`}>
-                          {msg.imageUrl && (
-                            <img 
-                              src={msg.imageUrl} 
-                              alt="User uploaded" 
-                              className="max-w-full rounded-lg mb-2 max-h-64 object-contain"
-                            />
+                          {msg.imageUrls && msg.imageUrls.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              {msg.imageUrls.map((url, idx) => (
+                                <img 
+                                  key={idx}
+                                  src={url} 
+                                  alt={`User uploaded ${idx + 1}`} 
+                                  className="w-full rounded-lg object-cover max-h-40"
+                                />
+                              ))}
+                            </div>
                           )}
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                         </div>
