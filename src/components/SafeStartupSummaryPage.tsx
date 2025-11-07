@@ -31,7 +31,7 @@ import {
   Search, 
   Filter, 
   Settings,
-  ShieldCheck,
+  Rocket,
   BarChart3,
   Users,
   Calendar as CalendarIcon,
@@ -56,6 +56,7 @@ import PSSRTimelineView from './PSSRTimelineView';
 import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
+import PSSRStatsWidget from './PSSRStatsWidget';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
@@ -408,20 +409,20 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     
     switch (activeView) {
       case 'list':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: undefined });
+        crumbs.push({ label: 'Safe Start-Up', icon: Rocket, onClick: undefined });
         break;
       case 'create':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
+        crumbs.push({ label: 'Safe Start-Up', icon: Rocket, onClick: () => setActiveView('list') });
         crumbs.push({ label: 'Create PSSR', icon: Plus, onClick: undefined });
         break;
       case 'details':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
+        crumbs.push({ label: 'Safe Start-Up', icon: Rocket, onClick: () => setActiveView('list') });
         if (selectedPSSR) {
           crumbs.push({ label: selectedPSSR, icon: FileText, onClick: undefined });
         }
         break;
       case 'category-items':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
+        crumbs.push({ label: 'Safe Start-Up', icon: Rocket, onClick: () => setActiveView('list') });
         if (selectedPSSR) {
           crumbs.push({ label: selectedPSSR, icon: FileText, onClick: () => setActiveView('details') });
         }
@@ -430,7 +431,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         }
         break;
       case 'manage-checklist':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
+        crumbs.push({ label: 'Safe Start-Up', icon: Rocket, onClick: () => setActiveView('list') });
         crumbs.push({ label: 'Manage Checklists', icon: Settings, onClick: undefined });
         break;
     }
@@ -595,7 +596,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <Rocket className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-foreground tracking-tight">Safe Start-Up</h1>
@@ -604,18 +605,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               </div>
 
               {/* Header Actions */}
-              <div className="flex items-center gap-3">
-                {userRole === 'admin' && (
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActiveView('manage-checklist')}
-                    className="hidden lg:flex gap-2 hover:bg-muted/50"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Manage</span>
-                  </Button>
-                )}
+              <div className="flex items-center gap-2">
                 <Button 
                   onClick={() => setActiveView('create')}
                   size="sm"
@@ -624,82 +614,25 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   <Plus className="h-4 w-4" />
                   <span>New PSSR</span>
                 </Button>
+                {userRole === 'admin' && (
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveView('manage-checklist')}
+                    className="gap-2 hover:bg-muted/50"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Manage</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
-        {/* Modern Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total PSSRs */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-muted/20 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total PSSRs</CardTitle>
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <ClipboardList className="h-4 w-4 text-primary" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-foreground">{stats.total}</div>
-              <p className="text-xs text-muted-foreground mt-1">Active reviews</p>
-            </CardContent>
-          </Card>
-
-          {/* Approved */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-emerald-500/5 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Approved</CardTitle>
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <CheckCircle className="h-4 w-4 text-emerald-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-emerald-600">{stats.approved}</div>
-              <p className="text-xs text-muted-foreground mt-1">Completed</p>
-            </CardContent>
-          </Card>
-
-          {/* Under Review */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-amber-500/5 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Under Review</CardTitle>
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Clock className="h-4 w-4 text-amber-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-amber-600">{stats.underReview}</div>
-              <p className="text-xs text-muted-foreground mt-1">In progress</p>
-            </CardContent>
-          </Card>
-
-          {/* Draft */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-slate-500/5 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Draft</CardTitle>
-                <div className="p-2 rounded-lg bg-slate-500/10">
-                  <AlertTriangle className="h-4 w-4 text-slate-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-slate-600">{stats.draft}</div>
-              <p className="text-xs text-muted-foreground mt-1">Not submitted</p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Combined Stats Widget */}
+        <PSSRStatsWidget stats={stats} />
 
         {/* Modern Search and Filters */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -886,7 +819,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                 {activeDragId ? (
                   <Card className="p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
                     <div className="text-center">
-                      <ShieldCheck className="h-8 w-8 text-primary mx-auto mb-2" />
+                      <Rocket className="h-8 w-8 text-primary mx-auto mb-2" />
                       <p className="font-semibold text-foreground">Moving PSSR...</p>
                       <p className="text-sm text-muted-foreground">
                         {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
@@ -903,7 +836,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               <CardContent className="py-16">
                 <div className="text-center max-w-md mx-auto">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/20 mb-4">
-                    <ShieldCheck className="h-8 w-8 text-muted-foreground/50" />
+                    <Rocket className="h-8 w-8 text-muted-foreground/50" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">No Reviews Found</h3>
                   <p className="text-sm text-muted-foreground mb-6">Try adjusting your filters</p>

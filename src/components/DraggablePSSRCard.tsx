@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ShieldCheck, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff, Edit, Copy, Archive } from 'lucide-react';
+import { GripVertical, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff, Edit, Copy, Archive } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -153,23 +153,23 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
         </div>
 
         <CardContent className="p-5 relative">
-          <div className="flex items-center gap-6">
-            {/* Drag Handle */}
+          <div className="flex items-center gap-4">
+            {/* Drag Handle - Shows on hover */}
             <div
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-colors"
+              className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <GripVertical className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors" />
+              <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
             </div>
 
             {/* Main Content Grid */}
-            <div className="flex-1 grid grid-cols-12 gap-6 items-center">
+            <div className="flex-1 grid grid-cols-12 gap-4 items-center">
               
-              {/* Project Info - 4 cols */}
-              <div className="col-span-4 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
+              {/* Project Info - 3 cols */}
+              <div className="col-span-3 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
                   <Badge variant="default" className="bg-primary text-primary-foreground font-semibold text-xs px-2.5 py-0.5">
                     {pssr.projectId}
                   </Badge>
@@ -209,11 +209,11 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Complete</p>
               </div>
 
-              {/* Status - 3 cols */}
-              <div className="col-span-3 flex flex-col gap-1.5">
+              {/* Status & Pin - 4 cols */}
+              <div className="col-span-4 flex items-center justify-end gap-2">
                 <Badge 
                   variant="outline"
-                  className={`justify-center py-1.5 font-medium ${
+                  className={`py-1.5 px-3 font-medium ${
                     pssr.status === 'Approved' ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' :
                     pssr.status === 'Under Review' ? 'border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20' :
                     pssr.status === 'In Progress' ? 'border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20' :
@@ -222,27 +222,27 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                   }`}
                 >
                   {pssr.status}
+                  {pssr.pendingApprovals > 0 && (
+                    <span className="ml-2 text-[10px]">({pssr.pendingApprovals})</span>
+                  )}
                 </Badge>
-                {pssr.pendingApprovals > 0 && (
-                  <p className="text-xs text-center text-muted-foreground">{pssr.pendingApprovals} pending</p>
-                )}
+                
+                {/* Pin Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTogglePin(pssr.id);
+                  }}
+                  className="p-2 hover:bg-muted/40 rounded-lg transition-colors flex-shrink-0"
+                >
+                  {isPinned ? (
+                    <PinOff className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <Pin className="h-4 w-4 text-muted-foreground hover:text-amber-500 transition-colors" />
+                  )}
+                </button>
               </div>
             </div>
-
-            {/* Pin Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePin(pssr.id);
-              }}
-              className="p-2 hover:bg-muted/40 rounded-lg transition-colors"
-            >
-              {isPinned ? (
-                <PinOff className="h-4 w-4 text-amber-500" />
-              ) : (
-                <Pin className="h-4 w-4 text-muted-foreground hover:text-amber-500 transition-colors" />
-              )}
-            </button>
           </div>
         </CardContent>
       </Card>
