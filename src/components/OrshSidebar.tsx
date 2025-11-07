@@ -107,7 +107,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
               <div
                 role="button"
                 tabIndex={0}
-                className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md"
+                className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer"
               >
                 <Avatar className="h-10 w-10 flex-shrink-0">
                   <AvatarImage src={userAvatar} alt={userName} />
@@ -137,44 +137,65 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
               </Button>
             )}
           </CollapsibleTrigger>
-          {!isSidebarCollapsed && (
-            <CollapsibleContent className="space-y-1 mt-1 animate-fade-in">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setProfileModalOpen(true)}
-                className="w-full justify-start h-9 pl-10"
-              >
-                <User className="mr-2 h-4 w-4" />
-                <span>Edit Profile</span>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="w-full justify-start h-9 pl-10"
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Account Settings</span>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="w-full justify-start h-9 pl-10"
-              >
-                <Shield className="mr-2 h-4 w-4" />
-                <span>Security</span>
-              </Button>
-              <Separator className="my-2" />
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="w-full justify-start h-9 pl-10 text-destructive hover:text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log Out</span>
-              </Button>
-            </CollapsibleContent>
-          )}
+          <CollapsibleContent className="space-y-1 mt-1 animate-fade-in">
+            {isSidebarCollapsed ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setProfileModalOpen(true)}
+                  className="w-full h-9"
+                  title="Edit Profile"
+                >
+                  <User className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="w-full h-9"
+                  title="Account Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="w-full h-9"
+                  title="Security"
+                >
+                  <Shield className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setProfileModalOpen(true)}
+                  className="w-full justify-start h-9 pl-10"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Edit Profile</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="w-full justify-start h-9 pl-10"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Account Settings</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="w-full justify-start h-9 pl-10"
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Security</span>
+                </Button>
+              </>
+            )}
+          </CollapsibleContent>
         </Collapsible>
       </div>
 
@@ -301,6 +322,19 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         >
           <Clock className="w-4 h-4" />
           {!isSidebarCollapsed && <span className="ml-2">Take Tour</span>}
+        </Button>
+
+        <Separator />
+
+        {/* Logout Row */}
+        <Button
+          variant="outline"
+          size={isSidebarCollapsed ? "icon" : "sm"}
+          className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive animate-fade-in`}
+          title="Log Out"
+        >
+          <LogOut className="w-4 h-4" />
+          {!isSidebarCollapsed && <span className="ml-2">Log Out</span>}
         </Button>
         
         {/* Sidebar Toggle Button */}
