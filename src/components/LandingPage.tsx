@@ -3,12 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListTodo, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListTodo, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -115,6 +116,22 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     ];
   });
 
+  // AI Panel and Tasks Panel state
+  const [aiPanelVisible, setAiPanelVisible] = useState(() => {
+    const saved = localStorage.getItem('aiPanelVisible');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const [aiPanelExpanded, setAiPanelExpanded] = useState(() => {
+    const saved = localStorage.getItem('aiPanelExpanded');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  const [tasksPanelVisible, setTasksPanelVisible] = useState(() => {
+    const saved = localStorage.getItem('tasksPanelVisible');
+    return saved ? JSON.parse(saved) : true;
+  });
+
   const MAX_IMAGES = 5;
   const chatEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -122,6 +139,19 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   React.useEffect(() => {
     localStorage.setItem('dashboardWidgetConfig', JSON.stringify(widgets));
   }, [widgets]);
+
+  // Save panel states to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('aiPanelVisible', JSON.stringify(aiPanelVisible));
+  }, [aiPanelVisible]);
+
+  React.useEffect(() => {
+    localStorage.setItem('aiPanelExpanded', JSON.stringify(aiPanelExpanded));
+  }, [aiPanelExpanded]);
+
+  React.useEffect(() => {
+    localStorage.setItem('tasksPanelVisible', JSON.stringify(tasksPanelVisible));
+  }, [tasksPanelVisible]);
 
   // Drag and drop sensors for widgets
   const sensors = useSensors(
@@ -620,12 +650,42 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           ) : (
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
             {/* AI Assistant Panel */}
-            <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '50%' : '30%' }}>
-              <CardHeader className="flex-shrink-0 py-4 pb-3">
-                <CardTitle className="text-2xl font-bold">
-                  Welcome {userProfile?.full_name || 'User'}
-                </CardTitle>
-              </CardHeader>
+            {aiPanelVisible && (
+              <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }}>
+                <CardHeader className="flex-shrink-0 py-4 pb-3 flex flex-row items-center justify-between space-y-0">
+                  <CardTitle className="text-2xl font-bold">
+                    Welcome {userProfile?.full_name || 'User'}
+                  </CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="z-50 bg-background">
+                      <DropdownMenuItem onClick={() => setAiPanelExpanded(!aiPanelExpanded)}>
+                        {aiPanelExpanded ? (
+                          <>
+                            <Minimize2 className="w-4 h-4 mr-2" />
+                            Collapse
+                          </>
+                        ) : (
+                          <>
+                            <Maximize2 className="w-4 h-4 mr-2" />
+                            Expand
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setAiPanelVisible(false);
+                        toast({ title: 'AI Assistant hidden' });
+                      }}>
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        Hide
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
               <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
                 <div className="space-y-1.5 flex-shrink-0">
                   {imagePreviews.length > 0 && (
@@ -761,74 +821,124 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 </ScrollArea>
                 )}
               </CardContent>
-            </Card>
+              </Card>
+            )}
 
             {/* Widgets Section with Drag and Drop */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Dashboard Widgets</h2>
-              {hasHiddenWidgets && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleShowAllWidgets}
-                  className="text-xs"
-                >
-                  Show All Widgets
-                </Button>
-              )}
-            </div>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
-                  {widgets.filter(w => w.isVisible).map((widget) => (
-                    <SortableWidgetWrapper key={widget.id} id={widget.id} isExpanded={widget.isExpanded}>
-                      <WidgetCard
-                        title={widget.title}
-                        isExpanded={widget.isExpanded}
-                        isVisible={widget.isVisible}
-                        onToggleVisibility={() => handleToggleVisibility(widget.id)}
-                        onToggleExpand={() => handleToggleExpand(widget.id)}
+            {!aiPanelExpanded && (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-semibold">Dashboard Widgets</h2>
+                  <div className="flex gap-2">
+                    {!aiPanelVisible && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setAiPanelVisible(true);
+                          toast({ title: 'AI Assistant shown' });
+                        }}
+                        className="text-xs"
                       >
-                        {widget.id === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
-                        {widget.id === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
-                        {widget.id === 'recent-activity' && <RecentActivityWidget />}
-                      </WidgetCard>
-                    </SortableWidgetWrapper>
-                  ))}
+                        Show AI Assistant
+                      </Button>
+                    )}
+                    {!tasksPanelVisible && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setTasksPanelVisible(true);
+                          toast({ title: 'Tasks panel shown' });
+                        }}
+                        className="text-xs"
+                      >
+                        Show Tasks Panel
+                      </Button>
+                    )}
+                    {hasHiddenWidgets && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleShowAllWidgets}
+                        className="text-xs"
+                      >
+                        Show All Widgets
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </SortableContext>
-            </DndContext>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
+                      {widgets.filter(w => w.isVisible).map((widget) => (
+                        <SortableWidgetWrapper key={widget.id} id={widget.id} isExpanded={widget.isExpanded}>
+                          <WidgetCard
+                            title={widget.title}
+                            isExpanded={widget.isExpanded}
+                            isVisible={widget.isVisible}
+                            onToggleVisibility={() => handleToggleVisibility(widget.id)}
+                            onToggleExpand={() => handleToggleExpand(widget.id)}
+                          >
+                            {widget.id === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
+                            {widget.id === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
+                            {widget.id === 'recent-activity' && <RecentActivityWidget />}
+                          </WidgetCard>
+                        </SortableWidgetWrapper>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </>
+            )}
           </div>
           )}
 
           {/* Tasks Panel */}
-          <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
-          <CardHeader className="border-b border-border/40 py-4">
-            <div className="flex items-center justify-between">
-              {!isTasksPanelCollapsed && (
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/80 to-accent flex items-center justify-center shadow-lg">
-                    <ListTodo className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
-                  </div>
+          {tasksPanelVisible && (
+            <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
+              <CardHeader className="border-b border-border/40 py-4">
+                <div className="flex items-center justify-between">
+                  {!isTasksPanelCollapsed && (
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/80 to-accent flex items-center justify-center shadow-lg">
+                        <ListTodo className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="z-50 bg-background">
+                          <DropdownMenuItem onClick={() => {
+                            setTasksPanelVisible(false);
+                            toast({ title: 'Tasks panel hidden' });
+                          }}>
+                            <EyeOff className="w-4 h-4 mr-2" />
+                            Hide
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => setIsTasksPanelCollapsed(!isTasksPanelCollapsed)}
+                    className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 transition-all duration-300"
+                  >
+                    {isTasksPanelCollapsed ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                  </Button>
                 </div>
-              )}
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                onClick={() => setIsTasksPanelCollapsed(!isTasksPanelCollapsed)}
-                className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 transition-all duration-300"
-              >
-                {isTasksPanelCollapsed ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-              </Button>
-            </div>
-          </CardHeader>
+              </CardHeader>
           {!isTasksPanelCollapsed && (
             <>
               <div className="border-b border-border/40 p-4 space-y-3 bg-gradient-to-r from-muted/30 to-muted/10">
@@ -954,6 +1064,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </>
           )}
           </Card>
+          )}
         </div>
       </div>
 

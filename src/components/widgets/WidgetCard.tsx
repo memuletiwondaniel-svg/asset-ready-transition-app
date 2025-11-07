@@ -34,7 +34,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
           <DropdownMenuTrigger className="p-1 hover:bg-accent rounded-md transition-colors">
             <MoreVertical className="w-4 h-4 text-muted-foreground" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="z-50 bg-background">
             {onToggleExpand && (
               <DropdownMenuItem onClick={onToggleExpand}>
                 {isExpanded ? (
