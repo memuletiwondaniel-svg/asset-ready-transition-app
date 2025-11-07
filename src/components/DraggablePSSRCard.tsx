@@ -251,15 +251,10 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               </div>
             </div>
 
-            {/* Compact Progress Bar */}
-            <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden">
-              <div 
-                className={`absolute inset-y-0 left-0 ${getProgressColor(pssr.progress)} rounded-full transition-all duration-500`}
-                style={{ width: `${pssr.progress}%` }}
-              />
-              <div className="absolute inset-0 flex items-center justify-end pr-1.5">
-                <span className="text-[8px] font-bold text-background mix-blend-difference">{pssr.progress}%</span>
-              </div>
+            {/* Simple Progress Percentage */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Progress</span>
+              <span className="text-lg font-bold text-primary">{pssr.progress}%</span>
             </div>
 
             {/* Footer Row */}

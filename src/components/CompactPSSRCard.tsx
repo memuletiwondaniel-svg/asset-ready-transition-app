@@ -137,15 +137,9 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
             </div>
           </div>
 
-          {/* Compact Progress */}
-          <div className="flex items-center gap-1.5 min-w-[80px]">
-            <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden w-12">
-              <div 
-                className={`absolute inset-y-0 left-0 ${getProgressColor(pssr.progress)} rounded-full transition-all`}
-                style={{ width: `${pssr.progress}%` }}
-              />
-            </div>
-            <span className="text-[10px] font-bold text-foreground min-w-[24px]">{pssr.progress}%</span>
+          {/* Simple Progress Percentage */}
+          <div className="min-w-[60px] text-right">
+            <span className="text-sm font-bold text-primary">{pssr.progress}%</span>
           </div>
 
           {/* Team & Actions */}

@@ -69,7 +69,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const {
     toast
   } = useToast();
-  return <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col h-screen transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+  return <div className={`fixed left-0 top-0 border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col h-screen transition-all duration-300 z-50 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Collapse/Expand Button */}
       
 

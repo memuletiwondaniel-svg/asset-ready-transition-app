@@ -15,32 +15,30 @@ interface PSSRStatsWidgetProps {
 
 const PSSRStatsWidget: React.FC<PSSRStatsWidgetProps> = ({ stats }) => {
   return (
-    <Card className="border-border/50 bg-card">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Activity className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">PSSR Stats</h3>
+    <div>
+      <div className="flex flex-col items-center gap-2 mb-4">
+        <Activity className="h-5 w-5 text-primary" />
+        <h3 className="text-sm font-semibold">PSSR Statistics</h3>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="space-y-1 text-center">
+          <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+          <p className="text-xs text-muted-foreground">Total</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Total</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-2xl font-bold text-emerald-600">{stats.approved}</p>
-            <p className="text-xs text-muted-foreground">Approved</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-2xl font-bold text-amber-600">{stats.underReview}</p>
-            <p className="text-xs text-muted-foreground">Review</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-2xl font-bold text-slate-600">{stats.draft}</p>
-            <p className="text-xs text-muted-foreground">Draft</p>
-          </div>
+        <div className="space-y-1 text-center">
+          <p className="text-2xl font-bold text-emerald-600">{stats.approved}</p>
+          <p className="text-xs text-muted-foreground">Approved</p>
         </div>
-      </CardContent>
-    </Card>
+        <div className="space-y-1 text-center">
+          <p className="text-2xl font-bold text-amber-600">{stats.underReview}</p>
+          <p className="text-xs text-muted-foreground">Review</p>
+        </div>
+        <div className="space-y-1 text-center">
+          <p className="text-2xl font-bold text-slate-600">{stats.draft}</p>
+          <p className="text-xs text-muted-foreground">Draft</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

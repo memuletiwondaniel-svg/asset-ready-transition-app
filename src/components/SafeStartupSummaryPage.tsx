@@ -545,7 +545,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   }
 
   return (
-    <div className="min-h-screen flex w-full relative overflow-hidden">
+    <div className="min-h-screen flex w-full relative overflow-hidden ml-64">
       {/* Dynamic Color Modeled Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background">
         {/* Animated gradient orbs */}
@@ -754,7 +754,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
           {/* Right Side - PSSR Cards Widget */}
           {widgets.find(w => w.id === 'pssr-cards')?.isVisible && (
-            <div className="w-full lg:w-[600px] xl:w-[700px] flex-shrink-0">
+            <div className="w-full lg:w-[700px] xl:w-[800px] flex-shrink-0">
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-180px)] sticky top-[120px]">
                 <CardContent className="p-5 h-full flex flex-col">
                   <PSSRCardsWidget
