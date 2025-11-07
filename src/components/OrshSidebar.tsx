@@ -69,13 +69,13 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const {
     toast
   } = useToast();
-  return <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+  return <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col h-screen transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Collapse/Expand Button */}
       
 
       {/* ORSH Branding & Header */}
-      <div className="p-6 border-b border-border/40">
-        <div className="flex items-center justify-center mb-4">
+      <div className="p-4 border-b border-border/40 flex-shrink-0">
+        <div className="flex items-center justify-center mb-3">
           {!isSidebarCollapsed ? <OrshLogo size="medium" className="animate-fade-in" /> : <OrshLogo size="small" />}
         </div>
         
@@ -135,10 +135,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       </div>
 
       {/* Navigation Menu */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 flex flex-col min-h-0">
         {/* Main Navigation */}
         {!isSidebarCollapsed && (
-          <div className="mb-4">
+          <div className="mb-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
               Navigation
             </p>
@@ -168,7 +168,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         )}
 
         {isSidebarCollapsed && (
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-3">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPage === item.section;
@@ -192,11 +192,11 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           </div>
         )}
 
-        <Separator className="mb-4" />
+        <Separator className="mb-3" />
 
         {/* Settings Section */}
         {!isSidebarCollapsed && (
-          <div className="mb-4">
+          <div className="mb-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
               Settings
             </p>
@@ -242,7 +242,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         )}
 
         {isSidebarCollapsed && (
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-3">
             <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full h-9" title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
@@ -280,7 +280,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-border/40 space-y-2">
+      <div className="p-3 border-t border-border/40 space-y-2 flex-shrink-0">
         {/* Logout Row */}
         <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive animate-fade-in`} title="Log Out">
           <LogOut className="w-4 h-4" />
