@@ -462,7 +462,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-3 flex flex-col flex-1 overflow-hidden">
-              <div className="space-y-2 flex-shrink-0">
+              <div className="space-y-1.5 flex-shrink-0">
                 {imagePreviews.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {imagePreviews.map((preview, index) => (
