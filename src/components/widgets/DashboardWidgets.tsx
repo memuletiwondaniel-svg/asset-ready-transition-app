@@ -9,9 +9,13 @@ import { CalendarWidget } from './CalendarWidget';
 import { ProjectsOverviewWidget } from './ProjectsOverviewWidget';
 import { NotificationsWidget } from './NotificationsWidget';
 import { AIAssistantWidget } from './AIAssistantWidget';
+import { PSSRStatsWidget } from './PSSRStatsWidget';
+import { TeamMembersWidget } from './TeamMembersWidget';
 import { WidgetLibrary } from './WidgetLibrary';
 import { WidgetSettingsModal } from './WidgetSettingsModal';
+import { PresetManager } from './PresetManager';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DndContext,
   closestCenter,
@@ -151,8 +155,41 @@ export const DashboardWidgets: React.FC = () => {
         return <NotificationsWidget settings={widget.settings} />;
       case 'ai-assistant':
         return <AIAssistantWidget settings={widget.settings} />;
+      case 'pssr-stats':
+        return <PSSRStatsWidget settings={widget.settings} />;
+      case 'team-members':
+        return <TeamMembersWidget settings={widget.settings} />;
       default:
         return null;
+    }
+  };
+
+  const handleLoadPreset = async (presetWidgets: Omit<WidgetConfig, 'id'>[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Delete all current widgets
+      await supabase
+        .from('user_widget_configs')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Insert preset widgets
+      const widgetsToInsert = presetWidgets.map((w, index) => ({
+        ...w,
+        user_id: user.id,
+        position: index
+      }));
+
+      await supabase
+        .from('user_widget_configs')
+        .insert(widgetsToInsert);
+
+      // Refresh widget list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error loading preset:', error);
     }
   };
 
@@ -163,6 +200,10 @@ export const DashboardWidgets: React.FC = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Dashboard</h2>
         <div className="flex gap-2">
+          <PresetManager 
+            currentWidgets={widgets}
+            onLoadPreset={handleLoadPreset}
+          />
           <Button
             variant={customizeMode ? "default" : "outline"}
             size="sm"
