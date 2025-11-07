@@ -1,4 +1,5 @@
 import React from 'react';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import LanguageSelector from './LanguageSelector';
 import UserProfileDropdown from './UserProfileDropdown';
 import { ThemeToggle } from './ThemeToggle';
@@ -29,6 +30,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="flex items-center space-x-3">
           <OrshLogo size="medium" />
           <ThemeToggle />
+          <NotificationCenter />
           <LanguageSelector 
             selectedLanguage={selectedLanguage}
             onLanguageChange={onLanguageChange}

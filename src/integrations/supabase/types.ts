@@ -1609,6 +1609,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_widget_configs: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          position: number
+          settings: Json | null
+          size: string
+          updated_at: string
+          user_id: string
+          widget_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          settings?: Json | null
+          size?: string
+          updated_at?: string
+          user_id: string
+          widget_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          settings?: Json | null
+          size?: string
+          updated_at?: string
+          user_id?: string
+          widget_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

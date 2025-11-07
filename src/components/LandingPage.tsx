@@ -12,6 +12,7 @@ import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
 import { OnboardingTour } from '@/components/OnboardingTour';
+import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -44,6 +45,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showWidgets, setShowWidgets] = useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
 
   // Check if user has seen the tour before
@@ -304,6 +306,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       <div className="h-[calc(100vh-5rem)] flex gap-6 p-6">
         {/* Main Content Area */}
+        {showWidgets ? (
+          <div className="flex-1 animate-fade-in">
+            <DashboardWidgets />
+          </div>
+        ) : (
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
           <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
@@ -471,6 +478,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* Tasks Panel */}
         <Card className={`border-border/40 shadow-xl transition-all duration-500 backdrop-blur-xl bg-card/95 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
