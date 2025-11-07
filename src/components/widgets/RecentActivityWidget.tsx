@@ -1,73 +1,89 @@
 import React from 'react';
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Activity, Circle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock, CheckCircle, FileText, UserPlus, Settings } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RecentActivityWidgetProps {
-  settings: Record<string, any>;
+  className?: string;
 }
 
-export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ settings }) => {
-  // Mock activity data - in real app, this would come from an API
+export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ className }) => {
+  // Mock recent activities - in real app, fetch from API
   const activities = [
     {
-      id: 1,
-      action: 'Completed task',
-      item: 'Review safety checklist',
-      time: new Date(Date.now() - 1000 * 60 * 15),
-      type: 'success'
+      id: '1',
+      type: 'approval',
+      action: 'Approved PSSR-2024-001',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      icon: CheckCircle,
+      color: 'text-green-500'
     },
     {
-      id: 2,
-      action: 'Created PSSR',
-      item: 'Plant A - Equipment Check',
-      time: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      type: 'info'
+      id: '2',
+      type: 'creation',
+      action: 'Created new checklist',
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+      icon: FileText,
+      color: 'text-blue-500'
     },
     {
-      id: 3,
-      action: 'Approved',
-      item: 'P2A Plan for Project X',
-      time: new Date(Date.now() - 1000 * 60 * 60 * 5),
-      type: 'success'
+      id: '3',
+      type: 'user',
+      action: 'Added team member',
+      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+      icon: UserPlus,
+      color: 'text-purple-500'
+    },
+    {
+      id: '4',
+      type: 'settings',
+      action: 'Updated project settings',
+      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      icon: Settings,
+      color: 'text-orange-500'
+    },
+    {
+      id: '5',
+      type: 'approval',
+      action: 'Reviewed P2A handover',
+      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      icon: CheckCircle,
+      color: 'text-green-500'
     }
   ];
 
-  const typeColors = {
-    success: 'text-success',
-    info: 'text-primary',
-    warning: 'text-warning'
-  };
-
   return (
-    <>
-      <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
-        <CardTitle className="text-lg font-bold flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
+    <Card className={`glass-card overflow-hidden border-border/40 ${className}`}>
+      <CardHeader className="border-b border-border/40 pb-4">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Clock className="w-4 h-4" />
           Recent Activity
         </CardTitle>
-        <CardDescription className="text-xs">Your latest actions</CardDescription>
       </CardHeader>
-      <CardContent className="p-4 space-y-3">
-        {activities.map((activity, idx) => (
-          <div
-            key={activity.id}
-            className="flex gap-3 p-3 rounded-lg border border-border/40 bg-gradient-to-br from-card/50 to-card/30 animate-smooth-in"
-            style={{ animationDelay: `${idx * 100}ms` }}
-          >
-            <Circle className={`w-2 h-2 mt-1.5 ${typeColors[activity.type as keyof typeof typeColors]} fill-current`} />
-            <div className="flex-1">
-              <p className="text-sm font-medium mb-1">
-                {activity.action} <span className="text-muted-foreground">•</span>{' '}
-                <span className="text-muted-foreground">{activity.item}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(activity.time, { addSuffix: true })}
-              </p>
-            </div>
-          </div>
-        ))}
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {activities.map((activity, index) => {
+            const Icon = activity.icon;
+            return (
+              <div
+                key={activity.id}
+                className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-all duration-200 animate-fade-in group"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className={`p-2 rounded-lg bg-muted/50 group-hover:scale-110 transition-transform duration-200`}>
+                  <Icon className={`w-4 h-4 ${activity.color}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{activity.action}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
-    </>
+    </Card>
   );
 };

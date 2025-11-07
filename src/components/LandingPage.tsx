@@ -16,12 +16,45 @@ import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WorkspacesWidget } from '@/components/widgets/WorkspacesWidget';
+import { RecentActivityWidget } from '@/components/widgets/RecentActivityWidget';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableWidgetWrapperProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({ id, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+      {children}
+    </div>
+  );
+};
+
 interface LandingPageProps {
   onBack: () => void;
   onNavigate: (section: string) => void;
@@ -57,8 +90,37 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Widget grid configuration
+  const [widgetOrder, setWidgetOrder] = useState(() => {
+    const saved = localStorage.getItem('dashboardWidgetOrder');
+    return saved ? JSON.parse(saved) : ['quick-actions', 'workspaces', 'recent-activity'];
+  });
+
   const MAX_IMAGES = 5;
   const chatEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Save widget order to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('dashboardWidgetOrder', JSON.stringify(widgetOrder));
+  }, [widgetOrder]);
+
+  // Drag and drop sensors for widgets
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setWidgetOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Check if user has seen the tour before
   React.useEffect(() => {
@@ -650,11 +712,24 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </CardContent>
             </Card>
 
-            {/* Widgets Section */}
-            <div className="grid grid-cols-2 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
-              <QuickActionsWidget onActionClick={setUserInput} />
-              <WorkspacesWidget onNavigate={onNavigate} />
-            </div>
+            {/* Widgets Section with Drag and Drop */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
+                  {widgetOrder.map((widgetId, index) => (
+                    <SortableWidgetWrapper key={widgetId} id={widgetId}>
+                      {widgetId === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
+                      {widgetId === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
+                      {widgetId === 'recent-activity' && <RecentActivityWidget />}
+                    </SortableWidgetWrapper>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
           )}
 

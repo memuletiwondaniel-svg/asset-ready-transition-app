@@ -143,7 +143,7 @@ export const DashboardWidgets: React.FC = () => {
       case 'quick-stats':
         return <QuickStatsWidget settings={widget.settings} />;
       case 'recent-activity':
-        return <RecentActivityWidget settings={widget.settings} />;
+        return <RecentActivityWidget />;
       case 'calendar':
         return <CalendarWidget settings={widget.settings} />;
       case 'projects':
