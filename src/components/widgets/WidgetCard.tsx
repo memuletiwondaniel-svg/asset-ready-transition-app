@@ -32,13 +32,13 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   if (!isVisible) return null;
 
   return (
-    <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 ${isExpanded ? 'col-span-full' : ''} ${className}`}>
+    <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} ${className}`}>
       <CardHeader className="border-b border-border/40 pb-4 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-2 flex-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted"
+            className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
             {...dragAttributes}
             {...dragListeners}
           >
@@ -48,7 +48,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>

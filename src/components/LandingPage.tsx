@@ -931,15 +931,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       >
                         <GripVertical className="w-4 h-4 text-muted-foreground" />
                       </Button>
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/80 to-accent flex items-center justify-center shadow-lg">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/80 to-accent flex items-center justify-center shadow-lg flex-shrink-0">
                         <ListTodo className="w-5 h-5 text-white" />
                       </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-xl font-bold whitespace-nowrap">Pending Tasks</CardTitle>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -976,7 +976,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <SelectContent className="backdrop-blur-xl bg-background/98">
                       <SelectItem value="all">
                         <div className="flex items-center justify-between w-full">
-                          <span>All Types</span>
+                          <span>All</span>
                           <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
                             {taskCounts.all}
                           </Badge>
