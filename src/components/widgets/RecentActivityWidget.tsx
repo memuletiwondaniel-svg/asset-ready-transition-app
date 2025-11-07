@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, CheckCircle, FileText, UserPlus, Settings } from 'lucide-react';
+import { CheckCircle, FileText, UserPlus, Settings } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RecentActivityWidgetProps {
@@ -53,37 +52,29 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ clas
   ];
 
   return (
-    <Card className={`glass-card overflow-hidden border-border/40 ${className}`}>
-      <CardHeader className="border-b border-border/40 pb-4">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          Recent Activity
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {activities.map((activity, index) => {
-            const Icon = activity.icon;
-            return (
-              <div
-                key={activity.id}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-all duration-200 animate-fade-in group"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className={`p-2 rounded-lg bg-muted/50 group-hover:scale-110 transition-transform duration-200`}>
-                  <Icon className={`w-4 h-4 ${activity.color}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
-                  </p>
-                </div>
+    <div className={className}>
+      <div className="space-y-3">
+        {activities.map((activity, index) => {
+          const Icon = activity.icon;
+          return (
+            <div
+              key={activity.id}
+              className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-all duration-200 animate-fade-in group"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className={`p-2 rounded-lg bg-muted/50 group-hover:scale-110 transition-transform duration-200`}>
+                <Icon className={`w-4 h-4 ${activity.color}`} />
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{activity.action}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 };

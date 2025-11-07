@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList, KeyRound, Settings, ArrowRight } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
@@ -39,36 +38,30 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
   ];
 
   return (
-    <Card className={`glass-card overflow-hidden border-border/40 ${className}`}>
-      <CardHeader className="border-b border-border/40 pb-4">
-        <CardTitle className="text-base font-semibold">Workspaces</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-3">
-          {workspaces.map((workspace, index) => {
-            const Icon = workspace.icon;
-            return (
-              <button
-                key={workspace.id}
-                onClick={() => onNavigate?.(workspace.id)}
-                className={`relative w-full p-4 rounded-xl ${workspace.bg} ${workspace.hoverBg} transition-all duration-300 group border border-transparent hover:border-border/60 hover:shadow-md animate-fade-in`}
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-lg bg-background/50 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className={`w-6 h-6 ${workspace.color}`} />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="text-sm font-semibold mb-1">{workspace.title}</h3>
-                    <p className="text-xs text-muted-foreground">{workspace.description}</p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
+    <div className={className}>
+      <div className="space-y-3">
+        {workspaces.map((workspace, index) => {
+          const Icon = workspace.icon;
+          return (
+            <button
+              key={workspace.id}
+              onClick={() => onNavigate?.(workspace.id)}
+              className={`relative w-full p-4 rounded-xl ${workspace.bg} ${workspace.hoverBg} transition-all duration-300 group border border-transparent hover:border-border/60 hover:shadow-md animate-fade-in`}
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-lg bg-background/50 group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className={`w-6 h-6 ${workspace.color}`} />
                 </div>
-              </button>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+                <div className="flex-1 text-left">
+                  <h3 className="text-sm font-semibold">{workspace.title}</h3>
+                </div>
+                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 };

@@ -17,6 +17,7 @@ import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WorkspacesWidget } from '@/components/widgets/WorkspacesWidget';
 import { RecentActivityWidget } from '@/components/widgets/RecentActivityWidget';
+import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
@@ -27,12 +28,20 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+interface WidgetConfig {
+  id: string;
+  title: string;
+  isVisible: boolean;
+  isExpanded: boolean;
+}
+
 interface SortableWidgetWrapperProps {
   id: string;
   children: React.ReactNode;
+  isExpanded: boolean;
 }
 
-const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({ id, children }) => {
+const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({ id, children, isExpanded }) => {
   const {
     attributes,
     listeners,
@@ -49,7 +58,13 @@ const SortableWidgetWrapper: React.FC<SortableWidgetWrapperProps> = ({ id, child
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners} 
+      className={`cursor-grab active:cursor-grabbing ${isExpanded ? 'col-span-full' : ''}`}
+    >
       {children}
     </div>
   );
@@ -91,18 +106,22 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Widget grid configuration
-  const [widgetOrder, setWidgetOrder] = useState(() => {
-    const saved = localStorage.getItem('dashboardWidgetOrder');
-    return saved ? JSON.parse(saved) : ['quick-actions', 'workspaces', 'recent-activity'];
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
+    const saved = localStorage.getItem('dashboardWidgetConfig');
+    return saved ? JSON.parse(saved) : [
+      { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
+      { id: 'workspaces', title: 'Workspaces', isVisible: true, isExpanded: false },
+      { id: 'recent-activity', title: 'Recent Activity', isVisible: true, isExpanded: false }
+    ];
   });
 
   const MAX_IMAGES = 5;
   const chatEndRef = React.useRef<HTMLDivElement>(null);
 
-  // Save widget order to localStorage
+  // Save widget config to localStorage
   React.useEffect(() => {
-    localStorage.setItem('dashboardWidgetOrder', JSON.stringify(widgetOrder));
-  }, [widgetOrder]);
+    localStorage.setItem('dashboardWidgetConfig', JSON.stringify(widgets));
+  }, [widgets]);
 
   // Drag and drop sensors for widgets
   const sensors = useSensors(
@@ -114,13 +133,45 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
-      setWidgetOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
+      setWidgets((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
+
+  const handleToggleVisibility = (widgetId: string) => {
+    setWidgets((items) =>
+      items.map((item) =>
+        item.id === widgetId ? { ...item, isVisible: false } : item
+      )
+    );
+    toast({
+      title: 'Widget hidden',
+      description: 'Widget has been hidden from your dashboard'
+    });
+  };
+
+  const handleToggleExpand = (widgetId: string) => {
+    setWidgets((items) =>
+      items.map((item) =>
+        item.id === widgetId ? { ...item, isExpanded: !item.isExpanded } : item
+      )
+    );
+  };
+
+  const handleShowAllWidgets = () => {
+    setWidgets((items) =>
+      items.map((item) => ({ ...item, isVisible: true }))
+    );
+    toast({
+      title: 'All widgets visible',
+      description: 'All widgets have been restored to your dashboard'
+    });
+  };
+
+  const hasHiddenWidgets = widgets.some((w) => !w.isVisible);
 
   // Check if user has seen the tour before
   React.useEffect(() => {
@@ -713,18 +764,39 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </Card>
 
             {/* Widgets Section with Drag and Drop */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Dashboard Widgets</h2>
+              {hasHiddenWidgets && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleShowAllWidgets}
+                  className="text-xs"
+                >
+                  Show All Widgets
+                </Button>
+              )}
+            </div>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+              <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
                 <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '48%' : '68%' }}>
-                  {widgetOrder.map((widgetId, index) => (
-                    <SortableWidgetWrapper key={widgetId} id={widgetId}>
-                      {widgetId === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
-                      {widgetId === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
-                      {widgetId === 'recent-activity' && <RecentActivityWidget />}
+                  {widgets.filter(w => w.isVisible).map((widget) => (
+                    <SortableWidgetWrapper key={widget.id} id={widget.id} isExpanded={widget.isExpanded}>
+                      <WidgetCard
+                        title={widget.title}
+                        isExpanded={widget.isExpanded}
+                        isVisible={widget.isVisible}
+                        onToggleVisibility={() => handleToggleVisibility(widget.id)}
+                        onToggleExpand={() => handleToggleExpand(widget.id)}
+                      >
+                        {widget.id === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
+                        {widget.id === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
+                        {widget.id === 'recent-activity' && <RecentActivityWidget />}
+                      </WidgetCard>
                     </SortableWidgetWrapper>
                   ))}
                 </div>
