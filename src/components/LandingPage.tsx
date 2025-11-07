@@ -461,7 +461,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 Welcome, {userName}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 pt-3 flex flex-col flex-1 overflow-hidden">
+            <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
               <div className="space-y-1.5 flex-shrink-0">
                 {imagePreviews.length > 0 && (
                   <div className="flex flex-wrap gap-2">
