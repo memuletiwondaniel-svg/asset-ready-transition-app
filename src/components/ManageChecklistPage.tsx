@@ -234,7 +234,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <AnimatedBackground>
@@ -293,7 +293,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <AnimatedBackground>
@@ -360,7 +360,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={[{ label: 'Home', icon: Home }, { label: 'Admin Tools', icon: Settings }, { label: 'Success', icon: ClipboardList }]}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <AnimatedBackground>
@@ -406,7 +406,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} selectedLanguage={currentLanguage} translations={t} />
@@ -418,7 +418,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         userName="Daniel"
         userTitle="ORA Engr."
         language="en"
-        breadcrumbs={getBreadcrumbs()}
+        currentPage="admin-tools"
       />
       <div className="flex-1 overflow-auto">
         <AnimatedBackground>

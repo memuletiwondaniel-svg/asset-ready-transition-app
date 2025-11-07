@@ -292,7 +292,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -307,7 +307,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -322,7 +322,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -337,7 +337,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -352,7 +352,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userName="Daniel"
           userTitle="ORA Engr."
           language="en"
-          breadcrumbs={getBreadcrumbs()}
+          currentPage="admin-tools"
         />
         <div className="flex-1 overflow-auto">
           <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
@@ -365,7 +365,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         userName="Daniel"
         userTitle="ORA Engr."
         language="en"
-        breadcrumbs={getBreadcrumbs()}
+        currentPage="admin-tools"
       />
       <div className="flex-1 overflow-auto">
         <AnimatedBackground>

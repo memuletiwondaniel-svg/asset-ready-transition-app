@@ -4,19 +4,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
-import { ThemeToggle } from './admin/ThemeToggle';
-import { NotificationCenter } from '@/components/NotificationCenter';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, ShieldCheck, Users, FileText, FolderKanban } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
-interface BreadcrumbItem {
+import { cn } from '@/lib/utils';
+
+interface NavigationItem {
   label: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  onClick?: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  path: string;
+  section?: string;
 }
 
 interface OrshSidebarProps {
@@ -34,7 +34,6 @@ interface OrshSidebarProps {
   onSearchHistoryClick?: (item: string) => void;
   showSearchHistory?: boolean;
   onToggleSearchHistory?: () => void;
-  breadcrumbs?: BreadcrumbItem[];
 }
 export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   userName = 'Daniel',
@@ -42,15 +41,25 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   userAvatar = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
   language = 'en',
   onLanguageChange,
+  onNavigate,
   onShowWidgets,
   onShowOnboarding,
   showWidgets = false,
+  currentPage = 'home',
   searchHistory = [],
   onSearchHistoryClick,
   showSearchHistory = false,
-  onToggleSearchHistory,
-  breadcrumbs = [{ label: 'Home', icon: Home }]
+  onToggleSearchHistory
 }) => {
+  
+  // Navigation items
+  const navigationItems: NavigationItem[] = [
+    { label: 'Home', icon: Home, path: '/', section: 'home' },
+    { label: 'Safe Start-Up', icon: ShieldCheck, path: '/safe-startup', section: 'safe-startup' },
+    { label: 'User Management', icon: Users, path: '/user-management', section: 'user-management' },
+    { label: 'Admin Tools', icon: Settings, path: '/admin-tools', section: 'admin-tools' },
+    { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },
+  ];
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -70,46 +79,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         <div className="flex items-center justify-center mb-4">
           {!isSidebarCollapsed ? <OrshLogo size="medium" className="animate-fade-in" /> : <OrshLogo size="small" />}
         </div>
-
-        {!isSidebarCollapsed && <>
-            {/* Breadcrumb Navigation */}
-            <div className="mb-4 animate-fade-in">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((crumb, index) => {
-                    const Icon = crumb.icon || Home;
-                    const isLast = index === breadcrumbs.length - 1;
-                    
-                    return (
-                      <React.Fragment key={index}>
-                        <BreadcrumbItem>
-                          {isLast ? (
-                            <BreadcrumbPage className="flex items-center gap-1.5 text-sm font-medium">
-                              <Icon className="h-3.5 w-3.5" />
-                              {crumb.label}
-                            </BreadcrumbPage>
-                          ) : (
-                            <button
-                              onClick={crumb.onClick}
-                              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              {crumb.label}
-                            </button>
-                          )}
-                        </BreadcrumbItem>
-                        {!isLast && (
-                          <span className="mx-2 text-muted-foreground text-sm">/</span>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-
-            <Separator className="mb-4" />
-          </>}
         
         {/* User Profile Section */}
         <Collapsible open={userMenuOpen} onOpenChange={setUserMenuOpen}>
@@ -166,8 +135,66 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         </Collapsible>
       </div>
 
-      {/* Navigation Menu - Removed, only widgets on main page */}
+      {/* Navigation Menu */}
       <ScrollArea className="flex-1 p-4">
+        {/* Main Navigation */}
+        {!isSidebarCollapsed && (
+          <div className="mb-6">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
+              Navigation
+            </p>
+            <div className="space-y-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentPage === item.section;
+                
+                return (
+                  <Button
+                    key={item.section}
+                    variant={isActive ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => onNavigate?.(item.section || '')}
+                    className={cn(
+                      "w-full justify-start h-9",
+                      isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                    )}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {isSidebarCollapsed && (
+          <div className="space-y-2 mb-6">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentPage === item.section;
+              
+              return (
+                <Button
+                  key={item.section}
+                  variant={isActive ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => onNavigate?.(item.section || '')}
+                  className={cn(
+                    "w-full h-9",
+                    isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                  )}
+                  title={item.label}
+                >
+                  <Icon className="h-4 w-4" />
+                </Button>
+              );
+            })}
+          </div>
+        )}
+
+        <Separator className="mb-4" />
+
         {/* Quick Actions */}
         <div className="space-y-2">
           {/* Theme Toggle Row */}

@@ -55,12 +55,14 @@ import PSSRKanbanBoard from './PSSRKanbanBoard';
 import PSSRTimelineView from './PSSRTimelineView';
 import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
+import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
 import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
 import { OrshSidebar } from './OrshSidebar';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
@@ -542,27 +544,55 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         userName="Daniel"
         userTitle="ORA Engr."
         language="en"
-        breadcrumbs={getBreadcrumbs()}
+        currentPage="safe-startup"
+        onNavigate={(section) => {
+          if (section === 'home') {
+            onBack();
+          }
+        }}
       />
       
       <div className="flex-1 relative z-10 overflow-auto">
-      {/* Modern Minimalist Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
-        <div className="max-w-[1400px] mx-auto px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Button 
-                variant="ghost" 
-                onClick={onBack} 
-                size="sm"
-                className="hover:bg-muted/50 gap-2 text-muted-foreground hover:text-foreground transition-all"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden md:inline">Back</span>
-              </Button>
-              
-              <div className="h-6 w-px bg-border/50"></div>
-              
+        {/* Modern Minimalist Header */}
+        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
+          <div className="max-w-[1400px] mx-auto px-6 py-5">
+            {/* Breadcrumb Navigation */}
+            <div className="mb-4">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {getBreadcrumbs().map((crumb, index) => {
+                    const Icon = crumb.icon || Home;
+                    const isLast = index === getBreadcrumbs().length - 1;
+                    
+                    return (
+                      <React.Fragment key={index}>
+                        <BreadcrumbItem>
+                          {isLast ? (
+                            <BreadcrumbPage className="flex items-center gap-1.5 text-sm font-medium">
+                              <Icon className="h-3.5 w-3.5" />
+                              {crumb.label}
+                            </BreadcrumbPage>
+                          ) : (
+                            <button
+                              onClick={crumb.onClick}
+                              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                              {crumb.label}
+                            </button>
+                          )}
+                        </BreadcrumbItem>
+                        {!isLast && (
+                          <span className="mx-2 text-muted-foreground text-sm">/</span>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
                   <ShieldCheck className="h-5 w-5 text-primary" />
@@ -572,33 +602,32 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   <p className="text-xs text-muted-foreground">Pre-Start-Up Safety Review</p>
                 </div>
               </div>
-            </div>
 
-            {/* Header Actions */}
-            <div className="flex items-center gap-3">
-              {userRole === 'admin' && (
+              {/* Header Actions */}
+              <div className="flex items-center gap-3">
+                {userRole === 'admin' && (
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveView('manage-checklist')}
+                    className="hidden lg:flex gap-2 hover:bg-muted/50"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Manage</span>
+                  </Button>
+                )}
                 <Button 
-                  variant="outline"
+                  onClick={() => setActiveView('create')}
                   size="sm"
-                  onClick={() => setActiveView('manage-checklist')}
-                  className="hidden lg:flex gap-2 hover:bg-muted/50"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2"
                 >
-                  <Settings className="h-4 w-4" />
-                  <span>Manage</span>
+                  <Plus className="h-4 w-4" />
+                  <span>New PSSR</span>
                 </Button>
-              )}
-              <Button 
-                onClick={() => setActiveView('create')}
-                size="sm"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>New PSSR</span>
-              </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
         {/* Modern Stats Grid */}
@@ -676,15 +705,13 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-5">
             <div className="flex flex-col lg:flex-row gap-4 items-center">
-              <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by Project ID, Asset, Lead..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10 h-10 border-border/50 bg-background/50 focus:bg-background"
-                />
-              </div>
+              <PSSRAdvancedSearch
+                pssrs={pssrList}
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onSelectPSSR={handleViewDetails}
+                placeholder="Search by Project ID, Name, Asset, Lead..."
+              />
               
               <div className="flex items-center gap-3 w-full lg:w-auto">
                 <PSSRFilters

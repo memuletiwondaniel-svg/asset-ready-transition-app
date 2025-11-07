@@ -165,7 +165,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
         userName="Daniel"
         userTitle="ORA Engr."
         language="en"
-        breadcrumbs={breadcrumbs}
+        currentPage="user-management"
       />
       
       <div className="flex-1 overflow-auto">
