@@ -30,6 +30,7 @@ import OrshLogo from './ui/OrshLogo';
 import LanguageSelector from '@/components/admin/LanguageSelector';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import { getCurrentTranslations } from '@/utils/translations';
+import { OrshSidebar } from './OrshSidebar';
 interface ManageChecklistPageProps {
   onBack: () => void;
   selectedLanguage?: string;
@@ -203,8 +204,37 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     sessionStorage.removeItem(`new-checklist-${checklist.id}`);
     setSelectedChecklist(checklist);
   };
+
+  // Generate breadcrumbs based on current state
+  const getBreadcrumbs = () => {
+    const crumbs = [{ label: 'Home', icon: Home }, { label: 'Admin Tools', icon: Settings }];
+    
+    if (showCreateForm) {
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+      crumbs.push({ label: 'Create Checklist', icon: Plus });
+    } else if (showEditForm) {
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+      crumbs.push({ label: 'Edit Checklist', icon: Edit3 });
+    } else if (selectedChecklist) {
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+      crumbs.push({ label: selectedChecklist.name, icon: FileText });
+    } else {
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+    }
+    
+    return crumbs;
+  };
+
   if (showCreateForm) {
-    return <AnimatedBackground>
+    return <div className="min-h-screen flex w-full">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
             <div className="container flex h-20 items-center justify-between gap-4">
@@ -250,10 +280,20 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
           <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} selectedLanguage={currentLanguage} translations={t} />
         </div>
-      </AnimatedBackground>;
+          </AnimatedBackground>
+        </div>
+      </div>;
   }
   if (showEditForm && editingChecklist) {
-    return <AnimatedBackground>
+    return <div className="min-h-screen flex w-full">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
             <div className="container flex h-20 items-center justify-between gap-4">
@@ -307,10 +347,20 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           setEditingChecklist(null);
         }} onSave={handleEditComplete} />
         </div>
-      </AnimatedBackground>;
+          </AnimatedBackground>
+        </div>
+      </div>;
   }
   if (showSuccessPage) {
-    return <AnimatedBackground>
+    return <div className="min-h-screen flex w-full">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={[{ label: 'Home', icon: Home }, { label: 'Admin Tools', icon: Settings }, { label: 'Success', icon: ClipboardList }]}
+        />
+        <div className="flex-1 overflow-auto">
+          <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
             <div className="container flex h-20 items-center justify-between gap-4">
@@ -343,12 +393,32 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           setShowCreateForm(true);
         }} />
         </div>
-      </AnimatedBackground>;
+          </AnimatedBackground>
+        </div>
+      </div>;
   }
   if (selectedChecklist) {
-    return <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} selectedLanguage={currentLanguage} translations={t} />;
+    return <div className="min-h-screen flex w-full">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} selectedLanguage={currentLanguage} translations={t} />
+        </div>
+      </div>;
   }
-  return <AnimatedBackground>
+  return <div className="min-h-screen flex w-full">
+      <OrshSidebar 
+        userName="Daniel"
+        userTitle="ORA Engr."
+        language="en"
+        breadcrumbs={getBreadcrumbs()}
+      />
+      <div className="flex-1 overflow-auto">
+        <AnimatedBackground>
       <div className="relative z-10">
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
           <div className="container flex h-20 items-center justify-between gap-4">
@@ -553,6 +623,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </AnimatedBackground>;
+        </AnimatedBackground>
+      </div>
+    </div>;
 };
 export default ManageChecklistPage;

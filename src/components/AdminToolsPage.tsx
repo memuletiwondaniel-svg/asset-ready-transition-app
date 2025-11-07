@@ -15,6 +15,7 @@ import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
+import { OrshSidebar } from './OrshSidebar';
 interface AdminToolsPageProps {
   onBack: () => void;
 }
@@ -250,43 +251,124 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return filteredAdminTools.filter(tool => !favoriteTools.includes(tool.id));
   }, [filteredAdminTools, favoriteTools]);
 
+  // Generate breadcrumbs based on current view
+  const getBreadcrumbs = () => {
+    const crumbs = [{ label: 'Home', icon: Home }];
+    
+    switch (activeView) {
+      case 'dashboard':
+        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        break;
+      case 'users':
+        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        crumbs.push({ label: 'User Management', icon: Users });
+        break;
+      case 'checklist':
+        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+        break;
+      case 'pssr-settings':
+        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        crumbs.push({ label: 'PSSR Configuration', icon: Settings });
+        break;
+      case 'projects':
+        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        crumbs.push({ label: 'Project Management', icon: FolderOpen });
+        break;
+      case 'activity-log':
+        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        crumbs.push({ label: 'Activity Log', icon: Activity });
+        break;
+    }
+    
+    return crumbs;
+  };
+
   // Handle conditional views AFTER all hooks
   if (activeView === 'users') {
     return (
-      <div className="animate-fade-in">
-        <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+      <div className="min-h-screen flex w-full animate-fade-in">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+        </div>
       </div>
     );
   }
   if (activeView === 'checklist') {
     return (
-      <div className="animate-fade-in">
-        <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+      <div className="min-h-screen flex w-full animate-fade-in">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+        </div>
       </div>
     );
   }
   if (activeView === 'pssr-settings') {
     return (
-      <div className="animate-fade-in">
-        <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+      <div className="min-h-screen flex w-full animate-fade-in">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+        </div>
       </div>
     );
   }
   if (activeView === 'projects') {
     return (
-      <div className="animate-fade-in">
-        <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+      <div className="min-h-screen flex w-full animate-fade-in">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
+        </div>
       </div>
     );
   }
   if (activeView === 'activity-log') {
     return (
-      <div className="animate-fade-in">
-        <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
+      <div className="min-h-screen flex w-full animate-fade-in">
+        <OrshSidebar 
+          userName="Daniel"
+          userTitle="ORA Engr."
+          language="en"
+          breadcrumbs={getBreadcrumbs()}
+        />
+        <div className="flex-1 overflow-auto">
+          <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
+        </div>
       </div>
     );
   }
-  return <AnimatedBackground>
+  return <div className="min-h-screen flex w-full">
+      <OrshSidebar 
+        userName="Daniel"
+        userTitle="ORA Engr."
+        language="en"
+        breadcrumbs={getBreadcrumbs()}
+      />
+      <div className="flex-1 overflow-auto">
+        <AnimatedBackground>
       <AdminHeader selectedLanguage={language} onLanguageChange={setLanguage} translations={t}>
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
@@ -533,7 +615,9 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         )}
       </TooltipProvider>
       </div>
-    </AnimatedBackground>;
+        </AnimatedBackground>
+      </div>
+    </div>;
 };
 
 const AdminToolsPage: React.FC<AdminToolsPageProps> = (props) => {

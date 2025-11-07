@@ -32,12 +32,14 @@ import {
   XCircle,
   Clock,
   UserCheck,
-  AlertTriangle
+  AlertTriangle,
+  Home
 } from "lucide-react";
 import EnhancedCreateUserModal from "@/components/user-management/EnhancedCreateUserModal";
 import UserDetailsModal from "@/components/user-management/UserDetailsModal";
 import AuthenticatorApprovalModal from "@/components/user-management/AuthenticatorApprovalModal";
 import { useUsers } from "@/hooks/useUsers";
+import { OrshSidebar } from "@/components/OrshSidebar";
 
 interface UserManagementProps {
   onBack: () => void;
@@ -152,9 +154,23 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
   const companies = ["BGC", "Kent", "Others"];
   const projects = ["Project Alpha", "Project Beta", "Project Gamma"]; // Mock projects
 
+  const breadcrumbs = [
+    { label: 'Home', icon: Home },
+    { label: 'User Management', icon: Users }
+  ];
+
   return (
-    <AnimatedBackground>
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="min-h-screen flex w-full">
+      <OrshSidebar 
+        userName="Daniel"
+        userTitle="ORA Engr."
+        language="en"
+        breadcrumbs={breadcrumbs}
+      />
+      
+      <div className="flex-1 overflow-auto">
+        <AnimatedBackground>
+          <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -466,7 +482,9 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
           onReject={handleRejectUser}
         />
       )}
-    </AnimatedBackground>
+        </AnimatedBackground>
+      </div>
+    </div>
   );
 };
 
