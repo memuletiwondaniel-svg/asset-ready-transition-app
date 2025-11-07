@@ -1,11 +1,12 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff, Edit, Copy, Archive } from 'lucide-react';
+import { GripVertical, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff, Edit, Copy, Archive, MapPin, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 
 interface DraggablePSSRCardProps {
   pssr: {
@@ -71,6 +72,26 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
     transition,
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Approved': return 'border-emerald-500';
+      case 'Under Review': return 'border-amber-500';
+      case 'In Progress': return 'border-blue-500';
+      case 'Pending': return 'border-orange-500';
+      default: return 'border-slate-500';
+    }
+  };
+
+  const getStatusBg = (status: string) => {
+    switch (status) {
+      case 'Approved': return 'bg-emerald-500/10';
+      case 'Under Review': return 'bg-amber-500/10';
+      case 'In Progress': return 'bg-blue-500/10';
+      case 'Pending': return 'bg-orange-500/10';
+      default: return 'bg-slate-500/10';
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -84,24 +105,60 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       }`}
     >
       <Card
-        className={`group relative overflow-hidden border-border/50 cursor-pointer transition-all duration-200 ${
-          isPinned ? 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/40 dark:border-amber-900/40' : 'hover:shadow-md hover:border-border/80'
+        className={`group relative overflow-hidden border-border/40 cursor-pointer transition-all duration-300 ${
+          isPinned ? 'ring-2 ring-amber-400/50 shadow-lg shadow-amber-100/20 dark:shadow-amber-900/20' : 'hover:shadow-lg hover:border-primary/30'
         } ${isDragging ? 'ring-2 ring-primary/30' : ''}`}
         onClick={() => onViewDetails(pssr.id)}
       >
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/2 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Status Color Bar */}
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${getStatusColor(pssr.status)}`} />
 
-        {/* Quick Actions - Appears on hover */}
+        {/* Pinned Indicator */}
+        {isPinned && (
+          <div className="absolute top-0 right-0 w-0 h-0 border-t-[40px] border-l-[40px] border-t-amber-400/20 border-l-transparent" />
+        )}
+
+        {/* Drag Handle - Shows on hover */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all cursor-grab active:cursor-grabbing p-1.5 hover:bg-muted/50 rounded-md"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+
+        {/* Quick Actions - Top Right */}
         <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
           <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTogglePin(pssr.id);
+                  }}
+                >
+                  {isPinned ? (
+                    <PinOff className="h-3.5 w-3.5 text-amber-500" />
+                  ) : (
+                    <Pin className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isPinned ? 'Unpin' : 'Pin'}</TooltipContent>
+            </Tooltip>
+
             {onEdit && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 bg-background/80 hover:bg-background border border-border/50 shadow-sm"
+                    className="h-7 w-7 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       onEdit(pssr.id);
@@ -110,16 +167,17 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Edit PSSR</TooltipContent>
+                <TooltipContent>Edit</TooltipContent>
               </Tooltip>
             )}
+
             {onDuplicate && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 bg-background/80 hover:bg-background border border-border/50 shadow-sm"
+                    className="h-7 w-7 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicate(pssr.id);
@@ -128,16 +186,17 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Duplicate PSSR</TooltipContent>
+                <TooltipContent>Duplicate</TooltipContent>
               </Tooltip>
             )}
+
             {onArchive && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 bg-background/80 hover:bg-background border border-border/50 shadow-sm"
+                    className="h-7 w-7 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       onArchive(pssr.id);
@@ -146,101 +205,92 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                     <Archive className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Archive PSSR</TooltipContent>
+                <TooltipContent>Archive</TooltipContent>
               </Tooltip>
             )}
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-5 relative">
-          <div className="flex items-center gap-4">
-            {/* Drag Handle - Shows on hover */}
-            <div
-              {...attributes}
-              {...listeners}
-              className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="flex-1 grid grid-cols-12 gap-4 items-center">
-              
-              {/* Project Info - 3 cols */}
-              <div className="col-span-3 min-w-0">
+        <CardContent className="p-6 pl-8">
+          <div className="space-y-4">
+            {/* Header Row */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="default" className="bg-primary text-primary-foreground font-semibold text-xs px-2.5 py-0.5">
+                  <Badge variant="default" className="font-mono font-semibold">
                     {pssr.projectId}
                   </Badge>
                   <Badge 
                     variant="outline" 
-                    className={`text-xs font-medium ${
-                      pssr.tier === 1 ? 'border-red-500/40 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20' :
-                      pssr.tier === 2 ? 'border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-950/20' :
-                      'border-green-500/40 text-green-600 dark:text-green-400 bg-green-50/50 dark:bg-green-950/20'
+                    className={`text-xs ${
+                      pssr.tier === 1 ? 'border-red-500/50 text-red-600 dark:text-red-400' :
+                      pssr.tier === 2 ? 'border-orange-500/50 text-orange-600 dark:text-orange-400' :
+                      'border-green-500/50 text-green-600 dark:text-green-400'
                     }`}
                   >
                     Tier {pssr.tier}
                   </Badge>
                 </div>
-                <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
                   {pssr.projectName}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">{pssr.asset}</p>
-              </div>
-
-              {/* Lead Info - 3 cols */}
-              <div className="col-span-3 flex items-center gap-2.5">
-                <img 
-                  src={pssr.pssrLeadAvatar} 
-                  alt={pssr.pssrLead}
-                  className="w-9 h-9 rounded-full border-2 border-border/50 shadow-sm"
-                />
-                <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
-                  <p className="text-sm font-medium text-foreground truncate">{pssr.pssrLead}</p>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {pssr.asset}
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {pssr.lastActivity}
+                  </span>
                 </div>
               </div>
 
-              {/* Progress - 2 cols */}
-              <div className="col-span-2 text-center">
-                <div className="text-2xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Complete</p>
+              {/* Status Badge */}
+              <Badge 
+                className={`${getStatusBg(pssr.status)} ${getStatusColor(pssr.status).replace('border-', 'text-')} border-0 font-medium`}
+              >
+                {pssr.status}
+                {pssr.pendingApprovals > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-background/40 rounded text-[10px]">
+                    {pssr.pendingApprovals}
+                  </span>
+                )}
+              </Badge>
+            </div>
+
+            {/* Progress Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-semibold text-foreground">{pssr.progress}%</span>
+              </div>
+              <Progress value={pssr.progress} className="h-2" />
+            </div>
+
+            {/* Footer Row */}
+            <div className="flex items-center justify-between pt-2 border-t border-border/40">
+              {/* Lead Info */}
+              <div className="flex items-center gap-2">
+                <img 
+                  src={pssr.pssrLeadAvatar} 
+                  alt={pssr.pssrLead}
+                  className="w-8 h-8 rounded-full border-2 border-border/50"
+                />
+                <div>
+                  <p className="text-xs text-muted-foreground">PSSR Lead</p>
+                  <p className="text-sm font-medium text-foreground">{pssr.pssrLead}</p>
+                </div>
               </div>
 
-              {/* Status & Pin - 4 cols */}
-              <div className="col-span-4 flex items-center justify-end gap-2">
-                <Badge 
-                  variant="outline"
-                  className={`py-1.5 px-3 font-medium ${
-                    pssr.status === 'Approved' ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' :
-                    pssr.status === 'Under Review' ? 'border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20' :
-                    pssr.status === 'In Progress' ? 'border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20' :
-                    pssr.status === 'Pending' ? 'border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-950/20' :
-                    'border-slate-500/40 text-slate-600 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-950/20'
-                  }`}
-                >
-                  {pssr.status}
-                  {pssr.pendingApprovals > 0 && (
-                    <span className="ml-2 text-[10px]">({pssr.pendingApprovals})</span>
-                  )}
-                </Badge>
-                
-                {/* Pin Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTogglePin(pssr.id);
-                  }}
-                  className="p-2 hover:bg-muted/40 rounded-lg transition-colors flex-shrink-0"
-                >
-                  {isPinned ? (
-                    <PinOff className="h-4 w-4 text-amber-500" />
-                  ) : (
-                    <Pin className="h-4 w-4 text-muted-foreground hover:text-amber-500 transition-colors" />
-                  )}
-                </button>
+              {/* Team & Priority */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-sm">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground font-medium">{pssr.teamMembers}</span>
+                </div>
+                <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)}`} />
               </div>
             </div>
           </div>
