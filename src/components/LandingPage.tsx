@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
@@ -37,11 +39,20 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'due_date' | 'type'>('priority');
   const [taskFilterType, setTaskFilterType] = useState<string>('all');
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
+  const chatEndRef = React.useRef<HTMLDivElement>(null);
   const {
     tasks,
     loading: tasksLoading,
-    updateTaskStatus
+    updateTaskStatus,
+    deleteTask
   } = useUserTasks();
+  
+  // Scroll to bottom when new messages arrive
+  React.useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
   const {
     isListening,
     startListening,
@@ -166,6 +177,30 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       handleSend();
     }
   };
+
+  const handleTaskAction = async (taskId: string, action: 'complete' | 'dismiss') => {
+    if (action === 'complete') {
+      await updateTaskStatus(taskId, 'completed');
+    } else {
+      await deleteTask(taskId);
+    }
+    setTaskToDelete(null);
+    setTaskAction(null);
+    toast({
+      title: action === 'complete' ? 'Task completed' : 'Task dismissed',
+      description: `Task has been ${action === 'complete' ? 'marked as complete' : 'removed from your list'}`
+    });
+  };
+
+  // Calculate task counts by type
+  const taskCounts = React.useMemo(() => {
+    return {
+      all: tasks.length,
+      approval: tasks.filter(t => t.type === 'approval').length,
+      review: tasks.filter(t => t.type === 'review').length,
+      action: tasks.filter(t => t.type === 'action').length
+    };
+  }, [tasks]);
 
   // Filter and sort tasks
   const filteredAndSortedTasks = React.useMemo(() => {
@@ -310,8 +345,33 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </Card>
                 )}
               </div>
-
               
+              {/* AI Conversation Display */}
+              {messages.length > 0 && (
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="space-y-4 py-4">
+                    {messages.map((msg, idx) => (
+                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          msg.role === 'user' 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted'
+                        }`}>
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {isLoadingAI && (
+                      <div className="flex justify-start">
+                        <div className="bg-muted rounded-lg px-4 py-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
 
@@ -377,10 +437,30 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       <SelectValue placeholder="Filter" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="approval">Approval</SelectItem>
-                      <SelectItem value="review">Review</SelectItem>
-                      <SelectItem value="action">Action</SelectItem>
+                      <SelectItem value="all">
+                        All Types
+                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
+                          {taskCounts.all}
+                        </Badge>
+                      </SelectItem>
+                      <SelectItem value="approval">
+                        Approval
+                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
+                          {taskCounts.approval}
+                        </Badge>
+                      </SelectItem>
+                      <SelectItem value="review">
+                        Review
+                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
+                          {taskCounts.review}
+                        </Badge>
+                      </SelectItem>
+                      <SelectItem value="action">
+                        Action
+                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
+                          {taskCounts.action}
+                        </Badge>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={taskSortBy} onValueChange={(value) => setTaskSortBy(value as 'priority' | 'due_date' | 'type')}>
@@ -399,16 +479,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-16rem)]">
                 {tasksLoading ? <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div> : filteredAndSortedTasks.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                    <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No {taskFilterType !== 'all' ? taskFilterType : ''} tasks</p>
-                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md">
+                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md group relative">
                       <CardContent className="p-3 space-y-2">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-2">
                           <h4 className="font-medium text-sm flex-1">{task.title}</h4>
-                          <Badge variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'} className="text-xs">
-                            {task.priority}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'} className="text-xs">
+                              {task.priority}
+                            </Badge>
+                          </div>
                         </div>
                         {task.description && <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -419,14 +498,45 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       }) : 'No deadline'}
                           </span>
                         </div>
-                        {task.type === 'approval' && <div className="flex gap-2 pt-2">
-                            <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'cancelled')}>
-                              Reject
-                            </Button>
-                          </div>}
+                        <div className="flex gap-2 pt-2">
+                          {task.type === 'approval' ? (
+                            <>
+                              <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
+                                Approve
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'cancelled')}>
+                                Reject
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="default" 
+                                className="flex-1 h-7 text-xs" 
+                                onClick={() => {
+                                  setTaskToDelete(task.id);
+                                  setTaskAction('complete');
+                                }}
+                              >
+                                <Check className="w-3 h-3 mr-1" />
+                                Complete
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex-1 h-7 text-xs" 
+                                onClick={() => {
+                                  setTaskToDelete(task.id);
+                                  setTaskAction('dismiss');
+                                }}
+                              >
+                                <X className="w-3 h-3 mr-1" />
+                                Dismiss
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>)}
               </CardContent>
@@ -434,6 +544,28 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           )}
         </Card>
       </div>
+
+      {/* Task Action Confirmation Dialog */}
+      <AlertDialog open={!!taskToDelete} onOpenChange={(open) => !open && setTaskToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {taskAction === 'complete' ? 'Complete Task' : 'Dismiss Task'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {taskAction === 'complete' 
+                ? 'Are you sure you want to mark this task as completed? This action cannot be undone.'
+                : 'Are you sure you want to dismiss this task? It will be removed from your list.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => taskToDelete && taskAction && handleTaskAction(taskToDelete, taskAction)}>
+              {taskAction === 'complete' ? 'Complete' : 'Dismiss'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AnimatedBackground>;
 };
 const LandingPage: React.FC<LandingPageProps> = props => {

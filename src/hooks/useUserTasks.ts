@@ -88,5 +88,27 @@ export const useUserTasks = () => {
     }
   };
 
-  return { tasks, loading, updateTaskStatus };
+  const deleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Optimistically update the local state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  };
+
+  return { 
+    tasks, 
+    loading, 
+    updateTaskStatus,
+    deleteTask
+  };
 };
