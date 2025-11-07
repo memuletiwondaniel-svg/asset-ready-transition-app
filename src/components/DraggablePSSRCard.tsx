@@ -1,9 +1,11 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ShieldCheck, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff } from 'lucide-react';
+import { GripVertical, ShieldCheck, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff, Edit, Copy, Archive } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DraggablePSSRCardProps {
   pssr: {
@@ -35,6 +37,9 @@ interface DraggablePSSRCardProps {
   getRiskLevelColor: (riskLevel: string) => string;
   isPinned: boolean;
   onTogglePin: (pssrId: string) => void;
+  onEdit?: (pssrId: string) => void;
+  onDuplicate?: (pssrId: string) => void;
+  onArchive?: (pssrId: string) => void;
 }
 
 const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
@@ -46,7 +51,10 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
   getTeamStatusColor,
   getRiskLevelColor,
   isPinned,
-  onTogglePin
+  onTogglePin,
+  onEdit,
+  onDuplicate,
+  onArchive
 }) => {
   const {
     attributes,
@@ -83,6 +91,66 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       >
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/2 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Quick Actions - Appears on hover */}
+        <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+          <TooltipProvider delayDuration={100}>
+            {onEdit && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 w-8 p-0 bg-background/80 hover:bg-background border border-border/50 shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(pssr.id);
+                    }}
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit PSSR</TooltipContent>
+              </Tooltip>
+            )}
+            {onDuplicate && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 w-8 p-0 bg-background/80 hover:bg-background border border-border/50 shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicate(pssr.id);
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Duplicate PSSR</TooltipContent>
+              </Tooltip>
+            )}
+            {onArchive && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 w-8 p-0 bg-background/80 hover:bg-background border border-border/50 shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive(pssr.id);
+                    }}
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Archive PSSR</TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
+        </div>
 
         <CardContent className="p-5 relative">
           <div className="flex items-center gap-6">

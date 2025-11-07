@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   ArrowLeft, 
   Plus, 
@@ -33,7 +34,7 @@ import {
   ShieldCheck,
   BarChart3,
   Users,
-  Calendar,
+  Calendar as CalendarIcon,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -43,12 +44,17 @@ import {
   FileText,
   FolderOpen,
   GripVertical,
-  Columns3
+  Columns3,
+  CalendarDays,
+  Bell
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import PSSRTableView from './PSSRTableView';
 import PSSRKanbanBoard from './PSSRKanbanBoard';
+import PSSRTimelineView from './PSSRTimelineView';
+import PSSRActivityFeed from './PSSRActivityFeed';
+import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
@@ -56,6 +62,7 @@ import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
 import { OrshSidebar } from './OrshSidebar';
 import { toast } from 'sonner';
+import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 interface SafeStartupSummaryPageProps {
   onBack: () => void;
@@ -88,7 +95,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
@@ -96,6 +103,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
   const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [showActivityFeed, setShowActivityFeed] = useState(false);
+  const [dateRangeFilters, setDateRangeFilters] = useState<DateRangeFilter>({});
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
@@ -255,7 +264,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     };
   }, [pssrList]);
 
-  // Filtered PSSRs
+  // Filtered PSSRs with date range support
   const filteredPSSRs = useMemo(() => {
     const filtered = pssrList.filter(pssr => {
       const searchQuery = searchTerm.toLowerCase().trim();
@@ -271,7 +280,46 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       const matchesStatus = filters.status.length === 0 || filters.status.includes(pssr.status);
       const matchesLead = filters.lead.length === 0 || filters.lead.includes(pssr.pssrLead);
 
-      return matchesSearch && matchesPlant && matchesStatus && matchesLead;
+      // Date range filtering
+      let matchesDateRange = true;
+
+      if (dateRangeFilters.created) {
+        const createdDate = parseISO(pssr.created);
+        if (dateRangeFilters.created.from && dateRangeFilters.created.to) {
+          matchesDateRange = matchesDateRange && isWithinInterval(createdDate, {
+            start: startOfDay(dateRangeFilters.created.from),
+            end: endOfDay(dateRangeFilters.created.to)
+          });
+        } else if (dateRangeFilters.created.from) {
+          matchesDateRange = matchesDateRange && createdDate >= startOfDay(dateRangeFilters.created.from);
+        }
+      }
+
+      if (dateRangeFilters.nextReview && pssr.nextReview) {
+        const reviewDate = parseISO(pssr.nextReview);
+        if (dateRangeFilters.nextReview.from && dateRangeFilters.nextReview.to) {
+          matchesDateRange = matchesDateRange && isWithinInterval(reviewDate, {
+            start: startOfDay(dateRangeFilters.nextReview.from),
+            end: endOfDay(dateRangeFilters.nextReview.to)
+          });
+        } else if (dateRangeFilters.nextReview.from) {
+          matchesDateRange = matchesDateRange && reviewDate >= startOfDay(dateRangeFilters.nextReview.from);
+        }
+      }
+
+      if (dateRangeFilters.completed && pssr.completedDate) {
+        const completedDate = parseISO(pssr.completedDate);
+        if (dateRangeFilters.completed.from && dateRangeFilters.completed.to) {
+          matchesDateRange = matchesDateRange && isWithinInterval(completedDate, {
+            start: startOfDay(dateRangeFilters.completed.from),
+            end: endOfDay(dateRangeFilters.completed.to)
+          });
+        } else if (dateRangeFilters.completed.from) {
+          matchesDateRange = matchesDateRange && completedDate >= startOfDay(dateRangeFilters.completed.from);
+        }
+      }
+
+      return matchesSearch && matchesPlant && matchesStatus && matchesLead && matchesDateRange;
     });
 
     return filtered.sort((a, b) => {
@@ -295,7 +343,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       
       return 0;
     });
-  }, [searchTerm, filters, pssrList, pssrOrder, pinnedPSSRs]);
+  }, [searchTerm, filters, pssrList, pssrOrder, pinnedPSSRs, dateRangeFilters]);
 
   const toggleFilter = (category: 'plant' | 'status' | 'lead', value: string) => {
     setFilters(prev => ({
@@ -334,6 +382,22 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
+  };
+
+  // Quick action handlers
+  const handleEditPSSR = (pssrId: string) => {
+    toast.info(`Edit PSSR ${pssrId}`);
+    // In production, navigate to edit view
+  };
+
+  const handleDuplicatePSSR = (pssrId: string) => {
+    toast.success(`PSSR ${pssrId} duplicated successfully`);
+    // In production, duplicate the PSSR
+  };
+
+  const handleArchivePSSR = (pssrId: string) => {
+    toast.success(`PSSR ${pssrId} archived`);
+    // In production, archive the PSSR
   };
 
   // Generate breadcrumbs based on current view
@@ -631,67 +695,112 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   uniqueStatuses={uniqueStatuses}
                   uniqueLeads={uniqueLeads}
                 />
+                
+                {/* Date Range Filter */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className={`gap-2 ${
+                        dateRangeFilters.created || dateRangeFilters.nextReview || dateRangeFilters.completed
+                          ? 'border-primary bg-primary/5'
+                          : ''
+                      }`}
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      <span className="hidden md:inline">Dates</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-80">
+                    <PSSRDateRangeFilter value={dateRangeFilters} onChange={setDateRangeFilters} />
+                  </PopoverContent>
+                </Popover>
+
+                {/* Activity Feed Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowActivityFeed(!showActivityFeed)}
+                  className="gap-2"
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="hidden md:inline">Activity</span>
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* PSSR List Header and Content */}
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Reviews <span className="text-muted-foreground">({filteredPSSRs.length})</span>
-              </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Area */}
+          <div className={`space-y-5 ${showActivityFeed ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Reviews <span className="text-muted-foreground">({filteredPSSRs.length})</span>
+                </h2>
+                
+                {/* Compact View Toggle */}
+                <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
+                  <button
+                    onClick={() => setViewMode('card')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === 'card' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setViewMode('kanban')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === 'kanban' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Columns3 className="h-3.5 w-3.5 inline mr-1.5" />
+                    Kanban
+                  </button>
+                  <button
+                    onClick={() => setViewMode('timeline')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === 'timeline' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <CalendarDays className="h-3.5 w-3.5 inline mr-1.5" />
+                    Timeline
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === 'table' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
+                    Table
+                  </button>
+                </div>
+              </div>
               
-              {/* Compact View Toggle */}
-              <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
-                <button
-                  onClick={() => setViewMode('card')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'card' 
-                      ? 'bg-background text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
-                  Cards
-                </button>
-                <button
-                  onClick={() => setViewMode('kanban')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'kanban' 
-                      ? 'bg-background text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Columns3 className="h-3.5 w-3.5 inline mr-1.5" />
-                  Kanban
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'table' 
-                      ? 'bg-background text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
-                  Table
-                </button>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{filteredPSSRs.length} of {stats.total}</span>
+                {filteredPSSRs.length > 0 && (viewMode === 'card' || viewMode === 'kanban') && (
+                  <span className="hidden lg:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
+                    <GripVertical className="h-3 w-3" />
+                    Drag to reorder
+                  </span>
+                )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span>{filteredPSSRs.length} of {stats.total}</span>
-              {filteredPSSRs.length > 0 && (viewMode === 'card' || viewMode === 'kanban') && (
-                <span className="hidden lg:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
-                  <GripVertical className="h-3 w-3" />
-                  Drag to reorder
-                </span>
-              )}
-            </div>
-          </div>
 
           {viewMode === 'table' ? (
             <PSSRTableView 
@@ -711,6 +820,11 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               onStatusChange={(pssrId, newStatus) => {
                 toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
               }}
+            />
+          ) : viewMode === 'timeline' ? (
+            <PSSRTimelineView
+              pssrs={filteredPSSRs}
+              onViewDetails={handleViewDetails}
             />
           ) : (
             <DndContext
@@ -733,6 +847,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                       getRiskLevelColor={getRiskLevelColor}
                       isPinned={pinnedPSSRs.includes(pssr.id)}
                       onTogglePin={handleTogglePin}
+                      onEdit={handleEditPSSR}
+                      onDuplicate={handleDuplicatePSSR}
+                      onArchive={handleArchivePSSR}
                     />
                   ))}
                 </div>
@@ -761,29 +878,21 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/20 mb-4">
                     <ShieldCheck className="h-8 w-8 text-muted-foreground/50" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {pssrList.length === 0 ? 'No PSSR Reviews Yet' : 'No Reviews Found'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {pssrList.length === 0 
-                      ? 'Create your first Pre-Start-Up Safety Review to ensure safe facility operations.'
-                      : searchTerm || filters.plant.length || filters.status.length || filters.lead.length
-                        ? 'Try adjusting your search or filters to find more reviews.'
-                        : 'No PSSR reviews are available at the moment.'
-                    }
-                  </p>
-                  <Button 
-                    onClick={() => setShowCreateIntro(true)}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create New PSSR
-                  </Button>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No Reviews Found</h3>
+                  <p className="text-sm text-muted-foreground mb-6">Try adjusting your filters</p>
                 </div>
               </CardContent>
             </Card>
           )}
         </div>
+
+        {/* Activity Feed Sidebar */}
+        {showActivityFeed && (
+          <div className="lg:col-span-1">
+            <PSSRActivityFeed maxHeight="calc(100vh - 24rem)" />
+          </div>
+        )}
+      </div>
       </main>
       </div>
     </div>
