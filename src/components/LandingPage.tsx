@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
@@ -34,6 +35,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [isTasksPanelCollapsed, setIsTasksPanelCollapsed] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [taskSortBy, setTaskSortBy] = useState<'priority' | 'due_date' | 'type'>('priority');
+  const [taskFilterType, setTaskFilterType] = useState<string>('all');
   const {
     tasks,
     loading: tasksLoading,
@@ -163,6 +166,34 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       handleSend();
     }
   };
+
+  // Filter and sort tasks
+  const filteredAndSortedTasks = React.useMemo(() => {
+    let filtered = tasks;
+    
+    // Filter by type
+    if (taskFilterType !== 'all') {
+      filtered = filtered.filter(task => task.type === taskFilterType);
+    }
+    
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+      if (taskSortBy === 'priority') {
+        const priorityOrder = { 'High': 0, 'Medium': 1, 'Low': 2 };
+        return priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
+      } else if (taskSortBy === 'due_date') {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+      } else if (taskSortBy === 'type') {
+        return a.type.localeCompare(b.type);
+      }
+      return 0;
+    });
+    
+    return sorted;
+  }, [tasks, taskFilterType, taskSortBy]);
+
   const quickActions = [{
     id: 'create-pssr',
     label: 'Create a PSSR',
@@ -219,18 +250,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       <div className="h-[calc(100vh-5rem)] flex gap-4 p-4">
         <div className="flex-1 flex flex-col gap-4">
           <Card className="border-border/40 shadow-lg overflow-hidden flex flex-col" style={{ height: '35%' }}>
-            <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 flex-shrink-0 py-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-3xl font-bold">Welcome, {userName}</CardTitle>
-                <Button size="icon" variant="ghost" onClick={() => setShowHistory(!showHistory)} className="h-8 w-8">
-                  <History className="w-4 h-4" />
-                </Button>
-              </div>
+            <CardHeader className="border-b border-border/40 flex-shrink-0 py-4">
+              <CardTitle className="text-3xl font-bold">Welcome, {userName}</CardTitle>
             </CardHeader>
             <CardContent className="p-4 flex flex-col flex-1 overflow-hidden">
               <div className="space-y-2 flex-shrink-0">
                 <div className="relative">
-                  <Textarea value={userInput} onChange={e => setUserInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask a question or describe what you need..." className="min-h-[80px] resize-none border-border/40 pr-24" disabled={isLoadingAI} />
+                  <Textarea value={userInput} onChange={e => setUserInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask a question or describe what you need..." className="min-h-[120px] resize-none border-border/40 pr-24" disabled={isLoadingAI} />
                   <div className="absolute bottom-2 right-2 flex gap-1">
                     <Button size="icon" variant="ghost" onClick={handleVoiceInput} disabled={!isSupported || isLoadingAI} className="h-7 w-7">
                       <Mic className={`w-3.5 h-3.5 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
@@ -241,6 +267,23 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <Button size="icon" onClick={handleSend} disabled={isLoadingAI || !userInput.trim()} className="rounded-full bg-gradient-to-br from-primary to-accent h-7 w-7">
                       <Send className="w-3.5 h-3.5" />
                     </Button>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setShowHistory(!showHistory)} 
+                    className="text-[11px] h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50"
+                  >
+                    <History className="w-3 h-3 mr-1.5" />
+                    History
+                  </Button>
+                  <div className="flex flex-wrap gap-1.5">
+                    {quickActions.map(action => <Button key={action.id} variant="outline" size="sm" className="text-[11px] h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50" onClick={() => setUserInput(action.label)}>
+                        {action.label}
+                      </Button>)}
                   </div>
                 </div>
                 
@@ -266,12 +309,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     </CardContent>
                   </Card>
                 )}
-                
-                <div className="flex flex-wrap gap-1.5">
-                  {quickActions.map(action => <Button key={action.id} variant="outline" size="sm" className="text-[11px] h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50" onClick={() => setUserInput(action.label)}>
-                      {action.label}
-                    </Button>)}
-                </div>
               </div>
 
               
@@ -309,12 +346,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         </div>
 
         <Card className={`border-border/40 shadow-lg transition-all duration-300 ${isTasksPanelCollapsed ? 'w-12' : 'w-80'}`}>
-          <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 py-3">
+          <CardHeader className="border-b border-border/40 py-3">
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1">
                   <Clock className="w-5 h-5" />
-                  <div>
+                  <div className="flex-1">
                     <CardTitle className="text-lg">Pending Tasks</CardTitle>
                     <CardDescription className="text-xs">Your action items</CardDescription>
                   </div>
@@ -331,40 +368,69 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </div>
           </CardHeader>
           {!isTasksPanelCollapsed && (
-          <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-12rem)]">
-            {tasksLoading ? <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div> : tasks.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No pending tasks</p>
-              </div> : tasks.map(task => <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md">
-                  <CardContent className="p-3 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h4 className="font-medium text-sm flex-1">{task.title}</h4>
-                      <Badge variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'} className="text-xs">
-                        {task.priority}
-                      </Badge>
-                    </div>
-                    {task.description && <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span>
-                        Due: {task.due_date ? formatDistanceToNow(new Date(task.due_date), {
-                    addSuffix: true
-                  }) : 'No deadline'}
-                      </span>
-                    </div>
-                    {task.type === 'approval' && <div className="flex gap-2 pt-2">
-                        <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
-                          Approve
-                        </Button>
-                        <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'cancelled')}>
-                          Reject
-                        </Button>
-                      </div>}
-                  </CardContent>
-                </Card>)}
-          </CardContent>
+            <>
+              <div className="border-b border-border/40 p-3 space-y-2">
+                <div className="flex gap-2">
+                  <Select value={taskFilterType} onValueChange={setTaskFilterType}>
+                    <SelectTrigger className="h-8 text-xs flex-1">
+                      <Filter className="w-3 h-3 mr-1" />
+                      <SelectValue placeholder="Filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="approval">Approval</SelectItem>
+                      <SelectItem value="review">Review</SelectItem>
+                      <SelectItem value="action">Action</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={taskSortBy} onValueChange={(value) => setTaskSortBy(value as 'priority' | 'due_date' | 'type')}>
+                    <SelectTrigger className="h-8 text-xs flex-1">
+                      <ArrowUpDown className="w-3 h-3 mr-1" />
+                      <SelectValue placeholder="Sort" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="due_date">Due Date</SelectItem>
+                      <SelectItem value="type">Type</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-16rem)]">
+                {tasksLoading ? <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div> : filteredAndSortedTasks.length === 0 ? <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No {taskFilterType !== 'all' ? taskFilterType : ''} tasks</p>
+                  </div> : filteredAndSortedTasks.map(task => <Card key={task.id} className="border-border/40 hover:border-primary/30 transition-all cursor-pointer hover:shadow-md">
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-medium text-sm flex-1">{task.title}</h4>
+                          <Badge variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'} className="text-xs">
+                            {task.priority}
+                          </Badge>
+                        </div>
+                        {task.description && <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            Due: {task.due_date ? formatDistanceToNow(new Date(task.due_date), {
+                        addSuffix: true
+                      }) : 'No deadline'}
+                          </span>
+                        </div>
+                        {task.type === 'approval' && <div className="flex gap-2 pt-2">
+                            <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'cancelled')}>
+                              Reject
+                            </Button>
+                          </div>}
+                      </CardContent>
+                    </Card>)}
+              </CardContent>
+            </>
           )}
         </Card>
       </div>
