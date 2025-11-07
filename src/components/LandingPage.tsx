@@ -446,54 +446,197 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         </Breadcrumb>
       </AdminHeader>
 
-      <div className="h-[calc(100vh-5rem)] flex gap-6 p-6">
-        {/* Main Content Area */}
-        {showWidgets ? (
-          <div className="flex-1 animate-fade-in">
-            <DashboardWidgets />
+      <div className="h-[calc(100vh-5rem)] flex">
+        {/* ORSH Sidebar Panel */}
+        <div className="w-72 border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col">
+          {/* ORSH Branding */}
+          <div className="p-6 border-b border-border/40">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                <span className="text-xl font-bold text-white">OR</span>
+              </div>
+              <div>
+                <h2 className="font-bold text-lg">ORSH</h2>
+                <p className="text-xs text-muted-foreground">Operations Hub</p>
+              </div>
+            </div>
+            
+            {/* User Info */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-muted/30 to-muted/10 border border-border/30">
+              <p className="text-sm font-medium">{userName}</p>
+              <p className="text-xs text-muted-foreground">Operations Manager</p>
+            </div>
           </div>
-        ) : (
-        <div className="flex-1 flex flex-col gap-6">
-          {/* AI Assistant Panel */}
-          <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '55%' : '35%' }}>
-            <CardHeader className="flex-shrink-0 py-3 pb-2">
-              <CardTitle className="text-4xl font-bold">
-                Welcome, {userName}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
-              <div className="space-y-1.5 flex-shrink-0">
-                {imagePreviews.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative inline-block">
-                        <img 
-                          src={preview} 
-                          alt={`Upload preview ${index + 1}`} 
-                          className="h-20 w-20 rounded-lg border border-border/40 object-cover"
-                        />
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                    {imagePreviews.length < MAX_IMAGES && (
+
+          {/* Navigation Menu */}
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-11 px-4 bg-primary/10 text-primary hover:bg-primary/20"
+              >
+                <Home className="w-4 h-4 mr-3" />
+                Dashboard
+              </Button>
+
+              {workspaceCards.map((workspace) => {
+                const Icon = workspace.icon;
+                return (
+                  <Button
+                    key={workspace.id}
+                    variant="ghost"
+                    onClick={() => onNavigate(workspace.id)}
+                    className="w-full justify-start h-11 px-4 hover:bg-muted/50 transition-all group"
+                  >
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspace.gradient} flex items-center justify-center mr-3 group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium">{workspace.title}</p>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Quick Actions Section */}
+            <div className="mt-6 pt-6 border-t border-border/40">
+              <p className="text-xs font-semibold text-muted-foreground px-4 mb-3 uppercase tracking-wide">Quick Actions</p>
+              <div className="space-y-1">
+                {quickActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Button
+                      key={action.id}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUserInput(action.label)}
+                      className="w-full justify-start h-9 px-4 text-xs hover:bg-muted/50"
+                    >
+                      <Icon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                      {action.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Search History Section */}
+            {searchHistory.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-border/40">
+                <div className="flex items-center justify-between px-4 mb-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="h-6 w-6"
+                  >
+                    <ChevronDown className={`w-3 h-3 transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+                  </Button>
+                </div>
+                {showHistory && (
+                  <div className="space-y-1">
+                    {searchHistory.slice(0, 5).map((item, idx) => (
                       <Button
-                        variant="outline"
-                        className="h-20 w-20 border-dashed border-2 hover:bg-primary/5"
-                        onClick={() => fileInputRef.current?.click()}
+                        key={idx}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setUserInput(item);
+                          setShowHistory(false);
+                        }}
+                        className="w-full justify-start h-8 px-4 text-xs hover:bg-muted/50"
                       >
-                        <Upload className="w-6 h-6 text-muted-foreground" />
+                        <History className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate text-left">{item}</span>
                       </Button>
-                    )}
+                    ))}
                   </div>
                 )}
-                  <div className="relative group" data-tour="ai-input">
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Footer Actions */}
+          <div className="p-4 border-t border-border/40 space-y-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowWidgets(!showWidgets)}
+              className="w-full justify-start h-9"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {showWidgets ? 'Hide Widgets' : 'Show Widgets'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowOnboarding(true)}
+              className="w-full justify-start h-9"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Take Tour
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex gap-6 p-6 overflow-hidden">
+          {showWidgets ? (
+            <div className="flex-1 animate-fade-in">
+              <DashboardWidgets />
+            </div>
+          ) : (
+          <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+            {/* AI Assistant Panel */}
+            <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '55%' : '35%' }}>
+              <CardHeader className="flex-shrink-0 py-3 pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold">
+                    AI Assistant
+                  </CardTitle>
+                </div>
+                <CardDescription className="mt-2">
+                  Ask questions, get insights, and manage your operations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
+                <div className="space-y-1.5 flex-shrink-0">
+                  {imagePreviews.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative inline-block">
+                          <img 
+                            src={preview} 
+                            alt={`Upload preview ${index + 1}`} 
+                            className="h-20 w-20 rounded-lg border border-border/40 object-cover"
+                          />
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
+                            onClick={() => removeImage(index)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      {imagePreviews.length < MAX_IMAGES && (
+                        <Button
+                          variant="outline"
+                          className="h-20 w-20 border-dashed border-2 hover:bg-primary/5"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="w-6 h-6 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                    <div className="relative group" data-tour="ai-input">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Textarea 
                     value={userInput} 
@@ -550,52 +693,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     </Button>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-3 animate-smooth-in stagger-1 mt-6" data-tour="quick-actions">
-                  <Button 
-                    size="icon"
-                    variant="outline" 
-                    onClick={() => setShowHistory(!showHistory)} 
-                    className="h-7 w-7 border-border/40 bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 transition-all duration-300 backdrop-blur-sm"
-                    title="View search history"
-                  >
-                    <History className="w-3.5 h-3.5" />
-                  </Button>
-                  <div className="flex flex-wrap gap-1.5">
-                    {quickActions.map((action, idx) => <Button 
-                      key={action.id} 
-                      variant="outline" 
-                      size="sm" 
-                      className={`text-xs h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
-                      onClick={() => setUserInput(action.label)}
-                    >
-                      {action.label}
-                    </Button>)}
-                  </div>
-                </div>
-                
-                {showHistory && searchHistory.length > 0 && (
-                  <Card className="border-border/40 bg-background/98 backdrop-blur-xl shadow-2xl animate-scale-in">
-                    <CardContent className="p-3 space-y-1">
-                      <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Recent searches</p>
-                      {searchHistory.map((item, idx) => (
-                        <Button
-                          key={idx}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-xs h-8 px-3 hover:bg-primary/10 transition-all duration-300"
-                          onClick={() => {
-                            setUserInput(item);
-                            setShowHistory(false);
-                          }}
-                        >
-                          <History className="w-3.5 h-3.5 mr-2 text-primary" />
-                          <span className="truncate">{item}</span>
-                        </Button>
-                      ))}
-                    </CardContent>
-                  </Card>
-                )}
 
               </div>
               
@@ -640,51 +737,86 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <div ref={chatEndRef} />
                   </div>
                 </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* Workspaces Section */}
-          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '43%' : '63%' }} data-tour="workspaces">
-            <CardHeader className="border-b border-border/40 py-4">
-              <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 h-[calc(100%-6rem)] overflow-auto">
-              <div className="grid grid-cols-3 gap-6 h-full">
-                {workspaceCards.map((workspace, idx) => {
-                const Icon = workspace.icon;
-                return <Card 
-                  key={workspace.id} 
-                  onClick={() => onNavigate(workspace.id)} 
-                  className={`glass-card glass-card-hover cursor-pointer group overflow-hidden animate-smooth-in ${workspace.bgTone}`}
-                  style={{ animationDelay: `${idx * 100}ms` }}
-                >
-                      {/* Gradient overlay on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-500" />
-                      
-                      <CardContent className="p-8 flex flex-col items-center justify-center h-full text-center space-y-5 relative z-10">
-                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
-                          <Icon className="w-10 h-10 text-white drop-shadow-lg" />
+            {/* Recent Activity / Stats Cards */}
+            <div className="grid grid-cols-2 gap-4 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '43%' : '63%' }}>
+              <Card className="glass-card glass-card-hover overflow-hidden" data-tour="workspaces">
+                <CardHeader className="border-b border-border/40 py-3">
+                  <CardTitle className="text-lg font-bold">Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                          <ClipboardList className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
-                            {workspace.title}
-                          </h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                            {workspace.description}
-                          </p>
+                          <p className="text-xs text-muted-foreground">Active PSSRs</p>
+                          <p className="text-lg font-bold">12</p>
                         </div>
-                      </CardContent>
-                    </Card>;
-              })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-green-600/5 border border-green-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Completed</p>
+                          <p className="text-lg font-bold">28</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/5 border border-orange-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Pending</p>
+                          <p className="text-lg font-bold">5</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Tasks Panel */}
-        <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
+              <Card className="glass-card glass-card-hover overflow-hidden">
+                <CardHeader className="border-b border-border/40 py-3">
+                  <CardTitle className="text-lg font-bold">Quick Access</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {workspaceCards.map((workspace) => {
+                      const Icon = workspace.icon;
+                      return (
+                        <Button
+                          key={workspace.id}
+                          variant="outline"
+                          onClick={() => onNavigate(workspace.id)}
+                          className="h-auto flex flex-col items-center gap-2 p-4 hover:bg-muted/50 group"
+                        >
+                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                            <Icon className="w-6 h-6 text-white" />
+                          </div>
+                          <span className="text-xs font-medium text-center">{workspace.title}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          )}
+
+          {/* Tasks Panel */}
+          <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`} data-tour="tasks">
           <CardHeader className="border-b border-border/40 py-4">
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
@@ -831,7 +963,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </CardContent>
             </>
           )}
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Onboarding Tour */}
