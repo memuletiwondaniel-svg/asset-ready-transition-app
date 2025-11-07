@@ -13,6 +13,11 @@ import OrshLogo from '@/components/ui/OrshLogo';
 import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
+interface BreadcrumbItem {
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
 interface OrshSidebarProps {
   userName?: string;
   userTitle?: string;
@@ -28,6 +33,7 @@ interface OrshSidebarProps {
   onSearchHistoryClick?: (item: string) => void;
   showSearchHistory?: boolean;
   onToggleSearchHistory?: () => void;
+  breadcrumbs?: BreadcrumbItem[];
 }
 export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   userName = 'Daniel',
@@ -41,7 +47,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   searchHistory = [],
   onSearchHistoryClick,
   showSearchHistory = false,
-  onToggleSearchHistory
+  onToggleSearchHistory,
+  breadcrumbs = [{ label: 'Home', icon: Home }]
 }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -68,12 +75,20 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
             <div className="mb-4 animate-fade-in">
               <Breadcrumb>
                 <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
-                      <Home className="h-3.5 w-3.5" />
-                      Home
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
+                  {breadcrumbs.map((crumb, index) => {
+                    const Icon = crumb.icon || Home;
+                    return (
+                      <BreadcrumbItem key={index}>
+                        <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
+                          <Icon className="h-3.5 w-3.5" />
+                          {crumb.label}
+                        </BreadcrumbPage>
+                        {index < breadcrumbs.length - 1 && (
+                          <span className="mx-2 text-muted-foreground">/</span>
+                        )}
+                      </BreadcrumbItem>
+                    );
+                  })}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>

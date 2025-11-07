@@ -38,7 +38,10 @@ import {
   TrendingDown,
   Minus,
   LayoutGrid,
-  Table as TableIcon
+  Table as TableIcon,
+  Home,
+  FileText,
+  FolderOpen
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
@@ -329,6 +332,42 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     setSearchTerm(value);
   };
 
+  // Generate breadcrumbs based on current view
+  const getBreadcrumbs = () => {
+    const crumbs = [{ label: 'Home', icon: Home }];
+    
+    switch (activeView) {
+      case 'list':
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        break;
+      case 'create':
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        crumbs.push({ label: 'Create PSSR', icon: Plus });
+        break;
+      case 'details':
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        if (selectedPSSR) {
+          crumbs.push({ label: selectedPSSR, icon: FileText });
+        }
+        break;
+      case 'category-items':
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        if (selectedPSSR) {
+          crumbs.push({ label: selectedPSSR, icon: FileText });
+        }
+        if (selectedCategory) {
+          crumbs.push({ label: selectedCategory, icon: FolderOpen });
+        }
+        break;
+      case 'manage-checklist':
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        crumbs.push({ label: 'Manage Checklists', icon: Settings });
+        break;
+    }
+    
+    return crumbs;
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Approved': return <CheckCircle className="h-4 w-4 text-success" />;
@@ -435,6 +474,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         userName="Daniel"
         userTitle="ORA Engr."
         language="en"
+        breadcrumbs={getBreadcrumbs()}
       />
       
       <div className="flex-1 relative z-10 overflow-auto">
