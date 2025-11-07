@@ -41,7 +41,8 @@ import {
   Table as TableIcon,
   Home,
   FileText,
-  FolderOpen
+  FolderOpen,
+  GripVertical
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
@@ -478,185 +479,201 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       />
       
       <div className="flex-1 relative z-10 overflow-auto">
-      {/* Header */}
-      <header className="fluent-navigation sticky top-0 z-50 border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
+      {/* Modern Minimalist Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
+        <div className="max-w-[1400px] mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-6">
               <Button 
                 variant="ghost" 
                 onClick={onBack} 
-                className="fluent-button hover:bg-secondary/80 group"
+                size="sm"
+                className="hover:bg-muted/50 gap-2 text-muted-foreground hover:text-foreground transition-all"
               >
-                <ArrowLeft className="h-4 w-4 mr-3 group-hover:-translate-x-1 transition-transform duration-200" />
-                <span className="font-medium">Back to Dashboard</span>
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden md:inline">Back</span>
               </Button>
               
-              <div className="h-8 w-px bg-border"></div>
+              <div className="h-6 w-px bg-border/50"></div>
               
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-                  <ClipboardList className="h-6 w-6 text-primary" />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">Safe Start-Up</h1>
-                  <p className="text-sm text-muted-foreground font-medium">Pre-Start-Up Safety Review System</p>
+                  <h1 className="text-xl font-bold text-foreground tracking-tight">Safe Start-Up</h1>
+                  <p className="text-xs text-muted-foreground">Pre-Start-Up Safety Review</p>
                 </div>
               </div>
             </div>
 
             {/* Header Actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {userRole === 'admin' && (
                 <Button 
                   variant="outline"
+                  size="sm"
                   onClick={() => setActiveView('manage-checklist')}
-                  className="fluent-button border-border/50 hover:bg-secondary/50"
+                  className="hidden lg:flex gap-2 hover:bg-muted/50"
                 >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Checklists
+                  <Settings className="h-4 w-4" />
+                  <span>Manage</span>
                 </Button>
               )}
               <Button 
                 onClick={() => setActiveView('create')}
-                className="fluent-button bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg group"
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2"
               >
-                <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                New PSSR
+                <Plus className="h-4 w-4" />
+                <span>New PSSR</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total PSSRs</CardTitle>
-              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+      <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+        {/* Modern Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total PSSRs */}
+          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-muted/20 hover:shadow-md transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+            <CardHeader className="pb-3 relative">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total PSSRs</CardTitle>
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <ClipboardList className="h-4 w-4 text-primary" />
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                Active reviews
-              </p>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold text-foreground">{stats.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">Active reviews</p>
             </CardContent>
           </Card>
 
-          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          {/* Approved */}
+          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-emerald-500/5 hover:shadow-md transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+            <CardHeader className="pb-3 relative">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Approved</CardTitle>
+                <div className="p-2 rounded-lg bg-emerald-500/10">
+                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-success">{stats.approved}</div>
-              <p className="text-xs text-muted-foreground">
-                Completed reviews
-              </p>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold text-emerald-600">{stats.approved}</div>
+              <p className="text-xs text-muted-foreground mt-1">Completed</p>
             </CardContent>
           </Card>
 
-          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Under Review</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+          {/* Under Review */}
+          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-amber-500/5 hover:shadow-md transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+            <CardHeader className="pb-3 relative">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Under Review</CardTitle>
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Clock className="h-4 w-4 text-amber-600" />
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-warning">{stats.underReview}</div>
-              <p className="text-xs text-muted-foreground">
-                In progress
-              </p>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold text-amber-600">{stats.underReview}</div>
+              <p className="text-xs text-muted-foreground mt-1">In progress</p>
             </CardContent>
           </Card>
 
-          <Card className="fluent-card bg-card/60 backdrop-blur-sm border-border/40 hover:bg-muted/20 transition-all duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Draft</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          {/* Draft */}
+          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-slate-500/5 hover:shadow-md transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+            <CardHeader className="pb-3 relative">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Draft</CardTitle>
+                <div className="p-2 rounded-lg bg-slate-500/10">
+                  <AlertTriangle className="h-4 w-4 text-slate-600" />
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">{stats.draft}</div>
-              <p className="text-xs text-muted-foreground">
-                Not submitted
-              </p>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold text-slate-600">{stats.draft}</div>
+              <p className="text-xs text-muted-foreground mt-1">Not submitted</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search and Filters */}
-        <Card className="fluent-card p-6">
-          <div className="flex flex-col lg:flex-row gap-6 items-center">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search PSSR by Project ID, Asset, Lead..."
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-12 h-12 rounded-xl border-border/50 bg-muted/20 focus:bg-background transition-colors duration-200"
-              />
+        {/* Modern Search and Filters */}
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-5">
+            <div className="flex flex-col lg:flex-row gap-4 items-center">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Project ID, Asset, Lead..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-10 h-10 border-border/50 bg-background/50 focus:bg-background"
+                />
+              </div>
+              
+              <div className="flex items-center gap-3 w-full lg:w-auto">
+                <PSSRFilters
+                  filters={filters}
+                  onToggleFilter={toggleFilter}
+                  onClearFilters={clearAllFilters}
+                  uniquePlants={uniquePlants}
+                  uniqueStatuses={uniqueStatuses}
+                  uniqueLeads={uniqueLeads}
+                />
+              </div>
             </div>
-            
-            <div className="flex items-center gap-4">
-              <PSSRFilters
-                filters={filters}
-                onToggleFilter={toggleFilter}
-                onClearFilters={clearAllFilters}
-                uniquePlants={uniquePlants}
-                uniqueStatuses={uniqueStatuses}
-                uniqueLeads={uniqueLeads}
-              />
-            </div>
-          </div>
+          </CardContent>
         </Card>
 
-        {/* PSSR List */}
-        <div className="space-y-4">
+        {/* PSSR List Header and Content */}
+        <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold text-foreground">
-                PSSR Reviews ({filteredPSSRs.length})
+              <h2 className="text-lg font-semibold text-foreground">
+                Reviews <span className="text-muted-foreground">({filteredPSSRs.length})</span>
               </h2>
               
-              {/* View Mode Toggle - Modern Pill Style */}
-              <div className="inline-flex items-center gap-0.5 p-1 rounded-full bg-muted/50 border border-border/30 backdrop-blur-sm">
+              {/* Compact View Toggle */}
+              <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
                 <button
                   onClick={() => setViewMode('card')}
-                  className={`
-                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
-                    transition-all duration-200 ease-out
-                    ${viewMode === 'card' 
-                      ? 'bg-background text-foreground shadow-sm scale-[1.02]' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                    }
-                  `}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    viewMode === 'card' 
+                      ? 'bg-background text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Cards</span>
+                  <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
+                  Cards
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`
-                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
-                    transition-all duration-200 ease-out
-                    ${viewMode === 'table' 
-                      ? 'bg-background text-foreground shadow-sm scale-[1.02]' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                    }
-                  `}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    viewMode === 'table' 
+                      ? 'bg-background text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
-                  <TableIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Table</span>
+                  <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
+                  Table
                 </button>
               </div>
             </div>
             
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Showing {filteredPSSRs.length} of {stats.total} reviews</span>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>{filteredPSSRs.length} of {stats.total}</span>
               {filteredPSSRs.length > 0 && viewMode === 'card' && (
-                <span className="text-xs bg-muted/50 px-2 py-1 rounded-lg">
-                  💡 Drag cards to reorder
+                <span className="hidden lg:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
+                  <GripVertical className="h-3 w-3" />
+                  Drag to reorder
                 </span>
               )}
             </div>
@@ -695,7 +712,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
               <DragOverlay>
                 {activeDragId ? (
-                  <div className="fluent-card p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
+                  <Card className="p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
                     <div className="text-center">
                       <ShieldCheck className="h-8 w-8 text-primary mx-auto mb-2" />
                       <p className="font-semibold text-foreground">Moving PSSR...</p>
@@ -703,36 +720,40 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                         {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
                       </p>
                     </div>
-                  </div>
+                  </Card>
                 ) : null}
               </DragOverlay>
             </DndContext>
           )}
 
           {filteredPSSRs.length === 0 && (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <ShieldCheck className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium text-muted-foreground mb-2">
-                  {pssrList.length === 0 ? 'No PSSR Reviews Yet' : 'No PSSR Reviews Found'}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  {pssrList.length === 0 
-                    ? 'Get started by creating your first Pre-Start-Up Safety Review to ensure safe facility operations.'
-                    : searchTerm || filters.plant.length || filters.status.length || filters.lead.length
-                      ? 'Try adjusting your search criteria or filters to find more reviews.'
-                      : 'No PSSR reviews are available at the moment.'
-                  }
-                </p>
-                <Button 
-                  onClick={() => setShowCreateIntro(true)}
-                  className="fluent-button bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New PSSR
-                </Button>
-              </div>
-            </div>
+            <Card className="border-border/50 bg-card/30">
+              <CardContent className="py-16">
+                <div className="text-center max-w-md mx-auto">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/20 mb-4">
+                    <ShieldCheck className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    {pssrList.length === 0 ? 'No PSSR Reviews Yet' : 'No Reviews Found'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {pssrList.length === 0 
+                      ? 'Create your first Pre-Start-Up Safety Review to ensure safe facility operations.'
+                      : searchTerm || filters.plant.length || filters.status.length || filters.lead.length
+                        ? 'Try adjusting your search or filters to find more reviews.'
+                        : 'No PSSR reviews are available at the moment.'
+                    }
+                  </p>
+                  <Button 
+                    onClick={() => setShowCreateIntro(true)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create New PSSR
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </main>

@@ -2,6 +2,8 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ShieldCheck, AlertTriangle, CheckCircle, Clock, Users, Pin, PinOff } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface DraggablePSSRCardProps {
   pssr: {
@@ -65,142 +67,117 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative transition-all duration-300 ${
+      className={`relative transition-all duration-200 ${
         isDragging 
-          ? 'opacity-50 scale-105 z-50 shadow-2xl' 
+          ? 'opacity-50 scale-[1.02] z-50' 
           : isOver 
-            ? 'scale-102' 
+            ? 'scale-[1.01]' 
             : ''
       }`}
     >
-      <div 
-        className={`fluent-card h-24 p-2.5 hover:shadow-fluent-lg transition-all duration-300 cursor-pointer group animate-fade-in border-l-4 ${
-          isPinned ? 'border-l-warning bg-warning/5' : 'border-l-primary/20'
-        } hover:border-l-primary relative overflow-hidden ${
-          isDragging ? 'ring-2 ring-primary/50 bg-primary/5' : ''
-        }`}
-        style={{ animationDelay: `${0.7 + index * 0.1}s` }}
+      <Card
+        className={`group relative overflow-hidden border-border/50 cursor-pointer transition-all duration-200 ${
+          isPinned ? 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/40 dark:border-amber-900/40' : 'hover:shadow-md hover:border-border/80'
+        } ${isDragging ? 'ring-2 ring-primary/30' : ''}`}
         onClick={() => onViewDetails(pssr.id)}
       >
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-1.5 hover:bg-muted/20 rounded-lg transition-colors duration-200 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors duration-200" />
-        </div>
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/2 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Pin/Unpin Button */}
-        <div className="absolute right-2 top-2 z-10">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onTogglePin(pssr.id);
-            }}
-            className="p-1.5 hover:bg-muted/20 rounded-lg transition-colors duration-200 group/pin"
-          >
-            {isPinned ? (
-              <PinOff className="h-4 w-4 text-warning hover:text-warning/70 transition-colors duration-200" />
-            ) : (
-              <Pin className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors duration-200" />
-            )}
-          </button>
-        </div>
+        <CardContent className="p-5 relative">
+          <div className="flex items-center gap-6">
+            {/* Drag Handle */}
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors" />
+            </div>
 
-        {/* Modern gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        <div className="relative z-10 flex items-stretch justify-between ml-7 mr-8 h-full gap-4">
-          
-          {/* Primary Info - Project ID and Name */}
-          <div className="flex-1 min-w-0 max-w-md flex flex-col justify-center">
-            {/* Project ID and Name */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="bg-gradient-to-r from-primary to-primary-hover text-primary-foreground px-3 py-1 rounded-lg font-bold text-sm shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 w-20 text-center">
-                {pssr.projectId}
+            {/* Main Content Grid */}
+            <div className="flex-1 grid grid-cols-12 gap-6 items-center">
+              
+              {/* Project Info - 4 cols */}
+              <div className="col-span-4 min-w-0">
+                <div className="flex items-center gap-3 mb-2">
+                  <Badge variant="default" className="bg-primary text-primary-foreground font-semibold text-xs px-2.5 py-0.5">
+                    {pssr.projectId}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs font-medium ${
+                      pssr.tier === 1 ? 'border-red-500/40 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20' :
+                      pssr.tier === 2 ? 'border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-950/20' :
+                      'border-green-500/40 text-green-600 dark:text-green-400 bg-green-50/50 dark:bg-green-950/20'
+                    }`}
+                  >
+                    Tier {pssr.tier}
+                  </Badge>
+                </div>
+                <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                  {pssr.projectName}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">{pssr.asset}</p>
               </div>
-              <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 leading-tight line-clamp-1 flex-1 min-w-0">
-                {pssr.projectName}
-              </h3>
-            </div>
-            
-            <div className="text-muted-foreground text-xs">
-              <span>{new Date(pssr.created).toLocaleDateString()}</span>
-            </div>
-          </div>
 
-          {/* Plant/Asset - Left Justified Column */}
-          <div className="flex items-center justify-start w-28 flex-shrink-0">
-            <span className="text-foreground text-base font-semibold text-left">{pssr.asset}</span>
-          </div>
-
-          {/* Tier Column - Left Justified */}
-          <div className="flex items-center justify-start w-20 flex-shrink-0">
-            <div className={`px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm ${
-              pssr.tier === 1 ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-2 border-red-500/40' :
-              pssr.tier === 2 ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-2 border-orange-500/40' :
-              'bg-green-500/15 text-green-600 dark:text-green-400 border-2 border-green-500/40'
-            }`}>
-              Tier {pssr.tier}
-            </div>
-          </div>
-
-          {/* PSSR Lead - Left Justified */}
-          <div className="flex items-center gap-2 px-2 flex-shrink-0">
-            {/* Lead Profile */}
-            <div className="flex items-center gap-2">
-              <img 
-                src={pssr.pssrLeadAvatar} 
-                alt={pssr.pssrLead}
-                className="w-8 h-8 rounded-full border-2 border-primary/20 shadow-fluent-sm group-hover:shadow-fluent-md transition-all duration-200 group-hover:border-primary/40"
-              />
-              <div className="flex flex-col">
-                <div className="text-[10px] text-muted-foreground font-medium">PSSR Lead</div>
-                <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
-                  {pssr.pssrLead.split(' ')[0]}
+              {/* Lead Info - 3 cols */}
+              <div className="col-span-3 flex items-center gap-2.5">
+                <img 
+                  src={pssr.pssrLeadAvatar} 
+                  alt={pssr.pssrLead}
+                  className="w-9 h-9 rounded-full border-2 border-border/50 shadow-sm"
+                />
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
+                  <p className="text-sm font-medium text-foreground truncate">{pssr.pssrLead}</p>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Progress and Status (Right) - Fixed Width for Alignment */}
-          <div className="flex items-center gap-6 flex-shrink-0">
-            {/* Progress - Fixed Width */}
-            <div className="text-center w-16">
-              <div className="text-lg font-bold text-foreground">{pssr.progress}%</div>
-            </div>
-
-            {/* Divider */}
-            <div className="w-px h-16 bg-border/30"></div>
-
-            {/* Status Section - Fixed Width */}
-            <div className="flex flex-col items-center justify-center gap-1 w-32">
-              {/* Status Badge - Consistent Size */}
-              <div className={`w-full px-3 py-1.5 rounded-lg font-semibold text-sm border shadow-fluent-sm transition-all duration-200 group-hover:shadow-fluent-md text-center ${
-                pssr.status === 'Approved' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40' :
-                pssr.status === 'Under Review' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40' :
-                pssr.status === 'In Progress' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/40' :
-                pssr.status === 'Pending' ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/40' :
-                'bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/40'
-              }`}>
-                {pssr.status}
+              {/* Progress - 2 cols */}
+              <div className="col-span-2 text-center">
+                <div className="text-2xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Complete</p>
               </div>
 
-              {/* Pending Approvals - Simple Text */}
-              {pssr.pendingApprovals > 0 && (
-                <span className="text-xs text-muted-foreground">{pssr.pendingApprovals} pending</span>
-              )}
+              {/* Status - 3 cols */}
+              <div className="col-span-3 flex flex-col gap-1.5">
+                <Badge 
+                  variant="outline"
+                  className={`justify-center py-1.5 font-medium ${
+                    pssr.status === 'Approved' ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' :
+                    pssr.status === 'Under Review' ? 'border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20' :
+                    pssr.status === 'In Progress' ? 'border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20' :
+                    pssr.status === 'Pending' ? 'border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-950/20' :
+                    'border-slate-500/40 text-slate-600 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-950/20'
+                  }`}
+                >
+                  {pssr.status}
+                </Badge>
+                {pssr.pendingApprovals > 0 && (
+                  <p className="text-xs text-center text-muted-foreground">{pssr.pendingApprovals} pending</p>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Drag Indicator when dragging */}
-        {isDragging && (
-          <div className="absolute -top-2 -left-2 -right-2 -bottom-2 border-2 border-dashed border-primary/50 rounded-xl bg-primary/5" />
-        )}
-      </div>
+            {/* Pin Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePin(pssr.id);
+              }}
+              className="p-2 hover:bg-muted/40 rounded-lg transition-colors"
+            >
+              {isPinned ? (
+                <PinOff className="h-4 w-4 text-amber-500" />
+              ) : (
+                <Pin className="h-4 w-4 text-muted-foreground hover:text-amber-500 transition-colors" />
+              )}
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
