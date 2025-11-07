@@ -3,15 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo, Bell, User, LogOut, Shield, Languages } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { ThemeToggle } from './admin/ThemeToggle';
+import { NotificationCenter } from '@/components/NotificationCenter';
+import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
@@ -432,26 +436,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <AnimatedParticles />
       </div>
-      
-      <AdminHeader selectedLanguage={language} onLanguageChange={setLanguage} translations={t}>
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbPage className="flex items-center gap-1.5">
-                <Home className="h-4 w-4" />
-                Home
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </AdminHeader>
 
-      <div className="h-[calc(100vh-5rem)] flex">
+      <div className="h-screen flex">
         {/* ORSH Sidebar Panel */}
-        <div className="w-72 border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col">
-          {/* ORSH Branding */}
+        <div className="w-80 border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col">
+          {/* ORSH Branding & Header */}
           <div className="p-6 border-b border-border/40">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
                 <span className="text-xl font-bold text-white">OR</span>
               </div>
@@ -460,12 +451,95 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 <p className="text-xs text-muted-foreground">Operations Hub</p>
               </div>
             </div>
-            
-            {/* User Info */}
-            <div className="p-3 rounded-lg bg-gradient-to-r from-muted/30 to-muted/10 border border-border/30">
-              <p className="text-sm font-medium">{userName}</p>
-              <p className="text-xs text-muted-foreground">Operations Manager</p>
+
+            {/* Breadcrumb Navigation */}
+            <div className="mb-4">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
+                      <Home className="h-3.5 w-3.5" />
+                      Home
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
+
+            {/* Settings Row - Theme, Notifications, Language */}
+            <div className="flex items-center gap-2 mb-4 p-2 rounded-lg bg-muted/20">
+              <ThemeToggle />
+              <NotificationCenter />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Languages className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setLanguage('en')}>
+                    English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLanguage('es')}>
+                    Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLanguage('fr')}>
+                    Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <Separator className="mb-4" />
+            
+            {/* User Profile Section */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start p-3 h-auto hover:bg-muted/50"
+                >
+                  <Avatar className="h-10 w-10 mr-3">
+                    <AvatarImage src="" alt={userName} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                      {userName.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium">{userName}</p>
+                    <p className="text-xs text-muted-foreground">Operations Manager</p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Security</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Notifications</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Navigation Menu */}
