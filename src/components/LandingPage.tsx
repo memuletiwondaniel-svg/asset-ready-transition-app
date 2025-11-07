@@ -455,7 +455,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         ) : (
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
-          <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: '40%' }}>
+          <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: messages.length > 0 ? '60%' : '40%' }}>
             <CardHeader className="flex-shrink-0 py-3 pb-2">
               <CardTitle className="text-4xl font-bold">
                 Welcome, {userName}
@@ -645,7 +645,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </Card>
 
           {/* Workspaces Section */}
-          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }} data-tour="workspaces">
+          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: messages.length > 0 ? '38%' : '58%' }} data-tour="workspaces">
             <CardHeader className="border-b border-border/40 py-4">
               <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
             </CardHeader>
