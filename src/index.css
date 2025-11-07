@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes morph {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: translate(-30%, -30%) rotate(0deg);
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    transform: translate(-20%, -40%) rotate(180deg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(-50%, 40%);
+  }
+  50% {
+    transform: translate(-50%, 30%);
+  }
+}
+
 /* Hide scrollbar for webkit browsers */
 .scrollbar-hide {
   -ms-overflow-style: none;

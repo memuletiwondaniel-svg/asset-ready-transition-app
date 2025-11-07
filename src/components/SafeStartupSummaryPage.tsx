@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
+import CompactPSSRCard from './CompactPSSRCard';
 import PSSRTableView from './PSSRTableView';
 import PSSRKanbanBoard from './PSSRKanbanBoard';
 import PSSRActivityFeed from './PSSRActivityFeed';
@@ -107,7 +108,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'compact'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
@@ -567,35 +568,60 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
   return (
     <div className="min-h-screen flex w-full relative overflow-hidden">
-      {/* Modern Gradient Background */}
-      <div className="absolute inset-0 bg-background">
-        {/* Main layer */}
-        <div className="absolute inset-0 opacity-25 dark:opacity-20">
+      {/* Dynamic Color Modeled Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background">
+        {/* Animated gradient orbs */}
+        <div className="absolute inset-0">
+          {/* Primary color orb - top left */}
           <div 
-            className="absolute inset-0 animate-gradient-shift-morph"
+            className="absolute top-0 left-0 w-[600px] h-[600px] opacity-30 dark:opacity-20 animate-[morph_20s_ease-in-out_infinite]"
             style={{
-              background: 'radial-gradient(at 20% 30%, hsl(220, 12%, 90%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(240, 10%, 92%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(210, 11%, 91%) 0%, transparent 40%)',
-              filter: 'blur(50px)',
+              background: `radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, hsl(var(--primary) / 0.2) 30%, transparent 70%)`,
+              filter: 'blur(80px)',
+              transform: 'translate(-30%, -30%)',
             }}
           />
-        </div>
-
-        {/* Sweep layer */}
-        <div className="absolute inset-0 opacity-20 dark:opacity-15">
+          
+          {/* Accent color orb - top right */}
           <div 
-            className="absolute inset-0 animate-gradient-sweep-morph"
+            className="absolute top-0 right-0 w-[500px] h-[500px] opacity-25 dark:opacity-15 animate-[morph_25s_ease-in-out_infinite_reverse]"
             style={{
-              background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(230, 10%, 88%) 0%, transparent 50%)',
+              background: `radial-gradient(circle, hsl(var(--accent) / 0.3) 0%, hsl(var(--accent) / 0.15) 40%, transparent 70%)`,
+              filter: 'blur(70px)',
+              transform: 'translate(20%, -40%)',
+            }}
+          />
+          
+          {/* Secondary color orb - bottom */}
+          <div 
+            className="absolute bottom-0 left-1/2 w-[700px] h-[700px] opacity-20 dark:opacity-15 animate-[float_30s_ease-in-out_infinite]"
+            style={{
+              background: `radial-gradient(circle, hsl(var(--secondary) / 0.3) 0%, hsl(var(--secondary) / 0.1) 35%, transparent 65%)`,
+              filter: 'blur(90px)',
+              transform: 'translate(-50%, 40%)',
+            }}
+          />
+          
+          {/* Muted accent orb - center right */}
+          <div 
+            className="absolute top-1/2 right-0 w-[450px] h-[450px] opacity-15 dark:opacity-10 animate-[pulse_15s_ease-in-out_infinite]"
+            style={{
+              background: `radial-gradient(circle, hsl(var(--muted) / 0.4) 0%, hsl(var(--muted) / 0.2) 40%, transparent 70%)`,
               filter: 'blur(60px)',
+              transform: 'translate(25%, -50%)',
             }}
           />
         </div>
         
-        {/* Overlay gradient */}
+        {/* Subtle mesh overlay */}
         <div 
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
           style={{
-            background: 'linear-gradient(135deg, hsl(220, 8%, 92%) 0%, transparent 30%, hsl(var(--primary) / 0.05) 50%, transparent 70%)',
+            backgroundImage: `
+              linear-gradient(0deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
           }}
         />
       </div>
@@ -811,7 +837,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   Reviews <span className="text-muted-foreground">({filteredPSSRs.length})</span>
                 </h2>
                 
-                {/* Compact View Toggle */}
+                {/* View Mode Toggle */}
                 <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
                   <button
                     onClick={() => setViewMode('card')}
@@ -823,6 +849,17 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   >
                     <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
                     Cards
+                  </button>
+                  <button
+                    onClick={() => setViewMode('compact')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === 'compact' 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
+                    Compact
                   </button>
                   <button
                     onClick={() => setViewMode('kanban')}
@@ -851,7 +888,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{filteredPSSRs.length} of {stats.total}</span>
-                {filteredPSSRs.length > 0 && (viewMode === 'card' || viewMode === 'kanban') && (
+                {filteredPSSRs.length > 0 && (viewMode === 'card' || viewMode === 'kanban' || viewMode === 'compact') && (
                   <span className="hidden lg:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
                     <GripVertical className="h-3 w-3" />
                     Drag to reorder
@@ -879,6 +916,43 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                 toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
               }}
             />
+          ) : viewMode === 'compact' ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={filteredPSSRs.map(pssr => pssr.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {filteredPSSRs.map((pssr) => (
+                    <CompactPSSRCard
+                      key={pssr.id}
+                      pssr={pssr}
+                      onViewDetails={handleViewDetails}
+                      getTeamStatusColor={getTeamStatusColor}
+                      isPinned={pinnedPSSRs.includes(pssr.id)}
+                      onTogglePin={handleTogglePin}
+                      onEdit={handleEditPSSR}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+
+              <DragOverlay>
+                {activeDragId ? (
+                  <Card className="p-5 shadow-2xl bg-background/95 backdrop-blur-md border-2 border-primary/50">
+                    <div className="text-center">
+                      <Rocket className="h-8 w-8 text-primary mx-auto mb-2" />
+                      <p className="font-semibold text-foreground">Moving PSSR...</p>
+                      <p className="text-sm text-muted-foreground">
+                        {filteredPSSRs.find(p => p.id === activeDragId)?.projectId}
+                      </p>
+                    </div>
+                  </Card>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           ) : (
             <DndContext
               sensors={sensors}
