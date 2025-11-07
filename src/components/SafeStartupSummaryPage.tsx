@@ -42,17 +42,20 @@ import {
   Home,
   FileText,
   FolderOpen,
-  GripVertical
+  GripVertical,
+  Columns3
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import PSSRTableView from './PSSRTableView';
+import PSSRKanbanBoard from './PSSRKanbanBoard';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
 import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
 import { OrshSidebar } from './OrshSidebar';
+import { toast } from 'sonner';
 
 interface SafeStartupSummaryPageProps {
   onBack: () => void;
@@ -85,7 +88,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
@@ -655,6 +658,17 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                   Cards
                 </button>
                 <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    viewMode === 'kanban' 
+                      ? 'bg-background text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Columns3 className="h-3.5 w-3.5 inline mr-1.5" />
+                  Kanban
+                </button>
+                <button
                   onClick={() => setViewMode('table')}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     viewMode === 'table' 
@@ -670,7 +684,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
             
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>{filteredPSSRs.length} of {stats.total}</span>
-              {filteredPSSRs.length > 0 && viewMode === 'card' && (
+              {filteredPSSRs.length > 0 && (viewMode === 'card' || viewMode === 'kanban') && (
                 <span className="hidden lg:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
                   <GripVertical className="h-3 w-3" />
                   Drag to reorder
@@ -683,6 +697,20 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
             <PSSRTableView 
               pssrs={filteredPSSRs}
               onViewDetails={handleViewDetails}
+            />
+          ) : viewMode === 'kanban' ? (
+            <PSSRKanbanBoard
+              pssrs={filteredPSSRs}
+              onViewDetails={handleViewDetails}
+              getPriorityColor={getPriorityColor}
+              getStatusIcon={getStatusIcon}
+              getTeamStatusColor={getTeamStatusColor}
+              getRiskLevelColor={getRiskLevelColor}
+              pinnedPSSRs={new Set(pinnedPSSRs)}
+              onTogglePin={handleTogglePin}
+              onStatusChange={(pssrId, newStatus) => {
+                toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
+              }}
             />
           ) : (
             <DndContext
