@@ -57,6 +57,7 @@ import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import PSSRStatsWidget from './PSSRStatsWidget';
+import { QuickActionsWidget } from './widgets/QuickActionsWidget';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
@@ -593,46 +594,56 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
               </Breadcrumb>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
-                  <Rocket className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-foreground tracking-tight">Safe Start-Up</h1>
-                  <p className="text-xs text-muted-foreground">Pre-Start-Up Safety Review</p>
-                </div>
-              </div>
-
-              {/* Header Actions */}
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => setActiveView('create')}
-                  size="sm"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>New PSSR</span>
-                </Button>
-                {userRole === 'admin' && (
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActiveView('manage-checklist')}
-                    className="gap-2 hover:bg-muted/50"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Manage</span>
-                  </Button>
-                )}
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground tracking-tight mb-1">Safe Start-Up</h1>
+              <p className="text-sm text-muted-foreground">Pre-Start-Up Safety Review Management</p>
             </div>
           </div>
         </header>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
-        {/* Combined Stats Widget */}
-        <PSSRStatsWidget stats={stats} />
+      <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
+        {/* Stats and Quick Actions Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* PSSR Stats - Takes 1/3 width */}
+          <div>
+            <PSSRStatsWidget stats={stats} />
+          </div>
+
+          {/* Quick Actions - Takes 2/3 width */}
+          <div className="lg:col-span-2">
+            <Card className="border-border/50 bg-card h-full">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setActiveView('create')}
+                    className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                  >
+                    <Plus className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-semibold text-sm">Create New PSSR</p>
+                      <p className="text-xs text-muted-foreground">Start a new safety review</p>
+                    </div>
+                  </Button>
+                  {userRole === 'admin' && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => setActiveView('manage-checklist')}
+                      className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                    >
+                      <Settings className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-semibold text-sm">Manage Checklists</p>
+                        <p className="text-xs text-muted-foreground">Configure PSSR templates</p>
+                      </div>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Modern Search and Filters */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">

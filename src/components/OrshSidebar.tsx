@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, Rocket, Users, FileText, FolderKanban } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, AlertTriangle, LayoutGrid, Moon, Sun, Users, FolderKanban } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -55,7 +54,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   // Navigation items
   const navigationItems: NavigationItem[] = [
     { label: 'Home', icon: Home, path: '/', section: 'home' },
-    { label: 'Safe Start-Up', icon: Rocket, path: '/safe-startup', section: 'safe-startup' },
+    { label: 'Safe Start-Up', icon: AlertTriangle, path: '/safe-startup', section: 'safe-startup' },
     { label: 'User Management', icon: Users, path: '/user-management', section: 'user-management' },
     { label: 'Admin Tools', icon: Settings, path: '/admin-tools', section: 'admin-tools' },
     { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },
@@ -136,10 +135,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       </div>
 
       {/* Navigation Menu */}
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         {/* Main Navigation */}
         {!isSidebarCollapsed && (
-          <div className="mb-6">
+          <div className="mb-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
               Navigation
             </p>
@@ -169,7 +168,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         )}
 
         {isSidebarCollapsed && (
-          <div className="space-y-2 mb-6">
+          <div className="space-y-2 mb-4">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPage === item.section;
@@ -195,77 +194,90 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
         <Separator className="mb-4" />
 
-        {/* Quick Actions */}
-        <div className="space-y-2">
-          {/* Theme Toggle Row */}
-          <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
-            {theme === 'dark' ? <>
-                <Sun className="w-4 h-4" />
-                {!isSidebarCollapsed && <span className="ml-2">Light Mode</span>}
-              </> : <>
-                <Moon className="w-4 h-4" />
-                {!isSidebarCollapsed && <span className="ml-2">Dark Mode</span>}
-              </>}
-          </Button>
-
-          {/* Notifications Row */}
-          <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Notifications">
-            <Bell className="w-4 h-4" />
-            {!isSidebarCollapsed && <span className="ml-2">Notifications</span>}
-          </Button>
-
-          {/* Language Selector Row */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Language">
-                <Languages className="w-4 h-4" />
-                {!isSidebarCollapsed && <span className="ml-2">Language</span>}
+        {/* Settings Section */}
+        {!isSidebarCollapsed && (
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
+              Settings
+            </p>
+            <div className="space-y-1">
+              <Button variant="outline" size="sm" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full justify-start h-9">
+                {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-background z-50">
-              <DropdownMenuLabel>Select Language</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
-                English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
-                Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
-                Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
-          {/* Widgets Row */}
-          <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowWidgets} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Widgets">
-            <LayoutGrid className="w-4 h-4" />
-            {!isSidebarCollapsed && <span className="ml-2">Widgets</span>}
-          </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start h-9">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+              </Button>
 
-          {/* Take Tour Row */}
-          <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowOnboarding} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Take Tour">
-            <Clock className="w-4 h-4" />
-            {!isSidebarCollapsed && <span className="ml-2">Take Tour</span>}
-          </Button>
-        </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start h-9">
+                    <Languages className="mr-2 h-4 w-4" />
+                    <span>Language</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                  <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
+                    English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
+                    Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
+                    Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-        {/* Search History Section */}
-        {searchHistory.length > 0 && !isSidebarCollapsed && <div className="mt-6 pt-6 border-t border-border/40 animate-fade-in">
-            <div className="flex items-center justify-between px-4 mb-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</p>
-              <Button variant="ghost" size="icon" onClick={onToggleSearchHistory} className="h-6 w-6">
-                <ChevronDown className={`w-3 h-3 transition-transform ${showSearchHistory ? 'rotate-180' : ''}`} />
+              <Button variant="outline" size="sm" onClick={onShowWidgets} className="w-full justify-start h-9">
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                <span>Widgets</span>
               </Button>
             </div>
-            {showSearchHistory && <div className="space-y-1">
-                {searchHistory.slice(0, 5).map((item, idx) => <Button key={idx} variant="ghost" size="sm" onClick={() => onSearchHistoryClick?.(item)} className="w-full justify-start h-8 px-4 text-xs hover:bg-muted/50">
-                    <History className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span className="truncate text-left">{item}</span>
-                  </Button>)}
-              </div>}
-          </div>}
-      </ScrollArea>
+          </div>
+        )}
+
+        {isSidebarCollapsed && (
+          <div className="space-y-2 mb-4">
+            <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full h-9" title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+
+            <Button variant="outline" size="icon" className="w-full h-9" title="Notifications">
+              <Bell className="w-4 h-4" />
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="w-full h-9" title="Language">
+                  <Languages className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background z-50">
+                <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
+                  English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
+                  Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
+                  Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button variant="outline" size="icon" onClick={onShowWidgets} className="w-full h-9" title="Widgets">
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-border/40 space-y-2">
