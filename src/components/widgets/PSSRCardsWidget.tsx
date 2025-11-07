@@ -152,30 +152,8 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
     onPssrOrderChange(arrayMove(pssrOrder, oldIndex, newIndex));
   };
 
-  const getDensityValue = () => {
-    switch (cardDensity) {
-      case 'minimal': return 0;
-      case 'comfortable': return 50;
-      case 'detailed': return 100;
-    }
-  };
-
-  const handleDensityChange = (value: number[]) => {
-    if (value[0] < 33) {
-      onCardDensityChange('minimal');
-    } else if (value[0] < 67) {
-      onCardDensityChange('comfortable');
-    } else {
-      onCardDensityChange('detailed');
-    }
-  };
-
   const getGapClass = () => {
-    switch (cardDensity) {
-      case 'minimal': return 'space-y-1';
-      case 'comfortable': return 'space-y-3';
-      case 'detailed': return 'space-y-4';
-    }
+    return 'space-y-2';
   };
 
   return (
@@ -270,32 +248,6 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
           </div>
         )}
 
-        {/* Card Density Slider */}
-        {(viewMode === 'card' || viewMode === 'compact') && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Settings2 className="h-3 w-3" />
-                Card Density
-              </label>
-              <span className="text-xs font-medium text-foreground capitalize">
-                {cardDensity}
-              </span>
-            </div>
-            <Slider
-              value={[getDensityValue()]}
-              onValueChange={handleDensityChange}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Minimal</span>
-              <span>Comfortable</span>
-              <span>Detailed</span>
-            </div>
-          </div>
-        )}
 
         {/* Drag to reorder hint */}
         {pssrs.length > 0 && (viewMode === 'card' || viewMode === 'compact') && (

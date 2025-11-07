@@ -812,7 +812,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
           {/* Right Side - PSSR Cards Widget */}
           {widgets.find(w => w.id === 'pssr-cards')?.isVisible && (
             <div className="w-full lg:w-[500px] xl:w-[600px] flex-shrink-0">
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-280px)] sticky top-[180px]">
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-[calc(100vh-180px)] sticky top-[120px]">
                 <CardContent className="p-5 h-full flex flex-col">
                   <PSSRCardsWidget
                     pssrs={filteredPSSRs}

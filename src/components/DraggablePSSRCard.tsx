@@ -206,18 +206,18 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-5">
-          <div className="space-y-3">
+        <CardContent className="p-3">
+          <div className="space-y-2">
             {/* Header Row */}
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Badge variant="secondary" className="font-mono font-semibold text-xs">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0">
                     {pssr.projectId}
                   </Badge>
                   <Badge 
                     variant="outline" 
-                    className={`text-[10px] px-1.5 py-0.5 ${
+                    className={`text-[9px] px-1 py-0 ${
                       pssr.tier === 1 ? 'border-rose-500/60 text-rose-600 dark:text-rose-400 bg-rose-500/10' :
                       pssr.tier === 2 ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
                       'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
@@ -225,26 +225,26 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                   >
                     T{pssr.tier}
                   </Badge>
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
+                  <Badge variant="outline" className="text-[9px] px-1 py-0">
                     {pssr.status}
                   </Badge>
                   {pssr.pendingApprovals > 0 && (
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
-                      {pssr.pendingApprovals} pending
+                    <Badge variant="destructive" className="text-[9px] px-1 py-0">
+                      {pssr.pendingApprovals}
                     </Badge>
                   )}
                 </div>
-                <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors mb-1">
+                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors mb-0.5 line-clamp-1">
                   {pssr.projectName}
                 </h3>
-                <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-0.5">
+                    <MapPin className="h-2.5 w-2.5" />
                     {pssr.asset}
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
+                  <span className="flex items-center gap-0.5">
+                    <Calendar className="h-2.5 w-2.5" />
                     {pssr.lastActivity}
                   </span>
                 </div>
@@ -252,36 +252,36 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             </div>
 
             {/* Compact Progress Bar */}
-            <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden">
+            <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden">
               <div 
                 className={`absolute inset-y-0 left-0 ${getProgressColor(pssr.progress)} rounded-full transition-all duration-500`}
                 style={{ width: `${pssr.progress}%` }}
               />
-              <div className="absolute inset-0 flex items-center justify-end pr-2">
-                <span className="text-[9px] font-bold text-background mix-blend-difference">{pssr.progress}%</span>
+              <div className="absolute inset-0 flex items-center justify-end pr-1.5">
+                <span className="text-[8px] font-bold text-background mix-blend-difference">{pssr.progress}%</span>
               </div>
             </div>
 
             {/* Footer Row */}
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center justify-between">
               {/* Lead Info - Compact */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
-                  className="w-7 h-7 rounded-full border-2 border-primary/20"
+                  className="w-5 h-5 rounded-full border border-primary/20"
                 />
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-medium text-foreground">{pssr.pssrLead}</span>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Users className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <span className="font-medium text-foreground truncate max-w-[100px]">{pssr.pssrLead}</span>
+                  <div className="flex items-center gap-0.5 text-muted-foreground">
+                    <Users className="h-2.5 w-2.5" />
                     <span className="font-medium">{pssr.teamMembers}</span>
                   </div>
                 </div>
               </div>
 
               {/* Team Status Indicator */}
-              <div className={`h-2.5 w-2.5 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-2 ring-background shadow-sm`} />
+              <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background shadow-sm`} />
             </div>
           </div>
         </CardContent>

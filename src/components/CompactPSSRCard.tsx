@@ -82,7 +82,7 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
       className={`${isDragging ? 'opacity-50 z-50' : ''}`}
     >
       <div
-        className={`group relative flex items-center gap-3 p-2.5 rounded-lg border-l-4 ${getStatusColor(pssr.status)} border-y border-r border-border/50 bg-gradient-to-r from-card/80 to-card/40 backdrop-blur-sm cursor-pointer transition-all hover:shadow-md hover:border-primary/30 hover:scale-[1.01] ${
+        className={`group relative flex items-center gap-2 p-2 rounded-lg border-l-4 ${getStatusColor(pssr.status)} border-y border-r border-border/50 bg-gradient-to-r from-card/80 to-card/40 backdrop-blur-sm cursor-pointer transition-all hover:shadow-md hover:border-primary/30 hover:scale-[1.01] ${
           isPinned ? 'ring-1 ring-amber-400/50 bg-amber-50/5' : ''
         }`}
         onClick={() => onViewDetails(pssr.id)}
@@ -94,22 +94,22 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
           className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
 
         {/* Status Indicator */}
-        <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getTeamStatusColor(pssr.teamStatus)} ring-2 ring-background`} />
+        <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background`} />
 
         {/* Project Info */}
-        <div className="flex-1 min-w-0 grid grid-cols-[auto_1fr_auto_auto] gap-3 items-center">
+        <div className="flex-1 min-w-0 grid grid-cols-[auto_1fr_auto_auto] gap-2 items-center">
           {/* ID & Tier */}
-          <div className="flex items-center gap-1.5">
-            <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 font-semibold">
+          <div className="flex items-center gap-1">
+            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0 font-semibold">
               {pssr.projectId}
             </Badge>
             <Badge 
               variant="outline" 
-              className={`text-[10px] px-1.5 py-0 ${
+              className={`text-[9px] px-1 py-0 ${
                 pssr.tier === 1 ? 'border-rose-500/60 text-rose-600 dark:text-rose-400 bg-rose-500/10' :
                 pssr.tier === 2 ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
                 'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
@@ -121,58 +121,58 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
 
           {/* Name & Location */}
           <div className="min-w-0">
-            <h3 className="text-sm font-bold truncate text-foreground group-hover:text-primary transition-colors">
+            <h3 className="text-xs font-bold truncate text-foreground group-hover:text-primary transition-colors">
               {pssr.projectName}
             </h3>
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-0.5">
+                <MapPin className="h-2.5 w-2.5" />
                 {pssr.asset}
               </span>
               <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+              <span className="flex items-center gap-0.5">
+                <Clock className="h-2.5 w-2.5" />
                 {pssr.lastActivity}
               </span>
             </div>
           </div>
 
           {/* Compact Progress */}
-          <div className="flex items-center gap-2 min-w-[100px]">
-            <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden w-16">
+          <div className="flex items-center gap-1.5 min-w-[80px]">
+            <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden w-12">
               <div 
                 className={`absolute inset-y-0 left-0 ${getProgressColor(pssr.progress)} rounded-full transition-all`}
                 style={{ width: `${pssr.progress}%` }}
               />
             </div>
-            <span className="text-xs font-bold text-foreground min-w-[28px]">{pssr.progress}%</span>
+            <span className="text-[10px] font-bold text-foreground min-w-[24px]">{pssr.progress}%</span>
           </div>
 
           {/* Team & Actions */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Users className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Users className="h-3 w-3" />
               <span className="font-medium">{pssr.teamMembers}</span>
             </div>
             
             {/* Quick Actions */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0"
+                      className="h-5 w-5 p-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         onTogglePin(pssr.id);
                       }}
                     >
                       {isPinned ? (
-                        <PinOff className="h-3 w-3 text-amber-500" />
+                        <PinOff className="h-2.5 w-2.5 text-amber-500" />
                       ) : (
-                        <Pin className="h-3 w-3" />
+                        <Pin className="h-2.5 w-2.5" />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -185,13 +185,13 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
+                        className="h-5 w-5 p-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEdit(pssr.id);
                         }}
                       >
-                        <Edit className="h-3 w-3" />
+                        <Edit className="h-2.5 w-2.5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Edit</TooltipContent>
@@ -204,7 +204,7 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
 
         {/* Pinned Indicator */}
         {isPinned && (
-          <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-l-[20px] border-t-amber-400/20 border-l-transparent rounded-tr-lg" />
+          <div className="absolute top-0 right-0 w-0 h-0 border-t-[16px] border-l-[16px] border-t-amber-400/20 border-l-transparent rounded-tr-lg" />
         )}
       </div>
     </div>
