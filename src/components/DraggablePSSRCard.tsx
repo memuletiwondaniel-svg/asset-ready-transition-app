@@ -74,22 +74,19 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Approved': return 'border-emerald-500';
-      case 'Under Review': return 'border-amber-500';
-      case 'In Progress': return 'border-blue-500';
-      case 'Pending': return 'border-orange-500';
-      default: return 'border-slate-500';
+      case 'Approved': return 'border-l-emerald-500';
+      case 'Under Review': return 'border-l-amber-500';
+      case 'In Progress': return 'border-l-violet-500';
+      case 'Pending': return 'border-l-orange-500';
+      default: return 'border-l-slate-500';
     }
   };
 
-  const getStatusBg = (status: string) => {
-    switch (status) {
-      case 'Approved': return 'bg-emerald-500/10';
-      case 'Under Review': return 'bg-amber-500/10';
-      case 'In Progress': return 'bg-blue-500/10';
-      case 'Pending': return 'bg-orange-500/10';
-      default: return 'bg-slate-500/10';
-    }
+  const getProgressColor = (progress: number) => {
+    if (progress >= 80) return 'bg-emerald-500';
+    if (progress >= 50) return 'bg-violet-500';
+    if (progress >= 25) return 'bg-amber-500';
+    return 'bg-orange-500';
   };
 
   return (
@@ -105,13 +102,11 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       }`}
     >
       <Card
-        className={`group relative overflow-hidden border-border/40 cursor-pointer transition-all duration-300 ${
-          isPinned ? 'ring-2 ring-amber-400/50 shadow-lg shadow-amber-100/20 dark:shadow-amber-900/20' : 'hover:shadow-lg hover:border-primary/30'
+        className={`group relative overflow-hidden border-l-4 ${getStatusColor(pssr.status)} bg-gradient-to-br from-card to-card/50 cursor-pointer transition-all duration-300 ${
+          isPinned ? 'ring-2 ring-amber-400/50 shadow-lg shadow-amber-100/20 dark:shadow-amber-900/20' : 'hover:shadow-lg hover:border-primary/30 hover:scale-[1.01]'
         } ${isDragging ? 'ring-2 ring-primary/30' : ''}`}
         onClick={() => onViewDetails(pssr.id)}
       >
-        {/* Status Color Bar */}
-        <div className={`absolute left-0 top-0 bottom-0 w-1 ${getStatusColor(pssr.status)}`} />
 
         {/* Pinned Indicator */}
         {isPinned && (
@@ -211,30 +206,38 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-6 pl-8">
-          <div className="space-y-4">
+        <CardContent className="p-5">
+          <div className="space-y-3">
             {/* Header Row */}
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="default" className="font-mono font-semibold">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Badge variant="secondary" className="font-mono font-semibold text-xs">
                     {pssr.projectId}
                   </Badge>
                   <Badge 
                     variant="outline" 
-                    className={`text-xs ${
-                      pssr.tier === 1 ? 'border-red-500/50 text-red-600 dark:text-red-400' :
-                      pssr.tier === 2 ? 'border-orange-500/50 text-orange-600 dark:text-orange-400' :
-                      'border-green-500/50 text-green-600 dark:text-green-400'
+                    className={`text-[10px] px-1.5 py-0.5 ${
+                      pssr.tier === 1 ? 'border-rose-500/60 text-rose-600 dark:text-rose-400 bg-rose-500/10' :
+                      pssr.tier === 2 ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
+                      'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
                     }`}
                   >
-                    Tier {pssr.tier}
+                    T{pssr.tier}
                   </Badge>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
+                    {pssr.status}
+                  </Badge>
+                  {pssr.pendingApprovals > 0 && (
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
+                      {pssr.pendingApprovals} pending
+                    </Badge>
+                  )}
                 </div>
-                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
+                <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors mb-1">
                   {pssr.projectName}
                 </h3>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
                     {pssr.asset}
@@ -246,52 +249,39 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                   </span>
                 </div>
               </div>
-
-              {/* Status Badge */}
-              <Badge 
-                className={`${getStatusBg(pssr.status)} ${getStatusColor(pssr.status).replace('border-', 'text-')} border-0 font-medium`}
-              >
-                {pssr.status}
-                {pssr.pendingApprovals > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-background/40 rounded text-[10px]">
-                    {pssr.pendingApprovals}
-                  </span>
-                )}
-              </Badge>
             </div>
 
-            {/* Progress Section */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-semibold text-foreground">{pssr.progress}%</span>
+            {/* Compact Progress Bar */}
+            <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden">
+              <div 
+                className={`absolute inset-y-0 left-0 ${getProgressColor(pssr.progress)} rounded-full transition-all duration-500`}
+                style={{ width: `${pssr.progress}%` }}
+              />
+              <div className="absolute inset-0 flex items-center justify-end pr-2">
+                <span className="text-[9px] font-bold text-background mix-blend-difference">{pssr.progress}%</span>
               </div>
-              <Progress value={pssr.progress} className="h-2" />
             </div>
 
             {/* Footer Row */}
-            <div className="flex items-center justify-between pt-2 border-t border-border/40">
-              {/* Lead Info */}
+            <div className="flex items-center justify-between pt-1">
+              {/* Lead Info - Compact */}
               <div className="flex items-center gap-2">
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
-                  className="w-8 h-8 rounded-full border-2 border-border/50"
+                  className="w-7 h-7 rounded-full border-2 border-primary/20"
                 />
-                <div>
-                  <p className="text-xs text-muted-foreground">PSSR Lead</p>
-                  <p className="text-sm font-medium text-foreground">{pssr.pssrLead}</p>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-medium text-foreground">{pssr.pssrLead}</span>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="font-medium">{pssr.teamMembers}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Team & Priority */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-foreground font-medium">{pssr.teamMembers}</span>
-                </div>
-                <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)}`} />
-              </div>
+              {/* Team Status Indicator */}
+              <div className={`h-2.5 w-2.5 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-2 ring-background shadow-sm`} />
             </div>
           </div>
         </CardContent>

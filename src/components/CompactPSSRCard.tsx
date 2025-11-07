@@ -60,12 +60,19 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Approved': return 'border-emerald-500';
-      case 'Under Review': return 'border-amber-500';
-      case 'In Progress': return 'border-blue-500';
-      case 'Pending': return 'border-orange-500';
-      default: return 'border-border';
+      case 'Approved': return 'border-l-emerald-500';
+      case 'Under Review': return 'border-l-amber-500';
+      case 'In Progress': return 'border-l-violet-500';
+      case 'Pending': return 'border-l-orange-500';
+      default: return 'border-l-border';
     }
+  };
+
+  const getProgressColor = (progress: number) => {
+    if (progress >= 80) return 'bg-emerald-500';
+    if (progress >= 50) return 'bg-violet-500';
+    if (progress >= 25) return 'bg-amber-500';
+    return 'bg-orange-500';
   };
 
   return (
@@ -75,9 +82,9 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
       className={`${isDragging ? 'opacity-50 z-50' : ''}`}
     >
       <div
-        className={`group relative flex items-center gap-3 p-3 rounded-lg border bg-card/50 backdrop-blur-sm cursor-pointer transition-all hover:shadow-md hover:border-primary/30 ${
+        className={`group relative flex items-center gap-3 p-2.5 rounded-lg border-l-4 ${getStatusColor(pssr.status)} border-y border-r border-border/50 bg-gradient-to-r from-card/80 to-card/40 backdrop-blur-sm cursor-pointer transition-all hover:shadow-md hover:border-primary/30 hover:scale-[1.01] ${
           isPinned ? 'ring-1 ring-amber-400/50 bg-amber-50/5' : ''
-        } ${getStatusColor(pssr.status)}`}
+        }`}
         onClick={() => onViewDetails(pssr.id)}
       >
         {/* Drag Handle */}
@@ -91,21 +98,21 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
         </div>
 
         {/* Status Indicator */}
-        <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getTeamStatusColor(pssr.teamStatus)}`} />
+        <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getTeamStatusColor(pssr.teamStatus)} ring-2 ring-background`} />
 
         {/* Project Info */}
         <div className="flex-1 min-w-0 grid grid-cols-[auto_1fr_auto_auto] gap-3 items-center">
           {/* ID & Tier */}
-          <div className="flex items-center gap-2">
-            <Badge variant="default" className="font-mono text-xs px-2 py-0.5">
+          <div className="flex items-center gap-1.5">
+            <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 font-semibold">
               {pssr.projectId}
             </Badge>
             <Badge 
               variant="outline" 
               className={`text-[10px] px-1.5 py-0 ${
-                pssr.tier === 1 ? 'border-red-500/50 text-red-600 dark:text-red-400' :
-                pssr.tier === 2 ? 'border-orange-500/50 text-orange-600 dark:text-orange-400' :
-                'border-green-500/50 text-green-600 dark:text-green-400'
+                pssr.tier === 1 ? 'border-rose-500/60 text-rose-600 dark:text-rose-400 bg-rose-500/10' :
+                pssr.tier === 2 ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
+                'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
               }`}
             >
               T{pssr.tier}
@@ -114,10 +121,10 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
 
           {/* Name & Location */}
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
+            <h3 className="text-sm font-bold truncate text-foreground group-hover:text-primary transition-colors">
               {pssr.projectName}
             </h3>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {pssr.asset}
@@ -130,10 +137,15 @@ const CompactPSSRCard: React.FC<CompactPSSRCardProps> = ({
             </div>
           </div>
 
-          {/* Progress */}
-          <div className="flex items-center gap-2 min-w-[120px]">
-            <Progress value={pssr.progress} className="h-1.5 w-20" />
-            <span className="text-xs font-medium text-foreground min-w-[32px]">{pssr.progress}%</span>
+          {/* Compact Progress */}
+          <div className="flex items-center gap-2 min-w-[100px]">
+            <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden w-16">
+              <div 
+                className={`absolute inset-y-0 left-0 ${getProgressColor(pssr.progress)} rounded-full transition-all`}
+                style={{ width: `${pssr.progress}%` }}
+              />
+            </div>
+            <span className="text-xs font-bold text-foreground min-w-[28px]">{pssr.progress}%</span>
           </div>
 
           {/* Team & Actions */}

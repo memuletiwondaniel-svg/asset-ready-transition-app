@@ -106,6 +106,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
   const [cardDensity, setCardDensity] = useState<CardDensity>('comfortable');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterTier, setFilterTier] = useState('all');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
@@ -829,6 +833,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                     pssrOrder={pssrOrder}
                     onPssrOrderChange={setPssrOrder}
                     totalCount={stats.total}
+                    searchQuery={searchQuery}
+                    onSearchQueryChange={setSearchQuery}
+                    filterStatus={filterStatus}
+                    onFilterStatusChange={setFilterStatus}
+                    filterPriority={filterPriority}
+                    onFilterPriorityChange={setFilterPriority}
+                    filterTier={filterTier}
+                    onFilterTierChange={setFilterTier}
                   />
                 </CardContent>
               </Card>

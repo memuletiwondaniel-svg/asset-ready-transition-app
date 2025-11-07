@@ -20,18 +20,23 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { 
   LayoutGrid, 
   TableIcon,
   Columns3,
   GripVertical,
   Rocket,
-  Settings2
+  Settings2,
+  Search,
+  Filter,
+  X
 } from 'lucide-react';
 import DraggablePSSRCard from '../DraggablePSSRCard';
 import CompactPSSRCard from '../CompactPSSRCard';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
+import SimplePSSRFilters from './SimplePSSRFilters';
 import { toast } from 'sonner';
 
 export type CardDensity = 'minimal' | 'comfortable' | 'detailed';
@@ -78,6 +83,14 @@ interface PSSRCardsWidgetProps {
   pssrOrder: string[];
   onPssrOrderChange: (order: string[]) => void;
   totalCount: number;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  filterStatus: string;
+  onFilterStatusChange: (status: string) => void;
+  filterPriority: string;
+  onFilterPriorityChange: (priority: string) => void;
+  filterTier: string;
+  onFilterTierChange: (tier: string) => void;
 }
 
 const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
@@ -99,8 +112,17 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
   pssrOrder,
   onPssrOrderChange,
   totalCount,
+  searchQuery,
+  onSearchQueryChange,
+  filterStatus,
+  onFilterStatusChange,
+  filterPriority,
+  onFilterPriorityChange,
+  filterTier,
+  onFilterTierChange,
 }) => {
   const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
+  const [showFilters, setShowFilters] = React.useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -159,11 +181,11 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header Controls */}
-      <div className="space-y-4 mb-4">
-        {/* View Mode Toggle */}
+      <div className="space-y-3 mb-4">
+        {/* Title and View Mode */}
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            Reviews <Badge variant="secondary" className="text-xs">{pssrs.length}/{totalCount}</Badge>
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            PSSR Reviews <Badge variant="secondary" className="text-xs font-semibold">{pssrs.length}/{totalCount}</Badge>
           </h3>
           
           <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted/30 border border-border/30">
@@ -171,8 +193,8 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
               onClick={() => onViewModeChange('card')}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === 'card' 
-                  ? 'bg-background text-foreground shadow-sm' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
               title="Card View"
             >
@@ -182,8 +204,8 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
               onClick={() => onViewModeChange('compact')}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === 'compact' 
-                  ? 'bg-background text-foreground shadow-sm' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
               title="Compact View"
             >
@@ -193,8 +215,8 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
               onClick={() => onViewModeChange('kanban')}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === 'kanban' 
-                  ? 'bg-background text-foreground shadow-sm' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
               title="Kanban View"
             >
@@ -202,6 +224,51 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search PSSRs..."
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            className="pl-9 pr-20 h-9 text-sm"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-12 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+              onClick={() => onSearchQueryChange('')}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 ${showFilters ? 'bg-primary text-primary-foreground' : ''}`}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-3.5 w-3.5 mr-1" />
+            <span className="text-xs">Filter</span>
+          </Button>
+        </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="p-3 rounded-lg border border-border/50 bg-muted/30 space-y-2 animate-in slide-in-from-top-2">
+            <SimplePSSRFilters
+              filterStatus={filterStatus}
+              onFilterStatusChange={onFilterStatusChange}
+              filterPriority={filterPriority}
+              onFilterPriorityChange={onFilterPriorityChange}
+              filterTier={filterTier}
+              onFilterTierChange={onFilterTierChange}
+            />
+          </div>
+        )}
 
         {/* Card Density Slider */}
         {(viewMode === 'card' || viewMode === 'compact') && (
