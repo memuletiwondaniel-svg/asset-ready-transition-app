@@ -1,5 +1,6 @@
 import React from 'react';
-import { ClipboardList, KeyRound, Settings, ArrowRight } from 'lucide-react';
+import { ClipboardList, KeyRound, Settings, ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -13,27 +14,33 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       title: 'Safe Start-Up',
       description: 'PSSR & Safety Checklists',
       icon: ClipboardList,
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10',
-      hoverBg: 'hover:bg-blue-500/20'
+      gradient: 'from-primary/20 via-primary/10 to-transparent',
+      iconBg: 'bg-primary/10',
+      iconColor: 'text-primary',
+      badge: 'Active',
+      badgeVariant: 'default' as const
     },
     {
       id: 'p2o',
       title: 'P2O Handover',
       description: 'Project-to-Operations Transition',
       icon: KeyRound,
-      color: 'text-purple-500',
-      bg: 'bg-purple-500/10',
-      hoverBg: 'hover:bg-purple-500/20'
+      gradient: 'from-accent/20 via-accent/10 to-transparent',
+      iconBg: 'bg-accent/10',
+      iconColor: 'text-accent',
+      badge: 'New',
+      badgeVariant: 'secondary' as const
     },
     {
       id: 'admin-tools',
       title: 'Admin Tools',
       description: 'Users, Roles & Permissions',
       icon: Settings,
-      color: 'text-orange-500',
-      bg: 'bg-orange-500/10',
-      hoverBg: 'hover:bg-orange-500/20'
+      gradient: 'from-orange-500/20 via-orange-500/10 to-transparent',
+      iconBg: 'bg-orange-500/10',
+      iconColor: 'text-orange-500',
+      badge: null,
+      badgeVariant: null
     }
   ];
 
@@ -46,17 +53,47 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
             <button
               key={workspace.id}
               onClick={() => onNavigate?.(workspace.id)}
-              className={`relative w-full p-4 rounded-xl ${workspace.bg} ${workspace.hoverBg} transition-all duration-300 group border border-transparent hover:border-border/60 hover:shadow-md animate-fade-in`}
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="relative w-full group animate-fade-in overflow-hidden"
+              style={{ animationDelay: `${index * 80}ms` }}
             >
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg bg-background/50 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`w-6 h-6 ${workspace.color}`} />
+              {/* Gradient background */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${workspace.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              
+              {/* Card content */}
+              <div className="relative backdrop-blur-sm bg-card/50 border border-border/40 rounded-xl p-4 group-hover:border-border/80 group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  {/* Icon container */}
+                  <div className={`flex-shrink-0 p-3 rounded-xl ${workspace.iconBg} group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-sm`}>
+                    <Icon className={`w-5 h-5 ${workspace.iconColor}`} strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {workspace.title}
+                      </h3>
+                      {workspace.badge && (
+                        <Badge variant={workspace.badgeVariant} className="text-[10px] h-5 px-1.5">
+                          {workspace.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {workspace.description}
+                    </p>
+                  </div>
+                  
+                  {/* Arrow CTA */}
+                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-muted/30 group-hover:bg-primary/10 transition-all duration-300">
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="text-sm font-semibold">{workspace.title}</h3>
-                </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
+              </div>
+              
+              {/* Shine effect on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </div>
             </button>
           );
