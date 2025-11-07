@@ -457,7 +457,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           {/* AI Assistant Panel */}
           <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
             <CardHeader className="flex-shrink-0 py-3 pb-2">
-              <CardTitle className="text-4xl font-bold">
+              <CardTitle className="text-4xl font-bold gradient-text-vibrant">
                 Welcome, {userName}
               </CardTitle>
             </CardHeader>
@@ -683,7 +683,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           {/* Workspaces Section */}
           <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }} data-tour="workspaces">
             <CardHeader className="border-b border-border/40 py-4">
-              <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
+              <CardTitle className="text-2xl font-bold gradient-text-vibrant flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                Workspaces
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-6 h-[calc(100%-6rem)] overflow-auto">
               <div className="grid grid-cols-3 gap-6 h-full">
@@ -703,7 +706,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                           <Icon className="w-10 h-10 text-white drop-shadow-lg" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
+                          <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300 gradient-text-accent">
                             {workspace.title}
                           </h4>
                           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
@@ -729,7 +732,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
+                    <CardTitle className="text-xl font-bold gradient-text-primary">Pending Tasks</CardTitle>
                   </div>
                 </div>
               )}
