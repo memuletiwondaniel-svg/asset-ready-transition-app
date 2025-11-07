@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListTodo, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListTodo, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
@@ -101,6 +102,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'due_date' | 'type'>('priority');
   const [taskFilterType, setTaskFilterType] = useState<string>('all');
+  const [taskSearchQuery, setTaskSearchQuery] = useState('');
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [taskAction, setTaskAction] = useState<'complete' | 'dismiss' | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -567,6 +569,17 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const filteredAndSortedTasks = React.useMemo(() => {
     let filtered = tasks;
     
+    // Filter by search query
+    if (taskSearchQuery.trim()) {
+      const query = taskSearchQuery.toLowerCase();
+      filtered = filtered.filter(task => 
+        task.title.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query) ||
+        task.type.toLowerCase().includes(query) ||
+        task.priority.toLowerCase().includes(query)
+      );
+    }
+    
     // Filter by type
     if (taskFilterType !== 'all') {
       filtered = filtered.filter(task => task.type === taskFilterType);
@@ -588,7 +601,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     });
     
     return sorted;
-  }, [tasks, taskFilterType, taskSortBy]);
+  }, [tasks, taskFilterType, taskSortBy, taskSearchQuery]);
 
   const quickActions = [{
     id: 'create-pssr',
@@ -968,6 +981,26 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           {!isTasksPanelCollapsed && (
             <>
               <div className="border-b border-border/40 p-4 space-y-3 bg-gradient-to-r from-muted/30 to-muted/10">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search tasks..."
+                    value={taskSearchQuery}
+                    onChange={(e) => setTaskSearchQuery(e.target.value)}
+                    className="pl-9 h-9 text-sm backdrop-blur-sm bg-background/80 hover:bg-background transition-colors"
+                  />
+                  {taskSearchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => setTaskSearchQuery('')}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
                 <div className="flex gap-3">
                   <Select value={taskFilterType} onValueChange={setTaskFilterType}>
                     <SelectTrigger className="h-9 text-sm flex-1 backdrop-blur-sm bg-background/80 hover:bg-background transition-colors">
