@@ -15,6 +15,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +58,8 @@ import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import PSSRStatsWidget from './PSSRStatsWidget';
-import { QuickActionsWidget } from './widgets/QuickActionsWidget';
+import { SafeStartupWidgetManagement } from './SafeStartupWidgetManagement';
+import { DraggableWidgetCard } from './widgets/DraggableWidgetCard';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
 import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
@@ -94,6 +96,13 @@ interface PSSR {
   tier: 1 | 2 | 3;
 }
 
+interface SafeStartupWidgetConfig {
+  id: string;
+  title: string;
+  isVisible: boolean;
+  isExpanded: boolean;
+}
+
 const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack }) => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
@@ -114,6 +123,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     status: [] as string[],
     lead: [] as string[]
   });
+
+  // Widget Management State
+  const [showWidgetManagement, setShowWidgetManagement] = useState(false);
+  const [widgets, setWidgets] = useState<SafeStartupWidgetConfig[]>([
+    { id: 'pssr-stats', title: 'PSSR Statistics', isVisible: true, isExpanded: false },
+    { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
+  ]);
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(['pssr-stats', 'quick-actions']);
 
   // Mock PSSR data - starts empty but can be populated
   const pssrList: PSSR[] = [
@@ -227,7 +244,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
     setActiveDragId(event.active.id as string);
   };
 
-  // Handle drag end
+  // Handle drag end for PSSRs
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
@@ -242,6 +259,49 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
       return arrayMove(items, oldIndex, newIndex);
     });
+  };
+
+  // Handle drag end for widgets
+  const handleWidgetDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setWidgetOrder((items) => {
+      const oldIndex = items.indexOf(active.id as string);
+      const newIndex = items.indexOf(over.id as string);
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
+
+  // Widget management handlers
+  const toggleWidget = (widgetId: string) => {
+    setWidgets(widgets.map(w => 
+      w.id === widgetId ? { ...w, isVisible: !w.isVisible } : w
+    ));
+  };
+
+  const toggleWidgetExpansion = (widgetId: string) => {
+    setWidgets(widgets.map(w => 
+      w.id === widgetId ? { ...w, isExpanded: !w.isExpanded } : w
+    ));
+  };
+
+  const hideWidget = (widgetId: string) => {
+    setWidgets(widgets.map(w => 
+      w.id === widgetId ? { ...w, isVisible: false } : w
+    ));
+    toast.success('Widget hidden. You can show it again from Widget Management.');
+  };
+
+  const resetWidgets = () => {
+    setWidgets([
+      { id: 'pssr-stats', title: 'PSSR Statistics', isVisible: true, isExpanded: false },
+      { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
+    ]);
+    setWidgetOrder(['pssr-stats', 'quick-actions']);
   };
 
   // Get unique values for filter options
@@ -552,6 +612,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
             onBack();
           }
         }}
+        onShowWidgets={() => setShowWidgetManagement(true)}
       />
       
       <div className="flex-1 relative z-10 overflow-auto">
@@ -602,48 +663,86 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
         </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-6">
-        {/* Stats and Quick Actions Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* PSSR Stats - Takes 1/3 width */}
-          <div>
-            <PSSRStatsWidget stats={stats} />
-          </div>
+        {/* Stats and Quick Actions Row - Draggable Widgets */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleWidgetDragEnd}
+        >
+          <SortableContext
+            items={widgetOrder}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {widgetOrder.map((widgetId) => {
+                const widget = widgets.find(w => w.id === widgetId);
+                if (!widget || !widget.isVisible) return null;
 
-          {/* Quick Actions - Takes 2/3 width */}
-          <div className="lg:col-span-2">
-            <Card className="border-border/50 bg-card h-full">
-              <CardContent className="p-5">
-                <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setActiveView('create')}
-                    className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
-                  >
-                    <Plus className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-semibold text-sm">Create New PSSR</p>
-                      <p className="text-xs text-muted-foreground">Start a new safety review</p>
-                    </div>
-                  </Button>
-                  {userRole === 'admin' && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => setActiveView('manage-checklist')}
-                      className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                if (widgetId === 'pssr-stats') {
+                  return (
+                    <DraggableWidgetCard
+                      key={widgetId}
+                      id={widgetId}
+                      title="PSSR Statistics"
+                      isExpanded={widget.isExpanded}
+                      onToggleExpand={() => toggleWidgetExpansion(widgetId)}
+                      onHide={() => hideWidget(widgetId)}
+                      colSpan="lg:col-span-1"
                     >
-                      <Settings className="h-5 w-5 text-primary" />
+                      <PSSRStatsWidget stats={stats} />
+                    </DraggableWidgetCard>
+                  );
+                }
+
+                if (widgetId === 'quick-actions') {
+                  return (
+                    <DraggableWidgetCard
+                      key={widgetId}
+                      id={widgetId}
+                      title="Quick Actions"
+                      isExpanded={widget.isExpanded}
+                      onToggleExpand={() => toggleWidgetExpansion(widgetId)}
+                      onHide={() => hideWidget(widgetId)}
+                      colSpan="lg:col-span-2"
+                    >
                       <div>
-                        <p className="font-semibold text-sm">Manage Checklists</p>
-                        <p className="text-xs text-muted-foreground">Configure PSSR templates</p>
+                        <h3 className="text-sm font-semibold mb-4">Quick Actions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <Button 
+                            variant="outline"
+                            onClick={() => setActiveView('create')}
+                            className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                          >
+                            <Plus className="h-5 w-5 text-primary" />
+                            <div>
+                              <p className="font-semibold text-sm">Create New PSSR</p>
+                              <p className="text-xs text-muted-foreground">Start a new safety review</p>
+                            </div>
+                          </Button>
+                          {userRole === 'admin' && (
+                            <Button 
+                              variant="outline"
+                              onClick={() => setActiveView('manage-checklist')}
+                              className="h-auto py-4 flex-col items-start gap-2 text-left hover:bg-muted/50"
+                            >
+                              <Settings className="h-5 w-5 text-primary" />
+                              <div>
+                                <p className="font-semibold text-sm">Manage Checklists</p>
+                                <p className="text-xs text-muted-foreground">Configure PSSR templates</p>
+                              </div>
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                    </DraggableWidgetCard>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         {/* Modern Search and Filters */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -866,6 +965,15 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
       </div>
       </main>
       </div>
+
+      {/* Safe Start-Up Widget Management Modal */}
+      <SafeStartupWidgetManagement
+        open={showWidgetManagement}
+        onOpenChange={setShowWidgetManagement}
+        widgets={widgets}
+        onToggleWidget={toggleWidget}
+        onResetWidgets={resetWidgets}
+      />
     </div>
   );
 };
