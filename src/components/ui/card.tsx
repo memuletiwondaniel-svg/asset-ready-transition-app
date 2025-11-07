@@ -20,8 +20,8 @@ const Card = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
-        (interactive || onClick) && "relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99]",
+        "rounded-lg border bg-card text-card-foreground shadow-elevation-rest transition-all duration-300",
+        (interactive || onClick) && "relative overflow-hidden cursor-pointer hover:shadow-elevation-hover hover:-translate-y-1 active:shadow-elevation-pressed active:translate-y-0",
         className
       )}
       onClick={handleClick}

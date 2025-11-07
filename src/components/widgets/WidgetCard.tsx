@@ -27,7 +27,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   if (!isVisible) return null;
 
   return (
-    <Card className={`glass-card overflow-hidden border-border/40 ${isExpanded ? 'col-span-full' : ''} ${className}`}>
+    <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 ${isExpanded ? 'col-span-full' : ''} ${className}`}>
       <CardHeader className="border-b border-border/40 pb-4 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base font-semibold">{title}</CardTitle>
         <DropdownMenu>
