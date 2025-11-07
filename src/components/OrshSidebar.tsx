@@ -3,23 +3,15 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from './admin/ThemeToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { 
-  Home, Settings, ClipboardList, KeyRound, ChevronDown, ChevronLeft, ChevronRight, 
-  Languages, Check, User, Shield, Bell, LogOut, Eye, EyeOff, GripVertical,
-  Clock, Sparkles, History
+  Home, Settings, ChevronDown, ChevronLeft, ChevronRight, 
+  Languages, Check, User, Shield, Bell, LogOut, Clock, History, Sparkles
 } from 'lucide-react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '@/components/ui/use-toast';
 
 interface OrshSidebarProps {
@@ -39,148 +31,23 @@ interface OrshSidebarProps {
   onToggleSearchHistory?: () => void;
 }
 
-interface SortableNavItemProps {
-  item: {
-    id: string;
-    label: string;
-    icon: string;
-    visible: boolean;
-    gradient?: string;
-  };
-}
-
-const SortableNavItem: React.FC<SortableNavItemProps> = ({ item }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card hover:bg-muted/30 transition-colors"
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing"
-      >
-        <GripVertical className="w-4 h-4 text-muted-foreground" />
-      </div>
-      <span className="text-sm font-medium flex-1">{item.label}</span>
-      {!item.visible && (
-        <Badge variant="secondary" className="text-xs">Hidden</Badge>
-      )}
-    </div>
-  );
-};
-
 export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   userName = 'Daniel',
   userTitle = 'ORA Engr.',
   userAvatar = '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
   language = 'en',
   onLanguageChange,
-  onNavigate,
   onShowWidgets,
   onShowOnboarding,
   showWidgets = false,
-  currentPage = 'dashboard',
   searchHistory = [],
   onSearchHistoryClick,
   showSearchHistory = false,
   onToggleSearchHistory
 }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const { toast } = useToast();
-
-  // Navigation items configuration with visibility and order
-  const [navItems, setNavItems] = useState(() => {
-    const saved = localStorage.getItem('sidebarNavConfig');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    return [
-      { id: 'dashboard', label: 'Dashboard', icon: 'Home', visible: true },
-      { id: 'safe-startup', label: 'Safe Start-Up', icon: 'ClipboardList', gradient: 'from-blue-500 to-blue-600', visible: true },
-      { id: 'p2o', label: 'Project-to-Operations', icon: 'KeyRound', gradient: 'from-purple-500 to-purple-600', visible: true },
-      { id: 'admin-tools', label: 'Admin & Tools', icon: 'Settings', gradient: 'from-orange-500 to-orange-600', visible: true }
-    ];
-  });
-
-  // Save navigation config to localStorage whenever it changes
-  React.useEffect(() => {
-    localStorage.setItem('sidebarNavConfig', JSON.stringify(navItems));
-  }, [navItems]);
-
-  // Icon mapping helper
-  const getIconComponent = (iconName: string) => {
-    const icons: Record<string, any> = {
-      Home, ClipboardList, KeyRound, Settings
-    };
-    return icons[iconName] || Home;
-  };
-
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      setNavItems((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  const toggleNavItemVisibility = (id: string) => {
-    setNavItems((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, visible: !item.visible } : item
-      )
-    );
-  };
-
-  const resetNavConfig = () => {
-    const defaultConfig = [
-      { id: 'dashboard', label: 'Dashboard', icon: 'Home', visible: true },
-      { id: 'safe-startup', label: 'Safe Start-Up', icon: 'ClipboardList', gradient: 'from-blue-500 to-blue-600', visible: true },
-      { id: 'p2o', label: 'Project-to-Operations', icon: 'KeyRound', gradient: 'from-purple-500 to-purple-600', visible: true },
-      { id: 'admin-tools', label: 'Admin & Tools', icon: 'Settings', gradient: 'from-orange-500 to-orange-600', visible: true }
-    ];
-    setNavItems(defaultConfig);
-    toast({
-      title: "Settings Reset",
-      description: "Navigation menu restored to default configuration"
-    });
-  };
-
-  // Get workspace data by id
-  const getWorkspaceGradient = (id: string) => {
-    const item = navItems.find(i => i.id === id);
-    return item?.gradient || '';
-  };
 
   return (
     <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
@@ -221,7 +88,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   <BreadcrumbItem>
                     <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
                       <Home className="h-3.5 w-3.5" />
-                      {currentPage === 'dashboard' ? 'Home' : currentPage.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      Home
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
@@ -310,46 +177,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         </DropdownMenu>
       </div>
 
-      {/* Navigation Menu */}
+      {/* Navigation Menu - Removed, only widgets on main page */}
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-2">
-          {navItems.filter(item => item.visible).map((navItem) => {
-            const IconComponent = getIconComponent(navItem.icon);
-            const isActive = currentPage === navItem.id;
-            
-            if (navItem.id === 'dashboard') {
-              return (
-                <Button
-                  key={navItem.id}
-                  variant="ghost"
-                  onClick={() => onNavigate?.('dashboard')}
-                  className={`w-full h-11 px-4 ${isActive ? 'bg-primary/10 text-primary' : ''} hover:bg-primary/20 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-                >
-                  <IconComponent className={`w-4 h-4 ${isSidebarCollapsed ? '' : 'mr-3'} flex-shrink-0`} />
-                  {!isSidebarCollapsed && <span className="animate-fade-in">{navItem.label}</span>}
-                </Button>
-              );
-            }
-
-            return (
-              <Button
-                key={navItem.id}
-                variant="ghost"
-                onClick={() => onNavigate?.(navItem.id)}
-                className={`w-full h-11 px-4 hover:bg-muted/50 transition-all group ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-              >
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${navItem.gradient} flex items-center justify-center ${isSidebarCollapsed ? '' : 'mr-3'} group-hover:scale-110 transition-transform flex-shrink-0`}>
-                  <IconComponent className="w-4 h-4 text-white" />
-                </div>
-                {!isSidebarCollapsed && (
-                  <div className="flex-1 text-left animate-fade-in">
-                    <p className="text-sm font-medium">{navItem.label}</p>
-                  </div>
-                )}
-              </Button>
-            );
-          })}
-        </div>
 
         {/* Search History Section */}
         {searchHistory.length > 0 && !isSidebarCollapsed && (
@@ -387,95 +216,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-border/40 space-y-2">
-        {/* Sidebar Settings Button */}
-        {!isSidebarCollapsed && (
-          <Sheet open={sidebarSettingsOpen} onOpenChange={setSidebarSettingsOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start h-9 animate-fade-in"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Customize Menu
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md bg-background z-[100]">
-              <SheetHeader>
-                <SheetTitle>Navigation Menu Settings</SheetTitle>
-                <SheetDescription>
-                  Customize which sections appear and their order in the sidebar
-                </SheetDescription>
-              </SheetHeader>
-              
-              <div className="mt-6 space-y-6">
-                {/* Visibility Toggles */}
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">Section Visibility</h3>
-                  <div className="space-y-3">
-                    {navItems.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-muted/20">
-                        <div className="flex items-center gap-3">
-                          {item.visible ? (
-                            <Eye className="w-4 h-4 text-primary" />
-                          ) : (
-                            <EyeOff className="w-4 h-4 text-muted-foreground" />
-                          )}
-                          <Label htmlFor={`toggle-${item.id}`} className="cursor-pointer">
-                            {item.label}
-                          </Label>
-                        </div>
-                        <Switch
-                          id={`toggle-${item.id}`}
-                          checked={item.visible}
-                          onCheckedChange={() => toggleNavItemVisibility(item.id)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Drag to Reorder */}
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">Reorder Sections</h3>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Drag to change the order of navigation items
-                  </p>
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={navItems.map(item => item.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-2">
-                        {navItems.map((item) => (
-                          <SortableNavItem key={item.id} item={item} />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                </div>
-
-                <Separator />
-
-                {/* Reset Button */}
-                <Button
-                  variant="outline"
-                  onClick={resetNavConfig}
-                  className="w-full"
-                >
-                  Reset to Default
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
-
         {/* Sidebar Toggle Button */}
         <Button
           variant="outline"
