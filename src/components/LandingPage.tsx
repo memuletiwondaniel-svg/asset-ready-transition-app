@@ -3,13 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo, Menu, User, Bell, LogOut, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AdminHeader from './admin/AdminHeader';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
@@ -41,6 +43,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   }>>([]);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isTasksPanelCollapsed, setIsTasksPanelCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   
@@ -68,6 +71,39 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       return () => clearTimeout(timer);
     }
   }, []);
+
+  // Keyboard shortcuts for navigation
+  React.useEffect(() => {
+    const handleKeyboardShortcut = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case '1':
+            e.preventDefault();
+            // Dashboard is current page, do nothing
+            break;
+          case '2':
+            e.preventDefault();
+            onNavigate('safe-startup');
+            break;
+          case '3':
+            e.preventDefault();
+            onNavigate('p2o');
+            break;
+          case '4':
+            e.preventDefault();
+            onNavigate('admin-tools');
+            break;
+          case 'b':
+            e.preventDefault();
+            setIsSidebarCollapsed(!isSidebarCollapsed);
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboardShortcut);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [isSidebarCollapsed, onNavigate]);
   const {
     tasks,
     loading: tasksLoading,
@@ -411,21 +447,27 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     description: 'Manage PSSR processes and safety checklists',
     icon: ClipboardList,
     gradient: 'from-blue-500 to-blue-600',
-    bgTone: 'bg-blue-500/5'
+    bgTone: 'bg-blue-500/5',
+    badge: 12,
+    shortcut: '⌘2'
   }, {
     id: 'p2o',
     title: 'Project-to-Operations',
     description: 'Manage seamless project handovers',
     icon: KeyRound,
     gradient: 'from-purple-500 to-purple-600',
-    bgTone: 'bg-purple-500/5'
+    bgTone: 'bg-purple-500/5',
+    badge: 5,
+    shortcut: '⌘3'
   }, {
     id: 'admin-tools',
     title: 'Admin & Tools',
     description: 'Manage users, roles, and permissions',
     icon: Settings,
     gradient: 'from-orange-500 to-orange-600',
-    bgTone: 'bg-orange-500/5'
+    bgTone: 'bg-orange-500/5',
+    badge: 3,
+    shortcut: '⌘4'
   }];
   return <AnimatedBackground>
       {/* Particle Effects */}
@@ -448,35 +490,54 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       <div className="h-[calc(100vh-5rem)] flex">
         {/* ORSH Sidebar Panel */}
-        <div className="w-72 border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col">
+        <div className={`border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-72'}`}>
           {/* ORSH Branding */}
-          <div className="p-6 border-b border-border/40">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                <span className="text-xl font-bold text-white">OR</span>
-              </div>
-              <div>
-                <h2 className="font-bold text-lg">ORSH</h2>
-                <p className="text-xs text-muted-foreground">Operations Hub</p>
-              </div>
+          <div className="p-4 border-b border-border/40">
+            <div className={`flex items-center gap-3 mb-4 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+              {!isSidebarCollapsed ? (
+                <>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                    <span className="text-lg font-bold text-white">OR</span>
+                  </div>
+                  <div>
+                    <h2 className="font-bold">ORSH</h2>
+                    <p className="text-[10px] text-muted-foreground">Operations Hub</p>
+                  </div>
+                </>
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                  <span className="text-lg font-bold text-white">OR</span>
+                </div>
+              )}
             </div>
             
-            {/* User Info */}
-            <div className="p-3 rounded-lg bg-gradient-to-r from-muted/30 to-muted/10 border border-border/30">
-              <p className="text-sm font-medium">{userName}</p>
-              <p className="text-xs text-muted-foreground">Operations Manager</p>
-            </div>
+            {/* Toggle Button */}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="w-full h-8 hover:bg-primary/10 transition-all"
+              title={isSidebarCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
           </div>
 
           {/* Navigation Menu */}
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-2">
+          <ScrollArea className="flex-1 p-2">
+            <div className="space-y-1">
               <Button
                 variant="ghost"
-                className="w-full justify-start h-11 px-4 bg-primary/10 text-primary hover:bg-primary/20"
+                className={`w-full h-11 bg-primary/10 text-primary hover:bg-primary/20 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start px-4'}`}
+                title={isSidebarCollapsed ? 'Dashboard (⌘1)' : ''}
               >
-                <Home className="w-4 h-4 mr-3" />
-                Dashboard
+                <Home className={`w-4 h-4 ${isSidebarCollapsed ? '' : 'mr-3'}`} />
+                {!isSidebarCollapsed && <span>Dashboard</span>}
+                {!isSidebarCollapsed && (
+                  <Badge variant="secondary" className="ml-auto text-[10px] h-5 px-1.5">
+                    ⌘1
+                  </Badge>
+                )}
               </Button>
 
               {workspaceCards.map((workspace) => {
@@ -486,45 +547,65 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     key={workspace.id}
                     variant="ghost"
                     onClick={() => onNavigate(workspace.id)}
-                    className="w-full justify-start h-11 px-4 hover:bg-muted/50 transition-all group"
+                    className={`w-full h-11 hover:bg-muted/50 transition-all group relative ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start px-4'}`}
+                    title={isSidebarCollapsed ? `${workspace.title} (${workspace.shortcut})` : ''}
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspace.gradient} flex items-center justify-center mr-3 group-hover:scale-110 transition-transform`}>
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 transition-transform relative ${isSidebarCollapsed ? '' : 'mr-3'}`}>
                       <Icon className="w-4 h-4 text-white" />
+                      {workspace.badge > 0 && (
+                        <Badge className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] bg-destructive hover:bg-destructive">
+                          {workspace.badge}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium">{workspace.title}</p>
-                    </div>
+                    {!isSidebarCollapsed && (
+                      <>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-medium">{workspace.title}</p>
+                        </div>
+                        {workspace.badge > 0 && (
+                          <Badge variant="destructive" className="ml-2 text-[10px] h-5 px-1.5">
+                            {workspace.badge}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="ml-2 text-[10px] h-5 px-1.5">
+                          {workspace.shortcut}
+                        </Badge>
+                      </>
+                    )}
                   </Button>
                 );
               })}
             </div>
 
             {/* Quick Actions Section */}
-            <div className="mt-6 pt-6 border-t border-border/40">
-              <p className="text-xs font-semibold text-muted-foreground px-4 mb-3 uppercase tracking-wide">Quick Actions</p>
-              <div className="space-y-1">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Button
-                      key={action.id}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setUserInput(action.label)}
-                      className="w-full justify-start h-9 px-4 text-xs hover:bg-muted/50"
-                    >
-                      <Icon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-                      {action.label}
-                    </Button>
-                  );
-                })}
+            {!isSidebarCollapsed && (
+              <div className="mt-4 pt-4 border-t border-border/40">
+                <p className="text-xs font-semibold text-muted-foreground px-2 mb-2 uppercase tracking-wide">Quick Actions</p>
+                <div className="space-y-1">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Button
+                        key={action.id}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setUserInput(action.label)}
+                        className="w-full justify-start h-8 px-2 text-xs hover:bg-muted/50"
+                      >
+                        <Icon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                        {action.label}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Search History Section */}
-            {searchHistory.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-border/40">
-                <div className="flex items-center justify-between px-4 mb-3">
+            {!isSidebarCollapsed && searchHistory.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border/40">
+                <div className="flex items-center justify-between px-2 mb-2">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</p>
                   <Button
                     variant="ghost"
@@ -546,7 +627,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                           setUserInput(item);
                           setShowHistory(false);
                         }}
-                        className="w-full justify-start h-8 px-4 text-xs hover:bg-muted/50"
+                        className="w-full justify-start h-7 px-2 text-xs hover:bg-muted/50"
                       >
                         <History className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
                         <span className="truncate text-left">{item}</span>
@@ -558,26 +639,119 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             )}
           </ScrollArea>
 
-          {/* Footer Actions */}
-          <div className="p-4 border-t border-border/40 space-y-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowWidgets(!showWidgets)}
-              className="w-full justify-start h-9"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {showWidgets ? 'Hide Widgets' : 'Show Widgets'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowOnboarding(true)}
-              className="w-full justify-start h-9"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              Take Tour
-            </Button>
+          {/* User Profile Section */}
+          <div className="p-3 border-t border-border/40 space-y-2">
+            {!isSidebarCollapsed ? (
+              <>
+                <div className="flex items-center gap-3 p-2 rounded-lg bg-gradient-to-r from-muted/30 to-muted/10 border border-border/30">
+                  <Avatar className="h-10 w-10 border-2 border-primary/20">
+                    <AvatarImage src="/placeholder.svg" alt={userName} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white font-semibold">
+                      {userName.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{userName}</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                      <p className="text-xs text-muted-foreground">Online</p>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <Settings className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <User className="w-4 h-4 mr-2" />
+                        Profile Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notifications
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Zap className="w-4 h-4 mr-2" />
+                        Preferences
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowWidgets(!showWidgets)}
+                    className="h-8 text-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    Widgets
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowOnboarding(true)}
+                    className="h-8 text-xs"
+                  >
+                    <Clock className="w-3.5 h-3.5 mr-1.5" />
+                    Tour
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost" className="w-full h-10 relative">
+                    <Avatar className="h-8 w-8 border-2 border-primary/20">
+                      <AvatarImage src="/placeholder.svg" alt={userName} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-xs font-semibold">
+                        {userName.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="absolute bottom-0 right-2 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card"></span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>{userName}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="w-4 h-4 mr-2" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Bell className="w-4 h-4 mr-2" />
+                    Notifications
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Preferences
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowWidgets(!showWidgets)}>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Toggle Widgets
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowOnboarding(true)}>
+                    <Clock className="w-4 h-4 mr-2" />
+                    Take Tour
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
