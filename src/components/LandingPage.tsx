@@ -282,63 +282,97 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         </Breadcrumb>
       </AdminHeader>
 
-      <div className="h-[calc(100vh-5rem)] flex gap-4 p-4">
-        <div className="flex-1 flex flex-col gap-4">
-          <Card className="border-border/40 shadow-lg overflow-hidden flex flex-col" style={{ height: '35%' }}>
-            <CardHeader className="border-b border-border/40 flex-shrink-0 py-4">
-              <CardTitle className="text-3xl font-bold">Welcome, {userName}</CardTitle>
+      <div className="h-[calc(100vh-5rem)] flex gap-6 p-6">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col gap-6">
+          {/* AI Assistant Panel */}
+          <Card className="border-border/40 shadow-xl overflow-hidden flex flex-col backdrop-blur-xl bg-card/95 animate-smooth-in" style={{ height: '40%' }}>
+            <CardHeader className="border-b border-border/40 flex-shrink-0 py-5 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
+              <CardTitle className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                Welcome, {userName}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 flex flex-col flex-1 overflow-hidden">
-              <div className="space-y-2 flex-shrink-0">
-                <div className="relative">
-                  <Textarea value={userInput} onChange={e => setUserInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask a question or describe what you need..." className="min-h-[120px] resize-none border-border/40 pr-24" disabled={isLoadingAI} />
-                  <div className="absolute bottom-2 right-2 flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={handleVoiceInput} disabled={!isSupported || isLoadingAI} className="h-7 w-7">
-                      <Mic className={`w-3.5 h-3.5 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
+            <CardContent className="p-6 flex flex-col flex-1 overflow-hidden">
+              <div className="space-y-3 flex-shrink-0">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <Textarea 
+                    value={userInput} 
+                    onChange={e => setUserInput(e.target.value)} 
+                    onKeyPress={handleKeyPress} 
+                    placeholder="Ask a question or describe what you need..." 
+                    className="min-h-[140px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-background/50 focus:bg-background/80 transition-all duration-300" 
+                    disabled={isLoadingAI} 
+                  />
+                  <div className="absolute bottom-3 right-3 flex gap-2">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={handleVoiceInput} 
+                      disabled={!isSupported || isLoadingAI} 
+                      className="h-9 w-9 hover:bg-primary/10 transition-all duration-300"
+                    >
+                      <Mic className={`w-4 h-4 ${isListening ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
                     </Button>
-                    <Button size="icon" variant="ghost" disabled className="h-7 w-7">
-                      <ImagePlus className="w-3.5 h-3.5" />
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      disabled 
+                      className="h-9 w-9 hover:bg-primary/10 transition-all duration-300"
+                    >
+                      <ImagePlus className="w-4 h-4 text-muted-foreground" />
                     </Button>
-                    <Button size="icon" onClick={handleSend} disabled={isLoadingAI || !userInput.trim()} className="rounded-full bg-gradient-to-br from-primary to-accent h-7 w-7">
-                      <Send className="w-3.5 h-3.5" />
+                    <Button 
+                      size="icon" 
+                      onClick={handleSend} 
+                      disabled={isLoadingAI || !userInput.trim()} 
+                      className="rounded-full bg-gradient-to-br from-primary to-accent h-9 w-9 hover:scale-110 transition-transform duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      <Send className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 animate-smooth-in stagger-1">
                   <Button 
                     size="sm" 
                     variant="outline" 
                     onClick={() => setShowHistory(!showHistory)} 
-                    className="text-[11px] h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50"
+                    className="text-xs h-8 px-4 border-border/40 bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 transition-all duration-300 backdrop-blur-sm"
                   >
-                    <History className="w-3 h-3 mr-1.5" />
+                    <History className="w-3.5 h-3.5 mr-2" />
                     History
                   </Button>
-                  <div className="flex flex-wrap gap-1.5">
-                    {quickActions.map(action => <Button key={action.id} variant="outline" size="sm" className="text-[11px] h-7 px-3 border-border/40 bg-muted/30 hover:bg-muted/50" onClick={() => setUserInput(action.label)}>
-                        {action.label}
-                      </Button>)}
+                  <div className="flex flex-wrap gap-2">
+                    {quickActions.map((action, idx) => <Button 
+                      key={action.id} 
+                      variant="outline" 
+                      size="sm" 
+                      className={`text-xs h-8 px-4 border-border/40 bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-all duration-300 backdrop-blur-sm animate-smooth-in stagger-${idx + 2}`}
+                      onClick={() => setUserInput(action.label)}
+                    >
+                      {action.label}
+                    </Button>)}
                   </div>
                 </div>
                 
                 {showHistory && searchHistory.length > 0 && (
-                  <Card className="border-border/40 bg-background/95 backdrop-blur">
-                    <CardContent className="p-2 space-y-1">
-                      <p className="text-xs text-muted-foreground px-2 py-1">Recent searches</p>
+                  <Card className="border-border/40 bg-background/98 backdrop-blur-xl shadow-2xl animate-scale-in">
+                    <CardContent className="p-3 space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Recent searches</p>
                       {searchHistory.map((item, idx) => (
                         <Button
                           key={idx}
                           variant="ghost"
                           size="sm"
-                          className="w-full justify-start text-xs h-7 px-2"
+                          className="w-full justify-start text-xs h-8 px-3 hover:bg-primary/10 transition-all duration-300"
                           onClick={() => {
                             setUserInput(item);
                             setShowHistory(false);
                           }}
                         >
-                          <History className="w-3 h-3 mr-2" />
-                          {item}
+                          <History className="w-3.5 h-3.5 mr-2 text-primary" />
+                          <span className="truncate">{item}</span>
                         </Button>
                       ))}
                     </CardContent>
@@ -348,23 +382,27 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               
               {/* AI Conversation Display */}
               {messages.length > 0 && (
-                <ScrollArea className="flex-1 pr-4">
-                  <div className="space-y-4 py-4">
+                <ScrollArea className="flex-1 pr-4 mt-4">
+                  <div className="space-y-4 py-2">
                     {messages.map((msg, idx) => (
-                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      <div 
+                        key={idx} 
+                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-smooth-in`}
+                        style={{ animationDelay: `${idx * 50}ms` }}
+                      >
+                        <div className={`max-w-[85%] rounded-2xl px-5 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ${
                           msg.role === 'user' 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-muted'
+                            ? 'bg-gradient-to-br from-primary to-accent text-primary-foreground' 
+                            : 'bg-gradient-to-br from-muted/80 to-muted/60 border border-border/40'
                         }`}>
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                         </div>
                       </div>
                     ))}
                     {isLoadingAI && (
-                      <div className="flex justify-start">
-                        <div className="bg-muted rounded-lg px-4 py-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                      <div className="flex justify-start animate-smooth-in">
+                        <div className="bg-gradient-to-br from-muted/80 to-muted/60 rounded-2xl px-5 py-3 border border-border/40 backdrop-blur-sm">
+                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
                         </div>
                       </div>
                     )}
@@ -375,25 +413,34 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </CardContent>
           </Card>
 
-          <Card className="border-border/40 shadow-lg" style={{ height: '63%' }}>
-            <CardHeader className="border-b border-border/40 py-3">
-              <CardTitle className="text-lg">Workspaces</CardTitle>
-              <CardDescription className="text-xs">Select a workspace to get started</CardDescription>
+          {/* Workspaces Section */}
+          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }}>
+            <CardHeader className="border-b border-border/40 py-4 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
+              <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
+              <CardDescription className="text-sm">Select a workspace to get started</CardDescription>
             </CardHeader>
-            <CardContent className="p-4 h-[calc(100%-5rem)]">
-              <div className="grid grid-cols-3 gap-3 h-full">
-                {workspaceCards.map(workspace => {
+            <CardContent className="p-6 h-[calc(100%-6rem)] overflow-auto">
+              <div className="grid grid-cols-3 gap-6 h-full">
+                {workspaceCards.map((workspace, idx) => {
                 const Icon = workspace.icon;
-                return <Card key={workspace.id} onClick={() => onNavigate(workspace.id)} className={`cursor-pointer border-border/40 hover:border-primary/30 transition-all hover:shadow-lg hover:scale-105 group ${workspace.bgTone}`}>
-                      <CardContent className="p-6 flex flex-col items-center justify-center h-full text-center space-y-4">
-                        <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                          <Icon className="w-8 h-8 text-white" />
+                return <Card 
+                  key={workspace.id} 
+                  onClick={() => onNavigate(workspace.id)} 
+                  className={`cursor-pointer border-border/40 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:scale-105 group backdrop-blur-sm overflow-hidden animate-smooth-in ${workspace.bgTone}`}
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-500" />
+                      
+                      <CardContent className="p-8 flex flex-col items-center justify-center h-full text-center space-y-5 relative z-10">
+                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
+                          <Icon className="w-10 h-10 text-white drop-shadow-lg" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-base mb-1.5 group-hover:text-primary transition-colors">
+                          <h4 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
                             {workspace.title}
                           </h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
+                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                             {workspace.description}
                           </p>
                         </div>
@@ -405,15 +452,18 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </Card>
         </div>
 
-        <Card className={`border-border/40 shadow-lg transition-all duration-300 ${isTasksPanelCollapsed ? 'w-12' : 'w-80'}`}>
-          <CardHeader className="border-b border-border/40 py-3">
+        {/* Tasks Panel */}
+        <Card className={`border-border/40 shadow-xl transition-all duration-500 backdrop-blur-xl bg-card/95 animate-smooth-in stagger-3 ${isTasksPanelCollapsed ? 'w-16' : 'w-96'}`}>
+          <CardHeader className="border-b border-border/40 py-4 bg-gradient-to-r from-primary/5 to-accent/5">
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
-                <div className="flex items-center gap-2 flex-1">
-                  <Clock className="w-5 h-5" />
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
                   <div className="flex-1">
-                    <CardTitle className="text-lg">Pending Tasks</CardTitle>
-                    <CardDescription className="text-xs">Your action items</CardDescription>
+                    <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
+                    <CardDescription className="text-sm">Your action items</CardDescription>
                   </div>
                 </div>
               )}
@@ -421,45 +471,53 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 size="icon" 
                 variant="ghost" 
                 onClick={() => setIsTasksPanelCollapsed(!isTasksPanelCollapsed)}
-                className="h-8 w-8 flex-shrink-0"
+                className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 transition-all duration-300"
               >
-                {isTasksPanelCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                {isTasksPanelCollapsed ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
               </Button>
             </div>
           </CardHeader>
           {!isTasksPanelCollapsed && (
             <>
-              <div className="border-b border-border/40 p-3 space-y-2">
-                <div className="flex gap-2">
+              <div className="border-b border-border/40 p-4 space-y-3 bg-gradient-to-r from-muted/30 to-muted/10">
+                <div className="flex gap-3">
                   <Select value={taskFilterType} onValueChange={setTaskFilterType}>
-                    <SelectTrigger className="h-8 text-xs flex-1">
-                      <Filter className="w-3 h-3 mr-1" />
+                    <SelectTrigger className="h-9 text-sm flex-1 backdrop-blur-sm bg-background/80 hover:bg-background transition-colors">
+                      <Filter className="w-4 h-4 mr-2 text-primary" />
                       <SelectValue placeholder="Filter" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="backdrop-blur-xl bg-background/98">
                       <SelectItem value="all">
-                        All Types
-                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                          {taskCounts.all}
-                        </Badge>
+                        <div className="flex items-center justify-between w-full">
+                          <span>All Types</span>
+                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                            {taskCounts.all}
+                          </Badge>
+                        </div>
                       </SelectItem>
                       <SelectItem value="approval">
-                        Approval
-                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                          {taskCounts.approval}
-                        </Badge>
+                        <div className="flex items-center justify-between w-full">
+                          <span>Approval</span>
+                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                            {taskCounts.approval}
+                          </Badge>
+                        </div>
                       </SelectItem>
                       <SelectItem value="review">
-                        Review
-                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                          {taskCounts.review}
-                        </Badge>
+                        <div className="flex items-center justify-between w-full">
+                          <span>Review</span>
+                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                            {taskCounts.review}
+                          </Badge>
+                        </div>
                       </SelectItem>
                       <SelectItem value="action">
-                        Action
-                        <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                          {taskCounts.action}
-                        </Badge>
+                        <div className="flex items-center justify-between w-full">
+                          <span>Action</span>
+                          <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                            {taskCounts.action}
+                          </Badge>
+                        </div>
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -504,7 +562,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
                                 Approve
                               </Button>
-                              <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'cancelled')}>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex-1 h-8 text-xs font-medium hover:bg-destructive/10 transition-all" 
+                                onClick={() => updateTaskStatus(task.id, 'cancelled')}
+                              >
                                 Reject
                               </Button>
                             </>
@@ -513,25 +576,25 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               <Button 
                                 size="sm" 
                                 variant="default" 
-                                className="flex-1 h-7 text-xs" 
+                                className="flex-1 h-8 text-xs font-medium shadow-sm hover:shadow-md transition-all" 
                                 onClick={() => {
                                   setTaskToDelete(task.id);
                                   setTaskAction('complete');
                                 }}
                               >
-                                <Check className="w-3 h-3 mr-1" />
+                                <Check className="w-3.5 h-3.5 mr-1.5" />
                                 Complete
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="flex-1 h-7 text-xs" 
+                                className="flex-1 h-8 text-xs font-medium hover:bg-destructive/10 transition-all" 
                                 onClick={() => {
                                   setTaskToDelete(task.id);
                                   setTaskAction('dismiss');
                                 }}
                               >
-                                <X className="w-3 h-3 mr-1" />
+                                <X className="w-3.5 h-3.5 mr-1.5" />
                                 Dismiss
                               </Button>
                             </>
