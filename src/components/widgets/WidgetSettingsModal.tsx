@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Trash2, LayoutGrid } from 'lucide-react';
 import { WidgetConfig } from '@/hooks/useWidgetConfigs';
+import { cn } from '@/lib/utils';
 
 interface WidgetSettingsModalProps {
   widget: WidgetConfig | null;
@@ -141,18 +142,50 @@ export const WidgetSettingsModal: React.FC<WidgetSettingsModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label>Widget Size</Label>
-            <Select value={size} onValueChange={(val) => setSize(val as 'small' | 'medium' | 'large')}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="small">Small</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="large">Large</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-3 gap-3">
+              {(['small', 'medium', 'large'] as const).map((sizeOption) => (
+                <button
+                  key={sizeOption}
+                  type="button"
+                  onClick={() => setSize(sizeOption)}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all hover:border-primary/50",
+                    size === sizeOption 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border bg-background"
+                  )}
+                >
+                  <div className="flex items-center justify-center w-full h-12">
+                    <div className="grid grid-cols-3 gap-1 w-full h-full">
+                      <div 
+                        className={cn(
+                          "rounded border-2 transition-all",
+                          size === sizeOption ? "border-primary bg-primary/20" : "border-muted bg-muted/50",
+                          sizeOption === 'small' && "col-span-1",
+                          sizeOption === 'medium' && "col-span-2",
+                          sizeOption === 'large' && "col-span-3"
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className={cn(
+                      "text-sm font-medium capitalize",
+                      size === sizeOption ? "text-primary" : "text-foreground"
+                    )}>
+                      {sizeOption}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {sizeOption === 'small' && '1 column'}
+                      {sizeOption === 'medium' && '2 columns'}
+                      {sizeOption === 'large' && '3 columns'}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {renderWidgetSpecificSettings()}
