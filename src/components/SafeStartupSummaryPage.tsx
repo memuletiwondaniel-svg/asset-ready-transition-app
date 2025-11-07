@@ -46,7 +46,8 @@ import {
   GripVertical,
   Columns3,
   Bell,
-  Rocket
+  Rocket,
+  ChevronRight
 } from 'lucide-react';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
@@ -644,7 +645,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
                           )}
                         </BreadcrumbItem>
                         {!isLast && (
-                          <span className="mx-2 text-muted-foreground text-sm">/</span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground/40 mx-1.5" />
                         )}
                       </React.Fragment>
                     );
