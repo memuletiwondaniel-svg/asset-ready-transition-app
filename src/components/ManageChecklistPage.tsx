@@ -207,19 +207,22 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
   // Generate breadcrumbs based on current state
   const getBreadcrumbs = () => {
-    const crumbs = [{ label: 'Home', icon: Home }, { label: 'Admin Tools', icon: Settings }];
+    const crumbs = [
+      { label: 'Home', icon: Home, onClick: onBack }, 
+      { label: 'Admin Tools', icon: Settings, onClick: onBack }
+    ];
     
     if (showCreateForm) {
-      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
-      crumbs.push({ label: 'Create Checklist', icon: Plus });
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList, onClick: () => setShowCreateForm(false) });
+      crumbs.push({ label: 'Create Checklist', icon: Plus, onClick: undefined });
     } else if (showEditForm) {
-      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
-      crumbs.push({ label: 'Edit Checklist', icon: Edit3 });
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList, onClick: () => { setShowEditForm(false); setEditingChecklist(null); } });
+      crumbs.push({ label: 'Edit Checklist', icon: Edit3, onClick: undefined });
     } else if (selectedChecklist) {
-      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
-      crumbs.push({ label: selectedChecklist.name, icon: FileText });
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList, onClick: () => setSelectedChecklist(null) });
+      crumbs.push({ label: selectedChecklist.name, icon: FileText, onClick: undefined });
     } else {
-      crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+      crumbs.push({ label: 'Checklist Management', icon: ClipboardList, onClick: undefined });
     }
     
     return crumbs;

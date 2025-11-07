@@ -155,8 +155,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
   const projects = ["Project Alpha", "Project Beta", "Project Gamma"]; // Mock projects
 
   const breadcrumbs = [
-    { label: 'Home', icon: Home },
-    { label: 'User Management', icon: Users }
+    { label: 'Home', icon: Home, onClick: onBack },
+    { label: 'User Management', icon: Users, onClick: undefined }
   ];
 
   return (

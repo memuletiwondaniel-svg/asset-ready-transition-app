@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 interface BreadcrumbItem {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
 }
 
 interface OrshSidebarProps {
@@ -77,16 +78,30 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => {
                     const Icon = crumb.icon || Home;
+                    const isLast = index === breadcrumbs.length - 1;
+                    
                     return (
-                      <BreadcrumbItem key={index}>
-                        <BreadcrumbPage className="flex items-center gap-1.5 text-sm">
-                          <Icon className="h-3.5 w-3.5" />
-                          {crumb.label}
-                        </BreadcrumbPage>
-                        {index < breadcrumbs.length - 1 && (
-                          <span className="mx-2 text-muted-foreground">/</span>
+                      <React.Fragment key={index}>
+                        <BreadcrumbItem>
+                          {isLast ? (
+                            <BreadcrumbPage className="flex items-center gap-1.5 text-sm font-medium">
+                              <Icon className="h-3.5 w-3.5" />
+                              {crumb.label}
+                            </BreadcrumbPage>
+                          ) : (
+                            <button
+                              onClick={crumb.onClick}
+                              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                              {crumb.label}
+                            </button>
+                          )}
+                        </BreadcrumbItem>
+                        {!isLast && (
+                          <span className="mx-2 text-muted-foreground text-sm">/</span>
                         )}
-                      </BreadcrumbItem>
+                      </React.Fragment>
                     );
                   })}
                 </BreadcrumbList>

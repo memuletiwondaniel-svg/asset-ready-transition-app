@@ -334,34 +334,34 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
 
   // Generate breadcrumbs based on current view
   const getBreadcrumbs = () => {
-    const crumbs = [{ label: 'Home', icon: Home }];
+    const crumbs = [{ label: 'Home', icon: Home, onClick: onBack }];
     
     switch (activeView) {
       case 'list':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: undefined });
         break;
       case 'create':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
-        crumbs.push({ label: 'Create PSSR', icon: Plus });
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
+        crumbs.push({ label: 'Create PSSR', icon: Plus, onClick: undefined });
         break;
       case 'details':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
         if (selectedPSSR) {
-          crumbs.push({ label: selectedPSSR, icon: FileText });
+          crumbs.push({ label: selectedPSSR, icon: FileText, onClick: undefined });
         }
         break;
       case 'category-items':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
         if (selectedPSSR) {
-          crumbs.push({ label: selectedPSSR, icon: FileText });
+          crumbs.push({ label: selectedPSSR, icon: FileText, onClick: () => setActiveView('details') });
         }
         if (selectedCategory) {
-          crumbs.push({ label: selectedCategory, icon: FolderOpen });
+          crumbs.push({ label: selectedCategory, icon: FolderOpen, onClick: undefined });
         }
         break;
       case 'manage-checklist':
-        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck });
-        crumbs.push({ label: 'Manage Checklists', icon: Settings });
+        crumbs.push({ label: 'Safe Start-Up', icon: ShieldCheck, onClick: () => setActiveView('list') });
+        crumbs.push({ label: 'Manage Checklists', icon: Settings, onClick: undefined });
         break;
     }
     

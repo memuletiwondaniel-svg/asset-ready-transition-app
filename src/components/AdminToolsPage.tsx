@@ -253,31 +253,31 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   // Generate breadcrumbs based on current view
   const getBreadcrumbs = () => {
-    const crumbs = [{ label: 'Home', icon: Home }];
+    const crumbs = [{ label: 'Home', icon: Home, onClick: onBack }];
     
     switch (activeView) {
       case 'dashboard':
-        crumbs.push({ label: 'Admin Tools', icon: Settings });
+        crumbs.push({ label: 'Admin Tools', icon: Settings, onClick: undefined });
         break;
       case 'users':
-        crumbs.push({ label: 'Admin Tools', icon: Settings });
-        crumbs.push({ label: 'User Management', icon: Users });
+        crumbs.push({ label: 'Admin Tools', icon: Settings, onClick: () => setActiveView('dashboard') });
+        crumbs.push({ label: 'User Management', icon: Users, onClick: undefined });
         break;
       case 'checklist':
-        crumbs.push({ label: 'Admin Tools', icon: Settings });
-        crumbs.push({ label: 'Checklist Management', icon: ClipboardList });
+        crumbs.push({ label: 'Admin Tools', icon: Settings, onClick: () => setActiveView('dashboard') });
+        crumbs.push({ label: 'Checklist Management', icon: ClipboardList, onClick: undefined });
         break;
       case 'pssr-settings':
-        crumbs.push({ label: 'Admin Tools', icon: Settings });
-        crumbs.push({ label: 'PSSR Configuration', icon: Settings });
+        crumbs.push({ label: 'Admin Tools', icon: Settings, onClick: () => setActiveView('dashboard') });
+        crumbs.push({ label: 'PSSR Configuration', icon: Settings, onClick: undefined });
         break;
       case 'projects':
-        crumbs.push({ label: 'Admin Tools', icon: Settings });
-        crumbs.push({ label: 'Project Management', icon: FolderOpen });
+        crumbs.push({ label: 'Admin Tools', icon: Settings, onClick: () => setActiveView('dashboard') });
+        crumbs.push({ label: 'Project Management', icon: FolderOpen, onClick: undefined });
         break;
       case 'activity-log':
-        crumbs.push({ label: 'Admin Tools', icon: Settings });
-        crumbs.push({ label: 'Activity Log', icon: Activity });
+        crumbs.push({ label: 'Admin Tools', icon: Settings, onClick: () => setActiveView('dashboard') });
+        crumbs.push({ label: 'Activity Log', icon: Activity, onClick: undefined });
         break;
     }
     
