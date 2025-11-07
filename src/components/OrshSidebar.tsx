@@ -103,17 +103,30 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         {/* User Profile Section */}
         <Collapsible open={userMenuOpen} onOpenChange={setUserMenuOpen}>
           <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className={`w-full p-3 h-auto hover:bg-muted/50 ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-            >
-              <Avatar className={`h-10 w-10 flex-shrink-0 ${isSidebarCollapsed ? '' : 'mr-3'}`}>
-                <AvatarImage src={userAvatar} alt={userName} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                  {userName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              {!isSidebarCollapsed && (
+            {isSidebarCollapsed ? (
+              <div
+                role="button"
+                tabIndex={0}
+                className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md"
+              >
+                <Avatar className="h-10 w-10 flex-shrink-0">
+                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                    {userName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            ) : (
+              <Button 
+                variant="ghost" 
+                className="w-full p-3 h-auto hover:bg-muted/50 justify-start"
+              >
+                <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
+                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                    {userName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <>
                   <div className="flex-1 text-left animate-fade-in">
                     <p className="text-sm font-medium">{userName}</p>
@@ -121,8 +134,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   </div>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </>
-              )}
-            </Button>
+              </Button>
+            )}
           </CollapsibleTrigger>
           {!isSidebarCollapsed && (
             <CollapsibleContent className="space-y-1 mt-1 animate-fade-in">
