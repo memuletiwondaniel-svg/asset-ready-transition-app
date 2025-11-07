@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, ChevronRight, ChevronLeft, Filter, ArrowUpDown, Check, X, ChevronDown, Sparkles, Upload, ListTodo } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -725,8 +725,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <div className="flex items-center justify-between">
               {!isTasksPanelCollapsed && (
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                    <Clock className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/80 to-accent flex items-center justify-center shadow-lg">
+                    <ListTodo className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
                     <CardTitle className="text-xl font-bold">Pending Tasks</CardTitle>
