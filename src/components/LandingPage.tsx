@@ -428,9 +428,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     bgTone: 'bg-orange-500/5'
   }];
   return <AnimatedBackground>
-      {/* Animated Gradient Mesh Background */}
-      <div className="absolute inset-0 gradient-mesh-animate opacity-60" />
-      
       {/* Particle Effects */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <AnimatedParticles />
@@ -458,8 +455,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         ) : (
         <div className="flex-1 flex flex-col gap-6">
           {/* AI Assistant Panel */}
-          <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in relative" style={{ height: '40%' }}>
-            <div className="absolute inset-0 gradient-animate-slow opacity-50 pointer-events-none" />
+          <Card className="glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in" style={{ height: '40%' }}>
             <CardHeader className="flex-shrink-0 py-3 pb-2">
               <CardTitle className="text-4xl font-bold">
                 Welcome, {userName}
@@ -685,8 +681,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </Card>
 
           {/* Workspaces Section */}
-          <Card className="glass-card shadow-xl animate-smooth-in stagger-2 relative overflow-hidden" style={{ height: '58%' }} data-tour="workspaces">
-            <div className="absolute inset-0 gradient-animate opacity-40 pointer-events-none" />
+          <Card className="border-border/40 shadow-xl backdrop-blur-xl bg-card/95 animate-smooth-in stagger-2" style={{ height: '58%' }} data-tour="workspaces">
             <CardHeader className="border-b border-border/40 py-4">
               <CardTitle className="text-2xl font-bold">Workspaces</CardTitle>
             </CardHeader>
@@ -697,10 +692,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 return <Card 
                   key={workspace.id} 
                   onClick={() => onNavigate(workspace.id)} 
-                  className={`glass-card glass-card-hover cursor-pointer group overflow-hidden animate-smooth-in ${workspace.bgTone} relative`}
+                  className={`glass-card glass-card-hover cursor-pointer group overflow-hidden animate-smooth-in ${workspace.bgTone}`}
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
-                      <div className="absolute inset-0 gradient-animate-fast opacity-0 group-hover:opacity-30 transition-opacity duration-500" />
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-500" />
                       
                       <CardContent className="p-8 flex flex-col items-center justify-center h-full text-center space-y-5 relative z-10">
                         <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${workspace.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl hover-glow`}>
