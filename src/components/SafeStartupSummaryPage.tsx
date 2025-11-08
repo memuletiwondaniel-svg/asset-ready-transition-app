@@ -300,7 +300,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       dateTo: ''
     });
   };
-
   const handleDateChange = (dateType: 'dateFrom' | 'dateTo', value: string) => {
     setFilters(prev => ({
       ...prev,
@@ -632,10 +631,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                 {/* Date Range Filter */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={`gap-2 ${dateRangeFilters.created || dateRangeFilters.nextReview || dateRangeFilters.completed ? 'border-primary bg-primary/5' : ''}`}>
-                      <CalendarIcon className="h-4 w-4" />
-                      <span className="hidden md:inline">Dates</span>
-                    </Button>
+                    
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-80">
                     <PSSRDateRangeFilter value={dateRangeFilters} onChange={setDateRangeFilters} />
