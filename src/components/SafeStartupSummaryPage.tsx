@@ -469,10 +469,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   return <div className="h-screen flex w-full overflow-hidden">
       {/* ORSH Sidebar - Fixed */}
       <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="safe-startup" onNavigate={section => {
-        if (section === 'home') {
-          onBack();
-        }
-      }} />
+      if (section === 'home') {
+        onBack();
+      }
+    }} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -486,35 +486,27 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                 <Breadcrumb>
                   <BreadcrumbList>
                     {(() => {
-                      const breadcrumbs = getBreadcrumbs();
-                      const totalItems = breadcrumbs.length;
-                      
-                      return breadcrumbs.map((crumb, index) => {
-                        const Icon = crumb.icon || Home;
-                        const isLast = index === breadcrumbs.length - 1;
-                        const isFirst = index === 0;
-                        
-                        // Determine which items to hide based on screen size
-                        const shouldHideOnSmall = totalItems > 2 && !isFirst && !isLast;
-                        const shouldHideOnMedium = totalItems > 3 && !isFirst && !isLast && index !== 1;
-                        
-                        // Show ellipsis before the last item if there are hidden items
-                        const shouldShowEllipsisSmall = totalItems > 2 && index === totalItems - 1;
-                        const shouldShowEllipsisMedium = totalItems > 3 && index === totalItems - 1;
-                        
-                        // Get hidden items for dropdown
-                        const hiddenItemsSmall = totalItems > 2 
-                          ? breadcrumbs.slice(1, -1) 
-                          : [];
-                        const hiddenItemsMedium = totalItems > 3 
-                          ? breadcrumbs.filter((_, i) => i !== 0 && i !== totalItems - 1 && i !== 1) 
-                          : [];
-                        
-                        return (
-                          <React.Fragment key={index}>
+                    const breadcrumbs = getBreadcrumbs();
+                    const totalItems = breadcrumbs.length;
+                    return breadcrumbs.map((crumb, index) => {
+                      const Icon = crumb.icon || Home;
+                      const isLast = index === breadcrumbs.length - 1;
+                      const isFirst = index === 0;
+
+                      // Determine which items to hide based on screen size
+                      const shouldHideOnSmall = totalItems > 2 && !isFirst && !isLast;
+                      const shouldHideOnMedium = totalItems > 3 && !isFirst && !isLast && index !== 1;
+
+                      // Show ellipsis before the last item if there are hidden items
+                      const shouldShowEllipsisSmall = totalItems > 2 && index === totalItems - 1;
+                      const shouldShowEllipsisMedium = totalItems > 3 && index === totalItems - 1;
+
+                      // Get hidden items for dropdown
+                      const hiddenItemsSmall = totalItems > 2 ? breadcrumbs.slice(1, -1) : [];
+                      const hiddenItemsMedium = totalItems > 3 ? breadcrumbs.filter((_, i) => i !== 0 && i !== totalItems - 1 && i !== 1) : [];
+                      return <React.Fragment key={index}>
                             {/* Ellipsis dropdown for small screens */}
-                            {shouldShowEllipsisSmall && hiddenItemsSmall.length > 0 && (
-                              <>
+                            {shouldShowEllipsisSmall && hiddenItemsSmall.length > 0 && <>
                                 <BreadcrumbItem className="md:hidden">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger className="flex items-center gap-1 hover:text-foreground transition-colors">
@@ -522,28 +514,20 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="bg-popover z-50">
                                       {hiddenItemsSmall.map((hiddenCrumb, hiddenIndex) => {
-                                        const HiddenIcon = hiddenCrumb.icon || Home;
-                                        return (
-                                          <DropdownMenuItem
-                                            key={hiddenIndex}
-                                            onClick={hiddenCrumb.onClick}
-                                            className="flex items-center gap-2 cursor-pointer"
-                                          >
+                                  const HiddenIcon = hiddenCrumb.icon || Home;
+                                  return <DropdownMenuItem key={hiddenIndex} onClick={hiddenCrumb.onClick} className="flex items-center gap-2 cursor-pointer">
                                             {hiddenCrumb.icon && <HiddenIcon className="h-3.5 w-3.5" />}
                                             {hiddenCrumb.label}
-                                          </DropdownMenuItem>
-                                        );
-                                      })}
+                                          </DropdownMenuItem>;
+                                })}
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="md:hidden" />
-                              </>
-                            )}
+                              </>}
                             
                             {/* Ellipsis dropdown for medium screens */}
-                            {shouldShowEllipsisMedium && hiddenItemsMedium.length > 0 && (
-                              <>
+                            {shouldShowEllipsisMedium && hiddenItemsMedium.length > 0 && <>
                                 <BreadcrumbItem className="hidden md:block lg:hidden">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger className="flex items-center gap-1 hover:text-foreground transition-colors">
@@ -551,57 +535,34 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="bg-popover z-50">
                                       {hiddenItemsMedium.map((hiddenCrumb, hiddenIndex) => {
-                                        const HiddenIcon = hiddenCrumb.icon || Home;
-                                        return (
-                                          <DropdownMenuItem
-                                            key={hiddenIndex}
-                                            onClick={hiddenCrumb.onClick}
-                                            className="flex items-center gap-2 cursor-pointer"
-                                          >
+                                  const HiddenIcon = hiddenCrumb.icon || Home;
+                                  return <DropdownMenuItem key={hiddenIndex} onClick={hiddenCrumb.onClick} className="flex items-center gap-2 cursor-pointer">
                                             {hiddenCrumb.icon && <HiddenIcon className="h-3.5 w-3.5" />}
                                             {hiddenCrumb.label}
-                                          </DropdownMenuItem>
-                                        );
-                                      })}
+                                          </DropdownMenuItem>;
+                                })}
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block lg:hidden" />
-                              </>
-                            )}
+                              </>}
                             
                             {/* Actual breadcrumb item */}
-                            <BreadcrumbItem className={
-                              shouldHideOnSmall ? 'hidden md:block' : 
-                              shouldHideOnMedium ? 'hidden lg:block' : ''
-                            }>
-                              {isLast ? (
-                                <BreadcrumbPage className="flex items-center gap-1.5">
+                            <BreadcrumbItem className={shouldHideOnSmall ? 'hidden md:block' : shouldHideOnMedium ? 'hidden lg:block' : ''}>
+                              {isLast ? <BreadcrumbPage className="flex items-center gap-1.5">
                                   {crumb.icon && <Icon className="h-3.5 w-3.5" />}
                                   {crumb.label}
-                                </BreadcrumbPage>
-                              ) : (
-                                <BreadcrumbLink asChild>
-                                  <button 
-                                    onClick={crumb.onClick} 
-                                    className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-                                  >
+                                </BreadcrumbPage> : <BreadcrumbLink asChild>
+                                  <button onClick={crumb.onClick} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
                                     {crumb.icon && <Icon className="h-3.5 w-3.5" />}
                                     {crumb.label}
                                   </button>
-                                </BreadcrumbLink>
-                              )}
+                                </BreadcrumbLink>}
                             </BreadcrumbItem>
-                            {!isLast && (
-                              <BreadcrumbSeparator className={
-                                shouldHideOnSmall ? 'hidden md:block' : 
-                                shouldHideOnMedium ? 'hidden lg:block' : ''
-                              } />
-                            )}
-                          </React.Fragment>
-                        );
-                      });
-                    })()}
+                            {!isLast && <BreadcrumbSeparator className={shouldHideOnSmall ? 'hidden md:block' : shouldHideOnMedium ? 'hidden lg:block' : ''} />}
+                          </React.Fragment>;
+                    });
+                  })()}
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>
@@ -619,22 +580,11 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
 
               {/* Header Actions - Right aligned */}
               <div className="ml-auto flex items-center gap-3">
-                {userRole === 'admin' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setActiveView('manage-checklist')} 
-                    className="hidden lg:flex gap-2 hover:bg-muted/50"
-                  >
+                {userRole === 'admin' && <Button variant="outline" size="sm" onClick={() => setActiveView('manage-checklist')} className="hidden lg:flex gap-2 hover:bg-muted/50">
                     <Settings className="h-4 w-4" />
                     <span>Manage</span>
-                  </Button>
-                )}
-                <Button 
-                  onClick={() => setActiveView('create')} 
-                  size="sm" 
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2"
-                >
+                  </Button>}
+                <Button onClick={() => setActiveView('create')} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2">
                   <Plus className="h-4 w-4" />
                   <span>New PSSR</span>
                 </Button>
@@ -653,14 +603,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           
           {/* Quick Actions Widget */}
           <div className="lg:col-span-1">
-            <PSSRQuickActionsWidget
-              onCreatePSSR={() => setActiveView('create')}
-              onManageChecklist={() => setActiveView('manage-checklist')}
-              onChatWithORSH={() => {
-                toast.info('AI Assistant coming soon!');
-                // In production, open AI chat interface
-              }}
-            />
+            <PSSRQuickActionsWidget onCreatePSSR={() => setActiveView('create')} onManageChecklist={() => setActiveView('manage-checklist')} onChatWithORSH={() => {
+              toast.info('AI Assistant coming soon!');
+              // In production, open AI chat interface
+            }} />
           </div>
           
           {/* Recent Activities Widget */}
@@ -670,75 +616,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         </div>
 
         {/* Modern Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total PSSRs */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-muted/20 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total PSSRs</CardTitle>
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <ClipboardList className="h-4 w-4 text-primary" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-foreground">{stats.total}</div>
-              <p className="text-xs text-muted-foreground mt-1">Active reviews</p>
-            </CardContent>
-          </Card>
-
-          {/* Approved */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-emerald-500/5 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Approved</CardTitle>
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <CheckCircle className="h-4 w-4 text-emerald-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-emerald-600">{stats.approved}</div>
-              <p className="text-xs text-muted-foreground mt-1">Completed</p>
-            </CardContent>
-          </Card>
-
-          {/* Under Review */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-amber-500/5 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Under Review</CardTitle>
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Clock className="h-4 w-4 text-amber-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-amber-600">{stats.underReview}</div>
-              <p className="text-xs text-muted-foreground mt-1">In progress</p>
-            </CardContent>
-          </Card>
-
-          {/* Draft */}
-          <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-slate-500/5 hover:shadow-md transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-500/10 to-transparent rounded-full blur-2xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="pb-3 relative">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Draft</CardTitle>
-                <div className="p-2 rounded-lg bg-slate-500/10">
-                  <AlertTriangle className="h-4 w-4 text-slate-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold text-slate-600">{stats.draft}</div>
-              <p className="text-xs text-muted-foreground mt-1">Not submitted</p>
-            </CardContent>
-          </Card>
-        </div>
+        
 
         {/* Modern Search and Filters */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
