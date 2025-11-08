@@ -195,6 +195,15 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
         <Separator className="mb-4" />
 
+        {/* Settings Section */}
+        {!isSidebarCollapsed && (
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
+              Settings
+            </p>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="space-y-2">
           {/* Theme Toggle Row */}
