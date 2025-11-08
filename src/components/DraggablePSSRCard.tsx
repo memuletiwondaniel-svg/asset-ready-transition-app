@@ -152,8 +152,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-5 relative">
-          <div className="flex items-center gap-6">
+        <CardContent className="p-4 relative">
+          <div className="flex items-center gap-4">
             {/* Drag Handle */}
             <div
               {...attributes}
@@ -191,22 +191,22 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               </div>
 
               {/* Lead Info - 3 cols */}
-              <div className="col-span-3 flex items-center gap-2.5">
+              <div className="col-span-3 flex items-center gap-2">
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
-                  className="w-9 h-9 rounded-full border-2 border-border/50 shadow-sm"
+                  className="w-8 h-8 rounded-full border-2 border-border/50 shadow-sm"
                 />
                 <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
-                  <p className="text-sm font-medium text-foreground truncate">{pssr.pssrLead}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
+                  <p className="text-xs font-medium text-foreground truncate">{pssr.pssrLead}</p>
                 </div>
               </div>
 
               {/* Progress - 2 cols */}
               <div className="col-span-2 text-center">
-                <div className="text-2xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Complete</p>
+                <div className="text-xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Complete</p>
               </div>
 
               {/* Status - 3 cols */}

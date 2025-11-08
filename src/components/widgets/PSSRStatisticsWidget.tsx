@@ -10,79 +10,105 @@ interface PSSRStatisticsWidgetProps {
     draft: number;
   };
   onStatClick?: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
+  isExpanded?: boolean;
+  isVisible?: boolean;
+  onToggleExpand?: () => void;
+  onToggleVisibility?: () => void;
 }
 
-export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stats, onStatClick }) => {
+export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ 
+  stats, 
+  onStatClick,
+  isExpanded,
+  isVisible,
+  onToggleExpand,
+  onToggleVisibility,
+}) => {
   const statisticsData = [
     {
-      label: 'Total PSSRs',
+      label: 'Total',
       value: stats.total,
       icon: FileText,
-      borderColor: 'border-l-primary',
-      iconColor: 'text-primary',
+      accent: 'primary',
       filterKey: 'all' as const,
     },
     {
       label: 'Approved',
       value: stats.approved,
       icon: CheckCircle,
-      borderColor: 'border-l-success',
-      iconColor: 'text-success',
+      accent: 'success',
       filterKey: 'approved' as const,
     },
     {
       label: 'Under Review',
       value: stats.underReview,
       icon: Clock,
-      borderColor: 'border-l-warning',
-      iconColor: 'text-warning',
+      accent: 'warning',
       filterKey: 'under-review' as const,
     },
     {
       label: 'Draft',
       value: stats.draft,
       icon: AlertTriangle,
-      borderColor: 'border-l-muted-foreground',
-      iconColor: 'text-muted-foreground',
+      accent: 'muted',
       filterKey: 'draft' as const,
     },
     {
-      label: 'Open Actions',
+      label: 'Open',
       value: Math.floor(stats.total * 0.3),
       icon: ListChecks,
-      borderColor: 'border-l-accent-foreground',
-      iconColor: 'text-accent-foreground',
+      accent: 'accent',
       filterKey: 'open-actions' as const,
     },
     {
-      label: 'Completed',
+      label: 'Done',
       value: Math.floor(stats.approved * 0.85),
       icon: CheckCheck,
-      borderColor: 'border-l-success',
-      iconColor: 'text-success',
+      accent: 'success',
       filterKey: 'completed' as const,
     },
   ];
 
+  const getAccentColor = (accent: string) => {
+    switch (accent) {
+      case 'primary':
+        return 'text-primary bg-primary/5 border-primary/20 hover:bg-primary/10';
+      case 'success':
+        return 'text-success bg-success/5 border-success/20 hover:bg-success/10';
+      case 'warning':
+        return 'text-warning bg-warning/5 border-warning/20 hover:bg-warning/10';
+      case 'accent':
+        return 'text-accent-foreground bg-accent/5 border-accent/20 hover:bg-accent/10';
+      case 'muted':
+        return 'text-muted-foreground bg-muted/10 border-muted/20 hover:bg-muted/15';
+      default:
+        return 'text-foreground bg-muted/5 border-border/20 hover:bg-muted/10';
+    }
+  };
+
   return (
-    <WidgetCard title="Statistics" className="h-full flex flex-col">
-      <div className="grid grid-cols-2 gap-2.5">
-        {statisticsData.map((stat, index) => {
+    <WidgetCard
+      title="Statistics"
+      isExpanded={isExpanded}
+      isVisible={isVisible}
+      onToggleExpand={onToggleExpand}
+      onToggleVisibility={onToggleVisibility}
+      className="h-full flex flex-col"
+    >
+      <div className="grid grid-cols-3 gap-2">
+        {statisticsData.map((stat) => {
           const Icon = stat.icon;
-          
+          const colorClasses = getAccentColor(stat.accent);
+
           return (
             <button
-              key={index}
+              key={stat.filterKey}
               onClick={() => onStatClick?.(stat.filterKey)}
-              className={`group relative flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm hover:border-border/60 hover:bg-card cursor-pointer active:scale-[0.98] border-l-4 ${stat.borderColor}`}
+              className={`group flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all duration-300 hover:-translate-y-0.5 active:scale-95 ${colorClasses}`}
             >
-              <div className={`flex items-center justify-center w-9 h-9 rounded-full border ${stat.borderColor.replace('border-l-', 'border-')} flex-shrink-0 transition-all duration-300 group-hover:scale-110`}>
-                <Icon className={`h-4 w-4 ${stat.iconColor}`} />
-              </div>
-              <div className="flex-1 text-left min-w-0">
-                <p className="text-2xl font-bold text-foreground leading-none mb-0.5">{stat.value}</p>
-                <p className="text-xs text-muted-foreground font-medium truncate leading-tight">{stat.label}</p>
-              </div>
+              <Icon className="h-4 w-4 mb-1.5 transition-transform group-hover:scale-110" />
+              <p className="text-lg font-bold leading-none mb-0.5">{stat.value}</p>
+              <p className="text-[10px] font-medium opacity-70 leading-tight text-center">{stat.label}</p>
             </button>
           );
         })}
