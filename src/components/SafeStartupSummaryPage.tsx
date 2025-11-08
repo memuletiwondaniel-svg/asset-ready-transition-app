@@ -9,8 +9,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, Settings, ShieldCheck, BarChart3, Users, Calendar as CalendarIcon, TrendingUp, TrendingDown, Minus, LayoutGrid, Table as TableIcon, Home, FileText, FolderOpen, GripVertical, Columns3, CalendarDays, Bell } from 'lucide-react';
 import { WidgetCard } from './widgets/WidgetCard';
-import { PSSRStatsWidget } from './widgets/PSSRStatsWidget';
-import { RecentActivityWidget } from './widgets/RecentActivityWidget';
+import { PSSRStatisticsWidget } from './widgets/PSSRStatisticsWidget';
+import { PSSRQuickActionsWidget } from './widgets/PSSRQuickActionsWidget';
+import { PSSRRecentActivitiesWidget } from './widgets/PSSRRecentActivitiesWidget';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import PSSRTableView from './PSSRTableView';
@@ -643,6 +644,31 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         </header>
 
       <main className="flex-1 overflow-auto max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+        {/* Widgets Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Statistics Widget - Full width on mobile, 1 column on desktop */}
+          <div className="lg:col-span-1">
+            <PSSRStatisticsWidget stats={stats} />
+          </div>
+          
+          {/* Quick Actions Widget */}
+          <div className="lg:col-span-1">
+            <PSSRQuickActionsWidget
+              onCreatePSSR={() => setActiveView('create')}
+              onManageChecklist={() => setActiveView('manage-checklist')}
+              onChatWithORSH={() => {
+                toast.info('AI Assistant coming soon!');
+                // In production, open AI chat interface
+              }}
+            />
+          </div>
+          
+          {/* Recent Activities Widget */}
+          <div className="lg:col-span-1">
+            <PSSRRecentActivitiesWidget />
+          </div>
+        </div>
+
         {/* Modern Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total PSSRs */}
