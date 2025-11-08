@@ -244,11 +244,25 @@ export default {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.5' }
 				},
-				'micro-press': {
-					'0%': { transform: 'scale(1) rotate(0deg)' },
-					'50%': { transform: 'scale(0.95) rotate(1deg)' },
-					'100%': { transform: 'scale(1) rotate(0deg)' }
-				}
+			'micro-press': {
+				'0%': { transform: 'scale(1) rotate(0deg)' },
+				'50%': { transform: 'scale(0.95) rotate(1deg)' },
+				'100%': { transform: 'scale(1) rotate(0deg)' }
+			},
+			'dot-color-shift': {
+				'0%, 100%': {
+					background: 'radial-gradient(circle at 30% 30%, hsl(142, 76%, 45%), hsl(142, 76%, 36%))',
+					boxShadow: 'inset -1px -1px 2px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px hsla(142, 76%, 45%, 0.4)',
+				},
+				'33%': {
+					background: 'radial-gradient(circle at 30% 30%, hsl(160, 70%, 42%), hsl(160, 70%, 33%))',
+					boxShadow: 'inset -1px -1px 2px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px hsla(160, 70%, 42%, 0.4)',
+				},
+				'66%': {
+					background: 'radial-gradient(circle at 30% 30%, hsl(170, 65%, 40%), hsl(170, 65%, 31%))',
+					boxShadow: 'inset -1px -1px 2px rgba(0, 0, 0, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px hsla(170, 65%, 40%, 0.4)',
+				},
+			}
 			},
 		animation: {
 			'accordion-down': 'accordion-down 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -271,9 +285,10 @@ export default {
 			'gradient-color-morph': 'gradient-color-morph 18s linear infinite',
 			'gradient-color-morph-fast': 'gradient-color-morph 15s linear infinite',
 			'gradient-color-morph-slow': 'gradient-color-morph 22s linear infinite',
-			shimmer: 'shimmer 2s linear infinite',
-			'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-			'micro-press': 'micro-press 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+		shimmer: 'shimmer 2s linear infinite',
+		'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+		'micro-press': 'micro-press 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+		'dot-pulse': 'dot-color-shift 6s ease-in-out infinite',
 			// Combined animations for visible background movement
 			'gradient-shift-morph': 'gradient-shift 12s ease infinite, gradient-color-morph 18s linear infinite',
 			'gradient-sweep-morph': 'gradient-sweep 20s ease-in-out infinite, gradient-color-morph-fast 15s linear infinite',
