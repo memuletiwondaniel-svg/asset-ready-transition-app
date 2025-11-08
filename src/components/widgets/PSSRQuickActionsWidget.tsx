@@ -51,7 +51,7 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
   return (
     <>
       <WidgetCard title="Quick Actions" className="h-full">
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
@@ -59,10 +59,10 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
                 key={index}
                 variant={action.variant}
                 onClick={action.onClick}
-                className={`w-full h-auto py-4 px-4 flex items-start gap-3 justify-start ${action.className}`}
+                className={`w-full h-auto py-2 px-3 flex items-start gap-2 justify-start ${action.className}`}
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-background/10 flex-shrink-0">
-                  <Icon className="h-5 w-5" />
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-background/10 flex-shrink-0">
+                  <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-semibold text-sm">{action.label}</p>

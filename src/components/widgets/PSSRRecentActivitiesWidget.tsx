@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { WidgetCard } from './WidgetCard';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, AlertCircle, FileEdit, UserPlus } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Activity {
   id: string;
@@ -105,36 +104,34 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
 
   return (
     <WidgetCard title="Recent Activities" className="h-full">
-      <ScrollArea className="h-[400px] pr-4">
-        <div className="space-y-4">
-          {displayActivities.map((activity) => (
-            <div
-              key={activity.id}
-              onClick={() => navigate(`/pssr/${activity.pssrId}`)}
-              className="flex gap-3 p-3 rounded-lg border border-border/50 bg-card hover:shadow-sm hover:bg-accent/50 transition-all cursor-pointer"
-            >
-              <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 ${getActivityColor(activity.type)}`}>
-                {getActivityIcon(activity.type)}
+      <div className="space-y-2">
+        {displayActivities.slice(0, 4).map((activity) => (
+          <div
+            key={activity.id}
+            onClick={() => navigate(`/pssr/${activity.pssrId}`)}
+            className="flex gap-2 p-2 rounded-lg border border-border/50 bg-card hover:bg-accent/50 transition-all cursor-pointer"
+          >
+            <div className={`flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 ${getActivityColor(activity.type)}`}>
+              {getActivityIcon(activity.type)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-1 mb-0.5">
+                <p className="text-xs font-medium text-foreground line-clamp-1">
+                  {activity.description}
+                </p>
+                <Badge variant="secondary" className="text-xs flex-shrink-0 h-5 px-1.5">
+                  {activity.pssrId}
+                </Badge>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-medium text-foreground line-clamp-2">
-                    {activity.description}
-                  </p>
-                  <Badge variant="secondary" className="text-xs flex-shrink-0">
-                    {activity.pssrId}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{activity.user}</span>
-                  <span>•</span>
-                  <span>{activity.timestamp}</span>
-                </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="truncate">{activity.user}</span>
+                <span>•</span>
+                <span className="flex-shrink-0">{activity.timestamp}</span>
               </div>
             </div>
-          ))}
-        </div>
-      </ScrollArea>
+          </div>
+        ))}
+      </div>
     </WidgetCard>
   );
 };
