@@ -70,12 +70,12 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const {
     toast
   } = useToast();
-  return <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+  return <div className={`relative border-r border-border/40 bg-card/50 backdrop-blur-xl flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} h-screen`}>
       {/* Collapse/Expand Button */}
       
 
       {/* ORSH Branding & Header */}
-      <div className="p-6 border-b border-border/40">
+      <div className="p-6 border-b border-border/40 flex-shrink-0">
         <div className="flex items-center justify-center mb-4">
           {!isSidebarCollapsed ? <OrshLogo size="medium" className="animate-fade-in" /> : <OrshLogo size="small" />}
         </div>
@@ -277,7 +277,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       </ScrollArea>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-border/40 space-y-2">
+      <div className="p-4 border-t border-border/40 space-y-2 flex-shrink-0">
         {/* Logout Row */}
         <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive animate-fade-in`} title="Log Out">
           <LogOut className="w-4 h-4" />
