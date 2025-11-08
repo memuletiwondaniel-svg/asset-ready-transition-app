@@ -165,21 +165,21 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
 
   return (
     <WidgetCard title="Recent Activity" className="h-full">
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {activities.map((activity) => (
           <div
             key={activity.id}
             onClick={() => navigate(`/pssr/${activity.pssrId}`)}
-            className="p-2 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg border border-transparent hover:border-border/50"
+            className="p-1.5 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg border border-transparent hover:border-border/50"
           >
-            <div className="flex gap-2">
-              <Avatar className="h-7 w-7 flex-shrink-0">
+            <div className="flex gap-1.5">
+              <Avatar className="h-6 w-6 flex-shrink-0">
                 <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
                 <AvatarFallback className="text-xs">{activity.user.name.charAt(0)}</AvatarFallback>
               </Avatar>
 
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <div className="flex items-start justify-between gap-1.5">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs leading-tight">
                       <span className="font-medium text-foreground">{activity.user.name}</span>
@@ -187,36 +187,36 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
                       <span className="text-muted-foreground">{activity.message}</span>
                     </p>
                   </div>
-                  <div className={`p-1 rounded-md border ${getActivityColor(activity.type)} flex-shrink-0`}>
+                  <div className={`p-0.5 rounded-md border ${getActivityColor(activity.type)} flex-shrink-0`}>
                     {getActivityIcon(activity.type)}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <Badge variant="outline" className="text-xs h-5 px-1.5">
+                <div className="flex items-center gap-1 flex-wrap">
+                  <Badge variant="outline" className="text-xs h-4 px-1">
                     {activity.pssrId}
                   </Badge>
                   <span className="text-xs text-muted-foreground">•</span>
                   <span className="text-xs text-muted-foreground truncate">
                     {activity.projectName}
                   </span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+                  </span>
                 </div>
 
                 {activity.metadata?.oldValue && activity.metadata?.newValue && (
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <Badge variant="outline" className="bg-muted/30 h-5 px-1.5">
+                  <div className="flex items-center gap-1 text-xs">
+                    <Badge variant="outline" className="bg-muted/30 h-4 px-1">
                       {activity.metadata.oldValue}
                     </Badge>
                     <span className="text-muted-foreground">→</span>
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 h-5 px-1.5">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 h-4 px-1">
                       {activity.metadata.newValue}
                     </Badge>
                   </div>
                 )}
-
-                <p className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
-                </p>
               </div>
             </div>
           </div>
