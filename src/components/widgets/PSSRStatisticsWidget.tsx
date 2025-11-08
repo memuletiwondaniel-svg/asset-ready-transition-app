@@ -1,6 +1,6 @@
 import React from 'react';
 import { WidgetCard } from './WidgetCard';
-import { CheckCircle, Clock, FileText, AlertTriangle, ListChecks, CheckCheck } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle, Clock, FileCheck } from 'lucide-react';
 
 interface PSSRStatisticsWidgetProps {
   stats: {
@@ -8,107 +8,105 @@ interface PSSRStatisticsWidgetProps {
     approved: number;
     underReview: number;
     draft: number;
+    openActions: number;
+    completed: number;
   };
-  onStatClick?: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
+  onStatClick: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
   isExpanded?: boolean;
   isVisible?: boolean;
   onToggleExpand?: () => void;
   onToggleVisibility?: () => void;
 }
 
-export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ 
-  stats, 
+export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
+  stats,
   onStatClick,
   isExpanded,
   isVisible,
   onToggleExpand,
-  onToggleVisibility,
+  onToggleVisibility
 }) => {
   const statisticsData = [
     {
       label: 'Total',
       value: stats.total,
-      icon: FileText,
-      accent: 'primary',
-      filterKey: 'all' as const,
+      icon: FileCheck,
+      filter: 'all' as const,
+      borderColor: 'border-l-primary',
+      iconColor: 'text-primary',
+      bgColor: 'bg-primary/5'
     },
     {
       label: 'Approved',
       value: stats.approved,
       icon: CheckCircle,
-      accent: 'success',
-      filterKey: 'approved' as const,
+      filter: 'approved' as const,
+      borderColor: 'border-l-success',
+      iconColor: 'text-success',
+      bgColor: 'bg-success/5'
     },
     {
       label: 'Under Review',
       value: stats.underReview,
       icon: Clock,
-      accent: 'warning',
-      filterKey: 'under-review' as const,
+      filter: 'under-review' as const,
+      borderColor: 'border-l-warning',
+      iconColor: 'text-warning',
+      bgColor: 'bg-warning/5'
     },
     {
       label: 'Draft',
       value: stats.draft,
-      icon: AlertTriangle,
-      accent: 'muted',
-      filterKey: 'draft' as const,
+      icon: AlertCircle,
+      filter: 'draft' as const,
+      borderColor: 'border-l-muted-foreground',
+      iconColor: 'text-muted-foreground',
+      bgColor: 'bg-muted/30'
     },
     {
-      label: 'Open',
-      value: Math.floor(stats.total * 0.3),
-      icon: ListChecks,
-      accent: 'accent',
-      filterKey: 'open-actions' as const,
+      label: 'Open Actions',
+      value: stats.openActions,
+      icon: TrendingUp,
+      filter: 'open-actions' as const,
+      borderColor: 'border-l-destructive',
+      iconColor: 'text-destructive',
+      bgColor: 'bg-destructive/5'
     },
     {
-      label: 'Done',
-      value: Math.floor(stats.approved * 0.85),
-      icon: CheckCheck,
-      accent: 'success',
-      filterKey: 'completed' as const,
-    },
+      label: 'Completed',
+      value: stats.completed,
+      icon: CheckCircle,
+      filter: 'completed' as const,
+      borderColor: 'border-l-success',
+      iconColor: 'text-success',
+      bgColor: 'bg-success/5'
+    }
   ];
 
-  const getAccentColor = (accent: string) => {
-    switch (accent) {
-      case 'primary':
-        return 'text-primary bg-primary/5 border-primary/20 hover:bg-primary/10';
-      case 'success':
-        return 'text-success bg-success/5 border-success/20 hover:bg-success/10';
-      case 'warning':
-        return 'text-warning bg-warning/5 border-warning/20 hover:bg-warning/10';
-      case 'accent':
-        return 'text-accent-foreground bg-accent/5 border-accent/20 hover:bg-accent/10';
-      case 'muted':
-        return 'text-muted-foreground bg-muted/10 border-muted/20 hover:bg-muted/15';
-      default:
-        return 'text-foreground bg-muted/5 border-border/20 hover:bg-muted/10';
-    }
-  };
-
   return (
-    <WidgetCard
-      title="Statistics"
+    <WidgetCard 
+      title="Statistics" 
+      className="h-full"
       isExpanded={isExpanded}
       isVisible={isVisible}
       onToggleExpand={onToggleExpand}
       onToggleVisibility={onToggleVisibility}
-      className="h-full flex flex-col"
     >
       <div className="grid grid-cols-3 gap-2">
-        {statisticsData.map((stat) => {
+        {statisticsData.map((stat, index) => {
           const Icon = stat.icon;
-          const colorClasses = getAccentColor(stat.accent);
-
+          
           return (
             <button
-              key={stat.filterKey}
-              onClick={() => onStatClick?.(stat.filterKey)}
-              className={`group flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all duration-300 hover:-translate-y-0.5 active:scale-95 ${colorClasses}`}
+              key={index}
+              onClick={() => onStatClick(stat.filter)}
+              className={`group relative flex flex-col items-center justify-center p-3 rounded-lg border-l-4 ${stat.borderColor} ${stat.bgColor} border border-border/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm hover:border-border/60`}
             >
-              <Icon className="h-4 w-4 mb-1.5 transition-transform group-hover:scale-110" />
-              <p className="text-lg font-bold leading-none mb-0.5">{stat.value}</p>
-              <p className="text-[10px] font-medium opacity-70 leading-tight text-center">{stat.label}</p>
+              <div className={`w-8 h-8 rounded-full ${stat.bgColor} flex items-center justify-center mb-1.5 transition-transform duration-300 group-hover:scale-110`}>
+                <Icon className={`w-4 h-4 ${stat.iconColor}`} />
+              </div>
+              <div className="text-xl font-bold text-foreground mb-0.5">{stat.value}</div>
+              <div className="text-xs text-muted-foreground text-center leading-tight">{stat.label}</div>
             </button>
           );
         })}

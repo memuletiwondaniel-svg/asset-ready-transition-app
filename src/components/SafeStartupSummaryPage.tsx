@@ -226,15 +226,15 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     const approved = pssrList.filter(p => p.status === 'Approved').length;
     const underReview = pssrList.filter(p => p.status === 'Under Review').length;
     const draft = pssrList.filter(p => p.status === 'Draft').length;
-    const criticalIssues = pssrList.filter(p => p.priority === 'Critical').length;
-    const avgProgress = total > 0 ? Math.round(pssrList.reduce((sum, p) => sum + p.progress, 0) / total) : 0;
+    const openActions = pssrList.filter(p => p.pendingApprovals > 0).length;
+    const completed = pssrList.filter(p => p.completedDate !== null).length;
     return {
       total,
       approved,
       underReview,
       draft,
-      criticalIssues,
-      avgProgress
+      openActions,
+      completed
     };
   }, [pssrList]);
 

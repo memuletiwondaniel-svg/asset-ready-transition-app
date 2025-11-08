@@ -180,8 +180,8 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
       onToggleExpand={onToggleExpand}
       onToggleVisibility={onToggleVisibility}
     >
-      <div className="space-y-1.5 overflow-y-auto max-h-[320px] pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-        {activities.map((activity) => (
+      <div className="space-y-1.5 overflow-y-auto max-h-[240px] pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        {activities.slice(0, 3).map((activity) => (
           <div
             key={activity.id}
             onClick={() => navigate(`/pssr/${activity.pssrId}`)}
