@@ -13,6 +13,7 @@ import { PSSRStatisticsWidget } from './widgets/PSSRStatisticsWidget';
 import { PSSRQuickActionsWidget } from './widgets/PSSRQuickActionsWidget';
 import { PSSRRecentActivitiesWidget } from './widgets/PSSRRecentActivitiesWidget';
 import { PSSRReviewsWidget } from './widgets/PSSRReviewsWidget';
+import { SortableWidget } from './widgets/SortableWidget';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import PSSRTableView from './PSSRTableView';
@@ -85,6 +86,24 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   });
   const [showWidgetManagement, setShowWidgetManagement] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Widgets ordering (drag-and-drop)
+  const [widgetOrder, setWidgetOrder] = useState<Array<'statistics' | 'quickActions' | 'recentActivities'>>([
+    'statistics', 'quickActions', 'recentActivities'
+  ]);
+
+  const widgetSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleWidgetDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = widgetOrder.indexOf(active.id as any);
+    const newIndex = widgetOrder.indexOf(over.id as any);
+    setWidgetOrder((items) => arrayMove(items, oldIndex, newIndex));
+  };
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
@@ -661,43 +680,53 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* Widgets Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Statistics Widget - Full width on mobile, 1 column on desktop */}
-          <div className="lg:col-span-1">
-            <PSSRStatisticsWidget 
-              stats={stats} 
-              onStatClick={handleStatClick}
-              isExpanded={widgetExpanded.statistics}
-              isVisible={widgetVisibility.statistics}
-              onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, statistics: !prev.statistics }))}
-              onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, statistics: !prev.statistics }))}
-            />
-          </div>
-          
-          {/* Quick Actions Widget */}
-          <div className="lg:col-span-1">
-            <PSSRQuickActionsWidget
-              onCreatePSSR={() => setActiveView('create')}
-              onManageChecklist={() => setActiveView('manage-checklist')}
-              onChatWithORSH={() => {
-                // Navigate to home page where the AI widget is available
-                onBack();
-              }}
-              isExpanded={widgetExpanded.quickActions}
-              isVisible={widgetVisibility.quickActions}
-              onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, quickActions: !prev.quickActions }))}
-              onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, quickActions: !prev.quickActions }))}
-            />
-          </div>
-          
-          {/* Recent Activities Widget */}
-          <div className="lg:col-span-1">
-            <PSSRRecentActivitiesWidget 
-              isExpanded={widgetExpanded.recentActivities}
-              isVisible={widgetVisibility.recentActivities}
-              onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
-              onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
-            />
-          </div>
+          <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragEnd={handleWidgetDragEnd}>
+            <SortableContext items={widgetOrder}>
+              {widgetOrder.map((key) => (
+                <SortableWidget id={key} key={key}>
+                  {({ attributes, listeners }) => (
+                    <div className="lg:col-span-1">
+                      {key === 'statistics' ? (
+                        <PSSRStatisticsWidget 
+                          stats={stats} 
+                          onStatClick={handleStatClick}
+                          isExpanded={widgetExpanded.statistics}
+                          isVisible={widgetVisibility.statistics}
+                          onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, statistics: !prev.statistics }))}
+                          onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, statistics: !prev.statistics }))}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      ) : key === 'quickActions' ? (
+                        <PSSRQuickActionsWidget
+                          onCreatePSSR={() => setActiveView('create')}
+                          onManageChecklist={() => setActiveView('manage-checklist')}
+                          onChatWithORSH={() => {
+                            onBack();
+                          }}
+                          isExpanded={widgetExpanded.quickActions}
+                          isVisible={widgetVisibility.quickActions}
+                          onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, quickActions: !prev.quickActions }))}
+                          onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, quickActions: !prev.quickActions }))}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      ) : (
+                        <PSSRRecentActivitiesWidget 
+                          isExpanded={widgetExpanded.recentActivities}
+                          isVisible={widgetVisibility.recentActivities}
+                          onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
+                          onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      )}
+                    </div>
+                  )}
+                </SortableWidget>
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Reviews Widget */}

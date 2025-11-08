@@ -11,6 +11,8 @@ interface PSSRQuickActionsWidgetProps {
   isVisible?: boolean;
   onToggleExpand?: () => void;
   onToggleVisibility?: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
@@ -20,7 +22,9 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
   isExpanded,
   isVisible,
   onToggleExpand,
-  onToggleVisibility
+  onToggleVisibility,
+  dragAttributes,
+  dragListeners
 }) => {
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -87,6 +91,8 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
         isVisible={isVisible}
         onToggleExpand={onToggleExpand}
         onToggleVisibility={onToggleVisibility}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
       >
         <div className="space-y-2.5">
           {actions.map((action, index) => {

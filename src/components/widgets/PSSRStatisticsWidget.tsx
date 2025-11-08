@@ -16,6 +16,8 @@ interface PSSRStatisticsWidgetProps {
   isVisible?: boolean;
   onToggleExpand?: () => void;
   onToggleVisibility?: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
@@ -24,7 +26,9 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
   isExpanded,
   isVisible,
   onToggleExpand,
-  onToggleVisibility
+  onToggleVisibility,
+  dragAttributes,
+  dragListeners
 }) => {
   const statisticsData = [
     {
@@ -91,6 +95,8 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       isVisible={isVisible}
       onToggleExpand={onToggleExpand}
       onToggleVisibility={onToggleVisibility}
+      dragAttributes={dragAttributes}
+      dragListeners={dragListeners}
     >
       <div className="grid grid-cols-3 gap-2">
         {statisticsData.map((stat, index) => {

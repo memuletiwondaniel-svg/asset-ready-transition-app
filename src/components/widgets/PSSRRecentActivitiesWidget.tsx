@@ -37,6 +37,8 @@ interface PSSRRecentActivitiesWidgetProps {
   isVisible?: boolean;
   onToggleExpand?: () => void;
   onToggleVisibility?: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({ 
@@ -44,7 +46,9 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
   isExpanded,
   isVisible,
   onToggleExpand,
-  onToggleVisibility 
+  onToggleVisibility,
+  dragAttributes,
+  dragListeners 
 }) => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -179,6 +183,8 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
       isVisible={isVisible}
       onToggleExpand={onToggleExpand}
       onToggleVisibility={onToggleVisibility}
+      dragAttributes={dragAttributes}
+      dragListeners={dragListeners}
     >
       <div className="space-y-1.5 overflow-y-auto max-h-[240px] pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {activities.slice(0, 3).map((activity) => (
