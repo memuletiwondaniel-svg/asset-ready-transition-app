@@ -206,48 +206,26 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-3 pr-10">
-          <div className="flex items-center gap-3">
-            {/* Column 1: Project ID + Name + Asset */}
-            <div className="flex-1 min-w-0 flex items-center gap-2">
-              <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0 flex-shrink-0 w-16 text-center">
-                {pssr.projectId}
-              </Badge>
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
+        <CardContent className="p-2 pr-10">
+          <div className="flex items-start gap-2">
+            {/* Column 1: Project Info */}
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="font-mono font-semibold text-[10px] px-1.5 py-0 flex-shrink-0">
+                  {pssr.projectId}
+                </Badge>
+                <h3 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
                   {pssr.projectName}
                 </h3>
-                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 flex-shrink-0">
-                  <MapPin className="h-2.5 w-2.5" />
-                  {pssr.asset}
-                </span>
               </div>
+              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <MapPin className="h-2.5 w-2.5" />
+                {pssr.location}
+              </span>
             </div>
 
-            {/* Column 2: Status (Fixed Width) */}
-            <div className="w-24 flex-shrink-0">
-              <Badge variant="outline" className="text-[9px] px-2 py-0.5 w-full justify-center">
-                {pssr.status}
-              </Badge>
-            </div>
-
-            {/* Column 3: Progress (Left Aligned) */}
-            <div className="w-16 flex-shrink-0">
-              <span className="text-sm font-bold text-primary">{pssr.progress}%</span>
-            </div>
-
-            {/* Column 4: PSSR Lead (Left Aligned) */}
-            <div className="w-32 flex-shrink-0 flex items-center gap-1.5">
-              <img 
-                src={pssr.pssrLeadAvatar} 
-                alt={pssr.pssrLead}
-                className="w-5 h-5 rounded-full border border-primary/20 flex-shrink-0"
-              />
-              <span className="text-[10px] font-medium text-foreground truncate">{pssr.pssrLead}</span>
-            </div>
-
-            {/* Column 5: Tier + Team + Status */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Column 2: Tier (Fixed Width) */}
+            <div className="w-12 flex-shrink-0 flex items-center">
               <Badge 
                 variant="outline" 
                 className={`text-[9px] px-1 py-0 ${
@@ -258,16 +236,36 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               >
                 T{pssr.tier}
               </Badge>
-              {pssr.pendingApprovals > 0 && (
-                <Badge variant="destructive" className="text-[9px] px-1 py-0">
-                  {pssr.pendingApprovals}
-                </Badge>
-              )}
-              <div className="flex items-center gap-0.5 text-muted-foreground">
-                <Users className="h-2.5 w-2.5" />
-                <span className="text-[10px] font-medium">{pssr.teamMembers}</span>
-              </div>
-              <div className={`h-2 w-2 rounded-full ${getTeamStatusColor(pssr.teamStatus)} ring-1 ring-background shadow-sm`} />
+            </div>
+
+            {/* Column 3: Status (Fixed Width, Left Aligned) */}
+            <div className="w-28 flex-shrink-0">
+              <Badge 
+                variant="outline" 
+                className={`text-[9px] px-2 py-0.5 w-full justify-center ${
+                  pssr.status === 'Approved' ? 'border-emerald-500/60 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' :
+                  pssr.status === 'Under Review' ? 'border-amber-500/60 text-amber-600 dark:text-amber-400 bg-amber-500/10' :
+                  pssr.status === 'In Progress' ? 'border-violet-500/60 text-violet-600 dark:text-violet-400 bg-violet-500/10' :
+                  'border-orange-500/60 text-orange-600 dark:text-orange-400 bg-orange-500/10'
+                }`}
+              >
+                {pssr.status}
+              </Badge>
+            </div>
+
+            {/* Column 4: Progress (Fixed Width, Left Aligned) */}
+            <div className="w-12 flex-shrink-0">
+              <span className="text-xs font-bold text-primary">{pssr.progress}%</span>
+            </div>
+
+            {/* Column 5: PSSR Lead (Fixed Width, Left Aligned) */}
+            <div className="w-32 flex-shrink-0 flex items-center gap-1.5">
+              <img 
+                src={pssr.pssrLeadAvatar} 
+                alt={pssr.pssrLead}
+                className="w-5 h-5 rounded-full border border-primary/20 flex-shrink-0"
+              />
+              <span className="text-[10px] font-medium text-foreground truncate">{pssr.pssrLead}</span>
             </div>
           </div>
         </CardContent>

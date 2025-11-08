@@ -665,7 +665,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({ onBack 
           </div>
         </header>
 
-      <main className="w-full px-6 py-8 overflow-x-hidden">
+      <main className="w-full px-6 py-8">
         <div className="flex gap-4">
           {/* Left Side - Widgets (Reduced Width) */}
           <div className="w-80 flex-shrink-0 space-y-4">

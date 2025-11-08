@@ -210,6 +210,17 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
               <LayoutGrid className="h-3.5 w-3.5" />
             </button>
             <button
+              onClick={() => onViewModeChange('table')}
+              className={`p-1.5 rounded-md transition-all ${
+                viewMode === 'table' 
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+              title="Table View"
+            >
+              <TableIcon className="h-3.5 w-3.5" />
+            </button>
+            <button
               onClick={() => onViewModeChange('compact')}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === 'compact' 
@@ -218,7 +229,7 @@ const PSSRCardsWidget: React.FC<PSSRCardsWidgetProps> = ({
               }`}
               title="Compact View"
             >
-              <TableIcon className="h-3.5 w-3.5" />
+              <LayoutGrid className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => onViewModeChange('kanban')}
