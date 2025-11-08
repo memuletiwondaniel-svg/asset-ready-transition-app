@@ -75,7 +75,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     status: [] as string[],
     lead: [] as string[],
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    statFilter: 'all' as 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed'
   });
 
   // Mock PSSR data - starts empty but can be populated
@@ -231,6 +232,30 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       const matchesStatus = filters.status.length === 0 || filters.status.includes(pssr.status);
       const matchesLead = filters.lead.length === 0 || filters.lead.includes(pssr.pssrLead);
 
+      // Stat filter
+      let matchesStatFilter = true;
+      if (filters.statFilter !== 'all') {
+        switch (filters.statFilter) {
+          case 'approved':
+            matchesStatFilter = pssr.status === 'Approved';
+            break;
+          case 'under-review':
+            matchesStatFilter = pssr.status === 'Under Review';
+            break;
+          case 'draft':
+            matchesStatFilter = pssr.status === 'Draft';
+            break;
+          case 'open-actions':
+            // Mock logic: filter items with pending approvals
+            matchesStatFilter = pssr.pendingApprovals > 0;
+            break;
+          case 'completed':
+            // Mock logic: filter items with completedDate
+            matchesStatFilter = pssr.completedDate !== null;
+            break;
+        }
+      }
+
       // Date range filtering
       let matchesDateRange = true;
       if (dateRangeFilters.created) {
@@ -266,7 +291,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           matchesDateRange = matchesDateRange && completedDate >= startOfDay(dateRangeFilters.completed.from);
         }
       }
-      return matchesSearch && matchesPlant && matchesStatus && matchesLead && matchesDateRange;
+      return matchesSearch && matchesPlant && matchesStatus && matchesLead && matchesStatFilter && matchesDateRange;
     });
     return filtered.sort((a, b) => {
       const aPinned = pinnedPSSRs.includes(a.id);
@@ -285,6 +310,19 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       return 0;
     });
   }, [searchTerm, filters, pssrList, pssrOrder, pinnedPSSRs, dateRangeFilters]);
+
+  const handleStatClick = (filterKey: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => {
+    setFilters(prev => ({
+      ...prev,
+      statFilter: filterKey
+    }));
+    toast.success(
+      filterKey === 'all' 
+        ? 'Showing all PSSRs' 
+        : `Filtered by: ${filterKey.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`
+    );
+  };
+
   const toggleFilter = (category: 'plant' | 'status' | 'lead', value: string) => {
     setFilters(prev => ({
       ...prev,
@@ -297,8 +335,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       status: [],
       lead: [],
       dateFrom: '',
-      dateTo: ''
+      dateTo: '',
+      statFilter: 'all'
     });
+    setDateRangeFilters({});
   };
   const handleDateChange = (dateType: 'dateFrom' | 'dateTo', value: string) => {
     setFilters(prev => ({
@@ -599,7 +639,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Statistics Widget - Full width on mobile, 1 column on desktop */}
           <div className="lg:col-span-1">
-            <PSSRStatisticsWidget stats={stats} />
+            <PSSRStatisticsWidget stats={stats} onStatClick={handleStatClick} />
           </div>
           
           {/* Quick Actions Widget */}

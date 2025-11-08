@@ -9,9 +9,10 @@ interface PSSRStatisticsWidgetProps {
     underReview: number;
     draft: number;
   };
+  onStatClick?: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
 }
 
-export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stats }) => {
+export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stats, onStatClick }) => {
   const statisticsData = [
     {
       label: 'Total',
@@ -20,6 +21,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
       gradient: 'from-primary/20 to-primary/5',
       iconColor: 'text-primary',
       bgColor: 'bg-primary/10',
+      filterKey: 'all' as const,
     },
     {
       label: 'Approved',
@@ -28,6 +30,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
       gradient: 'from-success/20 to-success/5',
       iconColor: 'text-success',
       bgColor: 'bg-success/10',
+      filterKey: 'approved' as const,
     },
     {
       label: 'Under Review',
@@ -36,6 +39,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
       gradient: 'from-warning/20 to-warning/5',
       iconColor: 'text-warning',
       bgColor: 'bg-warning/10',
+      filterKey: 'under-review' as const,
     },
     {
       label: 'Draft',
@@ -44,6 +48,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
       gradient: 'from-muted/30 to-muted/5',
       iconColor: 'text-muted-foreground',
       bgColor: 'bg-muted/10',
+      filterKey: 'draft' as const,
     },
     {
       label: 'Open Actions',
@@ -52,6 +57,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
       gradient: 'from-accent/20 to-accent/5',
       iconColor: 'text-accent-foreground',
       bgColor: 'bg-accent/10',
+      filterKey: 'open-actions' as const,
     },
     {
       label: 'Completed',
@@ -60,6 +66,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
       gradient: 'from-success/20 to-success/5',
       iconColor: 'text-success',
       bgColor: 'bg-success/10',
+      filterKey: 'completed' as const,
     },
   ];
 
@@ -69,9 +76,10 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
         {statisticsData.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div
+            <button
               key={index}
-              className={`group relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br ${stat.gradient} p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-border/60`}
+              onClick={() => onStatClick?.(stat.filterKey)}
+              className={`group relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br ${stat.gradient} p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-border/60 cursor-pointer active:scale-[0.98]`}
             >
               <div className="flex items-start gap-2.5">
                 <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${stat.bgColor} flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}>
@@ -83,7 +91,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
                 </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
-            </div>
+            </button>
           );
         })}
       </div>
