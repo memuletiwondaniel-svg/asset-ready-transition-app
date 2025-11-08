@@ -6,7 +6,7 @@ import PSSRFilters from '../PSSRFilters';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
 import DraggablePSSRCard from '../DraggablePSSRCard';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 interface PSSRReviewsWidgetProps {
@@ -71,7 +71,19 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   onToggleVisibility,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -84,6 +96,32 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleDragStart = (event: DragEndEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && onPSSROrderChange) {
+      const oldIndex = filteredPSSRs.findIndex(p => p.id === active.id);
+      const newIndex = filteredPSSRs.findIndex(p => p.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedPSSRs = arrayMove(filteredPSSRs, oldIndex, newIndex);
+        onPSSROrderChange(reorderedPSSRs.map(p => p.id));
+      }
+    }
+
+    setActiveId(null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
+
+  const activePSSR = filteredPSSRs.find(p => p.id === activeId);
 
   return (
     <WidgetCard
@@ -180,22 +218,53 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               onStatusChange={onStatusChange}
             />
           ) : (
-            <div className="space-y-3">
-              {filteredPSSRs.map((pssr, idx) => (
-                <DraggablePSSRCard
-                  key={pssr.id}
-                  pssr={pssr}
-                  index={idx}
-                  onViewDetails={onViewDetails}
-                  getPriorityColor={getPriorityColor}
-                  getStatusIcon={getStatusIcon}
-                  getTeamStatusColor={getTeamStatusColor}
-                  getRiskLevelColor={getRiskLevelColor}
-                  isPinned={pinnedPSSRs.includes(pssr.id)}
-                  onTogglePin={onTogglePin}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <SortableContext
+                items={filteredPSSRs.map(p => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {filteredPSSRs.map((pssr, idx) => (
+                    <DraggablePSSRCard
+                      key={pssr.id}
+                      pssr={pssr}
+                      index={idx}
+                      onViewDetails={onViewDetails}
+                      getPriorityColor={getPriorityColor}
+                      getStatusIcon={getStatusIcon}
+                      getTeamStatusColor={getTeamStatusColor}
+                      getRiskLevelColor={getRiskLevelColor}
+                      isPinned={pinnedPSSRs.includes(pssr.id)}
+                      onTogglePin={onTogglePin}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+
+              <DragOverlay>
+                {activeId && activePSSR ? (
+                  <div className="opacity-80 rotate-2 scale-105">
+                    <DraggablePSSRCard
+                      pssr={activePSSR}
+                      index={0}
+                      onViewDetails={onViewDetails}
+                      getPriorityColor={getPriorityColor}
+                      getStatusIcon={getStatusIcon}
+                      getTeamStatusColor={getTeamStatusColor}
+                      getRiskLevelColor={getRiskLevelColor}
+                      isPinned={pinnedPSSRs.includes(activePSSR.id)}
+                      onTogglePin={onTogglePin}
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           )}
         </div>
       </div>

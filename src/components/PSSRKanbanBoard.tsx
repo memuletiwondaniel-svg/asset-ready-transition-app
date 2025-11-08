@@ -8,8 +8,10 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  DragOverEvent,
+  UniqueIdentifier,
 } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +70,11 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
   onStatusChange,
 }) => {
   const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [items, setItems] = React.useState(pssrs);
+
+  React.useEffect(() => {
+    setItems(pssrs);
+  }, [pssrs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -81,16 +88,54 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
     setActiveId(event.active.id as string);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Find the active and over items
+    const activePSSR = items.find(p => p.id === activeId);
+    const overPSSR = items.find(p => p.id === overId);
+
+    if (!activePSSR || !overPSSR) return;
+
+    // If dragging to a different column
+    if (activePSSR.status !== overPSSR.status) {
+      setItems(items => {
+        const updatedItems = items.map(item => 
+          item.id === activeId 
+            ? { ...item, status: overPSSR.status }
+            : item
+        );
+        return updatedItems;
+      });
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const overStatus = statusColumns.find(col => 
-        pssrs.find(p => p.id === over.id)?.status === col.id
-      )?.id || over.id as string;
+      const activePSSR = items.find(p => p.id === active.id);
+      const overPSSR = items.find(p => p.id === over.id);
 
-      if (onStatusChange && statusColumns.some(col => col.id === overStatus)) {
-        onStatusChange(active.id as string, overStatus);
+      if (activePSSR && overPSSR && activePSSR.status === overPSSR.status) {
+        // Reordering within the same column
+        const status = activePSSR.status;
+        const statusItems = items.filter(p => p.status === status);
+        const oldIndex = statusItems.findIndex(p => p.id === active.id);
+        const newIndex = statusItems.findIndex(p => p.id === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reordered = arrayMove(statusItems, oldIndex, newIndex);
+          const otherItems = items.filter(p => p.status !== status);
+          setItems([...otherItems, ...reordered]);
+        }
+      } else if (activePSSR && overPSSR && onStatusChange) {
+        // Moving to a different column
+        onStatusChange(active.id as string, overPSSR.status);
       }
     }
 
@@ -99,19 +144,21 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
 
   const handleDragCancel = () => {
     setActiveId(null);
+    setItems(pssrs);
   };
 
   const getPSSRsByStatus = (status: string) => {
-    return pssrs.filter(pssr => pssr.status === status);
+    return items.filter(pssr => pssr.status === status);
   };
 
-  const activePSSR = pssrs.find(p => p.id === activeId);
+  const activePSSR = items.find(p => p.id === activeId);
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
