@@ -6,12 +6,14 @@ interface OrshLogoProps {
   size?: 'small' | 'medium' | 'large';
   showTagline?: boolean;
   className?: string;
+  status?: 'ready' | 'error' | 'warning' | 'info';
 }
 
 const OrshLogo: React.FC<OrshLogoProps> = ({ 
   size = 'medium', 
   showTagline = false,
-  className 
+  className,
+  status = 'ready'
 }) => {
   const sizeClasses = {
     small: 'text-2xl',
@@ -24,6 +26,28 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
     medium: 'h-12',
     large: 'h-16'
   };
+
+  // Status color mapping with HSL values for smooth transitions
+  const statusColors = {
+    ready: {
+      gradient: 'radial-gradient(circle at 30% 30%, hsl(142, 76%, 45%), hsl(142, 76%, 36%))',
+      glow: 'hsla(142, 76%, 45%, 0.4)'
+    },
+    error: {
+      gradient: 'radial-gradient(circle at 30% 30%, hsl(0, 84%, 60%), hsl(0, 84%, 50%))',
+      glow: 'hsla(0, 84%, 60%, 0.4)'
+    },
+    warning: {
+      gradient: 'radial-gradient(circle at 30% 30%, hsl(45, 93%, 47%), hsl(45, 93%, 37%))',
+      glow: 'hsla(45, 93%, 47%, 0.4)'
+    },
+    info: {
+      gradient: 'radial-gradient(circle at 30% 30%, hsl(217, 91%, 60%), hsl(217, 91%, 50%))',
+      glow: 'hsla(217, 91%, 60%, 0.4)'
+    }
+  };
+
+  const currentColor = statusColors[status];
 
   return (
     <Link to="/" className={cn('flex flex-col items-center justify-center group/logo cursor-pointer', heightClasses[size], className)}>
@@ -40,7 +64,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             style={{ letterSpacing: '-0.02em' }}
           >
             O
-            {/* 3D Green Dot */}
+            {/* 3D Status Dot */}
             <span 
               className={cn(
                 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse',
@@ -49,15 +73,16 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
                 size === 'large' && 'w-3 h-3'
               )}
               style={{
-                background: 'radial-gradient(circle at 30% 30%, hsl(142, 76%, 45%), hsl(142, 76%, 36%))',
+                background: currentColor.gradient,
                 boxShadow: `
                   inset -1px -1px 2px rgba(0, 0, 0, 0.3),
                   inset 1px 1px 2px rgba(255, 255, 255, 0.4),
                   0 2px 4px rgba(0, 0, 0, 0.2),
-                  0 0 8px hsla(142, 76%, 45%, 0.4)
+                  0 0 8px ${currentColor.glow}
                 `,
                 borderRadius: '50%',
-                animationDuration: '2s'
+                animationDuration: '2s',
+                transition: 'all 0.5s ease-in-out'
               }}
             />
           </span>
