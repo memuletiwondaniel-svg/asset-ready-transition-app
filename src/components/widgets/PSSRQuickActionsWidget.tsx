@@ -24,51 +24,56 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
   const actions = [
     {
       label: 'Create PSSR',
-      description: 'Start a new Pre-Start-Up Safety Review',
+      description: 'Start a new safety review',
       icon: Plus,
       onClick: onCreatePSSR,
-      variant: 'default' as const,
-      className: 'bg-primary hover:bg-primary/90 text-primary-foreground',
+      gradient: 'from-primary to-primary/80',
+      iconBg: 'bg-primary-foreground/20',
+      iconColor: 'text-primary-foreground',
     },
     {
       label: 'Manage Checklist',
-      description: 'Configure and manage checklist templates',
+      description: 'Configure templates',
       icon: Settings,
       onClick: onManageChecklist,
-      variant: 'outline' as const,
-      className: 'hover:bg-muted/50',
+      gradient: 'from-accent to-accent/80',
+      iconBg: 'bg-accent-foreground/20',
+      iconColor: 'text-accent-foreground',
     },
     {
       label: 'Ask ORSH',
-      description: 'Get AI-powered assistance and answers',
+      description: 'AI-powered assistance',
       icon: MessageSquare,
       onClick: handleChatClick,
-      variant: 'outline' as const,
-      className: 'hover:bg-muted/50',
+      gradient: 'from-secondary to-secondary/80',
+      iconBg: 'bg-secondary-foreground/20',
+      iconColor: 'text-secondary-foreground',
     },
   ];
 
   return (
     <>
       <WidgetCard title="Quick Actions" className="h-full flex flex-col">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-3">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
-              <Button
+              <button
                 key={index}
-                variant={action.variant}
                 onClick={action.onClick}
-                className={`w-full h-auto py-1.5 px-2 flex items-center gap-2 justify-start ${action.className}`}
+                className={`group relative w-full overflow-hidden rounded-xl bg-gradient-to-br ${action.gradient} p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]`}
               >
-                <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-background/10 flex-shrink-0">
-                  <Icon className="h-3 w-3" />
+                <div className="flex items-center gap-3">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${action.iconBg} backdrop-blur-sm flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className={`h-5 w-5 ${action.iconColor}`} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className={`font-semibold text-sm ${action.iconColor} leading-tight mb-0.5`}>{action.label}</p>
+                    <p className={`text-xs ${action.iconColor} opacity-80 leading-tight`}>{action.description}</p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="font-semibold text-xs leading-tight">{action.label}</p>
-                  <p className="text-[10px] opacity-70 font-normal leading-tight">{action.description}</p>
-                </div>
-              </Button>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              </button>
             );
           })}
         </div>
