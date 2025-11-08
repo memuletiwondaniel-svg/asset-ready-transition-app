@@ -658,7 +658,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           </div>
         </header>
 
-      <main className="flex-1 overflow-auto max-w-[1400px] mx-auto px-6 py-8 space-y-2">
+      <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* Widgets Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Statistics Widget - Full width on mobile, 1 column on desktop */}
@@ -679,14 +679,24 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
               onCreatePSSR={() => setActiveView('create')}
               onManageChecklist={() => setActiveView('manage-checklist')}
               onChatWithORSH={() => {
-                toast.info('AI Assistant coming soon!');
+                // Navigate to home page where the AI widget is available
+                onBack();
               }}
+              isExpanded={widgetExpanded.quickActions}
+              isVisible={widgetVisibility.quickActions}
+              onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, quickActions: !prev.quickActions }))}
+              onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, quickActions: !prev.quickActions }))}
             />
           </div>
           
           {/* Recent Activities Widget */}
           <div className="lg:col-span-1">
-            <PSSRRecentActivitiesWidget />
+            <PSSRRecentActivitiesWidget 
+              isExpanded={widgetExpanded.recentActivities}
+              isVisible={widgetVisibility.recentActivities}
+              onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
+              onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
+            />
           </div>
         </div>
 

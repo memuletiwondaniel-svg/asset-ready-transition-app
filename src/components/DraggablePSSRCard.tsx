@@ -152,8 +152,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-4 relative">
-          <div className="flex items-center gap-4">
+        <CardContent className="p-3 relative">
+          <div className="flex items-center gap-3">
             {/* Drag Handle */}
             <div
               {...attributes}
@@ -195,18 +195,18 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 <img 
                   src={pssr.pssrLeadAvatar} 
                   alt={pssr.pssrLead}
-                  className="w-8 h-8 rounded-full border-2 border-border/50 shadow-sm"
+                  className="w-7 h-7 rounded-full border-2 border-border/50 shadow-sm"
                 />
                 <div className="min-w-0">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
-                  <p className="text-xs font-medium text-foreground truncate">{pssr.pssrLead}</p>
+                  <p className="text-[8px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
+                  <p className="text-[11px] font-medium text-foreground truncate">{pssr.pssrLead}</p>
                 </div>
               </div>
 
               {/* Progress - 2 cols */}
               <div className="col-span-2 text-center">
-                <div className="text-xl font-bold text-foreground mb-0.5">{pssr.progress}%</div>
-                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Complete</p>
+                <div className="text-lg font-bold text-foreground mb-0.5">{pssr.progress}%</div>
+                <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Complete</p>
               </div>
 
               {/* Status - 3 cols */}

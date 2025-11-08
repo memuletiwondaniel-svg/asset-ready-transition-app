@@ -381,6 +381,39 @@
     background: hsl(var(--muted-foreground));
   }
 
+  /* Thin scrollbar utilities */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  .scrollbar-thumb-border {
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  .scrollbar-track-transparent {
+    /* For Firefox */
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;

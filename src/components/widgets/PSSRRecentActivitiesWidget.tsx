@@ -33,10 +33,18 @@ interface ActivityItem {
 
 interface PSSRRecentActivitiesWidgetProps {
   limit?: number;
+  isExpanded?: boolean;
+  isVisible?: boolean;
+  onToggleExpand?: () => void;
+  onToggleVisibility?: () => void;
 }
 
 export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({ 
-  limit = 6 
+  limit = 6,
+  isExpanded,
+  isVisible,
+  onToggleExpand,
+  onToggleVisibility 
 }) => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -164,8 +172,15 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
   };
 
   return (
-    <WidgetCard title="Recent Activity" className="h-full flex flex-col">
-      <div className="space-y-1.5 overflow-y-auto max-h-[180px] pr-1">
+    <WidgetCard 
+      title="Recent Activity" 
+      className="h-full flex flex-col"
+      isExpanded={isExpanded}
+      isVisible={isVisible}
+      onToggleExpand={onToggleExpand}
+      onToggleVisibility={onToggleVisibility}
+    >
+      <div className="space-y-1.5 overflow-y-auto max-h-[320px] pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {activities.map((activity) => (
           <div
             key={activity.id}

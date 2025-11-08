@@ -7,12 +7,20 @@ interface PSSRQuickActionsWidgetProps {
   onCreatePSSR: () => void;
   onManageChecklist: () => void;
   onChatWithORSH: () => void;
+  isExpanded?: boolean;
+  isVisible?: boolean;
+  onToggleExpand?: () => void;
+  onToggleVisibility?: () => void;
 }
 
 export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
   onCreatePSSR,
   onManageChecklist,
   onChatWithORSH,
+  isExpanded,
+  isVisible,
+  onToggleExpand,
+  onToggleVisibility
 }) => {
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -72,7 +80,14 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
 
   return (
     <>
-      <WidgetCard title="Quick Actions" className="h-full flex flex-col">
+      <WidgetCard 
+        title="Quick Actions" 
+        className="h-full flex flex-col"
+        isExpanded={isExpanded}
+        isVisible={isVisible}
+        onToggleExpand={onToggleExpand}
+        onToggleVisibility={onToggleVisibility}
+      >
         <div className="space-y-2.5">
           {actions.map((action, index) => {
             const Icon = action.icon;
