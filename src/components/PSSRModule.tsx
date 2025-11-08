@@ -455,20 +455,20 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
 
-        {/* PSSR Reviews Title */}
-        <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <h2 className="text-xl font-semibold text-foreground">
-            PSSR Reviews ({filteredPSSRs.length})
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Showing {filteredPSSRs.length} of {stats.total} reviews
-          </p>
-        </div>
-
         {/* Search and Filters */}
-        <div className="fluent-card p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-          <div className="flex flex-col lg:flex-row gap-6 items-center">
-            <div className="relative flex-1 max-w-md">
+        <div className="fluent-card p-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          {/* PSSR Reviews Title */}
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              PSSR Reviews ({filteredPSSRs.length})
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Showing {filteredPSSRs.length} of {stats.total} reviews
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="relative flex-1 w-full sm:w-auto sm:max-w-md">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Search PSSR by Project ID, Asset, Lead..."
@@ -478,7 +478,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               />
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {/* View Mode Selector */}
               <div className="flex items-center gap-1 bg-muted border border-border/50 rounded-lg p-1 shadow-sm">
                 <Button
