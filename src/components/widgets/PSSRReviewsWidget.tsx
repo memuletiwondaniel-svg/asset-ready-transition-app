@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { LayoutGrid, Table as TableIcon, Columns3 } from 'lucide-react';
 import PSSRAdvancedSearch from '../PSSRAdvancedSearch';
@@ -70,6 +70,21 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   onToggleExpand,
   onToggleVisibility,
 }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      setIsScrolled(scrollContainer.scrollTop > 10);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <WidgetCard
       title="Reviews"
@@ -80,8 +95,10 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       className="flex flex-col"
     >
       <div className="flex flex-col h-full overflow-hidden">
-        {/* Search and View Controls - Sticky */}
-        <div className="sticky top-0 z-10 bg-card pb-3 border-b border-border/40">
+        {/* Search and View Controls - Sticky with scroll shadow */}
+        <div className={`sticky top-0 z-10 bg-card pb-3 border-b border-border/40 transition-shadow duration-300 ${
+          isScrolled ? 'shadow-md' : ''
+        }`}>
           <div className="flex flex-col lg:flex-row gap-3 items-center mb-3">
             <PSSRAdvancedSearch
               pssrs={pssrs}
@@ -143,7 +160,11 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
         </div>
 
         {/* Content Views - Scrollable Area with fixed height */}
-        <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4" style={{ maxHeight: '500px' }}>
+        <div 
+          ref={scrollContainerRef}
+          className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 pt-4" 
+          style={{ maxHeight: '500px' }}
+        >
           {viewMode === 'table' ? (
             <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
           ) : viewMode === 'kanban' ? (
