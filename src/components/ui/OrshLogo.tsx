@@ -43,12 +43,19 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             {/* 3D Green Dot */}
             <span 
               className={cn(
-                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-dot-pulse',
-                size === 'small' && 'w-2 h-2',
-                size === 'medium' && 'w-2.5 h-2.5',
-                size === 'large' && 'w-3 h-3'
+                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+                size === 'small' && 'w-1.5 h-1.5',
+                size === 'medium' && 'w-2 h-2',
+                size === 'large' && 'w-2.5 h-2.5'
               )}
               style={{
+                background: 'radial-gradient(circle at 30% 30%, hsl(142, 76%, 45%), hsl(142, 76%, 36%))',
+                boxShadow: `
+                  inset -1px -1px 2px rgba(0, 0, 0, 0.3),
+                  inset 1px 1px 2px rgba(255, 255, 255, 0.4),
+                  0 2px 4px rgba(0, 0, 0, 0.2),
+                  0 0 8px hsla(142, 76%, 45%, 0.4)
+                `,
                 borderRadius: '50%',
               }}
             />
