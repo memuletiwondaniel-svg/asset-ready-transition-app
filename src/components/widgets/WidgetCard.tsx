@@ -33,7 +33,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
 
   return (
     <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} ${className}`}>
-      <CardHeader className="border-b border-border/40 pb-2 flex flex-row items-center justify-between space-y-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent relative overflow-hidden">
+      <CardHeader className="border-b border-border/40 pb-4 flex flex-row items-center justify-between space-y-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent relative overflow-hidden">
         {/* Subtle shine effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         
@@ -47,7 +47,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
           >
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <CardTitle className="text-sm font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">{title}</CardTitle>
+          <CardTitle className="text-lg font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">{title}</CardTitle>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -86,7 +86,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-6">
         {children}
       </CardContent>
     </Card>
