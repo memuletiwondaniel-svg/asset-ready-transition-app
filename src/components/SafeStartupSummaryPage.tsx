@@ -594,7 +594,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           </div>
         </header>
 
-      <main className="flex-1 overflow-auto max-w-[1400px] mx-auto px-6 py-8 space-y-6">
+      <main className="flex-1 overflow-auto max-w-[1400px] mx-auto px-6 py-8 space-y-4">
         {/* Widgets Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Statistics Widget - Full width on mobile, 1 column on desktop */}
