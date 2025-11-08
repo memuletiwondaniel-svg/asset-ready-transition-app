@@ -334,14 +334,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       case 'list':
         crumbs.push({
           label: 'Safe Start-Up',
-          icon: ShieldCheck,
+          icon: undefined,
           onClick: undefined
         });
         break;
       case 'create':
         crumbs.push({
           label: 'Safe Start-Up',
-          icon: ShieldCheck,
+          icon: undefined,
           onClick: () => setActiveView('list')
         });
         crumbs.push({
@@ -353,7 +353,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       case 'details':
         crumbs.push({
           label: 'Safe Start-Up',
-          icon: ShieldCheck,
+          icon: undefined,
           onClick: () => setActiveView('list')
         });
         if (selectedPSSR) {
@@ -367,7 +367,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       case 'category-items':
         crumbs.push({
           label: 'Safe Start-Up',
-          icon: ShieldCheck,
+          icon: undefined,
           onClick: () => setActiveView('list')
         });
         if (selectedPSSR) {
@@ -388,7 +388,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       case 'manage-checklist':
         crumbs.push({
           label: 'Safe Start-Up',
-          icon: ShieldCheck,
+          icon: undefined,
           onClick: () => setActiveView('list')
         });
         crumbs.push({
@@ -491,7 +491,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                           <BreadcrumbItem>
                             {isLast ? (
                               <BreadcrumbPage className="flex items-center gap-1.5">
-                                <Icon className="h-3.5 w-3.5" />
+                                {crumb.icon && <Icon className="h-3.5 w-3.5" />}
                                 {crumb.label}
                               </BreadcrumbPage>
                             ) : (
@@ -500,7 +500,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                                   onClick={crumb.onClick} 
                                   className="flex items-center gap-1.5 hover:text-foreground transition-colors"
                                 >
-                                  <Icon className="h-3.5 w-3.5" />
+                                  {crumb.icon && <Icon className="h-3.5 w-3.5" />}
                                   {crumb.label}
                                 </button>
                               </BreadcrumbLink>
