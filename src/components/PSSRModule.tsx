@@ -480,14 +480,14 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             
             <div className="flex items-center gap-3">
               {/* View Mode Selector */}
-              <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-muted border border-border/50 rounded-lg p-1 shadow-sm">
                 <Button
                   variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('cards')}
                   className="h-8 px-3"
                 >
-                  <LayoutGrid className="h-4 w-4 mr-1" />
+                  <LayoutGrid className="h-4 w-4 mr-1.5" />
                   Cards
                 </Button>
                 <Button
@@ -496,7 +496,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                   onClick={() => setViewMode('kanban')}
                   className="h-8 px-3"
                 >
-                  <Kanban className="h-4 w-4 mr-1" />
+                  <Kanban className="h-4 w-4 mr-1.5" />
                   Kanban
                 </Button>
                 <Button
@@ -505,7 +505,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                   onClick={() => setViewMode('table')}
                   className="h-8 px-3"
                 >
-                  <LayoutList className="h-4 w-4 mr-1" />
+                  <LayoutList className="h-4 w-4 mr-1.5" />
                   Table
                 </Button>
               </div>
