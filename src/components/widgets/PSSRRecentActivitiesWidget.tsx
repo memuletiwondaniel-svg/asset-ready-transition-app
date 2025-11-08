@@ -36,7 +36,7 @@ interface PSSRRecentActivitiesWidgetProps {
 }
 
 export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({ 
-  limit = 2 
+  limit = 6 
 }) => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
