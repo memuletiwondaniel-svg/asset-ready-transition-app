@@ -468,7 +468,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="relative flex-1 w-full sm:w-auto sm:max-w-md">
+            <div className="relative flex-1 w-full sm:w-auto sm:max-w-xs">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Search PSSR by Project ID, Asset, Lead..."
