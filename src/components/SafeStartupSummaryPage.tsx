@@ -464,39 +464,16 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   if (activeView === 'manage-checklist') {
     return <ManageChecklistPage onBack={() => setActiveView('list')} />;
   }
-  return <div className="min-h-screen flex w-full relative overflow-hidden">
-      {/* Modern Gradient Background */}
-      <div className="absolute inset-0 bg-background">
-        {/* Main layer */}
-        <div className="absolute inset-0 opacity-25 dark:opacity-20">
-          <div className="absolute inset-0 animate-gradient-shift-morph" style={{
-          background: 'radial-gradient(at 20% 30%, hsl(220, 12%, 90%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(240, 10%, 92%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(210, 11%, 91%) 0%, transparent 40%)',
-          filter: 'blur(50px)'
-        }} />
-        </div>
-
-        {/* Sweep layer */}
-        <div className="absolute inset-0 opacity-20 dark:opacity-15">
-          <div className="absolute inset-0 animate-gradient-sweep-morph" style={{
-          background: 'radial-gradient(ellipse 80% 50% at 50% 50%, hsl(230, 10%, 88%) 0%, transparent 50%)',
-          filter: 'blur(60px)'
-        }} />
-        </div>
-        
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 opacity-10" style={{
-        background: 'linear-gradient(135deg, hsl(220, 8%, 92%) 0%, transparent 30%, hsl(var(--primary) / 0.05) 50%, transparent 70%)'
-      }} />
-      </div>
-      
-      {/* ORSH Sidebar */}
+  return <div className="h-screen flex w-full overflow-hidden">
+      {/* ORSH Sidebar - Fixed */}
       <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="safe-startup" onNavigate={section => {
-      if (section === 'home') {
-        onBack();
-      }
-    }} />
+        if (section === 'home') {
+          onBack();
+        }
+      }} />
       
-      <div className="flex-1 relative z-10 overflow-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
+
         {/* Modern Minimalist Header */}
         <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
           <div className="max-w-[1400px] mx-auto px-6 py-5">
@@ -550,7 +527,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           </div>
         </header>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+      <main className="flex-1 overflow-auto max-w-[1400px] mx-auto px-6 py-8 space-y-8">
         {/* Modern Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total PSSRs */}
