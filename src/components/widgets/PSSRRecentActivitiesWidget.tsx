@@ -36,7 +36,7 @@ interface PSSRRecentActivitiesWidgetProps {
 }
 
 export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({ 
-  limit = 3 
+  limit = 2 
 }) => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -164,8 +164,8 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
   };
 
   return (
-    <WidgetCard title="Recent Activity" className="h-full">
-      <div className="space-y-1.5">
+    <WidgetCard title="Recent Activity" className="h-full flex flex-col">
+      <div className="space-y-1.5 overflow-y-auto max-h-[180px] pr-1">
         {activities.map((activity) => (
           <div
             key={activity.id}

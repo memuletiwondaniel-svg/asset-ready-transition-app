@@ -44,7 +44,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
   ];
 
   return (
-    <WidgetCard title="PSSR Statistics" className="h-full">
+    <WidgetCard title="PSSR Statistics" className="h-full flex flex-col">
       <div className="grid grid-cols-2 gap-2">
         {statisticsData.map((stat, index) => {
           const Icon = stat.icon;
@@ -53,11 +53,11 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({ stat
               key={index}
               className="flex items-center gap-1.5 p-1.5 rounded-lg border border-border/50 bg-card"
             >
-              <div className={`flex items-center justify-center w-7 h-7 rounded-lg ${stat.bgColor} flex-shrink-0`}>
-                <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
+              <div className={`flex items-center justify-center w-6 h-6 rounded-lg ${stat.bgColor} flex-shrink-0`}>
+                <Icon className={`h-3 w-3 ${stat.color}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-foreground leading-tight">{stat.value}</p>
+                <p className="text-sm font-bold text-foreground leading-tight">{stat.value}</p>
                 <p className="text-xs text-muted-foreground truncate leading-tight">{stat.label}</p>
               </div>
             </div>
