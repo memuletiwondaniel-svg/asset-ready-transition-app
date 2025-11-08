@@ -73,7 +73,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
-    lead: [] as string[]
+    lead: [] as string[],
+    dateFrom: '',
+    dateTo: ''
   });
 
   // Mock PSSR data - starts empty but can be populated
@@ -293,7 +295,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     setFilters({
       plant: [],
       status: [],
-      lead: []
+      lead: [],
+      dateFrom: '',
+      dateTo: ''
     });
   };
   const handleViewDetails = (pssrId: string) => {
