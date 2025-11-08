@@ -24,7 +24,7 @@ import PSSRDashboard from './PSSRDashboard';
 import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
 import { OrshSidebar } from './OrshSidebar';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 interface SafeStartupSummaryPageProps {
@@ -486,9 +486,46 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                     {getBreadcrumbs().map((crumb, index) => {
                       const Icon = crumb.icon || Home;
                       const isLast = index === getBreadcrumbs().length - 1;
+                      const isFirst = index === 0;
+                      const breadcrumbs = getBreadcrumbs();
+                      const totalItems = breadcrumbs.length;
+                      
+                      // On small screens, show first, last, and ellipsis for middle items when > 2 items
+                      // On medium screens, show first, last, and ellipsis when > 3 items
+                      const shouldShowEllipsis = (
+                        (totalItems > 2 && !isFirst && !isLast && index === 1) ||
+                        (totalItems > 3 && !isFirst && !isLast && index === Math.floor(totalItems / 2))
+                      );
+                      
+                      const shouldHideOnSmall = totalItems > 2 && !isFirst && !isLast;
+                      const shouldHideOnMedium = totalItems > 3 && !isFirst && !isLast && index !== Math.floor(totalItems / 2);
+                      
                       return (
                         <React.Fragment key={index}>
-                          <BreadcrumbItem>
+                          {/* Show ellipsis on small screens when there are middle items */}
+                          {shouldShowEllipsis && totalItems > 2 && (
+                            <>
+                              <BreadcrumbItem className="md:hidden">
+                                <BreadcrumbEllipsis />
+                              </BreadcrumbItem>
+                              <BreadcrumbSeparator className="md:hidden" />
+                            </>
+                          )}
+                          
+                          {/* Show ellipsis on medium screens when there are many items */}
+                          {shouldShowEllipsis && totalItems > 3 && (
+                            <>
+                              <BreadcrumbItem className="hidden md:block lg:hidden">
+                                <BreadcrumbEllipsis />
+                              </BreadcrumbItem>
+                              <BreadcrumbSeparator className="hidden md:block lg:hidden" />
+                            </>
+                          )}
+                          
+                          <BreadcrumbItem className={
+                            shouldHideOnSmall ? 'hidden md:block' : 
+                            shouldHideOnMedium ? 'hidden lg:block' : ''
+                          }>
                             {isLast ? (
                               <BreadcrumbPage className="flex items-center gap-1.5">
                                 {crumb.icon && <Icon className="h-3.5 w-3.5" />}
@@ -506,7 +543,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                               </BreadcrumbLink>
                             )}
                           </BreadcrumbItem>
-                          {!isLast && <BreadcrumbSeparator />}
+                          {!isLast && (
+                            <BreadcrumbSeparator className={
+                              shouldHideOnSmall ? 'hidden md:block' : 
+                              shouldHideOnMedium ? 'hidden lg:block' : ''
+                            } />
+                          )}
                         </React.Fragment>
                       );
                     })}
