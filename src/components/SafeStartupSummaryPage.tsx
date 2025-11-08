@@ -632,7 +632,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                 </Popover>
 
                 {/* Activity Feed Toggle */}
-                
+                <Button variant="outline" size="sm" onClick={() => setShowActivityFeed(!showActivityFeed)} className="gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span className="hidden md:inline">Activity</span>
+                </Button>
               </div>
             </div>
           </CardContent>
