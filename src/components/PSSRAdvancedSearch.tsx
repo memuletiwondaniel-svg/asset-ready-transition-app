@@ -22,6 +22,7 @@ interface PSSRAdvancedSearchProps {
   onChange: (value: string) => void;
   onSelectPSSR?: (pssrId: string) => void;
   placeholder?: string;
+  className?: string;
 }
 
 const RECENT_SEARCHES_KEY = 'pssr_recent_searches';
@@ -32,7 +33,8 @@ const PSSRAdvancedSearch: React.FC<PSSRAdvancedSearchProps> = ({
   value,
   onChange,
   onSelectPSSR,
-  placeholder = 'Search PSSRs...'
+  placeholder = 'Search PSSRs...',
+  className
 }) => {
   const [open, setOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -140,7 +142,7 @@ const PSSRAdvancedSearch: React.FC<PSSRAdvancedSearchProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative flex-1">
+        <div className={cn("relative flex-1", className)}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
             type="text"

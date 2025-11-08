@@ -619,13 +619,39 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         {/* Modern Stats Grid */}
         
 
+        {/* Reviews Title */}
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">
+            Reviews ({filteredPSSRs.length})
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Showing {filteredPSSRs.length} of {stats.total} reviews
+          </p>
+        </div>
+
         {/* Modern Search and Filters */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-5">
             <div className="flex flex-col lg:flex-row gap-4 items-center">
-              <PSSRAdvancedSearch pssrs={pssrList} value={searchTerm} onChange={handleSearchChange} onSelectPSSR={handleViewDetails} placeholder="Search by Project ID, Name, Asset, Lead..." />
+              <PSSRAdvancedSearch pssrs={pssrList} value={searchTerm} onChange={handleSearchChange} onSelectPSSR={handleViewDetails} placeholder="Search by Project ID, Name, Asset, Lead..." className="flex-1 max-w-xs" />
               
               <div className="flex items-center gap-3 w-full lg:w-auto">
+                {/* View Mode Selector */}
+                <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border/50 shadow-sm">
+                  <button onClick={() => setViewMode('card')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'card' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
+                    Cards
+                  </button>
+                  <button onClick={() => setViewMode('kanban')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'kanban' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <Columns3 className="h-3.5 w-3.5 inline mr-1.5" />
+                    Kanban
+                  </button>
+                  <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
+                    Table
+                  </button>
+                </div>
+
                 <PSSRFilters filters={filters} onToggleFilter={toggleFilter} onDateChange={handleDateChange} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} />
                 
                 {/* Date Range Filter */}
@@ -652,23 +678,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 
-                
-                {/* Compact View Toggle */}
-                <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
-                  <button onClick={() => setViewMode('card')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'card' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                    <LayoutGrid className="h-3.5 w-3.5 inline mr-1.5" />
-                    Cards
-                  </button>
-                  <button onClick={() => setViewMode('kanban')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'kanban' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                    <Columns3 className="h-3.5 w-3.5 inline mr-1.5" />
-                    Kanban
-                  </button>
-                  
-                  <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                    <TableIcon className="h-3.5 w-3.5 inline mr-1.5" />
-                    Table
-                  </button>
-                </div>
               </div>
               
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
