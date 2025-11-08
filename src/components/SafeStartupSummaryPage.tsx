@@ -651,9 +651,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           <div className={`space-y-5 ${showActivityFeed ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Reviews <span className="text-muted-foreground">({filteredPSSRs.length})</span>
-                </h2>
+                
                 
                 {/* Compact View Toggle */}
                 <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-muted/30 border border-border/30">
