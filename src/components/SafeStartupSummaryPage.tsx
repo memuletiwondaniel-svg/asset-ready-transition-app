@@ -24,7 +24,7 @@ import PSSRDashboard from './PSSRDashboard';
 import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
 import ManageChecklistPage from './ManageChecklistPage';
 import { OrshSidebar } from './OrshSidebar';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 interface SafeStartupSummaryPageProps {
@@ -477,48 +477,72 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         {/* Modern Minimalist Header */}
         <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
           <div className="max-w-[1400px] mx-auto px-6 py-5">
-            {/* Breadcrumb Navigation */}
-            <div className="mb-4">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {getBreadcrumbs().map((crumb, index) => {
-                  const Icon = crumb.icon || Home;
-                  const isLast = index === getBreadcrumbs().length - 1;
-                  return <React.Fragment key={index}>
-                        <BreadcrumbItem>
-                          {isLast ? <BreadcrumbPage className="flex items-center gap-1.5 text-sm font-medium">
-                              <Icon className="h-3.5 w-3.5" />
-                              {crumb.label}
-                            </BreadcrumbPage> : <button onClick={crumb.onClick} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                              <Icon className="h-3.5 w-3.5" />
-                              {crumb.label}
-                            </button>}
-                        </BreadcrumbItem>
-                        {!isLast && <span className="mx-2 text-muted-foreground text-sm">/</span>}
-                      </React.Fragment>;
-                })}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
+            {/* Single row with Breadcrumb on left and Title centered */}
+            <div className="relative flex items-center">
+              {/* Breadcrumb - Left aligned */}
+              <div className="flex-shrink-0">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    {getBreadcrumbs().map((crumb, index) => {
+                      const Icon = crumb.icon || Home;
+                      const isLast = index === getBreadcrumbs().length - 1;
+                      return (
+                        <React.Fragment key={index}>
+                          <BreadcrumbItem>
+                            {isLast ? (
+                              <BreadcrumbPage className="flex items-center gap-1.5">
+                                <Icon className="h-3.5 w-3.5" />
+                                {crumb.label}
+                              </BreadcrumbPage>
+                            ) : (
+                              <BreadcrumbLink asChild>
+                                <button 
+                                  onClick={crumb.onClick} 
+                                  className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                                >
+                                  <Icon className="h-3.5 w-3.5" />
+                                  {crumb.label}
+                                </button>
+                              </BreadcrumbLink>
+                            )}
+                          </BreadcrumbItem>
+                          {!isLast && <BreadcrumbSeparator />}
+                        </React.Fragment>
+                      );
+                    })}
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              {/* Centered Title */}
+              <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
                   <ShieldCheck className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-foreground tracking-tight">Safe Start-Up</h1>
-                  <p className="text-xs text-muted-foreground">Pre-Start-Up Safety Review</p>
+                  <h1 className="text-xl font-bold text-foreground tracking-tight">Pre-Start-Up Safety Review</h1>
+                  <p className="text-xs text-muted-foreground">Safe Start-Up Management</p>
                 </div>
               </div>
 
-              {/* Header Actions */}
-              <div className="flex items-center gap-3">
-                {userRole === 'admin' && <Button variant="outline" size="sm" onClick={() => setActiveView('manage-checklist')} className="hidden lg:flex gap-2 hover:bg-muted/50">
+              {/* Header Actions - Right aligned */}
+              <div className="ml-auto flex items-center gap-3">
+                {userRole === 'admin' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setActiveView('manage-checklist')} 
+                    className="hidden lg:flex gap-2 hover:bg-muted/50"
+                  >
                     <Settings className="h-4 w-4" />
                     <span>Manage</span>
-                  </Button>}
-                <Button onClick={() => setActiveView('create')} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2">
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => setActiveView('create')} 
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2"
+                >
                   <Plus className="h-4 w-4" />
                   <span>New PSSR</span>
                 </Button>
