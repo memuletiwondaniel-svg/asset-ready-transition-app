@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface OrshLogoProps {
@@ -25,7 +26,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
   };
 
   return (
-    <div className={cn('flex flex-col items-center justify-center', heightClasses[size], className)}>
+    <Link to="/" className={cn('flex flex-col items-center justify-center group/logo cursor-pointer', heightClasses[size], className)}>
       <div className="relative group">
         {/* Modern minimalist logo with tighter spacing */}
         <div className="flex items-center gap-0">
@@ -34,7 +35,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
               sizeClasses[size],
               'font-bold bg-gradient-to-br from-primary via-primary/95 to-primary/80 bg-clip-text text-transparent',
               'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
-              'relative inline-block'
+              'relative inline-block group-hover/logo:scale-110'
             )}
             style={{ letterSpacing: '-0.02em' }}
           >
@@ -64,7 +65,8 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             className={cn(
               sizeClasses[size],
               'font-bold bg-gradient-to-br from-primary/95 via-primary to-primary/90 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]'
+              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
+              'group-hover/logo:scale-110'
             )}
             style={{ letterSpacing: '-0.02em' }}
           >
@@ -74,7 +76,8 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             className={cn(
               sizeClasses[size],
               'font-bold bg-gradient-to-br from-primary to-primary/95 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]'
+              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
+              'group-hover/logo:scale-110'
             )}
             style={{ letterSpacing: '-0.02em' }}
           >
@@ -84,7 +87,8 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             className={cn(
               sizeClasses[size],
               'font-bold bg-gradient-to-br from-primary/90 via-primary/85 to-primary/80 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]'
+              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
+              'group-hover/logo:scale-110'
             )}
             style={{ letterSpacing: '-0.02em' }}
           >
@@ -93,17 +97,17 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
         </div>
         
         {/* Subtle animated underline */}
-        <div className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70 group-hover/logo:opacity-100 transition-opacity duration-300" />
         
         {/* Ambient glow effect */}
-        <div className="absolute -inset-3 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 rounded-lg opacity-0 group-hover:opacity-100 blur-2xl transition-all duration-500 -z-10" />
+        <div className="absolute -inset-3 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 rounded-lg opacity-0 group-hover/logo:opacity-100 blur-2xl transition-all duration-500 -z-10" />
       </div>
       {showTagline && (
         <p className="text-[9px] text-muted-foreground/70 tracking-[0.15em] mt-1.5 uppercase font-medium">
           Operation Readiness
         </p>
       )}
-    </div>
+    </Link>
   );
 };
 
