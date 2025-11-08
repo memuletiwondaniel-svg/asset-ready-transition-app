@@ -137,6 +137,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Navigation Menu */}
       <ScrollArea className="flex-1 p-4">
+        <div className="p-4">
         {/* Main Navigation */}
         {!isSidebarCollapsed && (
           <div className="mb-6">
@@ -274,6 +275,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   </Button>)}
               </div>}
           </div>}
+        </div>
       </ScrollArea>
 
       {/* Footer Actions */}
