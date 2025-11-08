@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,17 +12,20 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem 
 } from '@/components/ui/dropdown-menu';
-import { Search, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 interface Filters {
   plant: string[];
   status: string[];
   lead: string[];
+  dateFrom: string;
+  dateTo: string;
 }
 
 interface PSSRFiltersProps {
   filters: Filters;
   onToggleFilter: (category: 'plant' | 'status' | 'lead', value: string) => void;
+  onDateChange: (dateType: 'dateFrom' | 'dateTo', value: string) => void;
   onClearFilters: () => void;
   uniquePlants: string[];
   uniqueStatuses: string[];
@@ -31,12 +35,13 @@ interface PSSRFiltersProps {
 const PSSRFilters: React.FC<PSSRFiltersProps> = ({
   filters,
   onToggleFilter,
+  onDateChange,
   onClearFilters,
   uniquePlants,
   uniqueStatuses,
   uniqueLeads
 }) => {
-  const hasActiveFilters = filters.plant.length > 0 || filters.status.length > 0 || filters.lead.length > 0;
+  const hasActiveFilters = filters.plant.length > 0 || filters.status.length > 0 || filters.lead.length > 0 || filters.dateFrom || filters.dateTo;
 
   return (
     <div className="flex items-center gap-4">
@@ -52,7 +57,32 @@ const PSSRFilters: React.FC<PSSRFiltersProps> = ({
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
+        <DropdownMenuContent className="w-64">
+          <DropdownMenuLabel>Date Range</DropdownMenuLabel>
+          <div className="px-2 py-2 space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="dateFrom" className="text-xs">From</Label>
+              <Input
+                id="dateFrom"
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => onDateChange('dateFrom', e.target.value)}
+                className="h-8"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="dateTo" className="text-xs">To</Label>
+              <Input
+                id="dateTo"
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => onDateChange('dateTo', e.target.value)}
+                className="h-8"
+              />
+            </div>
+          </div>
+          
+          <DropdownMenuSeparator />
           <DropdownMenuLabel>Filter by Plant</DropdownMenuLabel>
           {uniquePlants.map(plant => (
             <DropdownMenuCheckboxItem

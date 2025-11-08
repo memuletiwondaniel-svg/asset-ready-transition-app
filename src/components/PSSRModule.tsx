@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck, Settings } from 'lucide-react';
+import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck, Settings, LayoutGrid, LayoutList, Kanban } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
@@ -41,10 +41,13 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
   const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'cards' | 'kanban' | 'table'>('cards');
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
-    lead: [] as string[]
+    lead: [] as string[],
+    dateFrom: '',
+    dateTo: ''
   });
 
   // Mock PSSR data with enhanced structure
@@ -255,8 +258,17 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
     setFilters({
       plant: [],
       status: [],
-      lead: []
+      lead: [],
+      dateFrom: '',
+      dateTo: ''
     });
+  };
+
+  const handleDateChange = (dateType: 'dateFrom' | 'dateTo', value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [dateType]: value
+    }));
   };
 
   const handleViewDetails = (pssrId: string) => {
@@ -443,6 +455,16 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
 
+        {/* PSSR Reviews Title */}
+        <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <h2 className="text-xl font-semibold text-foreground">
+            PSSR Reviews ({filteredPSSRs.length})
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Showing {filteredPSSRs.length} of {stats.total} reviews
+          </p>
+        </div>
+
         {/* Search and Filters */}
         <div className="fluent-card p-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <div className="flex flex-col lg:flex-row gap-6 items-center">
@@ -456,10 +478,42 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
               />
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* View Mode Selector */}
+              <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('cards')}
+                  className="h-8 px-3"
+                >
+                  <LayoutGrid className="h-4 w-4 mr-1" />
+                  Cards
+                </Button>
+                <Button
+                  variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('kanban')}
+                  className="h-8 px-3"
+                >
+                  <Kanban className="h-4 w-4 mr-1" />
+                  Kanban
+                </Button>
+                <Button
+                  variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="h-8 px-3"
+                >
+                  <LayoutList className="h-4 w-4 mr-1" />
+                  Table
+                </Button>
+              </div>
+              
               <PSSRFilters
                 filters={filters}
                 onToggleFilter={toggleFilter}
+                onDateChange={handleDateChange}
                 onClearFilters={clearAllFilters}
                 uniquePlants={uniquePlants}
                 uniqueStatuses={uniqueStatuses}
@@ -471,17 +525,6 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
 
         {/* Enhanced PSSR List with Drag and Drop */}
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">
-              PSSR Reviews ({filteredPSSRs.length})
-            </h2>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Showing {filteredPSSRs.length} of {stats.total} reviews</span>
-              <span className="text-xs bg-muted/50 px-2 py-1 rounded-lg">
-                💡 Drag cards to reorder
-              </span>
-            </div>
-          </div>
 
           <DndContext
             sensors={sensors}

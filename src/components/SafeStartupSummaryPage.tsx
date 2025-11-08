@@ -73,7 +73,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
-    lead: [] as string[]
+    lead: [] as string[],
+    dateFrom: '',
+    dateTo: ''
   });
 
   // Mock PSSR data - starts empty but can be populated
@@ -293,8 +295,17 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     setFilters({
       plant: [],
       status: [],
-      lead: []
+      lead: [],
+      dateFrom: '',
+      dateTo: ''
     });
+  };
+
+  const handleDateChange = (dateType: 'dateFrom' | 'dateTo', value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [dateType]: value
+    }));
   };
   const handleViewDetails = (pssrId: string) => {
     setSelectedPSSR(pssrId);
@@ -616,7 +627,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
               <PSSRAdvancedSearch pssrs={pssrList} value={searchTerm} onChange={handleSearchChange} onSelectPSSR={handleViewDetails} placeholder="Search by Project ID, Name, Asset, Lead..." />
               
               <div className="flex items-center gap-3 w-full lg:w-auto">
-                <PSSRFilters filters={filters} onToggleFilter={toggleFilter} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} />
+                <PSSRFilters filters={filters} onToggleFilter={toggleFilter} onDateChange={handleDateChange} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} />
                 
                 {/* Date Range Filter */}
                 <Popover>
