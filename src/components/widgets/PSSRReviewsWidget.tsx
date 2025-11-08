@@ -77,10 +77,11 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       isVisible={isVisible}
       onToggleExpand={onToggleExpand}
       onToggleVisibility={onToggleVisibility}
+      className="flex flex-col"
     >
-      <div className="space-y-4 flex flex-col max-h-[600px]">
+      <div className="flex flex-col h-full">
         {/* Search and View Controls */}
-        <div className="flex flex-col lg:flex-row gap-3 items-center flex-shrink-0">
+        <div className="flex flex-col lg:flex-row gap-3 items-center flex-shrink-0 mb-4">
           <PSSRAdvancedSearch
             pssrs={pssrs}
             value={searchTerm}
@@ -135,12 +136,12 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
         </div>
 
         {/* Results Count */}
-        <p className="text-sm text-muted-foreground flex-shrink-0">
+        <p className="text-sm text-muted-foreground flex-shrink-0 mb-4">
           Showing {filteredPSSRs.length} of {pssrs.length} reviews
         </p>
 
-        {/* Content Views - Scrollable Area */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1">
+        {/* Content Views - Scrollable Area with fixed height */}
+        <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1" style={{ maxHeight: '500px' }}>
           {viewMode === 'table' ? (
             <PSSRTableView pssrs={filteredPSSRs} onViewDetails={onViewDetails} />
           ) : viewMode === 'kanban' ? (
