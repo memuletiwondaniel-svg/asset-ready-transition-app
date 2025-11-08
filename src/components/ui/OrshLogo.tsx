@@ -42,7 +42,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             {/* 3D Green Dot */}
             <span 
               className={cn(
-                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse',
                 size === 'small' && 'w-2 h-2',
                 size === 'medium' && 'w-2.5 h-2.5',
                 size === 'large' && 'w-3 h-3'
@@ -55,7 +55,8 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
                   0 2px 4px rgba(0, 0, 0, 0.2),
                   0 0 8px hsla(142, 76%, 45%, 0.4)
                 `,
-                borderRadius: '50%'
+                borderRadius: '50%',
+                animationDuration: '2s'
               }}
             />
           </span>
