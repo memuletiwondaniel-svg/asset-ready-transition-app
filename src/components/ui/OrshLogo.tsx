@@ -33,11 +33,31 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
             className={cn(
               sizeClasses[size],
               'font-bold bg-gradient-to-br from-primary via-primary/95 to-primary/80 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]'
+              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
+              'relative inline-block'
             )}
             style={{ letterSpacing: '-0.02em' }}
           >
             O
+            {/* 3D Green Dot */}
+            <span 
+              className={cn(
+                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+                size === 'small' && 'w-2 h-2',
+                size === 'medium' && 'w-2.5 h-2.5',
+                size === 'large' && 'w-3 h-3'
+              )}
+              style={{
+                background: 'radial-gradient(circle at 30% 30%, hsl(142, 76%, 45%), hsl(142, 76%, 36%))',
+                boxShadow: `
+                  inset -1px -1px 2px rgba(0, 0, 0, 0.3),
+                  inset 1px 1px 2px rgba(255, 255, 255, 0.4),
+                  0 2px 4px rgba(0, 0, 0, 0.2),
+                  0 0 8px hsla(142, 76%, 45%, 0.4)
+                `,
+                borderRadius: '50%'
+              }}
+            />
           </span>
           <span 
             className={cn(
