@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { WidgetCard } from './WidgetCard';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, AlertCircle, FileEdit, UserPlus } from 'lucide-react';
@@ -20,6 +21,8 @@ interface PSSRRecentActivitiesWidgetProps {
 export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({ 
   activities = [] 
 }) => {
+  const navigate = useNavigate();
+  
   // Default mock activities if none provided
   const defaultActivities: Activity[] = [
     {
@@ -107,7 +110,8 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
           {displayActivities.map((activity) => (
             <div
               key={activity.id}
-              className="flex gap-3 p-3 rounded-lg border border-border/50 bg-card hover:shadow-sm transition-shadow"
+              onClick={() => navigate(`/pssr/${activity.pssrId}`)}
+              className="flex gap-3 p-3 rounded-lg border border-border/50 bg-card hover:shadow-sm hover:bg-accent/50 transition-all cursor-pointer"
             >
               <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 ${getActivityColor(activity.type)}`}>
                 {getActivityIcon(activity.type)}
