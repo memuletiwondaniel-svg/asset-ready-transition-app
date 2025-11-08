@@ -579,16 +579,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
               </div>
 
               {/* Header Actions - Right aligned */}
-              <div className="ml-auto flex items-center gap-3">
-                {userRole === 'admin' && <Button variant="outline" size="sm" onClick={() => setActiveView('manage-checklist')} className="hidden lg:flex gap-2 hover:bg-muted/50">
-                    <Settings className="h-4 w-4" />
-                    <span>Manage</span>
-                  </Button>}
-                <Button onClick={() => setActiveView('create')} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm gap-2">
-                  <Plus className="h-4 w-4" />
-                  <span>New PSSR</span>
-                </Button>
-              </div>
+              
             </div>
           </div>
         </header>
