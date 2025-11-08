@@ -83,6 +83,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     recentActivities: false,
     reviews: false,
   });
+  const [showWidgetManagement, setShowWidgetManagement] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
@@ -531,11 +533,20 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   }
   return <div className="h-screen flex w-full overflow-hidden">
       {/* ORSH Sidebar - Fixed */}
-      <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="safe-startup" onNavigate={section => {
-      if (section === 'home') {
-        onBack();
-      }
-    }} />
+      <OrshSidebar 
+        userName="Daniel" 
+        userTitle="ORA Engr." 
+        language="en" 
+        currentPage="safe-startup" 
+        onNavigate={section => {
+          if (section === 'home') {
+            onBack();
+          }
+        }}
+        onShowWidgets={() => setShowWidgetManagement(true)}
+        onShowOnboarding={() => setShowOnboarding(true)}
+        showWidgets={showWidgetManagement}
+      />
       
       <div className="flex-1 flex flex-col overflow-hidden">
 
