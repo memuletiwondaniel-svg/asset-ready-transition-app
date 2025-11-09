@@ -510,14 +510,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     switch (activeView) {
       case 'list':
         crumbs.push({
-          label: 'Safe Start-Up',
+          label: 'PSSR',
           icon: undefined,
           onClick: undefined
         });
         break;
       case 'create':
         crumbs.push({
-          label: 'Safe Start-Up',
+          label: 'PSSR',
           icon: undefined,
           onClick: () => setActiveView('list')
         });
@@ -529,7 +529,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         break;
       case 'details':
         crumbs.push({
-          label: 'Safe Start-Up',
+          label: 'PSSR',
           icon: undefined,
           onClick: () => setActiveView('list')
         });
@@ -543,7 +543,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         break;
       case 'category-items':
         crumbs.push({
-          label: 'Safe Start-Up',
+          label: 'PSSR',
           icon: undefined,
           onClick: () => setActiveView('list')
         });
@@ -564,7 +564,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         break;
       case 'manage-checklist':
         crumbs.push({
-          label: 'Safe Start-Up',
+          label: 'PSSR',
           icon: undefined,
           onClick: () => setActiveView('list')
         });
