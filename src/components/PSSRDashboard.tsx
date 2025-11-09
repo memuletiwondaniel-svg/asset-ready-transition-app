@@ -49,12 +49,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const location = useLocation();
-  const { buildBreadcrumbsFromPath } = useBreadcrumb();
-
-  // Build breadcrumbs from current path with custom labels
-  const breadcrumbs = buildBreadcrumbsFromPath({
-    [`/safe-startup/${pssrId}`]: pssrId,
-  });
+  const { buildBreadcrumbsFromPath, updateMetadata } = useBreadcrumb();
 
   // Mock comprehensive PSSR data
   const pssrData = {
@@ -198,6 +193,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     ]
   };
 
+  // Update metadata with PSSR title for breadcrumb display
+  useEffect(() => {
+    updateMetadata(`/safe-startup/${pssrId}`, `${pssrData.id} - ${pssrData.title}`);
+  }, [pssrId, pssrData.id, pssrData.title, updateMetadata]);
+
+  // Build breadcrumbs from current path
+  const breadcrumbs = buildBreadcrumbsFromPath();
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
@@ -290,7 +293,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                 ))}
                 <BreadcrumbItem>
                   <BreadcrumbPage className="font-semibold text-foreground text-xs">
-                    {pssrData.id}
+                    {breadcrumbs[breadcrumbs.length - 1]?.label || pssrData.id}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
