@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
 }) => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
+  
+  // Breadcrumb context
+  const { buildBreadcrumbsFromPath } = useBreadcrumb();
 
   const {
     widgets,

@@ -4,6 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { 
   Select, 
   SelectContent, 
@@ -46,6 +55,9 @@ interface UserManagementProps {
 }
 
 const UserManagement = ({ onBack }: UserManagementProps) => {
+  const { buildBreadcrumbsFromPath } = useBreadcrumb();
+  const breadcrumbs = buildBreadcrumbsFromPath();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
@@ -154,10 +166,6 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
   const companies = ["BGC", "Kent", "Others"];
   const projects = ["Project Alpha", "Project Beta", "Project Gamma"]; // Mock projects
 
-  const breadcrumbs = [
-    { label: 'Home', icon: Home, onClick: onBack },
-    { label: 'User Management', icon: Users, onClick: undefined }
-  ];
 
   return (
     <div className="min-h-screen flex w-full">

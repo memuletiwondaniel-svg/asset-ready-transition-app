@@ -7,18 +7,26 @@ interface BreadcrumbItem {
   onClick?: () => void;
 }
 
+interface BreadcrumbMetadata {
+  [key: string]: string;
+}
+
 interface BreadcrumbContextType {
   breadcrumbs: BreadcrumbItem[];
   setBreadcrumbs: (breadcrumbs: BreadcrumbItem[]) => void;
   addBreadcrumb: (breadcrumb: BreadcrumbItem) => void;
   clearBreadcrumbs: () => void;
   buildBreadcrumbsFromPath: (customLabels?: Record<string, string>) => BreadcrumbItem[];
+  metadata: BreadcrumbMetadata;
+  setMetadata: (metadata: BreadcrumbMetadata) => void;
+  updateMetadata: (key: string, value: string) => void;
 }
 
 const BreadcrumbContext = createContext<BreadcrumbContextType | undefined>(undefined);
 
 export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+  const [metadata, setMetadata] = useState<BreadcrumbMetadata>({});
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -49,8 +57,9 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       
-      // Get label from custom labels, route labels, or format the segment
+      // Get label from custom labels, route labels, metadata, or format the segment
       const label = customLabels?.[currentPath] || 
+                   metadata[currentPath] ||
                    routeLabels[currentPath] || 
                    segment.split('-').map(word => 
                      word.charAt(0).toUpperCase() + word.slice(1)
@@ -64,7 +73,11 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     return crumbs;
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, metadata]);
+
+  const updateMetadata = useCallback((key: string, value: string) => {
+    setMetadata(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   const addBreadcrumb = useCallback((breadcrumb: BreadcrumbItem) => {
     setBreadcrumbs(prev => [...prev, breadcrumb]);
@@ -81,7 +94,10 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setBreadcrumbs,
         addBreadcrumb,
         clearBreadcrumbs,
-        buildBreadcrumbsFromPath
+        buildBreadcrumbsFromPath,
+        metadata,
+        setMetadata,
+        updateMetadata
       }}
     >
       {children}

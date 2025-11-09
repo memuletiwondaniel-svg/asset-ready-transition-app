@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
 import ProjectManagementPage from "./project/ProjectManagementPage";
@@ -24,6 +25,9 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   onBack
 }) => {
   const { language, setLanguage, translations: t } = useLanguage();
+  const { buildBreadcrumbsFromPath } = useBreadcrumb();
+  const breadcrumbs = buildBreadcrumbsFromPath();
+  
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings' | 'activity-log'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
