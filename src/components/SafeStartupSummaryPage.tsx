@@ -118,8 +118,15 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         return '';
       })
       .filter(Boolean);
-    return sorted.length > 0 ? sorted as Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'> : ['statistics', 'quickActions', 'recentActivities', 'reviews'];
+    const defaultOrder: Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'> = ['statistics', 'quickActions', 'recentActivities', 'reviews'];
+    return sorted.length > 0 ? (sorted as Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'>) : defaultOrder;
   }, [widgets]);
+
+  // Local, optimistic order state for immediate visual reordering
+  const [widgetOrderLocal, setWidgetOrderLocal] = useState<Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'>>(widgetOrder);
+  useEffect(() => {
+    setWidgetOrderLocal(widgetOrder);
+  }, [widgetOrder]);
 
   const widgetSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -135,9 +142,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     
-    const oldIndex = widgetOrder.indexOf(active.id as any);
-    const newIndex = widgetOrder.indexOf(over.id as any);
-    const newOrder = arrayMove(widgetOrder, oldIndex, newIndex);
+    const oldIndex = widgetOrderLocal.indexOf(active.id as any);
+    const newIndex = widgetOrderLocal.indexOf(over.id as any);
+    const newOrder = arrayMove(widgetOrderLocal, oldIndex, newIndex);
+
+    // Optimistically update UI
+    setWidgetOrderLocal(newOrder);
     
     // Update positions in Supabase
     const typeMap: Record<string, string> = {
@@ -764,9 +774,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           onDragStart={handleWidgetDragStart}
           onDragEnd={handleWidgetDragEnd}
         >
-          <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+          <SortableContext items={widgetOrderLocal} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {widgetOrder.map((key) => (
+              {widgetOrderLocal.map((key) => (
                 <SortableWidget id={key} key={key} className={key === 'reviews' ? 'col-span-1 lg:col-span-3' : 'col-span-1'}>
                   {({ attributes, listeners }) => (
                     <>
