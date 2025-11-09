@@ -2,6 +2,12 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -34,50 +40,117 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
 
   const breadcrumbs = buildBreadcrumbsFromPath();
 
+  const backHistory = history.slice(0, currentHistoryIndex).reverse();
+  const forwardHistory = history.slice(currentHistoryIndex + 1);
+
+  const navigateToHistoryIndex = (index: number) => {
+    const item = history[index];
+    if (item) {
+      window.history.pushState(null, '', item.path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
+
   return (
     <div className={cn("flex items-center gap-3", className)}>
       {/* Back/Forward Navigation Buttons */}
       <TooltipProvider>
         <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goBack}
-                disabled={!canGoBack}
-                className="h-8 w-8 rounded-lg disabled:opacity-30"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {canGoBack && currentHistoryIndex > 0 
-                ? `Back to ${history[currentHistoryIndex - 1]?.label}`
-                : 'No previous page'
-              }
-            </TooltipContent>
-          </Tooltip>
+          {/* Back Button with Dropdown */}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      if (e.detail === 1) {
+                        goBack();
+                      }
+                    }}
+                    disabled={!canGoBack}
+                    className="h-8 w-8 rounded-lg disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {canGoBack && currentHistoryIndex > 0 
+                  ? `Back to ${history[currentHistoryIndex - 1]?.label}`
+                  : 'No previous page'
+                }
+              </TooltipContent>
+            </Tooltip>
+            {canGoBack && (
+              <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
+                {backHistory.map((item, index) => {
+                  const actualIndex = currentHistoryIndex - index - 1;
+                  return (
+                    <DropdownMenuItem
+                      key={`${item.path}-${item.timestamp}`}
+                      onClick={() => navigateToHistoryIndex(actualIndex)}
+                      className="cursor-pointer text-xs py-2"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium">{item.label}</span>
+                        <span className="text-muted-foreground text-[10px]">{item.path}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            )}
+          </DropdownMenu>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goForward}
-                disabled={!canGoForward}
-                className="h-8 w-8 rounded-lg disabled:opacity-30"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {canGoForward && currentHistoryIndex < history.length - 1
-                ? `Forward to ${history[currentHistoryIndex + 1]?.label}`
-                : 'No next page'
-              }
-            </TooltipContent>
-          </Tooltip>
+          {/* Forward Button with Dropdown */}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      if (e.detail === 1) {
+                        goForward();
+                      }
+                    }}
+                    disabled={!canGoForward}
+                    className="h-8 w-8 rounded-lg disabled:opacity-30"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {canGoForward && currentHistoryIndex < history.length - 1
+                  ? `Forward to ${history[currentHistoryIndex + 1]?.label}`
+                  : 'No next page'
+                }
+              </TooltipContent>
+            </Tooltip>
+            {canGoForward && (
+              <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
+                {forwardHistory.map((item, index) => {
+                  const actualIndex = currentHistoryIndex + index + 1;
+                  return (
+                    <DropdownMenuItem
+                      key={`${item.path}-${item.timestamp}`}
+                      onClick={() => navigateToHistoryIndex(actualIndex)}
+                      className="cursor-pointer text-xs py-2"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium">{item.label}</span>
+                        <span className="text-muted-foreground text-[10px]">{item.path}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            )}
+          </DropdownMenu>
         </div>
       </TooltipProvider>
 
