@@ -182,7 +182,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                     Tier {pssr.tier}
                   </Badge>
                 </div>
-                <h3 className="text-sm font-semibold text-foreground transition-colors line-clamp-1">
+                <h3 className="text-sm font-semibold text-foreground group-hover/pssr-card:text-primary transition-colors line-clamp-1">
                   {pssr.projectName}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">{pssr.asset}</p>
@@ -203,7 +203,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
 
               {/* Progress - 2 cols */}
               <div className="col-span-2 text-center">
-                <div className="text-lg font-bold text-foreground mb-0.5">{pssr.progress}%</div>
+                <div className="text-lg font-bold text-foreground group-hover/pssr-card:text-primary transition-colors mb-0.5">{pssr.progress}%</div>
                 <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Complete</p>
               </div>
 
