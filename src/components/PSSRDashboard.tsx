@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OrshSidebar } from '@/components/OrshSidebar';
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,24 +40,21 @@ interface PSSRDashboardProps {
   pssrId: string;
   onBack: () => void;
   onNavigateToCategory?: (categoryName: string) => void;
-  breadcrumbPath?: Array<{ label: string; onClick?: () => void }>;
 }
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
   pssrId, 
   onBack, 
-  onNavigateToCategory,
-  breadcrumbPath 
+  onNavigateToCategory 
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const location = useLocation();
+  const { buildBreadcrumbsFromPath } = useBreadcrumb();
 
-  // Default breadcrumb path if none provided
-  const defaultBreadcrumbPath = [
-    { label: 'Home', onClick: onBack },
-    { label: 'Safe Start-Up', onClick: onBack },
-  ];
-
-  const breadcrumbs = breadcrumbPath || defaultBreadcrumbPath;
+  // Build breadcrumbs from current path with custom labels
+  const breadcrumbs = buildBreadcrumbsFromPath({
+    [`/safe-startup/${pssrId}`]: pssrId,
+  });
 
   // Mock comprehensive PSSR data
   const pssrData = {
@@ -276,7 +275,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
             {/* Breadcrumb Navigation */}
             <Breadcrumb className="mb-4">
               <BreadcrumbList className="text-xs">
-                {breadcrumbs.map((crumb, index) => (
+                {breadcrumbs.slice(0, -1).map((crumb, index) => (
                   <React.Fragment key={index}>
                     <BreadcrumbItem>
                       <BreadcrumbLink 
