@@ -50,7 +50,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     title: 'NRNGL Plant Start-up Commissioning',
     asset: 'NRNGL Plant',
     reason: 'Start-up or Commissioning of a new Asset',
-    projectId: 'BGC-2024-001',
+    projectId: 'DP300',
     projectName: 'Phase 3 Expansion Project',
     status: 'Under Review',
     progress: 75,
