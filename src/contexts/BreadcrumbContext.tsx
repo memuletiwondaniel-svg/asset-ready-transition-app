@@ -49,7 +49,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Route label mappings
   const routeLabels: Record<string, string> = {
     '/': 'Home',
-    '/safe-startup': 'Safe Start-Up',
+    '/safe-startup': 'PSSR',
     '/p2o': 'P2O Handover',
     '/users': 'User Management',
     '/admin-tools': 'Admin Tools',
