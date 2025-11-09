@@ -604,13 +604,16 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   const getTeamStatusColor = (teamStatus: string) => {
     switch (teamStatus) {
       case 'green':
-        return 'bg-success';
+        return 'bg-emerald-500';
       case 'amber':
         return 'bg-warning';
       case 'red':
         return 'bg-destructive';
+      case 'grey':
+      case 'gray':
+        return 'bg-muted-foreground/40';
       default:
-        return 'bg-muted';
+        return 'bg-muted-foreground/40';
     }
   };
   const getRiskLevelColor = (riskLevel: string) => {
