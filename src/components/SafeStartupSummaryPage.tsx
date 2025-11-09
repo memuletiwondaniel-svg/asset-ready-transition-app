@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -764,121 +764,90 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           onDragStart={handleWidgetDragStart}
           onDragEnd={handleWidgetDragEnd}
         >
-          <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
-            {widgetOrder.map((key, index) => {
-              const isSmallWidget = ['statistics', 'quickActions', 'recentActivities'].includes(key);
-              const nextIsSmallWidget = index + 1 < widgetOrder.length && ['statistics', 'quickActions', 'recentActivities'].includes(widgetOrder[index + 1]);
-              const prevIsSmallWidget = index > 0 && ['statistics', 'quickActions', 'recentActivities'].includes(widgetOrder[index - 1]);
-              
-              // Skip if this is a small widget and previous was also a small widget (we'll render them together)
-              if (isSmallWidget && prevIsSmallWidget) return null;
-              
-              // If this is a small widget, collect all consecutive small widgets
-              if (isSmallWidget) {
-                const smallWidgets = [];
-                let i = index;
-                while (i < widgetOrder.length && ['statistics', 'quickActions', 'recentActivities'].includes(widgetOrder[i])) {
-                  smallWidgets.push(widgetOrder[i]);
-                  i++;
-                }
-                
-                return (
-                  <div key={`row-${index}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {smallWidgets.map((widgetKey) => (
-                      <SortableWidget id={widgetKey} key={widgetKey}>
-                        {({ attributes, listeners }) => (
-                          <div className="lg:col-span-1">
-                            {widgetKey === 'statistics' && widgetVisibility.statistics && (
-                              <PSSRStatisticsWidget 
-                                stats={stats} 
-                                onStatClick={handleStatClick}
-                                isExpanded={widgetExpanded.statistics}
-                                isVisible={widgetVisibility.statistics}
-                                onToggleExpand={() => handleToggleWidgetExpanded('statistics')}
-                                onToggleVisibility={() => handleToggleWidgetVisibility('statistics')}
-                                dragAttributes={attributes}
-                                dragListeners={listeners}
-                              />
-                            )}
-                            {widgetKey === 'quickActions' && widgetVisibility.quickActions && (
-                              <PSSRQuickActionsWidget
-                                onCreatePSSR={() => setActiveView('create')}
-                                onManageChecklist={() => setActiveView('manage-checklist')}
-                                onChatWithORSH={() => {
-                                  onBack();
-                                }}
-                                isExpanded={widgetExpanded.quickActions}
-                                isVisible={widgetVisibility.quickActions}
-                                onToggleExpand={() => handleToggleWidgetExpanded('quickActions')}
-                                onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')}
-                                dragAttributes={attributes}
-                                dragListeners={listeners}
-                              />
-                            )}
-                            {widgetKey === 'recentActivities' && widgetVisibility.recentActivities && (
-                              <PSSRRecentActivitiesWidget 
-                                isExpanded={widgetExpanded.recentActivities}
-                                isVisible={widgetVisibility.recentActivities}
-                                onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')}
-                                onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')}
-                                dragAttributes={attributes}
-                                dragListeners={listeners}
-                              />
-                            )}
-                          </div>
-                        )}
-                      </SortableWidget>
-                    ))}
-                  </div>
-                );
-              }
-              
-              // Render reviews widget full width
-              if (key === 'reviews' && widgetVisibility.reviews) {
-                return (
-                  <SortableWidget id={key} key={key}>
-                    {({ attributes, listeners }) => (
-                      <PSSRReviewsWidget
-                        pssrs={pssrList}
-                        filteredPSSRs={filteredPSSRs}
-                        searchTerm={searchTerm}
-                        onSearchChange={handleSearchChange}
-                        onSelectPSSR={handleViewDetails}
-                        viewMode={viewMode === 'timeline' ? 'card' : viewMode}
-                        onViewModeChange={(mode) => setViewMode(mode)}
-                        filters={filters}
-                        onToggleFilter={toggleFilter}
-                        onDateChange={handleDateChange}
-                        onClearFilters={clearAllFilters}
-                        uniquePlants={uniquePlants}
-                        uniqueStatuses={uniqueStatuses}
-                        uniqueLeads={uniqueLeads}
-                        onViewDetails={handleViewDetails}
-                        getPriorityColor={getPriorityColor}
-                        getStatusIcon={getStatusIcon}
-                        getTeamStatusColor={getTeamStatusColor}
-                        getRiskLevelColor={getRiskLevelColor}
-                        pinnedPSSRs={pinnedPSSRs}
-                        onTogglePin={handleTogglePin}
-                        onStatusChange={(pssrId, newStatus) => {
-                          toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
-                        }}
-                        onPSSROrderChange={setPssrOrder}
-                        pssrOrder={pssrOrder}
-                        isExpanded={widgetExpanded.reviews}
-                        isVisible={widgetVisibility.reviews}
-                        onToggleExpand={() => handleToggleWidgetExpanded('reviews')}
-                        onToggleVisibility={() => handleToggleWidgetVisibility('reviews')}
-                        dragAttributes={attributes}
-                        dragListeners={listeners}
-                      />
-                    )}
-                  </SortableWidget>
-                );
-              }
-              
-              return null;
-            })}
+          <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {widgetOrder.map((key) => (
+                <SortableWidget id={key} key={key} className={key === 'reviews' ? 'col-span-1 lg:col-span-3' : 'col-span-1'}>
+                  {({ attributes, listeners }) => (
+                    <>
+                      {key === 'statistics' && widgetVisibility.statistics && (
+                        <PSSRStatisticsWidget 
+                          stats={stats} 
+                          onStatClick={handleStatClick}
+                          isExpanded={widgetExpanded.statistics}
+                          isVisible={widgetVisibility.statistics}
+                          onToggleExpand={() => handleToggleWidgetExpanded('statistics')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('statistics')}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      )}
+                      {key === 'quickActions' && widgetVisibility.quickActions && (
+                        <PSSRQuickActionsWidget
+                          onCreatePSSR={() => setActiveView('create')}
+                          onManageChecklist={() => setActiveView('manage-checklist')}
+                          onChatWithORSH={() => {
+                            onBack();
+                          }}
+                          isExpanded={widgetExpanded.quickActions}
+                          isVisible={widgetVisibility.quickActions}
+                          onToggleExpand={() => handleToggleWidgetExpanded('quickActions')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      )}
+                      {key === 'recentActivities' && widgetVisibility.recentActivities && (
+                        <PSSRRecentActivitiesWidget 
+                          isExpanded={widgetExpanded.recentActivities}
+                          isVisible={widgetVisibility.recentActivities}
+                          onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      )}
+                      {key === 'reviews' && widgetVisibility.reviews && (
+                        <PSSRReviewsWidget
+                          pssrs={pssrList}
+                          filteredPSSRs={filteredPSSRs}
+                          searchTerm={searchTerm}
+                          onSearchChange={handleSearchChange}
+                          onSelectPSSR={handleViewDetails}
+                          viewMode={viewMode === 'timeline' ? 'card' : viewMode}
+                          onViewModeChange={(mode) => setViewMode(mode)}
+                          filters={filters}
+                          onToggleFilter={toggleFilter}
+                          onDateChange={handleDateChange}
+                          onClearFilters={clearAllFilters}
+                          uniquePlants={uniquePlants}
+                          uniqueStatuses={uniqueStatuses}
+                          uniqueLeads={uniqueLeads}
+                          onViewDetails={handleViewDetails}
+                          getPriorityColor={getPriorityColor}
+                          getStatusIcon={getStatusIcon}
+                          getTeamStatusColor={getTeamStatusColor}
+                          getRiskLevelColor={getRiskLevelColor}
+                          pinnedPSSRs={pinnedPSSRs}
+                          onTogglePin={handleTogglePin}
+                          onStatusChange={(pssrId, newStatus) => {
+                            toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
+                          }}
+                          onPSSROrderChange={setPssrOrder}
+                          pssrOrder={pssrOrder}
+                          isExpanded={widgetExpanded.reviews}
+                          isVisible={widgetVisibility.reviews}
+                          onToggleExpand={() => handleToggleWidgetExpanded('reviews')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('reviews')}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
+                        />
+                      )}
+                    </>
+                  )}
+                </SortableWidget>
+              ))}
+            </div>
           </SortableContext>
           
           {/* Drag Overlay for visual feedback */}
