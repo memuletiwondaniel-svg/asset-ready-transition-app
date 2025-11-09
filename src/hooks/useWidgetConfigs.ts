@@ -15,6 +15,7 @@ const DEFAULT_WIDGETS: Omit<WidgetConfig, 'id'>[] = [
   { widget_type: 'pssr-statistics', position: 0, size: 'medium', settings: { expanded: true }, is_visible: true },
   { widget_type: 'pssr-quick-actions', position: 1, size: 'medium', settings: { expanded: true }, is_visible: true },
   { widget_type: 'pssr-recent-activities', position: 2, size: 'medium', settings: { expanded: true }, is_visible: true },
+  { widget_type: 'pssr-reviews', position: 3, size: 'large', settings: { expanded: true }, is_visible: true },
 ];
 
 export const useWidgetConfigs = () => {

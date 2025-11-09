@@ -83,11 +83,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     const stats = widgets.find(w => w.widget_type === 'pssr-statistics');
     const quick = widgets.find(w => w.widget_type === 'pssr-quick-actions');
     const recent = widgets.find(w => w.widget_type === 'pssr-recent-activities');
+    const reviews = widgets.find(w => w.widget_type === 'pssr-reviews');
     return {
       statistics: stats?.is_visible ?? true,
       quickActions: quick?.is_visible ?? true,
       recentActivities: recent?.is_visible ?? true,
-      reviews: true, // Reviews widget always visible
+      reviews: reviews?.is_visible ?? true,
     };
   }, [widgets]);
 
@@ -95,26 +96,28 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     const stats = widgets.find(w => w.widget_type === 'pssr-statistics');
     const quick = widgets.find(w => w.widget_type === 'pssr-quick-actions');
     const recent = widgets.find(w => w.widget_type === 'pssr-recent-activities');
+    const reviews = widgets.find(w => w.widget_type === 'pssr-reviews');
     return {
       statistics: stats?.settings?.expanded ?? false,
       quickActions: quick?.settings?.expanded ?? false,
       recentActivities: recent?.settings?.expanded ?? false,
-      reviews: false,
+      reviews: reviews?.settings?.expanded ?? true,
     };
   }, [widgets]);
 
   const widgetOrder = useMemo(() => {
     const sorted = [...widgets]
-      .filter(w => ['pssr-statistics', 'pssr-quick-actions', 'pssr-recent-activities'].includes(w.widget_type))
+      .filter(w => ['pssr-statistics', 'pssr-quick-actions', 'pssr-recent-activities', 'pssr-reviews'].includes(w.widget_type))
       .sort((a, b) => a.position - b.position)
       .map(w => {
         if (w.widget_type === 'pssr-statistics') return 'statistics';
         if (w.widget_type === 'pssr-quick-actions') return 'quickActions';
         if (w.widget_type === 'pssr-recent-activities') return 'recentActivities';
+        if (w.widget_type === 'pssr-reviews') return 'reviews';
         return '';
       })
       .filter(Boolean);
-    return sorted.length > 0 ? sorted as Array<'statistics' | 'quickActions' | 'recentActivities'> : ['statistics', 'quickActions', 'recentActivities'];
+    return sorted.length > 0 ? sorted as Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'> : ['statistics', 'quickActions', 'recentActivities', 'reviews'];
   }, [widgets]);
 
   const widgetSensors = useSensors(
@@ -134,7 +137,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     const typeMap: Record<string, string> = {
       statistics: 'pssr-statistics',
       quickActions: 'pssr-quick-actions',
-      recentActivities: 'pssr-recent-activities'
+      recentActivities: 'pssr-recent-activities',
+      reviews: 'pssr-reviews'
     };
     
     const reorderedConfigs = newOrder.map((widgetKey, index) => {
@@ -147,11 +151,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     }
   };
 
-  const handleToggleWidgetVisibility = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities') => {
+  const handleToggleWidgetVisibility = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities' | 'reviews') => {
     const typeMap: Record<string, string> = {
       statistics: 'pssr-statistics',
       quickActions: 'pssr-quick-actions',
-      recentActivities: 'pssr-recent-activities'
+      recentActivities: 'pssr-recent-activities',
+      reviews: 'pssr-reviews'
     };
     const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
     if (widget) {
@@ -159,11 +164,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     }
   };
 
-  const handleToggleWidgetExpanded = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities') => {
+  const handleToggleWidgetExpanded = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities' | 'reviews') => {
     const typeMap: Record<string, string> = {
       statistics: 'pssr-statistics',
       quickActions: 'pssr-quick-actions',
-      recentActivities: 'pssr-recent-activities'
+      recentActivities: 'pssr-recent-activities',
+      reviews: 'pssr-reviews'
     };
     const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
     if (widget) {
@@ -744,16 +750,16 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
           </div>
         </header>
 
-      <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-        {/* Widgets Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragEnd={handleWidgetDragEnd}>
-            <SortableContext items={widgetOrder}>
-              {widgetOrder.map((key) => (
-                <SortableWidget id={key} key={key}>
-                  {({ attributes, listeners }) => (
-                    <div className="lg:col-span-1">
-                      {key === 'statistics' ? (
+      <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        {/* All Sortable Widgets */}
+        <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragEnd={handleWidgetDragEnd}>
+          <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
+            {widgetOrder.map((key) => (
+              <SortableWidget id={key} key={key}>
+                {({ attributes, listeners }) => (
+                  <div className={key === 'reviews' ? '' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
+                    {key === 'statistics' && widgetVisibility.statistics ? (
+                      <div className="lg:col-span-1">
                         <PSSRStatisticsWidget 
                           stats={stats} 
                           onStatClick={handleStatClick}
@@ -764,7 +770,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                           dragAttributes={attributes}
                           dragListeners={listeners}
                         />
-                      ) : key === 'quickActions' ? (
+                      </div>
+                    ) : key === 'quickActions' && widgetVisibility.quickActions ? (
+                      <div className="lg:col-span-1">
                         <PSSRQuickActionsWidget
                           onCreatePSSR={() => setActiveView('create')}
                           onManageChecklist={() => setActiveView('manage-checklist')}
@@ -778,7 +786,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                           dragAttributes={attributes}
                           dragListeners={listeners}
                         />
-                      ) : (
+                      </div>
+                    ) : key === 'recentActivities' && widgetVisibility.recentActivities ? (
+                      <div className="lg:col-span-1">
                         <PSSRRecentActivitiesWidget 
                           isExpanded={widgetExpanded.recentActivities}
                           isVisible={widgetVisibility.recentActivities}
@@ -787,52 +797,49 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                           dragAttributes={attributes}
                           dragListeners={listeners}
                         />
-                      )}
-                    </div>
-                  )}
-                </SortableWidget>
-              ))}
-            </SortableContext>
-          </DndContext>
-        </div>
-
-        {/* Reviews Widget */}
-        {widgetVisibility.reviews && (
-          <div className="mt-6">
-            <PSSRReviewsWidget
-              pssrs={pssrList}
-              filteredPSSRs={filteredPSSRs}
-              searchTerm={searchTerm}
-              onSearchChange={handleSearchChange}
-              onSelectPSSR={handleViewDetails}
-              viewMode={viewMode === 'timeline' ? 'card' : viewMode}
-              onViewModeChange={(mode) => setViewMode(mode)}
-              filters={filters}
-              onToggleFilter={toggleFilter}
-              onDateChange={handleDateChange}
-              onClearFilters={clearAllFilters}
-              uniquePlants={uniquePlants}
-              uniqueStatuses={uniqueStatuses}
-              uniqueLeads={uniqueLeads}
-              onViewDetails={handleViewDetails}
-              getPriorityColor={getPriorityColor}
-              getStatusIcon={getStatusIcon}
-              getTeamStatusColor={getTeamStatusColor}
-              getRiskLevelColor={getRiskLevelColor}
-              pinnedPSSRs={pinnedPSSRs}
-              onTogglePin={handleTogglePin}
-              onStatusChange={(pssrId, newStatus) => {
-                toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
-              }}
-              onPSSROrderChange={setPssrOrder}
-              pssrOrder={pssrOrder}
-              isExpanded={widgetExpanded.reviews}
-              isVisible={widgetVisibility.reviews}
-              onToggleExpand={() => {}}
-              onToggleVisibility={() => {}}
-            />
-          </div>
-        )}
+                      </div>
+                    ) : key === 'reviews' && widgetVisibility.reviews ? (
+                      <PSSRReviewsWidget
+                        pssrs={pssrList}
+                        filteredPSSRs={filteredPSSRs}
+                        searchTerm={searchTerm}
+                        onSearchChange={handleSearchChange}
+                        onSelectPSSR={handleViewDetails}
+                        viewMode={viewMode === 'timeline' ? 'card' : viewMode}
+                        onViewModeChange={(mode) => setViewMode(mode)}
+                        filters={filters}
+                        onToggleFilter={toggleFilter}
+                        onDateChange={handleDateChange}
+                        onClearFilters={clearAllFilters}
+                        uniquePlants={uniquePlants}
+                        uniqueStatuses={uniqueStatuses}
+                        uniqueLeads={uniqueLeads}
+                        onViewDetails={handleViewDetails}
+                        getPriorityColor={getPriorityColor}
+                        getStatusIcon={getStatusIcon}
+                        getTeamStatusColor={getTeamStatusColor}
+                        getRiskLevelColor={getRiskLevelColor}
+                        pinnedPSSRs={pinnedPSSRs}
+                        onTogglePin={handleTogglePin}
+                        onStatusChange={(pssrId, newStatus) => {
+                          toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
+                        }}
+                        onPSSROrderChange={setPssrOrder}
+                        pssrOrder={pssrOrder}
+                        isExpanded={widgetExpanded.reviews}
+                        isVisible={widgetVisibility.reviews}
+                        onToggleExpand={() => handleToggleWidgetExpanded('reviews')}
+                        onToggleVisibility={() => handleToggleWidgetVisibility('reviews')}
+                        dragAttributes={attributes}
+                        dragListeners={listeners}
+                      />
+                    ) : null}
+                  </div>
+                )}
+              </SortableWidget>
+            ))}
+          </SortableContext>
+        </DndContext>
 
       </main>
       </div>

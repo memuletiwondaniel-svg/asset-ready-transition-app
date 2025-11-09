@@ -38,6 +38,8 @@ interface PSSRReviewsWidgetProps {
   isVisible?: boolean;
   onToggleExpand?: () => void;
   onToggleVisibility?: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
@@ -69,6 +71,8 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   isVisible,
   onToggleExpand,
   onToggleVisibility,
+  dragAttributes,
+  dragListeners
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -130,7 +134,9 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       isVisible={isVisible}
       onToggleExpand={onToggleExpand}
       onToggleVisibility={onToggleVisibility}
-      className="flex flex-col"
+      dragAttributes={dragAttributes}
+      dragListeners={dragListeners}
+      className="flex flex-col h-[600px]"
     >
       <div className="flex flex-col h-full overflow-hidden">
         {/* Search and View Controls - Sticky with scroll shadow */}
