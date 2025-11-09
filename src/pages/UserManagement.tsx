@@ -5,14 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { 
   Select, 
   SelectContent, 
@@ -180,33 +173,35 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
         <AnimatedBackground>
           <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
+        <header className="bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            {/* Breadcrumb Navigation with History */}
+            <BreadcrumbNavigation 
+              currentPageLabel="User Management"
+              className="mb-4"
+            />
+
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Users className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                <Users className="h-8 w-8 text-primary" />
                 User Management
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-muted-foreground mt-1">
                 Manage users and their access to the P2A application
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        </header>
+
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card className="p-4">
               <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-blue-600" />
+                <Users className="h-8 w-8 text-primary" />
                 <div>
-                  <p className="text-sm text-gray-500">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+                  <p className="text-sm text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
                 </div>
               </div>
             </Card>
@@ -214,7 +209,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
               <div className="flex items-center gap-3">
                 <UserCheck className="h-8 w-8 text-green-600" />
                 <div>
-                  <p className="text-sm text-gray-500">Active Users</p>
+                  <p className="text-sm text-muted-foreground">Active Users</p>
                   <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
                 </div>
               </div>
@@ -223,7 +218,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
               <div className="flex items-center gap-3">
                 <Clock className="h-8 w-8 text-yellow-600" />
                 <div>
-                  <p className="text-sm text-gray-500">Pending Approval</p>
+                  <p className="text-sm text-muted-foreground">Pending Approval</p>
                   <p className="text-2xl font-bold text-yellow-600">{pendingUsers}</p>
                 </div>
               </div>
@@ -232,31 +227,32 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
                 <div>
-                  <p className="text-sm text-gray-500">Rejected</p>
+                  <p className="text-sm text-muted-foreground">Rejected</p>
                   <p className="text-2xl font-bold text-red-600">{rejectedUsers}</p>
                 </div>
               </div>
             </Card>
           </div>
-          <div className="flex items-center gap-4 mt-4">
+
+          {/* Add User Button */}
+          <div className="flex items-center gap-4 mb-6">
             <Button 
               onClick={() => setShowCreateUser(true)}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              className="flex items-center gap-2"
             >
               <UserPlus className="h-4 w-4" />
               Add User
             </Button>
           </div>
-        </div>
 
-        {/* Filters and Search */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Search & Filter Users
-            </CardTitle>
-          </CardHeader>
+          {/* Filters and Search */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Search & Filter Users
+              </CardTitle>
+            </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="relative">
@@ -490,7 +486,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
           onReject={handleRejectUser}
         />
       )}
-        </AnimatedBackground>
+        </div>
+      </AnimatedBackground>
       </div>
     </div>
   );

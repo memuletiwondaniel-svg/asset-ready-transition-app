@@ -8,14 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { 
   Clock, 
   CheckCircle2, 
@@ -275,29 +268,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         {/* Modern Header */}
         <header className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
           <div className="px-8 py-4">
-            {/* Breadcrumb Navigation */}
-            <Breadcrumb className="mb-4">
-              <BreadcrumbList className="text-xs">
-                {breadcrumbs.slice(0, -1).map((crumb, index) => (
-                  <React.Fragment key={index}>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink 
-                        onClick={crumb.onClick} 
-                        className="cursor-pointer hover:text-foreground transition-colors text-xs"
-                      >
-                        {crumb.label}
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="text-xs" />
-                  </React.Fragment>
-                ))}
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="font-semibold text-foreground text-xs">
-                    {breadcrumbs[breadcrumbs.length - 1]?.label || pssrData.id}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+            {/* Breadcrumb Navigation with History */}
+            <BreadcrumbNavigation 
+              currentPageLabel={breadcrumbs[breadcrumbs.length - 1]?.label || pssrData.id}
+              className="mb-4"
+            />
 
             {/* Header Content */}
             <div className="flex items-center justify-between">
