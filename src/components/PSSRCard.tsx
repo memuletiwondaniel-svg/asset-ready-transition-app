@@ -61,19 +61,19 @@ const PSSRCard: React.FC<PSSRCardProps> = ({ pssr, onViewDetails }) => {
   };
 
   return (
-    <Card className={`group hover:shadow-lg transition-shadow duration-300 border-l-4 ${getCardBorderColor(pssr.status)} bg-white`}>
-      <CardContent className="p-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            {/* Header with Project ID and PSSR ID */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <div className="p-0.5 bg-blue-50 rounded">
-                <Building2 className="h-2.5 w-2.5 text-blue-600" />
-              </div>
-              <div className="flex-1 flex items-center gap-2">
-                <h3 className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200 truncate">
-                  {pssr.projectId} - {pssr.projectName}
-                </h3>
+    	<Card className={`group/pssrcard hover:shadow-lg transition-shadow duration-300 border-l-4 ${getCardBorderColor(pssr.status)} bg-white`}>
+      		<CardContent className="p-2">
+        			<div className="flex items-center justify-between gap-3">
+          				<div className="flex-1 min-w-0">
+            					{/* Header with Project ID and PSSR ID */}
+            					<div className="flex items-center gap-1.5 mb-1">
+              						<div className="p-0.5 bg-blue-50 rounded">
+                							<Building2 className="h-2.5 w-2.5 text-blue-600" />
+              						</div>
+              						<div className="flex-1 flex items-center gap-2">
+                							<h3 className="text-sm font-bold text-gray-900 group-hover/pssrcard:text-blue-600 transition-colors duration-200 truncate">
+                  								{pssr.projectId} - {pssr.projectName}
+                							</h3>
                 <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 font-medium px-1.5 py-0">
                   {pssr.id}
                 </Badge>

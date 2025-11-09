@@ -24,12 +24,8 @@ export const SortableWidget: React.FC<SortableWidgetProps> = ({ id, className, c
       style={style} 
       className={`min-h-0 relative transition-all duration-200 ${
         isDragging ? 'cursor-grabbing' : ''
-      } ${isOver && !isDragging ? 'ring-2 ring-primary/30 rounded-xl' : ''} ${className ?? ''}`}
+      } ${className ?? ''}`}
     >
-      {/* Drop zone indicator */}
-      {isOver && !isDragging && (
-        <div className="absolute inset-0 -z-10 bg-primary/5 border-2 border-dashed border-primary/40 rounded-xl animate-pulse" />
-      )}
       {children({ attributes, listeners })}
     </div>
   );
