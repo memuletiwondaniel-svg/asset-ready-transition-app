@@ -12,9 +12,9 @@ export interface WidgetConfig {
 }
 
 const DEFAULT_WIDGETS: Omit<WidgetConfig, 'id'>[] = [
-  { widget_type: 'tasks', position: 0, size: 'medium', settings: {}, is_visible: true },
-  { widget_type: 'quick-stats', position: 1, size: 'small', settings: {}, is_visible: true },
-  { widget_type: 'recent-activity', position: 2, size: 'medium', settings: {}, is_visible: true },
+  { widget_type: 'pssr-statistics', position: 0, size: 'medium', settings: { expanded: true }, is_visible: true },
+  { widget_type: 'pssr-quick-actions', position: 1, size: 'medium', settings: { expanded: true }, is_visible: true },
+  { widget_type: 'pssr-recent-activities', position: 2, size: 'medium', settings: { expanded: true }, is_visible: true },
 ];
 
 export const useWidgetConfigs = () => {

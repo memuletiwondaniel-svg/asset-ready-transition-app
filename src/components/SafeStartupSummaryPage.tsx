@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
 
+  const { widgets, loading: widgetsLoading, updateWidgetPosition, toggleWidgetVisibility, updateWidgetSettings, reorderWidgets } = useWidgetConfigs();
+
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
   const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
@@ -72,37 +75,101 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [dateRangeFilters, setDateRangeFilters] = useState<DateRangeFilter>({});
-  const [widgetVisibility, setWidgetVisibility] = useState({
-    statistics: true,
-    quickActions: true,
-    recentActivities: true,
-    reviews: true,
-  });
-  const [widgetExpanded, setWidgetExpanded] = useState({
-    statistics: false,
-    quickActions: false,
-    recentActivities: false,
-    reviews: false,
-  });
   const [showWidgetManagement, setShowWidgetManagement] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Widgets ordering (drag-and-drop)
-  const [widgetOrder, setWidgetOrder] = useState<Array<'statistics' | 'quickActions' | 'recentActivities'>>([
-    'statistics', 'quickActions', 'recentActivities'
-  ]);
+  // Derive widget states from persisted configs
+  const widgetVisibility = useMemo(() => {
+    const stats = widgets.find(w => w.widget_type === 'pssr-statistics');
+    const quick = widgets.find(w => w.widget_type === 'pssr-quick-actions');
+    const recent = widgets.find(w => w.widget_type === 'pssr-recent-activities');
+    return {
+      statistics: stats?.is_visible ?? true,
+      quickActions: quick?.is_visible ?? true,
+      recentActivities: recent?.is_visible ?? true,
+      reviews: true, // Reviews widget always visible
+    };
+  }, [widgets]);
+
+  const widgetExpanded = useMemo(() => {
+    const stats = widgets.find(w => w.widget_type === 'pssr-statistics');
+    const quick = widgets.find(w => w.widget_type === 'pssr-quick-actions');
+    const recent = widgets.find(w => w.widget_type === 'pssr-recent-activities');
+    return {
+      statistics: stats?.settings?.expanded ?? false,
+      quickActions: quick?.settings?.expanded ?? false,
+      recentActivities: recent?.settings?.expanded ?? false,
+      reviews: false,
+    };
+  }, [widgets]);
+
+  const widgetOrder = useMemo(() => {
+    const sorted = [...widgets]
+      .filter(w => ['pssr-statistics', 'pssr-quick-actions', 'pssr-recent-activities'].includes(w.widget_type))
+      .sort((a, b) => a.position - b.position)
+      .map(w => {
+        if (w.widget_type === 'pssr-statistics') return 'statistics';
+        if (w.widget_type === 'pssr-quick-actions') return 'quickActions';
+        if (w.widget_type === 'pssr-recent-activities') return 'recentActivities';
+        return '';
+      })
+      .filter(Boolean);
+    return sorted.length > 0 ? sorted as Array<'statistics' | 'quickActions' | 'recentActivities'> : ['statistics', 'quickActions', 'recentActivities'];
+  }, [widgets]);
 
   const widgetSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleWidgetDragEnd = (event: DragEndEvent) => {
+  const handleWidgetDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    
     const oldIndex = widgetOrder.indexOf(active.id as any);
     const newIndex = widgetOrder.indexOf(over.id as any);
-    setWidgetOrder((items) => arrayMove(items, oldIndex, newIndex));
+    const newOrder = arrayMove(widgetOrder, oldIndex, newIndex);
+    
+    // Update positions in Supabase
+    const typeMap: Record<string, string> = {
+      statistics: 'pssr-statistics',
+      quickActions: 'pssr-quick-actions',
+      recentActivities: 'pssr-recent-activities'
+    };
+    
+    const reorderedConfigs = newOrder.map((widgetKey, index) => {
+      const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
+      return widget ? { ...widget, position: index } : null;
+    }).filter(Boolean);
+    
+    if (reorderedConfigs.length > 0) {
+      await reorderWidgets(reorderedConfigs as any);
+    }
+  };
+
+  const handleToggleWidgetVisibility = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities') => {
+    const typeMap: Record<string, string> = {
+      statistics: 'pssr-statistics',
+      quickActions: 'pssr-quick-actions',
+      recentActivities: 'pssr-recent-activities'
+    };
+    const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
+    if (widget) {
+      await toggleWidgetVisibility(widget.id);
+    }
+  };
+
+  const handleToggleWidgetExpanded = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities') => {
+    const typeMap: Record<string, string> = {
+      statistics: 'pssr-statistics',
+      quickActions: 'pssr-quick-actions',
+      recentActivities: 'pssr-recent-activities'
+    };
+    const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
+    if (widget) {
+      const newExpanded = !(widget.settings?.expanded ?? false);
+      await updateWidgetSettings(widget.id, { ...widget.settings, expanded: newExpanded });
+    }
   };
   const [filters, setFilters] = useState({
     plant: [] as string[],
@@ -692,8 +759,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                           onStatClick={handleStatClick}
                           isExpanded={widgetExpanded.statistics}
                           isVisible={widgetVisibility.statistics}
-                          onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, statistics: !prev.statistics }))}
-                          onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, statistics: !prev.statistics }))}
+                          onToggleExpand={() => handleToggleWidgetExpanded('statistics')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('statistics')}
                           dragAttributes={attributes}
                           dragListeners={listeners}
                         />
@@ -706,8 +773,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                           }}
                           isExpanded={widgetExpanded.quickActions}
                           isVisible={widgetVisibility.quickActions}
-                          onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, quickActions: !prev.quickActions }))}
-                          onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, quickActions: !prev.quickActions }))}
+                          onToggleExpand={() => handleToggleWidgetExpanded('quickActions')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')}
                           dragAttributes={attributes}
                           dragListeners={listeners}
                         />
@@ -715,8 +782,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                         <PSSRRecentActivitiesWidget 
                           isExpanded={widgetExpanded.recentActivities}
                           isVisible={widgetVisibility.recentActivities}
-                          onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
-                          onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, recentActivities: !prev.recentActivities }))}
+                          onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')}
+                          onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')}
                           dragAttributes={attributes}
                           dragListeners={listeners}
                         />
@@ -761,8 +828,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
               pssrOrder={pssrOrder}
               isExpanded={widgetExpanded.reviews}
               isVisible={widgetVisibility.reviews}
-              onToggleExpand={() => setWidgetExpanded(prev => ({ ...prev, reviews: !prev.reviews }))}
-              onToggleVisibility={() => setWidgetVisibility(prev => ({ ...prev, reviews: !prev.reviews }))}
+              onToggleExpand={() => {}}
+              onToggleVisibility={() => {}}
             />
           </div>
         )}
