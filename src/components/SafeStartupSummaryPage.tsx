@@ -754,51 +754,79 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
         {/* All Sortable Widgets */}
         <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragEnd={handleWidgetDragEnd}>
           <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
-            {widgetOrder.map((key) => (
-              <SortableWidget id={key} key={key}>
-                {({ attributes, listeners }) => (
-                  <div className={key === 'reviews' ? '' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
-                    {key === 'statistics' && widgetVisibility.statistics ? (
-                      <div className="lg:col-span-1">
-                        <PSSRStatisticsWidget 
-                          stats={stats} 
-                          onStatClick={handleStatClick}
-                          isExpanded={widgetExpanded.statistics}
-                          isVisible={widgetVisibility.statistics}
-                          onToggleExpand={() => handleToggleWidgetExpanded('statistics')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('statistics')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      </div>
-                    ) : key === 'quickActions' && widgetVisibility.quickActions ? (
-                      <div className="lg:col-span-1">
-                        <PSSRQuickActionsWidget
-                          onCreatePSSR={() => setActiveView('create')}
-                          onManageChecklist={() => setActiveView('manage-checklist')}
-                          onChatWithORSH={() => {
-                            onBack();
-                          }}
-                          isExpanded={widgetExpanded.quickActions}
-                          isVisible={widgetVisibility.quickActions}
-                          onToggleExpand={() => handleToggleWidgetExpanded('quickActions')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      </div>
-                    ) : key === 'recentActivities' && widgetVisibility.recentActivities ? (
-                      <div className="lg:col-span-1">
-                        <PSSRRecentActivitiesWidget 
-                          isExpanded={widgetExpanded.recentActivities}
-                          isVisible={widgetVisibility.recentActivities}
-                          onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      </div>
-                    ) : key === 'reviews' && widgetVisibility.reviews ? (
+            {widgetOrder.map((key, index) => {
+              const isSmallWidget = ['statistics', 'quickActions', 'recentActivities'].includes(key);
+              const nextIsSmallWidget = index + 1 < widgetOrder.length && ['statistics', 'quickActions', 'recentActivities'].includes(widgetOrder[index + 1]);
+              const prevIsSmallWidget = index > 0 && ['statistics', 'quickActions', 'recentActivities'].includes(widgetOrder[index - 1]);
+              
+              // Skip if this is a small widget and previous was also a small widget (we'll render them together)
+              if (isSmallWidget && prevIsSmallWidget) return null;
+              
+              // If this is a small widget, collect all consecutive small widgets
+              if (isSmallWidget) {
+                const smallWidgets = [];
+                let i = index;
+                while (i < widgetOrder.length && ['statistics', 'quickActions', 'recentActivities'].includes(widgetOrder[i])) {
+                  smallWidgets.push(widgetOrder[i]);
+                  i++;
+                }
+                
+                return (
+                  <div key={`row-${index}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {smallWidgets.map((widgetKey) => (
+                      <SortableWidget id={widgetKey} key={widgetKey}>
+                        {({ attributes, listeners }) => (
+                          <div className="lg:col-span-1">
+                            {widgetKey === 'statistics' && widgetVisibility.statistics && (
+                              <PSSRStatisticsWidget 
+                                stats={stats} 
+                                onStatClick={handleStatClick}
+                                isExpanded={widgetExpanded.statistics}
+                                isVisible={widgetVisibility.statistics}
+                                onToggleExpand={() => handleToggleWidgetExpanded('statistics')}
+                                onToggleVisibility={() => handleToggleWidgetVisibility('statistics')}
+                                dragAttributes={attributes}
+                                dragListeners={listeners}
+                              />
+                            )}
+                            {widgetKey === 'quickActions' && widgetVisibility.quickActions && (
+                              <PSSRQuickActionsWidget
+                                onCreatePSSR={() => setActiveView('create')}
+                                onManageChecklist={() => setActiveView('manage-checklist')}
+                                onChatWithORSH={() => {
+                                  onBack();
+                                }}
+                                isExpanded={widgetExpanded.quickActions}
+                                isVisible={widgetVisibility.quickActions}
+                                onToggleExpand={() => handleToggleWidgetExpanded('quickActions')}
+                                onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')}
+                                dragAttributes={attributes}
+                                dragListeners={listeners}
+                              />
+                            )}
+                            {widgetKey === 'recentActivities' && widgetVisibility.recentActivities && (
+                              <PSSRRecentActivitiesWidget 
+                                isExpanded={widgetExpanded.recentActivities}
+                                isVisible={widgetVisibility.recentActivities}
+                                onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')}
+                                onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')}
+                                dragAttributes={attributes}
+                                dragListeners={listeners}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </SortableWidget>
+                    ))}
+                  </div>
+                );
+              }
+              
+              // Render reviews widget full width
+              if (key === 'reviews' && widgetVisibility.reviews) {
+                return (
+                  <SortableWidget id={key} key={key}>
+                    {({ attributes, listeners }) => (
                       <PSSRReviewsWidget
                         pssrs={pssrList}
                         filteredPSSRs={filteredPSSRs}
@@ -833,11 +861,13 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                         dragAttributes={attributes}
                         dragListeners={listeners}
                       />
-                    ) : null}
-                  </div>
-                )}
-              </SortableWidget>
-            ))}
+                    )}
+                  </SortableWidget>
+                );
+              }
+              
+              return null;
+            })}
           </SortableContext>
         </DndContext>
 
