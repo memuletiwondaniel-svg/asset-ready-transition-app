@@ -6,8 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OrshSidebar } from '@/components/OrshSidebar';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { 
-  ArrowLeft, 
   Clock, 
   CheckCircle2, 
   AlertCircle, 
@@ -252,18 +259,38 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack, onNavigat
         {/* Modern Header */}
         <header className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
           <div className="px-8 py-4">
+            {/* Breadcrumb Navigation */}
+            <Breadcrumb className="mb-4">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack} 
+                    className="cursor-pointer hover:text-foreground transition-colors"
+                  >
+                    Home
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={onBack}
+                    className="cursor-pointer hover:text-foreground transition-colors"
+                  >
+                    Safe Start-Up
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-semibold text-foreground">
+                    {pssrData.id}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+
+            {/* Header Content */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <Button 
-                  variant="ghost" 
-                  onClick={onBack} 
-                  size="sm"
-                  className="gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </Button>
-                <div className="h-8 w-px bg-border" />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg">
                     <AlertTriangle className="h-6 w-6 text-white animate-pulse" />
