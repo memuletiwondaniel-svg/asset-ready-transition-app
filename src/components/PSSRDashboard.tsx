@@ -38,10 +38,24 @@ interface PSSRDashboardProps {
   pssrId: string;
   onBack: () => void;
   onNavigateToCategory?: (categoryName: string) => void;
+  breadcrumbPath?: Array<{ label: string; onClick?: () => void }>;
 }
 
-const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack, onNavigateToCategory }) => {
+const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
+  pssrId, 
+  onBack, 
+  onNavigateToCategory,
+  breadcrumbPath 
+}) => {
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Default breadcrumb path if none provided
+  const defaultBreadcrumbPath = [
+    { label: 'Home', onClick: onBack },
+    { label: 'Safe Start-Up', onClick: onBack },
+  ];
+
+  const breadcrumbs = breadcrumbPath || defaultBreadcrumbPath;
 
   // Mock comprehensive PSSR data
   const pssrData = {
@@ -261,27 +275,22 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ pssrId, onBack, onNavigat
           <div className="px-8 py-4">
             {/* Breadcrumb Navigation */}
             <Breadcrumb className="mb-4">
-              <BreadcrumbList>
+              <BreadcrumbList className="text-xs">
+                {breadcrumbs.map((crumb, index) => (
+                  <React.Fragment key={index}>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink 
+                        onClick={crumb.onClick} 
+                        className="cursor-pointer hover:text-foreground transition-colors text-xs"
+                      >
+                        {crumb.label}
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="text-xs" />
+                  </React.Fragment>
+                ))}
                 <BreadcrumbItem>
-                  <BreadcrumbLink 
-                    onClick={onBack} 
-                    className="cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    Home
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink 
-                    onClick={onBack}
-                    className="cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    Safe Start-Up
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="font-semibold text-foreground">
+                  <BreadcrumbPage className="font-semibold text-foreground text-xs">
                     {pssrData.id}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
