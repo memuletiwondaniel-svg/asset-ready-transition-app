@@ -85,7 +85,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
     >
       <Card
         className={`group/pssr-card relative overflow-hidden border-border/50 cursor-pointer transition-all duration-300 ${
-          isPinned ? 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/40 dark:border-amber-900/40' : 'hover:shadow-lg hover:border-border/80 hover:scale-[1.02] hover:bg-gradient-to-r hover:from-blue-50/40 hover:via-indigo-50/30 hover:to-purple-50/20 dark:hover:from-blue-950/20 dark:hover:via-indigo-950/15 dark:hover:to-purple-950/10'
+          isPinned ? 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/40 dark:border-amber-900/40' : 'hover:shadow-lg hover:border-border/80 hover:scale-[1.02] hover:bg-gradient-to-r hover:from-amber-50/40 hover:via-orange-50/30 hover:to-rose-50/20 dark:hover:from-amber-950/20 dark:hover:via-orange-950/15 dark:hover:to-rose-950/10'
         } ${isDragging ? 'ring-2 ring-primary/30' : ''}`}
         onClick={() => onViewDetails(pssr.id)}
       >
