@@ -186,10 +186,10 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     ]
   };
 
-  // Update metadata with Project ID and Project Name for breadcrumb display
+  // Update metadata with Project ID only for breadcrumb display
   useEffect(() => {
-    updateMetadata(`/safe-startup/${pssrId}`, `${pssrData.projectId}: ${pssrData.projectName}`);
-  }, [pssrId, pssrData.projectId, pssrData.projectName, updateMetadata]);
+    updateMetadata(`/safe-startup/${pssrId}`, pssrData.projectId);
+  }, [pssrId, pssrData.projectId, updateMetadata]);
 
   // Build breadcrumbs from current path
   const breadcrumbs = buildBreadcrumbsFromPath();
