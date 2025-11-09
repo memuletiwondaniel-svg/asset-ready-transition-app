@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, ShieldCheck, Users, FileText, FolderKanban } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -55,7 +55,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   // Navigation items
   const navigationItems: NavigationItem[] = [
     { label: 'Home', icon: Home, path: '/', section: 'home' },
-    { label: 'Safe Start-Up', icon: ShieldCheck, path: '/safe-startup', section: 'safe-startup' },
+    { label: 'Safe Start-Up', icon: AlertTriangle, path: '/safe-startup', section: 'safe-startup' },
     { label: 'User Management', icon: Users, path: '/user-management', section: 'user-management' },
     { label: 'Admin Tools', icon: Settings, path: '/admin-tools', section: 'admin-tools' },
     { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },
