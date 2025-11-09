@@ -150,8 +150,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-3 relative">
-          <div className="flex items-center gap-3">
+        <CardContent className="p-2.5 relative">
+          <div className="flex items-center gap-2">
             {/* Drag Handle - Hidden by default, shown on hover */}
             <div
               {...attributes}
@@ -163,7 +163,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             </div>
 
             {/* Main Content Grid */}
-            <div className="flex-1 grid grid-cols-12 gap-6 items-center">
+            <div className="flex-1 grid grid-cols-12 gap-3 items-center">
               
               {/* Project Info - 4 cols */}
               <div className="col-span-4 min-w-0">
