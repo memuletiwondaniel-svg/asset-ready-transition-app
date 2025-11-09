@@ -96,7 +96,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
   return (
     <WidgetCard 
       title="Statistics Overview" 
-      className="h-full"
+      className="h-full flex flex-col"
       isExpanded={isExpanded}
       isVisible={isVisible}
       onToggleExpand={onToggleExpand}
@@ -104,7 +104,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
     >
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 flex-1 content-start">
         {statisticsData.map((stat, index) => {
           const Icon = stat.icon;
           

@@ -49,7 +49,7 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
       label: 'Ask ORSH AI',
       icon: MessageSquare,
       onClick: handleChatClick,
-      color: 'accent',
+      color: 'tertiary',
     },
   ];
 
@@ -57,30 +57,38 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
     switch (color) {
       case 'primary':
         return {
-          bg: 'bg-gradient-to-br from-primary/15 to-primary/5 group-hover:from-primary/25 group-hover:to-primary/10',
+          bg: 'bg-gradient-to-br from-primary/15 to-primary/5',
+          hoverBg: 'hover:from-primary/25 hover:to-primary/10',
           icon: 'text-primary',
-          border: 'border-primary/20 group-hover:border-primary/40',
-          ring: 'group-hover:ring-2 group-hover:ring-primary/20'
+          border: 'border-primary/20',
+          hoverBorder: 'hover:border-primary/40',
+          ring: 'hover:ring-2 hover:ring-primary/20'
         };
       case 'secondary':
         return {
-          bg: 'bg-gradient-to-br from-accent/15 to-accent/5 group-hover:from-accent/25 group-hover:to-accent/10',
-          icon: 'text-accent-foreground',
-          border: 'border-accent/30 group-hover:border-accent/50',
-          ring: 'group-hover:ring-2 group-hover:ring-accent/20'
+          bg: 'bg-gradient-to-br from-emerald-500/15 to-emerald-500/5',
+          hoverBg: 'hover:from-emerald-500/25 hover:to-emerald-500/10',
+          icon: 'text-emerald-600 dark:text-emerald-400',
+          border: 'border-emerald-500/30',
+          hoverBorder: 'hover:border-emerald-500/50',
+          ring: 'hover:ring-2 hover:ring-emerald-500/20'
         };
-      case 'accent':
+      case 'tertiary':
         return {
-          bg: 'bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10',
-          icon: 'text-primary',
-          border: 'border-primary/15 group-hover:border-primary/30',
-          ring: 'group-hover:ring-2 group-hover:ring-primary/15'
+          bg: 'bg-gradient-to-br from-violet-500/15 to-violet-500/5',
+          hoverBg: 'hover:from-violet-500/25 hover:to-violet-500/10',
+          icon: 'text-violet-600 dark:text-violet-400',
+          border: 'border-violet-500/30',
+          hoverBorder: 'hover:border-violet-500/50',
+          ring: 'hover:ring-2 hover:ring-violet-500/20'
         };
       default:
         return {
-          bg: 'bg-muted/10 group-hover:bg-muted/20',
+          bg: 'bg-muted/10',
+          hoverBg: 'hover:bg-muted/20',
           icon: 'text-foreground',
-          border: 'border-border/20 group-hover:border-border/40',
+          border: 'border-border/20',
+          hoverBorder: 'hover:border-border/40',
           ring: ''
         };
     }
@@ -98,7 +106,7 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
         dragAttributes={dragAttributes}
         dragListeners={dragListeners}
       >
-        <div className="space-y-2.5">
+        <div className="space-y-3 flex-1">
           {actions.map((action, index) => {
             const Icon = action.icon;
             const colors = getColorClasses(action.color);
@@ -107,7 +115,7 @@ export const PSSRQuickActionsWidget: React.FC<PSSRQuickActionsWidgetProps> = ({
               <button
                 key={index}
                 onClick={action.onClick}
-                className={`group w-full flex items-center gap-3 p-3 rounded-xl border ${colors.border} ${colors.bg} ${colors.ring} transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}
+                className={`group w-full flex items-center gap-3 p-3 rounded-xl border ${colors.border} ${colors.hoverBorder} ${colors.bg} ${colors.hoverBg} ${colors.ring} transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-background/60 backdrop-blur-sm flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
                   <Icon className={`h-5 w-5 ${colors.icon}`} />
