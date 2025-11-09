@@ -165,11 +165,12 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             {/* Main Content Grid */}
             <div className="flex-1 grid grid-cols-12 gap-6 items-center">
               
+              {/* Project Info - 4 cols */}
               <div className="col-span-4 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xs font-semibold text-foreground group-hover/pssr-card:text-primary transition-colors">
+                  <Badge variant="default" className="bg-primary text-primary-foreground font-semibold text-xs px-2.5 py-0.5">
                     {pssr.projectId}
-                  </span>
+                  </Badge>
                   <Badge 
                     variant="outline" 
                     className={`text-xs font-medium ${
@@ -202,7 +203,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
 
               {/* Progress - 2 cols */}
               <div className="col-span-2 text-center">
-                <div className="text-lg font-bold text-foreground group-hover/pssr-card:text-primary transition-colors mb-0.5">{pssr.progress}%</div>
+                <div className="text-lg font-bold text-foreground mb-0.5">{pssr.progress}%</div>
                 <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Complete</p>
               </div>
 

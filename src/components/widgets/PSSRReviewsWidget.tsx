@@ -143,7 +143,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
         <div className={`sticky top-0 z-10 bg-card pb-3 border-b border-border/40 transition-shadow duration-300 ${
           isScrolled ? 'shadow-md' : ''
         }`}>
-          <div className="flex flex-col lg:flex-row gap-4 items-center mb-3">
+          <div className="flex flex-col lg:flex-row gap-3 items-center mb-3">
             <PSSRAdvancedSearch
               pssrs={pssrs}
               value={searchTerm}
@@ -153,7 +153,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               className="flex-1 max-w-md"
             />
 
-            <div className="flex items-center gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-2 w-full lg:w-auto">
               {/* View Mode Selector */}
               <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border/50">
                 <button

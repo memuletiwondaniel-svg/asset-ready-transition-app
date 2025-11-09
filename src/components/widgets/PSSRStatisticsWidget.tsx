@@ -95,7 +95,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
 
   return (
     <WidgetCard 
-      title="Summary" 
+      title="Statistics Overview" 
       className="h-full flex flex-col"
       isExpanded={isExpanded}
       isVisible={isVisible}
