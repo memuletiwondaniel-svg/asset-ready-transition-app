@@ -77,6 +77,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   const [dateRangeFilters, setDateRangeFilters] = useState<DateRangeFilter>({});
   const [showWidgetManagement, setShowWidgetManagement] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeWidgetId, setActiveWidgetId] = useState<string | null>(null);
 
   // Derive widget states from persisted configs
   const widgetVisibility = useMemo(() => {
@@ -125,7 +126,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const handleWidgetDragStart = (event: DragStartEvent) => {
+    setActiveWidgetId(event.active.id as string);
+  };
+
   const handleWidgetDragEnd = async (event: DragEndEvent) => {
+    setActiveWidgetId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     
@@ -752,7 +758,12 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
 
       <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* All Sortable Widgets */}
-        <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragEnd={handleWidgetDragEnd}>
+        <DndContext 
+          sensors={widgetSensors} 
+          collisionDetection={closestCenter} 
+          onDragStart={handleWidgetDragStart}
+          onDragEnd={handleWidgetDragEnd}
+        >
           <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
             {widgetOrder.map((key, index) => {
               const isSmallWidget = ['statistics', 'quickActions', 'recentActivities'].includes(key);
@@ -869,6 +880,53 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
               return null;
             })}
           </SortableContext>
+          
+          {/* Drag Overlay for visual feedback */}
+          <DragOverlay dropAnimation={{
+            duration: 300,
+            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+          }}>
+            {activeWidgetId ? (
+              <div className="opacity-80 scale-105 shadow-2xl ring-2 ring-primary/50 rounded-xl">
+                {activeWidgetId === 'statistics' && (
+                  <div className="pointer-events-none">
+                    <PSSRStatisticsWidget 
+                      stats={stats} 
+                      onStatClick={() => {}}
+                      isExpanded={widgetExpanded.statistics}
+                      isVisible={widgetVisibility.statistics}
+                    />
+                  </div>
+                )}
+                {activeWidgetId === 'quickActions' && (
+                  <div className="pointer-events-none">
+                    <PSSRQuickActionsWidget
+                      onCreatePSSR={() => {}}
+                      onManageChecklist={() => {}}
+                      onChatWithORSH={() => {}}
+                      isExpanded={widgetExpanded.quickActions}
+                      isVisible={widgetVisibility.quickActions}
+                    />
+                  </div>
+                )}
+                {activeWidgetId === 'recentActivities' && (
+                  <div className="pointer-events-none">
+                    <PSSRRecentActivitiesWidget 
+                      isExpanded={widgetExpanded.recentActivities}
+                      isVisible={widgetVisibility.recentActivities}
+                    />
+                  </div>
+                )}
+                {activeWidgetId === 'reviews' && (
+                  <div className="pointer-events-none h-[600px] w-full">
+                    <div className="h-full w-full bg-card border border-primary/50 rounded-xl p-4 flex items-center justify-center">
+                      <span className="text-lg font-semibold text-primary">Reviews Widget</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
 
       </main>
