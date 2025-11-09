@@ -33,7 +33,7 @@ import { OrshSidebar } from './OrshSidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
-interface SafeStartupSummaryPageProps {
+interface PSSRSummaryPageProps {
   onBack: () => void;
 }
 interface PSSR {
@@ -57,7 +57,7 @@ interface PSSR {
   location: string;
   tier: 1 | 2 | 3;
 }
-const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
+const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   onBack
 }) => {
   // Mock user role - in a real app, this would come from authentication context
@@ -813,4 +813,4 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       </div>
     </div>;
 };
-export default SafeStartupSummaryPage;
+export default PSSRSummaryPage;

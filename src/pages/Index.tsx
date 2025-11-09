@@ -6,7 +6,7 @@ import { Languages, Phone } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
-import SafeStartupSummaryPage from "@/components/SafeStartupSummaryPage";
+import PSSRSummaryPage from "@/components/PSSRSummaryPage";
 import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
@@ -141,7 +141,7 @@ const Index = () => {
   if (isAuthenticated && currentSection) {
     switch (currentSection) {
       case 'safe-startup':
-        return <SafeStartupSummaryPage onBack={handleBackToLanding} />;
+        return <PSSRSummaryPage onBack={handleBackToLanding} />;
       case 'users':
         return <UserManagement onBack={handleBackToLanding} />;
       case 'manage-checklist':
