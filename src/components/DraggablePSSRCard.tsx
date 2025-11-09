@@ -190,14 +190,20 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
 
               {/* Lead Info - 3 cols */}
               <div className="col-span-3 flex items-center gap-2">
-                <img 
-                  src={pssr.pssrLeadAvatar} 
-                  alt={pssr.pssrLead}
-                  className="w-7 h-7 rounded-full border-2 border-border/50 shadow-sm"
-                />
+                <div className="relative">
+                  <img 
+                    src={pssr.pssrLeadAvatar} 
+                    alt={pssr.pssrLead}
+                    className="w-7 h-7 rounded-full border-2 border-border/50 shadow-sm"
+                  />
+                  {/* Teams status indicator */}
+                  <div 
+                    className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-background ${getTeamStatusColor(pssr.teamStatus)}`}
+                  />
+                </div>
                 <div className="min-w-0">
-                  <p className="text-[8px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
                   <p className="text-[11px] font-medium text-foreground truncate">{pssr.pssrLead}</p>
+                  <p className="text-[8px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
                 </div>
               </div>
 
