@@ -270,7 +270,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           <div className="px-8 py-4">
             {/* Breadcrumb Navigation with History */}
             <BreadcrumbNavigation 
-              currentPageLabel={breadcrumbs[breadcrumbs.length - 1]?.label || pssrData.id}
+              currentPageLabel={pssrData.projectId}
               className="mb-4"
             />
 

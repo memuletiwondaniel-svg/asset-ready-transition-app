@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -39,6 +40,8 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   } = useBreadcrumb();
 
   const breadcrumbs = buildBreadcrumbsFromPath();
+  const location = useLocation();
+  const crumbsToShow = location.pathname === '/safe-startup' ? breadcrumbs : breadcrumbs.slice(0, -1);
 
   const backHistory = history.slice(0, currentHistoryIndex).reverse();
   const forwardHistory = history.slice(currentHistoryIndex + 1);
@@ -160,7 +163,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       {/* Breadcrumb Trail */}
       <Breadcrumb>
         <BreadcrumbList className="text-xs">
-          {breadcrumbs.slice(0, -1).map((crumb, index) => (
+          {crumbsToShow.map((crumb, index) => (
             <React.Fragment key={index}>
               <BreadcrumbItem>
                 <BreadcrumbLink 
