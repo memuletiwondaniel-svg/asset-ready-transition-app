@@ -1,6 +1,6 @@
 import React from 'react';
 import { WidgetCard } from './WidgetCard';
-import { TrendingUp, AlertCircle, CheckCircle, Clock, FileCheck } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle, Clock, FileCheck, ArrowUpRight } from 'lucide-react';
 
 interface PSSRStatisticsWidgetProps {
   stats: {
@@ -32,64 +32,70 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
 }) => {
   const statisticsData = [
     {
-      label: 'Total',
+      label: 'Total PSSRs',
       value: stats.total,
       icon: FileCheck,
       filter: 'all' as const,
-      borderColor: 'border-l-primary',
+      gradient: 'from-primary/20 via-primary/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-primary/20 to-primary/10',
       iconColor: 'text-primary',
-      bgColor: 'bg-primary/5'
+      ringColor: 'hover:ring-primary/20'
     },
     {
       label: 'Approved',
       value: stats.approved,
       icon: CheckCircle,
       filter: 'approved' as const,
-      borderColor: 'border-l-success',
+      gradient: 'from-success/20 via-success/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-success/20 to-success/10',
       iconColor: 'text-success',
-      bgColor: 'bg-success/5'
+      ringColor: 'hover:ring-success/20'
     },
     {
       label: 'Under Review',
       value: stats.underReview,
       icon: Clock,
       filter: 'under-review' as const,
-      borderColor: 'border-l-warning',
+      gradient: 'from-warning/20 via-warning/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-warning/20 to-warning/10',
       iconColor: 'text-warning',
-      bgColor: 'bg-warning/5'
+      ringColor: 'hover:ring-warning/20'
     },
     {
       label: 'Draft',
       value: stats.draft,
       icon: AlertCircle,
       filter: 'draft' as const,
-      borderColor: 'border-l-muted-foreground',
+      gradient: 'from-muted-foreground/20 via-muted-foreground/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-muted/30 to-muted/10',
       iconColor: 'text-muted-foreground',
-      bgColor: 'bg-muted/30'
+      ringColor: 'hover:ring-muted-foreground/20'
     },
     {
       label: 'Open Actions',
       value: stats.openActions,
       icon: TrendingUp,
       filter: 'open-actions' as const,
-      borderColor: 'border-l-destructive',
+      gradient: 'from-destructive/20 via-destructive/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-destructive/20 to-destructive/10',
       iconColor: 'text-destructive',
-      bgColor: 'bg-destructive/5'
+      ringColor: 'hover:ring-destructive/20'
     },
     {
       label: 'Completed',
       value: stats.completed,
       icon: CheckCircle,
       filter: 'completed' as const,
-      borderColor: 'border-l-success',
+      gradient: 'from-success/20 via-success/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-success/20 to-success/10',
       iconColor: 'text-success',
-      bgColor: 'bg-success/5'
+      ringColor: 'hover:ring-success/20'
     }
   ];
 
   return (
     <WidgetCard 
-      title="Statistics" 
+      title="Statistics Overview" 
       className="h-full"
       isExpanded={isExpanded}
       isVisible={isVisible}
@@ -98,7 +104,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
     >
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         {statisticsData.map((stat, index) => {
           const Icon = stat.icon;
           
@@ -106,13 +112,28 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
             <button
               key={index}
               onClick={() => onStatClick(stat.filter)}
-              className={`group relative flex flex-col items-center justify-center p-3 rounded-lg border-l-4 ${stat.borderColor} ${stat.bgColor} border border-border/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm hover:border-border/60`}
+              className={`group relative overflow-hidden flex flex-col items-start p-4 rounded-xl bg-card border border-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-border/80 hover:ring-2 ${stat.ringColor}`}
             >
-              <div className={`w-8 h-8 rounded-full ${stat.bgColor} flex items-center justify-center mb-1.5 transition-transform duration-300 group-hover:scale-110`}>
-                <Icon className={`w-4 h-4 ${stat.iconColor}`} />
+              {/* Gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+              
+              {/* Content */}
+              <div className="relative z-10 w-full">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`w-11 h-11 rounded-xl ${stat.iconBg} flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                    <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </div>
+                
+                <div className="text-2xl font-bold text-foreground mb-1 group-hover:scale-105 transition-transform duration-300">
+                  {stat.value}
+                </div>
+                
+                <div className="text-xs font-medium text-muted-foreground">
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-xl font-bold text-foreground mb-0.5">{stat.value}</div>
-              <div className="text-xs text-muted-foreground text-center leading-tight">{stat.label}</div>
             </button>
           );
         })}

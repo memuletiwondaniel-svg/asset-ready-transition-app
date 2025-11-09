@@ -84,13 +84,14 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
       }`}
     >
       <Card
-        className={`group relative overflow-hidden border-border/50 cursor-pointer transition-all duration-200 ${
-          isPinned ? 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/40 dark:border-amber-900/40' : 'hover:shadow-md hover:border-border/80'
+        className={`group relative overflow-hidden border-border/50 cursor-pointer transition-all duration-300 ${
+          isPinned ? 'bg-amber-50/30 dark:bg-amber-950/10 border-amber-200/40 dark:border-amber-900/40' : 'hover:shadow-lg hover:border-border/80 hover:scale-[1.02]'
         } ${isDragging ? 'ring-2 ring-primary/30' : ''}`}
         onClick={() => onViewDetails(pssr.id)}
       >
         {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/2 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/3 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer" />
 
         {/* Quick Actions - Appears on hover */}
         <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
@@ -154,11 +155,11 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
 
         <CardContent className="p-3 relative">
           <div className="flex items-center gap-3">
-            {/* Drag Handle */}
+            {/* Drag Handle - Hidden by default, shown on hover */}
             <div
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-colors"
+              className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors" />
@@ -229,13 +230,15 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               </div>
             </div>
 
-            {/* Pin Button */}
+            {/* Pin Button - Hidden by default, shown on hover */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onTogglePin(pssr.id);
               }}
-              className="p-2 hover:bg-muted/40 rounded-lg transition-colors"
+              className={`p-2 hover:bg-muted/40 rounded-lg transition-all duration-200 ${
+                isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
             >
               {isPinned ? (
                 <PinOff className="h-4 w-4 text-amber-500" />
