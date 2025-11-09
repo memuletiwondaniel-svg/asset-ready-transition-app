@@ -202,7 +202,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium text-foreground truncate">{pssr.pssrLead}</p>
+                  <p className="text-[11px] font-medium text-foreground group-hover/pssr-card:text-primary transition-colors truncate">{pssr.pssrLead}</p>
                   <p className="text-[8px] text-muted-foreground uppercase tracking-wide">PSSR Lead</p>
                 </div>
               </div>
