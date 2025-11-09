@@ -62,8 +62,14 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
 
-  const { widgets, loading: widgetsLoading, updateWidgetPosition, toggleWidgetVisibility, updateWidgetSettings, reorderWidgets } = useWidgetConfigs();
-
+  const {
+    widgets,
+    loading: widgetsLoading,
+    updateWidgetPosition,
+    toggleWidgetVisibility,
+    updateWidgetSettings,
+    reorderWidgets
+  } = useWidgetConfigs();
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
   const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('card');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
@@ -89,10 +95,9 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       statistics: stats?.is_visible ?? true,
       quickActions: quick?.is_visible ?? true,
       recentActivities: recent?.is_visible ?? true,
-      reviews: reviews?.is_visible ?? true,
+      reviews: reviews?.is_visible ?? true
     };
   }, [widgets]);
-
   const widgetExpanded = useMemo(() => {
     const stats = widgets.find(w => w.widget_type === 'pssr-statistics');
     const quick = widgets.find(w => w.widget_type === 'pssr-quick-actions');
@@ -102,24 +107,19 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       statistics: stats?.settings?.expanded ?? false,
       quickActions: quick?.settings?.expanded ?? false,
       recentActivities: recent?.settings?.expanded ?? false,
-      reviews: reviews?.settings?.expanded ?? true,
+      reviews: reviews?.settings?.expanded ?? true
     };
   }, [widgets]);
-
   const widgetOrder = useMemo(() => {
-    const sorted = [...widgets]
-      .filter(w => ['pssr-statistics', 'pssr-quick-actions', 'pssr-recent-activities', 'pssr-reviews'].includes(w.widget_type))
-      .sort((a, b) => a.position - b.position)
-      .map(w => {
-        if (w.widget_type === 'pssr-statistics') return 'statistics';
-        if (w.widget_type === 'pssr-quick-actions') return 'quickActions';
-        if (w.widget_type === 'pssr-recent-activities') return 'recentActivities';
-        if (w.widget_type === 'pssr-reviews') return 'reviews';
-        return '';
-      })
-      .filter(Boolean);
+    const sorted = [...widgets].filter(w => ['pssr-statistics', 'pssr-quick-actions', 'pssr-recent-activities', 'pssr-reviews'].includes(w.widget_type)).sort((a, b) => a.position - b.position).map(w => {
+      if (w.widget_type === 'pssr-statistics') return 'statistics';
+      if (w.widget_type === 'pssr-quick-actions') return 'quickActions';
+      if (w.widget_type === 'pssr-recent-activities') return 'recentActivities';
+      if (w.widget_type === 'pssr-reviews') return 'reviews';
+      return '';
+    }).filter(Boolean);
     const defaultOrder: Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'> = ['statistics', 'quickActions', 'recentActivities', 'reviews'];
-    return sorted.length > 0 ? (sorted as Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'>) : defaultOrder;
+    return sorted.length > 0 ? sorted as Array<'statistics' | 'quickActions' | 'recentActivities' | 'reviews'> : defaultOrder;
   }, [widgets]);
 
   // Local, optimistic order state for immediate visual reordering
@@ -127,28 +127,30 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   useEffect(() => {
     setWidgetOrderLocal(widgetOrder);
   }, [widgetOrder]);
-
-  const widgetSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
+  const widgetSensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8
+    }
+  }), useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates
+  }));
   const handleWidgetDragStart = (event: DragStartEvent) => {
     setActiveWidgetId(event.active.id as string);
   };
-
   const handleWidgetDragEnd = async (event: DragEndEvent) => {
     setActiveWidgetId(null);
-    const { active, over } = event;
+    const {
+      active,
+      over
+    } = event;
     if (!over || active.id === over.id) return;
-    
     const oldIndex = widgetOrderLocal.indexOf(active.id as any);
     const newIndex = widgetOrderLocal.indexOf(over.id as any);
     const newOrder = arrayMove(widgetOrderLocal, oldIndex, newIndex);
 
     // Optimistically update UI
     setWidgetOrderLocal(newOrder);
-    
+
     // Update positions in Supabase
     const typeMap: Record<string, string> = {
       statistics: 'pssr-statistics',
@@ -156,17 +158,17 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       recentActivities: 'pssr-recent-activities',
       reviews: 'pssr-reviews'
     };
-    
     const reorderedConfigs = newOrder.map((widgetKey, index) => {
       const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
-      return widget ? { ...widget, position: index } : null;
+      return widget ? {
+        ...widget,
+        position: index
+      } : null;
     }).filter(Boolean);
-    
     if (reorderedConfigs.length > 0) {
       await reorderWidgets(reorderedConfigs as any);
     }
   };
-
   const handleToggleWidgetVisibility = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities' | 'reviews') => {
     const typeMap: Record<string, string> = {
       statistics: 'pssr-statistics',
@@ -179,7 +181,6 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       await toggleWidgetVisibility(widget.id);
     }
   };
-
   const handleToggleWidgetExpanded = async (widgetKey: 'statistics' | 'quickActions' | 'recentActivities' | 'reviews') => {
     const typeMap: Record<string, string> = {
       statistics: 'pssr-statistics',
@@ -190,7 +191,10 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
     const widget = widgets.find(w => w.widget_type === typeMap[widgetKey]);
     if (widget) {
       const newExpanded = !(widget.settings?.expanded ?? false);
-      await updateWidgetSettings(widget.id, { ...widget.settings, expanded: newExpanded });
+      await updateWidgetSettings(widget.id, {
+        ...widget.settings,
+        expanded: newExpanded
+      });
     }
   };
   const [filters, setFilters] = useState({
@@ -433,19 +437,13 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
       return 0;
     });
   }, [searchTerm, filters, pssrList, pssrOrder, pinnedPSSRs, dateRangeFilters]);
-
   const handleStatClick = (filterKey: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => {
     setFilters(prev => ({
       ...prev,
       statFilter: filterKey
     }));
-    toast.success(
-      filterKey === 'all' 
-        ? 'Showing all PSSRs' 
-        : `Filtered by: ${filterKey.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`
-    );
+    toast.success(filterKey === 'all' ? 'Showing all PSSRs' : `Filtered by: ${filterKey.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`);
   };
-
   const toggleFilter = (category: 'plant' | 'status' | 'lead', value: string) => {
     setFilters(prev => ({
       ...prev,
@@ -644,20 +642,11 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
   }
   return <div className="h-screen flex w-full overflow-hidden">
       {/* ORSH Sidebar - Fixed */}
-      <OrshSidebar 
-        userName="Daniel" 
-        userTitle="ORA Engr." 
-        language="en" 
-        currentPage="safe-startup" 
-        onNavigate={section => {
-          if (section === 'home') {
-            onBack();
-          }
-        }}
-        onShowWidgets={() => setShowWidgetManagement(true)}
-        onShowOnboarding={() => setShowOnboarding(true)}
-        showWidgets={showWidgetManagement}
-      />
+      <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="safe-startup" onNavigate={section => {
+      if (section === 'home') {
+        onBack();
+      }
+    }} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} showWidgets={showWidgetManagement} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -759,7 +748,7 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-foreground tracking-tight">Pre-Start-Up Safety Review</h1>
-                  <p className="text-xs text-muted-foreground">Safe Start-Up Management</p>
+                  
                 </div>
               </div>
 
@@ -771,143 +760,48 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
 
       <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* All Sortable Widgets */}
-        <DndContext 
-          sensors={widgetSensors} 
-          collisionDetection={closestCenter} 
-          onDragStart={handleWidgetDragStart}
-          onDragEnd={handleWidgetDragEnd}
-        >
+        <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragStart={handleWidgetDragStart} onDragEnd={handleWidgetDragEnd}>
           <SortableContext items={widgetOrderLocal} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {widgetOrderLocal.map((key) => (
-                <SortableWidget id={key} key={key} className={key === 'reviews' ? 'col-span-1 lg:col-span-3' : 'col-span-1'}>
-                  {({ attributes, listeners }) => (
-                    <>
-                      {key === 'statistics' && widgetVisibility.statistics && (
-                        <PSSRStatisticsWidget 
-                          stats={stats} 
-                          onStatClick={handleStatClick}
-                          isExpanded={widgetExpanded.statistics}
-                          isVisible={widgetVisibility.statistics}
-                          onToggleExpand={() => handleToggleWidgetExpanded('statistics')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('statistics')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      )}
-                      {key === 'quickActions' && widgetVisibility.quickActions && (
-                        <PSSRQuickActionsWidget
-                          onCreatePSSR={() => setActiveView('create')}
-                          onManageChecklist={() => setActiveView('manage-checklist')}
-                          onChatWithORSH={() => {
-                            onBack();
-                          }}
-                          isExpanded={widgetExpanded.quickActions}
-                          isVisible={widgetVisibility.quickActions}
-                          onToggleExpand={() => handleToggleWidgetExpanded('quickActions')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      )}
-                      {key === 'recentActivities' && widgetVisibility.recentActivities && (
-                        <PSSRRecentActivitiesWidget 
-                          isExpanded={widgetExpanded.recentActivities}
-                          isVisible={widgetVisibility.recentActivities}
-                          onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      )}
-                      {key === 'reviews' && widgetVisibility.reviews && (
-                        <PSSRReviewsWidget
-                          pssrs={pssrList}
-                          filteredPSSRs={filteredPSSRs}
-                          searchTerm={searchTerm}
-                          onSearchChange={handleSearchChange}
-                          onSelectPSSR={handleViewDetails}
-                          viewMode={viewMode === 'timeline' ? 'card' : viewMode}
-                          onViewModeChange={(mode) => setViewMode(mode)}
-                          filters={filters}
-                          onToggleFilter={toggleFilter}
-                          onDateChange={handleDateChange}
-                          onClearFilters={clearAllFilters}
-                          uniquePlants={uniquePlants}
-                          uniqueStatuses={uniqueStatuses}
-                          uniqueLeads={uniqueLeads}
-                          onViewDetails={handleViewDetails}
-                          getPriorityColor={getPriorityColor}
-                          getStatusIcon={getStatusIcon}
-                          getTeamStatusColor={getTeamStatusColor}
-                          getRiskLevelColor={getRiskLevelColor}
-                          pinnedPSSRs={pinnedPSSRs}
-                          onTogglePin={handleTogglePin}
-                          onStatusChange={(pssrId, newStatus) => {
-                            toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
-                          }}
-                          onPSSROrderChange={setPssrOrder}
-                          pssrOrder={pssrOrder}
-                          isExpanded={widgetExpanded.reviews}
-                          isVisible={widgetVisibility.reviews}
-                          onToggleExpand={() => handleToggleWidgetExpanded('reviews')}
-                          onToggleVisibility={() => handleToggleWidgetVisibility('reviews')}
-                          dragAttributes={attributes}
-                          dragListeners={listeners}
-                        />
-                      )}
-                    </>
-                  )}
-                </SortableWidget>
-              ))}
+              {widgetOrderLocal.map(key => <SortableWidget id={key} key={key} className={key === 'reviews' ? 'col-span-1 lg:col-span-3' : 'col-span-1'}>
+                  {({
+                  attributes,
+                  listeners
+                }) => <>
+                      {key === 'statistics' && widgetVisibility.statistics && <PSSRStatisticsWidget stats={stats} onStatClick={handleStatClick} isExpanded={widgetExpanded.statistics} isVisible={widgetVisibility.statistics} onToggleExpand={() => handleToggleWidgetExpanded('statistics')} onToggleVisibility={() => handleToggleWidgetVisibility('statistics')} dragAttributes={attributes} dragListeners={listeners} />}
+                      {key === 'quickActions' && widgetVisibility.quickActions && <PSSRQuickActionsWidget onCreatePSSR={() => setActiveView('create')} onManageChecklist={() => setActiveView('manage-checklist')} onChatWithORSH={() => {
+                    onBack();
+                  }} isExpanded={widgetExpanded.quickActions} isVisible={widgetVisibility.quickActions} onToggleExpand={() => handleToggleWidgetExpanded('quickActions')} onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')} dragAttributes={attributes} dragListeners={listeners} />}
+                      {key === 'recentActivities' && widgetVisibility.recentActivities && <PSSRRecentActivitiesWidget isExpanded={widgetExpanded.recentActivities} isVisible={widgetVisibility.recentActivities} onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')} onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')} dragAttributes={attributes} dragListeners={listeners} />}
+                      {key === 'reviews' && widgetVisibility.reviews && <PSSRReviewsWidget pssrs={pssrList} filteredPSSRs={filteredPSSRs} searchTerm={searchTerm} onSearchChange={handleSearchChange} onSelectPSSR={handleViewDetails} viewMode={viewMode === 'timeline' ? 'card' : viewMode} onViewModeChange={mode => setViewMode(mode)} filters={filters} onToggleFilter={toggleFilter} onDateChange={handleDateChange} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} onViewDetails={handleViewDetails} getPriorityColor={getPriorityColor} getStatusIcon={getStatusIcon} getTeamStatusColor={getTeamStatusColor} getRiskLevelColor={getRiskLevelColor} pinnedPSSRs={pinnedPSSRs} onTogglePin={handleTogglePin} onStatusChange={(pssrId, newStatus) => {
+                    toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
+                  }} onPSSROrderChange={setPssrOrder} pssrOrder={pssrOrder} isExpanded={widgetExpanded.reviews} isVisible={widgetVisibility.reviews} onToggleExpand={() => handleToggleWidgetExpanded('reviews')} onToggleVisibility={() => handleToggleWidgetVisibility('reviews')} dragAttributes={attributes} dragListeners={listeners} />}
+                    </>}
+                </SortableWidget>)}
             </div>
           </SortableContext>
           
           {/* Drag Overlay for visual feedback */}
           <DragOverlay dropAnimation={{
             duration: 300,
-            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)'
           }}>
-            {activeWidgetId ? (
-              <div className="opacity-80 scale-105 shadow-2xl ring-2 ring-primary/50 rounded-xl">
-                {activeWidgetId === 'statistics' && (
-                  <div className="pointer-events-none">
-                    <PSSRStatisticsWidget 
-                      stats={stats} 
-                      onStatClick={() => {}}
-                      isExpanded={widgetExpanded.statistics}
-                      isVisible={widgetVisibility.statistics}
-                    />
-                  </div>
-                )}
-                {activeWidgetId === 'quickActions' && (
-                  <div className="pointer-events-none">
-                    <PSSRQuickActionsWidget
-                      onCreatePSSR={() => {}}
-                      onManageChecklist={() => {}}
-                      onChatWithORSH={() => {}}
-                      isExpanded={widgetExpanded.quickActions}
-                      isVisible={widgetVisibility.quickActions}
-                    />
-                  </div>
-                )}
-                {activeWidgetId === 'recentActivities' && (
-                  <div className="pointer-events-none">
-                    <PSSRRecentActivitiesWidget 
-                      isExpanded={widgetExpanded.recentActivities}
-                      isVisible={widgetVisibility.recentActivities}
-                    />
-                  </div>
-                )}
-                {activeWidgetId === 'reviews' && (
-                  <div className="pointer-events-none h-[600px] w-full">
+            {activeWidgetId ? <div className="opacity-80 scale-105 shadow-2xl ring-2 ring-primary/50 rounded-xl">
+                {activeWidgetId === 'statistics' && <div className="pointer-events-none">
+                    <PSSRStatisticsWidget stats={stats} onStatClick={() => {}} isExpanded={widgetExpanded.statistics} isVisible={widgetVisibility.statistics} />
+                  </div>}
+                {activeWidgetId === 'quickActions' && <div className="pointer-events-none">
+                    <PSSRQuickActionsWidget onCreatePSSR={() => {}} onManageChecklist={() => {}} onChatWithORSH={() => {}} isExpanded={widgetExpanded.quickActions} isVisible={widgetVisibility.quickActions} />
+                  </div>}
+                {activeWidgetId === 'recentActivities' && <div className="pointer-events-none">
+                    <PSSRRecentActivitiesWidget isExpanded={widgetExpanded.recentActivities} isVisible={widgetVisibility.recentActivities} />
+                  </div>}
+                {activeWidgetId === 'reviews' && <div className="pointer-events-none h-[600px] w-full">
                     <div className="h-full w-full bg-card border border-primary/50 rounded-xl p-4 flex items-center justify-center">
                       <span className="text-lg font-semibold text-primary">Reviews Widget</span>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : null}
+                  </div>}
+              </div> : null}
           </DragOverlay>
         </DndContext>
 
