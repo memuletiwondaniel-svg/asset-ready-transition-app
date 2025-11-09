@@ -168,7 +168,7 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
               {/* Project Info - 4 cols */}
               <div className="col-span-4 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <Badge variant="outline" className="bg-muted/70 border-muted text-foreground group-hover/pssr-card:bg-primary group-hover/pssr-card:text-primary-foreground group-hover/pssr-card:border-primary font-extrabold text-xs px-2.5 py-0.5 transition-colors">
+                  <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-foreground group-hover/pssr-card:bg-primary group-hover/pssr-card:text-primary-foreground group-hover/pssr-card:border-primary font-extrabold text-xs px-2.5 py-0.5 transition-colors">
                     {pssr.projectId}
                   </Badge>
                   <Badge 
