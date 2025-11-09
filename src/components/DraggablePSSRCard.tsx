@@ -150,24 +150,24 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
           </TooltipProvider>
         </div>
 
-        <CardContent className="p-3 relative">
-          <div className="flex items-center gap-3">
+        <CardContent className="p-2 relative">
+          <div className="flex items-center gap-2">
             {/* Drag Handle - Hidden by default, shown on hover */}
             <div
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-all duration-200 opacity-0 group-hover/pssr-card:opacity-100"
+              className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-muted/40 rounded-lg transition-all duration-200 opacity-0 group-hover/pssr-card:opacity-100"
               onClick={(e) => e.stopPropagation()}
             >
-              <GripVertical className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors" />
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-foreground transition-colors" />
             </div>
 
             {/* Main Content Grid */}
-            <div className="flex-1 grid grid-cols-12 gap-6 items-center">
+            <div className="flex-1 grid grid-cols-12 gap-4 items-center">
               
               {/* Project Info - 4 cols */}
               <div className="col-span-4 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-2 mb-1.5">
                   <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-foreground group-hover/pssr-card:bg-primary group-hover/pssr-card:text-primary-foreground group-hover/pssr-card:border-primary font-extrabold text-xs px-2.5 py-0.5 transition-colors">
                     {pssr.projectId}
                   </Badge>
@@ -239,14 +239,14 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 e.stopPropagation();
                 onTogglePin(pssr.id);
               }}
-              className={`p-2 hover:bg-muted/40 rounded-lg transition-all duration-200 ${
+              className={`p-1.5 hover:bg-muted/40 rounded-lg transition-all duration-200 ${
                 isPinned ? 'opacity-100' : 'opacity-0 group-hover/pssr-card:opacity-100'
               }`}
             >
               {isPinned ? (
-                <PinOff className="h-4 w-4 text-amber-500" />
+                <PinOff className="h-3.5 w-3.5 text-amber-500" />
               ) : (
-                <Pin className="h-4 w-4 text-muted-foreground hover:text-amber-500 transition-colors" />
+                <Pin className="h-3.5 w-3.5 text-muted-foreground hover:text-amber-500 transition-colors" />
               )}
             </button>
           </div>
