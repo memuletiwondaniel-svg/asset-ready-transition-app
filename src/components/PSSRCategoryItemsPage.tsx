@@ -22,6 +22,8 @@ import {
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 import { useChecklistItems } from '@/hooks/useChecklistItems';
 import ChecklistItemModal from './ChecklistItemModal';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 
 interface ChecklistItemStatus {
   id: string;
@@ -34,12 +36,14 @@ interface PSSRCategoryItemsPageProps {
   categoryName: string;
   pssrId: string;
   onBack: () => void;
+  onBackToList?: () => void;
 }
 
 const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({ 
   categoryName, 
   pssrId, 
-  onBack 
+  onBack,
+  onBackToList
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -49,6 +53,31 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data: checklistItems = [], isLoading } = useChecklistItems();
+  const { buildBreadcrumbsFromPath } = useBreadcrumb();
+
+  // Build custom breadcrumbs for category items page
+  const baseBreadcrumbs = buildBreadcrumbsFromPath();
+  const customBreadcrumbs = baseBreadcrumbs.map((crumb) => {
+    // Home breadcrumb - navigate to home/landing
+    if (crumb.path === '/') {
+      return crumb;
+    }
+    // PSSR breadcrumb - navigate to PSSR list
+    if (crumb.path === '/safe-startup') {
+      return {
+        ...crumb,
+        onClick: onBackToList || (() => {})
+      };
+    }
+    // PSSR ID breadcrumb - navigate to PSSR dashboard
+    if (crumb.path === `/safe-startup/${pssrId}`) {
+      return {
+        ...crumb,
+        onClick: onBack
+      };
+    }
+    return crumb;
+  });
 
   // Filter items by category and search term
   const filteredItems = checklistItems.filter(item => {
@@ -262,27 +291,28 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
       
       <div className="relative z-10">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={onBack} size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to PSSR Dashboard
-              </Button>
+          <div className="py-4">
+            {/* Breadcrumb Navigation */}
+            <BreadcrumbNavigation 
+              currentPageLabel={categoryName}
+              customBreadcrumbs={customBreadcrumbs}
+              className="mb-4"
+            />
+            
+            <div className="flex justify-between items-center">
               <div className="flex items-center space-x-3">
                 {getCategoryIcon(categoryName)}
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{categoryName}</h1>
-                  <p className="text-sm text-gray-600">PSSR ID: {pssrId}</p>
+                  <h1 className="text-xl font-bold text-foreground">{categoryName}</h1>
+                  <p className="text-sm text-muted-foreground">PSSR ID: {pssrId}</p>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
-                <span className="text-sm text-gray-600">Progress:</span>
-                <span className="font-medium text-gray-900">{stats.completed}/{stats.total}</span>
-                <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="flex items-center space-x-2 bg-muted/50 px-3 py-2 rounded-lg">
+                <span className="text-sm text-muted-foreground">Progress:</span>
+                <span className="font-medium text-foreground">{stats.completed}/{stats.total}</span>
+                <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-300"
                     style={{ width: `${stats.percentage}%` }}

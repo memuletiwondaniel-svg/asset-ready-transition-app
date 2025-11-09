@@ -639,7 +639,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     return <PSSRDashboard pssrId={selectedPSSR} onBack={() => setActiveView('list')} onNavigateToCategory={handleNavigateToCategory} />;
   }
   if (activeView === 'category-items' && selectedCategory && selectedPSSR) {
-    return <PSSRCategoryItemsPage categoryName={selectedCategory} pssrId={selectedPSSR} onBack={() => setActiveView('details')} />;
+    return <PSSRCategoryItemsPage categoryName={selectedCategory} pssrId={selectedPSSR} onBack={() => setActiveView('details')} onBackToList={() => setActiveView('list')} />;
   }
   if (activeView === 'manage-checklist') {
     return <ManageChecklistPage onBack={() => setActiveView('list')} />;
