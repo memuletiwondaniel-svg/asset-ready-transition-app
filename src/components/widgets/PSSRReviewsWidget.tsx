@@ -198,7 +198,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
           </div>
 
           {/* Results Count */}
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground ml-4">
             Showing {filteredPSSRs.length} of {pssrs.length} reviews
           </p>
         </div>

@@ -462,7 +462,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
             <h2 className="text-xl font-semibold text-foreground">
               PSSR Reviews ({filteredPSSRs.length})
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1 ml-4">
               Showing {filteredPSSRs.length} of {stats.total} reviews
             </p>
           </div>
