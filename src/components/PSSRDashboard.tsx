@@ -191,8 +191,19 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     updateMetadata(`/safe-startup/${pssrId}`, pssrData.projectId);
   }, [pssrId, pssrData.projectId, updateMetadata]);
 
-  // Build breadcrumbs from current path
+  // Build breadcrumbs from current path and customize PSSR link to call onBack
   const breadcrumbs = buildBreadcrumbsFromPath();
+  
+  // Override the PSSR breadcrumb onClick to navigate back to the list
+  const customizedBreadcrumbs = breadcrumbs.map((crumb) => {
+    if (crumb.path === '/safe-startup') {
+      return {
+        ...crumb,
+        onClick: onBack
+      };
+    }
+    return crumb;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -271,6 +282,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
             {/* Breadcrumb Navigation with History */}
             <BreadcrumbNavigation 
               currentPageLabel={pssrData.projectId}
+              customBreadcrumbs={customizedBreadcrumbs}
               className="mb-4"
             />
 

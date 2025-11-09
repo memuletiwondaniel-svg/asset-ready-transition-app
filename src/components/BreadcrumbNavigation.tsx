@@ -23,11 +23,17 @@ import { cn } from '@/lib/utils';
 interface BreadcrumbNavigationProps {
   currentPageLabel: string;
   className?: string;
+  customBreadcrumbs?: Array<{
+    label: string;
+    path: string;
+    onClick?: () => void;
+  }>;
 }
 
 export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   currentPageLabel,
-  className
+  className,
+  customBreadcrumbs
 }) => {
   const { 
     buildBreadcrumbsFromPath, 
@@ -39,7 +45,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
     currentHistoryIndex
   } = useBreadcrumb();
 
-  const breadcrumbs = buildBreadcrumbsFromPath();
+  const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
   const location = useLocation();
   const crumbsToShow = location.pathname === '/safe-startup' ? breadcrumbs : breadcrumbs.slice(0, -1);
 
