@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, Settings, Zap, BarChart3, Users, Calendar as CalendarIcon, TrendingUp, TrendingDown, Minus, LayoutGrid, Table as TableIcon, Home, FileText, FolderOpen, GripVertical, Columns3, CalendarDays, Bell } from 'lucide-react';
+import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, Settings, BarChart3, Users, Calendar as CalendarIcon, TrendingUp, TrendingDown, Minus, LayoutGrid, Table as TableIcon, Home, FileText, FolderOpen, GripVertical, Columns3, CalendarDays, Bell } from 'lucide-react';
 import { WidgetCard } from './widgets/WidgetCard';
 import { PSSRStatisticsWidget } from './widgets/PSSRStatisticsWidget';
 import { PSSRQuickActionsWidget } from './widgets/PSSRQuickActionsWidget';
@@ -743,8 +743,8 @@ const SafeStartupSummaryPage: React.FC<SafeStartupSummaryPageProps> = ({
 
               {/* Centered Title */}
               <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
-                  <Zap className="h-5 w-5 text-primary" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg">
+                  <AlertTriangle className="h-5 w-5 text-white animate-pulse" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-foreground tracking-tight">Pre-Start-Up Safety Review</h1>
