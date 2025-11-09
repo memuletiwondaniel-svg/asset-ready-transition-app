@@ -42,6 +42,16 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       ringColor: 'hover:ring-primary/20'
     },
     {
+      label: 'Approved',
+      value: stats.approved,
+      icon: CheckCircle,
+      filter: 'approved' as const,
+      gradient: 'from-success/20 via-success/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-success/20 to-success/10',
+      iconColor: 'text-success',
+      ringColor: 'hover:ring-success/20'
+    },
+    {
       label: 'Under Review',
       value: stats.underReview,
       icon: Clock,
@@ -52,6 +62,16 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       ringColor: 'hover:ring-warning/20'
     },
     {
+      label: 'Draft',
+      value: stats.draft,
+      icon: AlertCircle,
+      filter: 'draft' as const,
+      gradient: 'from-muted-foreground/20 via-muted-foreground/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-muted/30 to-muted/10',
+      iconColor: 'text-muted-foreground',
+      ringColor: 'hover:ring-muted-foreground/20'
+    },
+    {
       label: 'Open Actions',
       value: stats.openActions,
       icon: TrendingUp,
@@ -60,6 +80,16 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       iconBg: 'bg-gradient-to-br from-destructive/20 to-destructive/10',
       iconColor: 'text-destructive',
       ringColor: 'hover:ring-destructive/20'
+    },
+    {
+      label: 'Completed',
+      value: stats.completed,
+      icon: CheckCircle,
+      filter: 'completed' as const,
+      gradient: 'from-success/20 via-success/10 to-transparent',
+      iconBg: 'bg-gradient-to-br from-success/20 to-success/10',
+      iconColor: 'text-success',
+      ringColor: 'hover:ring-success/20'
     }
   ];
 
@@ -74,7 +104,7 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
     >
-      <div className="grid grid-cols-3 gap-3 flex-1">
+      <div className="grid grid-cols-3 gap-2 flex-1">
         {statisticsData.map((stat, index) => {
           const Icon = stat.icon;
           
@@ -82,25 +112,25 @@ export const PSSRStatisticsWidget: React.FC<PSSRStatisticsWidgetProps> = ({
             <button
               key={index}
               onClick={() => onStatClick(stat.filter)}
-              className={`group relative overflow-hidden flex flex-col items-start justify-between p-4 rounded-xl bg-card border border-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-border/80 hover:ring-2 ${stat.ringColor} h-full`}
+              className={`group relative overflow-hidden flex flex-col items-start justify-between p-2.5 rounded-lg bg-card border border-border/50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-border/80 hover:ring-2 ${stat.ringColor} h-full`}
             >
               {/* Gradient overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
               
               {/* Content */}
               <div className="relative z-10 w-full">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`w-11 h-11 rounded-xl ${stat.iconBg} flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                    <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className={`w-8 h-8 rounded-lg ${stat.iconBg} flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                    <Icon className={`w-4 h-4 ${stat.iconColor}`} />
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  <ArrowUpRight className="w-3 h-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </div>
                 
-                <div className="text-3xl font-bold text-foreground mb-1.5 group-hover:scale-105 transition-transform duration-300">
+                <div className="text-xl font-bold text-foreground mb-0.5 group-hover:scale-105 transition-transform duration-300">
                   {stat.value}
                 </div>
                 
-                <div className="text-xs font-medium text-muted-foreground">
+                <div className="text-[10px] font-medium text-muted-foreground leading-tight">
                   {stat.label}
                 </div>
               </div>
