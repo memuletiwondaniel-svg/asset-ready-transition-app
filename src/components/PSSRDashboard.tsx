@@ -17,6 +17,7 @@ import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidge
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetCustomizationToolbar, WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import { WidgetSizeControl } from '@/components/widgets/WidgetSizeControl';
+import BackgroundSlideshow from '@/components/BackgroundSlideshow';
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useToast } from '@/hooks/use-toast';
@@ -472,106 +473,112 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
             <SortableContext items={widgetOrder.filter(id => 
               widgetSettings.find(w => w.id === id)?.visible
             )} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
-                {widgetOrder.filter(id => 
-                  widgetSettings.find(w => w.id === id)?.visible
-                ).map((widgetId) => {
-                  const widgetSetting = widgetSettings.find(w => w.id === widgetId);
-                  if (!widgetSetting?.visible) return null;
+              {/* Optimized Grid Layout - 3 Columns with Specific Positioning */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                {/* Column 1: PSSR Information (top) + Key Activities (bottom) */}
+                <div className="space-y-4">
+                  <SortableWidget id="widget-1">
+                    {({ attributes, listeners }) => (
+                      <PSSRInformationWidget
+                        pssrId={pssrData.id}
+                        asset={pssrData.asset}
+                        projectId={pssrData.projectId}
+                        projectName={pssrData.projectName}
+                        reason={pssrData.reason}
+                        dateInitiated={pssrData.created}
+                        pssrLead={pssrData.initiator}
+                        tier={pssrData.tier}
+                      />
+                    )}
+                  </SortableWidget>
+                  
+                  {widgetSettings.find(w => w.id === 'widget-6')?.visible && (
+                    <SortableWidget id="widget-6">
+                      {({ attributes, listeners }) => (
+                        <PSSRKeyActivitiesWidget
+                          activities={pssrData.keyActivities}
+                          onActivityClick={(type) => console.log('Activity clicked:', type)}
+                        />
+                      )}
+                    </SortableWidget>
+                  )}
+                </div>
 
-                  const widgetMap: Record<string, JSX.Element> = {
-                    'widget-1': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRInformationWidget
-                          pssrId={pssrData.id}
-                          asset={pssrData.asset}
-                          projectId={pssrData.projectId}
-                          projectName={pssrData.projectName}
-                          reason={pssrData.reason}
-                          dateInitiated={pssrData.created}
-                          pssrLead={pssrData.initiator}
-                          tier={pssrData.tier}
+                {/* Column 2: PSSR Scope (top) + Pending Activities (bottom) */}
+                <div className="space-y-4">
+                  <SortableWidget id="widget-2">
+                    {({ attributes, listeners }) => (
+                      <PSSRScopeWidget
+                        description={pssrData.scope}
+                        images={pssrData.scopeImages}
+                      />
+                    )}
+                  </SortableWidget>
+                  
+                  {widgetSettings.find(w => w.id === 'widget-7')?.visible && (
+                    <SortableWidget id="widget-7">
+                      {({ attributes, listeners }) => (
+                        <PSSRPendingTasksWidget
+                          reviewers={pssrData.reviewers}
+                          approvers={pssrData.approvers}
                         />
-                      </div>
-                    ),
-                    'widget-2': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRScopeWidget
-                          description={pssrData.scope}
-                          images={pssrData.scopeImages}
-                        />
-                      </div>
-                    ),
-                    'widget-3': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRItemStatisticsWidget
-                          totalItems={pssrData.statistics.totalItems}
-                          draftItems={pssrData.statistics.draftItems}
-                          underReviewItems={pssrData.statistics.underReviewItems}
-                          approvedItems={pssrData.statistics.approvedItems}
-                        />
-                      </div>
-                    ),
-                    'widget-4': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
+                      )}
+                    </SortableWidget>
+                  )}
+                </div>
+
+                {/* Column 3: Checklist Items (full height) */}
+                <div className="lg:row-span-2">
+                  {widgetSettings.find(w => w.id === 'widget-4')?.visible && (
+                    <SortableWidget id="widget-4">
+                      {({ attributes, listeners }) => (
                         <PSSRProgressWidget
                           overallProgress={pssrData.progress}
                           categoryProgress={pssrData.categoryProgress}
                           onCategoryClick={onNavigateToCategory}
                         />
-                      </div>
-                    ),
-                    'widget-5': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRRecentActivitiesWidget
-                          activities={pssrData.recentActivities}
-                          maxItems={8}
-                        />
-                      </div>
-                    ),
-                    'widget-6': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRKeyActivitiesWidget
-                          activities={pssrData.keyActivities}
-                          onActivityClick={(type) => console.log('Activity clicked:', type)}
-                        />
-                      </div>
-                    ),
-                    'widget-7': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRPendingTasksWidget
-                          reviewers={pssrData.reviewers}
-                          approvers={pssrData.approvers}
-                        />
-                      </div>
-                    ),
-                    'widget-8': (
-                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
-                        <PSSRLinkedPSSRsWidget
-                          linkedPSSRs={pssrData.linkedPSSRs}
-                          onPSSRClick={(id) => console.log('PSSR clicked:', id)}
-                        />
-                      </div>
-                    ),
-                  };
-
-                  return (
-                    <SortableWidget key={widgetId} id={widgetId}>
-                      {({ attributes, listeners }) => (
-                        <div className="h-full relative group">
-                          <div
-                            {...attributes}
-                            {...listeners}
-                            className="absolute -top-2 -left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-primary/10 hover:bg-primary/20 rounded-lg p-2 backdrop-blur-sm"
-                          >
-                            <GripVertical className="h-5 w-5 text-primary" />
-                          </div>
-                          {widgetMap[widgetId]}
-                        </div>
                       )}
                     </SortableWidget>
-                  );
-                })}
+                  )}
+                </div>
+              </div>
+
+              {/* Secondary Row: Item Statistics, Recent Activities, Linked PSSRs */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+                {widgetSettings.find(w => w.id === 'widget-3')?.visible && (
+                  <SortableWidget id="widget-3">
+                    {({ attributes, listeners }) => (
+                      <PSSRItemStatisticsWidget
+                        totalItems={pssrData.statistics.totalItems}
+                        draftItems={pssrData.statistics.draftItems}
+                        underReviewItems={pssrData.statistics.underReviewItems}
+                        approvedItems={pssrData.statistics.approvedItems}
+                      />
+                    )}
+                  </SortableWidget>
+                )}
+
+                {widgetSettings.find(w => w.id === 'widget-5')?.visible && (
+                  <SortableWidget id="widget-5">
+                    {({ attributes, listeners }) => (
+                      <PSSRRecentActivitiesWidget
+                        activities={pssrData.recentActivities}
+                        maxItems={8}
+                      />
+                    )}
+                  </SortableWidget>
+                )}
+
+                {widgetSettings.find(w => w.id === 'widget-8')?.visible && (
+                  <SortableWidget id="widget-8">
+                    {({ attributes, listeners }) => (
+                      <PSSRLinkedPSSRsWidget
+                        linkedPSSRs={pssrData.linkedPSSRs}
+                        onPSSRClick={(pssrId) => console.log('Navigate to PSSR:', pssrId)}
+                      />
+                    )}
+                  </SortableWidget>
+                )}
               </div>
             </SortableContext>
           </DndContext>
