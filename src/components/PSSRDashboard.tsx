@@ -10,6 +10,7 @@ import { PSSRInformationWidget } from '@/components/widgets/PSSRInformationWidge
 import { PSSRScopeWidget } from '@/components/widgets/PSSRScopeWidget';
 import { PSSRItemStatisticsWidget } from '@/components/widgets/PSSRItemStatisticsWidget';
 import { PSSRProgressWidget } from '@/components/widgets/PSSRProgressWidget';
+import { PSSRRecentActivitiesWidget } from '@/components/widgets/PSSRRecentActivitiesWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRPendingTasksWidget } from '@/components/widgets/PSSRPendingTasksWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
@@ -30,7 +31,8 @@ const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Information', visible: true, size: 'medium' },
   { id: 'widget-2', name: 'PSSR Scope', visible: true, size: 'medium' },
   { id: 'widget-3', name: 'Item Statistics', visible: true, size: 'medium' },
-  { id: 'widget-4', name: 'Progress Overview', visible: true, size: 'large' },
+  { id: 'widget-4', name: 'Checklist Items', visible: true, size: 'large' },
+  { id: 'widget-5', name: 'Recent Activities', visible: true, size: 'medium' },
   { id: 'widget-6', name: 'Key Activities', visible: true, size: 'medium' },
   { id: 'widget-7', name: 'Pending Tasks', visible: true, size: 'medium' },
   { id: 'widget-8', name: 'Linked PSSRs', visible: true, size: 'medium' },
@@ -262,6 +264,65 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         progress: 45,
         relationship: 'Dependent'
       }
+    ],
+
+    // Recent activities
+    recentActivities: [
+      {
+        id: 'act-1',
+        type: 'approval' as const,
+        user: {
+          name: 'Dr. Sarah Wilson',
+          avatar: '/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png'
+        },
+        description: 'Approved checklist item "Emergency Shutdown System Verification"',
+        timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
+        category: 'Process Safety'
+      },
+      {
+        id: 'act-2',
+        type: 'comment' as const,
+        user: {
+          name: 'John Smith',
+          avatar: '/lovable-uploads/b229716e-e39e-41cb-91d3-2c30dd517fa8.png'
+        },
+        description: 'Added comment on "Pressure Relief Device Testing" requesting additional documentation',
+        timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
+        category: 'Hardware Integrity'
+      },
+      {
+        id: 'act-3',
+        type: 'upload' as const,
+        user: {
+          name: 'Maria Garcia',
+          avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png'
+        },
+        description: 'Uploaded inspection report for "Piping Integrity Check"',
+        timestamp: new Date(Date.now() - 5 * 3600000).toISOString(),
+        category: 'Documentation'
+      },
+      {
+        id: 'act-4',
+        type: 'update' as const,
+        user: {
+          name: 'Ahmed Al-Rashid',
+          avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png'
+        },
+        description: 'Updated status of "Control System Functional Test" to Under Review',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        category: 'Organization'
+      },
+      {
+        id: 'act-5',
+        type: 'assignment' as const,
+        user: {
+          name: 'Omar Hassan',
+          avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png'
+        },
+        description: 'Assigned "Fire & Gas Detection System Review" to Engineering Team',
+        timestamp: new Date(Date.now() - 2 * 86400000).toISOString(),
+        category: 'Health & Safety'
+      }
     ]
   };
 
@@ -318,17 +379,23 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   return (
     <div className="min-h-screen flex w-full relative overflow-hidden">
-      {/* Modern Background */}
-      <div className="absolute inset-0 bg-background">
-        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+      {/* Background matching home page */}
+      <div className="absolute inset-0 bg-background overflow-hidden">
+        <div className="absolute inset-0 opacity-30 dark:opacity-20">
           <div 
             className="absolute inset-0 animate-gradient-shift-morph"
             style={{
-              background: 'radial-gradient(at 20% 30%, hsl(210, 25%, 88%) 0%, transparent 40%), radial-gradient(at 80% 20%, hsl(280, 22%, 87%) 0%, transparent 40%), radial-gradient(at 40% 80%, hsl(200, 28%, 89%) 0%, transparent 40%)',
-              filter: 'blur(50px)',
+              background: 'radial-gradient(at 20% 30%, hsl(var(--primary) / 0.15) 0%, transparent 50%), radial-gradient(at 80% 20%, hsl(var(--accent) / 0.1) 0%, transparent 50%), radial-gradient(at 40% 80%, hsl(var(--primary) / 0.12) 0%, transparent 50%)',
+              filter: 'blur(80px)',
             }}
           />
         </div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.03]" 
+          style={{
+            backgroundImage: 'linear-gradient(hsl(var(--foreground) / 0.1) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
       </div>
 
       {/* ORSH Sidebar */}
@@ -401,7 +468,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
             <SortableContext items={widgetOrder.filter(id => 
               widgetSettings.find(w => w.id === id)?.visible
             )} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {widgetOrder.filter(id => 
                   widgetSettings.find(w => w.id === id)?.visible
                 ).map((widgetId) => {
@@ -447,6 +514,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                           overallProgress={pssrData.progress}
                           categoryProgress={pssrData.categoryProgress}
                           onCategoryClick={onNavigateToCategory}
+                        />
+                      </div>
+                    ),
+                    'widget-5': (
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
+                        <PSSRRecentActivitiesWidget
+                          activities={pssrData.recentActivities}
+                          maxItems={8}
                         />
                       </div>
                     ),

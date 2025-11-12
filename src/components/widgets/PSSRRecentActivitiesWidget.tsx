@@ -1,247 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  CheckCircle, 
-  Clock, 
-  MessageSquare, 
-  FileText, 
-  UserPlus, 
-  Edit,
-  TrendingUp
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Clock, FileText, CheckCircle, MessageSquare, Upload, UserPlus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface ActivityItem {
+interface Activity {
   id: string;
-  type: 'approval' | 'comment' | 'update' | 'created' | 'assigned' | 'status_change';
-  pssrId: string;
-  projectName: string;
+  type: 'comment' | 'approval' | 'update' | 'upload' | 'assignment';
   user: {
     name: string;
-    avatar: string;
+    avatar?: string;
   };
-  message: string;
-  timestamp: Date;
-  metadata?: {
-    oldValue?: string;
-    newValue?: string;
-  };
+  description: string;
+  timestamp: string;
+  category?: string;
 }
 
 interface PSSRRecentActivitiesWidgetProps {
-  limit?: number;
-  isExpanded?: boolean;
-  isVisible?: boolean;
-  onToggleExpand?: () => void;
-  onToggleVisibility?: () => void;
-  dragAttributes?: any;
-  dragListeners?: any;
+  activities: Activity[];
+  maxItems?: number;
 }
 
-export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({ 
-  limit = 6,
-  isExpanded,
-  isVisible,
-  onToggleExpand,
-  onToggleVisibility,
-  dragAttributes,
-  dragListeners 
+export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({
+  activities,
+  maxItems = 10
 }) => {
-  const navigate = useNavigate();
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-
-  // Mock activity data - in production, this would come from Supabase realtime
-  useEffect(() => {
-    const mockActivities: ActivityItem[] = [
-      {
-        id: '1',
-        type: 'approval',
-        pssrId: 'PSSR-2024-001',
-        projectName: 'HM Additional Compressors',
-        user: {
-          name: 'Sarah Johnson',
-          avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
-        },
-        message: 'approved the safety checklist',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-      },
-      {
-        id: '2',
-        type: 'comment',
-        pssrId: 'PSSR-2024-004',
-        projectName: 'Majnoon New Gas Tie-in',
-        user: {
-          name: 'Omar Al-Basri',
-          avatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face'
-        },
-        message: 'added a comment: "Need to review pressure test results before approval"',
-        timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
-      },
-      {
-        id: '3',
-        type: 'status_change',
-        pssrId: 'PSSR-2024-002',
-        projectName: 'LPG Unit 12.1 Rehabilitation',
-        user: {
-          name: 'Ahmed Al-Rashid',
-          avatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
-        },
-        message: 'changed status',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        metadata: {
-          oldValue: 'Draft',
-          newValue: 'Under Review'
-        }
-      },
-      {
-        id: '4',
-        type: 'update',
-        pssrId: 'PSSR-2024-001',
-        projectName: 'HM Additional Compressors',
-        user: {
-          name: 'Mohammed Hassan',
-          avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
-        },
-        message: 'updated equipment inspection results',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-      },
-      {
-        id: '5',
-        type: 'assigned',
-        pssrId: 'PSSR-2024-003',
-        projectName: 'UQ Jetty 2 Export Terminal',
-        user: {
-          name: 'Admin User',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-        },
-        message: 'assigned John Davis as reviewer',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
-      },
-      {
-        id: '6',
-        type: 'created',
-        pssrId: 'PSSR-2024-005',
-        projectName: 'New Pipeline Installation',
-        user: {
-          name: 'Sarah Johnson',
-          avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
-        },
-        message: 'created a new PSSR',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-      }
-    ];
-
-    setActivities(mockActivities.slice(0, limit));
-  }, [limit]);
-
-  const getActivityIcon = (type: ActivityItem['type']) => {
+  const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'approval':
-        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'comment':
-        return <MessageSquare className="h-4 w-4 text-primary" />;
+        return <MessageSquare className="h-4 w-4 text-blue-600" />;
+      case 'approval':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'update':
-        return <Edit className="h-4 w-4 text-warning" />;
-      case 'created':
-        return <FileText className="h-4 w-4 text-primary" />;
-      case 'assigned':
-        return <UserPlus className="h-4 w-4 text-primary" />;
-      case 'status_change':
-        return <TrendingUp className="h-4 w-4 text-warning" />;
+        return <FileText className="h-4 w-4 text-orange-600" />;
+      case 'upload':
+        return <Upload className="h-4 w-4 text-purple-600" />;
+      case 'assignment':
+        return <UserPlus className="h-4 w-4 text-cyan-600" />;
       default:
-        return <Clock className="h-4 w-4 text-muted-foreground" />;
+        return <FileText className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const getActivityColor = (type: ActivityItem['type']) => {
+  const getActivityColor = (type: string) => {
     switch (type) {
-      case 'approval':
-        return 'bg-success/10 border-success/20';
       case 'comment':
-        return 'bg-primary/10 border-primary/20';
+        return 'bg-blue-100 border-blue-200';
+      case 'approval':
+        return 'bg-green-100 border-green-200';
       case 'update':
-        return 'bg-warning/10 border-warning/20';
-      case 'created':
-        return 'bg-primary/10 border-primary/20';
-      case 'assigned':
-        return 'bg-primary/10 border-primary/20';
-      case 'status_change':
-        return 'bg-warning/10 border-warning/20';
+        return 'bg-orange-100 border-orange-200';
+      case 'upload':
+        return 'bg-purple-100 border-purple-200';
+      case 'assignment':
+        return 'bg-cyan-100 border-cyan-200';
       default:
-        return 'bg-muted/10 border-border';
+        return 'bg-muted border-border';
     }
   };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const displayedActivities = activities.slice(0, maxItems);
 
   return (
-    <WidgetCard 
-      title="Recent Activity" 
-      className="h-full flex flex-col"
-      isExpanded={isExpanded}
-      isVisible={isVisible}
-      onToggleExpand={onToggleExpand}
-      onToggleVisibility={onToggleVisibility}
-      dragAttributes={dragAttributes}
-      dragListeners={dragListeners}
-    >
-      <div className="space-y-1.5 overflow-y-auto max-h-[240px] pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-        {activities.slice(0, 3).map((activity) => (
+    <WidgetCard title="Recent Activities">
+      <div className="space-y-3">
+        {displayedActivities.map((activity) => (
           <div
             key={activity.id}
-            onClick={() => navigate(`/pssr/${activity.pssrId}`)}
-            className="p-1.5 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg border border-transparent hover:border-border/50"
+            className="group flex gap-3 p-3 rounded-lg border border-border/40 hover:border-primary/40 hover:bg-accent/5 transition-all animate-fade-in"
           >
-            <div className="flex gap-1.5">
-              <Avatar className="h-6 w-6 flex-shrink-0">
-                <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
-                <AvatarFallback className="text-xs">{activity.user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+            <div className={cn(
+              'flex items-center justify-center w-10 h-10 rounded-full border',
+              getActivityColor(activity.type)
+            )}>
+              {getActivityIcon(activity.type)}
+            </div>
 
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <div className="flex items-start justify-between gap-1.5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs leading-tight">
-                      <span className="font-medium text-foreground">{activity.user.name}</span>
-                      {' '}
-                      <span className="text-muted-foreground">{activity.message}</span>
-                    </p>
-                  </div>
-                  <div className={`p-0.5 rounded-md border ${getActivityColor(activity.type)} flex-shrink-0`}>
-                    {getActivityIcon(activity.type)}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 flex-wrap">
-                  <Badge variant="outline" className="text-xs h-4 px-1">
-                    {activity.pssrId}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {activity.projectName}
-                  </span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
+                    <AvatarFallback className="text-xs">
+                      {activity.user.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {activity.user.name}
                   </span>
                 </div>
-
-                {activity.metadata?.oldValue && activity.metadata?.newValue && (
-                  <div className="flex items-center gap-1 text-xs">
-                    <Badge variant="outline" className="bg-muted/30 h-4 px-1">
-                      {activity.metadata.oldValue}
-                    </Badge>
-                    <span className="text-muted-foreground">→</span>
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 h-4 px-1">
-                      {activity.metadata.newValue}
-                    </Badge>
-                  </div>
-                )}
+                <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                  <Clock className="h-3 w-3" />
+                  {formatTimestamp(activity.timestamp)}
+                </div>
               </div>
+
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {activity.description}
+              </p>
+
+              {activity.category && (
+                <Badge variant="outline" className="mt-2 text-xs">
+                  {activity.category}
+                </Badge>
+              )}
             </div>
           </div>
         ))}
+
+        {activities.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No recent activities</p>
+          </div>
+        )}
       </div>
     </WidgetCard>
   );

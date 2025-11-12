@@ -776,7 +776,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                       {key === 'quickActions' && widgetVisibility.quickActions && <PSSRQuickActionsWidget onCreatePSSR={() => setActiveView('create')} onManageChecklist={() => setActiveView('manage-checklist')} onChatWithORSH={() => {
                     onBack();
                   }} isExpanded={widgetExpanded.quickActions} isVisible={widgetVisibility.quickActions} onToggleExpand={() => handleToggleWidgetExpanded('quickActions')} onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')} dragAttributes={attributes} dragListeners={listeners} />}
-                      {key === 'recentActivities' && widgetVisibility.recentActivities && <PSSRRecentActivitiesWidget isExpanded={widgetExpanded.recentActivities} isVisible={widgetVisibility.recentActivities} onToggleExpand={() => handleToggleWidgetExpanded('recentActivities')} onToggleVisibility={() => handleToggleWidgetVisibility('recentActivities')} dragAttributes={attributes} dragListeners={listeners} />}
+                      {key === 'recentActivities' && widgetVisibility.recentActivities && <div className="p-4 text-muted-foreground">Recent Activities widget moved to PSSR Dashboard</div>}
                       {key === 'reviews' && widgetVisibility.reviews && <PSSRReviewsWidget pssrs={pssrList} filteredPSSRs={filteredPSSRs} searchTerm={searchTerm} onSearchChange={handleSearchChange} onSelectPSSR={handleViewDetails} viewMode={viewMode === 'timeline' ? 'card' : viewMode} onViewModeChange={mode => setViewMode(mode)} filters={filters} onToggleFilter={toggleFilter} onDateChange={handleDateChange} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} onViewDetails={handleViewDetails} getPriorityColor={getPriorityColor} getStatusIcon={getStatusIcon} getTeamStatusColor={getTeamStatusColor} getRiskLevelColor={getRiskLevelColor} pinnedPSSRs={pinnedPSSRs} onTogglePin={handleTogglePin} onStatusChange={(pssrId, newStatus) => {
                     toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
                   }} onPSSROrderChange={setPssrOrder} pssrOrder={pssrOrder} isExpanded={widgetExpanded.reviews} isVisible={widgetVisibility.reviews} onToggleExpand={() => handleToggleWidgetExpanded('reviews')} onToggleVisibility={() => handleToggleWidgetVisibility('reviews')} dragAttributes={attributes} dragListeners={listeners} />}
@@ -798,7 +798,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                     <PSSRQuickActionsWidget onCreatePSSR={() => {}} onManageChecklist={() => {}} onChatWithORSH={() => {}} isExpanded={widgetExpanded.quickActions} isVisible={widgetVisibility.quickActions} />
                   </div>}
                 {activeWidgetId === 'recentActivities' && <div className="pointer-events-none">
-                    <PSSRRecentActivitiesWidget isExpanded={widgetExpanded.recentActivities} isVisible={widgetVisibility.recentActivities} />
+                    <div className="p-4 text-muted-foreground">Recent Activities</div>
                   </div>}
                 {activeWidgetId === 'reviews' && <div className="pointer-events-none h-[600px] w-full">
                     <div className="h-full w-full bg-card border border-primary/50 rounded-xl p-4 flex items-center justify-center">
