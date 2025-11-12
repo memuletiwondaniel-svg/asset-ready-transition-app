@@ -695,6 +695,47 @@ export type Database = {
           },
         ]
       }
+      orp_comment_attachments: {
+        Row: {
+          comment_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_comment_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "orp_deliverable_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orp_deliverable_attachments: {
         Row: {
           created_at: string
@@ -729,6 +770,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orp_deliverable_attachments_plan_deliverable_id_fkey"
+            columns: ["plan_deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plan_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_deliverable_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          mentions: string[] | null
+          parent_comment_id: string | null
+          plan_deliverable_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          parent_comment_id?: string | null
+          plan_deliverable_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          parent_comment_id?: string | null
+          plan_deliverable_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_deliverable_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "orp_deliverable_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orp_deliverable_comments_plan_deliverable_id_fkey"
             columns: ["plan_deliverable_id"]
             isOneToOne: false
             referencedRelation: "orp_plan_deliverables"

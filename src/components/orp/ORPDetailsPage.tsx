@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, GanttChart } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, Users as UsersIcon } from 'lucide-react';
 import { useORPPlanDetails } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
@@ -14,12 +14,15 @@ import { ORPApprovalPanel } from './ORPApprovalPanel';
 import { ORPResourcesPanel } from './ORPResourcesPanel';
 import { ORPExportPDF } from './ORPExportPDF';
 import { ORPActivityTimeline } from './ORPActivityTimeline';
+import { ORPComparisonView } from './ORPComparisonView';
+import { ORPResourceDashboard } from './ORPResourceDashboard';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('kanban');
+  const [showComparison, setShowComparison] = useState(false);
 
   const { data: plan, isLoading } = useORPPlanDetails(id || '');
   useORPRealtime(id);
@@ -94,7 +97,18 @@ export const ORPDetailsPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowComparison(true)}
+                className="gap-2"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                Compare ORPs
+              </Button>
+              <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
+            </div>
           </div>
         </div>
 
@@ -115,7 +129,12 @@ export const ORPDetailsPage: React.FC = () => {
                   Activity
                 </TabsTrigger>
                 <TabsTrigger value="resources" className="gap-2">
+                  <UsersIcon className="w-4 h-4" />
                   Resources
+                </TabsTrigger>
+                <TabsTrigger value="resource-dashboard" className="gap-2">
+                  <UsersIcon className="w-4 h-4" />
+                  Dashboard
                 </TabsTrigger>
                 <TabsTrigger value="approvals" className="gap-2">
                   Approvals
@@ -150,6 +169,10 @@ export const ORPDetailsPage: React.FC = () => {
                 <ORPResourcesPanel planId={plan.id} resources={plan.resources || []} />
               </TabsContent>
 
+              <TabsContent value="resource-dashboard" className="h-full m-0 p-6">
+                <ORPResourceDashboard />
+              </TabsContent>
+
               <TabsContent value="approvals" className="h-full m-0 p-6">
                 <ORPApprovalPanel planId={plan.id} approvals={plan.approvals || []} />
               </TabsContent>
@@ -157,6 +180,11 @@ export const ORPDetailsPage: React.FC = () => {
           </Tabs>
         </div>
       </div>
+
+      <ORPComparisonView
+        open={showComparison}
+        onOpenChange={setShowComparison}
+      />
     </div>
   );
 };

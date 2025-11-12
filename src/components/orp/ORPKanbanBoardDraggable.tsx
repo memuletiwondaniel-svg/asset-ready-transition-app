@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
+import { ORPBulkActionsToolbar } from './ORPBulkActionsToolbar';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -12,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ORPKanbanBoardProps {
   planId: string;
@@ -21,9 +23,11 @@ interface ORPKanbanBoardProps {
 interface DeliverableCardProps {
   item: any;
   onClick: () => void;
+  isSelected: boolean;
+  onSelect: (id: string, selected: boolean) => void;
 }
 
-const DeliverableCard: React.FC<DeliverableCardProps> = ({ item, onClick }) => {
+const DeliverableCard: React.FC<DeliverableCardProps> = ({ item, onClick, isSelected, onSelect }) => {
   const {
     attributes,
     listeners,
@@ -51,63 +55,76 @@ const DeliverableCard: React.FC<DeliverableCardProps> = ({ item, onClick }) => {
       {...listeners}
       className={cn(
         "p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all relative",
-        unmetDependencies && unmetDependencies.length > 0 && "border-amber-500 border-2"
+        unmetDependencies && unmetDependencies.length > 0 && "border-amber-500 border-2",
+        isSelected && "ring-2 ring-primary bg-primary/5"
       )}
-      onClick={onClick}
     >
-      {unmetDependencies && unmetDependencies.length > 0 && (
-        <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-1 text-xs flex items-center justify-center w-5 h-5 font-bold z-10">
-          🔒
-        </div>
-      )}
+      <div className="flex items-start justify-between mb-2">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={(checked) => {
+            onSelect(item.id, checked as boolean);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-1"
+        />
+        <div className="flex-1 ml-2" onClick={onClick}>
+          {unmetDependencies && unmetDependencies.length > 0 && (
+            <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-1 text-xs flex items-center justify-center w-5 h-5 font-bold z-10">
+              🔒
+            </div>
+          )}
 
-      <h4 className="font-medium text-sm mb-2 line-clamp-2">
-        {item.deliverable?.name}
-      </h4>
+          <h4 className="font-medium text-sm mb-2 line-clamp-2">
+            {item.deliverable?.name}
+          </h4>
 
-      {unmetDependencies && unmetDependencies.length > 0 && (
-        <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
-          <span className="font-semibold">Blocked:</span>
-          <span>{unmetDependencies.length} prerequisite(s)</span>
-        </div>
-      )}
+          {unmetDependencies && unmetDependencies.length > 0 && (
+            <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
+              <span className="font-semibold">Blocked:</span>
+              <span>{unmetDependencies.length} prerequisite(s)</span>
+            </div>
+          )}
       
-      {item.estimated_manhours && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-          <Clock className="w-3 h-3" />
-          <span>{item.estimated_manhours} hrs</span>
-        </div>
-      )}
+          {item.estimated_manhours && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <Clock className="w-3 h-3" />
+              <span>{item.estimated_manhours} hrs</span>
+            </div>
+          )}
 
-      {item.start_date && item.end_date && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-          <Calendar className="w-3 h-3" />
-          <span>
-            {format(new Date(item.start_date), 'MMM dd')} - {format(new Date(item.end_date), 'MMM dd')}
-          </span>
-        </div>
-      )}
+          {item.start_date && item.end_date && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+              <Calendar className="w-3 h-3" />
+              <span>
+                {format(new Date(item.start_date), 'MMM dd')} - {format(new Date(item.end_date), 'MMM dd')}
+              </span>
+            </div>
+          )}
 
-      {item.completion_percentage > 0 && (
-        <div className="mt-2">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium">{item.completion_percentage}%</span>
-          </div>
-          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${item.completion_percentage}%` }}
-            />
-          </div>
+          {item.completion_percentage > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium">{item.completion_percentage}%</span>
+              </div>
+              <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${item.completion_percentage}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </Card>
   );
 };
 
 export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId, deliverables }) => {
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  const [selectedDeliverables, setSelectedDeliverables] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { updateDeliverable } = useORPPlans();
   const { toast } = useToast();
@@ -189,6 +206,38 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
 
   const activeDeliverable = activeId ? deliverables.find(d => d.id === activeId) : null;
 
+  const handleBulkStatusUpdate = (status: string) => {
+    selectedDeliverables.forEach(id => {
+      updateDeliverable({
+        deliverableId: id,
+        status: status as any
+      });
+    });
+    setSelectedDeliverables([]);
+    toast({
+      title: 'Success',
+      description: `Updated ${selectedDeliverables.length} deliverable(s)`
+    });
+  };
+
+  const handleBulkResourceAssign = (userId: string) => {
+    // This would require extending the updateDeliverable mutation
+    toast({
+      title: 'Info',
+      description: 'Resource assignment requires individual deliverable updates'
+    });
+    setSelectedDeliverables([]);
+  };
+
+  const handleBulkDateSet = (startDate: string, endDate: string) => {
+    // Note: Date updates would require separate API endpoint
+    setSelectedDeliverables([]);
+    toast({
+      title: 'Info',
+      description: 'Bulk date updates require individual deliverable edits'
+    });
+  };
+
   const DroppableColumn = ({ column, items }: { column: any; items: any[] }) => {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -216,6 +265,14 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
                   key={item.id}
                   item={item}
                   onClick={() => setSelectedDeliverable(item)}
+                  isSelected={selectedDeliverables.includes(item.id)}
+                  onSelect={(id, selected) => {
+                    if (selected) {
+                      setSelectedDeliverables(prev => [...prev, id]);
+                    } else {
+                      setSelectedDeliverables(prev => prev.filter(d => d !== id));
+                    }
+                  }}
                 />
               ))}
 
@@ -278,6 +335,14 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
           planId={planId}
         />
       )}
+
+      <ORPBulkActionsToolbar
+        selectedCount={selectedDeliverables.length}
+        onUpdateStatus={handleBulkStatusUpdate}
+        onAssignResource={handleBulkResourceAssign}
+        onSetDates={handleBulkDateSet}
+        onClearSelection={() => setSelectedDeliverables([])}
+      />
     </DndContext>
   );
 };
