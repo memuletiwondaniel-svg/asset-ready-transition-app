@@ -7,10 +7,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban, MessageSquare } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
 
 interface NavigationItem {
   label: string;
@@ -63,6 +64,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const {
     theme,
     setTheme
@@ -247,6 +249,12 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Ask ORSH AI Row */}
+          <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={() => setChatOpen(true)} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Ask ORSH AI">
+            <MessageSquare className="w-4 h-4" />
+            {!isSidebarCollapsed && <span className="ml-2">Ask ORSH AI</span>}
+          </Button>
+
           {/* Widgets Row */}
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowWidgets} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Widgets">
             <LayoutGrid className="w-4 h-4" />
@@ -300,5 +308,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       // Force parent component to refresh profile data
       window.location.reload();
     }} />
+
+      {/* ORSH Chat Dialog */}
+      <ORSHChatDialog open={chatOpen} onOpenChange={setChatOpen} />
     </div>;
 };
