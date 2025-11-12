@@ -118,7 +118,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   const currentFacts = bgcFactsSets[currentImageIndex] || bgcFactsSets[0];
 
   return (
-    <div className="fixed inset-0 -z-10">
+    <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
       {images.map((image, index) => (
         <div
           key={index}
