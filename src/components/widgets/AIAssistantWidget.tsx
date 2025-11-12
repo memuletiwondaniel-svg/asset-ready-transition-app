@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Sparkles, MessageSquare, FileText, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
 
 interface AIAssistantWidgetProps {
   settings: Record<string, any>;
 }
 
 export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }) => {
+  const [chatOpen, setChatOpen] = useState(false);
+  const [initialPrompt, setInitialPrompt] = useState<string>('');
+
   const quickPrompts = [
     {
       id: 1,
@@ -29,6 +33,11 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }
     }
   ];
 
+  const handlePromptClick = (prompt: string) => {
+    setInitialPrompt(prompt);
+    setChatOpen(true);
+  };
+
   return (
     <>
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
@@ -45,6 +54,7 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }
             <Button
               key={prompt.id}
               variant="outline"
+              onClick={() => handlePromptClick(prompt.prompt)}
               className="w-full justify-start gap-3 h-auto py-3 hover:bg-primary/5 transition-all"
               style={{ animationDelay: `${idx * 100}ms` }}
             >
@@ -58,6 +68,12 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }
           );
         })}
       </CardContent>
+
+      <ORSHChatDialog 
+        open={chatOpen} 
+        onOpenChange={setChatOpen}
+        initialMessage={initialPrompt}
+      />
     </>
   );
 };

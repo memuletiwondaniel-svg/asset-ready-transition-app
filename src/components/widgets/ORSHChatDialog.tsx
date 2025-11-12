@@ -31,6 +31,7 @@ interface ORSHChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUnreadCountChange?: (count: number) => void;
+  initialMessage?: string;
 }
 
 const SUGGESTED_PROMPTS = [
@@ -42,7 +43,7 @@ const SUGGESTED_PROMPTS = [
   "How do I assign tasks in a PSSR?",
 ];
 
-export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChange, onUnreadCountChange }) => {
+export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChange, onUnreadCountChange, initialMessage }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -58,6 +59,13 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Handle initial message when dialog opens
+  useEffect(() => {
+    if (open && initialMessage) {
+      setInput(initialMessage);
+    }
+  }, [open, initialMessage]);
 
   useEffect(() => {
     if (scrollRef.current) {
