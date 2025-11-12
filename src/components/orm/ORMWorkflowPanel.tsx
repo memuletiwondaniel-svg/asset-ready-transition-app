@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowRight, CheckCircle2, Clock, FileText } from 'lucide-react';
+import { ORMWorkflowCommentsPanel } from './ORMWorkflowCommentsPanel';
+import { useORMDeliverables } from '@/hooks/useORMDeliverables';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface ORMWorkflowPanelProps {
   planId: string;
@@ -15,6 +18,8 @@ export const ORMWorkflowPanel: React.FC<ORMWorkflowPanelProps> = ({
   planId,
   deliverables
 }) => {
+  const [expandedDeliverable, setExpandedDeliverable] = useState<string | null>(null);
+  const { submitForReview } = useORMDeliverables();
   const getDeliverableLabel = (type: string) => {
     const labels: Record<string, string> = {
       ASSET_REGISTER: 'Asset Register Build',
@@ -116,21 +121,35 @@ export const ORMWorkflowPanel: React.FC<ORMWorkflowPanelProps> = ({
                 })}
               </div>
 
-              {deliverable.workflow_stage !== 'APPROVED' && (
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    Add Comment
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    Attach Document
-                  </Button>
-                  {deliverable.progress_percentage === 100 && deliverable.workflow_stage === 'IN_PROGRESS' && (
-                    <Button size="sm">
-                      Submit for Review
-                    </Button>
-                  )}
-                </div>
-              )}
+              <Collapsible
+                open={expandedDeliverable === deliverable.id}
+                onOpenChange={(open) => setExpandedDeliverable(open ? deliverable.id : null)}
+              >
+                {deliverable.workflow_stage !== 'APPROVED' && (
+                  <div className="flex gap-2">
+                    <CollapsibleTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        {expandedDeliverable === deliverable.id ? 'Hide' : 'Show'} Comments
+                      </Button>
+                    </CollapsibleTrigger>
+                    {deliverable.progress_percentage === 100 && deliverable.workflow_stage === 'IN_PROGRESS' && (
+                      <Button 
+                        size="sm"
+                        onClick={() => submitForReview(deliverable.id)}
+                      >
+                        Submit for Review
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
+                <CollapsibleContent className="mt-4">
+                  <ORMWorkflowCommentsPanel
+                    deliverableId={deliverable.id}
+                    workflowStage={deliverable.workflow_stage}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </CardContent>
         </Card>
