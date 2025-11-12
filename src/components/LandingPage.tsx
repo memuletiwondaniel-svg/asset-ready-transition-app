@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
-import BackgroundSlideshow from '@/components/BackgroundSlideshow';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
@@ -774,10 +773,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     gradient: 'from-orange-500 to-orange-600',
     bgTone: 'bg-orange-500/5'
   }];
-  return <AnimatedBackground transparent>
-      {/* Background Slideshow */}
-      <BackgroundSlideshow showFunFacts={false} />
-      
+  return <AnimatedBackground>
       {/* Particle Effects */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <AnimatedParticles />

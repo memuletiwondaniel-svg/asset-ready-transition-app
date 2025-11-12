@@ -5,10 +5,9 @@ import { cn } from '@/lib/utils';
 interface AnimatedBackgroundProps {
   children: React.ReactNode;
   className?: string;
-  transparent?: boolean;
 }
 
-export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children, className, transparent = false }) => {
+export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children, className }) => {
   const { config } = useBackgroundTheme();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -25,37 +24,31 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
   }, []);
 
   return (
-    <div className={cn(
-      `min-h-screen relative overflow-hidden animate-smooth-in`,
-      !transparent && `bg-gradient-to-br ${config.baseGradient}`,
-      className
-    )}>
-      {/* Animated Background Elements with Mouse Following - Only show if not transparent */}
-      {!transparent && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div 
-            className={`absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r ${config.gradients.orb1} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
-            style={{ 
-              transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`,
-              animationDelay: '0ms'
-            }}
-          />
-          <div 
-            className={`absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l ${config.gradients.orb2} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
-            style={{ 
-              transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * 15}px)`,
-              animationDelay: '700ms'
-            }}
-          />
-          <div 
-            className={`absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t ${config.gradients.orb3} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
-            style={{ 
-              transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * -20}px)`,
-              animationDelay: '1400ms'
-            }}
-          />
-        </div>
-      )}
+    <div className={cn(`min-h-screen bg-gradient-to-br ${config.baseGradient} relative overflow-hidden animate-smooth-in`, className)}>
+      {/* Animated Background Elements with Mouse Following */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className={`absolute top-0 -left-4 w-96 h-96 bg-gradient-to-r ${config.gradients.orb1} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
+          style={{ 
+            transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`,
+            animationDelay: '0ms'
+          }}
+        />
+        <div 
+          className={`absolute top-0 -right-4 w-96 h-96 bg-gradient-to-l ${config.gradients.orb2} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
+          style={{ 
+            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * 15}px)`,
+            animationDelay: '700ms'
+          }}
+        />
+        <div 
+          className={`absolute -bottom-8 left-20 w-96 h-96 bg-gradient-to-t ${config.gradients.orb3} rounded-full mix-blend-multiply filter blur-3xl animate-pulse transition-transform duration-1000 ease-out`}
+          style={{ 
+            transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * -20}px)`,
+            animationDelay: '1400ms'
+          }}
+        />
+      </div>
       
       <div className="relative z-10">
         {children}
