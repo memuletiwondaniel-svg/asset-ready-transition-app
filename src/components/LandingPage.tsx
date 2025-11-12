@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus, Trash2, Link2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -24,13 +25,14 @@ import { RecentActivityWidget } from '@/components/widgets/RecentActivityWidget'
 import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
 import { OrshSidebar } from '@/components/OrshSidebar';
+import { DraggableTask } from '@/components/DraggableTask';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, rectSortingStrategy, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface WidgetConfig {
@@ -116,6 +118,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [newTaskType, setNewTaskType] = useState('action');
   const [newTaskPriority, setNewTaskPriority] = useState('Medium');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [showDependencyDialog, setShowDependencyDialog] = useState(false);
+  const [dependencyTaskId, setDependencyTaskId] = useState<string>('');
+  const [dependsOnTaskId, setDependsOnTaskId] = useState<string>('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -240,9 +246,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   }, []);
   const {
     tasks,
+    dependencies,
     loading: tasksLoading,
     updateTaskStatus,
-    deleteTask
+    deleteTask,
+    reorderTasks,
+    addDependency,
+    removeDependency,
+    bulkUpdateStatus,
+    bulkDelete
   } = useUserTasks();
   
   // Scroll to bottom when new messages arrive
@@ -610,6 +622,62 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         description: "Failed to create task",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleTaskDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = filteredAndSortedTasks.findIndex(t => t.id === active.id);
+      const newIndex = filteredAndSortedTasks.findIndex(t => t.id === over.id);
+      
+      const reordered = arrayMove(filteredAndSortedTasks, oldIndex, newIndex);
+      reorderTasks(reordered);
+    }
+  };
+
+  const handleTaskSelect = (taskId: string, checked: boolean) => {
+    const newSelected = new Set(selectedTasks);
+    if (checked) {
+      newSelected.add(taskId);
+    } else {
+      newSelected.delete(taskId);
+    }
+    setSelectedTasks(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(new Set(filteredAndSortedTasks.map(t => t.id)));
+    } else {
+      setSelectedTasks(new Set());
+    }
+  };
+
+  const handleBulkComplete = async () => {
+    await bulkUpdateStatus(Array.from(selectedTasks), 'completed');
+    setSelectedTasks(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Are you sure you want to delete ${selectedTasks.size} task(s)?`)) {
+      await bulkDelete(Array.from(selectedTasks));
+      setSelectedTasks(new Set());
+    }
+  };
+
+  const handleManageDependencies = (taskId: string) => {
+    setDependencyTaskId(taskId);
+    setShowDependencyDialog(true);
+  };
+
+  const handleAddDependency = async () => {
+    if (dependencyTaskId && dependsOnTaskId) {
+      await addDependency(dependencyTaskId, dependsOnTaskId);
+      setShowDependencyDialog(false);
+      setDependencyTaskId('');
+      setDependsOnTaskId('');
     }
   };
 
@@ -1166,106 +1234,94 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   </Select>
                 </div>
               </div>
+              
+              {/* Bulk Actions Toolbar */}
+              {selectedTasks.size > 0 && (
+                <div className="border-b border-border/40 p-3 bg-primary/5 flex items-center justify-between animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedTasks.size === filteredAndSortedTasks.length}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <span className="text-sm font-medium">
+                      {selectedTasks.size} task(s) selected
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkComplete}
+                      className="h-8 text-xs"
+                    >
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Complete All
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkDelete}
+                      className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete All
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedTasks(new Set())}
+                      className="h-8 text-xs"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-16rem)]">
-                {tasksLoading ? <div className="flex items-center justify-center py-8">
+                {tasksLoading ? (
+                  <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div> : filteredAndSortedTasks.map(task => {
-                    // Priority color coding
-                    const priorityColors = {
-                      High: {
-                        border: 'border-l-red-500',
-                        bg: 'bg-red-500/5',
-                        dot: 'bg-red-500',
-                        badge: 'bg-red-500/10 text-red-600 border-red-500/20'
-                      },
-                      Medium: {
-                        border: 'border-l-yellow-500',
-                        bg: 'bg-yellow-500/5',
-                        dot: 'bg-yellow-500',
-                        badge: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
-                      },
-                      Low: {
-                        border: 'border-l-green-500',
-                        bg: 'bg-green-500/5',
-                        dot: 'bg-green-500',
-                        badge: 'bg-green-500/10 text-green-600 border-green-500/20'
-                      }
-                    };
-                    const colors = priorityColors[task.priority as keyof typeof priorityColors] || priorityColors.Low;
-                    
-                    return (
-                      <Card key={task.id} className={`glass-subtle hover:shadow-lg transition-all cursor-pointer group relative border-l-4 ${colors.border} ${colors.bg} overflow-hidden`}>
-                        {/* Animated accent line */}
-                        <div className={`absolute top-0 left-0 w-1 h-full ${colors.dot} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                        
-                        <CardContent className="p-3 space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 flex-1">
-                              {/* Priority dot indicator */}
-                              <div className={`w-2 h-2 rounded-full ${colors.dot} flex-shrink-0 animate-pulse`} />
-                              <h4 className="font-medium text-sm flex-1">{task.title}</h4>
-                            </div>
-                            <Badge className={`text-xs border ${colors.badge}`}>
-                              {task.priority}
-                            </Badge>
-                          </div>
-                        {task.description && <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            Due: {task.due_date ? formatDistanceToNow(new Date(task.due_date), {
-                        addSuffix: true
-                      }) : 'No deadline'}
-                          </span>
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          {task.type === 'approval' ? (
-                            <>
-                              <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => updateTaskStatus(task.id, 'completed')}>
-                                Approve
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="flex-1 h-8 text-xs font-medium hover:bg-destructive/10 transition-all" 
-                                onClick={() => updateTaskStatus(task.id, 'cancelled')}
-                              >
-                                Reject
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button 
-                                size="sm" 
-                                variant="default" 
-                                className="flex-1 h-8 text-xs font-medium shadow-sm hover:shadow-md transition-all" 
-                                onClick={() => {
-                                  setTaskToDelete(task.id);
-                                  setTaskAction('complete');
-                                }}
-                              >
-                                <Check className="w-3.5 h-3.5 mr-1.5" />
-                                Complete
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="flex-1 h-8 text-xs font-medium hover:bg-destructive/10 transition-all" 
-                                onClick={() => {
-                                  setTaskToDelete(task.id);
-                                  setTaskAction('dismiss');
-                                }}
-                              >
-                                <X className="w-3.5 h-3.5 mr-1.5" />
-                                Dismiss
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                  </div>
+                ) : filteredAndSortedTasks.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm">No tasks found</p>
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleTaskDragEnd}
+                  >
+                    <SortableContext
+                      items={filteredAndSortedTasks.map(t => t.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2">
+                        {filteredAndSortedTasks.map(task => (
+                          <DraggableTask
+                            key={task.id}
+                            task={task}
+                            isSelected={selectedTasks.has(task.id)}
+                            onSelect={handleTaskSelect}
+                            onComplete={(id) => {
+                              setTaskToDelete(id);
+                              setTaskAction('complete');
+                            }}
+                            onDismiss={(id) => {
+                              setTaskToDelete(id);
+                              setTaskAction('dismiss');
+                            }}
+                            onDelete={deleteTask}
+                            onManageDependencies={handleManageDependencies}
+                            allTasks={tasks}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
               </CardContent>
             </>
           )}
@@ -1399,6 +1455,77 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             </Button>
             <Button onClick={handleCreateQuickTask}>
               Create Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dependency Management Dialog */}
+      <Dialog open={showDependencyDialog} onOpenChange={setShowDependencyDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Manage Task Dependencies</DialogTitle>
+            <DialogDescription>
+              Set which task this task depends on (is blocked by)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>This task depends on:</Label>
+              <Select value={dependsOnTaskId} onValueChange={setDependsOnTaskId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a task" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tasks
+                    .filter(t => t.id !== dependencyTaskId)
+                    .map(task => (
+                      <SelectItem key={task.id} value={task.id}>
+                        {task.title} ({task.priority})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {dependencyTaskId && (
+              <div className="space-y-2">
+                <Label>Current Dependencies:</Label>
+                <div className="border rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+                  {dependencies
+                    .filter(dep => dep.task_id === dependencyTaskId)
+                    .map(dep => {
+                      const depTask = tasks.find(t => t.id === dep.depends_on_task_id);
+                      return depTask ? (
+                        <div key={dep.id} className="flex items-center justify-between text-sm">
+                          <span>{depTask.title}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeDependency(dep.task_id, dep.depends_on_task_id)}
+                            className="h-6 w-6 p-0 text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : null;
+                    })}
+                  {dependencies.filter(dep => dep.task_id === dependencyTaskId).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center">No dependencies yet</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowDependencyDialog(false);
+              setDependsOnTaskId('');
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddDependency} disabled={!dependsOnTaskId}>
+              Add Dependency
             </Button>
           </DialogFooter>
         </DialogContent>

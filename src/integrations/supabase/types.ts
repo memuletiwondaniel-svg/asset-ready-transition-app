@@ -1439,6 +1439,45 @@ export type Database = {
           },
         ]
       }
+      task_dependencies: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          depends_on_task_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          depends_on_task_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          depends_on_task_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_depends_on_task_id_fkey"
+            columns: ["depends_on_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_logs: {
         Row: {
           activity_type: string
@@ -1672,6 +1711,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          display_order: number | null
           due_date: string | null
           id: string
           metadata: Json | null
@@ -1685,6 +1725,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
           due_date?: string | null
           id?: string
           metadata?: Json | null
@@ -1698,6 +1739,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
           due_date?: string | null
           id?: string
           metadata?: Json | null
