@@ -60,8 +60,8 @@ export const PSSRKeyActivitiesWidget: React.FC<PSSRKeyActivitiesWidgetProps> = (
 
   return (
     <>
-      <WidgetCard title="Key Activities">
-        <div className="space-y-3">
+      <WidgetCard title="Key Activities" className="h-[400px]">
+        <div className="space-y-3 h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
           {activities.map((activity, index) => (
             <div
               key={index}

@@ -80,8 +80,8 @@ export const PSSRPendingTasksWidget: React.FC<PSSRPendingTasksWidgetProps> = ({
   };
 
   return (
-    <WidgetCard title="Pending Activities">
-      <div className="space-y-4">
+    <WidgetCard title="Pending Activities" className="h-[400px]">
+      <div className="space-y-4 h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {reviewers.length > 0 && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
