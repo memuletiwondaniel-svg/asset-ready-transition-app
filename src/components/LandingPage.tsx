@@ -949,8 +949,16 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                         <ListChecks className="w-6 h-6 text-white relative z-10 group-hover:scale-110 transition-transform duration-300" />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
                         <CardTitle className="text-xl font-bold whitespace-nowrap">My Tasks</CardTitle>
+                        {tasks.length > 0 && (
+                          <Badge 
+                            variant="secondary" 
+                            className="bg-primary/10 text-primary hover:bg-primary/20 font-semibold px-2 py-0.5"
+                          >
+                            {tasks.length}
+                          </Badge>
+                        )}
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
