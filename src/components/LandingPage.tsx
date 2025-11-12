@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus, Trash2, Link2, AlertCircle } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus, Trash2, Link2, AlertCircle, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -26,6 +26,7 @@ import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { DraggableTask } from '@/components/DraggableTask';
+import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -124,12 +125,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [dependsOnTaskId, setDependsOnTaskId] = useState<string>('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [initialPrompt, setInitialPrompt] = useState<string>('');
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem('dashboardWidgetConfig');
     return saved ? JSON.parse(saved) : [
-      { id: 'ai-assistant', title: 'AI Assistant', isVisible: true, isExpanded: false },
       { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
       { id: 'workspaces', title: 'Workspaces', isVisible: true, isExpanded: false },
       { id: 'recent-activity', title: 'Recent Activity', isVisible: true, isExpanded: false }
@@ -223,7 +225,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
   const handleResetWidgets = () => {
     const defaultWidgets = [
-      { id: 'ai-assistant', title: 'AI Assistant', isVisible: true, isExpanded: false },
       { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
       { id: 'workspaces', title: 'Workspaces', isVisible: true, isExpanded: false },
       { id: 'recent-activity', title: 'Recent Activity', isVisible: true, isExpanded: false }
@@ -803,7 +804,63 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         {/* Main Content Area */}
         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-            {/* Dashboard Widgets - AI Assistant is now part of widgets grid below */}
+            {/* Welcome User - Ask ORSH AI Widget */}
+            <Card className="glass-card glass-card-hover overflow-hidden animate-fade-in">
+              <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Welcome {userProfile?.full_name || 'User'}
+                </CardTitle>
+                <CardDescription className="text-xs">Quick AI-powered assistance</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setInitialPrompt('How can I help you today?');
+                    setChatOpen(true);
+                  }}
+                  className="w-full justify-start gap-3 h-auto py-3 hover:bg-primary/5 transition-all"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium">Ask AI</p>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setInitialPrompt('Summarize my recent PSSR');
+                    setChatOpen(true);
+                  }}
+                  className="w-full justify-start gap-3 h-auto py-3 hover:bg-primary/5 transition-all"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium">Summarize PSSR</p>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setInitialPrompt('Review my checklist items');
+                    setChatOpen(true);
+                  }}
+                  className="w-full justify-start gap-3 h-auto py-3 hover:bg-primary/5 transition-all"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium">Review Checklist</p>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Widgets Section with Drag and Drop */}
             {!aiPanelExpanded && (
@@ -1349,6 +1406,13 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ORSH Chat Dialog */}
+      <ORSHChatDialog 
+        open={chatOpen} 
+        onOpenChange={setChatOpen}
+        initialMessage={initialPrompt}
+      />
     </AnimatedBackground>;
 };
 const LandingPage: React.FC<LandingPageProps> = props => {
