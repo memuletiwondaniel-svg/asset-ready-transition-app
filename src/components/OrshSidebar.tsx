@@ -159,9 +159,11 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
                     onClick={() => {
+                      console.log('Sidebar navigation clicked:', item.section, item);
                       if (item.section === 'ask-orsh') {
                         setChatOpen(true);
                       } else {
+                        console.log('Calling onNavigate with:', item.section);
                         onNavigate?.(item.section || '');
                       }
                     }}
@@ -196,9 +198,11 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   variant={isActive ? "secondary" : "ghost"}
                   size="icon"
                   onClick={() => {
+                    console.log('Sidebar navigation clicked (collapsed):', item.section, item);
                     if (item.section === 'ask-orsh') {
                       setChatOpen(true);
                     } else {
+                      console.log('Calling onNavigate with:', item.section);
                       onNavigate?.(item.section || '');
                     }
                   }}

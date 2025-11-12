@@ -35,6 +35,7 @@ const Index = () => {
   };
   
   const handleNavigate = (section: string) => {
+    console.log('Index handleNavigate called with section:', section);
     navigate(`/${section}`);
   };
   
