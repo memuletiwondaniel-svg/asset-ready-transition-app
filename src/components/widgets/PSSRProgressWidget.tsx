@@ -83,7 +83,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
                       </span>
                     </div>
                   </div>
-                  <Progress value={category.percentage} className="h-2" />
+                  <Progress value={category.percentage} className="h-2 [&>div]:bg-accent" />
                 </div>
               );
             })}
