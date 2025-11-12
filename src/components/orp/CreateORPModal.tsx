@@ -10,7 +10,8 @@ import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useORPPlans, useORPDeliverables } from '@/hooks/useORPPlans';
 import { AddProjectModal } from '@/components/project/AddProjectModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, FileText } from 'lucide-react';
+import { ORPTemplateSelector } from './ORPTemplateSelector';
 
 interface CreateORPModalProps {
   open: boolean;
@@ -35,6 +36,7 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
   }>>({});
   const [showAddProject, setShowAddProject] = useState(false);
   const [projectSearch, setProjectSearch] = useState('');
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
   const { projects } = useProjects();
   const { data: users } = useProfileUsers();
@@ -86,6 +88,15 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
           <div className="flex-1 overflow-auto px-1">
             {step === 1 && (
               <div className="space-y-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTemplateSelector(true)}
+                  className="w-full gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Use Template
+                </Button>
+                
                 <div>
                   <Label>Select Project</Label>
                   <div className="flex gap-2 mt-2">

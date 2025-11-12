@@ -39,18 +39,38 @@ const DeliverableCard: React.FC<DeliverableCardProps> = ({ item, onClick }) => {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Check for dependencies
+  const hasDependencies = item.dependencies && item.dependencies.length > 0;
+  const unmetDependencies = item.dependencies?.filter((dep: any) => dep.predecessor?.status !== 'COMPLETED');
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+      className={cn(
+        "p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all relative",
+        unmetDependencies && unmetDependencies.length > 0 && "border-amber-500 border-2"
+      )}
       onClick={onClick}
     >
+      {unmetDependencies && unmetDependencies.length > 0 && (
+        <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-1 text-xs flex items-center justify-center w-5 h-5 font-bold z-10">
+          🔒
+        </div>
+      )}
+
       <h4 className="font-medium text-sm mb-2 line-clamp-2">
         {item.deliverable?.name}
       </h4>
+
+      {unmetDependencies && unmetDependencies.length > 0 && (
+        <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
+          <span className="font-semibold">Blocked:</span>
+          <span>{unmetDependencies.length} prerequisite(s)</span>
+        </div>
+      )}
       
       {item.estimated_manhours && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
@@ -115,6 +135,20 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
     setActiveId(event.active.id as string);
   };
 
+  // Check if deliverable has unmet dependencies
+  const hasBlockingDependencies = (deliverableId: string) => {
+    const deps = deliverables.filter(d => 
+      d.dependencies?.some((dep: any) => dep.predecessor_id === deliverableId)
+    );
+    return deps.some(d => d.status !== 'COMPLETED');
+  };
+
+  const getBlockingDependencies = (deliverableId: string) => {
+    return deliverables.filter(d => 
+      d.dependencies?.some((dep: any) => dep.deliverable_id === deliverableId && d.status !== 'COMPLETED')
+    );
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
@@ -128,14 +162,27 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
     const targetColumn = columns.find(col => col.id === overId);
     
     if (targetColumn && activeDeliverable && activeDeliverable.status !== targetColumn.id) {
+      // Check for blocking dependencies
+      const blockingDeps = getBlockingDependencies(activeDeliverable.id);
+      
+      if (blockingDeps.length > 0 && targetColumn.id === 'IN_PROGRESS') {
+        toast({
+          title: '⚠️ Blocked by Dependencies',
+          description: `Cannot start until ${blockingDeps.length} prerequisite(s) are completed`,
+          variant: 'destructive',
+          duration: 5000,
+        });
+        return;
+      }
+
       updateDeliverable({
         deliverableId: activeDeliverable.id,
         status: targetColumn.id as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'
       });
       
       toast({
-        title: 'Status Updated',
-        description: `Moved to ${targetColumn.label}`
+        title: '✅ Status Updated',
+        description: `Moved to ${targetColumn.label}`,
       });
     }
   };

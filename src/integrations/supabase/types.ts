@@ -578,6 +578,50 @@ export type Database = {
           },
         ]
       }
+      orp_activity_log: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+          orp_plan_id: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          orp_plan_id: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          orp_plan_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_activity_log_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orp_approvals: {
         Row: {
           approved_at: string | null
@@ -976,6 +1020,119 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      orp_template_approvals: {
+        Row: {
+          approver_role: string
+          created_at: string
+          display_order: number
+          id: string
+          template_id: string
+        }
+        Insert: {
+          approver_role: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          template_id: string
+        }
+        Update: {
+          approver_role?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_template_approvals_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "orp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_template_deliverables: {
+        Row: {
+          created_at: string
+          deliverable_id: string
+          display_order: number
+          estimated_manhours: number | null
+          id: string
+          is_required: boolean
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          deliverable_id: string
+          display_order?: number
+          estimated_manhours?: number | null
+          id?: string
+          is_required?: boolean
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          deliverable_id?: string
+          display_order?: number
+          estimated_manhours?: number | null
+          id?: string
+          is_required?: boolean
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_template_deliverables_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_deliverables_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orp_template_deliverables_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "orp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phase: string
+          project_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phase: string
+          project_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phase?: string
+          project_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       p2a_approval_workflow: {
         Row: {

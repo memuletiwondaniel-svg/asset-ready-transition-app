@@ -230,15 +230,22 @@ export const useORPPlans = () => {
   });
 
   const updateDeliverable = useMutation({
-    mutationFn: async (data: { deliverableId: string; status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'; progress?: number; comments?: string }) => {
+    mutationFn: async (data: { 
+      deliverableId: string; 
+      status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'; 
+      progress?: number; 
+      comments?: string;
+      id?: string;
+    }) => {
+      const updateData: any = {};
+      if (data.status) updateData.status = data.status;
+      if (data.progress !== undefined) updateData.completion_percentage = data.progress;
+      if (data.comments) updateData.comments = data.comments;
+
       const { error } = await supabase
         .from('orp_plan_deliverables')
-        .update({
-          ...(data.status && { status: data.status }),
-          ...(data.progress !== undefined && { completion_percentage: data.progress }),
-          ...(data.comments && { comments: data.comments })
-        })
-        .eq('id', data.deliverableId);
+        .update(updateData)
+        .eq('id', data.deliverableId || data.id);
 
       if (error) throw error;
     },

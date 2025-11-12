@@ -13,6 +13,7 @@ import { ORPGanttChart } from './ORPGanttChart';
 import { ORPApprovalPanel } from './ORPApprovalPanel';
 import { ORPResourcesPanel } from './ORPResourcesPanel';
 import { ORPExportPDF } from './ORPExportPDF';
+import { ORPActivityTimeline } from './ORPActivityTimeline';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 
 export const ORPDetailsPage: React.FC = () => {
@@ -110,6 +111,9 @@ export const ORPDetailsPage: React.FC = () => {
                   <GanttChart className="w-4 h-4" />
                   Gantt Chart
                 </TabsTrigger>
+                <TabsTrigger value="activity" className="gap-2">
+                  Activity
+                </TabsTrigger>
                 <TabsTrigger value="resources" className="gap-2">
                   Resources
                 </TabsTrigger>
@@ -136,6 +140,10 @@ export const ORPDetailsPage: React.FC = () => {
                     <ORPGanttChart deliverables={plan.deliverables || []} />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="activity" className="h-full m-0 p-6">
+                <ORPActivityTimeline planId={plan.id} />
               </TabsContent>
 
               <TabsContent value="resources" className="h-full m-0 p-6">
