@@ -37,19 +37,27 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
     <WidgetCard title="Checklist Items">
       <div className="space-y-5">
         {/* Overall Progress */}
-        <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-accent/5 border border-border/40">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-foreground">Overall Progress</span>
-            <span className="text-2xl font-bold text-primary">{overallProgress}%</span>
+        <div className="p-5 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border-2 border-primary/20 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <BarChart3 className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-base font-bold text-foreground">Overall Progress</span>
+            </div>
+            <span className="text-3xl font-bold text-primary">{overallProgress}%</span>
           </div>
-          <Progress value={overallProgress} className="h-3" />
+          <Progress value={overallProgress} className="h-4" />
         </div>
 
         {/* Category Progress */}
-        <div className="space-y-3">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Progress by Category
-          </label>
+        <div className="space-y-3 pt-2 border-t-2 border-border/40">
+          <div className="flex items-center gap-2 pt-1">
+            <div className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Progress by Category
+            </label>
+          </div>
           <div className="space-y-3">
             {categoryProgress.map((category, index) => {
               const Icon = getCategoryIcon(category.name);
