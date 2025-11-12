@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, TrendingUp, Activity, Calendar, Briefcase, Bell, Sparkles, Plus, BarChart3, Users } from 'lucide-react';
+import { CheckCircle, TrendingUp, Activity, Calendar, Briefcase, Bell, Sparkles, Plus, BarChart3, Users, AlertCircle, AlertTriangle, Wrench } from 'lucide-react';
 
 interface WidgetLibraryProps {
   open: boolean;
@@ -75,6 +75,30 @@ const AVAILABLE_WIDGETS = [
     icon: Users,
     defaultSize: 'medium' as const,
     color: 'text-green-500'
+  },
+  {
+    type: 'orm-pending-reviews',
+    name: 'ORM Pending Reviews',
+    description: 'Deliverables awaiting your review',
+    icon: AlertCircle,
+    defaultSize: 'small' as const,
+    color: 'text-orange-500'
+  },
+  {
+    type: 'orm-overdue-tasks',
+    name: 'ORM Overdue Tasks',
+    description: 'Tasks that are past their due date',
+    icon: AlertTriangle,
+    defaultSize: 'small' as const,
+    color: 'text-red-500'
+  },
+  {
+    type: 'orm-resource-utilization',
+    name: 'ORM Resource Utilization',
+    description: 'Team workload and capacity overview',
+    icon: Wrench,
+    defaultSize: 'medium' as const,
+    color: 'text-primary'
   }
 ];
 

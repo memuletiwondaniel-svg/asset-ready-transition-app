@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle2, Clock, FileText } from 'lucide-react';
 import { ORMWorkflowCommentsPanel } from './ORMWorkflowCommentsPanel';
 import { useORMDeliverables } from '@/hooks/useORMDeliverables';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ORMTemplateManagement } from './ORMTemplateManagement';
 
 interface ORMWorkflowPanelProps {
   planId: string;
@@ -126,19 +127,25 @@ export const ORMWorkflowPanel: React.FC<ORMWorkflowPanelProps> = ({
                 onOpenChange={(open) => setExpandedDeliverable(open ? deliverable.id : null)}
               >
                 {deliverable.workflow_stage !== 'APPROVED' && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <CollapsibleTrigger asChild>
                       <Button size="sm" variant="outline">
                         {expandedDeliverable === deliverable.id ? 'Hide' : 'Show'} Comments
                       </Button>
                     </CollapsibleTrigger>
+                    {deliverable.workflow_stage === 'IN_PROGRESS' && (
+                      <ORMTemplateManagement 
+                        deliverableId={deliverable.id}
+                        deliverableType={deliverable.deliverable_type}
+                      />
+                    )}
                     {deliverable.progress_percentage === 100 && deliverable.workflow_stage === 'IN_PROGRESS' && (
                       <Button 
                         size="sm"
                         onClick={() => submitForReview({
                           deliverableId: deliverable.id,
                           deliverable_type: deliverable.deliverable_type,
-                          project_name: 'Project' // This should be passed from parent
+                          project_name: 'Project'
                         })}
                       >
                         Submit for Review

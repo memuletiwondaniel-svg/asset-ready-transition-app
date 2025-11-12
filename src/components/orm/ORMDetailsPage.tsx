@@ -4,9 +4,10 @@ import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, FileText, MessageSquare, ListTodo } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, FileText, MessageSquare, ListTodo, Target } from 'lucide-react';
 import { useORMPlanDetails } from '@/hooks/useORMPlans';
 import { ORMTaskManagement } from './ORMTaskManagement';
+import { ORMMilestoneTracking } from './ORMMilestoneTracking';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORMKanbanBoard } from './ORMKanbanBoard';
 import { ORMDailyReportsView } from './ORMDailyReportsView';
@@ -128,6 +129,10 @@ export const ORMDetailsPage: React.FC = () => {
                   <ListTodo className="w-4 h-4" />
                   Tasks
                 </TabsTrigger>
+                <TabsTrigger value="milestones" className="gap-2">
+                  <Target className="w-4 h-4" />
+                  Milestones
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -146,6 +151,10 @@ export const ORMDetailsPage: React.FC = () => {
 
               <TabsContent value="documents" className="h-full m-0 p-6">
                 <ORMDocumentChecklist planId={plan.id} deliverables={plan.deliverables || []} />
+              </TabsContent>
+
+              <TabsContent value="milestones" className="h-full m-0 p-6">
+                <ORMMilestoneTracking planId={plan.id} deliverables={plan.deliverables || []} />
               </TabsContent>
 
               <TabsContent value="tasks" className="h-full m-0 p-6">

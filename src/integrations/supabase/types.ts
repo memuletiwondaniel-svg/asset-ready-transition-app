@@ -669,6 +669,42 @@ export type Database = {
           },
         ]
       }
+      orm_deliverable_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deliverable_type: Database["public"]["Enums"]["orm_deliverable_type"]
+          description: string | null
+          estimated_hours: number | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deliverable_type: Database["public"]["Enums"]["orm_deliverable_type"]
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deliverable_type?: Database["public"]["Enums"]["orm_deliverable_type"]
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orm_deliverables: {
         Row: {
           actual_hours: number | null
@@ -772,6 +808,56 @@ export type Database = {
           },
         ]
       }
+      orm_milestones: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          description: string | null
+          id: string
+          linked_deliverables: string[] | null
+          name: string
+          orm_plan_id: string
+          progress_percentage: number | null
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          linked_deliverables?: string[] | null
+          name: string
+          orm_plan_id: string
+          progress_percentage?: number | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          linked_deliverables?: string[] | null
+          name?: string
+          orm_plan_id?: string
+          progress_percentage?: number | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_milestones_orm_plan_id_fkey"
+            columns: ["orm_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orm_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orm_plans: {
         Row: {
           created_at: string
@@ -871,6 +957,85 @@ export type Database = {
             columns: ["deliverable_id"]
             isOneToOne: false
             referencedRelation: "orm_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_template_checklists: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          id: string
+          is_mandatory: boolean
+          sequence_order: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          id?: string
+          is_mandatory?: boolean
+          sequence_order?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          id?: string
+          is_mandatory?: boolean
+          sequence_order?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_template_checklists_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverable_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_template_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_days: number | null
+          id: string
+          priority: string
+          sequence_order: number
+          template_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: number | null
+          id?: string
+          priority?: string
+          sequence_order?: number
+          template_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: number | null
+          id?: string
+          priority?: string
+          sequence_order?: number
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_template_tasks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverable_templates"
             referencedColumns: ["id"]
           },
         ]
