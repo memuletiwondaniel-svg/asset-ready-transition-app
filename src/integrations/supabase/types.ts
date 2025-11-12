@@ -578,6 +578,364 @@ export type Database = {
           },
         ]
       }
+      orp_approvals: {
+        Row: {
+          approved_at: string | null
+          approver_role: string
+          approver_user_id: string | null
+          comments: string | null
+          created_at: string
+          id: string
+          orp_plan_id: string
+          status: Database["public"]["Enums"]["orp_approval_status"]
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_role: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          orp_plan_id: string
+          status?: Database["public"]["Enums"]["orp_approval_status"]
+        }
+        Update: {
+          approved_at?: string | null
+          approver_role?: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          orp_plan_id?: string
+          status?: Database["public"]["Enums"]["orp_approval_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_approvals_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_collaborators: {
+        Row: {
+          added_by: string
+          created_at: string
+          id: string
+          plan_deliverable_id: string
+          user_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          id?: string
+          plan_deliverable_id: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          id?: string
+          plan_deliverable_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_collaborators_plan_deliverable_id_fkey"
+            columns: ["plan_deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plan_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_deliverable_dependencies: {
+        Row: {
+          created_at: string
+          deliverable_id: string
+          id: string
+          predecessor_id: string
+        }
+        Insert: {
+          created_at?: string
+          deliverable_id: string
+          id?: string
+          predecessor_id: string
+        }
+        Update: {
+          created_at?: string
+          deliverable_id?: string
+          id?: string
+          predecessor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_deliverable_dependencies_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plan_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orp_deliverable_dependencies_predecessor_id_fkey"
+            columns: ["predecessor_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plan_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_deliverable_sub_options: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          parent_deliverable_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_deliverable_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_deliverable_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_deliverable_sub_options_parent_deliverable_id_fkey"
+            columns: ["parent_deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_deliverables_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_deliverables_catalog: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          has_sub_options: boolean
+          id: string
+          is_active: boolean
+          name: string
+          phase: Database["public"]["Enums"]["orp_phase"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order: number
+          has_sub_options?: boolean
+          id?: string
+          is_active?: boolean
+          name: string
+          phase: Database["public"]["Enums"]["orp_phase"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          has_sub_options?: boolean
+          id?: string
+          is_active?: boolean
+          name?: string
+          phase?: Database["public"]["Enums"]["orp_phase"]
+        }
+        Relationships: []
+      }
+      orp_plan_deliverable_sub_selections: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          id: string
+          plan_deliverable_id: string
+          sub_option_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          plan_deliverable_id: string
+          sub_option_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          plan_deliverable_id?: string
+          sub_option_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_plan_deliverable_sub_selections_plan_deliverable_id_fkey"
+            columns: ["plan_deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plan_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orp_plan_deliverable_sub_selections_sub_option_id_fkey"
+            columns: ["sub_option_id"]
+            isOneToOne: false
+            referencedRelation: "orp_deliverable_sub_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_plan_deliverables: {
+        Row: {
+          comments: string | null
+          completion_percentage: number | null
+          created_at: string
+          deliverable_id: string
+          end_date: string | null
+          estimated_manhours: number | null
+          id: string
+          orp_plan_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["orp_deliverable_status"]
+          updated_at: string
+        }
+        Insert: {
+          comments?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          deliverable_id: string
+          end_date?: string | null
+          estimated_manhours?: number | null
+          id?: string
+          orp_plan_id: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["orp_deliverable_status"]
+          updated_at?: string
+        }
+        Update: {
+          comments?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          deliverable_id?: string
+          end_date?: string | null
+          estimated_manhours?: number | null
+          id?: string
+          orp_plan_id?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["orp_deliverable_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_plan_deliverables_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_deliverables_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orp_plan_deliverables_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          ora_engineer_id: string
+          phase: Database["public"]["Enums"]["orp_phase"]
+          project_id: string
+          status: Database["public"]["Enums"]["orp_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          ora_engineer_id: string
+          phase: Database["public"]["Enums"]["orp_phase"]
+          project_id: string
+          status?: Database["public"]["Enums"]["orp_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          ora_engineer_id?: string
+          phase?: Database["public"]["Enums"]["orp_phase"]
+          project_id?: string
+          status?: Database["public"]["Enums"]["orp_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_resources: {
+        Row: {
+          allocation_percentage: number | null
+          created_at: string
+          id: string
+          name: string
+          orp_plan_id: string
+          position: string
+          role_description: string | null
+          user_id: string | null
+        }
+        Insert: {
+          allocation_percentage?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          orp_plan_id: string
+          position: string
+          role_description?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          allocation_percentage?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          orp_plan_id?: string
+          position?: string
+          role_description?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_resources_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
@@ -1961,6 +2319,19 @@ export type Database = {
       user_is_admin: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
+      orp_approval_status: "PENDING" | "APPROVED" | "REJECTED"
+      orp_deliverable_status:
+        | "NOT_STARTED"
+        | "IN_PROGRESS"
+        | "COMPLETED"
+        | "ON_HOLD"
+      orp_phase: "ASSESS_SELECT" | "DEFINE" | "EXECUTE"
+      orp_status:
+        | "DRAFT"
+        | "IN_PROGRESS"
+        | "PENDING_APPROVAL"
+        | "APPROVED"
+        | "COMPLETED"
       ta2_commission: "Asset" | "Project and Engineering"
       ta2_discipline:
         | "Civil"
@@ -2120,6 +2491,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      orp_approval_status: ["PENDING", "APPROVED", "REJECTED"],
+      orp_deliverable_status: [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "ON_HOLD",
+      ],
+      orp_phase: ["ASSESS_SELECT", "DEFINE", "EXECUTE"],
+      orp_status: [
+        "DRAFT",
+        "IN_PROGRESS",
+        "PENDING_APPROVAL",
+        "APPROVED",
+        "COMPLETED",
+      ],
       ta2_commission: ["Asset", "Project and Engineering"],
       ta2_discipline: [
         "Civil",

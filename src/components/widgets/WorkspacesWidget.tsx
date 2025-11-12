@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Package, Sliders } from 'lucide-react';
+import { AlertTriangle, Package, Sliders, ClipboardCheck } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -15,6 +15,15 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       icon: AlertTriangle,
       gradient: 'from-amber-500/20 to-orange-500/20',
       iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
+      iconColor: 'text-white'
+    },
+    {
+      id: 'operation-readiness',
+      title: 'Operation Readiness',
+      description: 'ORP Planning & Tracking',
+      icon: ClipboardCheck,
+      gradient: 'from-blue-500/20 to-cyan-500/20',
+      iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
       iconColor: 'text-white'
     },
     {

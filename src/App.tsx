@@ -11,6 +11,8 @@ import { PageTransition } from "@/components/PageTransition";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
+import { ORPDetailsPage } from "@/components/orp/ORPDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
                     <Route path="/users" element={<Index />} />
                     <Route path="/manage-checklist" element={<Index />} />
                     <Route path="/admin-tools" element={<Index />} />
+                    <Route path="/operation-readiness" element={<ORPLandingPage />} />
+                    <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

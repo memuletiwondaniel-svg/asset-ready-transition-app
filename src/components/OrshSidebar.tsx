@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban, MessageSquare } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban, MessageSquare, ClipboardCheck } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -58,6 +58,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
     { label: 'Home', icon: Home, path: '/', section: 'home' },
     { label: 'Ask ORSH AI', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
     { label: 'Safe Start-Up', icon: AlertTriangle, path: '/safe-startup', section: 'safe-startup' },
+    { label: 'Operation Readiness', icon: ClipboardCheck, path: '/operation-readiness', section: 'operation-readiness' },
     { label: 'User Management', icon: Users, path: '/user-management', section: 'user-management' },
     { label: 'Admin Tools', icon: Settings, path: '/admin-tools', section: 'admin-tools' },
     { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },
