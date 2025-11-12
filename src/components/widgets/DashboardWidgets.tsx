@@ -193,7 +193,7 @@ export const DashboardWidgets: React.FC = () => {
     }
   };
 
-  const visibleWidgets = widgets.filter(w => w.is_visible);
+  const visibleWidgets = widgets.filter(w => w.is_visible && w.widget_type !== 'ai-assistant');
 
   return (
     <div className="space-y-4">
