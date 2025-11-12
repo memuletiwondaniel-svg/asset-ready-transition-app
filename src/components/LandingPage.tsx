@@ -3,13 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
@@ -108,6 +110,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWidgetManagement, setShowWidgetManagement] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [showQuickTaskDialog, setShowQuickTaskDialog] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskType, setNewTaskType] = useState('action');
+  const [newTaskPriority, setNewTaskPriority] = useState('Medium');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -555,13 +563,67 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     });
   };
 
-  // Calculate task counts by type
+  const handleCreateQuickTask = async () => {
+    if (!newTaskTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { error } = await supabase
+        .from('user_tasks')
+        .insert({
+          title: newTaskTitle,
+          description: newTaskDescription || null,
+          type: newTaskType,
+          priority: newTaskPriority,
+          due_date: newTaskDueDate || null,
+          status: 'pending',
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Task created successfully",
+      });
+
+      // Reset form
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      setNewTaskType('action');
+      setNewTaskPriority('Medium');
+      setNewTaskDueDate('');
+      setShowQuickTaskDialog(false);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Calculate task counts by type and detect overdue tasks
   const taskCounts = React.useMemo(() => {
+    const now = new Date();
+    const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < now);
+    
     return {
       all: tasks.length,
       approval: tasks.filter(t => t.type === 'approval').length,
       review: tasks.filter(t => t.type === 'review').length,
-      action: tasks.filter(t => t.type === 'action').length
+      action: tasks.filter(t => t.type === 'action').length,
+      overdue: overdueTasks.length
     };
   }, [tasks]);
 
@@ -951,15 +1013,48 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <CardTitle className="text-xl font-bold whitespace-nowrap">My Tasks</CardTitle>
-                        {tasks.length > 0 && (
-                          <Badge 
-                            variant="secondary" 
-                            className="bg-primary/10 text-primary hover:bg-primary/20 font-semibold px-2 py-0.5"
-                          >
-                            {tasks.length}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {taskCounts.overdue > 0 ? (
+                            <Badge 
+                              variant="destructive" 
+                              className="animate-pulse font-semibold px-2 py-0.5"
+                            >
+                              {taskCounts.overdue} Overdue
+                            </Badge>
+                          ) : tasks.length > 0 && (
+                            <Badge 
+                              variant="secondary" 
+                              className="bg-primary/10 text-primary hover:bg-primary/20 font-semibold px-2 py-0.5"
+                            >
+                              {tasks.length}
+                            </Badge>
+                          )}
+                          {taskCounts.approval > 0 && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              {taskCounts.approval} Approval
+                            </Badge>
+                          )}
+                          {taskCounts.review > 0 && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              {taskCounts.review} Review
+                            </Badge>
+                          )}
+                          {taskCounts.action > 0 && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              {taskCounts.action} Action
+                            </Badge>
+                          )}
+                        </div>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowQuickTaskDialog(true)}
+                        className="h-8 w-8 p-0 hover:bg-primary/10 flex-shrink-0"
+                        title="Quick add task"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
@@ -1229,6 +1324,85 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Quick Task Creation Dialog */}
+      <Dialog open={showQuickTaskDialog} onOpenChange={setShowQuickTaskDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Quick Task</DialogTitle>
+            <DialogDescription>
+              Add a new task to your list
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="task-title">Title *</Label>
+              <Input
+                id="task-title"
+                placeholder="Enter task title"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-description">Description</Label>
+              <Textarea
+                id="task-description"
+                placeholder="Enter task description (optional)"
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="task-type">Type</Label>
+                <Select value={newTaskType} onValueChange={setNewTaskType}>
+                  <SelectTrigger id="task-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="approval">Approval</SelectItem>
+                    <SelectItem value="review">Review</SelectItem>
+                    <SelectItem value="action">Action</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="task-priority">Priority</Label>
+                <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
+                  <SelectTrigger id="task-priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-due-date">Due Date</Label>
+              <Input
+                id="task-due-date"
+                type="date"
+                value={newTaskDueDate}
+                onChange={(e) => setNewTaskDueDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowQuickTaskDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateQuickTask}>
+              Create Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AnimatedBackground>;
 };
 const LandingPage: React.FC<LandingPageProps> = props => {
