@@ -34,7 +34,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   };
 
   return (
-    <WidgetCard title="PSSR Progress">
+    <WidgetCard title="Checklist Items">
       <div className="space-y-5">
         {/* Overall Progress */}
         <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-accent/5 border border-border/40">
