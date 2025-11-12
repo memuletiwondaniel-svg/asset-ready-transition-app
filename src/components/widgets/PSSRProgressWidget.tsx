@@ -2,7 +2,6 @@ import React from 'react';
 import { WidgetCard } from './WidgetCard';
 import { Progress } from '@/components/ui/progress';
 import { Settings, Shield, FileText, Users, AlertTriangle, BarChart3 } from 'lucide-react';
-import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface CategoryProgress {
   name: string;
@@ -26,8 +25,6 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   dragAttributes,
   dragListeners,
 }) => {
-  const { widgetSize } = useWidgetSize();
-  const widgetId = 'pssr-progress';
   const getCategoryIcon = (name: string) => {
     const iconMap: Record<string, any> = {
       'Hardware Integrity': Settings,
@@ -85,16 +82,10 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   return (
     <WidgetCard 
       title="Checklist Items" 
-      className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
-        widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
-        widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
-        'h-[450px] md:h-[500px] lg:h-[520px]'
-      }`}
-      widgetId={widgetId}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
     >
-      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-5">
+      <div className="space-y-5">
         {/* Overall Progress */}
         <div className="p-5 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border-2 border-primary/20 shadow-lg">
           <div className="flex items-center justify-between mb-3">

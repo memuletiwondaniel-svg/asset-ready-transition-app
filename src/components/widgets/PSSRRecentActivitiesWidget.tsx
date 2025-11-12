@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, FileText, CheckCircle, MessageSquare, Upload, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface Activity {
   id: string;
@@ -31,8 +30,6 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
   dragAttributes,
   dragListeners,
 }) => {
-  const { widgetSize } = useWidgetSize();
-  const widgetId = 'pssr-recent-activities';
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'comment':
@@ -87,16 +84,10 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
   return (
     <WidgetCard 
       title="Recent Activities"
-      className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
-        widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
-        widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
-        'h-[450px] md:h-[500px] lg:h-[520px]'
-      }`}
-      widgetId={widgetId}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
     >
-      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-3">
+      <div className="space-y-3">
         {displayedActivities.map((activity) => (
           <div
             key={activity.id}
