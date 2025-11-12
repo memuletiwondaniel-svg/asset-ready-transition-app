@@ -17,6 +17,7 @@ import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { OrshSidebar } from './OrshSidebar';
+import { useNavigate } from 'react-router-dom';
 interface AdminToolsPageProps {
   onBack: () => void;
 }
@@ -27,6 +28,28 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const { language, setLanguage, translations: t } = useLanguage();
   const { buildBreadcrumbsFromPath } = useBreadcrumb();
   const breadcrumbs = buildBreadcrumbsFromPath();
+  const navigate = useNavigate();
+  
+  const handleSidebarNavigate = (section: string) => {
+    // Map sidebar sections to internal views or routes
+    switch (section) {
+      case 'admin-tools':
+        setActiveView('dashboard');
+        break;
+      case 'user-management':
+      case 'users':
+        setActiveView('users');
+        break;
+      case 'projects':
+        setActiveView('projects');
+        break;
+      case 'safe-startup':
+        navigate('/safe-startup');
+        break;
+      default:
+        navigate(`/${section}`);
+    }
+  };
   
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings' | 'activity-log'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -297,6 +320,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userTitle="ORA Engr."
           language="en"
           currentPage="admin-tools"
+          onNavigate={handleSidebarNavigate}
         />
         <div className="flex-1 overflow-auto">
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -304,6 +328,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>
     );
   }
+  
   if (activeView === 'checklist') {
     return (
       <div className="min-h-screen flex w-full animate-fade-in">
@@ -312,6 +337,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userTitle="ORA Engr."
           language="en"
           currentPage="admin-tools"
+          onNavigate={handleSidebarNavigate}
         />
         <div className="flex-1 overflow-auto">
           <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -319,6 +345,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>
     );
   }
+  
   if (activeView === 'pssr-settings') {
     return (
       <div className="min-h-screen flex w-full animate-fade-in">
@@ -327,6 +354,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userTitle="ORA Engr."
           language="en"
           currentPage="admin-tools"
+          onNavigate={handleSidebarNavigate}
         />
         <div className="flex-1 overflow-auto">
           <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -334,6 +362,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>
     );
   }
+  
   if (activeView === 'projects') {
     return (
       <div className="min-h-screen flex w-full animate-fade-in">
@@ -342,6 +371,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userTitle="ORA Engr."
           language="en"
           currentPage="admin-tools"
+          onNavigate={handleSidebarNavigate}
         />
         <div className="flex-1 overflow-auto">
           <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
@@ -349,6 +379,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>
     );
   }
+  
   if (activeView === 'activity-log') {
     return (
       <div className="min-h-screen flex w-full animate-fade-in">
@@ -357,6 +388,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           userTitle="ORA Engr."
           language="en"
           currentPage="admin-tools"
+          onNavigate={handleSidebarNavigate}
         />
         <div className="flex-1 overflow-auto">
           <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
@@ -370,6 +402,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         userTitle="ORA Engr."
         language="en"
         currentPage="admin-tools"
+        onNavigate={handleSidebarNavigate}
       />
       <div className="flex-1 overflow-auto">
         <AnimatedBackground>
