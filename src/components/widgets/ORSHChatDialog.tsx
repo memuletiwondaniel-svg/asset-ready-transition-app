@@ -381,20 +381,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] h-[600px] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 bg-background/95 backdrop-blur-xl border-2 border-border/50 shadow-2xl animate-scale-in">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
           <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-primary" />
-                Ask ORSH
-              </DialogTitle>
-              <DialogDescription>
-                Get AI-powered assistance about PSSRs and safety reviews
-              </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                <Bot className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Ask ORSH AI
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Your intelligent assistant for PSSRs and safety reviews
+                </DialogDescription>
+              </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleNewChat}>
+              <Button variant="outline" size="sm" onClick={handleNewChat} className="hover:bg-primary/10 transition-all">
                 <Plus className="h-4 w-4 mr-1" />
                 New Chat
               </Button>
@@ -402,6 +406,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowSidebar(!showSidebar)}
+                className="hover:bg-primary/10 transition-all"
               >
                 {showSidebar ? (
                   <>
