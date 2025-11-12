@@ -12,8 +12,8 @@ export const PSSRScopeWidget: React.FC<PSSRScopeWidgetProps> = ({
   images = []
 }) => {
   return (
-    <WidgetCard title="PSSR Scope">
-      <div className="space-y-4">
+    <WidgetCard title="PSSR Scope" className="h-full">
+      <div className="space-y-4 h-full flex flex-col justify-between">
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <Target className="h-4 w-4" />
