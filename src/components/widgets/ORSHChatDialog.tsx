@@ -9,7 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Search, Edit2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
@@ -53,6 +54,9 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingConvId, setEditingConvId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,6 +64,29 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Set up realtime subscription for conversation updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('chat-conversations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_conversations'
+        },
+        (payload) => {
+          console.log('Conversation change received:', payload);
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -290,6 +317,48 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     }
   };
 
+  const handleRenameConversation = async (conversationId: string, newTitle: string) => {
+    if (!newTitle.trim()) {
+      toast.error('Title cannot be empty');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chat_conversations')
+        .update({ title: newTitle.trim() })
+        .eq('id', conversationId);
+
+      if (error) throw error;
+
+      setEditingConvId(null);
+      setEditingTitle('');
+      loadConversations();
+      toast.success('Conversation renamed');
+    } catch (error) {
+      console.error('Error renaming conversation:', error);
+      toast.error('Failed to rename conversation');
+    }
+  };
+
+  const startEditing = (conv: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingConvId(conv.id);
+    setEditingTitle(conv.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingConvId(null);
+    setEditingTitle('');
+  };
+
+  // Filter conversations based on search query
+  const filteredConversations = conversations.filter(conv => {
+    const matchesSearch = conv.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDate = searchQuery && new Date(conv.updated_at).toLocaleDateString().includes(searchQuery);
+    return matchesSearch || matchesDate;
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] h-[600px] flex flex-col p-0">
@@ -334,28 +403,71 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
           {/* Conversation History Sidebar */}
           {showSidebar && (
             <div className="w-64 border-r flex flex-col">
-              <div className="px-4 py-3 border-b">
+              <div className="px-4 py-3 border-b space-y-2">
                 <h3 className="font-semibold text-sm">Recent Conversations</h3>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search conversations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 h-9 text-sm"
+                  />
+                </div>
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-2 space-y-1">
-                  {conversations.map((conv) => (
+                  {filteredConversations.map((conv) => (
                     <div
                       key={conv.id}
-                      className={`p-3 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors relative ${
+                      className={`p-3 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors relative group ${
                         conv.id === currentConversationId ? 'bg-accent border border-primary' : 'border border-transparent'
                       }`}
-                      onClick={() => loadConversation(conv.id)}
+                      onClick={() => editingConvId !== conv.id && loadConversation(conv.id)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                            <p className="text-xs font-medium truncate">{conv.title}</p>
-                            {!conv.is_read && (
-                              <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-                            )}
-                          </div>
+                          {editingConvId === conv.id ? (
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <Input
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                className="h-7 text-xs"
+                                autoFocus
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleRenameConversation(conv.id, editingTitle);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditing();
+                                  }
+                                }}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => handleRenameConversation(conv.id, editingTitle)}
+                              >
+                                <Check className="h-3 w-3 text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={cancelEditing}
+                              >
+                                <X className="h-3 w-3 text-destructive" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <p className="text-xs font-medium truncate">{conv.title}</p>
+                              {!conv.is_read && (
+                                <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                              )}
+                            </div>
+                          )}
                           <p className="text-xs text-muted-foreground mt-1">
                             {new Date(conv.updated_at).toLocaleDateString(undefined, {
                               month: 'short',
@@ -365,20 +477,32 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                             })}
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100"
-                          onClick={(e) => handleDeleteConversation(conv.id, e)}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
+                        {editingConvId !== conv.id && (
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => startEditing(conv, e)}
+                            >
+                              <Edit2 className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => handleDeleteConversation(conv.id, e)}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
-                  {conversations.length === 0 && (
+                  {filteredConversations.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-8">
-                      No conversation history yet
+                      {searchQuery ? 'No conversations found' : 'No conversation history yet'}
                     </p>
                   )}
                 </div>
