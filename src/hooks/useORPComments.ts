@@ -68,6 +68,8 @@ export const useORPComments = (deliverableId: string) => {
       comment: string;
       mentions?: string[];
       parentCommentId?: string;
+      deliverableName: string;
+      planId: string;
     }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
@@ -85,6 +87,24 @@ export const useORPComments = (deliverableId: string) => {
         .single();
 
       if (error) throw error;
+
+      // Send notifications if there are mentions
+      if (data.mentions && data.mentions.length > 0) {
+        try {
+          await supabase.functions.invoke('send-orp-comment-notification', {
+            body: {
+              commentId: newComment.id,
+              mentionedUserIds: data.mentions,
+              deliverableName: data.deliverableName,
+              planId: data.planId
+            }
+          });
+        } catch (notifError) {
+          console.error('Error sending notifications:', notifError);
+          // Don't fail the comment creation if notifications fail
+        }
+      }
+
       return newComment;
     },
     onSuccess: () => {

@@ -23,11 +23,13 @@ import {
 interface ORPDeliverableCommentsProps {
   deliverableId: string;
   deliverableName: string;
+  planId: string;
 }
 
 export const ORPDeliverableComments: React.FC<ORPDeliverableCommentsProps> = ({
   deliverableId,
-  deliverableName
+  deliverableName,
+  planId
 }) => {
   const { comments, isLoading, addComment, updateComment, deleteComment, isAddingComment } = useORPComments(deliverableId);
   const [newComment, setNewComment] = useState('');
@@ -40,9 +42,20 @@ export const ORPDeliverableComments: React.FC<ORPDeliverableCommentsProps> = ({
   const handleSubmitComment = () => {
     if (!newComment.trim()) return;
 
+    // Extract mentions from comment (basic @ detection)
+    const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+    const mentions: string[] = [];
+    let match;
+    while ((match = mentionRegex.exec(newComment)) !== null) {
+      mentions.push(match[2]); // Extract user ID
+    }
+
     addComment({
       comment: newComment,
-      parentCommentId: replyingTo || undefined
+      mentions,
+      parentCommentId: replyingTo || undefined,
+      deliverableName,
+      planId
     });
 
     setNewComment('');

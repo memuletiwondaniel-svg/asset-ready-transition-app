@@ -929,6 +929,56 @@ export type Database = {
         }
         Relationships: []
       }
+      orp_milestones: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          description: string | null
+          id: string
+          linked_deliverables: string[] | null
+          name: string
+          orp_plan_id: string
+          progress_percentage: number | null
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          linked_deliverables?: string[] | null
+          name: string
+          orp_plan_id: string
+          progress_percentage?: number | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          linked_deliverables?: string[] | null
+          name?: string
+          orp_plan_id?: string
+          progress_percentage?: number | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_milestones_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orp_plan_deliverable_sub_selections: {
         Row: {
           created_at: string
@@ -1103,6 +1153,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orp_resources_orp_plan_id_fkey"
+            columns: ["orp_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orp_risks: {
+        Row: {
+          actual_resolution_date: string | null
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          identified_date: string | null
+          mitigation_plan: string | null
+          orp_plan_id: string
+          owner_user_id: string | null
+          probability: string
+          severity: string
+          status: string
+          target_resolution_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_resolution_date?: string | null
+          category: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          identified_date?: string | null
+          mitigation_plan?: string | null
+          orp_plan_id: string
+          owner_user_id?: string | null
+          probability: string
+          severity: string
+          status?: string
+          target_resolution_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_resolution_date?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          identified_date?: string | null
+          mitigation_plan?: string | null
+          orp_plan_id?: string
+          owner_user_id?: string | null
+          probability?: string
+          severity?: string
+          status?: string
+          target_resolution_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_risks_orp_plan_id_fkey"
             columns: ["orp_plan_id"]
             isOneToOne: false
             referencedRelation: "orp_plans"
