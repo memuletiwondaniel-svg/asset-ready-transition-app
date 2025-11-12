@@ -14,12 +14,16 @@ interface PSSRProgressWidgetProps {
   overallProgress: number;
   categoryProgress: CategoryProgress[];
   onCategoryClick?: (categoryName: string) => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   overallProgress,
   categoryProgress,
-  onCategoryClick
+  onCategoryClick,
+  dragAttributes,
+  dragListeners,
 }) => {
   const getCategoryIcon = (name: string) => {
     const iconMap: Record<string, any> = {
@@ -76,7 +80,11 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   };
 
   return (
-    <WidgetCard title="Checklist Items">
+    <WidgetCard 
+      title="Checklist Items" 
+      dragAttributes={dragAttributes}
+      dragListeners={dragListeners}
+    >
       <div className="space-y-5">
         {/* Overall Progress */}
         <div className="p-5 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border-2 border-primary/20 shadow-lg">

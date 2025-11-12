@@ -18,11 +18,15 @@ interface Reviewer {
 interface PSSRPendingTasksWidgetProps {
   reviewers: Reviewer[];
   approvers: Reviewer[];
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRPendingTasksWidget: React.FC<PSSRPendingTasksWidgetProps> = ({
   reviewers,
-  approvers
+  approvers,
+  dragAttributes,
+  dragListeners,
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-pending-tasks';
@@ -120,6 +124,8 @@ export const PSSRPendingTasksWidget: React.FC<PSSRPendingTasksWidgetProps> = ({
           'h-[450px] md:h-[500px] lg:h-[520px]'
         }`}
         widgetId={widgetId}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
       >
         {widgetContent}
       </WidgetCard>

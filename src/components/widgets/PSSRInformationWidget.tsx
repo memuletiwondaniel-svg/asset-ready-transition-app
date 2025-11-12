@@ -21,6 +21,8 @@ interface PSSRInformationWidgetProps {
   stationName?: string;
   hubName?: string;
   onNavigateToProject?: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
@@ -36,7 +38,9 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
   plantName,
   stationName,
   hubName,
-  onNavigateToProject
+  onNavigateToProject,
+  dragAttributes,
+  dragListeners,
 }) => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const { widgetSize } = useWidgetSize();
@@ -132,6 +136,8 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
           'h-[450px] md:h-[500px] lg:h-[520px]'
         }`}
         widgetId={widgetId}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
       >
         {widgetContent}
       </WidgetCard>

@@ -18,11 +18,15 @@ interface LinkedPSSR {
 interface PSSRLinkedPSSRsWidgetProps {
   linkedPSSRs: LinkedPSSR[];
   onPSSRClick?: (pssrId: string) => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRLinkedPSSRsWidget: React.FC<PSSRLinkedPSSRsWidgetProps> = ({
   linkedPSSRs,
-  onPSSRClick
+  onPSSRClick,
+  dragAttributes,
+  dragListeners,
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-linked-pssrs';
@@ -124,6 +128,8 @@ export const PSSRLinkedPSSRsWidget: React.FC<PSSRLinkedPSSRsWidgetProps> = ({
           'h-[450px] md:h-[500px] lg:h-[520px]'
         }`}
         widgetId={widgetId}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
       >
         {widgetContent}
       </WidgetCard>

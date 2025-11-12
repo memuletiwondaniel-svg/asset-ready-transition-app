@@ -20,11 +20,15 @@ interface Activity {
 interface PSSRRecentActivitiesWidgetProps {
   activities: Activity[];
   maxItems?: number;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProps> = ({
   activities,
-  maxItems = 10
+  maxItems = 10,
+  dragAttributes,
+  dragListeners,
 }) => {
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -78,7 +82,11 @@ export const PSSRRecentActivitiesWidget: React.FC<PSSRRecentActivitiesWidgetProp
   const displayedActivities = activities.slice(0, maxItems);
 
   return (
-    <WidgetCard title="Recent Activities">
+    <WidgetCard 
+      title="Recent Activities"
+      dragAttributes={dragAttributes}
+      dragListeners={dragListeners}
+    >
       <div className="space-y-3">
         {displayedActivities.map((activity) => (
           <div

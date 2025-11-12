@@ -488,6 +488,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         dateInitiated={pssrData.created}
                         pssrLead={pssrData.initiator}
                         tier={pssrData.tier}
+                        dragAttributes={attributes}
+                        dragListeners={listeners}
                       />
                     )}
                   </SortableWidget>
@@ -498,6 +500,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         <PSSRKeyActivitiesWidget
                           activities={pssrData.keyActivities}
                           onActivityClick={(type) => console.log('Activity clicked:', type)}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
                         />
                       )}
                     </SortableWidget>
@@ -511,6 +515,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       <PSSRScopeWidget
                         description={pssrData.scope}
                         images={pssrData.scopeImages}
+                        dragAttributes={attributes}
+                        dragListeners={listeners}
                       />
                     )}
                   </SortableWidget>
@@ -521,6 +527,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         <PSSRPendingTasksWidget
                           reviewers={pssrData.reviewers}
                           approvers={pssrData.approvers}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
                         />
                       )}
                     </SortableWidget>
@@ -536,6 +544,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                           overallProgress={pssrData.progress}
                           categoryProgress={pssrData.categoryProgress}
                           onCategoryClick={onNavigateToCategory}
+                          dragAttributes={attributes}
+                          dragListeners={listeners}
                         />
                       )}
                     </SortableWidget>
@@ -553,6 +563,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         draftItems={pssrData.statistics.draftItems}
                         underReviewItems={pssrData.statistics.underReviewItems}
                         approvedItems={pssrData.statistics.approvedItems}
+                        dragAttributes={attributes}
+                        dragListeners={listeners}
                       />
                     )}
                   </SortableWidget>
@@ -564,6 +576,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       <PSSRRecentActivitiesWidget
                         activities={pssrData.recentActivities}
                         maxItems={8}
+                        dragAttributes={attributes}
+                        dragListeners={listeners}
                       />
                     )}
                   </SortableWidget>
@@ -575,6 +589,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       <PSSRLinkedPSSRsWidget
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onPSSRClick={(pssrId) => console.log('Navigate to PSSR:', pssrId)}
+                        dragAttributes={attributes}
+                        dragListeners={listeners}
                       />
                     )}
                   </SortableWidget>

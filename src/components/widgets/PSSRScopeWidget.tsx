@@ -7,11 +7,15 @@ import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 interface PSSRScopeWidgetProps {
   description: string;
   images?: string[];
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRScopeWidget: React.FC<PSSRScopeWidgetProps> = ({
   description,
-  images = []
+  images = [],
+  dragAttributes,
+  dragListeners,
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-scope';
@@ -61,6 +65,8 @@ export const PSSRScopeWidget: React.FC<PSSRScopeWidgetProps> = ({
           'h-[450px] md:h-[500px] lg:h-[520px]'
         }`}
         widgetId={widgetId}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
       >
         {widgetContent}
       </WidgetCard>

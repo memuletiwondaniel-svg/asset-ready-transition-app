@@ -18,11 +18,15 @@ interface KeyActivity {
 interface PSSRKeyActivitiesWidgetProps {
   activities: KeyActivity[];
   onActivityClick?: (activityType: string) => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const PSSRKeyActivitiesWidget: React.FC<PSSRKeyActivitiesWidgetProps> = ({
   activities,
-  onActivityClick
+  onActivityClick,
+  dragAttributes,
+  dragListeners,
 }) => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<KeyActivity | null>(null);
@@ -117,6 +121,8 @@ export const PSSRKeyActivitiesWidget: React.FC<PSSRKeyActivitiesWidgetProps> = (
           'h-[450px] md:h-[500px] lg:h-[520px]'
         }`}
         widgetId={widgetId}
+        dragAttributes={dragAttributes}
+        dragListeners={dragListeners}
       >
         {widgetContent}
       </WidgetCard>
