@@ -774,7 +774,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     gradient: 'from-orange-500 to-orange-600',
     bgTone: 'bg-orange-500/5'
   }];
-  return <AnimatedBackground>
+  return <AnimatedBackground transparent>
       {/* Background Slideshow */}
       <BackgroundSlideshow showFunFacts={false} />
       
