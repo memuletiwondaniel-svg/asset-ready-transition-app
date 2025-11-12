@@ -31,7 +31,7 @@ const tourSteps: TourStep[] = [
   },
   {
     target: '[data-tour="tasks"]',
-    title: 'Pending Tasks',
+    title: 'My Tasks',
     description: 'View and manage all your pending tasks. Filter by type and priority to stay organized.',
     position: 'left'
   }

@@ -950,7 +950,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                         <ListChecks className="w-6 h-6 text-white relative z-10 group-hover:scale-110 transition-transform duration-300" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-xl font-bold whitespace-nowrap">Pending Tasks</CardTitle>
+                        <CardTitle className="text-xl font-bold whitespace-nowrap">My Tasks</CardTitle>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

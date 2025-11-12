@@ -48,7 +48,7 @@ export const WidgetManagement: React.FC<WidgetManagementProps> = ({
 
   const panelWidgets = [
     { id: 'ai-assistant', title: 'AI Assistant', icon: Sparkles, description: 'Chat with AI assistant', visible: aiPanelVisible, onToggle: onToggleAiPanel },
-    { id: 'tasks-panel', title: 'Pending Tasks', icon: ListTodo, description: 'View and manage tasks', visible: tasksPanelVisible, onToggle: onToggleTasksPanel },
+    { id: 'tasks-panel', title: 'My Tasks', icon: ListTodo, description: 'View and manage tasks', visible: tasksPanelVisible, onToggle: onToggleTasksPanel },
   ];
 
   const handleReset = () => {
