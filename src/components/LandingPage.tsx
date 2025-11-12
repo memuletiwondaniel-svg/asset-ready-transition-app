@@ -158,6 +158,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     const saved = localStorage.getItem('tasksPanelVisible');
     return saved ? JSON.parse(saved) : true;
   });
+  const [tasksPanelExpanded, setTasksPanelExpanded] = useState(() => {
+    const saved = localStorage.getItem('tasksPanelExpanded');
+    return saved ? JSON.parse(saved) : false;
+  });
   const MAX_IMAGES = 5;
   const chatEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -176,6 +180,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   React.useEffect(() => {
     localStorage.setItem('tasksPanelVisible', JSON.stringify(tasksPanelVisible));
   }, [tasksPanelVisible]);
+  React.useEffect(() => {
+    localStorage.setItem('tasksPanelExpanded', JSON.stringify(tasksPanelExpanded));
+  }, [tasksPanelExpanded]);
   React.useEffect(() => {
     localStorage.setItem('welcomeBannerCollapsed', JSON.stringify(welcomeBannerCollapsed));
   }, [welcomeBannerCollapsed]);
@@ -781,7 +788,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
         {/* Main Content Area */}
         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-          <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+          <div className={`flex-1 flex flex-col gap-6 overflow-hidden transition-all duration-500 ${tasksPanelExpanded ? 'hidden' : ''}`}>
             {/* Welcome User Banner - Ask ORSH AI */}
             <Card className="glass-card overflow-hidden animate-fade-in border-2 border-primary/20 shadow-lg transition-all duration-300">
               <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
@@ -895,7 +902,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Tasks Panel */}
-          {tasksPanelVisible && <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 group ${isTasksPanelCollapsed ? 'w-16' : 'w-80'}`} data-tour="tasks">
+          {tasksPanelVisible && !tasksPanelExpanded && <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 group ${isTasksPanelCollapsed ? 'w-16' : 'w-80'}`} data-tour="tasks">
               <CardHeader className="border-b border-border/40 py-4">
                 <div className="flex items-center justify-between">
                   {!isTasksPanelCollapsed && <div className="flex items-center gap-3 flex-1">
@@ -936,6 +943,15 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="z-50 bg-background">
+                          <DropdownMenuItem onClick={() => {
+                      setTasksPanelExpanded(!tasksPanelExpanded);
+                      toast({
+                        title: tasksPanelExpanded ? 'Tasks panel restored' : 'Tasks panel expanded'
+                      });
+                    }}>
+                            {tasksPanelExpanded ? <Minimize2 className="w-4 h-4 mr-2" /> : <Maximize2 className="w-4 h-4 mr-2" />}
+                            {tasksPanelExpanded ? 'Restore' : 'Expand'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                       setTasksPanelVisible(false);
                       toast({
@@ -1061,6 +1077,180 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </CardContent>
             </>}
           </Card>}
+
+          {/* Expanded Tasks Panel - Full Width */}
+          {tasksPanelVisible && tasksPanelExpanded && <div className="flex-1 animate-fade-in">
+            <Card className="glass-panel shadow-xl h-full flex flex-col" data-tour="tasks-expanded">
+              <CardHeader className="border-b border-border/40 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center shadow-lg flex-shrink-0 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                      <ListChecks className="w-6 h-6 text-white relative z-10" />
+                    </div>
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <CardTitle className="text-2xl font-bold whitespace-nowrap">My Tasks</CardTitle>
+                      <div className="flex items-center gap-1.5">
+                        {taskCounts.overdue > 0 ? <Badge variant="destructive" className="animate-pulse font-semibold px-2 py-0.5">
+                            {taskCounts.overdue} Overdue
+                          </Badge> : tasks.length > 0 && <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 font-semibold px-2 py-0.5">
+                            {tasks.length}
+                          </Badge>}
+                        {taskCounts.approval > 0 && <Badge variant="outline" className="text-xs px-1.5 py-0">
+                            {taskCounts.approval} Approval
+                          </Badge>}
+                        {taskCounts.review > 0 && <Badge variant="outline" className="text-xs px-1.5 py-0">
+                            {taskCounts.review} Review
+                          </Badge>}
+                        {taskCounts.action > 0 && <Badge variant="outline" className="text-xs px-1.5 py-0">
+                            {taskCounts.action} Action
+                          </Badge>}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setShowQuickTaskDialog(true)} className="h-8 w-8 p-0 hover:bg-primary/10 flex-shrink-0" title="Quick add task">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="z-50 bg-background">
+                        <DropdownMenuItem onClick={() => {
+                    setTasksPanelExpanded(false);
+                    toast({
+                      title: 'Tasks panel restored'
+                    });
+                  }}>
+                          <Minimize2 className="w-4 h-4 mr-2" />
+                          Restore
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                    setTasksPanelVisible(false);
+                    setTasksPanelExpanded(false);
+                    toast({
+                      title: 'Tasks panel hidden'
+                    });
+                  }}>
+                          <EyeOff className="w-4 h-4 mr-2" />
+                          Hide
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <div className="border-b border-border/40 p-4 space-y-3 bg-gradient-to-r from-muted/30 to-muted/10">
+                <div className="flex gap-3">
+                  {/* Search Input */}
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input placeholder="Search tasks..." value={taskSearchQuery} onChange={e => setTaskSearchQuery(e.target.value)} className="pl-9 h-9 text-sm backdrop-blur-sm bg-background/80 hover:bg-background transition-colors" />
+                    {taskSearchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setTaskSearchQuery('')}>
+                        <X className="w-3 h-3" />
+                      </Button>}
+                  </div>
+
+                  <Select value={taskFilterType} onValueChange={setTaskFilterType}>
+                    <SelectTrigger className="h-9 text-sm w-48 backdrop-blur-sm bg-background/80 hover:bg-background transition-colors">
+                      <SelectValue placeholder="Filter" />
+                    </SelectTrigger>
+                    <SelectContent className="backdrop-blur-xl bg-background/98">
+                      <SelectItem value="all">
+                        <div className="flex items-center justify-between w-full">
+                          <span>All</span>
+                          {taskCounts.all > 0 && <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.all}
+                            </Badge>}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="approval">
+                        <div className="flex items-center justify-between w-full">
+                          <span>Approval</span>
+                          {taskCounts.approval > 0 && <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.approval}
+                            </Badge>}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="review">
+                        <div className="flex items-center justify-between w-full">
+                          <span>Review</span>
+                          {taskCounts.review > 0 && <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.review}
+                            </Badge>}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="action">
+                        <div className="flex items-center justify-between w-full">
+                          <span>Action</span>
+                          {taskCounts.action > 0 && <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
+                              {taskCounts.action}
+                            </Badge>}
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={taskSortBy} onValueChange={value => setTaskSortBy(value as 'priority' | 'due_date' | 'type')}>
+                    <SelectTrigger className="h-9 text-sm w-40">
+                      <SelectValue placeholder="Sort" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="due_date">Due Date</SelectItem>
+                      <SelectItem value="type">Type</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Bulk Actions Toolbar */}
+              {selectedTasks.size > 0 && <div className="border-b border-border/40 p-3 bg-primary/5 flex items-center justify-between animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <Checkbox checked={selectedTasks.size === filteredAndSortedTasks.length} onCheckedChange={handleSelectAll} />
+                    <span className="text-sm font-medium">
+                      {selectedTasks.size} task(s) selected
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={handleBulkComplete} className="h-8 text-xs">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Complete All
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleBulkDelete} className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive">
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete All
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedTasks(new Set())} className="h-8 text-xs">
+                      <X className="w-3 h-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                </div>}
+
+              <CardContent className="flex-1 p-6 overflow-y-auto">
+                {tasksLoading ? <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div> : filteredAndSortedTasks.length === 0 ? <div className="text-center py-12 text-muted-foreground">
+                    <p className="text-sm">No tasks found</p>
+                  </div> : <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleTaskDragEnd}>
+                    <SortableContext items={filteredAndSortedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredAndSortedTasks.map(task => <DraggableTask key={task.id} task={task} isSelected={selectedTasks.has(task.id)} onSelect={handleTaskSelect} onComplete={id => {
+                      setTaskToDelete(id);
+                      setTaskAction('complete');
+                    }} onDismiss={id => {
+                      setTaskToDelete(id);
+                      setTaskAction('dismiss');
+                    }} onDelete={deleteTask} onManageDependencies={handleManageDependencies} allTasks={tasks} />)}
+                      </div>
+                    </SortableContext>
+                  </DndContext>}
+              </CardContent>
+            </Card>
+          </div>}
         </div>
       </div>
 
