@@ -114,6 +114,21 @@ export const DashboardWidgets: React.FC = () => {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [settingsWidget, setSettingsWidget] = useState<WidgetConfig | null>(null);
 
+  // Cleanup: Remove any legacy ai-assistant widgets
+  React.useEffect(() => {
+    const cleanupLegacyWidgets = async () => {
+      const aiAssistantWidgets = widgets.filter(w => w.widget_type === 'ai-assistant');
+      for (const widget of aiAssistantWidgets) {
+        console.log('Removing legacy AI Assistant widget:', widget.id);
+        await removeWidget(widget.id);
+      }
+    };
+    
+    if (widgets.length > 0 && widgets.some(w => w.widget_type === 'ai-assistant')) {
+      cleanupLegacyWidgets();
+    }
+  }, [widgets.length, removeWidget]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
