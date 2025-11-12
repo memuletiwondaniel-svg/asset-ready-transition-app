@@ -61,14 +61,6 @@ const AVAILABLE_WIDGETS = [
     color: 'text-orange-500'
   },
   {
-    type: 'ai-assistant',
-    name: 'AI Assistant',
-    description: 'Quick access to AI chat',
-    icon: Sparkles,
-    defaultSize: 'medium' as const,
-    color: 'text-cyan-500'
-  },
-  {
     type: 'pssr-stats',
     name: 'PSSR Statistics',
     description: 'Real-time PSSR analytics with charts',

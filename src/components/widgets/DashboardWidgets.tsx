@@ -8,7 +8,6 @@ import { RecentActivityWidget } from './RecentActivityWidget';
 import { CalendarWidget } from './CalendarWidget';
 import { ProjectsOverviewWidget } from './ProjectsOverviewWidget';
 import { NotificationsWidget } from './NotificationsWidget';
-import { AIAssistantWidget } from './AIAssistantWidget';
 import { PSSRStatsWidget } from './PSSRStatsWidget';
 import { TeamMembersWidget } from './TeamMembersWidget';
 import { WidgetLibrary } from './WidgetLibrary';
@@ -156,8 +155,6 @@ export const DashboardWidgets: React.FC = () => {
         return <ProjectsOverviewWidget settings={widget.settings} />;
       case 'notifications':
         return <NotificationsWidget settings={widget.settings} />;
-      case 'ai-assistant':
-        return <AIAssistantWidget settings={widget.settings} />;
       case 'pssr-stats':
         return <PSSRStatsWidget settings={widget.settings} />;
       case 'team-members':
