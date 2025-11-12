@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useORMPlans } from '@/hooks/useORMPlans';
 import { CreateORMModal } from './CreateORMModal';
-import { Wrench, Plus, Calendar, User, TrendingUp, AlertCircle, BarChart3, UserCog } from 'lucide-react';
+import { Wrench, Plus, Calendar, User, TrendingUp, AlertCircle, BarChart3, UserCog, Bell } from 'lucide-react';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,6 +113,10 @@ export const ORMLandingPage: React.FC = () => {
               <Button variant="outline" size="sm" onClick={() => navigate('/or-maintenance/resources')}>
                 <UserCog className="w-4 h-4 mr-2" />
                 Resources
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/or-maintenance/notifications')}>
+                <Bell className="w-4 h-4 mr-2" />
+                Notifications
               </Button>
               <Button onClick={() => setShowCreateModal(true)} className="gap-2">
                 <Plus className="w-4 h-4" />

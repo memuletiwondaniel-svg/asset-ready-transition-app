@@ -21,6 +21,7 @@ import { ORMLandingPage } from "@/components/orm/ORMLandingPage";
 import { ORMDetailsPage } from "@/components/orm/ORMDetailsPage";
 import { ORMAnalyticsDashboard } from "@/components/orm/ORMAnalyticsDashboard";
 import { ORMResourceCapacityDashboard } from "@/components/orm/ORMResourceCapacityDashboard";
+import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPreferences";
 
 const queryClient = new QueryClient();
 
@@ -50,7 +51,8 @@ const App = () => (
             <Route path="/p2a-handover/:id" element={<P2ADetailsPage />} />
             <Route path="/or-maintenance" element={<ORMLandingPage />} />
             <Route path="/or-maintenance/analytics" element={<ORMAnalyticsDashboard />} />
-            <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
+          <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
+          <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
             <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />

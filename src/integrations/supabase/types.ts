@@ -858,6 +858,42 @@ export type Database = {
           },
         ]
       }
+      orm_notification_preferences: {
+        Row: {
+          created_at: string | null
+          digest_frequency: string
+          digest_time: string | null
+          id: string
+          include_milestone_progress: boolean | null
+          include_overdue_tasks: boolean | null
+          include_pending_reviews: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          digest_frequency?: string
+          digest_time?: string | null
+          id?: string
+          include_milestone_progress?: boolean | null
+          include_overdue_tasks?: boolean | null
+          include_pending_reviews?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          digest_frequency?: string
+          digest_time?: string | null
+          id?: string
+          include_milestone_progress?: boolean | null
+          include_overdue_tasks?: boolean | null
+          include_pending_reviews?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       orm_plans: {
         Row: {
           created_at: string
