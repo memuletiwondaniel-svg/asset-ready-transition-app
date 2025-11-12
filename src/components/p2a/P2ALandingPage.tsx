@@ -52,7 +52,7 @@ export const P2ALandingPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       <OrshSidebar 
         currentPage="p2a-handover"
         onNavigate={(section) => {
@@ -67,32 +67,35 @@ export const P2ALandingPage: React.FC = () => {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-6">
+        <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel="P2A Handover" />
           
-          <div className="flex items-center justify-between mt-4">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                 P2A Handover
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">
                 Project to Asset Transition Management
               </p>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => navigate('/p2a-handover/analytics')}
+                className="flex-1 sm:flex-none text-xs sm:text-sm"
               >
-                <BarChart3 className="mr-2 h-4 w-4" />
+                <BarChart3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Analytics
               </Button>
               <Button
+                size="sm"
                 onClick={() => setCreateModalOpen(true)}
-                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity text-xs sm:text-sm"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Initiate Handover
               </Button>
             </div>
@@ -100,10 +103,10 @@ export const P2ALandingPage: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-[1600px] mx-auto space-y-6">
+        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
+          <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -112,18 +115,18 @@ export const P2ALandingPage: React.FC = () => {
                     className={`relative overflow-hidden border-border/40 bg-gradient-to-br ${stat.bgGradient} animate-fade-in`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient}`}>
-                          <Icon className="h-5 w-5 text-white" />
+                    <div className="p-3 sm:p-4 md:p-6">
+                      <div className="flex items-center justify-between mb-2 sm:mb-4">
+                        <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-br ${stat.gradient}`}>
+                          <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">{stat.title}</p>
-                        <p className="text-3xl font-bold">{stat.value}</p>
+                        <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">{stat.title}</p>
+                        <p className="text-xl sm:text-2xl md:text-3xl font-bold">{stat.value}</p>
                       </div>
                     </div>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full -mr-16 -mt-16" />
+                    <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full -mr-10 -mt-10 sm:-mr-16 sm:-mt-16" />
                   </Card>
                 );
               })}

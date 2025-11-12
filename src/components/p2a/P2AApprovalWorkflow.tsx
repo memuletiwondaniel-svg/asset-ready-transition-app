@@ -103,43 +103,43 @@ export const P2AApprovalWorkflow: React.FC<P2AApprovalWorkflowProps> = ({ handov
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Approval Workflow</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Approval Workflow</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
+        <CardContent className="p-3 sm:p-6">
+          <div className="space-y-4 sm:space-y-6">
             {approvals?.map((approval, index) => (
-              <div key={approval.id} className="flex items-start gap-4 relative">
+              <div key={approval.id} className="flex items-start gap-3 sm:gap-4 relative">
                 {index < approvals.length - 1 && (
-                  <div className="absolute left-[10px] top-8 w-0.5 h-16 bg-border" />
+                  <div className="absolute left-[10px] top-8 w-0.5 h-12 sm:h-16 bg-border" />
                 )}
                 
-                <div className="relative z-10 flex-shrink-0">
+                <div className="relative z-10 flex-shrink-0 mt-1">
                   {getStatusIcon(approval.status)}
                 </div>
                 
-                <div className="flex-1 pt-0.5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold">{getStatusLabel(approval.stage)}</h4>
-                    <Badge variant={approval.status === 'APPROVED' ? 'default' : 'secondary'}>
+                <div className="flex-1 pt-0.5 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                    <h4 className="font-semibold text-sm sm:text-base">{getStatusLabel(approval.stage)}</h4>
+                    <Badge variant={approval.status === 'APPROVED' ? 'default' : 'secondary'} className="w-fit text-xs">
                       {approval.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">Approver: {approval.approver_name}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Approver: {approval.approver_name}</p>
                   {approval.approved_at && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Approved on: {new Date(approval.approved_at).toLocaleDateString()}
+                      Approved: {new Date(approval.approved_at).toLocaleDateString()}
                     </p>
                   )}
                   {approval.comments && (
                     <div className="mt-2 p-2 bg-muted rounded text-xs">
                       <p className="font-semibold mb-1">Comments:</p>
-                      <p>{approval.comments}</p>
+                      <p className="break-words">{approval.comments}</p>
                     </div>
                   )}
                   {approval.status === 'PENDING' && index === completedCount && (
-                    <Button size="sm" className="mt-3" onClick={() => handleApprove(approval)}>
+                    <Button size="sm" className="mt-3 text-xs" onClick={() => handleApprove(approval)}>
                       <Send className="mr-2 h-3 w-3" />
-                      Submit for Approval
+                      Submit Approval
                     </Button>
                   )}
                 </div>
@@ -147,10 +147,10 @@ export const P2AApprovalWorkflow: React.FC<P2AApprovalWorkflowProps> = ({ handov
             ))}
           </div>
 
-          <div className="mt-8 p-4 bg-muted rounded-lg space-y-3">
-            <h4 className="font-semibold mb-2">Workflow Status</h4>
+          <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-muted rounded-lg space-y-3">
+            <h4 className="font-semibold text-sm sm:text-base mb-2">Workflow Status</h4>
             <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Progress: {completedCount} of {totalCount} stages completed ({Math.round(progress)}%)
             </p>
           </div>
@@ -158,13 +158,13 @@ export const P2AApprovalWorkflow: React.FC<P2AApprovalWorkflowProps> = ({ handov
       </Card>
 
       <Dialog open={commentModalOpen} onOpenChange={setCommentModalOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Approval Comments</DialogTitle>
+            <DialogTitle className="text-lg">Add Approval Comments</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                 Add any comments or notes for this approval stage:
               </p>
               <Textarea
@@ -172,13 +172,14 @@ export const P2AApprovalWorkflow: React.FC<P2AApprovalWorkflowProps> = ({ handov
                 onChange={(e) => setComments(e.target.value)}
                 placeholder="Enter your comments..."
                 rows={4}
+                className="text-sm"
               />
             </div>
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setCommentModalOpen(false)}>
+            <div className="flex gap-2 sm:gap-3 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setCommentModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSubmitApproval}>
+              <Button size="sm" onClick={handleSubmitApproval}>
                 Approve
               </Button>
             </div>

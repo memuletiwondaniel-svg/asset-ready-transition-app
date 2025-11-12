@@ -19,7 +19,7 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
     },
     {
       id: 'operation-readiness',
-      title: 'Operation Readiness',
+      title: 'OR Plans',
       description: 'ORP Planning & Tracking',
       icon: ClipboardCheck,
       gradient: 'from-blue-500/20 to-cyan-500/20',
