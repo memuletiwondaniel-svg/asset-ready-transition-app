@@ -107,15 +107,15 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
               return (
                 <div
                   key={index}
-                  className={`group p-3 rounded-lg border ${colors.border} hover:bg-accent/5 transition-all cursor-pointer`}
+                  className={`group p-3 rounded-lg border ${colors.border} hover:bg-accent/5 transition-all duration-300 cursor-pointer hover-scale`}
                   onClick={() => onCategoryClick?.(category.name)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center transition-colors`}>
-                        <Icon className={`h-4 w-4 ${colors.icon}`} />
+                      <div className={`w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
+                        <Icon className={`h-4 w-4 ${colors.icon} transition-transform duration-300 group-hover:rotate-12`} />
                       </div>
-                      <span className="text-sm font-medium text-foreground">{category.name}</span>
+                      <span className="text-sm font-medium text-foreground transition-colors duration-300 group-hover:font-semibold">{category.name}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground">
@@ -126,7 +126,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
                       </span>
                     </div>
                   </div>
-                  <Progress value={category.percentage} className={`h-2 ${colors.progress}`} />
+                  <Progress value={category.percentage} className={`h-2 ${colors.progress} transition-all duration-300 group-hover:h-2.5`} />
                 </div>
               );
             })}
