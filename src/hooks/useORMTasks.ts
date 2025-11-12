@@ -41,7 +41,7 @@ export const useORMTasks = (deliverableId?: string) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { data: newTask, error } = await supabase
         .from('orm_tasks')
         .insert({
           deliverable_id: data.deliverable_id,
@@ -52,9 +52,26 @@ export const useORMTasks = (deliverableId?: string) => {
           priority: data.priority,
           created_by: user.user.id,
           status: 'PENDING'
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Create notification for assigned user
+      if (data.assigned_to) {
+        await supabase.functions.invoke('create-orm-notification', {
+          body: {
+            userId: data.assigned_to,
+            type: 'TASK_ASSIGNED',
+            title: 'New Task Assigned',
+            message: `You have been assigned: ${data.title}`,
+            entityType: 'task',
+            entityId: newTask.id,
+            metadata: { deliverableId: data.deliverable_id }
+          }
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orm-tasks'] });

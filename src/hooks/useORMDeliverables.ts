@@ -35,6 +35,13 @@ export const useORMDeliverables = () => {
           .eq('user_id', user.user?.id)
           .single();
 
+        // Get deliverable details for reviewer notification
+        const { data: deliverable } = await supabase
+          .from('orm_deliverables')
+          .select('deliverable_type, qaqc_reviewer_id, orm_plan_id')
+          .eq('id', data.deliverableId)
+          .single();
+
         await supabase.functions.invoke('send-orm-workflow-notification', {
           body: {
             deliverable_id: data.deliverableId,
@@ -45,6 +52,25 @@ export const useORMDeliverables = () => {
             submitted_by_name: profile?.full_name || 'Unknown'
           }
         });
+
+        // Create in-app notification for reviewer
+        if (deliverable?.qaqc_reviewer_id) {
+          await supabase.functions.invoke('create-orm-notification', {
+            body: {
+              userId: deliverable.qaqc_reviewer_id,
+              type: 'WORKFLOW_CHANGE',
+              title: 'Deliverable Ready for Review',
+              message: `${deliverable.deliverable_type} deliverable moved to ${data.updates.workflow_stage}`,
+              entityType: 'deliverable',
+              entityId: data.deliverableId,
+              metadata: { 
+                planId: deliverable.orm_plan_id,
+                oldStage: data.from_stage,
+                newStage: data.updates.workflow_stage
+              }
+            }
+          });
+        }
       }
     },
     onSuccess: () => {
