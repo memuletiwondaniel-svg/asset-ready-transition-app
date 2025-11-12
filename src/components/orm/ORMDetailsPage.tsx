@@ -4,8 +4,9 @@ import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, FileText, MessageSquare } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, FileText, MessageSquare, ListTodo } from 'lucide-react';
 import { useORMPlanDetails } from '@/hooks/useORMPlans';
+import { ORMTaskManagement } from './ORMTaskManagement';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORMKanbanBoard } from './ORMKanbanBoard';
 import { ORMDailyReportsView } from './ORMDailyReportsView';
@@ -123,6 +124,10 @@ export const ORMDetailsPage: React.FC = () => {
                   <FileText className="w-4 h-4" />
                   Documents
                 </TabsTrigger>
+                <TabsTrigger value="tasks" className="gap-2">
+                  <ListTodo className="w-4 h-4" />
+                  Tasks
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -141,6 +146,19 @@ export const ORMDetailsPage: React.FC = () => {
 
               <TabsContent value="documents" className="h-full m-0 p-6">
                 <ORMDocumentChecklist planId={plan.id} deliverables={plan.deliverables || []} />
+              </TabsContent>
+
+              <TabsContent value="tasks" className="h-full m-0 p-6">
+                <div className="space-y-6">
+                  {plan.deliverables?.map((deliverable: any) => (
+                    <div key={deliverable.id}>
+                      <h3 className="text-lg font-medium mb-4">
+                        {deliverable.deliverable_type.replace(/_/g, ' ')}
+                      </h3>
+                      <ORMTaskManagement deliverableId={deliverable.id} />
+                    </div>
+                  ))}
+                </div>
               </TabsContent>
             </div>
           </Tabs>

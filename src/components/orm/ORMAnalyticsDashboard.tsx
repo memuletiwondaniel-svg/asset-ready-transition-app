@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Wrench, ArrowLeft, TrendingUp, Users, CheckCircle, Clock } from 'lucide-react';
+import { Wrench, ArrowLeft, TrendingUp, Users, CheckCircle, Clock, Download } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { exportToExcel, exportToPDF } from '@/utils/ormExport';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export const ORMAnalyticsDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -104,14 +106,32 @@ export const ORMAnalyticsDashboard: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b border-border bg-card px-6 py-4">
           <BreadcrumbNavigation currentPageLabel="Analytics" />
-          <div className="flex items-center gap-4 mt-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/or-maintenance')}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Wrench className="w-5 h-5 text-primary" />
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/or-maintenance')}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Wrench className="w-5 h-5 text-primary" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">OR Maintenance Analytics</h1>
             </div>
-            <h1 className="text-2xl font-bold text-foreground">OR Maintenance Analytics</h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => exportToExcel(plans || [], 'orm-analytics')}>
+                  Export to Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToPDF(plans || [], 'orm-analytics')}>
+                  Export to PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

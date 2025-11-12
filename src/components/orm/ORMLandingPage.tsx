@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useORMPlans } from '@/hooks/useORMPlans';
 import { CreateORMModal } from './CreateORMModal';
-import { Wrench, Plus, Calendar, User, TrendingUp, AlertCircle } from 'lucide-react';
+import { Wrench, Plus, Calendar, User, TrendingUp, AlertCircle, BarChart3, UserCog } from 'lucide-react';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -105,10 +105,20 @@ export const ORMLandingPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create ORM
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/or-maintenance/analytics')}>
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/or-maintenance/resources')}>
+                <UserCog className="w-4 h-4 mr-2" />
+                Resources
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create ORM
+              </Button>
+            </div>
           </div>
         </div>
 

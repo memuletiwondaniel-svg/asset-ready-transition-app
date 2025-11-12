@@ -135,7 +135,11 @@ export const ORMWorkflowPanel: React.FC<ORMWorkflowPanelProps> = ({
                     {deliverable.progress_percentage === 100 && deliverable.workflow_stage === 'IN_PROGRESS' && (
                       <Button 
                         size="sm"
-                        onClick={() => submitForReview(deliverable.id)}
+                        onClick={() => submitForReview({
+                          deliverableId: deliverable.id,
+                          deliverable_type: deliverable.deliverable_type,
+                          project_name: 'Project' // This should be passed from parent
+                        })}
                       >
                         Submit for Review
                       </Button>
