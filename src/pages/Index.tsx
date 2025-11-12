@@ -143,6 +143,7 @@ const Index = () => {
       case 'safe-startup':
         return <PSSRSummaryPage onBack={handleBackToLanding} />;
       case 'users':
+      case 'user-management':
         return <UserManagement onBack={handleBackToLanding} />;
       case 'manage-checklist':
         return <ManageChecklistPage onBack={handleBackToLanding} />;
