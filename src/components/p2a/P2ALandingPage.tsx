@@ -3,7 +3,7 @@ import { OrshSidebar } from '@/components/OrshSidebar';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Key, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Key, TrendingUp, AlertCircle, CheckCircle, BarChart3 } from 'lucide-react';
 import { CreateP2AHandoverModal } from './CreateP2AHandoverModal';
 import { P2AHeatmap } from './P2AHeatmap';
 import { useP2AHandovers } from '@/hooks/useP2AHandovers';
@@ -80,13 +80,22 @@ export const P2ALandingPage: React.FC = () => {
               </p>
             </div>
             
-            <Button
-              onClick={() => setCreateModalOpen(true)}
-              className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Initiate Handover
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/p2a-handover/analytics')}
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analytics
+              </Button>
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Initiate Handover
+              </Button>
+            </div>
           </div>
         </div>
 

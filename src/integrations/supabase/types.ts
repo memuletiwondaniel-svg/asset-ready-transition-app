@@ -1024,6 +1024,56 @@ export type Database = {
           },
         ]
       }
+      p2a_audit_trail: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string | null
+          entity_id: string | null
+          entity_type: string
+          handover_id: string
+          id: string
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type: string
+          handover_id: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          handover_id?: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_audit_trail_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_deliverable_attachments: {
         Row: {
           created_at: string

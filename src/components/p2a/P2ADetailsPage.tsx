@@ -13,6 +13,9 @@ import { P2ADeliverablesList } from './P2ADeliverablesList';
 import { P2AApprovalWorkflow } from './P2AApprovalWorkflow';
 import { P2AFileUpload } from './P2AFileUpload';
 import { P2ARealtimePresence } from './P2ARealtimePresence';
+import { P2AExportPDF } from './P2AExportPDF';
+import { P2AAuditTrail } from './P2AAuditTrail';
+import { useP2AApprovalWorkflow } from '@/hooks/useP2AApprovalWorkflow';
 
 export const P2ADetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +23,7 @@ export const P2ADetailsPage: React.FC = () => {
   const { handovers, isLoading: loadingHandover } = useP2AHandovers();
   const { deliverables, isLoading: loadingDeliverables } = useP2AHandoverDeliverables(id || '');
   const { categories } = useP2ADeliverableCategories();
+  const { approvals } = useP2AApprovalWorkflow(id || '');
 
   const handover = handovers?.find(h => h.id === id);
 
@@ -113,6 +117,8 @@ export const P2ADetailsPage: React.FC = () => {
             <Badge variant={handover.status === 'COMPLETED' ? 'default' : 'secondary'} className="text-sm">
               {handover.status}
             </Badge>
+            
+            <P2AExportPDF handover={handover} deliverables={deliverables} approvals={approvals} />
           </div>
         </div>
 
@@ -150,6 +156,7 @@ export const P2ADetailsPage: React.FC = () => {
                 <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
                 <TabsTrigger value="approval">Approval Workflow</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsTrigger value="audit">Audit Trail</TabsTrigger>
               </TabsList>
 
               <TabsContent value="deliverables" className="mt-6">
@@ -167,6 +174,10 @@ export const P2ADetailsPage: React.FC = () => {
 
               <TabsContent value="documents" className="mt-6">
                 <P2AFileUpload deliverableId={deliverables?.[0]?.id || ''} handoverId={id || ''} />
+              </TabsContent>
+
+              <TabsContent value="audit" className="mt-6">
+                <P2AAuditTrail handoverId={id || ''} />
               </TabsContent>
             </Tabs>
           </div>
