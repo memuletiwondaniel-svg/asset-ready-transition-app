@@ -9,10 +9,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Plus, MessageSquare, Trash2, History } from 'lucide-react';
+import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -23,11 +23,13 @@ interface Conversation {
   id: string;
   title: string;
   updated_at: string;
+  is_read?: boolean;
 }
 
 interface ORSHChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUnreadCountChange?: (count: number) => void;
 }
 
 const SUGGESTED_PROMPTS = [
@@ -39,7 +41,7 @@ const SUGGESTED_PROMPTS = [
   "How do I assign tasks in a PSSR?",
 ];
 
-export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChange }) => {
+export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChange, onUnreadCountChange }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -50,7 +52,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,11 +74,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
       const { data, error } = await supabase
         .from('chat_conversations')
-        .select('id, title, updated_at')
+        .select('id, title, updated_at, is_read')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
       setConversations(data || []);
+      
+      // Count unread conversations
+      const unreadCount = (data || []).filter(conv => !conv.is_read).length;
+      onUnreadCountChange?.(unreadCount);
     } catch (error) {
       console.error('Error loading conversations:', error);
     }
@@ -99,7 +105,14 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
       setMessages(loadedMessages);
       setCurrentConversationId(conversationId);
-      setShowHistory(false);
+      
+      // Mark conversation as read when loaded
+      await supabase
+        .from('chat_conversations')
+        .update({ is_read: true })
+        .eq('id', conversationId);
+      
+      loadConversations();
     } catch (error) {
       console.error('Error loading conversation:', error);
       toast.error('Failed to load conversation');
@@ -219,6 +232,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       // Save the complete assistant message
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
+        
+        // Mark conversation as unread
+        if (currentConversationId) {
+          await supabase
+            .from('chat_conversations')
+            .update({ is_read: false })
+            .eq('id', currentConversationId);
+        }
+        
         loadConversations();
       }
     } catch (error) {
@@ -245,7 +267,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       }
     ]);
     setCurrentConversationId(null);
-    setShowHistory(false);
   };
 
   const handleDeleteConversation = async (conversationId: string, e: React.MouseEvent) => {
@@ -271,7 +292,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] h-[600px] flex flex-col p-0">
+      <DialogContent className="sm:max-w-[900px] h-[600px] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div>
@@ -288,149 +309,172 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                 <Plus className="h-4 w-4 mr-1" />
                 New Chat
               </Button>
-              <Sheet open={showHistory} onOpenChange={setShowHistory}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <History className="h-4 w-4 mr-1" />
-                    History
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Chat History</SheetTitle>
-                    <SheetDescription>
-                      View and continue previous conversations
-                    </SheetDescription>
-                  </SheetHeader>
-                  <ScrollArea className="h-[calc(100vh-120px)] mt-4">
-                    <div className="space-y-2">
-                      {conversations.map((conv) => (
-                        <div
-                          key={conv.id}
-                          className={`p-3 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors ${
-                            conv.id === currentConversationId ? 'bg-accent border-primary' : ''
-                          }`}
-                          onClick={() => loadConversation(conv.id)}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <p className="text-sm font-medium truncate">{conv.title}</p>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(conv.updated_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => handleDeleteConversation(conv.id, e)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      {conversations.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-8">
-                          No conversation history yet
-                        </p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </SheetContent>
-              </Sheet>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowSidebar(!showSidebar)}
+              >
+                {showSidebar ? (
+                  <>
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Hide History
+                  </>
+                ) : (
+                  <>
+                    <ChevronRight className="h-4 w-4 mr-1" />
+                    Show History
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden px-6">
-          <ScrollArea className="h-full pr-4" ref={scrollRef}>
-            <div className="space-y-4 py-4">
-              {messages.length === 1 && (
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground mb-3">Quick questions:</p>
-                  <div className="grid grid-cols-1 gap-2">
-                    {SUGGESTED_PROMPTS.map((prompt, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="justify-start text-left h-auto py-2 px-3"
-                        onClick={() => handleSend(prompt)}
-                        disabled={isLoading}
-                      >
-                        <MessageSquare className="h-3 w-3 mr-2 flex-shrink-0" />
-                        <span className="text-sm">{prompt}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex gap-3 ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
-                      <Bot className="h-4 w-4 text-primary" />
+        <div className="flex-1 overflow-hidden flex">
+          {/* Conversation History Sidebar */}
+          {showSidebar && (
+            <div className="w-64 border-r flex flex-col">
+              <div className="px-4 py-3 border-b">
+                <h3 className="font-semibold text-sm">Recent Conversations</h3>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-2 space-y-1">
+                  {conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className={`p-3 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors relative ${
+                        conv.id === currentConversationId ? 'bg-accent border border-primary' : 'border border-transparent'
+                      }`}
+                      onClick={() => loadConversation(conv.id)}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                            <p className="text-xs font-medium truncate">{conv.title}</p>
+                            {!conv.is_read && (
+                              <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(conv.updated_at).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100"
+                          onClick={(e) => handleDeleteConversation(conv.id, e)}
+                        >
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
+                  ))}
+                  {conversations.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      No conversation history yet
+                    </p>
                   )}
-                  <div
-                    className={`rounded-lg px-4 py-2 max-w-[80%] ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                  {message.role === 'user' && (
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
-                      <User className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex gap-3 justify-start">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="rounded-lg px-4 py-2 bg-muted">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                </div>
-              )}
+              </ScrollArea>
             </div>
-          </ScrollArea>
-        </div>
+          )}
 
-        <div className="flex gap-2 p-6 pt-4 border-t">
-          <Textarea
-            placeholder="Ask ORSH about PSSRs, safety reviews, checklists..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="min-h-[60px] max-h-[120px] resize-none"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="self-end"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-hidden px-6">
+              <ScrollArea className="h-full pr-4" ref={scrollRef}>
+                <div className="space-y-4 py-4">
+                  {messages.length === 1 && (
+                    <div className="mb-6">
+                      <p className="text-sm text-muted-foreground mb-3">Quick questions:</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {SUGGESTED_PROMPTS.map((prompt, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            className="justify-start text-left h-auto py-2 px-3"
+                            onClick={() => handleSend(prompt)}
+                            disabled={isLoading}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-2 flex-shrink-0" />
+                            <span className="text-sm">{prompt}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex gap-3 ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
+                          <Bot className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+                      <div
+                        className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                      {message.role === 'user' && (
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex gap-3 justify-start">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
+                        <Bot className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="rounded-lg px-4 py-2 bg-muted">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+
+            <div className="flex gap-2 p-6 pt-4 border-t">
+              <Textarea
+                placeholder="Ask ORSH about PSSRs, safety reviews, checklists..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="min-h-[60px] max-h-[120px] resize-none"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isLoading}
+                className="self-end"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

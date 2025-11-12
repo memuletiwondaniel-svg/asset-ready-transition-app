@@ -56,6 +56,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   // Navigation items
   const navigationItems: NavigationItem[] = [
     { label: 'Home', icon: Home, path: '/', section: 'home' },
+    { label: 'Ask ORSH AI', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
     { label: 'Safe Start-Up', icon: AlertTriangle, path: '/safe-startup', section: 'safe-startup' },
     { label: 'User Management', icon: Users, path: '/user-management', section: 'user-management' },
     { label: 'Admin Tools', icon: Settings, path: '/admin-tools', section: 'admin-tools' },
@@ -65,6 +66,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const {
     theme,
     setTheme
@@ -156,14 +158,25 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                     key={item.section}
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    onClick={() => onNavigate?.(item.section || '')}
+                    onClick={() => {
+                      if (item.section === 'ask-orsh') {
+                        setChatOpen(true);
+                      } else {
+                        onNavigate?.(item.section || '');
+                      }
+                    }}
                     className={cn(
-                      "w-full justify-start h-9",
+                      "w-full justify-start h-9 relative",
                       isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                     )}
                   >
                     <Icon className="mr-2 h-4 w-4" />
                     <span>{item.label}</span>
+                    {item.section === 'ask-orsh' && unreadChatCount > 0 && (
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                        {unreadChatCount}
+                      </span>
+                    )}
                   </Button>
                 );
               })}
@@ -182,14 +195,25 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   key={item.section}
                   variant={isActive ? "secondary" : "ghost"}
                   size="icon"
-                  onClick={() => onNavigate?.(item.section || '')}
+                  onClick={() => {
+                    if (item.section === 'ask-orsh') {
+                      setChatOpen(true);
+                    } else {
+                      onNavigate?.(item.section || '');
+                    }
+                  }}
                   className={cn(
-                    "w-full h-9",
+                    "w-full h-9 relative",
                     isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                   )}
                   title={item.label}
                 >
                   <Icon className="h-4 w-4" />
+                  {item.section === 'ask-orsh' && unreadChatCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
+                      {unreadChatCount}
+                    </span>
+                  )}
                 </Button>
               );
             })}
@@ -249,12 +273,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Ask ORSH AI Row */}
-          <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={() => setChatOpen(true)} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Ask ORSH AI">
-            <MessageSquare className="w-4 h-4" />
-            {!isSidebarCollapsed && <span className="ml-2">Ask ORSH AI</span>}
-          </Button>
-
           {/* Widgets Row */}
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowWidgets} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Widgets">
             <LayoutGrid className="w-4 h-4" />
@@ -310,6 +328,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
     }} />
 
       {/* ORSH Chat Dialog */}
-      <ORSHChatDialog open={chatOpen} onOpenChange={setChatOpen} />
+      <ORSHChatDialog 
+        open={chatOpen} 
+        onOpenChange={setChatOpen}
+        onUnreadCountChange={setUnreadChatCount}
+      />
     </div>;
 };
