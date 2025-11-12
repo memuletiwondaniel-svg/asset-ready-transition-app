@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { OrshSidebar } from '@/components/OrshSidebar';
@@ -46,6 +46,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   onNavigateToCategory 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { buildBreadcrumbsFromPath, updateMetadata } = useBreadcrumb();
   const { toast } = useToast();
 
@@ -404,7 +405,15 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       <OrshSidebar 
         currentPage="safe-startup"
         onNavigate={(section) => {
-          if (section === 'home') onBack();
+          console.log('Dashboard navigation:', section);
+          if (section === 'home') {
+            onBack();
+          } else if (section === 'safe-startup') {
+            // Already on safe-startup, do nothing or refresh
+          } else {
+            // Navigate to other sections
+            navigate(`/${section}`);
+          }
         }}
       />
       

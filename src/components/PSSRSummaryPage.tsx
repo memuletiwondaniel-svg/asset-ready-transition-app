@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
@@ -60,6 +61,8 @@ interface PSSR {
 const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   onBack
 }) => {
+  const navigate = useNavigate();
+  
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
@@ -647,8 +650,14 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   return <div className="h-screen flex w-full overflow-hidden">
       {/* ORSH Sidebar - Fixed */}
       <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="safe-startup" onNavigate={section => {
+      console.log('PSSR page navigation:', section);
       if (section === 'home') {
         onBack();
+      } else if (section === 'safe-startup') {
+        setActiveView('list');
+      } else {
+        // Navigate to other sections via router
+        navigate(`/${section}`);
       }
     }} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} showWidgets={showWidgetManagement} />
       
