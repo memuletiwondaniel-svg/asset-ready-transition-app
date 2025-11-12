@@ -63,8 +63,8 @@ export const PSSRLinkedPSSRsWidget: React.FC<PSSRLinkedPSSRsWidgetProps> = ({
   };
 
   return (
-    <WidgetCard title="Linked PSSRs" className="h-[400px]">
-      <div className="space-y-3 h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+    <WidgetCard title="Linked PSSRs" className="min-h-[400px] h-[400px]">
+      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-3">
         {linkedPSSRs.length === 0 ? (
           <div className="text-center py-8">
             <Link2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />

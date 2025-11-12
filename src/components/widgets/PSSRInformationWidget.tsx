@@ -48,8 +48,8 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
 
   return (
     <>
-      <WidgetCard title="PSSR Information" className="h-[400px]">
-        <div className="space-y-4 h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <WidgetCard title="PSSR Information" className="min-h-[400px] h-[400px]">
+        <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">PSSR ID</label>
