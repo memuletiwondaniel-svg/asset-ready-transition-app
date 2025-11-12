@@ -39,12 +39,38 @@ export const ORMAnalyticsDashboard: React.FC = () => {
             deliverable_type,
             workflow_stage,
             progress_percentage,
-            assigned_resource:profiles!orm_deliverables_assigned_resource_id_fkey(full_name)
+            assigned_resource_id
           )
         `)
         .eq('is_active', true);
 
       if (error) throw error;
+
+      // Fetch profiles for assigned resources separately
+      const resourceIds = new Set<string>();
+      data?.forEach(p => {
+        p.deliverables?.forEach((d: any) => {
+          if (d.assigned_resource_id) resourceIds.add(d.assigned_resource_id);
+        });
+      });
+
+      let profilesMap = new Map<string, any>();
+      if (resourceIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', Array.from(resourceIds));
+        
+        profiles?.forEach(p => profilesMap.set(p.user_id, p));
+      }
+
+      // Attach profile data to deliverables
+      data?.forEach(p => {
+        p.deliverables?.forEach((d: any) => {
+          d.assigned_resource = d.assigned_resource_id ? profilesMap.get(d.assigned_resource_id) : null;
+        });
+      });
+
       return data;
     }
   });

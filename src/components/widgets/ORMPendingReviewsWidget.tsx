@@ -30,8 +30,7 @@ export const ORMPendingReviewsWidget: React.FC = () => {
           *,
           orm_plan:orm_plans(
             project:projects(project_title)
-          ),
-          assigned_resource:profiles!orm_deliverables_assigned_resource_id_fkey(full_name)
+          )
         `);
 
       // Filter based on workflow stage and user role
@@ -50,6 +49,28 @@ export const ORMPendingReviewsWidget: React.FC = () => {
 
       const { data, error } = await query.order('updated_at', { ascending: false }).limit(5);
       if (error) throw error;
+
+      // Fetch profiles for assigned resources separately
+      const resourceIds = new Set<string>();
+      data?.forEach((d: any) => {
+        if (d.assigned_resource_id) resourceIds.add(d.assigned_resource_id);
+      });
+
+      let profilesMap = new Map<string, any>();
+      if (resourceIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', Array.from(resourceIds));
+        
+        profiles?.forEach(p => profilesMap.set(p.user_id, p));
+      }
+
+      // Attach profile data
+      data?.forEach((d: any) => {
+        d.assigned_resource = d.assigned_resource_id ? profilesMap.get(d.assigned_resource_id) : null;
+      });
+
       return data;
     }
   });

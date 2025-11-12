@@ -33,16 +33,8 @@ export const ORMResourceCapacityDashboard: React.FC = () => {
         .from('orm_deliverables')
         .select(`
           *,
-          assigned_resource:profiles!orm_deliverables_assigned_resource_id_fkey(user_id, full_name, avatar_url, email),
           orm_plan:orm_plans(
             project:projects(project_title)
-          ),
-          tasks:orm_tasks(
-            id,
-            status,
-            priority,
-            due_date,
-            assigned_to
           )
         `)
         .not('assigned_resource_id', 'is', null);
@@ -52,12 +44,38 @@ export const ORMResourceCapacityDashboard: React.FC = () => {
       // Get all tasks
       const { data: allTasks, error: taskError } = await supabase
         .from('orm_tasks')
-        .select(`
-          *,
-          assigned_user:profiles!orm_tasks_assigned_to_fkey(user_id, full_name, avatar_url, email)
-        `);
+        .select('*');
 
       if (taskError) throw taskError;
+
+      // Fetch all unique user profiles
+      const userIds = new Set<string>();
+      deliverables?.forEach((d: any) => {
+        if (d.assigned_resource_id) userIds.add(d.assigned_resource_id);
+      });
+      allTasks?.forEach((t: any) => {
+        if (t.assigned_to) userIds.add(t.assigned_to);
+      });
+
+      let profilesMap = new Map<string, any>();
+      if (userIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, email')
+          .in('user_id', Array.from(userIds));
+        
+        profiles?.forEach(p => profilesMap.set(p.user_id, p));
+      }
+
+      // Attach profiles to deliverables
+      deliverables?.forEach((d: any) => {
+        d.assigned_resource = d.assigned_resource_id ? profilesMap.get(d.assigned_resource_id) : null;
+      });
+
+      // Attach profiles to tasks
+      allTasks?.forEach((t: any) => {
+        t.assigned_user = t.assigned_to ? profilesMap.get(t.assigned_to) : null;
+      });
 
       return { deliverables, allTasks };
     }
