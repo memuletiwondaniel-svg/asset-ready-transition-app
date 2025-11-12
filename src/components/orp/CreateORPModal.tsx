@@ -37,6 +37,7 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
   const [showAddProject, setShowAddProject] = useState(false);
   const [projectSearch, setProjectSearch] = useState('');
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedProjectType, setSelectedProjectType] = useState<'brownfield' | 'greenfield' | 'expansion' | ''>('');
 
   const { projects } = useProjects();
   const { data: users } = useProfileUsers();
@@ -47,6 +48,25 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
     p.project_title.toLowerCase().includes(projectSearch.toLowerCase()) ||
     `${p.project_id_prefix}-${p.project_id_number}`.toLowerCase().includes(projectSearch.toLowerCase())
   );
+
+  const handleTemplateSelect = (templateId: string, templateDetails: any) => {
+    // Pre-populate deliverables from template
+    const templateDeliverableIds = templateDetails.deliverables.map((d: any) => d.deliverable_id);
+    setSelectedDeliverables(templateDeliverableIds);
+
+    // Pre-populate deliverable details (manhours)
+    const details: Record<string, any> = {};
+    templateDetails.deliverables.forEach((d: any) => {
+      details[d.deliverable_id] = {
+        manhours: d.estimated_manhours
+      };
+    });
+    setDeliverableDetails(details);
+
+    // Move to step 2 to show selected deliverables
+    setShowTemplateSelector(false);
+    setStep(2);
+  };
 
   const handleSubmit = () => {
     if (!projectId || !phase || !oraEngineerId || selectedDeliverables.length === 0) {
@@ -74,6 +94,7 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
     setOraEngineerId('');
     setSelectedDeliverables([]);
     setDeliverableDetails({});
+    setSelectedProjectType('');
     onOpenChange(false);
   };
 
@@ -91,10 +112,11 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
                 <Button
                   variant="outline"
                   onClick={() => setShowTemplateSelector(true)}
+                  disabled={!phase}
                   className="w-full gap-2"
                 >
                   <FileText className="w-4 h-4" />
-                  Use Template
+                  Use Template {!phase && '(Select phase first)'}
                 </Button>
                 
                 <div>
@@ -292,6 +314,14 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
       <AddProjectModal
         open={showAddProject}
         onClose={() => setShowAddProject(false)}
+      />
+
+      <ORPTemplateSelector
+        open={showTemplateSelector}
+        onOpenChange={setShowTemplateSelector}
+        onSelectTemplate={handleTemplateSelect}
+        projectType={selectedProjectType || undefined}
+        phase={phase as any}
       />
     </>
   );
