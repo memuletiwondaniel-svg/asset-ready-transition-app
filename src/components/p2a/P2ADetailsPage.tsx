@@ -11,6 +11,8 @@ import { ArrowLeft, Upload, FileText, CheckCircle, Clock, AlertCircle } from 'lu
 import { Skeleton } from '@/components/ui/skeleton';
 import { P2ADeliverablesList } from './P2ADeliverablesList';
 import { P2AApprovalWorkflow } from './P2AApprovalWorkflow';
+import { P2AFileUpload } from './P2AFileUpload';
+import { P2ARealtimePresence } from './P2ARealtimePresence';
 
 export const P2ADetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -117,6 +119,9 @@ export const P2ADetailsPage: React.FC = () => {
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-[1600px] mx-auto space-y-6">
+            {/* Realtime Presence */}
+            <P2ARealtimePresence handoverId={id || ''} />
+            
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {stats.map((stat, index) => {
@@ -161,17 +166,7 @@ export const P2ADetailsPage: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="documents" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Documents & Attachments</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center p-8 text-muted-foreground">
-                      <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Document management coming soon</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <P2AFileUpload deliverableId={deliverables?.[0]?.id || ''} handoverId={id || ''} />
               </TabsContent>
             </Tabs>
           </div>

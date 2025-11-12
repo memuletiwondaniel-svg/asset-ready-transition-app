@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CheckCircle2, Clock, XCircle, Send, MessageSquare } from 'lucide-react';
 import { P2AHandover } from '@/hooks/useP2AHandovers';
 import { useP2AApprovalWorkflow } from '@/hooks/useP2AApprovalWorkflow';
+import { useP2ANotifications } from '@/hooks/useP2ANotifications';
 import { Progress } from '@/components/ui/progress';
 
 interface P2AApprovalWorkflowProps {
@@ -15,6 +16,7 @@ interface P2AApprovalWorkflowProps {
 
 export const P2AApprovalWorkflow: React.FC<P2AApprovalWorkflowProps> = ({ handover }) => {
   const { approvals, isLoading, updateApproval } = useP2AApprovalWorkflow(handover.id);
+  const { sendApprovalReadyNotification, sendApprovalCompletedNotification } = useP2ANotifications();
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<any>(null);
   const [comments, setComments] = useState('');
@@ -41,13 +43,48 @@ export const P2AApprovalWorkflow: React.FC<P2AApprovalWorkflowProps> = ({ handov
     setCommentModalOpen(true);
   };
 
-  const handleSubmitApproval = () => {
+  const handleSubmitApproval = async () => {
     if (selectedApproval) {
       updateApproval({ 
         id: selectedApproval.id, 
         status: 'APPROVED',
         comments 
       });
+
+      // Check if this was the last approval stage
+      const currentIndex = approvals?.findIndex(a => a.id === selectedApproval.id) || 0;
+      const isLastStage = currentIndex === (approvals?.length || 0) - 1;
+
+      if (isLastStage) {
+        // Send completion notification to project team
+        await sendApprovalCompletedNotification(
+          handover.id,
+          'project-team@example.com', // In production, fetch from project data
+          'Project Team',
+          {
+            project_name: handover.project?.project_title || '',
+            project_id: `${handover.project?.project_id_prefix}-${handover.project?.project_id_number}`,
+            phase: handover.phase,
+          }
+        );
+      } else {
+        // Send notification to next approver
+        const nextApproval = approvals?.[currentIndex + 1];
+        if (nextApproval) {
+          await sendApprovalReadyNotification(
+            handover.id,
+            'next-approver@example.com', // In production, fetch from user data
+            nextApproval.approver_name,
+            {
+              project_name: handover.project?.project_title || '',
+              project_id: `${handover.project?.project_id_prefix}-${handover.project?.project_id_number}`,
+              phase: handover.phase,
+              stage: getStatusLabel(nextApproval.stage),
+            }
+          );
+        }
+      }
+
       setCommentModalOpen(false);
       setComments('');
       setSelectedApproval(null);

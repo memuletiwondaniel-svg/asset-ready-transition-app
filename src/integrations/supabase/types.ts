@@ -1024,6 +1024,47 @@ export type Database = {
           },
         ]
       }
+      p2a_deliverable_attachments: {
+        Row: {
+          created_at: string
+          deliverable_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          deliverable_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          deliverable_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_deliverable_attachments_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_deliverable_categories: {
         Row: {
           created_at: string
@@ -1198,6 +1239,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "p2a_notifications_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_user_presence: {
+        Row: {
+          deliverable_id: string | null
+          handover_id: string
+          id: string
+          is_editing: boolean
+          last_seen: string
+          user_id: string
+        }
+        Insert: {
+          deliverable_id?: string | null
+          handover_id: string
+          id?: string
+          is_editing?: boolean
+          last_seen?: string
+          user_id: string
+        }
+        Update: {
+          deliverable_id?: string | null
+          handover_id?: string
+          id?: string
+          is_editing?: boolean
+          last_seen?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_user_presence_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_user_presence_handover_id_fkey"
             columns: ["handover_id"]
             isOneToOne: false
             referencedRelation: "p2a_handovers"
