@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, LayoutGrid, GanttChart } from 'lucide-react';
 import { useORPPlanDetails } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ORPKanbanBoard } from './ORPKanbanBoard';
+import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
 import { ORPGanttChart } from './ORPGanttChart';
 import { ORPApprovalPanel } from './ORPApprovalPanel';
 import { ORPResourcesPanel } from './ORPResourcesPanel';
+import { ORPExportPDF } from './ORPExportPDF';
+import { useORPRealtime } from '@/hooks/useORPRealtime';
 
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +21,7 @@ export const ORPDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('kanban');
 
   const { data: plan, isLoading } = useORPPlanDetails(id || '');
+  useORPRealtime(id);
 
   if (isLoading) {
     return (
@@ -90,6 +93,7 @@ export const ORPDetailsPage: React.FC = () => {
                 </span>
               </div>
             </div>
+            <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
           </div>
         </div>
 
@@ -117,7 +121,7 @@ export const ORPDetailsPage: React.FC = () => {
 
             <div className="flex-1 overflow-auto">
               <TabsContent value="kanban" className="h-full m-0">
-                <ORPKanbanBoard 
+                <ORPKanbanBoardDraggable 
                   planId={plan.id} 
                   deliverables={plan.deliverables || []} 
                 />

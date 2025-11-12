@@ -11,6 +11,7 @@ import { Plus, Trash2, User, GitBranch, MessageSquare } from 'lucide-react';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
+import { ORPAttachmentsPanel } from './ORPAttachmentsPanel';
 
 interface ORPDeliverableModalProps {
   open: boolean;
@@ -64,10 +65,11 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="details" className="mt-4">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="collaborators">Collaborators</TabsTrigger>
             <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
             <TabsTrigger value="comments">Comments</TabsTrigger>
           </TabsList>
 
@@ -188,6 +190,10 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
                 <p className="text-center text-muted-foreground py-4">No dependencies added</p>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="space-y-4 mt-4">
+            <ORPAttachmentsPanel deliverableId={deliverable.id} />
           </TabsContent>
 
           <TabsContent value="comments" className="space-y-4 mt-4">

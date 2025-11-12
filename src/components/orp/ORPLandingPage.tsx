@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, BarChart3 } from 'lucide-react';
 import { ORPListWidget } from '@/components/orp/ORPListWidget';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
+import { useORPRealtime } from '@/hooks/useORPRealtime';
 
 export const ORPLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  useORPRealtime();
 
   return (
     <div className="h-screen flex w-full overflow-hidden">
@@ -35,10 +37,16 @@ export const ORPLandingPage: React.FC = () => {
                 Manage and track operation readiness activities
               </p>
             </div>
-            <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create New ORP
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/operation-readiness/analytics')} variant="outline" className="gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Analytics
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create New ORP
+              </Button>
+            </div>
           </div>
         </div>
 

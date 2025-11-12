@@ -651,6 +651,47 @@ export type Database = {
           },
         ]
       }
+      orp_deliverable_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          plan_deliverable_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          plan_deliverable_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          plan_deliverable_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orp_deliverable_attachments_plan_deliverable_id_fkey"
+            columns: ["plan_deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plan_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orp_deliverable_dependencies: {
         Row: {
           created_at: string
