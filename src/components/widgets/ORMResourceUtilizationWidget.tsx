@@ -15,45 +15,43 @@ export const ORMResourceUtilizationWidget: React.FC = () => {
     queryFn: async () => {
       const { data: deliverables, error } = await supabase
         .from('orm_deliverables')
-        .select(`
-          progress_percentage,
-          workflow_stage,
-          assigned_resource:profiles!orm_deliverables_assigned_resource_id_fkey(user_id, full_name)
-        `)
+        .select('assigned_resource_id, progress_percentage')
         .not('assigned_resource_id', 'is', null);
 
       if (error) throw error;
 
-      // Calculate utilization
-      const resourceMap = new Map<string, { 
-        count: number; 
-        totalProgress: number; 
-        name: string;
-      }>();
-
-      deliverables?.forEach((del: any) => {
-        if (!del.assigned_resource) return;
-        
-        const userId = del.assigned_resource.user_id;
+      // Aggregate by resource id
+      const resourceMap = new Map<string, { count: number; totalProgress: number }>();
+      (deliverables || []).forEach((del: any) => {
+        const userId = del.assigned_resource_id;
+        if (!userId) return;
         if (!resourceMap.has(userId)) {
-          resourceMap.set(userId, {
-            count: 0,
-            totalProgress: 0,
-            name: del.assigned_resource.full_name
-          });
+          resourceMap.set(userId, { count: 0, totalProgress: 0 });
         }
-
-        const resource = resourceMap.get(userId)!;
-        resource.count++;
-        resource.totalProgress += del.progress_percentage || 0;
+        const res = resourceMap.get(userId)!;
+        res.count++;
+        res.totalProgress += del.progress_percentage || 0;
       });
 
-      const resources = Array.from(resourceMap.entries()).map(([userId, data]) => ({
-        userId,
-        name: data.name,
-        deliverables: data.count,
-        avgProgress: Math.round(data.totalProgress / data.count)
-      })).sort((a, b) => b.deliverables - a.deliverables);
+      const ids = Array.from(resourceMap.keys());
+      let nameMap = new Map<string, string>();
+      if (ids.length) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', ids);
+        (profilesData || []).forEach((p: any) => nameMap.set(p.user_id, p.full_name));
+      }
+
+      const resources = ids.map((userId) => {
+        const data = resourceMap.get(userId)!;
+        return {
+          userId,
+          name: nameMap.get(userId) || 'Unassigned',
+          deliverables: data.count,
+          avgProgress: data.count ? Math.round(data.totalProgress / data.count) : 0,
+        };
+      }).sort((a, b) => b.deliverables - a.deliverables);
 
       const avgUtilization = resources.length > 0
         ? Math.round(resources.reduce((sum, r) => sum + r.avgProgress, 0) / resources.length)

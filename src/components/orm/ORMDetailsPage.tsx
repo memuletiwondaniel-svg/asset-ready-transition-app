@@ -98,7 +98,7 @@ export const ORMDetailsPage: React.FC = () => {
                 </span>
                 <span className="text-sm text-muted-foreground">•</span>
                 <span className="text-sm text-muted-foreground">
-                  Lead: {(plan.orm_lead as any)?.full_name || 'Not assigned'}
+                  Lead: {plan.orm_lead_id ? 'Assigned' : 'Not assigned'}
                 </span>
               </div>
             </div>

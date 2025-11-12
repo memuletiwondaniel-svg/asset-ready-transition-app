@@ -14,11 +14,7 @@ export const useORMPlans = () => {
         .select(`
           *,
           project:projects(project_title, project_id_prefix, project_id_number),
-          orm_lead:profiles!orm_plans_orm_lead_id_fkey(full_name),
-          deliverables:orm_deliverables(
-            *,
-            assigned_resource:profiles!orm_deliverables_assigned_resource_id_fkey(full_name)
-          )
+          deliverables:orm_deliverables(*)
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -107,17 +103,8 @@ export const useORMPlanDetails = (planId: string) => {
         .select(`
           *,
           project:projects(*),
-          orm_lead:profiles!orm_plans_orm_lead_id_fkey(*),
-          deliverables:orm_deliverables(
-            *,
-            assigned_resource:profiles!orm_deliverables_assigned_resource_id_fkey(*),
-            qaqc_reviewer:profiles!orm_deliverables_qaqc_reviewer_id_fkey(*),
-            tasks:orm_tasks(*),
-            reports:orm_daily_reports(
-              *,
-              user:profiles!orm_daily_reports_submitted_by_fkey(full_name)
-            )
-          )
+          deliverables:orm_deliverables(*),
+          reports:orm_daily_reports(*)
         `)
         .eq('id', planId)
         .single();
