@@ -1,6 +1,7 @@
 import React from 'react';
 import { WidgetCard } from './WidgetCard';
 import { FileText, Clock, Eye, CheckCircle2 } from 'lucide-react';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface PSSRItemStatisticsWidgetProps {
   totalItems: number;
@@ -19,6 +20,8 @@ export const PSSRItemStatisticsWidget: React.FC<PSSRItemStatisticsWidgetProps> =
   dragAttributes,
   dragListeners,
 }) => {
+  const { widgetSize } = useWidgetSize();
+  const widgetId = 'pssr-statistics';
   const stats = [
     {
       label: 'Total Items',
@@ -57,10 +60,17 @@ export const PSSRItemStatisticsWidget: React.FC<PSSRItemStatisticsWidgetProps> =
   return (
     <WidgetCard 
       title="PSSR Statistics"
+      className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
+        widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
+        widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
+        'h-[450px] md:h-[500px] lg:h-[520px]'
+      }`}
+      widgetId={widgetId}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        <div className="grid grid-cols-2 gap-3">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -82,6 +92,7 @@ export const PSSRItemStatisticsWidget: React.FC<PSSRItemStatisticsWidgetProps> =
             </div>
           );
         })}
+      </div>
       </div>
     </WidgetCard>
   );
