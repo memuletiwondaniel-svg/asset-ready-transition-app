@@ -5,12 +5,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ORPKanbanBoardProps {
   planId: string;
@@ -141,14 +142,59 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
 
   const activeDeliverable = activeId ? deliverables.find(d => d.id === activeId) : null;
 
+  const DroppableColumn = ({ column, items }: { column: any; items: any[] }) => {
+    const { setNodeRef, isOver } = useDroppable({ id: column.id });
+
+    return (
+      <Card 
+        ref={setNodeRef}
+        className={cn(
+          "flex flex-col transition-all",
+          isOver && "ring-2 ring-primary bg-primary/5"
+        )}
+      >
+        <CardHeader className="pb-3 p-3 md:p-6">
+          <CardTitle className="text-xs sm:text-sm font-medium flex items-center justify-between">
+            <span>{column.label}</span>
+            <Badge variant="secondary" className="ml-2 text-xs">
+              {items.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-hidden pt-0 p-2 md:p-6">
+          <ScrollArea className="h-full">
+            <div className="space-y-2 md:space-y-3 pr-2 md:pr-4 min-h-[200px]">
+              {items.map((item) => (
+                <DeliverableCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => setSelectedDeliverable(item)}
+                />
+              ))}
+
+              {items.length === 0 && (
+                <div className={cn(
+                  "text-center py-6 md:py-8 text-muted-foreground text-xs sm:text-sm rounded-lg border-2 border-dashed transition-all",
+                  isOver && "border-primary bg-primary/5"
+                )}>
+                  {isOver ? 'Drop here' : 'Drop items here'}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-full p-6">
-        <div className="grid grid-cols-4 gap-4 h-full">
+      <div className="h-full p-3 sm:p-4 md:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 h-full">
           {columns.map((column) => {
             const items = getColumnDeliverables(column.id);
             
@@ -159,35 +205,7 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
                 items={items.map(item => item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Card className="flex flex-col">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium flex items-center justify-between">
-                      <span>{column.label}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        {items.length}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 overflow-hidden pt-0">
-                    <ScrollArea className="h-full">
-                      <div className="space-y-3 pr-4">
-                        {items.map((item) => (
-                          <DeliverableCard
-                            key={item.id}
-                            item={item}
-                            onClick={() => setSelectedDeliverable(item)}
-                          />
-                        ))}
-
-                        {items.length === 0 && (
-                          <div className="text-center py-8 text-muted-foreground text-sm">
-                            Drop items here
-                          </div>
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
+                <DroppableColumn column={column} items={items} />
               </SortableContext>
             );
           })}
