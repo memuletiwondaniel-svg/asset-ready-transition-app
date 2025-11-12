@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, GripVertical } from 'lucide-react';
 import { PSSRInformationWidget } from '@/components/widgets/PSSRInformationWidget';
 import { PSSRScopeWidget } from '@/components/widgets/PSSRScopeWidget';
 import { PSSRItemStatisticsWidget } from '@/components/widgets/PSSRItemStatisticsWidget';
@@ -13,6 +13,10 @@ import { PSSRProgressWidget } from '@/components/widgets/PSSRProgressWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRPendingTasksWidget } from '@/components/widgets/PSSRPendingTasksWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
+import { SortableWidget } from '@/components/widgets/SortableWidget';
+import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
+import { useToast } from '@/hooks/use-toast';
 
 interface PSSRDashboardProps {
   pssrId: string;
@@ -27,6 +31,52 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 }) => {
   const location = useLocation();
   const { buildBreadcrumbsFromPath, updateMetadata } = useBreadcrumb();
+  const { toast } = useToast();
+
+  // Widget order state - persisted in localStorage
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem(`pssr-widget-order-${pssrId}`);
+    return saved ? JSON.parse(saved) : [
+      'widget-1',
+      'widget-2',
+      'widget-3',
+      'widget-4',
+      'widget-6',
+      'widget-7',
+      'widget-8'
+    ];
+  });
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setWidgetOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+        
+        // Persist to localStorage
+        localStorage.setItem(`pssr-widget-order-${pssrId}`, JSON.stringify(newOrder));
+        
+        toast({
+          title: 'Layout Updated',
+          description: 'Widget layout has been saved.'
+        });
+        
+        return newOrder;
+      });
+    }
+  };
 
   // Mock comprehensive PSSR data
   const pssrData = {
@@ -265,74 +315,104 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           </div>
         </header>
 
-        {/* Main Content - Widget Grid */}
+        {/* Main Content - Widget Grid with Drag and Drop */}
         <main className="px-8 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
-            {/* Widget 1: PSSR Information */}
-            <div className="lg:col-span-1">
-              <PSSRInformationWidget
-                pssrId={pssrData.id}
-                asset={pssrData.asset}
-                projectId={pssrData.projectId}
-                projectName={pssrData.projectName}
-                reason={pssrData.reason}
-                dateInitiated={pssrData.created}
-                pssrLead={pssrData.initiator}
-                tier={pssrData.tier}
-              />
-            </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
+                {widgetOrder.map((widgetId) => {
+                  const widgetMap: Record<string, JSX.Element> = {
+                    'widget-1': (
+                      <div className="lg:col-span-1">
+                        <PSSRInformationWidget
+                          pssrId={pssrData.id}
+                          asset={pssrData.asset}
+                          projectId={pssrData.projectId}
+                          projectName={pssrData.projectName}
+                          reason={pssrData.reason}
+                          dateInitiated={pssrData.created}
+                          pssrLead={pssrData.initiator}
+                          tier={pssrData.tier}
+                        />
+                      </div>
+                    ),
+                    'widget-2': (
+                      <div className="lg:col-span-1">
+                        <PSSRScopeWidget
+                          description={pssrData.scope}
+                          images={pssrData.scopeImages}
+                        />
+                      </div>
+                    ),
+                    'widget-3': (
+                      <div className="lg:col-span-1">
+                        <PSSRItemStatisticsWidget
+                          totalItems={pssrData.statistics.totalItems}
+                          draftItems={pssrData.statistics.draftItems}
+                          underReviewItems={pssrData.statistics.underReviewItems}
+                          approvedItems={pssrData.statistics.approvedItems}
+                        />
+                      </div>
+                    ),
+                    'widget-4': (
+                      <div className="lg:col-span-1 xl:col-span-2">
+                        <PSSRProgressWidget
+                          overallProgress={pssrData.progress}
+                          categoryProgress={pssrData.categoryProgress}
+                          onCategoryClick={onNavigateToCategory}
+                        />
+                      </div>
+                    ),
+                    'widget-6': (
+                      <div className="lg:col-span-1">
+                        <PSSRKeyActivitiesWidget
+                          activities={pssrData.keyActivities}
+                          onActivityClick={(type) => console.log('Activity clicked:', type)}
+                        />
+                      </div>
+                    ),
+                    'widget-7': (
+                      <div className="lg:col-span-1">
+                        <PSSRPendingTasksWidget
+                          reviewers={pssrData.reviewers}
+                          approvers={pssrData.approvers}
+                        />
+                      </div>
+                    ),
+                    'widget-8': (
+                      <div className="lg:col-span-1">
+                        <PSSRLinkedPSSRsWidget
+                          linkedPSSRs={pssrData.linkedPSSRs}
+                          onPSSRClick={(id) => console.log('PSSR clicked:', id)}
+                        />
+                      </div>
+                    ),
+                  };
 
-            {/* Widget 2: PSSR Scope */}
-            <div className="lg:col-span-1">
-              <PSSRScopeWidget
-                description={pssrData.scope}
-                images={pssrData.scopeImages}
-              />
-            </div>
-
-            {/* Widget 3: PSSR Statistics */}
-            <div className="lg:col-span-1">
-              <PSSRItemStatisticsWidget
-                totalItems={pssrData.statistics.totalItems}
-                draftItems={pssrData.statistics.draftItems}
-                underReviewItems={pssrData.statistics.underReviewItems}
-                approvedItems={pssrData.statistics.approvedItems}
-              />
-            </div>
-
-            {/* Widget 4: Progress */}
-            <div className="lg:col-span-1 xl:col-span-2">
-              <PSSRProgressWidget
-                overallProgress={pssrData.progress}
-                categoryProgress={pssrData.categoryProgress}
-                onCategoryClick={onNavigateToCategory}
-              />
-            </div>
-
-            {/* Widget 6: Key Activities */}
-            <div className="lg:col-span-1">
-              <PSSRKeyActivitiesWidget
-                activities={pssrData.keyActivities}
-                onActivityClick={(type) => console.log('Activity clicked:', type)}
-              />
-            </div>
-
-            {/* Widget 7: Pending Tasks */}
-            <div className="lg:col-span-1">
-              <PSSRPendingTasksWidget
-                reviewers={pssrData.reviewers}
-                approvers={pssrData.approvers}
-              />
-            </div>
-
-            {/* Widget 8: Linked PSSRs */}
-            <div className="lg:col-span-1">
-              <PSSRLinkedPSSRsWidget
-                linkedPSSRs={pssrData.linkedPSSRs}
-                onPSSRClick={(id) => console.log('PSSR clicked:', id)}
-              />
-            </div>
-          </div>
+                  return (
+                    <SortableWidget key={widgetId} id={widgetId}>
+                      {({ attributes, listeners }) => (
+                        <div className="h-full relative group">
+                          <div
+                            {...attributes}
+                            {...listeners}
+                            className="absolute -top-2 -left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-primary/10 hover:bg-primary/20 rounded-lg p-2 backdrop-blur-sm"
+                          >
+                            <GripVertical className="h-5 w-5 text-primary" />
+                          </div>
+                          {widgetMap[widgetId]}
+                        </div>
+                      )}
+                    </SortableWidget>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         </main>
       </div>
     </div>
