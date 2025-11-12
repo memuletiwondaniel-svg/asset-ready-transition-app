@@ -16,6 +16,7 @@ import { PSSRPendingTasksWidget } from '@/components/widgets/PSSRPendingTasksWid
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetCustomizationToolbar, WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
+import { WidgetSizeControl } from '@/components/widgets/WidgetSizeControl';
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useToast } from '@/hooks/use-toast';
@@ -453,12 +454,15 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
         {/* Main Content - Widget Grid with Drag and Drop */}
         <main className="px-8 py-6">
-          <WidgetCustomizationToolbar
-            widgets={widgetSettings}
-            onVisibilityChange={handleVisibilityChange}
-            onSizeChange={handleSizeChange}
-            onResetLayout={handleResetLayout}
-          />
+          <div className="flex items-center justify-between mb-6">
+            <WidgetCustomizationToolbar
+              widgets={widgetSettings}
+              onVisibilityChange={handleVisibilityChange}
+              onSizeChange={handleSizeChange}
+              onResetLayout={handleResetLayout}
+            />
+            <WidgetSizeControl />
+          </div>
 
           <DndContext
             sensors={sensors}

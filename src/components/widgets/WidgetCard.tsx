@@ -1,8 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Eye, EyeOff, Maximize2, Minimize2, Settings, GripVertical } from 'lucide-react';
+import { MoreVertical, Eye, EyeOff, Maximize2, Minimize2, Settings, GripVertical, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface WidgetCardProps {
   title: string;
@@ -15,6 +16,8 @@ interface WidgetCardProps {
   onSettings?: () => void;
   dragAttributes?: any;
   dragListeners?: any;
+  widgetId?: string;
+  enableFullscreen?: boolean;
 }
 
 export const WidgetCard: React.FC<WidgetCardProps> = ({
@@ -27,9 +30,19 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   onToggleExpand,
   onSettings,
   dragAttributes,
-  dragListeners
+  dragListeners,
+  widgetId,
+  enableFullscreen = true,
 }) => {
+  const { setFullscreenWidget } = useWidgetSize();
+  
   if (!isVisible) return null;
+
+  const handleFullscreen = () => {
+    if (widgetId && enableFullscreen) {
+      setFullscreenWidget(widgetId);
+    }
+  };
 
   return (
     <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} flex flex-col h-full ${className || ''}`}>
@@ -56,6 +69,12 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-50 bg-background">
+            {enableFullscreen && widgetId && (
+              <DropdownMenuItem onClick={handleFullscreen}>
+                <Maximize className="w-4 h-4 mr-2" />
+                Fullscreen
+              </DropdownMenuItem>
+            )}
             {onToggleExpand && (
               <DropdownMenuItem onClick={onToggleExpand}>
                 {isExpanded ? (

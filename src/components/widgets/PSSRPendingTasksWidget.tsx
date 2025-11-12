@@ -1,8 +1,10 @@
 import React from 'react';
 import { WidgetCard } from './WidgetCard';
+import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Circle } from 'lucide-react';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface Reviewer {
   id: string;
@@ -22,6 +24,9 @@ export const PSSRPendingTasksWidget: React.FC<PSSRPendingTasksWidgetProps> = ({
   reviewers,
   approvers
 }) => {
+  const { widgetSize } = useWidgetSize();
+  const widgetId = 'pssr-pending-tasks';
+
   const renderPersonCard = (person: Reviewer) => {
     const initials = person.name
       .split(' ')
@@ -79,31 +84,49 @@ export const PSSRPendingTasksWidget: React.FC<PSSRPendingTasksWidgetProps> = ({
     );
   };
 
-  return (
-    <WidgetCard title="Pending Activities" className="min-h-[400px] h-[400px]">
-      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
-        {reviewers.length > 0 && (
+  const widgetContent = (
+    <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
+      {reviewers.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Reviewers ({reviewers.length})
+          </label>
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Reviewers ({reviewers.length})
-            </label>
-            <div className="space-y-2">
-              {reviewers.map(renderPersonCard)}
-            </div>
+            {reviewers.map(renderPersonCard)}
           </div>
-        )}
+        </div>
+      )}
 
-        {approvers.length > 0 && (
+      {approvers.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Approvers ({approvers.length})
+          </label>
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Approvers ({approvers.length})
-            </label>
-            <div className="space-y-2">
-              {approvers.map(renderPersonCard)}
-            </div>
+            {approvers.map(renderPersonCard)}
           </div>
-        )}
-      </div>
-    </WidgetCard>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <WidgetCard 
+        title="Pending Activities" 
+        className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
+          widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
+          widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
+          'h-[450px] md:h-[500px] lg:h-[520px]'
+        }`}
+        widgetId={widgetId}
+      >
+        {widgetContent}
+      </WidgetCard>
+
+      <FullscreenWidgetModal widgetId={widgetId} title="Pending Activities">
+        {widgetContent}
+      </FullscreenWidgetModal>
+    </>
   );
 };

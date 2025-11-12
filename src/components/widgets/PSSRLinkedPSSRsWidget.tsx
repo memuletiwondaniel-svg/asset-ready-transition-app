@@ -1,9 +1,11 @@
 import React from 'react';
 import { WidgetCard } from './WidgetCard';
+import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Link2, CheckCircle2, Clock, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface LinkedPSSR {
   id: string;
@@ -22,6 +24,9 @@ export const PSSRLinkedPSSRsWidget: React.FC<PSSRLinkedPSSRsWidgetProps> = ({
   linkedPSSRs,
   onPSSRClick
 }) => {
+  const { widgetSize } = useWidgetSize();
+  const widgetId = 'pssr-linked-pssrs';
+
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -62,52 +67,70 @@ export const PSSRLinkedPSSRsWidget: React.FC<PSSRLinkedPSSRsWidgetProps> = ({
     );
   };
 
-  return (
-    <WidgetCard title="Linked PSSRs" className="min-h-[400px] h-[400px]">
-      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-3">
-        {linkedPSSRs.length === 0 ? (
-          <div className="text-center py-8">
-            <Link2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No linked PSSRs</p>
-          </div>
-        ) : (
-          linkedPSSRs.map((pssr, index) => (
-            <div
-              key={index}
-              className="group p-4 rounded-lg border border-border/40 hover:border-primary/40 hover:bg-accent/5 transition-all"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Link2 className="h-4 w-4 text-muted-foreground" />
-                    <h4 className="text-sm font-semibold text-foreground">{pssr.id}</h4>
-                    {getRelationshipBadge(pssr.relationship)}
-                  </div>
-                  <p className="text-xs text-muted-foreground pl-6">{pssr.title}</p>
+  const widgetContent = (
+    <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-3">
+      {linkedPSSRs.length === 0 ? (
+        <div className="text-center py-8">
+          <Link2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No linked PSSRs</p>
+        </div>
+      ) : (
+        linkedPSSRs.map((pssr, index) => (
+          <div
+            key={index}
+            className="group p-4 rounded-lg border border-border/40 hover:border-primary/40 hover:bg-accent/5 transition-all"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm font-semibold text-foreground">{pssr.id}</h4>
+                  {getRelationshipBadge(pssr.relationship)}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => onPSSRClick?.(pssr.id)}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+                <p className="text-xs text-muted-foreground pl-6">{pssr.title}</p>
               </div>
-
-              <div className="space-y-2 pl-6">
-                <div className="flex items-center justify-between">
-                  {getStatusBadge(pssr.status)}
-                  <span className="text-xs font-semibold text-primary">
-                    {pssr.progress}%
-                  </span>
-                </div>
-                <Progress value={pssr.progress} className="h-2" />
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => onPSSRClick?.(pssr.id)}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
-          ))
-        )}
-      </div>
-    </WidgetCard>
+
+            <div className="space-y-2 pl-6">
+              <div className="flex items-center justify-between">
+                {getStatusBadge(pssr.status)}
+                <span className="text-xs font-semibold text-primary">
+                  {pssr.progress}%
+                </span>
+              </div>
+              <Progress value={pssr.progress} className="h-2" />
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <WidgetCard 
+        title="Linked PSSRs" 
+        className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
+          widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
+          widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
+          'h-[450px] md:h-[500px] lg:h-[520px]'
+        }`}
+        widgetId={widgetId}
+      >
+        {widgetContent}
+      </WidgetCard>
+
+      <FullscreenWidgetModal widgetId={widgetId} title="Linked PSSRs">
+        {widgetContent}
+      </FullscreenWidgetModal>
+    </>
   );
 };

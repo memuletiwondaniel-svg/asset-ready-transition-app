@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
+import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, CheckCircle2, Clock, AlertCircle, CalendarPlus, Users } from 'lucide-react';
 import { ScheduleActivityModal } from './ScheduleActivityModal';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface KeyActivity {
   name: string;
@@ -24,6 +26,8 @@ export const PSSRKeyActivitiesWidget: React.FC<PSSRKeyActivitiesWidgetProps> = (
 }) => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<KeyActivity | null>(null);
+  const { widgetSize } = useWidgetSize();
+  const widgetId = 'pssr-key-activities';
 
   const handleOpenScheduleModal = (activity: KeyActivity) => {
     setSelectedActivity(activity);
@@ -58,52 +62,68 @@ export const PSSRKeyActivitiesWidget: React.FC<PSSRKeyActivitiesWidgetProps> = (
     }
   };
 
+  const widgetContent = (
+    <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-3">
+      {activities.map((activity, index) => (
+        <div
+          key={index}
+          className="group p-4 rounded-lg border border-border/40 hover:border-primary/40 hover:bg-accent/5 transition-all"
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-foreground mb-1">{activity.name}</h4>
+              {getStatusBadge(activity.status)}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => handleOpenScheduleModal(activity)}
+            >
+              <CalendarPlus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            {activity.date && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{new Date(activity.date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}</span>
+              </div>
+            )}
+            {activity.attendees !== undefined && (
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                <span>{activity.attendees} attendees</span>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <>
-      <WidgetCard title="Key Activities" className="min-h-[400px] h-[400px]">
-        <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-3">
-          {activities.map((activity, index) => (
-            <div
-              key={index}
-              className="group p-4 rounded-lg border border-border/40 hover:border-primary/40 hover:bg-accent/5 transition-all"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground mb-1">{activity.name}</h4>
-                  {getStatusBadge(activity.status)}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleOpenScheduleModal(activity)}
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                {activity.date && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>{new Date(activity.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}</span>
-                  </div>
-                )}
-                {activity.attendees !== undefined && (
-                  <div className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    <span>{activity.attendees} attendees</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+      <WidgetCard 
+        title="Key Activities" 
+        className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
+          widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
+          widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
+          'h-[450px] md:h-[500px] lg:h-[520px]'
+        }`}
+        widgetId={widgetId}
+      >
+        {widgetContent}
       </WidgetCard>
+
+      <FullscreenWidgetModal widgetId={widgetId} title="Key Activities">
+        {widgetContent}
+      </FullscreenWidgetModal>
 
       {selectedActivity && (
         <ScheduleActivityModal
