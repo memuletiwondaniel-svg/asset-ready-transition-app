@@ -92,7 +92,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
 
   return (
     <>
-      <div className="mt-4 p-3 bg-white rounded-lg border border-gray-200">
+      <div className="mt-4 p-3 bg-card/80 backdrop-blur-xl rounded-lg border border-border/50 shadow-sm">
         {/* Header with Edit Button */}
         <div className="flex justify-between items-center mb-3">
           <h4 className="text-base font-semibold text-gray-900">Project Information</h4>
@@ -109,26 +109,26 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
 
         {/* Project Details Grid - Optimized Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          <div className="p-2 bg-blue-50 rounded-md">
-            <span className="text-xs text-gray-600 block mb-1">Project Name</span>
-            <span className="text-sm font-medium text-gray-900">{currentProject.name}</span>
+          <div className="p-2 bg-primary/10 rounded-md">
+            <span className="text-xs text-muted-foreground block mb-1">Project Name</span>
+            <span className="text-sm font-medium text-foreground">{currentProject.name}</span>
           </div>
           
-          <div className="p-2 bg-gray-50 rounded-md">
-            <span className="text-xs text-gray-600 block mb-1">Plant</span>
-            <span className="text-sm font-medium text-gray-900">{currentProject.plant}</span>
+          <div className="p-2 bg-secondary rounded-md">
+            <span className="text-xs text-muted-foreground block mb-1">Plant</span>
+            <span className="text-sm font-medium text-foreground">{currentProject.plant}</span>
           </div>
 
           {currentProject.subdivision && currentProject.plant === 'Compressor Station (CS)' && (
-            <div className="p-2 bg-gray-50 rounded-md">
-              <span className="text-xs text-gray-600 block mb-1">Subdivision</span>
-              <span className="text-sm font-medium text-gray-900">{currentProject.subdivision}</span>
+            <div className="p-2 bg-secondary rounded-md">
+              <span className="text-xs text-muted-foreground block mb-1">Subdivision</span>
+              <span className="text-sm font-medium text-foreground">{currentProject.subdivision}</span>
             </div>
           )}
 
           {currentProject.milestone && (
-            <div className="p-2 bg-green-50 rounded-md">
-              <span className="text-xs text-gray-600 block mb-1">{currentYear} Project Milestone</span>
+            <div className="p-2 bg-accent/20 rounded-md">
+              <span className="text-xs text-muted-foreground block mb-1">{currentYear} Project Milestone</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900">{currentProject.milestone}</span>
                 {currentProject.scorecardProject === 'Yes' && (
@@ -144,17 +144,17 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
 
         {/* Project Scope - Compact */}
         <div className="mb-4">
-          <h5 className="text-sm font-medium text-gray-900 mb-2">Project Scope</h5>
-          <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
-            <p className="text-sm text-gray-700 leading-relaxed">{currentProject.scope}</p>
+          <h5 className="text-sm font-medium text-foreground mb-2">Project Scope</h5>
+          <div className="p-3 bg-primary/10 rounded-md border border-border/50">
+            <p className="text-sm text-foreground leading-relaxed">{currentProject.scope}</p>
           </div>
         </div>
         
         {/* Project Team - Compact Layout */}
         <div className="space-y-3">
-          <h5 className="text-sm font-medium text-gray-900">Project Team</h5>
+          <h5 className="text-sm font-medium text-foreground">Project Team</h5>
           
-          <div className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 rounded-md">
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-secondary rounded-md">
             {/* Project Hub Lead */}
             <div className="flex items-center gap-2">
               <ContextMenu>
@@ -162,7 +162,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
                   <div className="relative cursor-pointer">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={currentProject.hubLead.avatar} alt={currentProject.hubLead.name} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                      <AvatarFallback className="bg-primary/20 text-primary text-xs">
                         {currentProject.hubLead.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
@@ -182,8 +182,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
                 </ContextMenuContent>
               </ContextMenu>
               <div>
-                <p className="font-medium text-gray-900 text-xs">{currentProject.hubLead.name}</p>
-                <p className="text-xs text-gray-600">Project Hub Lead</p>
+                <p className="font-medium text-foreground text-xs">{currentProject.hubLead.name}</p>
+                <p className="text-xs text-muted-foreground">Project Hub Lead</p>
               </div>
             </div>
 
@@ -195,7 +195,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
                     <div className="relative cursor-pointer">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={member.avatar} alt={member.name} />
-                        <AvatarFallback className="bg-green-100 text-green-700 text-xs">
+                        <AvatarFallback className="bg-accent/20 text-accent-foreground text-xs">
                           {member.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
@@ -215,8 +215,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
                   </ContextMenuContent>
                 </ContextMenu>
                 <div>
-                  <p className="font-medium text-gray-900 text-xs">{member.name}</p>
-                  <p className="text-xs text-gray-600">{member.role}</p>
+                  <p className="font-medium text-foreground text-xs">{member.name}</p>
+                  <p className="text-xs text-muted-foreground">{member.role}</p>
                 </div>
               </div>
             ))}
