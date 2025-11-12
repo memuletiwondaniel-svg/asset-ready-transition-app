@@ -158,10 +158,185 @@ export const useORPPlans = () => {
     }
   });
 
+  const updateApproval = useMutation({
+    mutationFn: async (data: { approvalId: string; status: 'APPROVED' | 'REJECTED' | 'PENDING'; comments?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('orp_approvals')
+        .update({
+          status: data.status,
+          comments: data.comments,
+          approver_user_id: user.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', data.approvalId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Approval status updated' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const addResource = useMutation({
+    mutationFn: async (data: { planId: string; name: string; position: string; userId?: string; allocation?: number; role?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('orp_resources')
+        .insert({
+          orp_plan_id: data.planId,
+          name: data.name,
+          position: data.position,
+          user_id: data.userId,
+          allocation_percentage: data.allocation,
+          role_description: data.role
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Resource added successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const deleteResource = useMutation({
+    mutationFn: async (resourceId: string) => {
+      const { error } = await supabase
+        .from('orp_resources')
+        .delete()
+        .eq('id', resourceId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Resource removed' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const updateDeliverable = useMutation({
+    mutationFn: async (data: { deliverableId: string; status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'; progress?: number; comments?: string }) => {
+      const { error } = await supabase
+        .from('orp_plan_deliverables')
+        .update({
+          ...(data.status && { status: data.status }),
+          ...(data.progress !== undefined && { completion_percentage: data.progress }),
+          ...(data.comments && { comments: data.comments })
+        })
+        .eq('id', data.deliverableId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Deliverable updated' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const addCollaborator = useMutation({
+    mutationFn: async (data: { deliverableId: string; userId: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('orp_collaborators')
+        .insert({
+          plan_deliverable_id: data.deliverableId,
+          user_id: data.userId,
+          added_by: user.id
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Collaborator added' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const removeCollaborator = useMutation({
+    mutationFn: async (collaboratorId: string) => {
+      const { error } = await supabase
+        .from('orp_collaborators')
+        .delete()
+        .eq('id', collaboratorId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Collaborator removed' });
+    }
+  });
+
+  const addDependency = useMutation({
+    mutationFn: async (data: { deliverableId: string; predecessorId: string }) => {
+      const { error } = await supabase
+        .from('orp_deliverable_dependencies')
+        .insert({
+          deliverable_id: data.deliverableId,
+          predecessor_id: data.predecessorId
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Dependency added' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const removeDependency = useMutation({
+    mutationFn: async (dependencyId: string) => {
+      const { error } = await supabase
+        .from('orp_deliverable_dependencies')
+        .delete()
+        .eq('id', dependencyId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      toast({ title: 'Success', description: 'Dependency removed' });
+    }
+  });
+
   return {
     plans,
     isLoading,
-    createPlan: createPlan.mutate
+    createPlan: createPlan.mutate,
+    updateApproval: updateApproval.mutate,
+    addResource: addResource.mutate,
+    deleteResource: deleteResource.mutate,
+    updateDeliverable: updateDeliverable.mutate,
+    addCollaborator: addCollaborator.mutate,
+    removeCollaborator: removeCollaborator.mutate,
+    addDependency: addDependency.mutate,
+    removeDependency: removeDependency.mutate
   };
 };
 
@@ -199,7 +374,9 @@ export const useORPPlanDetails = (planId: string) => {
           ora_engineer:profiles!orp_plans_ora_engineer_id_fkey(full_name, position, avatar_url),
           deliverables:orp_plan_deliverables(
             *,
-            deliverable:orp_deliverables_catalog(*)
+            deliverable:orp_deliverables_catalog(*),
+            collaborators:orp_collaborators(*),
+            dependencies:orp_deliverable_dependencies(*)
           ),
           resources:orp_resources(*),
           approvals:orp_approvals(*)

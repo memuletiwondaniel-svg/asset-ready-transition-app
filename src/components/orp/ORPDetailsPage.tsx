@@ -9,6 +9,9 @@ import { ArrowLeft, LayoutGrid, GanttChart } from 'lucide-react';
 import { useORPPlanDetails } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoard } from './ORPKanbanBoard';
+import { ORPGanttChart } from './ORPGanttChart';
+import { ORPApprovalPanel } from './ORPApprovalPanel';
+import { ORPResourcesPanel } from './ORPResourcesPanel';
 
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -103,12 +106,21 @@ export const ORPDetailsPage: React.FC = () => {
                   <GanttChart className="w-4 h-4" />
                   Gantt Chart
                 </TabsTrigger>
+                <TabsTrigger value="resources" className="gap-2">
+                  Resources
+                </TabsTrigger>
+                <TabsTrigger value="approvals" className="gap-2">
+                  Approvals
+                </TabsTrigger>
               </TabsList>
             </div>
 
             <div className="flex-1 overflow-auto">
               <TabsContent value="kanban" className="h-full m-0">
-                <ORPKanbanBoard planId={plan.id} deliverables={plan.deliverables || []} />
+                <ORPKanbanBoard 
+                  planId={plan.id} 
+                  deliverables={plan.deliverables || []} 
+                />
               </TabsContent>
 
               <TabsContent value="gantt" className="h-full m-0 p-6">
@@ -117,12 +129,17 @@ export const ORPDetailsPage: React.FC = () => {
                     <CardTitle>Gantt Chart</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-12 text-muted-foreground">
-                      <GanttChart className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Gantt chart view coming soon</p>
-                    </div>
+                    <ORPGanttChart deliverables={plan.deliverables || []} />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="resources" className="h-full m-0 p-6">
+                <ORPResourcesPanel planId={plan.id} resources={plan.resources || []} />
+              </TabsContent>
+
+              <TabsContent value="approvals" className="h-full m-0 p-6">
+                <ORPApprovalPanel planId={plan.id} approvals={plan.approvals || []} />
               </TabsContent>
             </div>
           </Tabs>

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Clock, User } from 'lucide-react';
 import { format } from 'date-fns';
+import { ORPDeliverableModal } from './ORPDeliverableModal';
 
 interface ORPKanbanBoardProps {
   planId: string;
@@ -11,6 +12,8 @@ interface ORPKanbanBoardProps {
 }
 
 export const ORPKanbanBoard: React.FC<ORPKanbanBoardProps> = ({ planId, deliverables }) => {
+  const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  
   const columns = [
     { id: 'NOT_STARTED', label: 'Not Started', color: 'slate' },
     { id: 'IN_PROGRESS', label: 'In Progress', color: 'blue' },
@@ -45,6 +48,7 @@ export const ORPKanbanBoard: React.FC<ORPKanbanBoardProps> = ({ planId, delivera
                       <Card
                         key={item.id}
                         className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedDeliverable(item)}
                       >
                         <h4 className="font-medium text-sm mb-2 line-clamp-2">
                           {item.deliverable?.name}
@@ -95,6 +99,16 @@ export const ORPKanbanBoard: React.FC<ORPKanbanBoardProps> = ({ planId, delivera
           );
         })}
       </div>
+
+      {selectedDeliverable && (
+        <ORPDeliverableModal
+          open={!!selectedDeliverable}
+          onOpenChange={(open) => !open && setSelectedDeliverable(null)}
+          deliverable={selectedDeliverable}
+          allDeliverables={deliverables}
+          planId={planId}
+        />
+      )}
     </div>
   );
 };
