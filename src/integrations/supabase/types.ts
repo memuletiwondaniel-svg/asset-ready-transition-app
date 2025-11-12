@@ -977,6 +977,143 @@ export type Database = {
           },
         ]
       }
+      p2a_deliverable_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order: number
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      p2a_handover_deliverables: {
+        Row: {
+          category_id: string
+          comments: string | null
+          completion_date: string | null
+          created_at: string
+          deliverable_name: string
+          delivering_party: string
+          handover_id: string
+          id: string
+          receiving_party: string
+          status: Database["public"]["Enums"]["p2a_deliverable_status"]
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          comments?: string | null
+          completion_date?: string | null
+          created_at?: string
+          deliverable_name: string
+          delivering_party: string
+          handover_id: string
+          id?: string
+          receiving_party: string
+          status?: Database["public"]["Enums"]["p2a_deliverable_status"]
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          comments?: string | null
+          completion_date?: string | null
+          created_at?: string
+          deliverable_name?: string
+          delivering_party?: string
+          handover_id?: string
+          id?: string
+          receiving_party?: string
+          status?: Database["public"]["Enums"]["p2a_deliverable_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_deliverables_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_deliverable_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_deliverables_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_handovers: {
+        Row: {
+          created_at: string
+          created_by: string
+          fac_effective_date: string | null
+          handover_scope: string | null
+          id: string
+          is_active: boolean
+          pac_effective_date: string | null
+          phase: Database["public"]["Enums"]["p2a_phase"]
+          project_id: string
+          pssr_signed_date: string | null
+          status: Database["public"]["Enums"]["p2a_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          fac_effective_date?: string | null
+          handover_scope?: string | null
+          id?: string
+          is_active?: boolean
+          pac_effective_date?: string | null
+          phase: Database["public"]["Enums"]["p2a_phase"]
+          project_id: string
+          pssr_signed_date?: string | null
+          status?: Database["public"]["Enums"]["p2a_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          fac_effective_date?: string | null
+          handover_scope?: string | null
+          id?: string
+          is_active?: boolean
+          pac_effective_date?: string | null
+          phase?: Database["public"]["Enums"]["p2a_phase"]
+          project_id?: string
+          pssr_signed_date?: string | null
+          status?: Database["public"]["Enums"]["p2a_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handovers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
@@ -2373,6 +2510,14 @@ export type Database = {
         | "PENDING_APPROVAL"
         | "APPROVED"
         | "COMPLETED"
+      p2a_deliverable_status:
+        | "NOT_STARTED"
+        | "IN_PROGRESS"
+        | "BEHIND_SCHEDULE"
+        | "COMPLETED"
+        | "NOT_APPLICABLE"
+      p2a_phase: "PAC" | "FAC"
+      p2a_status: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
       ta2_commission: "Asset" | "Project and Engineering"
       ta2_discipline:
         | "Civil"
@@ -2547,6 +2692,15 @@ export const Constants = {
         "APPROVED",
         "COMPLETED",
       ],
+      p2a_deliverable_status: [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "BEHIND_SCHEDULE",
+        "COMPLETED",
+        "NOT_APPLICABLE",
+      ],
+      p2a_phase: ["PAC", "FAC"],
+      p2a_status: ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
       ta2_commission: ["Asset", "Project and Engineering"],
       ta2_discipline: [
         "Civil",

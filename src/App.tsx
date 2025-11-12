@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
 import { ORPDetailsPage } from "@/components/orp/ORPDetailsPage";
 import { ORPAnalyticsPage } from "@/components/orp/ORPAnalyticsPage";
+import { P2ALandingPage } from "@/components/p2a/P2ALandingPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
         <Route path="/operation-readiness" element={<ORPLandingPage />} />
         <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
         <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
+        <Route path="/p2a-handover" element={<P2ALandingPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

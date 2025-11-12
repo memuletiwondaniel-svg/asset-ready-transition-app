@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Package, Sliders, ClipboardCheck } from 'lucide-react';
+import { AlertTriangle, Package, Sliders, ClipboardCheck, Key } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -27,10 +27,10 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       iconColor: 'text-white'
     },
     {
-      id: 'p2o',
-      title: 'P2O Handover',
-      description: 'Project-to-Operations Transition',
-      icon: Package,
+      id: 'p2a-handover',
+      title: 'P2A Handover',
+      description: 'Project-to-Asset Transition',
+      icon: Key,
       gradient: 'from-purple-500/20 to-pink-500/20',
       iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
       iconColor: 'text-white'
