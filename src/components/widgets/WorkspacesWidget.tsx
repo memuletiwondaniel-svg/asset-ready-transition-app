@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Package, Sliders, ClipboardCheck, Key } from 'lucide-react';
+import { AlertTriangle, Package, Sliders, ClipboardCheck, Key, Wrench } from 'lucide-react';
 
 interface WorkspacesWidgetProps {
   onNavigate?: (section: string) => void;
@@ -24,6 +24,15 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       icon: ClipboardCheck,
       gradient: 'from-blue-500/20 to-cyan-500/20',
       iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+      iconColor: 'text-white'
+    },
+    {
+      id: 'or-maintenance',
+      title: 'OR Maintenance',
+      description: 'CMMS & IMS Development',
+      icon: Wrench,
+      gradient: 'from-emerald-500/20 to-teal-500/20',
+      iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
       iconColor: 'text-white'
     },
     {

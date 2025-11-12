@@ -578,6 +578,338 @@ export type Database = {
           },
         ]
       }
+      orm_attachments: {
+        Row: {
+          attachment_type: string
+          created_at: string
+          deliverable_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          attachment_type: string
+          created_at?: string
+          deliverable_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          attachment_type?: string
+          created_at?: string
+          deliverable_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_attachments_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_daily_reports: {
+        Row: {
+          challenges: string | null
+          created_at: string
+          deliverable_id: string
+          hours_worked: number
+          id: string
+          next_day_plan: string | null
+          progress_percentage: number | null
+          report_date: string
+          submitted_by: string
+          work_completed: string
+        }
+        Insert: {
+          challenges?: string | null
+          created_at?: string
+          deliverable_id: string
+          hours_worked: number
+          id?: string
+          next_day_plan?: string | null
+          progress_percentage?: number | null
+          report_date?: string
+          submitted_by: string
+          work_completed: string
+        }
+        Update: {
+          challenges?: string | null
+          created_at?: string
+          deliverable_id?: string
+          hours_worked?: number
+          id?: string
+          next_day_plan?: string | null
+          progress_percentage?: number | null
+          report_date?: string
+          submitted_by?: string
+          work_completed?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_daily_reports_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_deliverables: {
+        Row: {
+          actual_hours: number | null
+          assigned_resource_id: string | null
+          completion_date: string | null
+          created_at: string
+          deliverable_type: Database["public"]["Enums"]["orm_deliverable_type"]
+          estimated_hours: number | null
+          id: string
+          orm_plan_id: string
+          progress_percentage: number | null
+          qaqc_reviewer_id: string | null
+          start_date: string | null
+          updated_at: string
+          workflow_stage: Database["public"]["Enums"]["orm_workflow_stage"]
+        }
+        Insert: {
+          actual_hours?: number | null
+          assigned_resource_id?: string | null
+          completion_date?: string | null
+          created_at?: string
+          deliverable_type: Database["public"]["Enums"]["orm_deliverable_type"]
+          estimated_hours?: number | null
+          id?: string
+          orm_plan_id: string
+          progress_percentage?: number | null
+          qaqc_reviewer_id?: string | null
+          start_date?: string | null
+          updated_at?: string
+          workflow_stage?: Database["public"]["Enums"]["orm_workflow_stage"]
+        }
+        Update: {
+          actual_hours?: number | null
+          assigned_resource_id?: string | null
+          completion_date?: string | null
+          created_at?: string
+          deliverable_type?: Database["public"]["Enums"]["orm_deliverable_type"]
+          estimated_hours?: number | null
+          id?: string
+          orm_plan_id?: string
+          progress_percentage?: number | null
+          qaqc_reviewer_id?: string | null
+          start_date?: string | null
+          updated_at?: string
+          workflow_stage?: Database["public"]["Enums"]["orm_workflow_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_deliverables_orm_plan_id_fkey"
+            columns: ["orm_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orm_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_document_checklist: {
+        Row: {
+          created_at: string
+          deliverable_id: string
+          document_name: string
+          document_type: string
+          id: string
+          is_mandatory: boolean | null
+          is_received: boolean | null
+          notes: string | null
+          received_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deliverable_id: string
+          document_name: string
+          document_type: string
+          id?: string
+          is_mandatory?: boolean | null
+          is_received?: boolean | null
+          notes?: string | null
+          received_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deliverable_id?: string
+          document_name?: string
+          document_type?: string
+          id?: string
+          is_mandatory?: boolean | null
+          is_received?: boolean | null
+          notes?: string | null
+          received_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_document_checklist_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          estimated_completion_date: string | null
+          id: string
+          is_active: boolean
+          orm_lead_id: string
+          overall_progress: number | null
+          project_id: string
+          scope_description: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          estimated_completion_date?: string | null
+          id?: string
+          is_active?: boolean
+          orm_lead_id: string
+          overall_progress?: number | null
+          project_id: string
+          scope_description?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          estimated_completion_date?: string | null
+          id?: string
+          is_active?: boolean
+          orm_lead_id?: string
+          overall_progress?: number | null
+          project_id?: string
+          scope_description?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_tasks: {
+        Row: {
+          assigned_to: string
+          completion_date: string | null
+          created_at: string
+          created_by: string
+          deliverable_id: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          completion_date?: string | null
+          created_at?: string
+          created_by: string
+          deliverable_id: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string
+          deliverable_id?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_tasks_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orm_workflow_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          deliverable_id: string
+          id: string
+          user_id: string
+          workflow_stage: Database["public"]["Enums"]["orm_workflow_stage"]
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          deliverable_id: string
+          id?: string
+          user_id: string
+          workflow_stage: Database["public"]["Enums"]["orm_workflow_stage"]
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          deliverable_id?: string
+          id?: string
+          user_id?: string
+          workflow_stage?: Database["public"]["Enums"]["orm_workflow_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orm_workflow_comments_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "orm_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orp_activity_log: {
         Row: {
           activity_type: string
@@ -3082,6 +3414,20 @@ export type Database = {
       user_is_admin: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
+      orm_deliverable_type:
+        | "ASSET_REGISTER"
+        | "PREVENTIVE_MAINTENANCE"
+        | "BOM_DEVELOPMENT"
+        | "OPERATING_SPARES"
+        | "IMS_UPDATE"
+        | "PM_ACTIVATION"
+      orm_workflow_stage:
+        | "IN_PROGRESS"
+        | "QAQC_REVIEW"
+        | "LEAD_REVIEW"
+        | "CENTRAL_TEAM_REVIEW"
+        | "APPROVED"
+        | "REJECTED"
       orp_approval_status: "PENDING" | "APPROVED" | "REJECTED"
       orp_deliverable_status:
         | "NOT_STARTED"
@@ -3268,6 +3614,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      orm_deliverable_type: [
+        "ASSET_REGISTER",
+        "PREVENTIVE_MAINTENANCE",
+        "BOM_DEVELOPMENT",
+        "OPERATING_SPARES",
+        "IMS_UPDATE",
+        "PM_ACTIVATION",
+      ],
+      orm_workflow_stage: [
+        "IN_PROGRESS",
+        "QAQC_REVIEW",
+        "LEAD_REVIEW",
+        "CENTRAL_TEAM_REVIEW",
+        "APPROVED",
+        "REJECTED",
+      ],
       orp_approval_status: ["PENDING", "APPROVED", "REJECTED"],
       orp_deliverable_status: [
         "NOT_STARTED",
