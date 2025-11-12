@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Search, Edit2, Check, X } from 'lucide-react';
+import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Search, Edit2, Check, X, Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -59,6 +60,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
 
   // Handle initial message when dialog opens
   useEffect(() => {
@@ -291,6 +293,16 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleVoiceInput = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening((transcript) => {
+        setInput((prev) => prev + (prev ? ' ' : '') + transcript);
+      });
     }
   };
 
@@ -598,13 +610,26 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                 className="min-h-[60px] max-h-[120px] resize-none"
                 disabled={isLoading}
               />
-              <Button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isLoading}
-                className="self-end"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+              <div className="flex flex-col gap-2">
+                {isSupported && (
+                  <Button
+                    onClick={handleVoiceInput}
+                    disabled={isLoading}
+                    variant={isListening ? "destructive" : "outline"}
+                    className={`self-end ${isListening ? 'animate-pulse' : ''}`}
+                    title={isListening ? "Stop listening" : "Voice input"}
+                  >
+                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  </Button>
+                )}
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isLoading}
+                  className="self-end"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
