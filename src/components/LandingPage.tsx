@@ -129,6 +129,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem('dashboardWidgetConfig');
     return saved ? JSON.parse(saved) : [
+      { id: 'ai-assistant', title: 'AI Assistant', isVisible: true, isExpanded: false },
       { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
       { id: 'workspaces', title: 'Workspaces', isVisible: true, isExpanded: false },
       { id: 'recent-activity', title: 'Recent Activity', isVisible: true, isExpanded: false }
@@ -222,6 +223,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
   const handleResetWidgets = () => {
     const defaultWidgets = [
+      { id: 'ai-assistant', title: 'AI Assistant', isVisible: true, isExpanded: false },
       { id: 'quick-actions', title: 'Quick Actions', isVisible: true, isExpanded: false },
       { id: 'workspaces', title: 'Workspaces', isVisible: true, isExpanded: false },
       { id: 'recent-activity', title: 'Recent Activity', isVisible: true, isExpanded: false }
@@ -801,190 +803,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         {/* Main Content Area */}
         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-            {/* AI Assistant Panel */}
-            {aiPanelVisible && (
-              <Card className={`glass-card glass-card-hover overflow-hidden flex flex-col animate-smooth-in group ${aiPanelExpanded ? 'flex-1' : ''}`} style={{ height: aiPanelExpanded ? 'auto' : (messages.length > 0 ? '50%' : '30%') }}>
-                <CardHeader className="flex-shrink-0 py-4 pb-3 flex flex-row items-center justify-between space-y-0">
-                  <div className="flex items-center gap-2 flex-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 cursor-grab active:cursor-grabbing hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Drag to reposition (coming soon)"
-                    >
-                      <GripVertical className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                    <CardTitle className="text-2xl font-bold">
-                      Welcome {userProfile?.full_name || 'User'}
-                    </CardTitle>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="icon" variant="ghost" className="h-8 w-8">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="z-50 bg-background">
-                      <DropdownMenuItem onClick={() => setAiPanelExpanded(!aiPanelExpanded)}>
-                        {aiPanelExpanded ? (
-                          <>
-                            <Minimize2 className="w-4 h-4 mr-2" />
-                            Collapse
-                          </>
-                        ) : (
-                          <>
-                            <Maximize2 className="w-4 h-4 mr-2" />
-                            Expand
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        setAiPanelVisible(false);
-                        toast({ title: 'AI Assistant hidden' });
-                      }}>
-                        <EyeOff className="w-4 h-4 mr-2" />
-                        Hide
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-              <CardContent className="p-4 pt-3 flex flex-col flex-1 overflow-hidden">
-                <div className="space-y-1.5 flex-shrink-0">
-                  {imagePreviews.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {imagePreviews.map((preview, index) => (
-                        <div key={index} className="relative inline-block">
-                          <img 
-                            src={preview} 
-                            alt={`Upload preview ${index + 1}`} 
-                            className="h-20 w-20 rounded-lg border border-border/40 object-cover"
-                          />
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ))}
-                      {imagePreviews.length < MAX_IMAGES && (
-                        <Button
-                          variant="outline"
-                          className="h-20 w-20 border-dashed border-2 hover:bg-primary/5"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="w-6 h-6 text-muted-foreground" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                    <div className="relative group" data-tour="ai-input">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <Textarea 
-                    value={userInput} 
-                    onChange={e => setUserInput(e.target.value)} 
-                    onKeyPress={handleKeyPress} 
-                    placeholder="Ask a question or describe what you need..." 
-                    className="min-h-[120px] resize-none border-border/40 pr-24 relative backdrop-blur-sm bg-muted/20 focus:bg-muted/30 transition-all duration-300" 
-                    disabled={isLoadingAI} 
-                  />
-                  <div className="absolute bottom-3 right-3 flex gap-2">
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      onClick={handleVoiceInput} 
-                      disabled={!isSupported || isLoadingAI} 
-                      className="h-9 w-9 hover:bg-primary/10 transition-all duration-300"
-                    >
-                      <Mic className={`w-4 h-4 ${isListening ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
-                    </Button>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isLoadingAI || uploadedImages.length >= MAX_IMAGES}
-                      className="h-9 w-9 hover:bg-primary/10 transition-all duration-300"
-                      title={uploadedImages.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images` : "Attach images"}
-                    >
-                      <ImagePlus className="w-4 h-4 text-muted-foreground" />
-                      {uploadedImages.length > 0 && (
-                        <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
-                          {uploadedImages.length}
-                        </Badge>
-                      )}
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      multiple
-                      className="hidden"
-                      onChange={handleImageSelect}
-                    />
-                    <Button 
-                      size="icon" 
-                      onClick={handleSend} 
-                      disabled={isLoadingAI || (!userInput.trim() && uploadedImages.length === 0)} 
-                      className={`rounded-full h-9 w-9 hover:scale-105 transition-all duration-300 ${
-                        userInput.trim() || uploadedImages.length > 0
-                          ? 'bg-gradient-to-br from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl'
-                          : 'bg-muted/60 hover:bg-muted/80'
-                      }`}
-                    >
-                      <Send className={`w-4 h-4 ${userInput.trim() || uploadedImages.length > 0 ? 'text-white' : 'text-muted-foreground'}`} />
-                    </Button>
-                  </div>
-                </div>
-
-              </div>
-              
-              {/* AI Conversation Display */}
-              {messages.length > 0 && (
-                <ScrollArea className="flex-1 pr-4 mt-4">
-                  <div className="space-y-4 py-2">
-                    {messages.map((msg, idx) => (
-                      <div 
-                        key={idx} 
-                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-smooth-in`}
-                        style={{ animationDelay: `${idx * 50}ms` }}
-                      >
-                        <div className={`max-w-[85%] rounded-2xl px-5 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ${
-                          msg.role === 'user' 
-                            ? 'bg-gradient-to-br from-primary to-accent text-primary-foreground' 
-                            : 'bg-gradient-to-br from-muted/80 to-muted/60 border border-border/40'
-                        }`}>
-                          {msg.imageUrls && msg.imageUrls.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2 mb-2">
-                              {msg.imageUrls.map((url, idx) => (
-                                <img 
-                                  key={idx}
-                                  src={url} 
-                                  alt={`User uploaded ${idx + 1}`} 
-                                  className="w-full rounded-lg object-cover max-h-40"
-                                />
-                              ))}
-                            </div>
-                          )}
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {isLoadingAI && (
-                      <div className="flex justify-start animate-smooth-in">
-                        <div className="bg-gradient-to-br from-muted/80 to-muted/60 rounded-2xl px-5 py-3 border border-border/40 backdrop-blur-sm">
-                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                        </div>
-                      </div>
-                    )}
-                    <div ref={chatEndRef} />
-                  </div>
-                </ScrollArea>
-                )}
-              </CardContent>
-              </Card>
-            )}
+            {/* Dashboard Widgets - AI Assistant is now part of widgets grid below */}
 
             {/* Widgets Section with Drag and Drop */}
             {!aiPanelExpanded && (
