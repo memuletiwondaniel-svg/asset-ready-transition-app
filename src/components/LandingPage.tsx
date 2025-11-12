@@ -295,6 +295,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     full_name: string;
     position: string;
     avatar_url: string;
+    last_login_at: string | null;
   } | null>(null);
 
   const fetchUserProfile = React.useCallback(async () => {
@@ -302,7 +303,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, position, avatar_url')
+        .select('full_name, position, avatar_url, last_login_at')
         .eq('user_id', user.id)
         .single();
       
@@ -319,7 +320,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         setUserProfile({
           full_name: profile.full_name || 'User',
           position: profile.position || 'Team Member',
-          avatar_url: avatarUrl || ''
+          avatar_url: avatarUrl || '',
+          last_login_at: profile.last_login_at
         });
       }
     }
@@ -832,14 +834,33 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             <Sparkles className="w-6 h-6 text-white" />
                           </div>
                         )}
-                        <div>
+                        <div className="flex-1">
                           <h2 className={`font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ${welcomeBannerCollapsed ? 'text-lg' : 'text-2xl'} transition-all duration-300`}>
                             {getGreeting()}, {userProfile?.full_name || 'User'}! 👋
                           </h2>
                           {!welcomeBannerCollapsed && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              How can ORSH AI assist you today?
-                            </p>
+                            <>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                How can ORSH AI assist you today?
+                              </p>
+                              {/* Activity Summary */}
+                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                                {userProfile?.last_login_at && (
+                                  <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>Last login: {formatDistanceToNow(new Date(userProfile.last_login_at), { addSuffix: true })}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                  <CheckCircle className="w-3.5 h-3.5 text-success" />
+                                  <span>{tasks.filter(t => t.status === 'completed').length} completed</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className="w-3.5 h-3.5 text-warning" />
+                                  <span>{tasks.filter(t => t.status === 'pending').length} pending</span>
+                                </div>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
