@@ -14,15 +14,27 @@ import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesW
 import { PSSRPendingTasksWidget } from '@/components/widgets/PSSRPendingTasksWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
+import { WidgetCustomizationToolbar, WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface PSSRDashboardProps {
   pssrId: string;
   onBack: () => void;
   onNavigateToCategory?: (categoryName: string) => void;
 }
+
+const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
+  { id: 'widget-1', name: 'PSSR Information', visible: true, size: 'medium' },
+  { id: 'widget-2', name: 'PSSR Scope', visible: true, size: 'medium' },
+  { id: 'widget-3', name: 'Item Statistics', visible: true, size: 'medium' },
+  { id: 'widget-4', name: 'Progress Overview', visible: true, size: 'large' },
+  { id: 'widget-6', name: 'Key Activities', visible: true, size: 'medium' },
+  { id: 'widget-7', name: 'Pending Tasks', visible: true, size: 'medium' },
+  { id: 'widget-8', name: 'Linked PSSRs', visible: true, size: 'medium' },
+];
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
   pssrId, 
@@ -33,19 +45,27 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   const { buildBreadcrumbsFromPath, updateMetadata } = useBreadcrumb();
   const { toast } = useToast();
 
+  // Widget settings state - persisted in localStorage
+  const [widgetSettings, setWidgetSettings] = useState<WidgetSettings[]>(() => {
+    const saved = localStorage.getItem(`pssr-widget-settings-${pssrId}`);
+    return saved ? JSON.parse(saved) : DEFAULT_WIDGET_SETTINGS;
+  });
+
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+
   // Widget order state - persisted in localStorage
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-order-${pssrId}`);
-    return saved ? JSON.parse(saved) : [
-      'widget-1',
-      'widget-2',
-      'widget-3',
-      'widget-4',
-      'widget-6',
-      'widget-7',
-      'widget-8'
-    ];
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return DEFAULT_WIDGET_SETTINGS.map(w => w.id);
   });
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(`pssr-widget-settings-${pssrId}`, JSON.stringify(widgetSettings));
+  }, [widgetSettings, pssrId]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -76,6 +96,55 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         return newOrder;
       });
     }
+  };
+
+  const handleVisibilityChange = (widgetId: string, visible: boolean) => {
+    setWidgetSettings(prev =>
+      prev.map(w => w.id === widgetId ? { ...w, visible } : w)
+    );
+    toast({
+      title: visible ? 'Widget Shown' : 'Widget Hidden',
+      description: `${widgetSettings.find(w => w.id === widgetId)?.name} has been ${visible ? 'shown' : 'hidden'}.`
+    });
+  };
+
+  const handleSizeChange = (widgetId: string, size: 'small' | 'medium' | 'large') => {
+    setWidgetSettings(prev =>
+      prev.map(w => w.id === widgetId ? { ...w, size } : w)
+    );
+    toast({
+      title: 'Widget Size Changed',
+      description: `${widgetSettings.find(w => w.id === widgetId)?.name} is now ${size}.`
+    });
+  };
+
+  const handleResetLayout = () => {
+    setResetDialogOpen(true);
+  };
+
+  const confirmResetLayout = () => {
+    setWidgetSettings(DEFAULT_WIDGET_SETTINGS);
+    setWidgetOrder(DEFAULT_WIDGET_SETTINGS.map(w => w.id));
+    localStorage.removeItem(`pssr-widget-settings-${pssrId}`);
+    localStorage.removeItem(`pssr-widget-order-${pssrId}`);
+    toast({
+      title: 'Layout Reset',
+      description: 'Widget layout has been restored to default settings.'
+    });
+    setResetDialogOpen(false);
+  };
+
+  const getWidgetColSpan = (size: 'small' | 'medium' | 'large', widgetId: string) => {
+    // Widget 4 (Progress) gets special treatment
+    if (widgetId === 'widget-4') {
+      if (size === 'large') return 'lg:col-span-2 xl:col-span-3';
+      if (size === 'medium') return 'lg:col-span-2';
+      return 'lg:col-span-1';
+    }
+    
+    // Other widgets
+    if (size === 'large') return 'lg:col-span-2';
+    return 'lg:col-span-1';
   };
 
   // Mock comprehensive PSSR data
@@ -317,17 +386,31 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
         {/* Main Content - Widget Grid with Drag and Drop */}
         <main className="px-8 py-6">
+          <WidgetCustomizationToolbar
+            widgets={widgetSettings}
+            onVisibilityChange={handleVisibilityChange}
+            onSizeChange={handleSizeChange}
+            onResetLayout={handleResetLayout}
+          />
+
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+            <SortableContext items={widgetOrder.filter(id => 
+              widgetSettings.find(w => w.id === id)?.visible
+            )} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
-                {widgetOrder.map((widgetId) => {
+                {widgetOrder.filter(id => 
+                  widgetSettings.find(w => w.id === id)?.visible
+                ).map((widgetId) => {
+                  const widgetSetting = widgetSettings.find(w => w.id === widgetId);
+                  if (!widgetSetting?.visible) return null;
+
                   const widgetMap: Record<string, JSX.Element> = {
                     'widget-1': (
-                      <div className="lg:col-span-1">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRInformationWidget
                           pssrId={pssrData.id}
                           asset={pssrData.asset}
@@ -341,7 +424,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       </div>
                     ),
                     'widget-2': (
-                      <div className="lg:col-span-1">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRScopeWidget
                           description={pssrData.scope}
                           images={pssrData.scopeImages}
@@ -349,7 +432,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       </div>
                     ),
                     'widget-3': (
-                      <div className="lg:col-span-1">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRItemStatisticsWidget
                           totalItems={pssrData.statistics.totalItems}
                           draftItems={pssrData.statistics.draftItems}
@@ -359,7 +442,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       </div>
                     ),
                     'widget-4': (
-                      <div className="lg:col-span-1 xl:col-span-2">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRProgressWidget
                           overallProgress={pssrData.progress}
                           categoryProgress={pssrData.categoryProgress}
@@ -368,7 +451,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       </div>
                     ),
                     'widget-6': (
-                      <div className="lg:col-span-1">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRKeyActivitiesWidget
                           activities={pssrData.keyActivities}
                           onActivityClick={(type) => console.log('Activity clicked:', type)}
@@ -376,7 +459,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       </div>
                     ),
                     'widget-7': (
-                      <div className="lg:col-span-1">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRPendingTasksWidget
                           reviewers={pssrData.reviewers}
                           approvers={pssrData.approvers}
@@ -384,7 +467,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       </div>
                     ),
                     'widget-8': (
-                      <div className="lg:col-span-1">
+                      <div className={getWidgetColSpan(widgetSetting.size, widgetId)}>
                         <PSSRLinkedPSSRsWidget
                           linkedPSSRs={pssrData.linkedPSSRs}
                           onPSSRClick={(id) => console.log('PSSR clicked:', id)}
@@ -415,6 +498,24 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           </DndContext>
         </main>
       </div>
+
+      <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Widget Layout?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore all widgets to their default positions, sizes, and visibility settings. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmResetLayout}>
+              Reset Layout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

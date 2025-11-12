@@ -9,10 +9,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalendarIcon, Clock, MapPin, Mail, X } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, Mail, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Attendee {
   id: string;
@@ -79,6 +80,7 @@ export const ScheduleActivityModal: React.FC<ScheduleActivityModalProps> = ({
   const [description, setDescription] = useState<string>('');
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
   const [sendInvitations, setSendInvitations] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const handleToggleAttendee = (attendeeId: string) => {
     setSelectedAttendees(prev =>
@@ -88,7 +90,8 @@ export const ScheduleActivityModal: React.FC<ScheduleActivityModalProps> = ({
     );
   };
 
-  const handleSchedule = () => {
+
+  const handleSchedule = async () => {
     if (!date) {
       toast({
         title: 'Date Required',
@@ -107,22 +110,120 @@ export const ScheduleActivityModal: React.FC<ScheduleActivityModalProps> = ({
       return;
     }
 
-    // Here you would typically call an API to schedule the activity
-    toast({
-      title: 'Activity Scheduled',
-      description: `${activityName} has been scheduled for ${format(date, 'PPP')} at ${time}.${
-        sendInvitations ? ' Invitations have been sent to attendees.' : ''
-      }`
-    });
+    setIsSubmitting(true);
 
-    onOpenChange(false);
+    try {
+      // If sending invitations, call the edge function
+      if (sendInvitations) {
+        const selectedAttendeesData = mockAttendees.filter(a => 
+          selectedAttendees.includes(a.id)
+        );
+
+        const { data, error } = await supabase.functions.invoke('send-calendar-invitation', {
+          body: {
+            activityName,
+            activityType,
+            date: format(date, 'yyyy-MM-dd'),
+            time,
+            location,
+            description,
+            attendees: selectedAttendeesData,
+            organizer: {
+              name: 'PSSR Coordinator',
+              email: 'coordinator@company.com'
+            },
+            pssrId: 'PSSR-2024-001'
+          }
+        });
+
+        if (error) {
+          console.error('Error sending invitations:', error);
+          toast({
+            title: 'Invitation Error',
+            description: 'Failed to send calendar invitations. Please try again.',
+            variant: 'destructive'
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log('Invitations sent:', data);
+      }
+
+      // Here you would typically call an API to schedule the activity in the database
+      toast({
+        title: 'Activity Scheduled',
+        description: `${activityName} has been scheduled for ${format(date, 'PPP')} at ${time}.${
+          sendInvitations ? ' Invitations have been sent to attendees.' : ''
+        }`
+      });
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error scheduling activity:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSendReminders = () => {
-    toast({
-      title: 'Reminders Sent',
-      description: `Reminders have been sent to ${selectedAttendees.length} attendee(s).`
-    });
+  const handleSendReminders = async () => {
+    if (selectedAttendees.length === 0) {
+      toast({
+        title: 'No Attendees Selected',
+        description: 'Please select attendees to send reminders to.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const selectedAttendeesData = mockAttendees.filter(a => 
+        selectedAttendees.includes(a.id)
+      );
+
+      // Same edge function, just different messaging
+      const { data, error } = await supabase.functions.invoke('send-calendar-invitation', {
+        body: {
+          activityName: `Reminder: ${activityName}`,
+          activityType,
+          date: existingDate ? format(new Date(existingDate), 'yyyy-MM-dd') : format(date!, 'yyyy-MM-dd'),
+          time,
+          location,
+          description: `This is a reminder for the upcoming activity: ${description}`,
+          attendees: selectedAttendeesData,
+          organizer: {
+            name: 'PSSR Coordinator',
+            email: 'coordinator@company.com'
+          },
+          pssrId: 'PSSR-2024-001'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Reminders Sent',
+        description: `Reminders have been sent to ${selectedAttendees.length} attendee(s).`
+      });
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      toast({
+        title: 'Reminder Error',
+        description: 'Failed to send reminders. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -263,16 +364,33 @@ export const ScheduleActivityModal: React.FC<ScheduleActivityModalProps> = ({
               variant="outline"
               onClick={handleSendReminders}
               className="mr-auto"
+              disabled={isSubmitting || selectedAttendees.length === 0}
             >
-              <Mail className="h-4 w-4 mr-2" />
-              Send Reminders
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Reminders
+                </>
+              )}
             </Button>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSchedule}>
-            {existingDate ? 'Update Activity' : 'Schedule Activity'}
+          <Button onClick={handleSchedule} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {sendInvitations ? 'Sending...' : 'Scheduling...'}
+              </>
+            ) : (
+              existingDate ? 'Update Activity' : 'Schedule Activity'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
