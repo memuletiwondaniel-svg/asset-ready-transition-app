@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus, Trash2, Link2, AlertCircle, MessageSquare } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ListChecks, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, Search, Plus, Trash2, Link2, AlertCircle, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -127,6 +127,10 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
+  const [welcomeBannerCollapsed, setWelcomeBannerCollapsed] = useState(() => {
+    const saved = localStorage.getItem('welcomeBannerCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
@@ -174,6 +178,18 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   React.useEffect(() => {
     localStorage.setItem('tasksPanelVisible', JSON.stringify(tasksPanelVisible));
   }, [tasksPanelVisible]);
+
+  React.useEffect(() => {
+    localStorage.setItem('welcomeBannerCollapsed', JSON.stringify(welcomeBannerCollapsed));
+  }, [welcomeBannerCollapsed]);
+
+  // Get time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   // Drag and drop sensors for widgets
   const sensors = useSensors(
@@ -805,73 +821,97 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <div className="flex-1 flex gap-6 p-6 overflow-hidden">
           <div className="flex-1 flex flex-col gap-6 overflow-hidden">
             {/* Welcome User Banner - Ask ORSH AI */}
-            <Card className="glass-card overflow-hidden animate-fade-in border-2 border-primary/20 shadow-lg">
-              <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      Welcome back, {userProfile?.full_name || 'User'}! 👋
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      How can ORSH AI assist you today?
-                    </p>
+            <Card className="glass-card overflow-hidden animate-fade-in border-2 border-primary/20 shadow-lg transition-all duration-300">
+              <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
+                <div className={`${welcomeBannerCollapsed ? 'p-3' : 'p-6'} transition-all duration-300`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        {!welcomeBannerCollapsed && (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl flex-shrink-0">
+                            <Sparkles className="w-6 h-6 text-white" />
+                          </div>
+                        )}
+                        <div>
+                          <h2 className={`font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ${welcomeBannerCollapsed ? 'text-lg' : 'text-2xl'} transition-all duration-300`}>
+                            {getGreeting()}, {userProfile?.full_name || 'User'}! 👋
+                          </h2>
+                          {!welcomeBannerCollapsed && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              How can ORSH AI assist you today?
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setWelcomeBannerCollapsed(!welcomeBannerCollapsed)}
+                      className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
+                    >
+                      {welcomeBannerCollapsed ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronUp className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl">
-                    <Sparkles className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setInitialPrompt('How can I help you today?');
-                      setChatOpen(true);
-                    }}
-                    className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <MessageSquare className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-semibold">Ask AI</p>
-                      <p className="text-xs text-muted-foreground">Get instant answers</p>
-                    </div>
-                  </Button>
                   
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setInitialPrompt('Summarize my recent PSSR');
-                      setChatOpen(true);
-                    }}
-                    className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-primary" />
+                  {!welcomeBannerCollapsed && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 animate-fade-in">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setInitialPrompt('How can I help you today?');
+                          setChatOpen(true);
+                        }}
+                        className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                          <MessageSquare className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-semibold">Ask AI</p>
+                          <p className="text-xs text-muted-foreground">Get instant answers</p>
+                        </div>
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setInitialPrompt('Summarize my recent PSSR');
+                          setChatOpen(true);
+                        }}
+                        className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-semibold">Summarize PSSR</p>
+                          <p className="text-xs text-muted-foreground">Quick overview</p>
+                        </div>
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setInitialPrompt('Review my checklist items');
+                          setChatOpen(true);
+                        }}
+                        className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-semibold">Review Checklist</p>
+                          <p className="text-xs text-muted-foreground">Check progress</p>
+                        </div>
+                      </Button>
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-semibold">Summarize PSSR</p>
-                      <p className="text-xs text-muted-foreground">Quick overview</p>
-                    </div>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setInitialPrompt('Review my checklist items');
-                      setChatOpen(true);
-                    }}
-                    className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-semibold">Review Checklist</p>
-                      <p className="text-xs text-muted-foreground">Check progress</p>
-                    </div>
-                  </Button>
+                  )}
                 </div>
               </div>
             </Card>
