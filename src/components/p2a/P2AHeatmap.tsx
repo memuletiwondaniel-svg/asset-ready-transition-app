@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { useP2AHandovers, useP2ADeliverableCategories } from '@/hooks/useP2AHandovers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { P2AHeatmapCell } from './P2AHeatmapCell';
+import { useNavigate } from 'react-router-dom';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -25,6 +27,7 @@ const getStatusColor = (status: string) => {
 export const P2AHeatmap: React.FC = () => {
   const { handovers, isLoading: loadingHandovers } = useP2AHandovers();
   const { categories, isLoading: loadingCategories } = useP2ADeliverableCategories();
+  const navigate = useNavigate();
 
   if (loadingHandovers || loadingCategories) {
     return (
@@ -94,7 +97,7 @@ export const P2AHeatmap: React.FC = () => {
             ) : (
               handovers?.map((handover) => (
                 <div key={handover.id} className="flex border-b border-border/40 hover:bg-muted/20">
-                  <div className="w-64 p-3 border-r border-border/40 sticky left-0 bg-card z-10">
+                  <div className="w-64 p-3 border-r border-border/40 sticky left-0 bg-card z-10 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/p2a-handover/${handover.id}`)}>
                     <div className="font-medium text-sm">
                       {handover.project?.project_id_prefix}-{handover.project?.project_id_number}
                     </div>
@@ -115,7 +118,11 @@ export const P2AHeatmap: React.FC = () => {
                         key={category.id}
                         className="w-32 p-3 border-r border-border/40 flex items-center justify-center"
                       >
-                        <div className={`w-16 h-8 rounded ${getStatusColor(randomStatus)}`} />
+                        <P2AHeatmapCell 
+                          handoverId={handover.id}
+                          status={randomStatus}
+                          percentage={Math.floor(Math.random() * 100)}
+                        />
                       </div>
                     );
                   })}

@@ -977,6 +977,53 @@ export type Database = {
           },
         ]
       }
+      p2a_approval_workflow: {
+        Row: {
+          approved_at: string | null
+          approver_name: string
+          approver_user_id: string | null
+          comments: string | null
+          created_at: string
+          handover_id: string
+          id: string
+          stage: Database["public"]["Enums"]["p2a_approval_stage"]
+          status: Database["public"]["Enums"]["p2a_approval_status"]
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_name: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          handover_id: string
+          id?: string
+          stage: Database["public"]["Enums"]["p2a_approval_stage"]
+          status?: Database["public"]["Enums"]["p2a_approval_status"]
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_name?: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          handover_id?: string
+          id?: string
+          stage?: Database["public"]["Enums"]["p2a_approval_stage"]
+          status?: Database["public"]["Enums"]["p2a_approval_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_approval_workflow_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_deliverable_categories: {
         Row: {
           created_at: string
@@ -1110,6 +1157,50 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_notifications: {
+        Row: {
+          created_at: string
+          handover_id: string
+          id: string
+          message: string
+          notification_type: string
+          read: boolean
+          recipient_user_id: string
+          sender_user_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          handover_id: string
+          id?: string
+          message: string
+          notification_type: string
+          read?: boolean
+          recipient_user_id: string
+          sender_user_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          handover_id?: string
+          id?: string
+          message?: string
+          notification_type?: string
+          read?: boolean
+          recipient_user_id?: string
+          sender_user_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_notifications_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handovers"
             referencedColumns: ["id"]
           },
         ]
@@ -2510,6 +2601,12 @@ export type Database = {
         | "PENDING_APPROVAL"
         | "APPROVED"
         | "COMPLETED"
+      p2a_approval_stage:
+        | "PROJECT_TEAM_REVIEW"
+        | "ASSET_TEAM_REVIEW"
+        | "OPERATIONS_MANAGER_APPROVAL"
+        | "FINAL_SIGNOFF"
+      p2a_approval_status: "PENDING" | "IN_PROGRESS" | "APPROVED" | "REJECTED"
       p2a_deliverable_status:
         | "NOT_STARTED"
         | "IN_PROGRESS"
@@ -2692,6 +2789,13 @@ export const Constants = {
         "APPROVED",
         "COMPLETED",
       ],
+      p2a_approval_stage: [
+        "PROJECT_TEAM_REVIEW",
+        "ASSET_TEAM_REVIEW",
+        "OPERATIONS_MANAGER_APPROVAL",
+        "FINAL_SIGNOFF",
+      ],
+      p2a_approval_status: ["PENDING", "IN_PROGRESS", "APPROVED", "REJECTED"],
       p2a_deliverable_status: [
         "NOT_STARTED",
         "IN_PROGRESS",
