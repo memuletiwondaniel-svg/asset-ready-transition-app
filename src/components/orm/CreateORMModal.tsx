@@ -51,16 +51,6 @@ export const CreateORMModal: React.FC<CreateORMModalProps> = ({
   );
 
   const handleSubmit = () => {
-    // Check authentication
-    if (!session) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to create an ORM plan.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     if (!projectId || !ormLeadId || selectedDeliverables.length === 0) {
       toast({
         title: 'Missing Fields',

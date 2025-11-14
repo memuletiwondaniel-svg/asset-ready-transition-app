@@ -121,17 +121,7 @@ export const ORMLandingPage: React.FC = () => {
                 Resources
               </Button>
               <Button 
-                onClick={() => {
-                  if (!session) {
-                    toast({
-                      title: 'Authentication Required',
-                      description: 'Please sign in to create an ORM plan.',
-                      variant: 'destructive'
-                    });
-                    return;
-                  }
-                  setShowCreateModal(true);
-                }} 
+                onClick={() => setShowCreateModal(true)} 
                 className="gap-2"
               >
                 <Plus className="w-4 h-4" />

@@ -34,8 +34,9 @@ export const useORMPlans = () => {
         assigned_resource_id?: string;
       }>;
     }) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Not authenticated');
+      // Get current user if available, otherwise use null
+      const { data: { user } } = await supabase.auth.getUser();
+      const created_by = user?.id || null;
 
       // Create plan
       const { data: plan, error: planError } = await supabase
@@ -45,7 +46,7 @@ export const useORMPlans = () => {
           orm_lead_id: data.orm_lead_id,
           scope_description: data.scope_description,
           estimated_completion_date: data.estimated_completion_date,
-          created_by: user.user.id
+          created_by: created_by
         })
         .select()
         .single();
