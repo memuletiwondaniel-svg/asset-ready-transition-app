@@ -37,7 +37,9 @@ const Index = () => {
   
   const handleNavigate = (section: string) => {
     console.log('Index handleNavigate called with section:', section);
-    if (section === 'operation-readiness') {
+    if (section === 'home') {
+      navigate('/');
+    } else if (section === 'operation-readiness') {
       navigate('/operation-readiness');
     } else if (section === 'p2a-handover') {
       navigate('/p2a-handover');
