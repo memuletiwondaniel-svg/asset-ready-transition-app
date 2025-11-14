@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Eye, Edit, MoreVertical, Trash2, FileText, GripVertical, Search } from 'lucide-react';
+import { FileText, GripVertical, Search } from 'lucide-react';
 import { ChecklistItem } from '@/hooks/useChecklistItems';
 import {
   DndContext,
@@ -69,7 +68,6 @@ interface Column {
 }
 
 const defaultColumns: Column[] = [
-  { id: 'actions', label: 'Actions', width: 'w-12' },
   { id: 'id', label: 'ID', icon: FileText, width: 'w-24' },
   { id: 'description', label: 'Description', width: 'flex-1 min-w-0' },
   { id: 'category', label: 'Category', width: 'w-auto' },
@@ -102,7 +100,7 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({ column }) => {
       style={style}
       className={`font-semibold text-gray-700 px-4 py-4 relative group ${column.width} ${
         isDragging ? 'opacity-50' : ''
-      } ${column.id === 'actions' ? 'text-center' : ''}`}
+      }`}
       {...attributes}
     >
       <div className="flex items-center gap-2 justify-between">
@@ -205,44 +203,11 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
 
   const renderCellContent = (column: Column, item: ChecklistItem) => {
     switch (column.id) {
-      case 'actions':
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 rounded-full transition-all duration-200"
-              >
-                <span className="sr-only">Open menu</span>
-                <MoreVertical className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-gray-200/60">
-              <DropdownMenuItem onClick={() => onViewItem(item)} className="hover:bg-blue-50/50">
-                <Eye className="mr-2 h-4 w-4" />
-                View Item
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEditItem(item)} className="hover:bg-green-50/50">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Item
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => onDeleteItem(item)}
-                className="text-red-600 focus:text-red-600 hover:bg-red-50/50"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Item
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
       case 'id':
         return (
           <Badge 
             variant="outline" 
-            className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
+            className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium group-hover:bg-primary/10 group-hover:border-primary/30 group-hover:text-primary group-hover:scale-105 transition-all duration-300"
           >
             {item.unique_id || 'XX-YY'}
           </Badge>
@@ -251,7 +216,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         return (
           <Badge 
             variant="outline" 
-            className={`${getCategoryColor(item.category)} text-xs font-medium whitespace-nowrap`}
+            className={`${getCategoryColor(item.category)} text-xs font-medium whitespace-nowrap group-hover:scale-105 transition-all duration-300`}
           >
             {item.category}
           </Badge>
@@ -264,7 +229,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         );
       case 'description':
         return (
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap group-hover:text-primary transition-colors duration-300">
             {item.description}
           </p>
         );
@@ -307,14 +272,15 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
               {filteredAndSortedItems.map((item, index) => (
                 <TableRow 
                   key={item.unique_id} 
-                  className={`border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-300 ${
+                  className={`group border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent hover:shadow-lg hover:scale-[1.01] hover:border-l-4 hover:border-l-primary transition-all duration-300 cursor-pointer border-l-4 border-l-transparent ${
                     index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'
                   }`}
+                  onClick={() => onViewItem(item)}
                 >
                   {columns.map((column) => (
                     <TableCell 
                       key={column.id} 
-                      className={`px-4 py-4 ${column.id === 'actions' ? 'text-center' : ''} ${column.width}`}
+                      className={`px-4 py-4 ${column.width} group-hover:text-primary transition-colors`}
                     >
                       {renderCellContent(column, item)}
                     </TableCell>
