@@ -3,7 +3,7 @@ import { useORPPlans } from '@/hooks/useORPPlans';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, Calendar, User } from 'lucide-react';
+import { CalendarCheck, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ORPListWidgetProps {
@@ -38,8 +38,8 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ClipboardCheck className="w-5 h-5" />
-            Operation Readiness Plans
+            <CalendarCheck className="w-5 h-5" />
+            OR Plans
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -57,14 +57,14 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ClipboardCheck className="w-5 h-5" />
-          Operation Readiness Plans
+          <CalendarCheck className="w-5 h-5" />
+          OR Plans
         </CardTitle>
       </CardHeader>
       <CardContent>
         {!plans || plans.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <ClipboardCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <CalendarCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No ORP plans created yet</p>
             <p className="text-sm mt-2">Click "Create New ORP" to get started</p>
           </div>
@@ -92,7 +92,7 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
                   <div className="flex items-center gap-1">
-                    <ClipboardCheck className="w-4 h-4" />
+                    <CalendarCheck className="w-4 h-4" />
                     <span>{getPhaseLabel(plan.phase)}</span>
                   </div>
                   <div className="flex items-center gap-1">

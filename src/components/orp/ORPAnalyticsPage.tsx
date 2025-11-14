@@ -37,7 +37,7 @@ export const ORPAnalyticsPage: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-foreground">ORP Analytics Dashboard</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Track performance and metrics across all Operation Readiness Plans
+                Track performance and metrics across all OR Plans
               </p>
             </div>
           </div>

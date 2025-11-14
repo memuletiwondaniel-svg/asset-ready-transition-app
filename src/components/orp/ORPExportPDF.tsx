@@ -25,7 +25,7 @@ export const ORPExportPDF: React.FC<ORPExportPDFProps> = ({ plan, deliverables }
       // Title
       pdf.setFontSize(20);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Operation Readiness Plan Report', pageWidth / 2, yPosition, { align: 'center' });
+      pdf.text('OR Plan Report', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
 
       // Project Info
