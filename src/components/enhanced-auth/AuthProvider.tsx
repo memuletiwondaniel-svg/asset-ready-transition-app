@@ -71,37 +71,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Check for specific admin credentials
-      if (email === 'memuletiwondaniel@gmail.com' && password === 'Danibobo1@') {
-        // Simulate successful admin login
-        const mockUser = {
-          id: 'admin-user-id',
-          email: 'memuletiwondaniel@gmail.com',
-          role: 'admin',
-          user_metadata: {
-            full_name: 'Daniel Admin',
-            role: 'admin'
-          }
-        };
-        
-        setUser(mockUser as any);
-        setSession({
-          access_token: 'mock-admin-token',
-          refresh_token: 'mock-refresh-token',
-          user: mockUser,
-          expires_at: Date.now() + 3600000,
-          expires_in: 3600,
-          token_type: 'bearer'
-        } as any);
-        
-        toast.success('Successfully signed in as admin!');
-        return { error: null };
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      if (error) {
+        // Track failed login attempt
+        if (error.message.includes('Invalid login credentials')) {
+          try {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('user_id')
+              .eq('email', email)
+              .single();
+            
+            if (profileData) {
+              await supabase.rpc('track_failed_login', {
+                user_uuid: profileData.user_id
+              });
+            }
+          } catch (e) {
+            console.error('Failed to track failed login:', e);
+          }
+        }
+        toast.error(error.message);
+        return { error };
+      }
+
+      toast.success('Successfully signed in!');
+      return { error: null };
+    } catch (err: any) {
+      console.error('Sign in error:', err);
+      toast.error('Unable to sign in. Please try again.');
+      return { error: err };
+    }
+  };
 
       if (error) {
         // Track failed login attempt
