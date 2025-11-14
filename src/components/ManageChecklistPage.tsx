@@ -30,7 +30,6 @@ import OrshLogo from './ui/OrshLogo';
 import LanguageSelector from '@/components/admin/LanguageSelector';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import { getCurrentTranslations } from '@/utils/translations';
-import { OrshSidebar } from './OrshSidebar';
 interface ManageChecklistPageProps {
   onBack: () => void;
   selectedLanguage?: string;
@@ -229,14 +228,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   };
 
   if (showCreateForm) {
-    return <div className="min-h-screen flex w-full">
-        <OrshSidebar 
-          userName="Daniel"
-          userTitle="ORA Engr."
-          language="en"
-          currentPage="admin-tools"
-        />
-        <div className="flex-1 overflow-auto">
+    return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
@@ -284,18 +276,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} selectedLanguage={currentLanguage} translations={t} />
         </div>
           </AnimatedBackground>
-        </div>
-      </div>;
+        </div>;
   }
   if (showEditForm && editingChecklist) {
-    return <div className="min-h-screen flex w-full">
-        <OrshSidebar 
-          userName="Daniel"
-          userTitle="ORA Engr."
-          language="en"
-          currentPage="admin-tools"
-        />
-        <div className="flex-1 overflow-auto">
+    return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
@@ -351,18 +335,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         }} onSave={handleEditComplete} />
         </div>
           </AnimatedBackground>
-        </div>
-      </div>;
+        </div>;
   }
   if (showSuccessPage) {
-    return <div className="min-h-screen flex w-full">
-        <OrshSidebar 
-          userName="Daniel"
-          userTitle="ORA Engr."
-          language="en"
-          currentPage="admin-tools"
-        />
-        <div className="flex-1 overflow-auto">
+    return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
           <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
@@ -397,30 +373,14 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         }} />
         </div>
           </AnimatedBackground>
-        </div>
-      </div>;
+        </div>;
   }
   if (selectedChecklist) {
-    return <div className="min-h-screen flex w-full">
-        <OrshSidebar 
-          userName="Daniel"
-          userTitle="ORA Engr."
-          language="en"
-          currentPage="admin-tools"
-        />
-        <div className="flex-1 overflow-auto">
+    return <div className="flex-1 overflow-auto">
           <ChecklistDetailsPage checklist={selectedChecklist} onBack={() => setSelectedChecklist(null)} selectedLanguage={currentLanguage} translations={t} />
-        </div>
-      </div>;
+        </div>;
   }
-  return <div className="min-h-screen flex w-full">
-      <OrshSidebar 
-        userName="Daniel"
-        userTitle="ORA Engr."
-        language="en"
-        currentPage="admin-tools"
-      />
-      <div className="flex-1 overflow-auto">
+  return <div className="flex-1 overflow-auto">
         <AnimatedBackground>
       <div className="relative z-10">
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
@@ -627,7 +587,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         </AlertDialogContent>
       </AlertDialog>
         </AnimatedBackground>
-      </div>
-    </div>;
+      </div>;
 };
 export default ManageChecklistPage;
