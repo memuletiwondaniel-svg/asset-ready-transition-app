@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
-import { Plus, BarChart3 } from 'lucide-react';
+import { Plus, BarChart3, ClipboardCheck } from 'lucide-react';
 import { ORPListWidget } from '@/components/orp/ORPListWidget';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { supabase } from '@/integrations/supabase/client';
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 
 export const ORPLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { setBreadcrumbs } = useBreadcrumb();
   useORPRealtime();
 
   // Fetch current user profile
@@ -19,6 +22,13 @@ export const ORPLandingPage: React.FC = () => {
     position: string;
     avatar_url: string;
   } | null>(null);
+
+  React.useEffect(() => {
+    setBreadcrumbs([
+      { label: 'Home', path: '/' },
+      { label: 'OR Plans', path: '/operation-readiness' }
+    ]);
+  }, [setBreadcrumbs]);
 
   React.useEffect(() => {
     const fetchUserProfile = async () => {
@@ -71,6 +81,12 @@ export const ORPLandingPage: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-border bg-card px-6 py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent">
+              <ClipboardCheck className="w-5 h-5 text-white" />
+            </div>
+            <BreadcrumbNavigation currentPageLabel="OR Plans" />
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Operation Readiness Plans</h1>
