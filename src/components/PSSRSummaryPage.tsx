@@ -4,6 +4,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -91,6 +92,42 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   const [showWidgetManagement, setShowWidgetManagement] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeWidgetId, setActiveWidgetId] = useState<string | null>(null);
+
+  // Fetch current user profile
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    position: string;
+    avatar_url: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, position, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profile) {
+          let avatarUrl = profile.avatar_url;
+          if (avatarUrl && !avatarUrl.startsWith('http')) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('user-avatars')
+              .getPublicUrl(avatarUrl);
+            avatarUrl = publicUrl;
+          }
+          setUserProfile({
+            full_name: profile.full_name || 'User',
+            position: profile.position || 'Team Member',
+            avatar_url: avatarUrl || ''
+          });
+        }
+      }
+    };
+    fetchUserProfile();
+  }, []);
 
   // Derive widget states from persisted configs
   const widgetVisibility = useMemo(() => {
@@ -649,7 +686,13 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   }
   return <div className="h-screen flex w-full overflow-hidden">
       {/* ORSH Sidebar - Fixed */}
-      <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="safe-startup" onNavigate={section => {
+      <OrshSidebar 
+        userName={userProfile?.full_name || 'User'} 
+        userTitle={userProfile?.position || 'Team Member'} 
+        userAvatar={userProfile?.avatar_url || ''} 
+        language="en" 
+        currentPage="safe-startup" 
+        onNavigate={section => {
       console.log('PSSR page navigation:', section);
       if (section === 'home') {
         onBack();
