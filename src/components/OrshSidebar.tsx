@@ -165,6 +165,17 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   <Shield className="mr-2 h-4 w-4" />
                   <span>Security</span>
                 </Button>
+                
+                {/* Profile Completion Indicator */}
+                {realtimeProfile && (
+                  <div className="px-3 pt-2">
+                    <ProfileCompletionIndicator
+                      profile={realtimeProfile}
+                      onOpenProfile={() => setProfileModalOpen(true)}
+                      collapsed={false}
+                    />
+                  </div>
+                )}
               </>}
           </CollapsibleContent>
         </Collapsible>
@@ -354,30 +365,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         </div>
       </ScrollArea>
 
-      {/* Profile Completion & Online Users */}
+      {/* Online Users Indicator */}
       <div className="flex-shrink-0">
-        {/* Profile Completion Indicator */}
-        {!isSidebarCollapsed && (
-          <div className="px-4 pb-3">
-            <ProfileCompletionIndicator
-              profile={realtimeProfile}
-              onOpenProfile={() => setProfileModalOpen(true)}
-              collapsed={isSidebarCollapsed}
-            />
-          </div>
-        )}
-        
-        {isSidebarCollapsed && realtimeProfile && (
-          <div className="px-2 pb-3">
-            <ProfileCompletionIndicator
-              profile={realtimeProfile}
-              onOpenProfile={() => setProfileModalOpen(true)}
-              collapsed={isSidebarCollapsed}
-            />
-          </div>
-        )}
-
-        {/* Online Users Indicator */}
         <OnlineUsersIndicator users={onlineUsers} collapsed={isSidebarCollapsed} />
       </div>
 
