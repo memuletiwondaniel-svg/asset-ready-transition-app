@@ -185,12 +185,79 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <OrshLogo className="h-12 w-auto" />
                   </div>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Sign in to your ORSH account
+                    {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
                   </p>
                 </div>
 
               <div className="space-y-3.5">
-                  {/* Email/Password Sign In */}
+                  {activeTab === 'reset' ? (
+                    /* Password Reset Form */
+                    resetEmailSent ? (
+                      <div className="text-center space-y-4 py-8">
+                        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                          <Mail className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-semibold">Check Your Email</h3>
+                        <p className="text-sm text-muted-foreground">
+                          We've sent password reset instructions to <strong>{resetEmail}</strong>
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setActiveTab('signin');
+                            setResetEmailSent(false);
+                            setResetEmail('');
+                          }}
+                          className="w-full"
+                        >
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back to Sign In
+                        </Button>
+                      </div>
+                    ) : (
+                      <form onSubmit={handlePasswordReset} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-email" className="text-foreground font-medium">
+                            Email Address
+                          </Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              id="reset-email"
+                              type="email"
+                              placeholder="your.email@bgc.com"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              className="pl-11 h-10 text-sm border-border bg-input"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground"
+                          disabled={loading}
+                        >
+                          {loading ? 'Sending...' : 'Send Reset Link'}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setActiveTab('signin');
+                            setResetEmail('');
+                          }}
+                          className="w-full"
+                        >
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back to Sign In
+                        </Button>
+                      </form>
+                    )
+                  ) : (
+                  /* Email/Password Sign In */
                   <form onSubmit={handleSignIn} className="space-y-3.5">
                     <div className="space-y-1.5">
                       <Label htmlFor="signin-email" className="text-foreground font-medium">Email</Label>
@@ -231,11 +298,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                           Remember me
                         </Label>
                       </div>
-                      {loginFailed && (
-                        <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
-                          Forgot password?
-                        </Button>
-                      )}
+                      <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
+                        Forgot password?
+                      </Button>
                     </div>
 
                     <Button type="submit" className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground
@@ -248,18 +313,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       <span className="relative z-10">{loading ? 'Signing in...' : 'Sign In'}</span>
                     </Button>
                   </form>
+                  )}
 
-                  {/* Divider */}
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      
-                    </div>
-                  </div>
+                  {activeTab === 'signin' && (
+                    <>
+                      {/* Divider */}
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          
+                        </div>
+                      </div>
 
-                  {/* SSO Buttons */}
+                      {/* SSO Buttons */}
                   <div className="space-y-3">
                     <Button onClick={() => handleSSO('azure')} disabled={loading} className="w-full h-11 text-sm font-semibold bg-muted/40 text-muted-foreground 
                                  hover:bg-gradient-to-r hover:from-bgc hover:to-bgc/90 hover:text-bgc-foreground
@@ -309,6 +377,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       Privacy Policy
                     </Button>
                   </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
