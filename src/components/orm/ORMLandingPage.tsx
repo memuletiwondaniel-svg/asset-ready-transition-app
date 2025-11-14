@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useORMPlans } from '@/hooks/useORMPlans';
 import { CreateORMModal } from './CreateORMModal';
 import { 
@@ -17,7 +19,10 @@ import {
   CheckCircle,
   Clock,
   ArrowRight,
-  FileText
+  FileText,
+  Search,
+  Filter,
+  X
 } from 'lucide-react';
 import { ORMNotificationCenter } from './ORMNotificationCenter';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
@@ -25,13 +30,22 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
+import { useProjects } from '@/hooks/useProjects';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 
 export const ORMLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [leadFilter, setLeadFilter] = useState<string>('all');
+  
   const { session } = useAuth();
   const { toast } = useToast();
   const { plans, isLoading } = useORMPlans();
+  const { projects } = useProjects();
+  const { data: users } = useProfileUsers();
   const { setBreadcrumbs } = useBreadcrumb();
 
   React.useEffect(() => {
@@ -84,7 +98,53 @@ export const ORMLandingPage: React.FC = () => {
     return 'outline';
   };
 
-  // Calculate statistics
+  // Filter and search plans
+  const filteredPlans = useMemo(() => {
+    if (!plans) return [];
+
+    return plans.filter(plan => {
+      // Search filter
+      const matchesSearch = !searchQuery || 
+        plan.project?.project_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${plan.project?.project_id_prefix}-${plan.project?.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || plan.status === statusFilter;
+
+      // Project filter
+      const matchesProject = projectFilter === 'all' || plan.project_id === projectFilter;
+
+      // Lead filter
+      const matchesLead = leadFilter === 'all' || plan.orm_lead_id === leadFilter;
+
+      return matchesSearch && matchesStatus && matchesProject && matchesLead;
+    });
+  }, [plans, searchQuery, statusFilter, projectFilter, leadFilter]);
+
+  // Get unique ORM leads from plans
+  const ormLeads = useMemo(() => {
+    if (!plans || !users) return [];
+    const leadIds = new Set(plans.map(p => p.orm_lead_id).filter(Boolean));
+    return Array.from(leadIds).map(leadId => {
+      const user = users.find(u => u.user_id === leadId);
+      return {
+        id: leadId,
+        name: user?.full_name || 'Unknown'
+      };
+    });
+  }, [plans, users]);
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setProjectFilter('all');
+    setLeadFilter('all');
+  };
+
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || projectFilter !== 'all' || leadFilter !== 'all';
+
+  // Calculate statistics based on filtered plans
   const stats = {
     total: plans?.length || 0,
     active: plans?.filter(p => p.status === 'ACTIVE').length || 0,
@@ -178,6 +238,93 @@ export const ORMLandingPage: React.FC = () => {
 
         <div className="flex-1 overflow-auto">
           <div className="p-6 space-y-6">
+            {/* Search and Filters */}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex flex-col gap-4">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by project name or ID..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 bg-background/50"
+                    />
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Filter className="w-4 h-4" />
+                      <span>Filters:</span>
+                    </div>
+
+                    {/* Status Filter */}
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[140px] bg-background/50">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                        <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Project Filter */}
+                    <Select value={projectFilter} onValueChange={setProjectFilter}>
+                      <SelectTrigger className="w-[200px] bg-background/50">
+                        <SelectValue placeholder="Project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Projects</SelectItem>
+                        {projects?.map(project => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.project_id_prefix}-{project.project_id_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* ORM Lead Filter */}
+                    <Select value={leadFilter} onValueChange={setLeadFilter}>
+                      <SelectTrigger className="w-[180px] bg-background/50">
+                        <SelectValue placeholder="ORM Lead" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Leads</SelectItem>
+                        {ormLeads.map(lead => (
+                          <SelectItem key={lead.id} value={lead.id}>
+                            {lead.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Clear Filters Button */}
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="w-4 h-4" />
+                        Clear Filters
+                      </Button>
+                    )}
+
+                    {/* Results Count */}
+                    <div className="ml-auto text-sm text-muted-foreground">
+                      Showing {filteredPlans?.length || 0} of {plans?.length || 0} plans
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Statistics Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="border-none shadow-lg bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-background hover:shadow-xl transition-all duration-300 group">
@@ -250,9 +397,9 @@ export const ORMLandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {plans && plans.length > 0 ? (
+              {filteredPlans && filteredPlans.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {plans.map((plan: any) => (
+                  {filteredPlans.map((plan: any) => (
                     <Card
                       key={plan.id}
                       className="border-none shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden bg-card"
@@ -320,7 +467,9 @@ export const ORMLandingPage: React.FC = () => {
                         <div className="flex items-center justify-between pt-2 border-t border-border">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <User className="w-4 h-4" />
-                            <span className="font-medium">{plan.orm_lead?.full_name || 'Unassigned'}</span>
+                            <span className="font-medium">
+                              {users?.find(u => u.user_id === plan.orm_lead_id)?.full_name || 'Unassigned'}
+                            </span>
                           </div>
                           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                         </div>
@@ -334,18 +483,35 @@ export const ORMLandingPage: React.FC = () => {
                     <div className="p-4 bg-primary/10 rounded-full mb-4">
                       <Wrench className="w-12 h-12 text-primary" />
                     </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-2">No ORM Plans Yet</h3>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      {hasActiveFilters ? 'No Plans Match Your Filters' : 'No ORM Plans Yet'}
+                    </h3>
                     <p className="text-muted-foreground mb-6 max-w-md">
-                      Get started by creating your first OR Maintenance plan to track CMMS and IMS development activities.
+                      {hasActiveFilters 
+                        ? 'Try adjusting your search or filters to find what you\'re looking for.' 
+                        : 'Get started by creating your first OR Maintenance plan to track CMMS and IMS development activities.'
+                      }
                     </p>
-                    <Button 
-                      onClick={() => setShowCreateModal(true)} 
-                      size="lg"
-                      className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Create Your First ORM Plan
-                    </Button>
+                    {hasActiveFilters ? (
+                      <Button 
+                        onClick={clearFilters} 
+                        size="lg"
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        <X className="w-5 h-5" />
+                        Clear All Filters
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => setShowCreateModal(true)} 
+                        size="lg"
+                        className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Create Your First ORM Plan
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               )}
