@@ -209,13 +209,14 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     }
   };
 
-  const uploadFilesToStorage = async (files: File[]): Promise<{ imageUrls: string[], fileUrls: string[], fileNames: string[] }> => {
+  const uploadFilesToStorage = async (files: File[]): Promise<{ imageUrls: string[], fileUrls: string[], fileNames: string[], documentTexts: string[] }> => {
     const imageUrls: string[] = [];
     const fileUrls: string[] = [];
     const fileNames: string[] = [];
+    const documentTexts: string[] = [];
     
     for (const file of files) {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `chat-attachments/${fileName}`;
 
@@ -235,12 +236,28 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       if (file.type.startsWith('image/')) {
         imageUrls.push(publicUrl);
       } else {
+        // Parse document to extract text
+        try {
+          const { data: parseResult, error: parseError } = await supabase.functions.invoke('parse-document', {
+            body: { filePath: filePath }
+          });
+
+          if (!parseError && parseResult?.text) {
+            documentTexts.push(`[Document: ${file.name}]\n${parseResult.text}\n`);
+          } else {
+            documentTexts.push(`[Document: ${file.name}] - Unable to extract text automatically. File available at: ${publicUrl}`);
+          }
+        } catch (parseError) {
+          console.error('Error parsing document:', parseError);
+          documentTexts.push(`[Document: ${file.name}] - Unable to extract text automatically. File available at: ${publicUrl}`);
+        }
+        
         fileUrls.push(publicUrl);
         fileNames.push(file.name);
       }
     }
 
-    return { imageUrls, fileUrls, fileNames };
+    return { imageUrls, fileUrls, fileNames, documentTexts };
   };
 
   const handleSend = async (messageText?: string) => {
@@ -256,6 +273,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     let imageUrls: string[] = [];
     let fileUrls: string[] = [];
     let fileNames: string[] = [];
+    let documentTexts: string[] = [];
 
     try {
       if (attachedFiles.length > 0) {
@@ -263,6 +281,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
         imageUrls = uploadResult.imageUrls;
         fileUrls = uploadResult.fileUrls;
         fileNames = uploadResult.fileNames;
+        documentTexts = uploadResult.documentTexts;
         setAttachedFiles([]);
       }
     } catch (error) {
@@ -273,9 +292,18 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
     setUploadingFiles(false);
     
+    // Combine text content with document texts
+    let finalContent = textToSend || '';
+    if (documentTexts.length > 0) {
+      finalContent = finalContent + (finalContent ? '\n\n' : '') + documentTexts.join('\n\n');
+    }
+    if (!finalContent) {
+      finalContent = 'Please analyze these files.';
+    }
+    
     const userMessage: Message = { 
       role: 'user', 
-      content: textToSend || 'Please analyze these files.',
+      content: finalContent,
       imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       fileUrls: fileUrls.length > 0 ? fileUrls : undefined,
       fileNames: fileNames.length > 0 ? fileNames : undefined
@@ -386,12 +414,18 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     if (files.length > 0) {
       const validFiles = files.filter(file => {
         const isImage = file.type.startsWith('image/');
-        const isDocument = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type);
+        const isDocument = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ].includes(file.type);
         return isImage || isDocument;
       });
       
       if (validFiles.length < files.length) {
-        toast.error('Some files were skipped. Only images and documents (PDF, DOC, DOCX) are supported.');
+        toast.error('Some files were skipped. Only images and documents (PDF, DOC, DOCX, XLS, XLSX) are supported.');
       }
       
       setAttachedFiles(prev => [...prev, ...validFiles]);
@@ -774,7 +808,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept="image/*,.pdf,.doc,.docx"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
