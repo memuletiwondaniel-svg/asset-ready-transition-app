@@ -26,6 +26,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -38,18 +39,46 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   const fetchProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error fetching user:', userError);
+        toast({
+          title: 'Authentication Error',
+          description: 'Unable to verify user identity. Please sign in again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (!user) {
+        toast({
+          title: 'Not Authenticated',
+          description: 'Please sign in to edit your profile.',
+          variant: 'destructive'
+        });
+        onOpenChange(false);
+        return;
+      }
 
       setUserId(user.id);
+      setUserEmail(user.email || '');
 
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('full_name, position, avatar_url')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load profile data. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
 
       if (profile) {
         setFullName(profile.full_name || '');
@@ -64,12 +93,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         }
         setAvatarUrl(avatarUrlFull);
         setAvatarPreview(avatarUrlFull);
+      } else {
+        // Profile doesn't exist yet, that's okay - user can create it
+        console.log('No profile found for user, will create on save');
       }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
+    } catch (error: any) {
+      console.error('Unexpected error fetching profile:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load profile data',
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive'
       });
     }
@@ -178,17 +210,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         }
       }
 
-      // Update profile data
+      // Update or insert profile data
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert([{
+          user_id: userId,
+          email: userEmail,
           full_name: fullName.trim(),
           position: position.trim() || null,
+          avatar_url: newAvatarUrl || null,
           updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
+        }], {
+          onConflict: 'user_id'
+        });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving profile:', error);
+        throw error;
+      }
 
       toast({
         title: 'Profile updated',
