@@ -146,24 +146,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                 <Button variant="ghost" size="icon" onClick={() => setProfileModalOpen(true)} className="w-full h-9" title="Edit Profile">
                   <User className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => onNavigate?.('user-management')} className="w-full h-9" title="Account Settings">
-                  <Settings className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setProfileModalOpen(true)} className="w-full h-9" title="Security">
-                  <Shield className="h-4 w-4" />
-                </Button>
               </> : <>
                 <Button variant="ghost" size="sm" onClick={() => setProfileModalOpen(true)} className="w-full justify-start h-9 pl-10">
                   <User className="mr-2 h-4 w-4" />
                   <span>Edit Profile</span>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => onNavigate?.('user-management')} className="w-full justify-start h-9 pl-10">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Account Settings</span>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setProfileModalOpen(true)} className="w-full justify-start h-9 pl-10">
-                  <Shield className="mr-2 h-4 w-4" />
-                  <span>Security</span>
                 </Button>
                 
                 {/* Profile Completion Indicator */}
