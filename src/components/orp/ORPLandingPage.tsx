@@ -6,15 +6,55 @@ import { Plus, BarChart3 } from 'lucide-react';
 import { ORPListWidget } from '@/components/orp/ORPListWidget';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ORPLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   useORPRealtime();
 
+  // Fetch current user profile
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    position: string;
+    avatar_url: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, position, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profile) {
+          let avatarUrl = profile.avatar_url;
+          if (avatarUrl && !avatarUrl.startsWith('http')) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('user-avatars')
+              .getPublicUrl(avatarUrl);
+            avatarUrl = publicUrl;
+          }
+          setUserProfile({
+            full_name: profile.full_name || 'User',
+            position: profile.position || 'Team Member',
+            avatar_url: avatarUrl || ''
+          });
+        }
+      }
+    };
+    fetchUserProfile();
+  }, []);
+
   return (
     <div className="h-screen flex w-full overflow-hidden">
       <OrshSidebar
+        userName={userProfile?.full_name || 'User'} 
+        userTitle={userProfile?.position || 'Team Member'} 
+        userAvatar={userProfile?.avatar_url || ''} 
         currentPage="operation-readiness"
         onNavigate={(section) => {
           if (section === 'home') {
