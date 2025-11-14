@@ -67,7 +67,7 @@ serve(async (req) => {
         functional_email: userData.functional_email,
         phone_number: userData.phone_number,
         company: userData.company as any,
-        job_title: userData.job_title,
+        position: userData.job_title, // Map job_title to position
         role: finalRole,
         ta2_discipline: (userData.ta2_discipline ?? null) as any,
         ta2_commission: (userData.ta2_commission ?? null) as any,
