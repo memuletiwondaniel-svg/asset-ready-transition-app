@@ -9,6 +9,7 @@ import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import PSSRSummaryPage from "@/components/PSSRSummaryPage";
 import LandingPage from "@/components/LandingPage";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
@@ -176,8 +177,8 @@ const Index = () => {
   }
 
   // Show welcome screen before authentication
-  return <AnimatedBackground className="min-h-screen">
-      <div className="min-h-screen relative overflow-hidden">
+  return <div className="min-h-screen relative overflow-hidden">
+      <BackgroundSlideshow showFunFacts={false} />
       {/* Modern Navigation Header */}
       <header className="relative z-20">
         <div className="max-w-7xl mx-auto px-8 py-0 -my-8">
@@ -381,7 +382,6 @@ const Index = () => {
         </main>}
 
       <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
-      </div>
-    </AnimatedBackground>;
+      </div>;
 };
 export default Index;
