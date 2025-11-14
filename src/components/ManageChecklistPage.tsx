@@ -228,6 +228,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   };
 
   if (showCreateForm) {
+    console.log('Rendering create form - showCreateForm:', showCreateForm);
     return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
@@ -457,7 +458,13 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
             <TabsContent value="checklists" className="space-y-8 animate-slide-up mt-0">
               <div className="flex items-center justify-between animate-smooth-in stagger-2">
-                <Button onClick={() => setShowCreateForm(true)} className="btn-premium shadow-md hover:shadow-lg transition-all duration-300">
+                <Button 
+                  onClick={() => {
+                    console.log('Create button clicked');
+                    setShowCreateForm(true);
+                  }} 
+                  className="btn-premium shadow-md hover:shadow-lg transition-all duration-300"
+                >
                   <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
                   {t.createNewChecklist}
                 </Button>
