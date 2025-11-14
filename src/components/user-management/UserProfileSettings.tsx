@@ -26,6 +26,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { toast } from 'sonner';
+import { usePositions } from '@/hooks/usePositions';
 
 interface UserProfileSettingsProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const { data: positions, isLoading: positionsLoading } = usePositions();
 
   const [profileData, setProfileData] = useState({
     full_name: '',
@@ -46,6 +48,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
     last_name: '',
     email: '',
     phone_number: '',
+    position: '',
     department: '',
     company: '',
     backup_email: ''
@@ -91,6 +94,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
         last_name: data.last_name || '',
         email: data.email || '',
         phone_number: data.phone_number || '',
+        position: data.position || '',
         department: data.department || '',
         company: data.company || '',
         backup_email: data.backup_email || ''
@@ -315,12 +319,37 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                       value={profileData.phone_number}
                       onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
                       className="pl-10"
+                      placeholder="e.g., +1 (555) 123-4567"
                     />
                   </div>
                 </div>
 
                 <Separator />
 
+                <div>
+                  <Label htmlFor="position">Position / Title</Label>
+                  <Select
+                    value={profileData.position}
+                    onValueChange={(value) => setProfileData({ ...profileData, position: value })}
+                    disabled={positionsLoading}
+                  >
+                    <SelectTrigger id="position">
+                      <SelectValue placeholder="Select your position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {positions?.map((pos) => (
+                        <SelectItem key={pos.id} value={pos.name}>
+                          {pos.name}
+                          {pos.department && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({pos.department})
+                            </span>
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div>
                   <Label htmlFor="department">Department</Label>
