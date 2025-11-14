@@ -799,7 +799,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                         {!welcomeBannerCollapsed}
                         <div>
                           <h2 className={`font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ${welcomeBannerCollapsed ? 'text-lg' : 'text-2xl'} transition-all duration-300`}>
-                            {getGreeting()}, {userProfile?.full_name || 'User'}!
+                            {getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!
                           </h2>
                           {!welcomeBannerCollapsed && <p className="text-sm text-muted-foreground mt-1">
                               How can ORSH AI assist you today?

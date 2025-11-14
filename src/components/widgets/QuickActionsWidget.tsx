@@ -39,14 +39,14 @@ export const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ onAction
 
   return (
     <div className={className}>
-      <div className="space-y-3">
+      <div className="space-y-3 group/list">
         {quickActions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={action.id}
               onClick={() => onActionClick?.(action.id)}
-              className={`relative w-full p-4 rounded-xl backdrop-blur-sm border border-border/40 bg-gradient-to-br ${action.gradient} hover:border-primary/30 transition-all duration-300 group overflow-hidden animate-fade-in text-left shadow-sm hover:shadow-md`}
+              className={`relative w-full p-4 rounded-xl backdrop-blur-sm border border-border/40 bg-gradient-to-br ${action.gradient} hover:border-primary/30 transition-all duration-300 group overflow-hidden animate-fade-in text-left shadow-sm hover:shadow-lg hover:scale-[1.02] group-hover/list:opacity-50 hover:!opacity-100`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
               {/* Shine effect on hover */}
