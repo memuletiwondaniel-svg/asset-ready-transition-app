@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -13,6 +13,11 @@ import { useTheme } from '@/components/ui/theme-provider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
+import { useRealtimeProfile } from '@/hooks/useRealtimeProfile';
+import { useUserPresence } from '@/hooks/useUserPresence';
+import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
+import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NavigationItem {
   label: string;
@@ -55,6 +60,27 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   showSearchHistory = false,
   onToggleSearchHistory
 }) => {
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  
+  // Fetch current user ID
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id);
+    };
+    fetchUserId();
+  }, []);
+
+  // Real-time profile updates
+  const realtimeProfile = useRealtimeProfile(currentUserId);
+  
+  // User presence tracking
+  const onlineUsers = useUserPresence(currentUserId);
+  
+  // Use real-time profile data if available, otherwise use props
+  const displayName = realtimeProfile?.full_name || userName;
+  const displayTitle = realtimeProfile?.position || userTitle;
+  const displayAvatar = realtimeProfile?.avatar_url || userAvatar;
   
   // Navigation items
   const navigationItems: NavigationItem[] = [
@@ -328,6 +354,33 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         </div>
       </ScrollArea>
 
+      {/* Profile Completion & Online Users */}
+      <div className="flex-shrink-0">
+        {/* Profile Completion Indicator */}
+        {!isSidebarCollapsed && (
+          <div className="px-4 pb-3">
+            <ProfileCompletionIndicator
+              profile={realtimeProfile}
+              onOpenProfile={() => setProfileModalOpen(true)}
+              collapsed={isSidebarCollapsed}
+            />
+          </div>
+        )}
+        
+        {isSidebarCollapsed && realtimeProfile && (
+          <div className="px-2 pb-3">
+            <ProfileCompletionIndicator
+              profile={realtimeProfile}
+              onOpenProfile={() => setProfileModalOpen(true)}
+              collapsed={isSidebarCollapsed}
+            />
+          </div>
+        )}
+
+        {/* Online Users Indicator */}
+        <OnlineUsersIndicator users={onlineUsers} collapsed={isSidebarCollapsed} />
+      </div>
+
       {/* Footer Actions */}
       <div className="p-4 border-t border-border/40 space-y-2 flex-shrink-0">
         {/* Logout Row */}
@@ -352,10 +405,17 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       </div>
 
       {/* Profile Editor Modal */}
-      <UserProfileModal open={profileModalOpen} onOpenChange={setProfileModalOpen} onProfileUpdated={() => {
-      // Force parent component to refresh profile data
-      window.location.reload();
-    }} />
+      <UserProfileModal 
+        open={profileModalOpen} 
+        onOpenChange={setProfileModalOpen} 
+        onProfileUpdated={() => {
+          // Real-time updates will handle this automatically
+          toast({
+            title: "Profile updated",
+            description: "Your profile has been updated successfully.",
+          });
+        }} 
+      />
 
       {/* ORSH Chat Dialog */}
       <ORSHChatDialog 

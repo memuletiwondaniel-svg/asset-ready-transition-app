@@ -939,7 +939,7 @@ export type Database = {
       orm_plans: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           estimated_completion_date: string | null
           id: string
           is_active: boolean
@@ -952,7 +952,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           estimated_completion_date?: string | null
           id?: string
           is_active?: boolean
@@ -965,7 +965,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           estimated_completion_date?: string | null
           id?: string
           is_active?: boolean
@@ -2379,7 +2379,9 @@ export type Database = {
           station: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           temporary_password: string | null
+          two_factor_backup_codes: string[] | null
           two_factor_enabled: boolean | null
+          two_factor_secret: string | null
           updated_at: string
           user_id: string
         }
@@ -2425,7 +2427,9 @@ export type Database = {
           station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           temporary_password?: string | null
+          two_factor_backup_codes?: string[] | null
           two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2471,7 +2475,9 @@ export type Database = {
           station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           temporary_password?: string | null
+          two_factor_backup_codes?: string[] | null
           two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3529,6 +3535,16 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      check_orm_plan_access: {
+        Args: { plan_id: string; user_id: string }
+        Returns: boolean
+      }
+      cleanup_expired_password_reset_tokens: { Args: never; Returns: number }
+      create_password_reset_token: {
+        Args: { target_user_id: string }
+        Returns: string
+      }
+      delete_user_account: { Args: { target_user_id: string }; Returns: Json }
       get_active_roles: {
         Args: never
         Returns: {
@@ -3594,6 +3610,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_team_member_info: {
+        Args: { member_user_id: string }
+        Returns: {
+          company: Database["public"]["Enums"]["user_company"]
+          department: string
+          full_name: string
+          user_id: string
+          user_position: string
+        }[]
+      }
       get_unique_topics: {
         Args: never
         Returns: {
@@ -3627,6 +3653,16 @@ export type Database = {
         Args: { item_unique_id: string; new_position: number }
         Returns: undefined
       }
+      search_team_members: {
+        Args: { search_term?: string }
+        Returns: {
+          company: Database["public"]["Enums"]["user_company"]
+          department: string
+          full_name: string
+          user_id: string
+          user_position: string
+        }[]
+      }
       soft_delete_checklist_item: {
         Args: { p_unique_id: string }
         Returns: undefined
@@ -3655,6 +3691,14 @@ export type Database = {
         Returns: boolean
       }
       user_is_admin: { Args: { user_uuid: string }; Returns: boolean }
+      validate_password_reset_token: {
+        Args: { reset_token: string }
+        Returns: {
+          is_valid: boolean
+          token_id: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       orm_deliverable_type:
