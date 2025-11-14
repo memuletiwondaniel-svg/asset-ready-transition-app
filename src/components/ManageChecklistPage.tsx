@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, MoreVertical, Trash2, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -18,7 +18,6 @@ import { useChecklistCategories } from '@/hooks/useChecklistCategories';
 import { useChecklistTopics } from '@/hooks/useChecklistTopics';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
@@ -228,7 +227,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   };
 
   if (showCreateForm) {
-    console.log('Rendering create form - showCreateForm:', showCreateForm);
     return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
@@ -459,10 +457,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
             <TabsContent value="checklists" className="space-y-8 animate-slide-up mt-0">
               <div className="flex items-center justify-between animate-smooth-in stagger-2">
                 <Button 
-                  onClick={() => {
-                    console.log('Create button clicked');
-                    setShowCreateForm(true);
-                  }} 
+                  onClick={() => setShowCreateForm(true)} 
                   className="btn-premium shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
@@ -496,49 +491,37 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                 </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredAndSortedChecklists.map((checklist, index) => {
                 const colorVariants = [
-                  'from-blue-500/10 via-blue-500/5 to-transparent border-blue-500/15',
-                  'from-violet-500/10 via-violet-500/5 to-transparent border-violet-500/15',
-                  'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/15',
-                  'from-amber-500/10 via-amber-500/5 to-transparent border-amber-500/15',
-                  'from-rose-500/10 via-rose-500/5 to-transparent border-rose-500/15',
-                  'from-cyan-500/10 via-cyan-500/5 to-transparent border-cyan-500/15'
+                  'from-blue-500/10 via-blue-500/5 to-transparent border-blue-500/15 hover:border-blue-500/30',
+                  'from-violet-500/10 via-violet-500/5 to-transparent border-violet-500/15 hover:border-violet-500/30',
+                  'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/15 hover:border-emerald-500/30',
+                  'from-amber-500/10 via-amber-500/5 to-transparent border-amber-500/15 hover:border-amber-500/30',
+                  'from-rose-500/10 via-rose-500/5 to-transparent border-rose-500/15 hover:border-rose-500/30',
+                  'from-cyan-500/10 via-cyan-500/5 to-transparent border-cyan-500/15 hover:border-cyan-500/30'
                 ];
                 const colorClass = colorVariants[index % colorVariants.length];
-                return <Card key={checklist.id} className={`group cursor-pointer card-lift border bg-gradient-to-br backdrop-blur overflow-hidden animate-smooth-in ${colorClass}`} style={{
-                  animationDelay: `${index * 50}ms`
-                }} onClick={() => handleChecklistClick(checklist)}>
-                        {/* Gradient Background Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                return <Card 
+                  key={checklist.id} 
+                  className={`group cursor-pointer relative overflow-hidden transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br backdrop-blur animate-smooth-in ${colorClass}`} 
+                  style={{
+                    animationDelay: `${index * 50}ms`
+                  }} 
+                  onClick={() => handleChecklistClick(checklist)}
+                >
+                        {/* Animated Gradient Background Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        
+                        {/* Shimmer Effect on Hover */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                        </div>
                       
                       <CardHeader className="relative">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors duration-300">{checklist.name}</CardTitle>
-                            
+                            <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors duration-300">
+                              {checklist.name}
+                            </CardTitle>
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-accent transition-all duration-300 hover:scale-110 active:scale-95">
-                                <MoreVertical className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="animate-scale-up">
-                              <DropdownMenuItem onClick={e => {
-                            e.stopPropagation();
-                            handleEditChecklist(checklist);
-                          }} className="transition-all duration-200 hover:bg-primary/10">
-                                <Edit3 className="h-4 w-4 mr-2 transition-transform duration-300 hover:rotate-12" />
-                                {t.edit}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteChecklist(checklist);
-                          }} className="text-destructive transition-all duration-200 hover:bg-destructive/10">
-                                <Trash2 className="h-4 w-4 mr-2 transition-transform duration-300 hover:rotate-12" />
-                                {t.delete}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
                       </CardHeader>
                       <CardContent className="relative">
