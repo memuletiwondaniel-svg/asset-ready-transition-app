@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import ManageChecklistPage from "./ManageChecklistPage";
 import ProjectManagementPage from "./project/ProjectManagementPage";
@@ -18,6 +19,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { OrshSidebar } from './OrshSidebar';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggle } from './admin/ThemeToggle';
+import LanguageSelector from './admin/LanguageSelector';
+import UserProfileDropdown from './admin/UserProfileDropdown';
+import { NotificationCenter } from './NotificationCenter';
 interface AdminToolsPageProps {
   onBack: () => void;
 }
@@ -421,7 +426,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>
     );
   }
-  return <div className="min-h-screen flex w-full">
+  return (
+    <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20">
       <OrshSidebar 
         userName="Daniel"
         userTitle="ORA Engr."
@@ -429,74 +435,74 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         currentPage="admin-tools"
         onNavigate={handleSidebarNavigate}
       />
-      <div className="flex-1 overflow-auto">
-        <AnimatedBackground>
-      <AdminHeader selectedLanguage={language} onLanguageChange={setLanguage} translations={t}>
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
-                <Home className="h-4 w-4" />
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{t.administration}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </AdminHeader>
-
-      {/* Subtle Divider */}
-      <div className="border-t border-border/50" />
-
-      <div className="container pt-8 pb-8 max-w-7xl mx-auto">
-        {/* Header Section with Search */}
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <h1 className="text-2xl font-medium text-foreground/80 mb-2">
-              {t.administration}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {t.adminToolsSubtitle}
-            </p>
-          </div>
-          
-          {/* Search Bar - Compact Design */}
-          <div className="relative w-96">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg blur-xl" />
-            <div className="relative bg-background border-2 border-border/50 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search admin tools..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 h-10 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+          <BreadcrumbNavigation currentPageLabel="Administration" />
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl">
+                <Settings className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                  {t.administration}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {t.adminToolsSubtitle}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotificationCenter />
+              <LanguageSelector 
+                selectedLanguage={language}
+                onLanguageChange={setLanguage}
               />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted"
-                  onClick={() => setSearchQuery('')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
+              <UserProfileDropdown translations={t} />
             </div>
           </div>
         </div>
-        
-        {searchQuery && (
-          <p className="text-sm text-muted-foreground mb-6 -mt-6">
-            Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
-          </p>
-        )}
 
-        {/* Favorites Section */}
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="container pt-8 pb-8 max-w-7xl mx-auto">
+            {/* Search Bar Section */}
+            <div className="flex items-center justify-end mb-10">
+            {/* Search Bar - Compact Design */}
+            <div className="relative w-96">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg blur-xl" />
+              <div className="relative bg-background border-2 border-border/50 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search admin tools..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10 h-10 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mb-6">
+              Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
+            </p>
+          )}
+
+          {/* Favorites Section */}
         <TooltipProvider>
           {favoriteToolsList.length > 0 && (
             <div className="mb-12">
@@ -673,13 +679,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
             <Button variant="outline" onClick={() => setSearchQuery('')}>
               Clear search
             </Button>
-          </div>
-        )}
-      </TooltipProvider>
+            </div>
+          )}
+        </TooltipProvider>
+        </div>
       </div>
-        </AnimatedBackground>
-      </div>
-    </div>;
+    </div>
+    </div>
+  );
 };
 
 const AdminToolsPage: React.FC<AdminToolsPageProps> = (props) => {
