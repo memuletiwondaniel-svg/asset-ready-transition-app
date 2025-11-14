@@ -9,7 +9,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, AlertTriangle, FileText, Users, Shield, Heart, ClipboardCheck, Search, Filter, Plus, X, User, Home } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  CheckCircle, 
+  FileText, 
+  ClipboardCheck, 
+  Search, 
+  Filter, 
+  Plus, 
+  User,
+  Sparkles,
+  Target,
+  Zap,
+  Home,
+  X,
+  AlertTriangle
+} from 'lucide-react';
 import { useChecklistItems, ChecklistItem as DBChecklistItem, useChecklistCategories as useChecklistCategoriesFromItems, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
 import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 import CreateChecklistItemForm from './CreateChecklistItemForm';
