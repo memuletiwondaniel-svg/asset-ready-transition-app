@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Camera, KeyRound, ShieldCheck, ShieldOff } from 'lucide-react';
@@ -12,6 +13,7 @@ import { ChangePasswordModal } from './ChangePasswordModal';
 import { TwoFactorSetupModal } from './TwoFactorSetupModal';
 import { DisableTwoFactorModal } from './DisableTwoFactorModal';
 import { Badge } from '@/components/ui/badge';
+import { usePositions } from '@/hooks/usePositions';
 
 interface UserProfileModalProps {
   open: boolean;
@@ -28,6 +30,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [uploading, setUploading] = useState(false);
   const [fullName, setFullName] = useState('');
   const [position, setPosition] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { data: positions, isLoading: positionsLoading } = usePositions();
 
   // Fetch current profile data
   useEffect(() => {
@@ -78,7 +82,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name, position, avatar_url, two_factor_enabled')
+        .select('full_name, position, phone_number, avatar_url, two_factor_enabled')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -95,6 +99,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       if (profile) {
         setFullName(profile.full_name || '');
         setPosition(profile.position || '');
+        setPhoneNumber(profile.phone_number || '');
         setTwoFactorEnabled(profile.two_factor_enabled || false);
         
         let avatarUrlFull = profile.avatar_url || '';
@@ -256,6 +261,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           email: userEmail,
           full_name: fullName.trim(),
           position: position.trim() || null,
+          phone_number: phoneNumber.trim() || null,
           avatar_url: newAvatarUrl || null,
           updated_at: new Date().toISOString()
         }], {
@@ -351,12 +357,39 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
           {/* Position/Title */}
           <div className="space-y-2">
-            <Label htmlFor="position">Position / Title</Label>
+            <Label htmlFor="position">Position / Title *</Label>
+            <Select 
+              value={position} 
+              onValueChange={setPosition}
+              disabled={loading || positionsLoading}
+            >
+              <SelectTrigger id="position">
+                <SelectValue placeholder="Select your position" />
+              </SelectTrigger>
+              <SelectContent>
+                {positions?.map((pos) => (
+                  <SelectItem key={pos.id} value={pos.name}>
+                    {pos.name}
+                    {pos.department && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({pos.department})
+                      </span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Phone Number</Label>
             <Input
-              id="position"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              placeholder="e.g., ORA Engr., Project Manager"
+              id="phoneNumber"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="e.g., +1 (555) 123-4567"
               disabled={loading}
             />
           </div>
