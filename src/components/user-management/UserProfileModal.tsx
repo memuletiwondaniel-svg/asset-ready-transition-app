@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Camera } from 'lucide-react';
+import { Loader2, Camera, KeyRound } from 'lucide-react';
 import { AvatarCropDialog } from './AvatarCropDialog';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 interface UserProfileModalProps {
   open: boolean;
@@ -31,6 +32,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -351,6 +353,20 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               disabled={loading}
             />
           </div>
+
+          {/* Change Password Button */}
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowChangePasswordModal(true)}
+              className="w-full"
+              disabled={loading}
+            >
+              <KeyRound className="mr-2 h-4 w-4" />
+              Change Password
+            </Button>
+          </div>
         </div>
 
         <DialogFooter>
@@ -377,6 +393,12 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         imageSrc={selectedImageSrc}
         onCropComplete={handleCropComplete}
         onCancel={handleCropCancel}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        open={showChangePasswordModal}
+        onOpenChange={setShowChangePasswordModal}
       />
     </Dialog>
   );
