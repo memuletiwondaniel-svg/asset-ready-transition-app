@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Camera } from 'lucide-react';
+import { AvatarCropDialog } from './AvatarCropDialog';
 
 interface UserProfileModalProps {
   open: boolean;
@@ -27,6 +28,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [avatarPreview, setAvatarPreview] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
+  const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -132,22 +136,46 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       return;
     }
 
-    // Create preview
+    // Create preview and open crop dialog
     const reader = new FileReader();
     reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
+      setSelectedImageSrc(reader.result as string);
+      setShowCropDialog(true);
     };
     reader.readAsDataURL(file);
   };
 
+  const handleCropComplete = (croppedBlob: Blob) => {
+    setCroppedImageBlob(croppedBlob);
+    
+    // Create preview from cropped blob
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(croppedBlob);
+    
+    setShowCropDialog(false);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropDialog(false);
+    setSelectedImageSrc('');
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const uploadAvatar = async (): Promise<string | null> => {
-    const file = fileInputRef.current?.files?.[0];
-    if (!file || !userId) return null;
+    // Use cropped image if available, otherwise fall back to original file
+    const fileToUpload = croppedImageBlob || fileInputRef.current?.files?.[0];
+    if (!fileToUpload || !userId) return null;
 
     try {
       setUploading(true);
 
-      // Convert file to base64
+      // Convert file/blob to base64
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -156,17 +184,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           resolve(base64Data);
         };
         reader.onerror = reject;
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(fileToUpload);
       });
 
-      const fileExt = file.name.split('.').pop();
+      // Determine file extension
+      const fileExt = croppedImageBlob ? 'jpg' : (fileToUpload as File).name.split('.').pop();
 
       // Call the edge function to upload avatar
       const { data, error } = await supabase.functions.invoke('upload-user-avatar', {
         body: {
           userId,
           fileExt,
-          contentType: file.type,
+          contentType: croppedImageBlob ? 'image/jpeg' : (fileToUpload as File).type,
           base64
         }
       });
@@ -201,9 +230,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     try {
       setLoading(true);
 
-      // Upload avatar if a new one was selected
+      // Upload avatar if a new one was selected (check for cropped image or file input)
       let newAvatarUrl = avatarUrl;
-      if (fileInputRef.current?.files?.[0]) {
+      if (croppedImageBlob || fileInputRef.current?.files?.[0]) {
         const uploadedUrl = await uploadAvatar();
         if (uploadedUrl) {
           newAvatarUrl = uploadedUrl;
@@ -234,6 +263,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         description: 'Your profile has been updated successfully'
       });
 
+      // Reset cropped image state
+      setCroppedImageBlob(null);
+      
       onProfileUpdated?.();
       onOpenChange(false);
     } catch (error) {
@@ -338,6 +370,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Avatar Crop Dialog */}
+      <AvatarCropDialog
+        open={showCropDialog}
+        imageSrc={selectedImageSrc}
+        onCropComplete={handleCropComplete}
+        onCancel={handleCropCancel}
+      />
     </Dialog>
   );
 };
