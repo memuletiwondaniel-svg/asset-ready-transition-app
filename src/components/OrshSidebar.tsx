@@ -61,8 +61,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
     { label: 'OR Plans', icon: ClipboardCheck, path: '/operation-readiness', section: 'operation-readiness' },
     { label: 'OR Maintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
     { label: 'P2A Handover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },
-    { label: 'User Management', icon: Users, path: '/user-management', section: 'user-management' },
-    { label: 'Admin Tools', icon: Settings, path: '/admin-tools', section: 'admin-tools' },
     { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },
   ];
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -290,6 +288,21 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowOnboarding} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Take Tour">
             <Clock className="w-4 h-4" />
             {!isSidebarCollapsed && <span className="ml-2">Take Tour</span>}
+          </Button>
+
+          {/* Admin Tools Row */}
+          <Button 
+            variant="outline" 
+            size={isSidebarCollapsed ? "icon" : "sm"} 
+            onClick={() => onNavigate?.('admin-tools')} 
+            className={cn(
+              `w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`,
+              currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+            )} 
+            title="Admin Tools"
+          >
+            <Settings className="w-4 h-4" />
+            {!isSidebarCollapsed && <span className="ml-2">Admin Tools</span>}
           </Button>
         </div>
 
