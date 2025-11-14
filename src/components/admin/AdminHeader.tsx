@@ -1,42 +1,52 @@
 import React from 'react';
 import { NotificationCenter } from '@/components/NotificationCenter';
-import LanguageSelector from './LanguageSelector';
-import UserProfileDropdown from './UserProfileDropdown';
-import { ThemeToggle } from './ThemeToggle';
-import OrshLogo from '@/components/ui/OrshLogo';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 
 interface AdminHeaderProps {
-  selectedLanguage: string;
-  onLanguageChange: (language: string) => void;
-  translations: any;
+  icon?: React.ReactNode;
+  title: string;
+  description?: string;
   children?: React.ReactNode;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
-  selectedLanguage,
-  onLanguageChange,
-  translations,
+  icon,
+  title,
+  description,
   children
 }) => {
   return (
-    <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-      <div className="container flex h-20 items-center">
-        {/* Left side - Navigation content (back button, etc.) */}
-        <div className="flex items-center space-x-4 flex-1">
-          {children}
+    <div className="sticky top-0 z-50 bg-card border-b border-border">
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left side - Breadcrumb Navigation */}
+          <div className="flex items-center gap-4 flex-1">
+            <BreadcrumbNavigation currentPageLabel={title} />
+          </div>
+          
+          {/* Right side - Notification Center */}
+          <div className="flex items-center space-x-3">
+            <NotificationCenter />
+          </div>
         </div>
         
-        {/* Right side - ORSH Logo, Theme toggle, Language selector and User profile */}
-        <div className="flex items-center space-x-3">
-          <OrshLogo size="medium" />
-          <ThemeToggle />
-          <NotificationCenter />
-          <LanguageSelector 
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={onLanguageChange}
-          />
-          <UserProfileDropdown translations={translations} />
-        </div>
+        {/* Page Title Section */}
+        {(icon || title || description) && (
+          <div className="flex items-center gap-3 mt-4">
+            {icon && (
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
+                {icon}
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+              {description && (
+                <p className="text-sm text-muted-foreground mt-1">{description}</p>
+              )}
+            </div>
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );

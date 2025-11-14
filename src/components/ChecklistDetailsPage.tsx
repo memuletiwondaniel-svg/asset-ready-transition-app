@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight, FolderInput, X, Maximize2, Minimize2, Check, XCircle } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Calendar, User, Activity, FileText, Edit, Trash2, Plus, Settings, Eye, Home, Grid3x3, List, ChevronLeft, ChevronRight, FolderInput, X, Maximize2, Minimize2, Check, XCircle, ClipboardList } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -310,28 +310,11 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
       <AnimatedBackground>
         <div className="relative z-10">
           {/* Admin Header with Breadcrumb */}
-          <AdminHeader selectedLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} translations={t}>
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
-                    <Home className="h-4 w-4" />
-                    Dashboard
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink onClick={onBack} className="cursor-pointer">
-                    Checklists
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{checklist.name}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </AdminHeader>
+          <AdminHeader 
+            icon={<ClipboardList className="h-5 w-5" />}
+            title={checklist.name}
+            description="Manage checklist items and track progress"
+          />
 
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Checklist Overview - Compact Stats */}

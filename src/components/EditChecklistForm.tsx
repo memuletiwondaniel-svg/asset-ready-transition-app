@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Search, Edit3, ClipboardList, Home } from 'lucide-react';
 import { useChecklistItems, ChecklistItem } from '@/hooks/useChecklistItems';
 import { useCustomReasons, useUpdateChecklist, Checklist } from '@/hooks/useChecklists';
 import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
@@ -192,24 +192,10 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
     <div className="min-h-screen bg-background">
       {/* Admin Header with breadcrumb */}
       <AdminHeader
-        selectedLanguage={language}
-        onLanguageChange={setLanguage}
-        translations={translations}
-      >
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer">
-                Checklists
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Edit Checklist</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </AdminHeader>
+        icon={<Edit3 className="h-5 w-5" />}
+        title="Edit Checklist"
+        description="Update checklist details and manage items"
+      />
 
       <div className="pb-8">
         {/* Navigation Bar */}

@@ -102,7 +102,11 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
-      <AdminHeader selectedLanguage={selectedLanguage} onLanguageChange={() => {}} translations={t}>
+      <AdminHeader 
+        icon={<Activity className="h-5 w-5" />}
+        title="Activity Log"
+        description="View and monitor all system activities"
+      >
         <Button variant="ghost" onClick={onBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Admin Tools
