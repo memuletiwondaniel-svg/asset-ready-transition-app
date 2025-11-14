@@ -16,7 +16,6 @@ export const useORMPlans = () => {
           project:projects(project_title, project_id_prefix, project_id_number),
           deliverables:orm_deliverables(*)
         `)
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
