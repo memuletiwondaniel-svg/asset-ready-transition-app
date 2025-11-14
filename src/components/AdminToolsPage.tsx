@@ -30,6 +30,29 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const breadcrumbs = buildBreadcrumbsFromPath();
   const navigate = useNavigate();
   
+  // Fetch current user profile
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    position: string;
+    avatar_url: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles')
+          .select('full_name, position, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+        if (profile) {
+          setUserProfile(profile);
+        }
+      }
+    };
+    fetchUserProfile();
+  }, []);
+  
   const handleSidebarNavigate = (section: string) => {
     // Map sidebar sections to internal views or routes
     switch (section) {
@@ -366,13 +389,15 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   if (activeView === 'projects') {
     return (
       <div className="min-h-screen flex w-full animate-fade-in">
-        <OrshSidebar 
-          userName="Daniel"
-          userTitle="ORA Engr."
-          language="en"
-          currentPage="admin-tools"
-          onNavigate={handleSidebarNavigate}
-        />
+      <OrshSidebar 
+        userName={userProfile?.full_name || 'User'}
+        userTitle={userProfile?.position || 'Team Member'}
+        userAvatar={userProfile?.avatar_url || ''}
+        language={language}
+        onLanguageChange={setLanguage}
+        currentPage="admin-tools"
+        onNavigate={handleSidebarNavigate}
+      />
         <div className="flex-1 overflow-auto">
           <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
