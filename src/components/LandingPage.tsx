@@ -781,7 +781,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       <div className="h-screen flex">
         {/* ORSH Sidebar Component */}
-        <OrshSidebar userName={userProfile?.full_name || 'User'} userTitle={userProfile?.position || 'Team Member'} userAvatar={userProfile?.avatar_url || ''} language={language} onLanguageChange={setLanguage} onNavigate={onNavigate} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} showWidgets={showWidgetManagement} currentPage="home" searchHistory={searchHistory} onSearchHistoryClick={item => {
+        <OrshSidebar userName={userProfile?.full_name || 'User'} userTitle={userProfile?.position || 'Team Member'} userAvatar={userProfile?.avatar_url || ''} language={language} onLanguageChange={setLanguage} onNavigate={onNavigate} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} onLogout={onBack} showWidgets={showWidgetManagement} currentPage="home" searchHistory={searchHistory} onSearchHistoryClick={item => {
         setUserInput(item);
         setShowHistory(false);
       }} showSearchHistory={showHistory} onToggleSearchHistory={() => setShowHistory(!showHistory)} />

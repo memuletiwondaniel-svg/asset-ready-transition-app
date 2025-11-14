@@ -659,7 +659,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
         // Navigate to other sections via router
         navigate(`/${section}`);
       }
-    }} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} showWidgets={showWidgetManagement} />
+    }} onLogout={onBack} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} showWidgets={showWidgetManagement} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
 

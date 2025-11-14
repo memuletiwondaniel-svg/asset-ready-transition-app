@@ -30,7 +30,13 @@ export const P2ADetailsPage: React.FC = () => {
   if (loadingHandover) {
     return (
       <div className="flex h-screen">
-        <OrshSidebar currentPage="p2a-handover" />
+        <OrshSidebar currentPage="p2a-handover" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 p-6">
           <Skeleton className="h-64 w-full" />
         </div>
@@ -41,7 +47,13 @@ export const P2ADetailsPage: React.FC = () => {
   if (!handover) {
     return (
       <div className="flex h-screen">
-        <OrshSidebar currentPage="p2a-handover" />
+        <OrshSidebar currentPage="p2a-handover" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 p-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold">Handover not found</h2>
@@ -89,6 +101,7 @@ export const P2ADetailsPage: React.FC = () => {
           if (section === 'home') navigate('/');
           else if (section === 'p2a-handover') navigate('/p2a-handover');
         }}
+        onLogout={() => navigate('/')}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">

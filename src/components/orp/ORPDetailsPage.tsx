@@ -30,7 +30,13 @@ export const ORPDetailsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="operation-readiness" onNavigate={() => {}} />
+        <OrshSidebar currentPage="operation-readiness" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 p-6">
           <Skeleton className="h-8 w-64 mb-4" />
           <Skeleton className="h-96 w-full" />
@@ -42,7 +48,13 @@ export const ORPDetailsPage: React.FC = () => {
   if (!plan) {
     return (
       <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="operation-readiness" onNavigate={() => {}} />
+        <OrshSidebar currentPage="operation-readiness" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">ORP not found</p>
         </div>
@@ -72,6 +84,7 @@ export const ORPDetailsPage: React.FC = () => {
             navigate(`/${section}`);
           }
         }}
+        onLogout={() => navigate('/')}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">

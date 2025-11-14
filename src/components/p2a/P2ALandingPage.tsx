@@ -63,6 +63,7 @@ export const P2ALandingPage: React.FC = () => {
           else if (section === 'admin-tools') navigate('/admin-tools');
           else if (section === 'projects') navigate('/projects');
         }}
+        onLogout={() => navigate('/')}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
