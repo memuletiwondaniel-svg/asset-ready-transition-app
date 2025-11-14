@@ -121,12 +121,25 @@ serve(async (req) => {
 
     console.log('Profile updated successfully:', data);
 
-    // Sync first_name, last_name, and full_name to auth.users.raw_user_meta_data
-    if (profileData.first_name || profileData.last_name || profileData.full_name) {
+    // Sync important fields to auth.users.raw_user_meta_data
+    const fieldsToSync = ['first_name', 'last_name', 'full_name', 'avatar_url', 'phone_number', 'primary_phone', 'position'];
+    const hasFieldsToSync = fieldsToSync.some(field => profileData[field] !== undefined);
+    
+    if (hasFieldsToSync) {
       const metadataUpdate: any = {};
+      
       if (profileData.first_name !== undefined) metadataUpdate.first_name = profileData.first_name;
       if (profileData.last_name !== undefined) metadataUpdate.last_name = profileData.last_name;
       if (profileData.full_name !== undefined) metadataUpdate.full_name = profileData.full_name;
+      if (profileData.avatar_url !== undefined) metadataUpdate.avatar_url = profileData.avatar_url;
+      if (profileData.position !== undefined) metadataUpdate.position = profileData.position;
+      
+      // Use primary_phone if available, otherwise phone_number
+      if (profileData.primary_phone !== undefined) {
+        metadataUpdate.phone_number = profileData.primary_phone;
+      } else if (profileData.phone_number !== undefined) {
+        metadataUpdate.phone_number = profileData.phone_number;
+      }
 
       const { error: authUpdateErr } = await admin.auth.admin.updateUserById(userId, {
         user_metadata: metadataUpdate
@@ -136,7 +149,7 @@ serve(async (req) => {
         console.error('update-user-profile: auth metadata update error', authUpdateErr);
         // Don't fail the request if auth update fails, just log it
       } else {
-        console.log('Auth metadata updated successfully with names');
+        console.log('Auth metadata updated successfully:', metadataUpdate);
       }
     }
 
