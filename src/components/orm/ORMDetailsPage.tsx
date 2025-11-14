@@ -38,7 +38,13 @@ export const ORMDetailsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="or-maintenance" onNavigate={() => {}} />
+        <OrshSidebar currentPage="or-maintenance" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 p-6">
           <Skeleton className="h-8 w-64 mb-4" />
           <Skeleton className="h-96 w-full" />
@@ -50,7 +56,13 @@ export const ORMDetailsPage: React.FC = () => {
   if (!plan) {
     return (
       <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="or-maintenance" onNavigate={() => {}} />
+        <OrshSidebar currentPage="or-maintenance" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">ORM plan not found</p>
         </div>
@@ -71,6 +83,7 @@ export const ORMDetailsPage: React.FC = () => {
             navigate(`/${section}`);
           }
         }}
+        onLogout={() => navigate('/')}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">

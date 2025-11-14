@@ -21,6 +21,7 @@ export const P2AAnalyticsPage: React.FC = () => {
             navigate(`/${section}`);
           }
         }}
+        onLogout={() => navigate('/')}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">

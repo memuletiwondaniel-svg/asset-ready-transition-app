@@ -29,6 +29,7 @@ interface OrshSidebarProps {
   onNavigate?: (section: string) => void;
   onShowWidgets?: () => void;
   onShowOnboarding?: () => void;
+  onLogout?: () => void;
   showWidgets?: boolean;
   currentPage?: string;
   searchHistory?: string[];
@@ -45,6 +46,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   onNavigate,
   onShowWidgets,
   onShowOnboarding,
+  onLogout,
   showWidgets = false,
   currentPage = 'home',
   searchHistory = [],
@@ -327,7 +329,13 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       {/* Footer Actions */}
       <div className="p-4 border-t border-border/40 space-y-2 flex-shrink-0">
         {/* Logout Row */}
-        <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive animate-fade-in`} title="Log Out">
+        <Button 
+          variant="outline" 
+          size={isSidebarCollapsed ? "icon" : "sm"} 
+          onClick={onLogout}
+          className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive animate-fade-in`} 
+          title="Log Out"
+        >
           <LogOut className="w-4 h-4" />
           {!isSidebarCollapsed && <span className="ml-2">Log Out</span>}
         </Button>

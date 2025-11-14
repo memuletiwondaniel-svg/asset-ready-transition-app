@@ -69,7 +69,13 @@ export const ORMLandingPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="h-screen flex w-full overflow-hidden">
-        <OrshSidebar currentPage="or-maintenance" onNavigate={() => {}} />
+        <OrshSidebar currentPage="or-maintenance" onNavigate={(section) => {
+          if (section === 'home') {
+            navigate('/');
+          } else {
+            navigate(`/${section}`);
+          }
+        }} onLogout={() => navigate('/')} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="p-6">
             <Skeleton className="h-8 w-64 mb-4" />
@@ -93,6 +99,7 @@ export const ORMLandingPage: React.FC = () => {
             navigate(`/${section}`);
           }
         }}
+        onLogout={() => navigate('/')}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
