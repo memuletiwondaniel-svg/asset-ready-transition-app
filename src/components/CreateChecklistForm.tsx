@@ -624,25 +624,10 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         
         {/* Admin Header with Breadcrumb */}
         <AdminHeader
-          selectedLanguage={currentLanguage}
-          onLanguageChange={setCurrentLanguage}
-          translations={t}
-        >
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
-                  <Home className="h-4 w-4" />
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Create New Checklist</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </AdminHeader>
+          icon={<Plus className="h-5 w-5" />}
+          title="Create New Checklist"
+          description="Set up a new safety checklist for your project"
+        />
 
         <div className="relative z-10 pb-8">
         {/* Progress Steps */}
@@ -837,25 +822,10 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
     <div className="pb-8">
       {/* Admin Header with Breadcrumb */}
       <AdminHeader
-        selectedLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-        translations={t}
-      >
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink onClick={onBack} className="cursor-pointer flex items-center gap-1.5">
-                <Home className="h-4 w-4" />
-                Dashboard
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Select Checklist Items</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </AdminHeader>
+        icon={<Plus className="h-5 w-5" />}
+        title="Create New Checklist"
+        description="Set up a new safety checklist for your project"
+      />
       
       {/* Progress Steps */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
