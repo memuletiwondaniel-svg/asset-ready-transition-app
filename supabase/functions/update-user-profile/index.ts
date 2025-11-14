@@ -121,8 +121,8 @@ serve(async (req) => {
 
     console.log('Profile updated successfully:', data);
 
-    // Sync important fields to auth.users.raw_user_meta_data
-    const fieldsToSync = ['first_name', 'last_name', 'full_name', 'avatar_url', 'phone_number', 'primary_phone', 'position'];
+    // Sync complete profile fields to auth.users.raw_user_meta_data
+    const fieldsToSync = ['first_name', 'last_name', 'full_name', 'avatar_url', 'phone_number', 'primary_phone', 'position', 'email', 'company'];
     const hasFieldsToSync = fieldsToSync.some(field => profileData[field] !== undefined);
     
     if (hasFieldsToSync) {
@@ -133,6 +133,8 @@ serve(async (req) => {
       if (profileData.full_name !== undefined) metadataUpdate.full_name = profileData.full_name;
       if (profileData.avatar_url !== undefined) metadataUpdate.avatar_url = profileData.avatar_url;
       if (profileData.position !== undefined) metadataUpdate.position = profileData.position;
+      if (profileData.email !== undefined) metadataUpdate.email = profileData.email;
+      if (profileData.company !== undefined) metadataUpdate.company = profileData.company;
       
       // Use primary_phone if available, otherwise phone_number
       if (profileData.primary_phone !== undefined) {
