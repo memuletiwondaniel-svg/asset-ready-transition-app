@@ -6,9 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Camera, KeyRound } from 'lucide-react';
+import { Loader2, Camera, KeyRound, ShieldCheck, ShieldOff } from 'lucide-react';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { TwoFactorSetupModal } from './TwoFactorSetupModal';
+import { DisableTwoFactorModal } from './DisableTwoFactorModal';
+import { Badge } from '@/components/ui/badge';
 
 interface UserProfileModalProps {
   open: boolean;
@@ -33,6 +36,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showTwoFactorSetupModal, setShowTwoFactorSetupModal] = useState(false);
+  const [showDisableTwoFactorModal, setShowDisableTwoFactorModal] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -72,7 +78,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name, position, avatar_url')
+        .select('full_name, position, avatar_url, two_factor_enabled')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -89,6 +95,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       if (profile) {
         setFullName(profile.full_name || '');
         setPosition(profile.position || '');
+        setTwoFactorEnabled(profile.two_factor_enabled || false);
         
         let avatarUrlFull = profile.avatar_url || '';
         if (avatarUrlFull && !avatarUrlFull.startsWith('http')) {
@@ -367,6 +374,41 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               Change Password
             </Button>
           </div>
+
+          {/* Two-Factor Authentication */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              Two-Factor Authentication
+              {twoFactorEnabled && (
+                <Badge variant="default" className="text-xs">
+                  Enabled
+                </Badge>
+              )}
+            </Label>
+            {twoFactorEnabled ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDisableTwoFactorModal(true)}
+                className="w-full"
+                disabled={loading}
+              >
+                <ShieldOff className="mr-2 h-4 w-4" />
+                Disable 2FA
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowTwoFactorSetupModal(true)}
+                className="w-full"
+                disabled={loading}
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Enable 2FA
+              </Button>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
@@ -399,6 +441,26 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       <ChangePasswordModal
         open={showChangePasswordModal}
         onOpenChange={setShowChangePasswordModal}
+      />
+
+      {/* Two-Factor Setup Modal */}
+      <TwoFactorSetupModal
+        open={showTwoFactorSetupModal}
+        onOpenChange={setShowTwoFactorSetupModal}
+        onSetupComplete={() => {
+          setTwoFactorEnabled(true);
+          fetchProfile();
+        }}
+      />
+
+      {/* Disable Two-Factor Modal */}
+      <DisableTwoFactorModal
+        open={showDisableTwoFactorModal}
+        onOpenChange={setShowDisableTwoFactorModal}
+        onDisabled={() => {
+          setTwoFactorEnabled(false);
+          fetchProfile();
+        }}
       />
     </Dialog>
   );
