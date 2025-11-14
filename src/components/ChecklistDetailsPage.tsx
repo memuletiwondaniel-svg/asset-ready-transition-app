@@ -480,43 +480,28 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                     </div>
                   </div> : viewMode === 'grid' ? (/* Grid View */
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    {paginatedItems.map((item, index) => <div key={item.unique_id} className="group relative p-5 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-xl hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] animate-scale-in cursor-pointer" style={{
-                      animationDelay: `${index * 50}ms`
-                    }} onClick={() => setViewingItem(item)}>
+                    {paginatedItems.map((item, index) => <div 
+                      key={item.unique_id} 
+                      className="group relative p-5 rounded-xl border-2 border-border/40 bg-gradient-to-br from-card/80 to-card/50 hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/60 hover:-translate-y-1 transition-all duration-300 hover:scale-[1.03] animate-scale-in cursor-pointer overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/10 before:via-transparent before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700" 
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }} 
+                      onClick={() => setViewingItem(item)}
+                    >
                         {/* Item Header */}
-                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-start justify-between gap-4 mb-3 relative z-10">
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <Badge variant="outline" className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap transition-all duration-200 group-hover:bg-primary/10 group-hover:border-primary/50">
+                            <Badge variant="outline" className="font-mono text-sm px-3 py-1 bg-primary/5 border-primary/30 text-primary font-semibold shrink-0 whitespace-nowrap transition-all duration-300 group-hover:bg-primary/20 group-hover:border-primary/70 group-hover:scale-105">
                               {item.unique_id}
                             </Badge>
-                            <Badge className={`text-xs px-2.5 py-1 font-medium transition-all duration-200 ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
+                            <Badge className={`text-xs px-2.5 py-1 font-medium transition-all duration-300 group-hover:scale-105 ${CATEGORY_COLORS[item.category] || 'bg-secondary/10 text-secondary-foreground border-secondary/30'}`}>
                               {item.category}
                             </Badge>
-                          </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
-                            <Button variant="ghost" size="sm" onClick={e => {
-                            e.stopPropagation();
-                            setViewingItem(item);
-                          }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={e => {
-                            e.stopPropagation();
-                            handleEditItem(item);
-                          }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200 hover:scale-110">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteItem(item.unique_id);
-                          }} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200 hover:scale-110">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
                           </div>
                         </div>
                         
                         {/* Description */}
-                        <p className="text-sm font-medium text-foreground mb-3 line-clamp-2 leading-relaxed transition-colors duration-200 group-hover:text-primary">
+                        <p className="text-sm font-medium text-foreground mb-3 line-clamp-2 leading-relaxed transition-colors duration-300 group-hover:text-primary relative z-10">
                           {item.description}
                         </p>
                         
@@ -599,17 +584,21 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                               </Button>
                             </div>
                           </TableHead>
-                          <TableHead className="text-right w-32">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paginatedItems.map((item, index) => <TableRow key={item.unique_id} className={`hover:bg-muted/20 transition-all duration-200 cursor-pointer animate-fade-in ${bulkSelectedItems.has(item.unique_id) ? 'bg-primary/5' : ''}`} style={{
-                          animationDelay: `${index * 30}ms`
-                        }}>
+                        {paginatedItems.map((item, index) => <TableRow 
+                          key={item.unique_id} 
+                          className={`group hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent hover:shadow-lg hover:scale-[1.01] transition-all duration-300 cursor-pointer animate-fade-in border-l-4 border-l-transparent hover:border-l-primary ${bulkSelectedItems.has(item.unique_id) ? 'bg-primary/5 border-l-primary' : ''}`} 
+                          style={{
+                            animationDelay: `${index * 30}ms`
+                          }}
+                          onClick={() => setViewingItem(item)}
+                        >
                             <TableCell onClick={e => e.stopPropagation()}>
                               <Checkbox checked={bulkSelectedItems.has(item.unique_id)} onCheckedChange={checked => handleSelectItem(item.unique_id, checked as boolean)} aria-label={`Select ${item.unique_id}`} />
                             </TableCell>
-                            <TableCell className="font-mono font-medium text-primary" onClick={() => setViewingItem(item)}>
+                            <TableCell className="font-mono font-medium text-primary group-hover:text-primary/80 transition-colors">
                               {item.unique_id}
                             </TableCell>
                             <TableCell className={expandedColumns.has('description') ? '' : 'max-w-md'}>
@@ -706,28 +695,6 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
                                     (double-click)
                                   </span>
                                 </div>}
-                            </TableCell>
-                            <TableCell onClick={e => e.stopPropagation()}>
-                              <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="sm" onClick={e => {
-                                e.stopPropagation();
-                                setViewingItem(item);
-                              }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={e => {
-                                e.stopPropagation();
-                                handleEditItem(item);
-                              }} className="h-8 w-8 p-0 hover:bg-primary/10 transition-all duration-200">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={e => {
-                                e.stopPropagation();
-                                handleDeleteItem(item.unique_id);
-                              }} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 transition-all duration-200">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
                             </TableCell>
                           </TableRow>)}
                       </TableBody>
