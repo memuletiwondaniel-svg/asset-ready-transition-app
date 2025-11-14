@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-react';
@@ -31,6 +32,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   // Form states
   const [signInData, setSignInData] = useState({
@@ -55,7 +57,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     setLoading(true);
     const {
       error
-    } = await signIn(signInData.email, signInData.password);
+    } = await signIn(signInData.email, signInData.password, rememberMe);
     if (!error) {
       onAuthenticated();
       onClose();
@@ -218,15 +220,25 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       </div>
                     </div>
 
-                    {loginFailed && (
-                      <div className="text-right">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="remember-me"
+                          checked={rememberMe}
+                          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        />
+                        <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
+                          Remember me
+                        </Label>
+                      </div>
+                      {loginFailed && (
                         <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
                           Forgot password?
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
-                    <Button type="submit" className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground 
+                    <Button type="submit" className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground
                                  shadow-lg hover:shadow-xl transition-all duration-300 ease-out
                                  hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
                                  border border-primary/20 hover:border-primary/40

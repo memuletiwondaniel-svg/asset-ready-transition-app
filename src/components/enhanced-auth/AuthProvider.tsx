@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any }>;
   signUp: (userData: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -59,17 +59,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Check for existing session and handle remember me preference
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // Check if there's a session but no rememberMe flag in sessionStorage
+      const rememberMeFlag = sessionStorage.getItem('rememberMe');
+      
+      if (session && rememberMeFlag === 'false') {
+        // User didn't check remember me, so sign them out on new browser session
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -97,6 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         toast.error(error.message);
         return { error };
+      }
+
+      // Store remember me preference
+      if (rememberMe) {
+        sessionStorage.removeItem('rememberMe');
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        sessionStorage.setItem('rememberMe', 'false');
+        localStorage.removeItem('rememberMe');
       }
 
       toast.success('Successfully signed in!');
