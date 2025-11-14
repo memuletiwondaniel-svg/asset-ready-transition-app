@@ -69,8 +69,8 @@ serve(async (req) => {
         company: userData.company as any,
         position: userData.job_title, // Map job_title to position
         role: finalRole,
-        ta2_discipline: (userData.ta2_discipline ?? null) as any,
-        ta2_commission: (userData.ta2_commission ?? null) as any,
+        discipline: (userData.ta2_discipline ?? null) as any, // Actual column name is 'discipline'
+        commission: (userData.ta2_commission ?? null) as any, // Actual column name is 'commission'
         status: 'pending_approval' as any,
         rejection_reason: userData.comments ?? null,
       })

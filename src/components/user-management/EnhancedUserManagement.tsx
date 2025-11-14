@@ -586,7 +586,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     try {
       // Use the secure delete function
       const { data, error } = await supabase
-        .rpc('delete_user_account', { target_user_id: userToDelete.user_id });
+        .rpc('delete_user_account' as any, { target_user_id: userToDelete.user_id });
 
       if (error) {
         console.error('Error deleting user:', error);
@@ -595,7 +595,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       }
 
       // Check the response from the function
-      const result = data as { success: boolean; error?: string };
+      const result = data as any as { success: boolean; error?: string };
       if (!result?.success) {
         toast.error(result?.error || 'Failed to delete user');
         return;
