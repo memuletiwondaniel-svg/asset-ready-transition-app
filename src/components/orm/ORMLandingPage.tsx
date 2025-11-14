@@ -12,10 +12,14 @@ import { ORMNotificationCenter } from './ORMNotificationCenter';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 
 export const ORMLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { session } = useAuth();
+  const { toast } = useToast();
   const { plans, isLoading } = useORMPlans();
   const { setBreadcrumbs } = useBreadcrumb();
 
@@ -116,7 +120,20 @@ export const ORMLandingPage: React.FC = () => {
                 <UserCog className="w-4 h-4 mr-2" />
                 Resources
               </Button>
-              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+              <Button 
+                onClick={() => {
+                  if (!session) {
+                    toast({
+                      title: 'Authentication Required',
+                      description: 'Please sign in to create an ORM plan.',
+                      variant: 'destructive'
+                    });
+                    return;
+                  }
+                  setShowCreateModal(true);
+                }} 
+                className="gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 Create ORM
               </Button>

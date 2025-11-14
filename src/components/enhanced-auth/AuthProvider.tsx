@@ -108,38 +108,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-      if (error) {
-        // Track failed login attempt
-        if (error.message.includes('Invalid login credentials')) {
-          try {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('user_id')
-              .eq('email', email)
-              .single();
-            
-            if (profileData) {
-              await supabase.rpc('track_failed_login', {
-                user_uuid: profileData.user_id
-              });
-            }
-          } catch (trackError) {
-            console.error('Failed to track failed login:', trackError);
-          }
-        }
-        
-        toast.error(error.message);
-        return { error };
-      }
-
-      toast.success('Successfully signed in!');
-      return { error: null };
-    } catch (error: any) {
-      toast.error('An unexpected error occurred');
-      return { error };
-    }
-  };
-
   const signUp = async (userData: any) => {
     try {
       const redirectUrl = `${window.location.origin}/`;

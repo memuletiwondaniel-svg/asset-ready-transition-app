@@ -11,6 +11,8 @@ import { useProjects } from '@/hooks/useProjects';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useORMPlans } from '@/hooks/useORMPlans';
 import { Search } from 'lucide-react';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateORMModalProps {
   open: boolean;
@@ -37,6 +39,8 @@ export const CreateORMModal: React.FC<CreateORMModalProps> = ({
   const [selectedDeliverables, setSelectedDeliverables] = useState<string[]>([]);
   const [projectSearch, setProjectSearch] = useState('');
 
+  const { session } = useAuth();
+  const { toast } = useToast();
   const { projects } = useProjects();
   const { data: users } = useProfileUsers();
   const { createPlan, isCreating } = useORMPlans();
@@ -47,7 +51,22 @@ export const CreateORMModal: React.FC<CreateORMModalProps> = ({
   );
 
   const handleSubmit = () => {
+    // Check authentication
+    if (!session) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to create an ORM plan.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (!projectId || !ormLeadId || selectedDeliverables.length === 0) {
+      toast({
+        title: 'Missing Fields',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive'
+      });
       return;
     }
 
