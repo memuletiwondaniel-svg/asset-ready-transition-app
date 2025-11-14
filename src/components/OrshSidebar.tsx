@@ -4,12 +4,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
 import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban, MessageSquare, ClipboardCheck, Key, Wrench } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
 
@@ -70,6 +71,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const {
     theme,
     setTheme
@@ -332,7 +334,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         <Button 
           variant="outline" 
           size={isSidebarCollapsed ? "icon" : "sm"} 
-          onClick={onLogout}
+          onClick={() => setLogoutDialogOpen(true)}
           className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive animate-fade-in`} 
           title="Log Out"
         >
@@ -361,5 +363,33 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         onOpenChange={setChatOpen}
         onUnreadCountChange={setUnreadChatCount}
       />
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out? You'll need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setLogoutDialogOpen(false);
+                toast({
+                  title: "Logged out successfully",
+                  description: "You have been logged out of your account.",
+                });
+                onLogout?.();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Log Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 };
