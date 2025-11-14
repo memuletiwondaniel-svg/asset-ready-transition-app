@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Search, Edit2, Check, X, Mic, MicOff } from 'lucide-react';
+import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Search, Edit2, Check, X, Mic, MicOff, Paperclip, FileText, Image as ImageIcon, Loader2 as LoaderIcon, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +19,9 @@ import { useVoiceInput } from '@/hooks/useVoiceInput';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  imageUrls?: string[];
+  fileUrls?: string[];
+  fileNames?: string[];
 }
 
 interface Conversation {
@@ -59,6 +62,9 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   const [searchQuery, setSearchQuery] = useState('');
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
 
@@ -203,15 +209,79 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     }
   };
 
+  const uploadFilesToStorage = async (files: File[]): Promise<{ imageUrls: string[], fileUrls: string[], fileNames: string[] }> => {
+    const imageUrls: string[] = [];
+    const fileUrls: string[] = [];
+    const fileNames: string[] = [];
+    
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `chat-attachments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat_attachments')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat_attachments')
+        .getPublicUrl(filePath);
+
+      if (file.type.startsWith('image/')) {
+        imageUrls.push(publicUrl);
+      } else {
+        fileUrls.push(publicUrl);
+        fileNames.push(file.name);
+      }
+    }
+
+    return { imageUrls, fileUrls, fileNames };
+  };
+
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || input.trim();
-    if (!textToSend || isLoading) return;
+    if ((!textToSend && attachedFiles.length === 0) || isLoading) return;
 
     if (!messageText) {
       setInput('');
     }
+
+    setUploadingFiles(true);
     
-    const newMessages: Message[] = [...messages, { role: 'user', content: textToSend }];
+    let imageUrls: string[] = [];
+    let fileUrls: string[] = [];
+    let fileNames: string[] = [];
+
+    try {
+      if (attachedFiles.length > 0) {
+        const uploadResult = await uploadFilesToStorage(attachedFiles);
+        imageUrls = uploadResult.imageUrls;
+        fileUrls = uploadResult.fileUrls;
+        fileNames = uploadResult.fileNames;
+        setAttachedFiles([]);
+      }
+    } catch (error) {
+      toast.error('Failed to upload files. Please try again.');
+      setUploadingFiles(false);
+      return;
+    }
+
+    setUploadingFiles(false);
+    
+    const userMessage: Message = { 
+      role: 'user', 
+      content: textToSend || 'Please analyze these files.',
+      imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+      fileUrls: fileUrls.length > 0 ? fileUrls : undefined,
+      fileNames: fileNames.length > 0 ? fileNames : undefined
+    };
+    
+    const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
 
@@ -225,7 +295,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ 
-          messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+          messages: newMessages.map(m => ({ 
+            role: m.role, 
+            content: m.content,
+            imageUrls: m.imageUrls,
+            fileUrls: m.fileUrls
+          }))
         })
       });
 
@@ -304,6 +379,30 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
         setInput((prev) => prev + (prev ? ' ' : '') + transcript);
       });
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const validFiles = files.filter(file => {
+        const isImage = file.type.startsWith('image/');
+        const isDocument = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type);
+        return isImage || isDocument;
+      });
+      
+      if (validFiles.length < files.length) {
+        toast.error('Some files were skipped. Only images and documents (PDF, DOC, DOCX) are supported.');
+      }
+      
+      setAttachedFiles(prev => [...prev, ...validFiles]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleNewChat = () => {
@@ -579,7 +678,43 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                             : 'bg-muted text-foreground'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        {message.content && <p className="text-sm whitespace-pre-wrap">{message.content}</p>}
+                        
+                        {/* Display attached images */}
+                        {message.imageUrls && message.imageUrls.length > 0 && (
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            {message.imageUrls.map((url, idx) => (
+                              <img 
+                                key={idx} 
+                                src={url} 
+                                alt={`Attachment ${idx + 1}`}
+                                className="rounded border max-h-48 w-full object-cover"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Display attached files */}
+                        {message.fileUrls && message.fileUrls.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {message.fileUrls.map((url, idx) => (
+                              <a 
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-2 p-2 rounded border ${
+                                  message.role === 'user' 
+                                    ? 'bg-primary-foreground/10 hover:bg-primary-foreground/20' 
+                                    : 'bg-background/50 hover:bg-background/70'
+                                }`}
+                              >
+                                <FileText className="h-4 w-4" />
+                                <span className="text-xs">{message.fileNames?.[idx] || 'Document'}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       {message.role === 'user' && (
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
@@ -606,34 +741,84 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
               </ScrollArea>
             </div>
 
-            <div className="flex gap-2 p-6 pt-4 border-t">
-              <Textarea
-                placeholder="Ask ORSH about PSSRs, safety reviews, checklists..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="min-h-[60px] max-h-[120px] resize-none"
-                disabled={isLoading}
-              />
-              <div className="flex flex-col gap-2">
-                {isSupported && (
+            <div className="p-6 pt-4 border-t space-y-3">
+              {/* File attachments preview */}
+              {attachedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {attachedFiles.map((file, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg group"
+                    >
+                      {file.type.startsWith('image/') ? (
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm max-w-[150px] truncate">{file.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Textarea
+                  placeholder="Ask ORSH about PSSRs, safety reviews, checklists..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="min-h-[60px] max-h-[120px] resize-none"
+                  disabled={isLoading || uploadingFiles}
+                />
+                <div className="flex flex-col gap-2">
                   <Button
-                    onClick={handleVoiceInput}
-                    disabled={isLoading}
-                    variant={isListening ? "destructive" : "outline"}
-                    className={`self-end ${isListening ? 'animate-pulse' : ''}`}
-                    title={isListening ? "Stop listening" : "Voice input"}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isLoading || uploadingFiles}
+                    variant="outline"
+                    className="self-end"
+                    title="Attach files"
                   >
-                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    <Paperclip className="h-4 w-4" />
                   </Button>
-                )}
-                <Button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isLoading}
-                  className="self-end"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                  {isSupported && (
+                    <Button
+                      onClick={handleVoiceInput}
+                      disabled={isLoading || uploadingFiles}
+                      variant={isListening ? "destructive" : "outline"}
+                      className={`self-end ${isListening ? 'animate-pulse' : ''}`}
+                      title={isListening ? "Stop listening" : "Voice input"}
+                    >
+                      {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={(!input.trim() && attachedFiles.length === 0) || isLoading || uploadingFiles}
+                    className="self-end"
+                  >
+                    {uploadingFiles ? (
+                      <LoaderIcon className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
