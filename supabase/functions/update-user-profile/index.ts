@@ -121,6 +121,25 @@ serve(async (req) => {
 
     console.log('Profile updated successfully:', data);
 
+    // Sync first_name, last_name, and full_name to auth.users.raw_user_meta_data
+    if (profileData.first_name || profileData.last_name || profileData.full_name) {
+      const metadataUpdate: any = {};
+      if (profileData.first_name !== undefined) metadataUpdate.first_name = profileData.first_name;
+      if (profileData.last_name !== undefined) metadataUpdate.last_name = profileData.last_name;
+      if (profileData.full_name !== undefined) metadataUpdate.full_name = profileData.full_name;
+
+      const { error: authUpdateErr } = await admin.auth.admin.updateUserById(userId, {
+        user_metadata: metadataUpdate
+      });
+
+      if (authUpdateErr) {
+        console.error('update-user-profile: auth metadata update error', authUpdateErr);
+        // Don't fail the request if auth update fails, just log it
+      } else {
+        console.log('Auth metadata updated successfully with names');
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
