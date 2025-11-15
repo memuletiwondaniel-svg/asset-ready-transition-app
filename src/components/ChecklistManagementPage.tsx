@@ -3,7 +3,7 @@ import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Search, Home, Filter, Copy, AlignJustify, TableIcon, ListChecks } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Users, Shield, Cog, GripVertical, CheckCircle, Trash2, Save, Plus, MoreVertical, Eye, Edit, Grid3X3, Search, Home, Filter, Copy, AlignJustify, TableIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,6 @@ import { TemplateManagement } from './checklist/TemplateManagement';
 import { ChecklistItemPreviewPanel } from './checklist/ChecklistItemPreviewPanel';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateChecklistItem } from '@/hooks/useChecklistItems';
-import AdminHeader from './admin/AdminHeader';
 interface ChecklistManagementPageProps {
   onBack: () => void;
   translations?: any;
@@ -485,18 +484,6 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       </AnimatedBackground>;
   }
   return <AnimatedBackground className="min-h-screen">
-      {/* Admin Header with Breadcrumb Navigation */}
-      <AdminHeader 
-        icon={<ListChecks className="w-5 h-5" />} 
-        title="Checklist Management" 
-        description="Manage and organize checklist items, categories, and templates"
-        customBreadcrumbs={[
-          { label: 'Home', path: '/', onClick: onBack },
-          { label: 'Administration', path: '/admin-tools', onClick: onBack },
-          { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
-        ]}
-      />
-
       {/* Bulk Actions Toolbar */}
       <BulkActionsToolbar selectedItems={selectedItems} items={checklistItems || []} onClearSelection={() => setSelectedItems(new Set())} availableCategories={availableCategories} />
 
