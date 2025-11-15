@@ -433,6 +433,27 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
 
   useEffect(() => {
     fetchUsers();
+
+    // Subscribe to profile changes for real-time updates
+    const profileSubscription = supabase
+      .channel('profile_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'profiles' 
+        }, 
+        (payload) => {
+          console.log('Profile changed:', payload);
+          // Refetch users when any profile is updated
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      profileSubscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
