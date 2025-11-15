@@ -7,13 +7,19 @@ interface AdminHeaderProps {
   title: string;
   description?: string;
   children?: React.ReactNode;
+  customBreadcrumbs?: Array<{
+    label: string;
+    path: string;
+    onClick?: () => void;
+  }>;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
   icon,
   title,
   description,
-  children
+  children,
+  customBreadcrumbs
 }) => {
   return (
     <div className="sticky top-0 z-50 bg-card border-b border-border">
@@ -21,7 +27,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="flex items-center justify-between">
           {/* Left side - Breadcrumb Navigation */}
           <div className="flex items-center gap-4 flex-1">
-            <BreadcrumbNavigation currentPageLabel={title} />
+            <BreadcrumbNavigation currentPageLabel={title} customBreadcrumbs={customBreadcrumbs} />
           </div>
           
           {/* Right side - Notification Center */}
