@@ -365,48 +365,48 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   // Handle conditional views AFTER all hooks
   if (activeView === 'users') {
-    return <div className="min-h-screen flex w-full animate-fade-in">
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto">
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
       </div>;
   }
   if (activeView === 'checklist') {
-    return <div className="min-h-screen flex w-full animate-fade-in">
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto">
           <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
       </div>;
   }
   if (activeView === 'pssr-settings') {
-    return <div className="min-h-screen flex w-full animate-fade-in">
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto">
           <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
       </div>;
   }
   if (activeView === 'projects') {
-    return <div className="min-h-screen flex w-full animate-fade-in">
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
       <OrshSidebar userName={userProfile?.full_name || 'User'} userTitle={userProfile?.position || 'Team Member'} userAvatar={userProfile?.avatar_url || ''} language={language} onLanguageChange={setLanguage} currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto">
           <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
       </div>;
   }
   if (activeView === 'activity-log') {
-    return <div className="min-h-screen flex w-full animate-fade-in">
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto">
           <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
         </div>
       </div>;
   }
-  return <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20">
+  return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" />
