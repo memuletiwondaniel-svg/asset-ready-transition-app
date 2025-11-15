@@ -12,6 +12,7 @@ interface AdminHeaderProps {
     path: string;
     onClick?: () => void;
   }>;
+  iconGradient?: string;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
@@ -19,7 +20,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   title,
   description,
   children,
-  customBreadcrumbs
+  customBreadcrumbs,
+  iconGradient = 'from-purple-500 to-purple-600'
 }) => {
   return (
     <div className="sticky top-0 z-50 bg-card border-b border-border">
@@ -40,7 +42,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         {(icon || title || description) && (
           <div className="flex items-center gap-3 mt-4">
             {icon && (
-              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${iconGradient} flex items-center justify-center shadow-lg`}>
                 <div className="text-white">
                   {icon}
                 </div>

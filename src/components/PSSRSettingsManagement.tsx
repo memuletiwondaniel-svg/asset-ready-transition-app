@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,7 @@ import LanguageSelector from './admin/LanguageSelector';
 import UserProfileDropdown from './admin/UserProfileDropdown';
 import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
+import AdminHeader from './admin/AdminHeader';
 import {
   DndContext,
   closestCenter,
@@ -559,102 +560,56 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
   }, [searchQuery, activeTab, showReasonsTab, showTieInTab, showMOCTab]);
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <div className="flex-1 overflow-auto">
       <AnimatedBackground>
-        {/* Modern Fluent Header */}
-        <div className="fluent-navigation sticky top-0 z-50">
-          <div className="container flex h-16 items-center justify-between gap-4">
-            {/* Left - Breadcrumb Navigation */}
-            <div className="flex items-center min-w-0">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink 
-                      onClick={onBack}
-                      className="flex items-center gap-2 cursor-pointer hover:text-primary transition-all duration-200 text-sm group"
-                    >
-                      <Home className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                      <span className="hidden sm:inline font-medium">Home</span>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink 
-                      onClick={onBack}
-                      className="cursor-pointer hover:text-primary transition-colors hidden sm:inline text-sm font-medium"
-                    >
-                      Administration
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden sm:inline" />
-                  <BreadcrumbItem className="hidden sm:inline">
-                    <BreadcrumbPage className="font-semibold text-sm text-foreground">
-                      PSSR Configuration
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
+        <div className="relative z-10">
+          <AdminHeader 
+            icon={<Settings className="w-6 h-6" />} 
+            iconGradient="from-emerald-500 to-emerald-600"
+            title="PSSR Configuration" 
+            description="Manage PSSR reasons, tie-in scopes, and Management of Change options"
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: onBack },
+              { label: 'Administration', path: '/admin-tools', onClick: onBack },
+              { label: 'PSSR Configuration', path: '/admin-tools', onClick: () => {} }
+            ]}
+          />
 
-            {/* Right - Actions */}
-            <div className="flex items-center gap-3">
-              <OrshLogo size="medium" />
-              <ThemeToggle />
-              <LanguageSelector 
-                selectedLanguage={currentLanguage}
-                onLanguageChange={setCurrentLanguage}
-              />
-              <UserProfileDropdown translations={t} />
-            </div>
-          </div>
-        </div>
-
-        <div className="container pt-12 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Modern Hero Header */}
-          <div className="mb-10 animate-fade-in-up">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
-              <div className="space-y-2">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight fluent-hero-text">
-                  PSSR Configuration
-                </h1>
-                <p className="text-muted-foreground text-base max-w-2xl">
-                  Manage PSSR reasons, tie-in scopes, and Management of Change options for your operations
-                </p>
-              </div>
-              
-              {/* Desktop Search */}
-              <div className="flex-shrink-0 w-full md:w-96">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search configuration..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 pr-12 h-12 text-sm bg-card border-border/40 focus:border-primary/60 focus:ring-primary/20 rounded-xl shadow-fluent-sm transition-all duration-200 hover:shadow-fluent-md"
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-lg"
-                      onClick={() => setSearchQuery('')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+          <TooltipProvider delayDuration={200}>
+            <div className="container pt-6 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Search Bar */}
+              <div className="mb-8 animate-fade-in">
+                <div className="flex-shrink-0 w-full md:w-96">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search configuration..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-12 pr-12 h-12 text-sm bg-card border-border/40 focus:border-primary/60 focus:ring-primary/20 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-lg"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {searchQuery && (
-              <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg animate-scale-in">
-                <p className="text-sm text-foreground font-medium">
-                  Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} matching your search
-                </p>
+                {searchQuery && (
+                  <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg animate-scale-in mt-4">
+                    <p className="text-sm text-foreground font-medium">
+                      Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} matching your search
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Modern Tab Navigation */}
@@ -1331,9 +1286,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+            </div>
+          </TooltipProvider>
         </div>
       </AnimatedBackground>
-    </TooltipProvider>
+    </div>
   );
 };
 
