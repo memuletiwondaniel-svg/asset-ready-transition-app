@@ -227,8 +227,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           <AnimatedBackground>
         <div className="relative z-10">
           <AdminHeader 
-            icon={<ClipboardList className="w-5 h-5" />} 
-            title="Checklist Management" 
+            icon={<ClipboardList className="w-6 h-6" />} 
+            title="Checklist Management"
             description="Manage your checklists, items, categories, and topics"
             customBreadcrumbs={[
               { label: 'Home', path: '/', onClick: onBack },
@@ -247,8 +247,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
           <AnimatedBackground>
         <div className="relative z-10">
           <AdminHeader 
-            icon={<ClipboardList className="w-5 h-5" />} 
-            title="Checklist Management" 
+            icon={<ClipboardList className="w-6 h-6" />} 
+            title="Checklist Management"
             description="Manage your checklists, items, categories, and topics"
             customBreadcrumbs={[
               { label: 'Home', path: '/', onClick: onBack },
@@ -268,8 +268,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       <AnimatedBackground>
         <div className="relative z-10">
           <AdminHeader 
-            icon={<ClipboardList className="w-5 h-5" />} 
-            title="Checklist Management" 
+            icon={<ClipboardList className="w-6 h-6" />} 
+            title="Checklist Management"
             description="Manage your checklists, items, categories, and topics"
             customBreadcrumbs={[
               { label: 'Home', path: '/', onClick: onBack },
@@ -303,8 +303,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     <AnimatedBackground>
       <div className="relative z-10">
         <AdminHeader 
-          icon={<ClipboardList className="w-5 h-5" />} 
-          title="Checklist Management" 
+          icon={<ClipboardList className="w-6 h-6" />} 
+          title="Checklist Management"
           description="Manage your checklists, items, categories, and topics"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: onBack },

@@ -40,8 +40,10 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         {(icon || title || description) && (
           <div className="flex items-center gap-3 mt-4">
             {icon && (
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
-                {icon}
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <div className="text-white">
+                  {icon}
+                </div>
               </div>
             )}
             <div className="flex-1">
