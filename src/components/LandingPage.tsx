@@ -779,7 +779,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <AnimatedParticles />
       </div>
 
-      <div className="h-screen flex">
+      <div className="h-screen flex overflow-hidden">
         {/* ORSH Sidebar Component */}
         <OrshSidebar userName={userProfile?.full_name || 'User'} userTitle={userProfile?.position || 'Team Member'} userAvatar={userProfile?.avatar_url || ''} language={language} onLanguageChange={setLanguage} onNavigate={onNavigate} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} onLogout={onBack} showWidgets={showWidgetManagement} currentPage="home" searchHistory={searchHistory} onSearchHistoryClick={item => {
         setUserInput(item);
@@ -787,8 +787,8 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       }} showSearchHistory={showHistory} onToggleSearchHistory={() => setShowHistory(!showHistory)} />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex gap-6 p-6 overflow-hidden">
-          <div className={`flex-1 flex flex-col gap-6 overflow-hidden transition-all duration-500 ${tasksPanelExpanded ? 'hidden' : ''}`}>
+        <div className="flex-1 flex gap-6 p-6 overflow-y-auto">
+          <div className={`flex-1 flex flex-col gap-6 transition-all duration-500 ${tasksPanelExpanded ? 'hidden' : ''}`}>
             {/* Welcome User Banner - Ask ORSH AI */}
             <Card className="glass-card overflow-hidden animate-fade-in border-2 border-primary/20 shadow-lg transition-all duration-300">
               <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">

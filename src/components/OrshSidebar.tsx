@@ -168,8 +168,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       </div>
 
       {/* Navigation Menu */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="p-4">
+      <ScrollArea className="flex-1 px-4">
+        <div className="py-4">
         {/* Main Navigation */}
         {!isSidebarCollapsed && (
           <div className="mb-6">
