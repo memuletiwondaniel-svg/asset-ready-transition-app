@@ -627,6 +627,11 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
           icon={<Plus className="h-5 w-5" />}
           title="Create New Checklist"
           description="Set up a new safety checklist for your project"
+          customBreadcrumbs={[
+            { label: 'Home', path: '/', onClick: onBack },
+            { label: 'Administration', path: '/admin-tools', onClick: onBack },
+            { label: 'Create Checklist', path: '/admin-tools', onClick: () => {} }
+          ]}
         />
 
         <div className="relative z-10 pb-8">
@@ -825,6 +830,11 @@ const handleItemSave = (updatedItem: DBChecklistItem) => {
         icon={<Plus className="h-5 w-5" />}
         title="Create New Checklist"
         description="Set up a new safety checklist for your project"
+        customBreadcrumbs={[
+          { label: 'Home', path: '/', onClick: onBack },
+          { label: 'Administration', path: '/admin-tools', onClick: onBack },
+          { label: 'Create Checklist', path: '/admin-tools', onClick: () => {} }
+        ]}
       />
       
       {/* Progress Steps */}

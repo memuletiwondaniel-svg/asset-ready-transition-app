@@ -226,7 +226,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
-          <AdminHeader icon={<ClipboardList className="w-5 h-5" />} title="Checklist Management" description="Manage your checklists, items, categories, and topics" />
+          <AdminHeader 
+            icon={<ClipboardList className="w-5 h-5" />} 
+            title="Checklist Management" 
+            description="Manage your checklists, items, categories, and topics"
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: onBack },
+              { label: 'Administration', path: '/admin-tools', onClick: onBack },
+              { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
+            ]}
+          />
 
           <CreateChecklistForm onBack={() => setShowCreateForm(false)} onComplete={handleCreateComplete} selectedLanguage={currentLanguage} translations={t} />
         </div>
@@ -237,7 +246,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     return <div className="flex-1 overflow-auto">
           <AnimatedBackground>
         <div className="relative z-10">
-          <AdminHeader icon={<ClipboardList className="w-5 h-5" />} title="Checklist Management" description="Manage your checklists, items, categories, and topics" />
+          <AdminHeader 
+            icon={<ClipboardList className="w-5 h-5" />} 
+            title="Checklist Management" 
+            description="Manage your checklists, items, categories, and topics"
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: onBack },
+              { label: 'Administration', path: '/admin-tools', onClick: onBack },
+              { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
+            ]}
+          />
 
           <EditChecklistForm checklist={editingChecklist} onBack={() => { setShowEditForm(false); setEditingChecklist(null); }} onSave={handleEditComplete} />
         </div>
@@ -249,7 +267,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     return <div className="flex-1 overflow-auto">
       <AnimatedBackground>
         <div className="relative z-10">
-          <AdminHeader icon={<ClipboardList className="w-5 h-5" />} title="Checklist Management" description="Checklist created successfully" />
+          <AdminHeader 
+            icon={<ClipboardList className="w-5 h-5" />} 
+            title="Checklist Management" 
+            description="Manage your checklists, items, categories, and topics"
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: onBack },
+              { label: 'Administration', path: '/admin-tools', onClick: onBack },
+              { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
+            ]}
+          />
           
           <ChecklistSuccessPage 
             checklistName={createdChecklistName} 
@@ -275,7 +302,16 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   return <div className="flex-1 overflow-auto">
     <AnimatedBackground>
       <div className="relative z-10">
-        <AdminHeader icon={<ClipboardList className="w-5 h-5" />} title="Checklist Management" description="Manage your checklists, items, categories, and topics" />
+        <AdminHeader 
+          icon={<ClipboardList className="w-5 h-5" />} 
+          title="Checklist Management" 
+          description="Manage your checklists, items, categories, and topics"
+          customBreadcrumbs={[
+            { label: 'Home', path: '/', onClick: onBack },
+            { label: 'Administration', path: '/admin-tools', onClick: onBack },
+            { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
+          ]}
+        />
 
         <div className="container py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">

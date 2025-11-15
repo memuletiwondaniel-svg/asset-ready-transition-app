@@ -311,9 +311,14 @@ const ChecklistDetailsPage: React.FC<ChecklistDetailsPageProps> = ({
         <div className="relative z-10">
           {/* Admin Header with Breadcrumb */}
           <AdminHeader 
-            icon={<ClipboardList className="h-5 w-5" />}
+            icon={<ClipboardList className="h-5 h-5" />}
             title={checklist.name}
             description="Manage checklist items and track progress"
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: onBack },
+              { label: 'Administration', path: '/admin-tools', onClick: onBack },
+              { label: checklist.name, path: '/admin-tools', onClick: () => {} }
+            ]}
           />
 
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">

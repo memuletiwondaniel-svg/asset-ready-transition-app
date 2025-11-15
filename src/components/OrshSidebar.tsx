@@ -120,22 +120,22 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           <CollapsibleTrigger asChild>
             {isSidebarCollapsed ? <div role="button" tabIndex={0} className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer">
                 <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarImage src={displayAvatar} alt={displayName} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                    {userName.slice(0, 2).toUpperCase()}
+                    {displayName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </div> : <Button variant="ghost" className="w-full p-3 h-auto hover:bg-muted/50 justify-start">
                 <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
-                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarImage src={displayAvatar} alt={displayName} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                    {userName.slice(0, 2).toUpperCase()}
+                    {displayName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <>
                   <div className="flex-1 text-left animate-fade-in">
-                    <p className="text-sm font-medium">{userName}</p>
-                    <p className="text-xs text-muted-foreground">{userTitle}</p>
+                    <p className="text-sm font-medium">{displayName}</p>
+                    <p className="text-xs text-muted-foreground">{displayTitle}</p>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </>

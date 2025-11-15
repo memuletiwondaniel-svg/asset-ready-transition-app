@@ -195,6 +195,11 @@ const EditChecklistForm: React.FC<EditChecklistFormProps> = ({
         icon={<Edit3 className="h-5 w-5" />}
         title="Edit Checklist"
         description="Update checklist details and manage items"
+        customBreadcrumbs={[
+          { label: 'Home', path: '/', onClick: onBack },
+          { label: 'Administration', path: '/admin-tools', onClick: onBack },
+          { label: 'Edit Checklist', path: '/admin-tools', onClick: () => {} }
+        ]}
       />
 
       <div className="pb-8">

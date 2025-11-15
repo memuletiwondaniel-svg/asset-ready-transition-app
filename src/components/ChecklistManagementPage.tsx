@@ -486,7 +486,16 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
   }
   return <AnimatedBackground className="min-h-screen">
       {/* Admin Header with Breadcrumb Navigation */}
-      <AdminHeader icon={<ListChecks className="w-5 h-5" />} title="Checklist Management" description="Manage and organize checklist items, categories, and templates" />
+      <AdminHeader 
+        icon={<ListChecks className="w-5 h-5" />} 
+        title="Checklist Management" 
+        description="Manage and organize checklist items, categories, and templates"
+        customBreadcrumbs={[
+          { label: 'Home', path: '/', onClick: onBack },
+          { label: 'Administration', path: '/admin-tools', onClick: onBack },
+          { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
+        ]}
+      />
 
       {/* Bulk Actions Toolbar */}
       <BulkActionsToolbar selectedItems={selectedItems} items={checklistItems || []} onClearSelection={() => setSelectedItems(new Set())} availableCategories={availableCategories} />

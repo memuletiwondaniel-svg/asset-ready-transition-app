@@ -106,6 +106,11 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
         icon={<Activity className="h-5 w-5" />}
         title="Activity Log"
         description="View and monitor all system activities"
+        customBreadcrumbs={[
+          { label: 'Home', path: '/', onClick: onBack },
+          { label: 'Administration', path: '/admin-tools', onClick: onBack },
+          { label: 'Activity Log', path: '/admin-tools', onClick: () => {} }
+        ]}
       >
         <Button variant="ghost" onClick={onBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
