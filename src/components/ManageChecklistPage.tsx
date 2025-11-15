@@ -243,24 +243,137 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         </div>
           </AnimatedBackground>
         </div>;
+  }
+  
+  if (showSuccessPage) {
+    return <div className="flex-1 overflow-auto">
+      <AnimatedBackground>
+        <div className="relative z-10">
+          <AdminHeader icon={<ClipboardList className="w-5 h-5" />} title="Checklist Management" description="Checklist created successfully" />
+          
+          <ChecklistSuccessPage 
+            checklistName={createdChecklistName} 
+            onViewChecklists={handleBackToChecklists} 
+            onCreateAnother={() => { setShowSuccessPage(false); setShowCreateForm(true); }} 
+          />
+        </div>
+      </AnimatedBackground>
+    </div>;
+  }
+  
+  if (selectedChecklist) {
+    return <div className="flex-1 overflow-auto">
+      <ChecklistDetailsPage 
+        checklist={selectedChecklist} 
+        onBack={() => setSelectedChecklist(null)} 
+        selectedLanguage={currentLanguage} 
+        translations={t} 
+      />
+    </div>;
+  }
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t.delete} {t.checklists}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{checklistToDelete?.name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDeleteChecklist}>{t.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteChecklist} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t.delete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-        </AnimatedBackground>
-      </div>;
+  return <div className="flex-1 overflow-auto">
+    <AnimatedBackground>
+      <div className="relative z-10">
+        <AdminHeader icon={<ClipboardList className="w-5 h-5" />} title="Checklist Management" description="Manage your checklists, items, categories, and topics" />
+
+        <div className="container py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
+            <div className="flex justify-center animate-smooth-in stagger-1">
+              <TabsList className="inline-flex h-14 items-center justify-center rounded-2xl bg-card/90 backdrop-blur-md p-1.5 text-muted-foreground shadow-lg border transition-all duration-300">
+                <TabsTrigger value="checklists" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:scale-105 gap-2 hover:bg-accent/50 hover:scale-102 active:scale-100">
+                  <ClipboardList className="h-4 w-4 transition-transform duration-300" />
+                  <span className="hidden sm:inline">{t.checklists}</span>
+                </TabsTrigger>
+                <TabsTrigger value="items" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:scale-105 gap-2 hover:bg-accent/50 hover:scale-102 active:scale-100">
+                  <FileText className="h-4 w-4 transition-transform duration-300" />
+                  <span className="hidden sm:inline">{t.items}</span>
+                </TabsTrigger>
+                <TabsTrigger value="categories" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:scale-105 gap-2 hover:bg-accent/50 hover:scale-102 active:scale-100">
+                  <Users className="h-4 w-4 transition-transform duration-300" />
+                  <span className="hidden sm:inline">{t.categories}</span>
+                </TabsTrigger>
+                <TabsTrigger value="topics" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-3 text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:scale-105 gap-2 hover:bg-accent/50 hover:scale-102 active:scale-100">
+                  <BookOpen className="h-4 w-4 transition-transform duration-300" />
+                  <span className="hidden sm:inline">{t.topics}</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="checklists" className="space-y-8 animate-slide-up mt-0">
+              <div className="flex items-center justify-between animate-smooth-in stagger-2">
+                <Button onClick={() => setShowCreateForm(true)} className="btn-premium shadow-md hover:shadow-lg transition-all duration-300">
+                  <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
+                  {t.createNewChecklist}
+                </Button>
+              </div>
+              
+              {isLoading ? <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}</div> : checklists.length === 0 ? <div className="text-center py-16 animate-smooth-in">
+                  <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-xl font-semibold mb-2 text-foreground/80">No Checklists Yet</h3>
+                  <p className="text-muted-foreground">Create your first checklist to get started</p>
+                </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {checklists.map((checklist, index) => {
+                    const colorVariants = ['from-blue-500/10 via-blue-500/5 to-transparent border-blue-500/15 hover:border-blue-500/30', 'from-violet-500/10 via-violet-500/5 to-transparent border-violet-500/15 hover:border-violet-500/30', 'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/15 hover:border-emerald-500/30'];
+                    const colorClass = colorVariants[index % colorVariants.length];
+                    return <Card key={checklist.id} className={`group cursor-pointer relative overflow-hidden transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br backdrop-blur animate-smooth-in ${colorClass}`} onClick={() => handleChecklistClick(checklist)}>
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <CardHeader className="relative">
+                        <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors duration-300">{checklist.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="relative">
+                        <div className="flex items-center justify-between">
+                          {getStatusBadge(checklist.status)}
+                          <div className="flex items-center text-sm text-muted-foreground transition-colors duration-300 group-hover:text-foreground">
+                            <FileText className="h-4 w-4 mr-1" />
+                            {checklist.items_count} {t.items.toLowerCase()}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>;
+                  })}
+                </div>}
+            </TabsContent>
+
+            <TabsContent value="items" className="animate-slide-up mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
+                <ChecklistManagementPage onBack={() => {}} translations={t} selectedLanguage={currentLanguage} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="categories" className="animate-slide-up mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
+                <ChecklistCategoriesManagement onBack={() => {}} translations={t} selectedLanguage={currentLanguage} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="topics" className="animate-slide-up mt-0">
+              <div className="bg-card/60 backdrop-blur-sm rounded-xl shadow-xl border p-6 card-lift">
+                <ChecklistTopicsManagement onBack={() => {}} translations={t} selectedLanguage={currentLanguage} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t.delete} {t.checklists}</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{checklistToDelete?.name}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDeleteChecklist}>{t.cancel}</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteChecklist} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {t.delete}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </AnimatedBackground>
+  </div>;
 };
+
 export default ManageChecklistPage;
