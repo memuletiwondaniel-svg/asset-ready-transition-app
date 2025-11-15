@@ -228,6 +228,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         <div className="relative z-10">
           <AdminHeader 
             icon={<ClipboardList className="w-6 h-6" />} 
+            iconGradient="from-purple-500 to-purple-600"
             title="Checklist Management"
             description="Manage your checklists, items, categories, and topics"
             customBreadcrumbs={[
@@ -248,6 +249,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         <div className="relative z-10">
           <AdminHeader 
             icon={<ClipboardList className="w-6 h-6" />} 
+            iconGradient="from-purple-500 to-purple-600"
             title="Checklist Management"
             description="Manage your checklists, items, categories, and topics"
             customBreadcrumbs={[
@@ -269,6 +271,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         <div className="relative z-10">
           <AdminHeader 
             icon={<ClipboardList className="w-6 h-6" />} 
+            iconGradient="from-purple-500 to-purple-600"
             title="Checklist Management"
             description="Manage your checklists, items, categories, and topics"
             customBreadcrumbs={[
@@ -304,6 +307,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       <div className="relative z-10">
         <AdminHeader 
           icon={<ClipboardList className="w-6 h-6" />} 
+          iconGradient="from-purple-500 to-purple-600"
           title="Checklist Management"
           description="Manage your checklists, items, categories, and topics"
           customBreadcrumbs={[
