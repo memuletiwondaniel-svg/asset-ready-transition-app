@@ -491,17 +491,12 @@ const ChecklistManagementPage: React.FC<ChecklistManagementPageProps> = ({
       {/* Bulk Actions Toolbar */}
       <BulkActionsToolbar selectedItems={selectedItems} items={checklistItems || []} onClearSelection={() => setSelectedItems(new Set())} availableCategories={availableCategories} />
 
-      <div className="container pt-12 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Modern Hero Header */}
-        <div className="mb-10 animate-fade-in-up">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div className="space-y-2">
-              
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight fluent-hero-text">
-                Checklist Items
-              </h1>
-              
-              {selectedItems.size > 0 && <Badge className="mt-2">
+      <div className="container pt-6 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Action Buttons and Controls */}
+        <div className="mb-6 animate-fade-in-up">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {selectedItems.size > 0 && <Badge className="bg-primary/10 text-primary">
                   {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected
                 </Badge>}
             </div>
