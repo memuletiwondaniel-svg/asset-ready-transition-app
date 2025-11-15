@@ -530,9 +530,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     
     switch (status) {
       case 'active':
-        return <Badge variant="default">Active</Badge>;
+        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20">Active</Badge>;
       case 'pending_approval':
-        return <Badge variant="secondary">Awaiting Authentication</Badge>;
+        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 hover:bg-yellow-500/20">Awaiting Authentication</Badge>;
       case 'suspended':
         return <Badge variant="destructive">Suspended</Badge>;
       case 'inactive':
