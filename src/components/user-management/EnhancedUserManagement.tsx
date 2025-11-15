@@ -653,195 +653,238 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
           />
 
           <div className="max-w-7xl mx-auto p-6 space-y-6">
-            {/* Action Controls */}
-            <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Columns className="h-4 w-4 mr-2" />
-                  Columns
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
-                <div className="p-2">
-                  <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
-                  {columns.map((column) => (
-                    <div key={column.id} className="flex items-center space-x-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={column.visible}
-                        onChange={() => toggleColumnVisibility(column.id)}
-                        className="rounded"
-                      />
-                      <span className="text-sm">{column.label}</span>
+            {/* Stats Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+              <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent hover:shadow-lg transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-500/10 group-hover:scale-110 transition-transform duration-300">
+                      <Users className="h-6 w-6 text-blue-500" />
                     </div>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Button onClick={() => setShowCreateUser(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
-                </div>
-                <User className="h-8 w-8 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Users</p>
-                  <p className="text-2xl font-bold">
-                    {users.filter(u => u.status === 'active').length}
-                  </p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Awaiting Authentication</p>
-                  <p className="text-2xl font-bold">
-                    {users.filter(u => u.status === 'pending_approval').length}
-                  </p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Pending Actions</p>
-                  <p className="text-2xl font-bold">
-                    {users.reduce((sum, u) => sum + (u.pending_actions || 0), 0)}
-                  </p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="flex-1 min-w-[200px]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search users, emails, or projects..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+                    <Badge variant="secondary" className="text-xs">Total</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Users</p>
+                    <p className="text-3xl font-bold text-foreground">{users.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+              <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent hover:shadow-lg transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-green-500/10 group-hover:scale-110 transition-transform duration-300">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    </div>
+                    <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">Active</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Active Users</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {users.filter(u => u.status === 'active').length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
               
-              <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Company" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Companies</SelectItem>
-                  {companies.map(company => (
-                    <SelectItem key={company} value={company}>{company}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent hover:shadow-lg transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-yellow-500/10 group-hover:scale-110 transition-transform duration-300">
+                      <Clock className="h-6 w-6 text-yellow-500" />
+                    </div>
+                    <Badge variant="secondary" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Pending</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Awaiting Auth</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {users.filter(u => u.status === 'pending_approval').length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
               
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  {roles.map(role => (
-                    <SelectItem key={role} value={role}>{role}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
+              <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent hover:shadow-lg transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-orange-500/10 group-hover:scale-110 transition-transform duration-300">
+                      <AlertTriangle className="h-6 w-6 text-orange-500" />
+                    </div>
+                    <Badge variant="secondary" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20">Actions</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Pending Actions</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {users.reduce((sum, u) => sum + (u.pending_actions || 0), 0)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Users Table */}
-        <Card>
-          <CardContent className="p-0">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
-                      {columns.filter(col => col.visible).map((column) => (
-                        <SortableTableHeader
-                          key={column.id}
-                          column={column}
-                          onResize={handleColumnResize}
-                          sortDirection={columnSort[column.id] || null}
-                          onSort={handleColumnSort}
-                        />
+            {/* Search and Actions Bar */}
+            <Card className="border-border/40 shadow-sm animate-fade-in">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                  <div className="relative flex-1 w-full md:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search users by name, email, or role..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 bg-background border-border/60 focus-visible:ring-primary/20"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="border-border/60">
+                          <Columns className="h-4 w-4 mr-2" />
+                          Columns
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
+                        <div className="p-2">
+                          <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
+                          {columns.map((column) => (
+                            <div key={column.id} className="flex items-center space-x-2 py-1">
+                              <input
+                                type="checkbox"
+                                checked={column.visible}
+                                onChange={() => toggleColumnVisibility(column.id)}
+                                className="rounded"
+                              />
+                              <span className="text-sm">{column.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <Button 
+                      onClick={() => setShowCreateUser(true)}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add User
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+
+            {/* Filters */}
+            <Card className="border-border/40 shadow-sm animate-fade-in">
+              <CardContent className="p-6">
+                <div className="flex flex-wrap gap-3 items-center">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[160px] border-border/60">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                    <SelectTrigger className="w-[160px] border-border/60">
+                      <SelectValue placeholder="Company" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="all">All Companies</SelectItem>
+                      {companies.map(company => (
+                        <SelectItem key={company} value={company}>{company}</SelectItem>
                       ))}
-                    </SortableContext>
-                  </TableRow>
-                </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.user_id}>
-                    {columns.filter(col => col.visible).map((column) => (
-                      <TableCell key={column.id} style={{ width: column.width, minWidth: column.minWidth }}>
-                        {renderCellContent(column.id, user)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </DndContext>
-          </CardContent>
-        </Card>
-      </div>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-[160px] border-border/60">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="all">All Roles</SelectItem>
+                      {roles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setCompanyFilter('all');
+                        setRoleFilter('all');
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Users Table */}
+            <Card className="border-border/40 shadow-sm animate-fade-in">
+              <CardContent className="p-0">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow className="hover:bg-transparent border-border/40">
+                          <SortableContext items={columns.filter(col => col.visible).map(col => col.id)} strategy={horizontalListSortingStrategy}>
+                            {columns.filter(col => col.visible).map((column) => (
+                              <SortableTableHeader
+                                key={column.id}
+                                column={column}
+                                onResize={handleColumnResize}
+                                sortDirection={columnSort[column.id] || null}
+                                onSort={handleColumnSort}
+                              />
+                            ))}
+                          </SortableContext>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((user, index) => (
+                          <TableRow 
+                            key={user.user_id}
+                            className="hover:bg-muted/50 transition-colors border-border/40"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            {columns.filter(col => col.visible).map((column) => (
+                              <TableCell key={column.id} style={{ width: column.width, minWidth: column.minWidth }}>
+                                {renderCellContent(column.id, user)}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </DndContext>
+              </CardContent>
+            </Card>
+          </div>
 
       {/* Modals */}
       {selectedUser && (
