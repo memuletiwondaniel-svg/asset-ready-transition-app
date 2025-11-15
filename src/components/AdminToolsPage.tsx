@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -295,14 +295,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'dashboard':
         crumbs.push({
           label: 'Admin Tools',
-          icon: Settings,
+          icon: Sliders,
           onClick: undefined
         });
         break;
       case 'users':
         crumbs.push({
           label: 'Admin Tools',
-          icon: Settings,
+          icon: Sliders,
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
@@ -314,7 +314,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'checklist':
         crumbs.push({
           label: 'Admin Tools',
-          icon: Settings,
+          icon: Sliders,
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
@@ -326,7 +326,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'pssr-settings':
         crumbs.push({
           label: 'Admin Tools',
-          icon: Settings,
+          icon: Sliders,
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
@@ -338,7 +338,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'projects':
         crumbs.push({
           label: 'Admin Tools',
-          icon: Settings,
+          icon: Sliders,
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
@@ -350,7 +350,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'activity-log':
         crumbs.push({
           label: 'Admin Tools',
-          icon: Settings,
+          icon: Sliders,
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
@@ -412,8 +412,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           <BreadcrumbNavigation currentPageLabel="Administration" />
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl">
-                <Settings className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg">
+                <Sliders className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground tracking-tight">
