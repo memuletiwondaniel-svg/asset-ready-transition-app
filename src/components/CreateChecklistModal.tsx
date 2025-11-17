@@ -260,68 +260,90 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
       {currentStep === 1 && (
         <ScrollArea className="flex-1 px-6">
           <div className="space-y-6 pb-6">
-            <div className="space-y-2">
-              <Label htmlFor="checklistName" className="text-sm font-semibold text-foreground">
-                Checklist Name <span className="text-destructive">*</span>
-              </Label>
-              <p className="text-xs text-muted-foreground">Your response</p>
-              <Input
-                id="checklistName"
-                placeholder="Enter a descriptive name..."
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="h-11 bg-muted/30 focus:bg-background focus-visible:ring-inset outline-none"
-              />
+            <div className="space-y-3">
+              <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
+                <Label htmlFor="checklistName" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Checklist Name <span className="text-destructive">*</span>
+                </Label>
+              </div>
+              <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
+                <Input
+                  id="checklistName"
+                  placeholder="Enter a descriptive name..."
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="border-0 bg-background/80 focus:bg-background focus-visible:ring-0 focus-visible:ring-offset-0 outline-none"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-foreground">
-                Reason for Checklist <span className="text-destructive">*</span>
-              </Label>
-              <p className="text-xs text-muted-foreground">Your response</p>
-              <Select 
-                value={formData.reason} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
-              >
-                <SelectTrigger className="h-11 bg-muted/30 focus:bg-background focus-visible:ring-inset outline-none">
-                  <SelectValue placeholder="Select the primary reason..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px] z-[100] bg-popover">
-                  {checklistReasons.map((reason) => (
-                    <SelectItem key={reason} value={reason}>
-                      {reason}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
+                <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Reason for Checklist <span className="text-destructive">*</span>
+                </Label>
+              </div>
+              <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
+                <Select 
+                  value={formData.reason} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
+                >
+                  <SelectTrigger className="border-0 bg-background/80 focus:bg-background focus-visible:ring-0 focus-visible:ring-offset-0 outline-none">
+                    <SelectValue placeholder="Select the primary reason..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px] z-[100] bg-popover">
+                    {checklistReasons.map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {formData.reason === 'Others' && (
-              <div className="space-y-2 animate-in slide-in-from-top-2">
-                <Label htmlFor="customReason" className="text-sm font-semibold">
-                  Specify Custom Reason <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="customReason"
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  className="h-11 bg-muted/30 focus:bg-background focus-visible:ring-inset outline-none"
-                />
+              <div className="space-y-3 animate-in slide-in-from-top-2">
+                <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
+                  <Label htmlFor="customReason" className="text-sm font-semibold flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    Specify Custom Reason <span className="text-destructive">*</span>
+                  </Label>
+                </div>
+                <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
+                  <Input
+                    id="customReason"
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    className="border-0 bg-background/80 focus:bg-background focus-visible:ring-0 focus-visible:ring-offset-0 outline-none"
+                  />
+                </div>
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="comments" className="text-sm font-semibold">
-                Comments <span className="text-muted-foreground font-normal">(Optional)</span>
-              </Label>
-              <p className="text-xs text-muted-foreground">Your response</p>
-              <textarea
-                id="comments"
-                value={formData.comments}
-                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                className="flex min-h-[100px] w-full rounded-md border bg-muted/30 px-3 py-2 text-sm focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset resize-none"
-                rows={4}
-              />
+            <div className="space-y-3">
+              <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
+                <Label htmlFor="comments" className="text-sm font-semibold flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Comments <span className="text-muted-foreground font-normal">(Optional)</span>
+                </Label>
+              </div>
+              <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
+                <textarea
+                  id="comments"
+                  value={formData.comments}
+                  onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                  className="flex min-h-[100px] w-full rounded-md border-0 bg-background/80 px-3 py-2 text-sm focus:bg-background focus-visible:outline-none focus-visible:ring-0 resize-none"
+                  rows={4}
+                  placeholder="Enter any additional notes..."
+                />
+              </div>
             </div>
           </div>
         </ScrollArea>
