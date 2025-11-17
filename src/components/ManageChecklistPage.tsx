@@ -1,4 +1,21 @@
 import React, { useState, useMemo } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CardSkeleton, TableSkeleton } from '@/components/ui/skeleton-loader';
@@ -9,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home, ListChecks, Eye, Trash2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home, ListChecks, Eye, Trash2, GripVertical } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistModal from './CreateChecklistModal';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -27,6 +44,7 @@ import ChecklistTopicsManagement from './ChecklistTopicsManagement';
 import PSSRSettingsManagement from './PSSRSettingsManagement';
 import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
+import { SortableChecklistCard } from './checklist/SortableChecklistCard';
 
 interface ManageChecklistPageProps {
   onBack: () => void;
@@ -69,6 +87,32 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const [checklistToDelete, setChecklistToDelete] = useState<Checklist | null>(null);
   const [showApprovalHistory, setShowApprovalHistory] = useState(false);
   const [selectedChecklistForHistory, setSelectedChecklistForHistory] = useState<Checklist | null>(null);
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setLocalChecklists((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      
+      toast({
+        title: "Order Updated",
+        description: "Checklist order has been updated",
+      });
+    }
+  };
 
   const { toast } = useToast();
   
@@ -76,8 +120,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const sampleChecklists: Checklist[] = [
     {
       id: 'CL-001',
-      name: 'Pre-Startup Safety Review - New Compressor Station',
-      reason: 'New Equipment Installation',
+      name: 'Project PSSR',
+      reason: 'Start-Up or Commissioning of a new Facility or Project',
       status: 'approved',
       items_count: 45,
       active_pssr_count: 3,
@@ -94,8 +138,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     },
     {
       id: 'CL-002',
-      name: 'MOC Safety Checklist - Pipeline Modification',
-      reason: 'Management of Change (MOC)',
+      name: 'Turn Around Maintenance (TA)',
+      reason: 'Restart following a Turn Around (TAR) Event',
       status: 'active',
       items_count: 32,
       active_pssr_count: 1,
@@ -105,17 +149,24 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       selected_items: [],
       created_by: 'user-456',
       custom_reason: null,
-      moc_number: 'MOC-2024-015',
-      plant_change_type: 'modification',
-      selected_moc_scopes: ['Piping', 'Safety Systems'],
+      moc_number: null,
+      plant_change_type: null,
+      selected_moc_scopes: null,
       selected_tie_in_scopes: null,
     }
   ];
   
   const { data: checklistsData, isLoading, error } = useChecklists();
   
-  // Use sample checklists if database is empty
-  const checklists = (checklistsData && checklistsData.length > 0) ? checklistsData : sampleChecklists;
+  // Use sample checklists if database is empty and enable drag & drop
+  const [localChecklists, setLocalChecklists] = useState<Checklist[]>([]);
+  
+  React.useEffect(() => {
+    const items = (checklistsData && checklistsData.length > 0) ? checklistsData : sampleChecklists;
+    setLocalChecklists(items);
+  }, [checklistsData]);
+  
+  const checklists = localChecklists;
   const { data: categories = [] } = useChecklistCategories();
   const { data: topics = [] } = useChecklistTopics();
   const { mutate: createChecklist } = useCreateChecklist();
@@ -292,63 +343,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
               </div>
 
               <TabsContent value="checklists" className="space-y-6">
-                {/* Stats Widget Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Total Checklists</p>
-                          <p className="text-3xl font-bold text-primary">{checklists.length}</p>
-                        </div>
-                        <ClipboardList className="h-8 w-8 text-primary/60" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20 hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Active</p>
-                          <p className="text-3xl font-bold text-green-600">
-                            {checklists.filter(c => c.status === 'active').length}
-                          </p>
-                        </div>
-                        <FileText className="h-8 w-8 text-green-500/60" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20 hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Draft</p>
-                          <p className="text-3xl font-bold text-yellow-600">
-                            {checklists.filter(c => c.status === 'draft').length}
-                          </p>
-                        </div>
-                        <Edit3 className="h-8 w-8 text-yellow-500/60" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20 hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Total Items</p>
-                          <p className="text-3xl font-bold text-blue-600">
-                            {checklists.reduce((sum, c) => sum + (c.items_count || 0), 0)}
-                          </p>
-                        </div>
-                        <FileText className="h-8 w-8 text-blue-500/60" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Search and Actions Widget */}
                 <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
                   <CardContent className="pt-6">
@@ -419,153 +413,28 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                     </div>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredChecklists.map(checklist => {
-                      // Status-based styling
-                      const getStatusStyles = () => {
-                        switch(checklist.status) {
-                          case 'approved':
-                            return {
-                              border: 'border-l-4 border-l-green-500',
-                              gradient: 'from-green-500/10 via-transparent to-transparent',
-                              badgeClass: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/30'
-                            };
-                          case 'active':
-                            return {
-                              border: 'border-l-4 border-l-blue-500',
-                              gradient: 'from-blue-500/10 via-transparent to-transparent',
-                              badgeClass: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30'
-                            };
-                          case 'draft':
-                            return {
-                              border: 'border-l-4 border-l-gray-400',
-                              gradient: 'from-gray-400/10 via-transparent to-transparent',
-                              badgeClass: 'bg-gray-400/10 text-gray-700 dark:text-gray-300 border-gray-400/30'
-                            };
-                          case 'rejected':
-                            return {
-                              border: 'border-l-4 border-l-red-500',
-                              gradient: 'from-red-500/10 via-transparent to-transparent',
-                              badgeClass: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30'
-                            };
-                          default:
-                            return {
-                              border: 'border-l-4 border-l-primary',
-                              gradient: 'from-primary/10 via-transparent to-transparent',
-                              badgeClass: 'bg-primary/10 text-primary border-primary/30'
-                            };
-                        }
-                      };
-                      
-                      const statusStyles = getStatusStyles();
-                      
-                      return (
-                      <Card 
-                        key={checklist.id} 
-                        className={`group relative hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden bg-card/90 backdrop-blur-sm hover:bg-card hover:-translate-y-2 hover:scale-[1.02] animate-fade-in ${statusStyles.border}`}
-                        onClick={() => setSelectedChecklist(checklist)}
-                      >
-                        {/* Status Gradient Overlay */}
-                        <div className={`absolute inset-0 bg-gradient-to-r ${statusStyles.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                        
-                        {/* Animated Border Glow */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        <CardHeader className="pb-3 relative">
-                          <div className="flex justify-between items-start gap-3">
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-lg mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                                {checklist.name}
-                              </CardTitle>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4 pt-0 relative">
-                          {/* Status & Badges Row */}
-                          <div className="flex gap-2 flex-wrap pb-3 border-b border-border/50 animate-fade-in">
-                            <Badge 
-                              className={`text-xs font-medium capitalize ${statusStyles.badgeClass}`}
-                            >
-                              {checklist.status}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20">
-                              <ListChecks className="h-3 w-3 mr-1" />
-                              {checklist.items_count || 0} Items
-                            </Badge>
-                            {checklist.active_pssr_count > 0 && (
-                              <Badge className="text-xs bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20">
-                                <ClipboardList className="h-3 w-3 mr-1" />
-                                {checklist.active_pssr_count} Active PSSR{checklist.active_pssr_count !== 1 ? 's' : ''}
-                              </Badge>
-                            )}
-                          </div>
-
-                          {/* Details Grid */}
-                          <div className="space-y-2.5 text-sm">
-                            <div className="flex items-start gap-2.5">
-                              <FileText className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs text-muted-foreground mb-0.5">Reason</p>
-                                <p className="font-medium line-clamp-2 text-foreground">{checklist.reason}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3">
-                              {checklist.created_by_email && (
-                                <div className="flex items-start gap-2">
-                                  <User className="h-4 w-4 flex-shrink-0 text-primary mt-0.5" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-muted-foreground">Created By</p>
-                                    <p className="text-xs font-medium truncate">{checklist.created_by_email}</p>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {checklist.created_at && (
-                                <div className="flex items-start gap-2">
-                                  <Calendar className="h-4 w-4 flex-shrink-0 text-primary mt-0.5" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-muted-foreground">Created</p>
-                                    <p className="text-xs font-medium">{new Date(checklist.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Hover Actions - Hidden by default, visible on card hover */}
-                          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                            <Button 
-                              variant="secondary" 
-                              size="sm" 
-                              onClick={() => setSelectedChecklist(checklist)}
-                              className="h-8 px-3 shadow-lg"
-                            >
-                              <Eye className="h-3.5 w-3.5 mr-1.5" />
-                              View
-                            </Button>
-                            <Button 
-                              variant="secondary" 
-                              size="sm" 
-                              onClick={() => handleEdit(checklist)} 
-                              className="h-8 px-3 shadow-lg hover:bg-primary hover:text-primary-foreground"
-                            >
-                              <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="secondary" 
-                              size="sm" 
-                              onClick={() => handleDeleteClick(checklist)} 
-                              className="h-8 px-3 shadow-lg hover:bg-destructive hover:text-destructive-foreground"
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                              Delete
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      );
-                    })}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={filteredChecklists.map(c => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredChecklists.map(checklist => (
+                          <SortableChecklistCard 
+                            key={checklist.id} 
+                            checklist={checklist} 
+                            onSelect={setSelectedChecklist} 
+                            onEdit={handleEdit} 
+                            onDelete={handleDeleteClick} 
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                   </div>
                 )}
               </TabsContent>
