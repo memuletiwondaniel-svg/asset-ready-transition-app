@@ -34,9 +34,11 @@ interface CreateChecklistModalProps {
 }
 
 interface NewChecklistData {
+  name: string;
   reason: string;
   selected_items: string[];
   custom_reason?: string;
+  comments?: string;
 }
 
 const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({ 
@@ -55,8 +57,10 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
   const { data: mocScopes = [] } = usePSSRMOCScopes();
   
   const [formData, setFormData] = useState<NewChecklistData>({
+    name: '',
     reason: '',
     selected_items: [],
+    comments: ''
   });
   const [customReason, setCustomReason] = useState('');
   const [plantChangeType, setPlantChangeType] = useState('');
@@ -123,7 +127,8 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
     setFormData(prev => ({ ...prev, selected_items: [] }));
   };
 
-  const canProceedStep1 = formData.reason !== '' && 
+  const canProceedStep1 = formData.name.trim() !== '' && 
+    formData.reason !== '' && 
     (formData.reason !== 'Others' || customReason.trim() !== '');
 
   const canComplete = formData.selected_items.length > 0;
@@ -153,9 +158,11 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
     }
 
     const checklistData: NewChecklistData = {
+      name: formData.name,
       reason: formData.reason,
       selected_items: formData.selected_items,
-      custom_reason: formData.reason === 'Others' ? customReason : undefined
+      custom_reason: formData.reason === 'Others' ? customReason : undefined,
+      comments: formData.comments || undefined
     };
 
     onComplete(checklistData);
@@ -196,6 +203,21 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
       {currentStep === 1 && (
         <ScrollArea className="flex-1 -mx-6 px-6">
           <div className="space-y-6 pb-6">
+            {/* Checklist Name */}
+            <div className="space-y-3">
+              <Label htmlFor="checklistName" className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Checklist Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="checklistName"
+                placeholder="Enter a descriptive name for this checklist..."
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="h-11"
+              />
+            </div>
+
             {/* Reason Selection */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
@@ -323,6 +345,21 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 )}
               </div>
             )}
+
+            {/* Comments */}
+            <div className="space-y-3">
+              <Label htmlFor="comments" className="text-sm font-medium">
+                Additional Comments (Optional)
+              </Label>
+              <textarea
+                id="comments"
+                placeholder="Add any additional notes or comments about this checklist..."
+                value={formData.comments}
+                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                rows={4}
+              />
+            </div>
 
             {/* Info Card */}
             <Card className="bg-primary/5 border-primary/20">
