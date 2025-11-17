@@ -391,7 +391,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
           <Separator className="flex-shrink-0" />
 
           <ScrollArea className="h-[60vh]">
-            <div className="space-y-2 px-6 py-4">
+            <div className="space-y-2 px-6 py-4 pb-28">
               {filteredItems.length === 0 ? (
                 <div className="text-center py-12">
                   <ListChecks className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
@@ -489,7 +489,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
       {/* Step 3: Select Approvers */}
       {currentStep === 3 && (
         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-6 pb-6">
+          <div className="space-y-6 pb-28">
             <div className="space-y-3">
               <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
                 <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -648,7 +648,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
       )}
 
       {/* Footer */}
-      <div className="pt-6 border-t mt-auto px-6">
+      <div className="sticky bottom-0 z-20 pt-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={handleBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
