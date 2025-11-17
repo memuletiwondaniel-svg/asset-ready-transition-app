@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
@@ -455,25 +456,25 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       </AnimatedBackground>
 
       {/* Create Checklist Modal */}
-      <Sheet open={showCreateForm} onOpenChange={setShowCreateForm}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col">
+      <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+        <DialogContent className="max-w-3xl max-h-[90vh] p-0 gap-0 overflow-hidden">
           <div className="px-6 pt-6 pb-4 border-b border-border/50">
-            <SheetHeader>
-              <SheetTitle className="text-xl">Create New Checklist</SheetTitle>
-              <SheetDescription>
+            <DialogHeader>
+              <DialogTitle className="text-xl">Create New Checklist</DialogTitle>
+              <DialogDescription>
                 Set up a new safety checklist for your project
-              </SheetDescription>
-            </SheetHeader>
+              </DialogDescription>
+            </DialogHeader>
           </div>
-          <div className="flex-1 overflow-hidden px-6 pt-6">
+          <div className="overflow-y-auto px-6 py-6">
             <CreateChecklistModal 
               onComplete={handleCreateComplete} 
               onCancel={() => setShowCreateForm(false)}
               selectedLanguage={currentLanguage}
             />
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Checklist Modal */}
       {editingChecklist && (
