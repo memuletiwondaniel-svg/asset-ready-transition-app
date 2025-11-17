@@ -71,7 +71,48 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const [selectedChecklistForHistory, setSelectedChecklistForHistory] = useState<Checklist | null>(null);
 
   const { toast } = useToast();
-  const { data: checklists = [], isLoading, error } = useChecklists();
+  
+  // Sample checklists for demonstration
+  const sampleChecklists: Checklist[] = [
+    {
+      id: 'CL-001',
+      name: 'Pre-Startup Safety Review - New Compressor Station',
+      reason: 'New Equipment Installation',
+      status: 'approved',
+      items_count: 45,
+      active_pssr_count: 3,
+      created_by_email: 'john.doe@company.com',
+      created_at: new Date('2024-01-15').toISOString(),
+      updated_at: new Date('2024-01-15').toISOString(),
+      selected_items: [],
+      created_by: 'user-123',
+      custom_reason: null,
+      moc_number: null,
+      plant_change_type: null,
+      selected_moc_scopes: null,
+      selected_tie_in_scopes: null,
+    },
+    {
+      id: 'CL-002',
+      name: 'MOC Safety Checklist - Pipeline Modification',
+      reason: 'Management of Change (MOC)',
+      status: 'active',
+      items_count: 32,
+      active_pssr_count: 1,
+      created_by_email: 'sarah.smith@company.com',
+      created_at: new Date('2024-02-10').toISOString(),
+      updated_at: new Date('2024-02-10').toISOString(),
+      selected_items: [],
+      created_by: 'user-456',
+      custom_reason: null,
+      moc_number: 'MOC-2024-015',
+      plant_change_type: 'modification',
+      selected_moc_scopes: ['Piping', 'Safety Systems'],
+      selected_tie_in_scopes: null,
+    }
+  ];
+  
+  const { data: checklists = sampleChecklists, isLoading, error } = useChecklists();
   const { data: categories = [] } = useChecklistCategories();
   const { data: topics = [] } = useChecklistTopics();
   const { mutate: createChecklist } = useCreateChecklist();
