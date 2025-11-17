@@ -163,6 +163,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
       title: "Item Updated",
       description: "Your changes will only apply to this checklist",
     });
+    setEditingItem(null);
   };
 
   const canProceedStep1 = formData.name.trim() !== '' && 
@@ -614,6 +615,9 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
         onOpenChange={(open) => !open && setEditingItem(null)}
         itemId={editingItem?.id || ''}
         itemDescription={editingItem?.description || ''}
+        currentResponsible={checklistItems.find(i => i.unique_id === editingItem?.id)?.responsible || ''}
+        currentApprover={checklistItems.find(i => i.unique_id === editingItem?.id)?.Approver || ''}
+        existingCustomization={editingItem ? itemCustomizations[editingItem.id] : undefined}
         onSave={handleSaveItemCustomization}
       />
     </div>
