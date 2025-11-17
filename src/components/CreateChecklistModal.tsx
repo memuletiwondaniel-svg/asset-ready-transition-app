@@ -498,9 +498,9 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
             <Button
               onClick={handleNext}
               disabled={!canProceedStep1}
-              className="gap-2 min-w-[120px]"
+              className="gap-2 min-w-[160px]"
             >
-              Next
+              <span>Next: Select Items</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
