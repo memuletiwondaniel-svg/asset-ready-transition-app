@@ -390,7 +390,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
           <Separator className="flex-shrink-0" />
 
-          <ScrollArea className="flex-1 min-h-0 h-full">
+          <ScrollArea className="h-[60vh]">
             <div className="space-y-2 px-6 py-4">
               {filteredItems.length === 0 ? (
                 <div className="text-center py-12">
