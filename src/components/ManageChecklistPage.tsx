@@ -420,13 +420,56 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredChecklists.map(checklist => (
+                    {filteredChecklists.map(checklist => {
+                      // Status-based styling
+                      const getStatusStyles = () => {
+                        switch(checklist.status) {
+                          case 'approved':
+                            return {
+                              border: 'border-l-4 border-l-green-500',
+                              gradient: 'from-green-500/10 via-transparent to-transparent',
+                              badgeClass: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/30'
+                            };
+                          case 'active':
+                            return {
+                              border: 'border-l-4 border-l-blue-500',
+                              gradient: 'from-blue-500/10 via-transparent to-transparent',
+                              badgeClass: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30'
+                            };
+                          case 'draft':
+                            return {
+                              border: 'border-l-4 border-l-gray-400',
+                              gradient: 'from-gray-400/10 via-transparent to-transparent',
+                              badgeClass: 'bg-gray-400/10 text-gray-700 dark:text-gray-300 border-gray-400/30'
+                            };
+                          case 'rejected':
+                            return {
+                              border: 'border-l-4 border-l-red-500',
+                              gradient: 'from-red-500/10 via-transparent to-transparent',
+                              badgeClass: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30'
+                            };
+                          default:
+                            return {
+                              border: 'border-l-4 border-l-primary',
+                              gradient: 'from-primary/10 via-transparent to-transparent',
+                              badgeClass: 'bg-primary/10 text-primary border-primary/30'
+                            };
+                        }
+                      };
+                      
+                      const statusStyles = getStatusStyles();
+                      
+                      return (
                       <Card 
                         key={checklist.id} 
-                        className="group hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm hover:bg-card hover:-translate-y-1"
+                        className={`group relative hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden bg-card/90 backdrop-blur-sm hover:bg-card hover:-translate-y-2 hover:scale-[1.02] animate-fade-in ${statusStyles.border}`}
                         onClick={() => setSelectedChecklist(checklist)}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {/* Status Gradient Overlay */}
+                        <div className={`absolute inset-0 bg-gradient-to-r ${statusStyles.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                        
+                        {/* Animated Border Glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <CardHeader className="pb-3 relative">
                           <div className="flex justify-between items-start gap-3">
                             <div className="flex-1 min-w-0">
@@ -438,10 +481,9 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                         </CardHeader>
                         <CardContent className="space-y-4 pt-0 relative">
                           {/* Status & Badges Row */}
-                          <div className="flex gap-2 flex-wrap pb-3 border-b border-border/50">
+                          <div className="flex gap-2 flex-wrap pb-3 border-b border-border/50 animate-fade-in">
                             <Badge 
-                              variant={checklist.status === 'active' ? 'default' : checklist.status === 'draft' ? 'secondary' : 'outline'} 
-                              className="text-xs font-medium capitalize"
+                              className={`text-xs font-medium capitalize ${statusStyles.badgeClass}`}
                             >
                               {checklist.status}
                             </Badge>
@@ -522,7 +564,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </TabsContent>
