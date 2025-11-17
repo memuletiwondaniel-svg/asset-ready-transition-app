@@ -86,6 +86,10 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
     return [...pssrReasons.map(r => r.name), 'Others'];
   }, [pssrReasons]);
 
+  const activeUsers = useMemo(() => {
+    return users?.filter(u => u.status === 'active') || [];
+  }, [users]);
+
   const categories = useMemo(() => {
     const categoryMap = new Map();
     checklistItems.forEach(item => {
@@ -120,9 +124,6 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
     });
   }, [checklistItems, searchQuery, selectedCategory]);
 
-  const activeUsers = useMemo(() => {
-    return users.filter(u => u.status === 'active');
-  }, [users]);
 
   const handleToggleItem = (itemId: string) => {
     setFormData(prev => ({
@@ -487,55 +488,85 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
       {/* Step 3: Select Approvers */}
       {currentStep === 3 && (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 pb-4">
-            <p className="text-sm text-muted-foreground">
-              Select users who need to approve this checklist
-            </p>
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="px-6 pb-4 flex-shrink-0">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Select users who need to approve this checklist
+                </p>
+                <Badge variant="secondary" className="text-xs font-semibold">
+                  {formData.approvers.length} selected
+                </Badge>
+              </div>
+              {activeUsers.length === 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <UserCheck className="w-4 h-4 inline mr-2" />
+                    No active users found in the system
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          <Separator />
+          <Separator className="flex-shrink-0" />
 
-          <ScrollArea className="flex-1 px-6 mt-4">
-            <div className="space-y-2 pb-4">
-              {activeUsers.map((user, index) => (
-                <Card
-                  key={user.id}
-                  className={cn(
-                    "cursor-pointer transition-all hover:shadow-md",
-                    formData.approvers.includes(user.id)
-                      ? "border-primary bg-primary/5"
-                      : "border-border/50 hover:border-border"
-                  )}
-                  onClick={() => handleToggleApprover(user.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={formData.approvers.includes(user.id)}
-                        onCheckedChange={() => handleToggleApprover(user.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">{user.firstName} {user.lastName}</p>
-                          {formData.approvers.includes(user.id) && (
-                            <Badge variant="secondary" className="text-xs">
-                              Order: {formData.approvers.indexOf(user.id) + 1}
-                            </Badge>
-                          )}
+          <ScrollArea className="flex-1 min-h-0 h-full">
+            <div className="space-y-2 px-6 py-4">
+              {activeUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <UserCheck className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">No users available</p>
+                </div>
+              ) : (
+                activeUsers.map((user) => (
+                  <Card
+                    key={user.id}
+                    className={cn(
+                      "cursor-pointer transition-all hover:shadow-md",
+                      formData.approvers.includes(user.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-border/50 hover:border-border"
+                    )}
+                    onClick={() => handleToggleApprover(user.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={formData.approvers.includes(user.id)}
+                          onCheckedChange={() => handleToggleApprover(user.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold">{user.firstName} {user.lastName}</p>
+                            {formData.approvers.includes(user.id) && (
+                              <Badge variant="secondary" className="text-xs">
+                                Order: {formData.approvers.indexOf(user.id) + 1}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {user.email && (
+                              <span>{user.email}</span>
+                            )}
+                            {user.company && (
+                              <>
+                                <span>•</span>
+                                <span>{user.company}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {user.role} • {user.company}
-                        </p>
+                        {formData.approvers.includes(user.id) && (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
                       </div>
-                      {formData.approvers.includes(user.id) && (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </ScrollArea>
         </div>
