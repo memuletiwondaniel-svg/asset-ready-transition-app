@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home, ListChecks } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistModal from './CreateChecklistModal';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -386,47 +386,67 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                         <CardHeader className="pb-3 relative">
                           <div className="flex justify-between items-start gap-3">
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-lg mb-3 group-hover:text-primary transition-colors truncate">
+                              <CardTitle className="text-lg mb-3 group-hover:text-primary transition-colors line-clamp-2">
                                 {checklist.name}
                               </CardTitle>
-                              <div className="flex gap-2 flex-wrap">
-                                <Badge 
-                                  variant={checklist.status === 'active' ? 'default' : checklist.status === 'draft' ? 'secondary' : 'outline'} 
-                                  className="text-xs font-medium"
-                                >
-                                  {checklist.status}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs bg-background/50">
-                                  {checklist.items_count || 0} items
-                                </Badge>
-                                {checklist.active_pssr_count > 0 && (
-                                  <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
-                                    {checklist.active_pssr_count} active PSSR{checklist.active_pssr_count !== 1 ? 's' : ''}
-                                  </Badge>
-                                )}
-                              </div>
                             </div>
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-0 relative">
-                          <div className="space-y-2.5 text-sm">
-                            <div className="flex items-start gap-2.5 text-muted-foreground">
-                              <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                              <span className="font-medium line-clamp-2">{checklist.reason}</span>
-                            </div>
-                            {checklist.created_by_email && (
-                              <div className="flex items-center gap-2.5 text-muted-foreground">
-                                <User className="h-4 w-4 flex-shrink-0" />
-                                <span className="text-xs truncate">{checklist.created_by_email}</span>
-                              </div>
-                            )}
-                            {checklist.created_at && (
-                              <div className="flex items-center gap-2.5 text-muted-foreground">
-                                <Calendar className="h-4 w-4 flex-shrink-0" />
-                                <span className="text-xs">{new Date(checklist.created_at).toLocaleDateString()}</span>
-                              </div>
+                          {/* Status & Badges Row */}
+                          <div className="flex gap-2 flex-wrap pb-3 border-b border-border/50">
+                            <Badge 
+                              variant={checklist.status === 'active' ? 'default' : checklist.status === 'draft' ? 'secondary' : 'outline'} 
+                              className="text-xs font-medium capitalize"
+                            >
+                              {checklist.status}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20">
+                              <ListChecks className="h-3 w-3 mr-1" />
+                              {checklist.items_count || 0} Items
+                            </Badge>
+                            {checklist.active_pssr_count > 0 && (
+                              <Badge className="text-xs bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20">
+                                <ClipboardList className="h-3 w-3 mr-1" />
+                                {checklist.active_pssr_count} Active PSSR{checklist.active_pssr_count !== 1 ? 's' : ''}
+                              </Badge>
                             )}
                           </div>
+
+                          {/* Details Grid */}
+                          <div className="space-y-2.5 text-sm">
+                            <div className="flex items-start gap-2.5">
+                              <FileText className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-muted-foreground mb-0.5">Reason</p>
+                                <p className="font-medium line-clamp-2 text-foreground">{checklist.reason}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              {checklist.created_by_email && (
+                                <div className="flex items-start gap-2">
+                                  <User className="h-4 w-4 flex-shrink-0 text-primary mt-0.5" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-muted-foreground">Created By</p>
+                                    <p className="text-xs font-medium truncate">{checklist.created_by_email}</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {checklist.created_at && (
+                                <div className="flex items-start gap-2">
+                                  <Calendar className="h-4 w-4 flex-shrink-0 text-primary mt-0.5" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-muted-foreground">Created</p>
+                                    <p className="text-xs font-medium">{new Date(checklist.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
                           <div className="flex gap-2 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
                             <Button 
                               variant="outline" 
@@ -437,7 +457,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                               <Edit3 className="h-3 w-3 mr-1.5" />
                               Edit
                             </Button>
-                            <Button 
+                            <Button
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleDeleteClick(checklist)} 
