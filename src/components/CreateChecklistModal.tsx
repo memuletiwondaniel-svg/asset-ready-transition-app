@@ -397,7 +397,27 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   <p className="text-sm text-muted-foreground">No items found</p>
                 </div>
               ) : (
-                filteredItems.map((item) => (
+                filteredItems.map((item) => {
+                  const getCategoryColor = (catName: string) => {
+                    const colors: Record<string, string> = {
+                      'General': 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
+                      'Hardware Integrity': 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20',
+                      'Process Safety': 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20',
+                      'Documentation': 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
+                      'Organization': 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20',
+                      'Health & Safety': 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-500/20',
+                      'Emergency Response': 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20',
+                      'HSE': 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20',
+                      'Electrical': 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20',
+                      'Mechanical': 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20',
+                      'Instrumentation': 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/20',
+                      'Civil': 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20',
+                      'Rotating': 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20'
+                    };
+                    return colors[catName] || 'bg-muted/50 text-foreground border-border/20';
+                  };
+
+                  return (
                   <Card
                     key={item.unique_id}
                     className={cn(
@@ -415,51 +435,50 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                           className="mt-0.5"
                           onClick={(e) => e.stopPropagation()}
                         />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge variant="secondary" className="text-xs font-mono">
-                                  {item.unique_id}
-                                </Badge>
-                                {itemCustomizations[item.unique_id] && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Customized
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm font-medium leading-snug">
-                                {itemCustomizations[item.unique_id]?.custom_description || item.description}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {formData.selected_items.includes(item.unique_id) && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingItem({ id: item.unique_id, description: item.description });
-                                    }}
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                                </>
-                              )}
-                            </div>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge 
+                              variant="outline" 
+                              className={cn("text-xs font-semibold border", getCategoryColor(item.category))}
+                            >
+                              {item.category}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs font-mono font-semibold">
+                              {item.unique_id}
+                            </Badge>
+                            {itemCustomizations[item.unique_id] && (
+                              <Badge variant="default" className="text-xs">
+                                <Edit className="w-3 h-3 mr-1" />
+                                Customized
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                            {item.topic && <Badge variant="secondary" className="text-xs">{item.topic}</Badge>}
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm leading-relaxed flex-1">
+                              {itemCustomizations[item.unique_id]?.custom_description || item.description}
+                            </p>
+                            {formData.selected_items.includes(item.unique_id) && (
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingItem({ id: item.unique_id, description: item.description });
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <CheckCircle className="h-5 w-5 text-primary" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))
+                )})
               )}
             </div>
           </ScrollArea>

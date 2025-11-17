@@ -7,13 +7,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUsers } from '@/hooks/useUsers';
-import { User, Trash2, UserPlus } from 'lucide-react';
+import { User, Trash2, UserPlus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EditChecklistItemDialogProps {
@@ -48,43 +47,64 @@ export const EditChecklistItemDialog: React.FC<EditChecklistItemDialogProps> = (
   onSave,
 }) => {
   const { users } = useUsers();
-  const [customDescription, setCustomDescription] = useState('');
-  const [customResponsible, setCustomResponsible] = useState('');
-  const [customApprover, setCustomApprover] = useState('');
+  const [description, setDescription] = useState('');
+  const [responsibleParties, setResponsibleParties] = useState<string[]>([]);
+  const [approvers, setApprovers] = useState<string[]>([]);
+  const [newResponsible, setNewResponsible] = useState('');
+  const [newApprover, setNewApprover] = useState('');
   const [notes, setNotes] = useState('');
 
   const activeUsers = users?.filter(u => u.status === 'active') || [];
 
   useEffect(() => {
-    if (open && existingCustomization) {
-      setCustomDescription(existingCustomization.custom_description || '');
-      setCustomResponsible(existingCustomization.custom_responsible || '');
-      setCustomApprover(existingCustomization.custom_approver || '');
-      setNotes(existingCustomization.notes || '');
-    } else if (open) {
-      setCustomDescription('');
-      setCustomResponsible(currentResponsible || '');
-      setCustomApprover(currentApprover || '');
-      setNotes('');
+    if (open) {
+      // Set description from customization or original
+      setDescription(existingCustomization?.custom_description || itemDescription);
+      
+      // Initialize responsible parties
+      const initialResponsible = existingCustomization?.custom_responsible || currentResponsible || '';
+      setResponsibleParties(initialResponsible ? initialResponsible.split(',').map(s => s.trim()).filter(Boolean) : []);
+      
+      // Initialize approvers
+      const initialApprover = existingCustomization?.custom_approver || currentApprover || '';
+      setApprovers(initialApprover ? initialApprover.split(',').map(s => s.trim()).filter(Boolean) : []);
+      
+      setNotes(existingCustomization?.notes || '');
+      setNewResponsible('');
+      setNewApprover('');
     }
-  }, [open, existingCustomization, currentResponsible, currentApprover]);
+  }, [open, existingCustomization, itemDescription, currentResponsible, currentApprover]);
+
+  const handleAddResponsible = () => {
+    if (newResponsible && !responsibleParties.includes(newResponsible)) {
+      setResponsibleParties([...responsibleParties, newResponsible]);
+      setNewResponsible('');
+    }
+  };
+
+  const handleRemoveResponsible = (party: string) => {
+    setResponsibleParties(responsibleParties.filter(p => p !== party));
+  };
+
+  const handleAddApprover = () => {
+    if (newApprover && !approvers.includes(newApprover)) {
+      setApprovers([...approvers, newApprover]);
+      setNewApprover('');
+    }
+  };
+
+  const handleRemoveApprover = (approver: string) => {
+    setApprovers(approvers.filter(a => a !== approver));
+  };
 
   const handleSave = () => {
     onSave({
-      custom_description: customDescription || undefined,
-      custom_responsible: customResponsible || undefined,
-      custom_approver: customApprover || undefined,
+      custom_description: description !== itemDescription ? description : undefined,
+      custom_responsible: responsibleParties.length > 0 ? responsibleParties.join(', ') : undefined,
+      custom_approver: approvers.length > 0 ? approvers.join(', ') : undefined,
       notes: notes || undefined,
     });
     onOpenChange(false);
-  };
-
-  const handleClearResponsible = () => {
-    setCustomResponsible('');
-  };
-
-  const handleClearApprover = () => {
-    setCustomApprover('');
   };
 
   return (
@@ -92,7 +112,7 @@ export const EditChecklistItemDialog: React.FC<EditChecklistItemDialogProps> = (
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="border-b border-border pb-4">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono text-xs">
+            <Badge variant="outline" className="font-mono text-xs font-semibold">
               {itemId}
             </Badge>
             <DialogTitle className="text-lg">Edit Checklist Item</DialogTitle>
@@ -103,56 +123,58 @@ export const EditChecklistItemDialog: React.FC<EditChecklistItemDialogProps> = (
         </DialogHeader>
 
         <div className="space-y-5 py-4 overflow-y-auto flex-1">
-          {/* Original Description */}
+          {/* Description */}
           <div className="space-y-3">
             <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
-              <Label className="text-sm font-semibold flex items-center gap-2">
+              <Label htmlFor="description" className="text-sm font-semibold flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                Original Description
-              </Label>
-            </div>
-            <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-muted/50">
-              <p className="text-sm leading-relaxed text-muted-foreground">{itemDescription}</p>
-            </div>
-          </div>
-
-          {/* Custom Description */}
-          <div className="space-y-3">
-            <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
-              <Label htmlFor="customDescription" className="text-sm font-semibold flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                Custom Description <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+                Description <span className="text-destructive">*</span>
               </Label>
             </div>
             <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
               <Textarea
-                id="customDescription"
-                placeholder="Override the description for this checklist..."
-                value={customDescription}
-                onChange={(e) => setCustomDescription(e.target.value)}
-                className="min-h-[100px] border-0 bg-background/80 focus:bg-background focus-visible:ring-0 resize-none"
+                id="description"
+                placeholder="Enter item description..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-[120px] border-0 bg-background/80 focus:bg-background focus-visible:ring-0 resize-none"
               />
             </div>
           </div>
 
-          {/* Responsible Party */}
+          {/* Responsible Parties */}
           <div className="space-y-3">
             <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                Responsible Party
+                Responsible Parties
               </Label>
-              {currentResponsible && !customResponsible && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Current: <span className="font-medium">{currentResponsible}</span>
-                </p>
-              )}
             </div>
-            <div className="bg-blue-500/5 p-4 rounded-lg border-l-4 border-blue-500/30">
+            <div className="bg-blue-500/5 p-4 rounded-lg border-l-4 border-blue-500/30 space-y-3">
+              {/* Current Parties */}
+              {responsibleParties.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {responsibleParties.map((party) => (
+                    <Badge key={party} variant="secondary" className="gap-2 pr-1">
+                      <User className="w-3 h-3" />
+                      {party}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-destructive/20"
+                        onClick={() => handleRemoveResponsible(party)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {/* Add New */}
               <div className="flex gap-2">
-                <Select value={customResponsible} onValueChange={setCustomResponsible}>
+                <Select value={newResponsible} onValueChange={setNewResponsible}>
                   <SelectTrigger className="flex-1 border-0 bg-background/80 focus:bg-background focus-visible:ring-0 focus-visible:ring-offset-0">
-                    <SelectValue placeholder="Select responsible party..." />
+                    <SelectValue placeholder="Select user to add..." />
                   </SelectTrigger>
                   <SelectContent className="z-[100] bg-popover max-h-[300px]">
                     {activeUsers.map((user) => (
@@ -165,38 +187,53 @@ export const EditChecklistItemDialog: React.FC<EditChecklistItemDialogProps> = (
                     ))}
                   </SelectContent>
                 </Select>
-                {customResponsible && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleClearResponsible}
-                    className="shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddResponsible}
+                  disabled={!newResponsible}
+                  className="gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Add
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Custom Approver */}
+          {/* Approvers */}
           <div className="space-y-3">
             <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Custom Approver
+                Approvers
               </Label>
-              {currentApprover && !customApprover && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Current: <span className="font-medium">{currentApprover}</span>
-                </p>
-              )}
             </div>
-            <div className="bg-green-500/5 p-4 rounded-lg border-l-4 border-green-500/30">
+            <div className="bg-green-500/5 p-4 rounded-lg border-l-4 border-green-500/30 space-y-3">
+              {/* Current Approvers */}
+              {approvers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {approvers.map((approver) => (
+                    <Badge key={approver} variant="secondary" className="gap-2 pr-1">
+                      <User className="w-3 h-3" />
+                      {approver}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-destructive/20"
+                        onClick={() => handleRemoveApprover(approver)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {/* Add New */}
               <div className="flex gap-2">
-                <Select value={customApprover} onValueChange={setCustomApprover}>
+                <Select value={newApprover} onValueChange={setNewApprover}>
                   <SelectTrigger className="flex-1 border-0 bg-background/80 focus:bg-background focus-visible:ring-0 focus-visible:ring-offset-0">
-                    <SelectValue placeholder="Select approver..." />
+                    <SelectValue placeholder="Select user to add..." />
                   </SelectTrigger>
                   <SelectContent className="z-[100] bg-popover max-h-[300px]">
                     {activeUsers.map((user) => (
@@ -209,16 +246,16 @@ export const EditChecklistItemDialog: React.FC<EditChecklistItemDialogProps> = (
                     ))}
                   </SelectContent>
                 </Select>
-                {customApprover && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleClearApprover}
-                    className="shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddApprover}
+                  disabled={!newApprover}
+                  className="gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Add
+                </Button>
               </div>
             </div>
           </div>
@@ -247,7 +284,7 @@ export const EditChecklistItemDialog: React.FC<EditChecklistItemDialogProps> = (
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} className="gap-2">
+          <Button onClick={handleSave} className="gap-2" disabled={!description.trim()}>
             <UserPlus className="w-4 h-4" />
             Save Changes
           </Button>
