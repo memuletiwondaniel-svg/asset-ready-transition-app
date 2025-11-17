@@ -390,8 +390,8 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
           <Separator className="flex-shrink-0" />
 
-          <ScrollArea className="h-[60vh]">
-            <div className="space-y-2 px-6 py-4 pb-28">
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="space-y-2 px-6 py-4 pb-6">
               {filteredItems.length === 0 ? (
                 <div className="text-center py-12">
                   <ListChecks className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
@@ -489,7 +489,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
       {/* Step 3: Select Approvers */}
       {currentStep === 3 && (
         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-6 pb-28">
+          <div className="space-y-6 pb-6">
             <div className="space-y-3">
               <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
                 <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
