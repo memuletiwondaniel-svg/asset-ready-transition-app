@@ -204,9 +204,8 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
         <ScrollArea className="flex-1 -mx-6 px-6">
           <div className="space-y-6 pb-6">
             {/* Checklist Name */}
-            <div className="space-y-3">
-              <Label htmlFor="checklistName" className="text-sm font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+            <div className="space-y-2">
+              <Label htmlFor="checklistName" className="text-sm font-semibold text-foreground">
                 Checklist Name <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -214,26 +213,25 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 placeholder="Enter a descriptive name for this checklist..."
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="h-11"
+                className="h-11 bg-muted/30 border-border focus:bg-background transition-colors"
               />
             </div>
 
             {/* Reason Selection */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-foreground">
                 Reason for Checklist <span className="text-destructive">*</span>
               </Label>
               <Select 
                 value={formData.reason} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
               >
-                <SelectTrigger className="h-11 bg-background">
+                <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background transition-colors">
                   <SelectValue placeholder="Select the primary reason..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px] z-[100] bg-popover border-border">
                   {checklistReasons.map((reason) => (
-                    <SelectItem key={reason} value={reason}>
+                    <SelectItem key={reason} value={reason} className="cursor-pointer">
                       {reason}
                     </SelectItem>
                   ))}
@@ -243,8 +241,8 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
             {/* Custom Reason */}
             {formData.reason === 'Others' && (
-              <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                <Label htmlFor="customReason" className="text-sm font-medium">
+              <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="customReason" className="text-sm font-semibold text-foreground">
                   Specify Custom Reason <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -252,20 +250,20 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   placeholder="Enter your custom reason..."
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
-                  className="h-11"
+                  className="h-11 bg-muted/30 border-border focus:bg-background transition-colors"
                 />
               </div>
             )}
 
             {/* Plant Change Type */}
             {formData.reason === 'Restart following plant changes or modifications' && (
-              <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                <Label className="text-sm font-medium">Plant Change Type</Label>
+              <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                <Label className="text-sm font-semibold text-foreground">Plant Change Type</Label>
                 <Select value={plantChangeType} onValueChange={setPlantChangeType}>
-                  <SelectTrigger className="h-11 bg-background">
+                  <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background transition-colors">
                     <SelectValue placeholder="Select type..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100] bg-popover border-border">
                     <SelectItem value="tie-in">Tie-in</SelectItem>
                     <SelectItem value="moc">MOC (Management of Change)</SelectItem>
                   </SelectContent>
@@ -273,13 +271,13 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
                 {/* Tie-in Scopes */}
                 {plantChangeType === 'tie-in' && (
-                  <Card className="mt-4 border-border/50">
+                  <Card className="mt-3 border-border/50 shadow-sm">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Tie-in Scopes</CardTitle>
+                      <CardTitle className="text-sm font-semibold">Tie-in Scopes</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-3">
                       {tieInScopes.map((scope) => (
-                        <div key={scope.id} className="flex items-center space-x-2">
+                        <div key={scope.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
                           <Checkbox
                             id={`tie-in-${scope.id}`}
                             checked={selectedTieInScopes.includes(scope.description)}
@@ -290,8 +288,9 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                                   : prev.filter(s => s !== scope.description)
                               );
                             }}
+                            className="mt-0.5"
                           />
-                          <Label htmlFor={`tie-in-${scope.id}`} className="text-sm font-normal cursor-pointer">
+                          <Label htmlFor={`tie-in-${scope.id}`} className="text-sm font-normal cursor-pointer leading-relaxed flex-1">
                             {scope.description}
                           </Label>
                         </div>
@@ -302,9 +301,9 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
                 {/* MOC Information */}
                 {plantChangeType === 'moc' && (
-                  <div className="space-y-4 mt-4">
+                  <div className="space-y-3 mt-3">
                     <div className="space-y-2">
-                      <Label htmlFor="mocNumber" className="text-sm font-medium">
+                      <Label htmlFor="mocNumber" className="text-sm font-semibold text-foreground">
                         MOC Number
                       </Label>
                       <Input
@@ -312,17 +311,17 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                         placeholder="Enter MOC number..."
                         value={mocNumber}
                         onChange={(e) => setMocNumber(e.target.value)}
-                        className="h-11"
+                        className="h-11 bg-muted/30 border-border focus:bg-background transition-colors"
                       />
                     </div>
 
-                    <Card className="border-border/50">
+                    <Card className="border-border/50 shadow-sm">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm">MOC Scopes</CardTitle>
+                        <CardTitle className="text-sm font-semibold">MOC Scopes</CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-2">
+                      <CardContent className="space-y-3">
                         {mocScopes.map((scope) => (
-                          <div key={scope.id} className="flex items-center space-x-2">
+                          <div key={scope.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
                             <Checkbox
                               id={`moc-${scope.id}`}
                               checked={selectedMocScopes.includes(scope.name)}
@@ -333,8 +332,9 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                                     : prev.filter(s => s !== scope.name)
                                 );
                               }}
+                              className="mt-0.5"
                             />
-                            <Label htmlFor={`moc-${scope.id}`} className="text-sm font-normal cursor-pointer">
+                            <Label htmlFor={`moc-${scope.id}`} className="text-sm font-normal cursor-pointer leading-relaxed flex-1">
                               {scope.name}
                             </Label>
                           </div>
@@ -347,16 +347,16 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
             )}
 
             {/* Comments */}
-            <div className="space-y-3">
-              <Label htmlFor="comments" className="text-sm font-medium">
-                Additional Comments (Optional)
+            <div className="space-y-2">
+              <Label htmlFor="comments" className="text-sm font-semibold text-foreground">
+                Additional Comments <span className="text-muted-foreground font-normal">(Optional)</span>
               </Label>
               <textarea
                 id="comments"
                 placeholder="Add any additional notes or comments about this checklist..."
                 value={formData.comments}
                 onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                className="flex min-h-[100px] w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
                 rows={4}
               />
             </div>
@@ -381,11 +381,11 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[160px] h-10">
+                <SelectTrigger className="w-[180px] h-10 bg-muted/30 border-border">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100] bg-popover border-border">
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id}>
