@@ -189,7 +189,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Step {currentStep} of 2</h3>
             <p className="text-sm text-muted-foreground">
-              {currentStep === 1 ? 'Basic Information' : 'Select Items'}
+              {currentStep === 1 ? 'Basic Information' : 'Select PSSR Items'}
             </p>
           </div>
           <Badge variant="outline" className="text-xs">
@@ -361,18 +361,6 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               />
             </div>
 
-            {/* Info Card */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="pt-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <div className="space-y-1 text-sm">
-                  <p className="font-medium text-primary">Next Step</p>
-                  <p className="text-muted-foreground">
-                    After providing basic information, you'll select specific checklist items for your PSSR.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </ScrollArea>
       )}
@@ -512,7 +500,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               disabled={!canProceedStep1}
               className="gap-2 min-w-[120px]"
             >
-              Continue
+              Next
               <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
