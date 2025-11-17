@@ -214,7 +214,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 placeholder="Enter a descriptive name for this checklist..."
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors"
+                className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset focus-visible:outline-none outline-none transition-colors"
               />
             </div>
 
@@ -228,7 +228,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 value={formData.reason} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
               >
-                <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors">
+                <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset focus-visible:outline-none transition-colors">
                   <SelectValue placeholder="Select the primary reason..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] z-[100] bg-popover border-border">
@@ -252,7 +252,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   placeholder="Enter your custom reason..."
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
-                  className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors"
+                  className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset focus-visible:outline-none outline-none transition-colors"
                 />
               </div>
             )}
@@ -262,7 +262,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                 <Label className="text-sm font-semibold text-foreground">Plant Change Type</Label>
                 <Select value={plantChangeType} onValueChange={setPlantChangeType}>
-                  <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors">
+                  <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset focus-visible:outline-none transition-colors">
                     <SelectValue placeholder="Select type..." />
                   </SelectTrigger>
                   <SelectContent className="z-[100] bg-popover border-border">
@@ -313,7 +313,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                         placeholder="Enter MOC number..."
                         value={mocNumber}
                         onChange={(e) => setMocNumber(e.target.value)}
-                        className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors"
+                        className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset focus-visible:outline-none outline-none transition-colors"
                       />
                     </div>
 
@@ -359,7 +359,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 placeholder="Add any additional notes or comments about this checklist..."
                 value={formData.comments}
                 onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                className="flex min-h-[100px] w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
+                className="flex min-h-[100px] w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
                 rows={4}
               />
             </div>
@@ -380,11 +380,11 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   placeholder="Search items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10 focus-visible:ring-offset-0"
+                  className="pl-9 h-10 outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset"
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px] h-10 bg-muted/30 border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0">
+                <SelectTrigger className="w-[180px] h-10 bg-muted/30 border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-inset focus-visible:outline-none">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
