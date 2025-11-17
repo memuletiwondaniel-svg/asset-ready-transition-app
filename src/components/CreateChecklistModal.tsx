@@ -201,19 +201,20 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
       {/* Step 1: Basic Information */}
       {currentStep === 1 && (
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 px-6">
           <div className="space-y-6 pb-6">
             {/* Checklist Name */}
             <div className="space-y-2">
               <Label htmlFor="checklistName" className="text-sm font-semibold text-foreground">
                 Checklist Name <span className="text-destructive">*</span>
               </Label>
+              <p className="text-xs text-muted-foreground">Your response</p>
               <Input
                 id="checklistName"
                 placeholder="Enter a descriptive name for this checklist..."
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="h-11 bg-muted/30 border-border focus:bg-background transition-colors"
+                className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors"
               />
             </div>
 
@@ -222,11 +223,12 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               <Label className="text-sm font-semibold text-foreground">
                 Reason for Checklist <span className="text-destructive">*</span>
               </Label>
+              <p className="text-xs text-muted-foreground">Your response</p>
               <Select 
                 value={formData.reason} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
               >
-                <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background transition-colors">
+                <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors">
                   <SelectValue placeholder="Select the primary reason..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] z-[100] bg-popover border-border">
@@ -250,7 +252,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   placeholder="Enter your custom reason..."
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
-                  className="h-11 bg-muted/30 border-border focus:bg-background transition-colors"
+                  className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors"
                 />
               </div>
             )}
@@ -260,7 +262,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                 <Label className="text-sm font-semibold text-foreground">Plant Change Type</Label>
                 <Select value={plantChangeType} onValueChange={setPlantChangeType}>
-                  <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background transition-colors">
+                  <SelectTrigger className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors">
                     <SelectValue placeholder="Select type..." />
                   </SelectTrigger>
                   <SelectContent className="z-[100] bg-popover border-border">
@@ -311,7 +313,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                         placeholder="Enter MOC number..."
                         value={mocNumber}
                         onChange={(e) => setMocNumber(e.target.value)}
-                        className="h-11 bg-muted/30 border-border focus:bg-background transition-colors"
+                        className="h-11 bg-muted/30 border-border focus:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 transition-colors"
                       />
                     </div>
 
@@ -351,12 +353,13 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               <Label htmlFor="comments" className="text-sm font-semibold text-foreground">
                 Additional Comments <span className="text-muted-foreground font-normal">(Optional)</span>
               </Label>
+              <p className="text-xs text-muted-foreground">Your response</p>
               <textarea
                 id="comments"
                 placeholder="Add any additional notes or comments about this checklist..."
                 value={formData.comments}
                 onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                className="flex min-h-[100px] w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
+                className="flex min-h-[100px] w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
                 rows={4}
               />
             </div>
@@ -377,11 +380,11 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   placeholder="Search items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10"
+                  className="pl-9 h-10 focus-visible:ring-offset-0"
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px] h-10 bg-muted/30 border-border">
+                <SelectTrigger className="w-[180px] h-10 bg-muted/30 border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
@@ -425,7 +428,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
           <Separator />
 
           {/* Items List */}
-          <ScrollArea className="flex-1 -mx-6 px-6 mt-4">
+          <ScrollArea className="flex-1 px-6 mt-4">
             <div className="space-y-2 pb-4">
               {filteredItems.length === 0 ? (
                 <div className="text-center py-12">
