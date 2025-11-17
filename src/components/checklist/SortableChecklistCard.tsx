@@ -13,8 +13,15 @@ import {
   Eye,
   Edit3,
   Trash2,
-  GripVertical
+  GripVertical,
+  MoreVertical
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Checklist } from '@/hooks/useChecklists';
 
 interface SortableChecklistCardProps {
@@ -168,35 +175,36 @@ export const SortableChecklistCard: React.FC<SortableChecklistCardProps> = ({
             </div>
           </div>
 
-          {/* Hover Actions - Hidden by default, visible on card hover */}
-          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={() => onSelect(checklist)}
-              className="h-8 px-3 shadow-lg"
-            >
-              <Eye className="h-3.5 w-3.5 mr-1.5" />
-              View
-            </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={() => onEdit(checklist)} 
-              className="h-8 px-3 shadow-lg hover:bg-primary hover:text-primary-foreground"
-            >
-              <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-              Edit
-            </Button>
-            <Button
-              variant="secondary" 
-              size="sm" 
-              onClick={() => onDelete(checklist)} 
-              className="h-8 px-3 shadow-lg hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-              Delete
-            </Button>
+          {/* 3-Dot Menu */}
+          <div className="absolute top-3 right-3" onClick={e => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 hover:bg-muted"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => onSelect(checklist)}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(checklist)}>
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onDelete(checklist)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>

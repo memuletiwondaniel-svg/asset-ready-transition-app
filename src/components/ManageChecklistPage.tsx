@@ -435,7 +435,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                       </div>
                     </SortableContext>
                   </DndContext>
-                  </div>
                 )}
               </TabsContent>
 
