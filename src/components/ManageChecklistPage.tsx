@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
-import CreateChecklistForm from './CreateChecklistForm';
+import CreateChecklistModal from './CreateChecklistModal';
 import ChecklistManagementPage from './ChecklistManagementPage';
 import EditChecklistForm from './EditChecklistForm';
 import { ChecklistSuccessPage } from './ChecklistSuccessPage';
@@ -456,19 +456,20 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
       {/* Create Checklist Modal */}
       <Sheet open={showCreateForm} onOpenChange={setShowCreateForm}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Create New Checklist</SheetTitle>
-            <SheetDescription>
-              Set up a new safety checklist for your project
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            <CreateChecklistForm 
-              onBack={() => setShowCreateForm(false)} 
+        <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col">
+          <div className="px-6 pt-6 pb-4 border-b border-border/50">
+            <SheetHeader>
+              <SheetTitle className="text-xl">Create New Checklist</SheetTitle>
+              <SheetDescription>
+                Set up a new safety checklist for your project
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="flex-1 overflow-hidden px-6 pt-6">
+            <CreateChecklistModal 
               onComplete={handleCreateComplete} 
-              selectedLanguage={currentLanguage} 
-              translations={t} 
+              onCancel={() => setShowCreateForm(false)}
+              selectedLanguage={currentLanguage}
             />
           </div>
         </SheetContent>
