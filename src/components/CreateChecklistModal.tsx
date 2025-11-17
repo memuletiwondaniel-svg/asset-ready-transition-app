@@ -121,7 +121,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
   }, [checklistItems, searchQuery, selectedCategory]);
 
   const activeUsers = useMemo(() => {
-    return users.filter(u => u.isActive && u.status === 'active');
+    return users.filter(u => u.status === 'active');
   }, [users]);
 
   const handleToggleItem = (itemId: string) => {
@@ -480,7 +480,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">{user.name}</p>
+                          <p className="font-medium">{user.firstName} {user.lastName}</p>
                           {formData.approvers.includes(user.id) && (
                             <Badge variant="secondary" className="text-xs">
                               Order: {formData.approvers.indexOf(user.id) + 1}
@@ -488,7 +488,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {user.email}
+                          {user.role} • {user.company}
                         </p>
                       </div>
                       {formData.approvers.includes(user.id) && (
