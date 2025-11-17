@@ -35,9 +35,12 @@ interface ManageChecklistPageProps {
 }
 
 interface NewChecklistData {
+  name: string;
   reason: string;
   selected_items: string[];
+  approvers: string[];
   custom_reason?: string;
+  comments?: string;
 }
 
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
@@ -64,6 +67,8 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const [createdChecklistName, setCreatedChecklistName] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [checklistToDelete, setChecklistToDelete] = useState<Checklist | null>(null);
+  const [showApprovalHistory, setShowApprovalHistory] = useState(false);
+  const [selectedChecklistForHistory, setSelectedChecklistForHistory] = useState<Checklist | null>(null);
 
   const { toast } = useToast();
   const { data: checklists = [], isLoading, error } = useChecklists();
@@ -73,25 +78,54 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   const { mutate: updateChecklist } = useUpdateChecklist();
   const { mutate: deleteChecklist } = useDeleteChecklist();
 
-  const handleCreateComplete = (checklistData: NewChecklistData) => {
-    createChecklist(checklistData, {
-      onSuccess: (newChecklist) => {
-        setCreatedChecklistName(newChecklist.name);
-        setShowCreateForm(false);
-        setShowSuccessPage(true);
-        toast({
-          title: "Success",
-          description: "Checklist created successfully",
-        });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create checklist",
-          variant: "destructive",
-        });
+  const handleCreateComplete = async (checklistData: NewChecklistData) => {
+    try {
+      // Create the checklist
+      const { data: newChecklist, error: checklistError } = await supabase
+        .from('checklists' as any)
+        .insert({
+          name: checklistData.name,
+          reason: checklistData.reason,
+          custom_reason: checklistData.custom_reason,
+          selected_items: checklistData.selected_items,
+          status: 'under_review',
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        })
+        .select()
+        .single();
+
+      if (checklistError) throw checklistError;
+
+      // Add approvers
+      if (checklistData.approvers && checklistData.approvers.length > 0) {
+        const approversData = checklistData.approvers.map((userId, index) => ({
+          checklist_id: (newChecklist as any).id,
+          user_id: userId,
+          approval_order: index + 1,
+          status: 'pending'
+        }));
+
+        const { error: approversError } = await supabase
+          .from('checklist_approvers' as any)
+          .insert(approversData);
+
+        if (approversError) throw approversError;
       }
-    });
+
+      setCreatedChecklistName((newChecklist as any).name);
+      setShowCreateForm(false);
+      setShowSuccessPage(true);
+      toast({
+        title: "Success",
+        description: `Checklist created and sent to ${checklistData.approvers.length} approver(s)`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checklist",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBackToChecklists = () => {
