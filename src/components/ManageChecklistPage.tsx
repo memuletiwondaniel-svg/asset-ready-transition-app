@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistForm from './CreateChecklistForm';
@@ -167,103 +168,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       });
   }, [checklists, searchQuery, filterCategory, sortBy]);
 
-  if (showCreateForm) {
-    return (
-      <div className="flex-1 overflow-auto">
-        <AnimatedBackground>
-          <div className="relative z-10">
-            <AdminHeader 
-              icon={<ClipboardList className="w-6 h-6" />} 
-              iconGradient="from-purple-500 to-purple-600"
-              title="Checklist Management"
-              description="Manage your checklists, items, categories, and topics"
-              customBreadcrumbs={[
-                { label: 'Home', path: '/', onClick: onBack },
-                { label: 'Administration', path: '/admin-tools', onClick: onBack },
-                { label: 'Checklist Management', path: '/admin-tools', onClick: () => setShowCreateForm(false) },
-                { label: 'Create New', path: '/admin-tools', onClick: () => {} }
-              ]}
-            />
-            <CreateChecklistForm 
-              onBack={() => setShowCreateForm(false)} 
-              onComplete={handleCreateComplete} 
-              selectedLanguage={currentLanguage} 
-              translations={t} 
-            />
-          </div>
-        </AnimatedBackground>
-      </div>
-    );
-  }
-
-  if (showEditForm && editingChecklist) {
-    return (
-      <div className="flex-1 overflow-auto">
-        <AnimatedBackground>
-          <div className="relative z-10">
-            <AdminHeader 
-              icon={<ClipboardList className="w-6 h-6" />} 
-              iconGradient="from-purple-500 to-purple-600"
-              title="Checklist Management"
-              description="Manage your checklists, items, categories, and topics"
-              customBreadcrumbs={[
-                { label: 'Home', path: '/', onClick: onBack },
-                { label: 'Administration', path: '/admin-tools', onClick: onBack },
-                { label: 'Checklist Management', path: '/admin-tools', onClick: () => { setShowEditForm(false); setEditingChecklist(null); } },
-                { label: 'Edit', path: '/admin-tools', onClick: () => {} }
-              ]}
-            />
-            <EditChecklistForm 
-              checklist={editingChecklist} 
-              onBack={() => { setShowEditForm(false); setEditingChecklist(null); }} 
-              onSave={handleEditComplete} 
-            />
-          </div>
-        </AnimatedBackground>
-      </div>
-    );
-  }
-  
-  if (showSuccessPage) {
-    return (
-      <div className="flex-1 overflow-auto">
-        <AnimatedBackground>
-          <div className="relative z-10">
-            <AdminHeader 
-              icon={<ClipboardList className="w-6 h-6" />} 
-              iconGradient="from-purple-500 to-purple-600"
-              title="Checklist Management"
-              description="Manage your checklists, items, categories, and topics"
-              customBreadcrumbs={[
-                { label: 'Home', path: '/', onClick: onBack },
-                { label: 'Administration', path: '/admin-tools', onClick: onBack },
-                { label: 'Checklist Management', path: '/admin-tools', onClick: () => {} }
-              ]}
-            />
-            <ChecklistSuccessPage 
-              checklistName={createdChecklistName} 
-              onViewChecklists={handleBackToChecklists} 
-              onCreateAnother={() => { setShowSuccessPage(false); setShowCreateForm(true); }} 
-            />
-          </div>
-        </AnimatedBackground>
-      </div>
-    );
-  }
-  
-  if (selectedChecklist) {
-    return (
-      <div className="flex-1 overflow-auto">
-        <ChecklistDetailsPage 
-          checklist={selectedChecklist} 
-          onBack={() => setSelectedChecklist(null)} 
-          selectedLanguage={currentLanguage} 
-          translations={t} 
-        />
-      </div>
-    );
-  }
-
+  // Render the main page layout with modal overlays
   return (
     <div className="flex-1 overflow-auto">
       <AnimatedBackground>
@@ -549,6 +454,73 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
         </div>
       </AnimatedBackground>
 
+      {/* Create Checklist Modal */}
+      <Sheet open={showCreateForm} onOpenChange={setShowCreateForm}>
+        <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Create New Checklist</SheetTitle>
+            <SheetDescription>
+              Set up a new safety checklist for your project
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <CreateChecklistForm 
+              onBack={() => setShowCreateForm(false)} 
+              onComplete={handleCreateComplete} 
+              selectedLanguage={currentLanguage} 
+              translations={t} 
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Edit Checklist Modal */}
+      {editingChecklist && (
+        <Sheet open={showEditForm} onOpenChange={setShowEditForm}>
+          <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Edit Checklist</SheetTitle>
+              <SheetDescription>
+                Update your checklist information
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <EditChecklistForm 
+                checklist={editingChecklist} 
+                onBack={() => { setShowEditForm(false); setEditingChecklist(null); }} 
+                onSave={handleEditComplete} 
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {/* Success Page Modal */}
+      <Sheet open={showSuccessPage} onOpenChange={setShowSuccessPage}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <div className="mt-6">
+            <ChecklistSuccessPage 
+              checklistName={createdChecklistName} 
+              onViewChecklists={handleBackToChecklists} 
+              onCreateAnother={() => { setShowSuccessPage(false); setShowCreateForm(true); }} 
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Checklist Details - Still full page */}
+      {selectedChecklist && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <ChecklistDetailsPage 
+            checklist={selectedChecklist} 
+            onBack={() => setSelectedChecklist(null)} 
+            selectedLanguage={currentLanguage} 
+            translations={t} 
+          />
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
