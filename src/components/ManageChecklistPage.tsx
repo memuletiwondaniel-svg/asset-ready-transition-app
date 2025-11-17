@@ -457,7 +457,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
 
       {/* Create Checklist Modal */}
       <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0 overflow-visible">
           <div className="px-6 pt-6 pb-4 border-b border-border/50">
             <DialogHeader>
               <DialogTitle className="text-xl">Create New Checklist</DialogTitle>
