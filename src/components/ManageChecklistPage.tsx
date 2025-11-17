@@ -112,14 +112,6 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       title: "Success",
       description: "Checklist updated successfully",
     });
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to update checklist",
-          variant: "destructive",
-        });
-      }
-    });
   };
 
   const handleDeleteClick = (checklist: Checklist) => {
