@@ -105,6 +105,12 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     setShowEditForm(true);
   };
 
+  const openCreateChecklist = () => {
+    setSelectedChecklist(null);
+    setShowEditForm(false);
+    setShowSuccessPage(false);
+    setShowCreateForm(true);
+  };
   const handleEditComplete = () => {
     setShowEditForm(false);
     setEditingChecklist(null);
@@ -386,11 +392,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                           </SelectContent>
                         </Select>
                         <Button 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            console.log('Create New button clicked');
-                            setShowCreateForm(true);
-                          }} 
+                          onClick={openCreateChecklist} 
                           className="gap-2 shadow-md hover:shadow-lg transition-shadow h-11 px-6"
                         >
                           <Plus className="h-4 w-4" />
@@ -422,11 +424,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                       </div>
                       {!searchQuery && (
                         <Button 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            console.log('Create Your First Checklist button clicked');
-                            setShowCreateForm(true);
-                          }} 
+                          onClick={openCreateChecklist}
                           size="lg" 
                           className="gap-2 shadow-md"
                         >
