@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home, ListChecks } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Plus, FileText, Calendar, User, Loader2, Edit3, ClipboardList, Users, BookOpen, Settings, Wrench, Languages, Home, ListChecks, Eye, Trash2 } from 'lucide-react';
 import ChecklistDetailsPage from './ChecklistDetailsPage';
 import CreateChecklistModal from './CreateChecklistModal';
 import ChecklistManagementPage from './ChecklistManagementPage';
@@ -81,7 +81,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       status: 'approved',
       items_count: 45,
       active_pssr_count: 3,
-      created_by_email: 'john.doe@company.com',
+      created_by_email: 'John Doe',
       created_at: new Date('2024-01-15').toISOString(),
       updated_at: new Date('2024-01-15').toISOString(),
       selected_items: [],
@@ -99,7 +99,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       status: 'active',
       items_count: 32,
       active_pssr_count: 1,
-      created_by_email: 'sarah.smith@company.com',
+      created_by_email: 'Sarah Smith',
       created_at: new Date('2024-02-10').toISOString(),
       updated_at: new Date('2024-02-10').toISOString(),
       selected_items: [],
@@ -490,23 +490,33 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
                             </div>
                           </div>
 
-                          {/* Actions */}
-                          <div className="flex gap-2 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
+                          {/* Hover Actions - Hidden by default, visible on card hover */}
+                          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                             <Button 
-                              variant="outline" 
+                              variant="secondary" 
+                              size="sm" 
+                              onClick={() => setSelectedChecklist(checklist)}
+                              className="h-8 px-3 shadow-lg"
+                            >
+                              <Eye className="h-3.5 w-3.5 mr-1.5" />
+                              View
+                            </Button>
+                            <Button 
+                              variant="secondary" 
                               size="sm" 
                               onClick={() => handleEdit(checklist)} 
-                              className="flex-1 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                              className="h-8 px-3 shadow-lg hover:bg-primary hover:text-primary-foreground"
                             >
-                              <Edit3 className="h-3 w-3 mr-1.5" />
+                              <Edit3 className="h-3.5 w-3.5 mr-1.5" />
                               Edit
                             </Button>
                             <Button
-                              variant="outline" 
+                              variant="secondary" 
                               size="sm" 
                               onClick={() => handleDeleteClick(checklist)} 
-                              className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                              className="h-8 px-3 shadow-lg hover:bg-destructive hover:text-destructive-foreground"
                             >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                               Delete
                             </Button>
                           </div>
