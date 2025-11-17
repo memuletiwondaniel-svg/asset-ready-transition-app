@@ -268,7 +268,6 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 </Label>
               </div>
               <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
                 <Input
                   id="checklistName"
                   placeholder="Enter a descriptive name..."
@@ -287,7 +286,6 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 </Label>
               </div>
               <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
                 <Select 
                   value={formData.reason} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
@@ -315,7 +313,6 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                   </Label>
                 </div>
                 <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
-                  <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
                   <Input
                     id="customReason"
                     value={customReason}
@@ -334,7 +331,6 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 </Label>
               </div>
               <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Your response</p>
                 <textarea
                   id="comments"
                   value={formData.comments}
