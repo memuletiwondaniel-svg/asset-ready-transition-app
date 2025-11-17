@@ -112,7 +112,10 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     }
   ];
   
-  const { data: checklists = sampleChecklists, isLoading, error } = useChecklists();
+  const { data: checklistsData, isLoading, error } = useChecklists();
+  
+  // Use sample checklists if database is empty
+  const checklists = (checklistsData && checklistsData.length > 0) ? checklistsData : sampleChecklists;
   const { data: categories = [] } = useChecklistCategories();
   const { data: topics = [] } = useChecklistTopics();
   const { mutate: createChecklist } = useCreateChecklist();
