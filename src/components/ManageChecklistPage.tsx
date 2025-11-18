@@ -138,7 +138,7 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
     },
     {
       id: 'CL-002',
-      name: 'Turn Around Maintenance (TA)',
+      name: 'Turn Around Maintenance (TAR)',
       reason: 'Restart following a Turn Around (TAR) Event',
       status: 'active',
       items_count: 32,
