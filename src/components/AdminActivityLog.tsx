@@ -174,7 +174,7 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
                     <SelectValue placeholder="All Activity Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Activity Types</SelectItem>
+                    <SelectItem value="all">All Activity Types</SelectItem>
                     {activityTypes.map(type => (
                       <SelectItem key={type} value={type}>
                         {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
