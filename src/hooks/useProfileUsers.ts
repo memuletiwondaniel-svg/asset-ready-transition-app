@@ -9,6 +9,17 @@ export interface ProfileUser {
   avatar_url?: string;
 }
 
+const getFullAvatarUrl = (avatarUrl: string | null) => {
+  if (!avatarUrl) return '';
+  
+  // If already a full URL, return as is
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  
+  // If it's a partial path, construct the full URL
+  const { data } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+  return data.publicUrl;
+};
+
 export const useProfileUsers = () => {
   return useQuery({
     queryKey: ['profile-users'],
@@ -26,7 +37,7 @@ export const useProfileUsers = () => {
         full_name: profile.full_name || '',
         role: profile.position || '',
         position: profile.position || '',
-        avatar_url: profile.avatar_url || ''
+        avatar_url: getFullAvatarUrl(profile.avatar_url)
       })) || [];
     }
   });
@@ -49,7 +60,7 @@ export const useProfileUsersByRole = (role: string) => {
         full_name: profile.full_name || '',
         role: profile.position || '',
         position: profile.position || '',
-        avatar_url: profile.avatar_url || ''
+        avatar_url: getFullAvatarUrl(profile.avatar_url)
       })) || [];
     },
     enabled: true
