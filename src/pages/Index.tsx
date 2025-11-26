@@ -13,6 +13,7 @@ import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ManageChecklistPage from "@/components/ManageChecklistPage";
+import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import OrshLogo from "@/components/ui/OrshLogo";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -159,6 +160,8 @@ const Index = () => {
         return <ManageChecklistPage onBack={handleBackToLanding} />;
       case 'admin-tools':
         return <AdminToolsPage onBack={handleBackToLanding} />;
+      case 'projects':
+        return <ProjectManagementPage onBack={handleBackToLanding} />;
       case 'p2o':
         // Placeholder for P2O Module - can be implemented later
         return <div className="min-h-screen flex items-center justify-center bg-gray-100">

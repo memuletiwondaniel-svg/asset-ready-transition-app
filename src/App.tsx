@@ -44,7 +44,7 @@ const App = () => (
                     <Route path="/users" element={<Index />} />
                     <Route path="/manage-checklist" element={<Index />} />
                     <Route path="/admin-tools" element={<Index />} />
-                    <Route path="/projects" element={<ProjectManagementPage />} />
+                    <Route path="/projects" element={<Index />} />
         <Route path="/operation-readiness" element={<ORPLandingPage />} />
         <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
         <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
