@@ -41,36 +41,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   dragListeners,
   dragAttributes,
 }) => {
-  const handleViewClick = () => {
-    console.log('View clicked for project:', project.id);
-    onView();
-  };
-
-  const handleEditClick = () => {
-    console.log('Edit clicked for project:', project.id);
-    onEdit();
-  };
-
-  const handleDeleteClick = () => {
-    console.log('Delete clicked for project:', project.id);
-    onDelete();
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    console.log('Card clicked, target:', e.target);
-    const target = e.target as HTMLElement;
-    
-    // Don't trigger if clicking on interactive elements
-    if (
-      target.closest('button') || 
-      target.closest('[role="menuitem"]') ||
-      target.closest('[data-radix-dropdown-menu-content]')
-    ) {
-      console.log('Clicked on interactive element, not opening modal');
-      return;
-    }
-    
-    console.log('Opening view modal');
+  const handleCardClick = () => {
     onView();
   };
 
@@ -98,14 +69,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Badge variant="outline" className="bg-gradient-to-r from-primary/10 to-accent/10 text-primary border-primary/20 text-xs font-semibold px-2 py-0.5">
                   {project.project_id_prefix}{project.project_id_number}
                 </Badge>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={(e) => {
-                    e.preventDefault();
                     e.stopPropagation();
                     onToggleFavorite();
                   }}
-                  className="h-5 w-5 p-0 hover:bg-transparent inline-flex items-center justify-center rounded-md"
+                  className="h-5 w-5 p-0 hover:bg-transparent"
                 >
                   <Star
                     className={`h-3.5 w-3.5 transition-all duration-200 ${
@@ -114,7 +85,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                         : 'text-muted-foreground hover:text-yellow-400 hover:scale-110'
                     }`}
                   />
-                </button>
+                </Button>
               </div>
               <h3 className="font-bold text-base text-foreground group-hover:bg-gradient-to-r group-hover:from-orange-600 group-hover:to-amber-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-200 truncate">
                 {project.project_title}
@@ -137,7 +108,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <DropdownMenuItem 
                 onSelect={(e) => {
                   e.preventDefault();
-                  handleViewClick();
+                  onView();
                 }}
                 className="flex items-center cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
               >
@@ -147,7 +118,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <DropdownMenuItem 
                 onSelect={(e) => {
                   e.preventDefault();
-                  handleEditClick();
+                  onEdit();
                 }}
                 className="flex items-center cursor-pointer hover:bg-accent/10 focus:bg-accent/10"
               >
@@ -157,7 +128,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <DropdownMenuItem 
                 onSelect={(e) => {
                   e.preventDefault();
-                  handleDeleteClick();
+                  onDelete();
                 }}
                 className="flex items-center cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10"
               >
