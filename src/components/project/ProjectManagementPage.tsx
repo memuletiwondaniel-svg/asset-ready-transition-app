@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2 } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Folder } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
@@ -159,16 +159,21 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
-            <BreadcrumbNavigation currentPageLabel="Project Management" />
+            <BreadcrumbNavigation currentPageLabel="Projects" />
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                  Project Management
-                </h1>
-                <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                  Manage and oversee all project activities
-                </p>
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
+                  <Folder className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                    Projects
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                    Manage and oversee all project activities
+                  </p>
+                </div>
               </div>
               
               <div className="flex gap-2 w-full sm:w-auto">
@@ -191,8 +196,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b border-blue-100/60">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center text-blue-900">
-              <FolderOpen className="h-5 w-5 mr-2" />
+            <CardTitle className="text-blue-900">
               {t.projectsOverview}
             </CardTitle>
           </div>
