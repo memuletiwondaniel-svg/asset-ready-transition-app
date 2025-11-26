@@ -38,16 +38,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   translations: t,
 }) => {
   return (
-    <Card className={`relative overflow-hidden border-border/40 bg-gradient-to-br from-white to-blue-50/30 transition-all hover:shadow-lg ${isDragging ? 'opacity-50' : ''}`}>
-      <CardContent className="p-6">
+    <Card className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-300 hover:shadow-xl hover:border-primary/40 hover:-translate-y-1 ${isDragging ? 'opacity-50' : ''}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-300" />
+      
+      <CardContent className="relative p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3 flex-1">
-            <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
               <GripVertical className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-xs font-medium">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-semibold px-2.5 py-0.5">
                   {project.project_id_prefix}{project.project_id_number}
                 </Badge>
                 <Button
@@ -57,15 +59,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   className="h-6 w-6 p-0 hover:bg-transparent"
                 >
                   <Star
-                    className={`h-4 w-4 transition-all ${
+                    className={`h-4 w-4 transition-all duration-200 ${
                       isFavorite
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-muted-foreground hover:text-yellow-400'
+                        ? 'fill-yellow-400 text-yellow-400 scale-110'
+                        : 'text-muted-foreground hover:text-yellow-400 hover:scale-110'
                     }`}
                   />
                 </Button>
               </div>
-              <h3 className="font-semibold text-lg text-gray-900 truncate">
+              <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors duration-200 truncate">
                 {project.project_title}
               </h3>
             </div>
@@ -73,54 +75,58 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onView} className="flex items-center text-blue-600">
-                <Eye className="h-4 w-4 mr-2" />
-                {t.viewDetails}
+              <DropdownMenuItem onClick={onView} className="flex items-center cursor-pointer hover:bg-primary/10 focus:bg-primary/10">
+                <Eye className="h-4 w-4 mr-2 text-primary" />
+                <span className="text-primary">{t.viewDetails}</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onEdit} className="flex items-center text-green-600">
-                <Edit3 className="h-4 w-4 mr-2" />
-                {t.editProject}
+              <DropdownMenuItem onClick={onEdit} className="flex items-center cursor-pointer hover:bg-accent/10 focus:bg-accent/10">
+                <Edit3 className="h-4 w-4 mr-2 text-accent" />
+                <span className="text-accent">{t.editProject}</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete} className="flex items-center text-red-600">
-                <Trash2 className="h-4 w-4 mr-2" />
-                {t.deleteProject}
+              <DropdownMenuItem onClick={onDelete} className="flex items-center cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10">
+                <Trash2 className="h-4 w-4 mr-2 text-destructive" />
+                <span className="text-destructive">{t.deleteProject}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
         <div className="space-y-3">
-          <div>
-            <span className="text-sm text-muted-foreground">Plant:</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm font-medium text-gray-700">
+          <div className="p-3 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors duration-200">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Plant</span>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-sm font-semibold text-foreground">
                 {plantName || 'Not assigned'}
               </span>
               {stationName && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs bg-background/50">
                   {stationName}
                 </Badge>
               )}
             </div>
           </div>
 
-          <div>
-            <span className="text-sm text-muted-foreground">Hub:</span>
-            <p className="text-sm font-medium text-gray-700 mt-1">
+          <div className="p-3 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors duration-200">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hub</span>
+            <p className="text-sm font-semibold text-foreground mt-1.5">
               {hubName || 'Not assigned'}
             </p>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
+          <div className="flex items-center justify-between pt-3 border-t border-border/50">
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-medium">
               {t.active || 'Active'}
             </Badge>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground font-medium">
               {new Date(project.created_at).toLocaleDateString()}
             </span>
           </div>
