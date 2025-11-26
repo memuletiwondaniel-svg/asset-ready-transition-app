@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft, Home } from 'lucide-react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2 } from 'lucide-react';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
@@ -36,6 +37,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
   const { mutate: logActivity } = useLogActivity();
+  const { updateMetadata } = useBreadcrumb();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
@@ -43,6 +45,10 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
+
+  React.useEffect(() => {
+    updateMetadata('title', 'Project Management');
+  }, [updateMetadata]);
 
   // Fetch user profile for sidebar
   useEffect(() => {
@@ -151,45 +157,36 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header with Breadcrumb */}
-          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-            <div className="container flex h-16 items-center gap-4 px-4">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink 
-                      onClick={onBack}
-                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
-                    >
-                      <Home className="h-4 w-4" />
-                      <span>Home</span>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="font-medium">
-                      Project Management
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
+          {/* Header */}
+          <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+            <BreadcrumbNavigation currentPageLabel="Project Management" />
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  Project Management
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  Manage and oversee all project activities
+                </p>
+              </div>
               
-              <div className="ml-auto">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button 
                   onClick={() => setIsAddModalOpen(true)}
                   size="sm"
-                  className="bg-primary hover:bg-primary/90"
+                  className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity text-xs sm:text-sm"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   {t.createProject || 'Create Project'}
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="container py-6 space-y-6 px-4">
+          {/* Main Content */}
+          <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
+            <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
         {/* Projects Table */}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b border-blue-100/60">
