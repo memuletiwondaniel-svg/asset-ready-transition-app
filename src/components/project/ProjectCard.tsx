@@ -135,8 +135,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50">
               <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
+                onSelect={(e) => {
+                  e.preventDefault();
                   handleViewClick();
                 }}
                 className="flex items-center cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
@@ -145,8 +145,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <span className="text-primary">{t.viewDetails}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
+                onSelect={(e) => {
+                  e.preventDefault();
                   handleEditClick();
                 }}
                 className="flex items-center cursor-pointer hover:bg-accent/10 focus:bg-accent/10"
@@ -155,8 +155,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <span className="text-accent">{t.editProject}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
+                onSelect={(e) => {
+                  e.preventDefault();
                   handleDeleteClick();
                 }}
                 className="flex items-center cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10"
