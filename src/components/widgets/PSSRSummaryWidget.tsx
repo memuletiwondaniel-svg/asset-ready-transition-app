@@ -34,21 +34,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId,
         <div className="flex items-center gap-2 mb-2 opacity-0 group-hover/widget:opacity-100 transition-opacity" {...dragAttributes} {...dragListeners}>
           <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
         </div>
-        <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <StyledWidgetIcon 
-              Icon={AlertTriangle}
-              gradientFrom="from-red-500"
-              gradientTo="to-orange-500"
-              glowFrom="from-red-500/40"
-              glowTo="to-orange-500/40"
-            />
-            <span>PSSR / SoF</span>
-          </div>
-          <Button size="sm" variant="ghost" onClick={() => navigate('/pssr')}>
-            <Plus className="h-4 w-4 mr-1" />
-            New PSSR
-          </Button>
+        <CardTitle className="text-lg flex items-center gap-3">
+          <StyledWidgetIcon 
+            Icon={AlertTriangle}
+            gradientFrom="from-red-500"
+            gradientTo="to-orange-500"
+            glowFrom="from-red-500/40"
+            glowTo="to-orange-500/40"
+          />
+          <span>PSSR / SoF</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
