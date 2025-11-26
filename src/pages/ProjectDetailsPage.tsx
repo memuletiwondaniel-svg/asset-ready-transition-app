@@ -206,12 +206,12 @@ export default function ProjectDetailsPage() {
     <AnimatedBackground>
       <div className="flex h-screen">
         <OrshSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6 space-y-6">
+        <div className="flex-1 overflow-hidden">
+          <div className="container mx-auto p-6 space-y-6 h-full flex flex-col">
             <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-shrink-0">
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   {getProjectId()} - {project.project_title}
@@ -227,9 +227,9 @@ export default function ProjectDetailsPage() {
             </div>
 
             {/* Project Widgets Dashboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
               {/* Left Column - Large Overview Widget */}
-              <div className="lg:row-span-3">
+              <div className="lg:row-span-3 overflow-auto">
                 <ProjectReadinessWidget 
                   projectId={id || ''} 
                   onEditProject={() => setEditModalOpen(true)}
@@ -237,14 +237,14 @@ export default function ProjectDetailsPage() {
               </div>
               
               {/* Right Column - Draggable Widgets */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 overflow-auto">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
                       {visibleWidgets.map((widgetId) => (
                         <SortableWidget 
                           key={widgetId} 
