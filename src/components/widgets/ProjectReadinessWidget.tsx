@@ -132,24 +132,15 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           </Button>
         </div>
         
-        {/* Project Image & Key Info Banner */}
+        {/* Project Key Info Banner */}
         {project && (
           <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-            <div className="flex items-center gap-4 p-4">
-              {project.project_scope_image_url && (
-                <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 ring-2 ring-primary/20">
-                  <img 
-                    src={project.project_scope_image_url} 
-                    alt={project.project_title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+            <div className="flex items-center justify-between gap-4 p-4">
               <div className="flex-1 min-w-0">
-                <h3 className="text-xl font-bold text-foreground mb-1 truncate">
+                <h3 className="text-xl font-bold text-foreground mb-2 truncate">
                   {project.project_title}
                 </h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
                   <div className="flex items-center gap-1.5">
                     <Building className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-muted-foreground">Plant:</span>
@@ -196,9 +187,22 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   Project Scope
                 </h3>
                 <div className="pl-6">
-                  <p className="text-sm text-foreground/90 line-clamp-4">
+                  <p className="text-sm text-foreground/90">
                     {project.project_scope}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Project Image */}
+            {project?.project_scope_image_url && (
+              <div className="space-y-3">
+                <div className="relative rounded-xl overflow-hidden border border-primary/20 shadow-lg">
+                  <img 
+                    src={project.project_scope_image_url} 
+                    alt={project.project_title}
+                    className="w-full h-64 object-cover"
+                  />
                 </div>
               </div>
             )}
