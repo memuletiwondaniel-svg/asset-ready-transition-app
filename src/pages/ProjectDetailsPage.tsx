@@ -114,13 +114,20 @@ export default function ProjectDetailsPage() {
             </div>
 
             {/* Project Widgets Dashboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ProjectReadinessWidget projectId={id || ''} />
-              <ORPActivityPlanWidget projectId={id || ''} />
-              <PSSRSummaryWidget projectId={id || ''} />
-              <P2AHandoverWidget projectId={id || ''} />
-              <OwnersCostWidget projectId={id || ''} />
-              <ORMtceWidget projectId={id || ''} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Large Overview Widget */}
+              <div className="lg:row-span-3">
+                <ProjectReadinessWidget projectId={id || ''} />
+              </div>
+              
+              {/* Right Column - Other Widgets */}
+              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ORPActivityPlanWidget projectId={id || ''} />
+                <PSSRSummaryWidget projectId={id || ''} />
+                <P2AHandoverWidget projectId={id || ''} />
+                <OwnersCostWidget projectId={id || ''} />
+                <ORMtceWidget projectId={id || ''} />
+              </div>
             </div>
           </div>
 
