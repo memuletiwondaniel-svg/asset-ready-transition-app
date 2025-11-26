@@ -68,8 +68,8 @@ const SortableProjectCard = ({ project, ...props }: any) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <ProjectCard {...props} project={project} isDragging={isDragging} />
+    <div ref={setNodeRef} style={style}>
+      <ProjectCard {...props} project={project} isDragging={isDragging} dragListeners={listeners} dragAttributes={attributes} />
     </div>
   );
 };
