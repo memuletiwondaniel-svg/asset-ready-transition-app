@@ -1,0 +1,65 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRightLeft, Plus, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+interface P2AHandoverWidgetProps {
+  projectId: string;
+}
+
+export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId }) => {
+  const navigate = useNavigate();
+
+  // Mock data - replace with actual data fetching
+  const handovers = [
+    { id: '1', name: 'System A Handover', status: 'pending-approval', deliverables: 5, completedDeliverables: 3 },
+    { id: '2', name: 'System B Handover', status: 'in-progress', deliverables: 8, completedDeliverables: 2 }
+  ];
+
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ArrowRightLeft className="h-5 w-5 text-primary" />
+            P2A Handover
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => navigate('/p2a')}>
+            <Plus className="h-4 w-4 mr-1" />
+            New Handover
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {handovers.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <ArrowRightLeft className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p className="mb-3">No handovers yet</p>
+            <Button size="sm" onClick={() => navigate('/p2a')}>
+              Create First Handover
+            </Button>
+          </div>
+        ) : (
+          handovers.map((handover) => (
+            <div key={handover.id} className="p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">{handover.name}</span>
+                <Badge variant="outline" className="text-xs">
+                  {handover.status}
+                </Badge>
+              </div>
+              <div className="text-sm text-muted-foreground mb-2">
+                {handover.completedDeliverables}/{handover.deliverables} deliverables ready
+              </div>
+              <Button size="sm" variant="link" className="p-0 h-auto" onClick={() => navigate('/p2a')}>
+                View Details <ExternalLink className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+};
