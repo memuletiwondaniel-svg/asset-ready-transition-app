@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { AddProjectModal } from './AddProjectModal';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
+import { OrshSidebar } from '@/components/OrshSidebar';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,9 +39,26 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
+
+  // Fetch user profile for sidebar
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setUserProfile(profile);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const getProjectId = (project: any) => {
     return `${project.project_id_prefix}${project.project_id_number}`;
@@ -83,53 +102,94 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     }
   };
 
+  const handleNavigate = (section: string) => {
+    if (section === 'home') {
+      onBack?.();
+    } else if (section === 'projects') {
+      // Already on projects page
+      return;
+    } else {
+      // Handle other navigation
+      window.location.href = `/${section}`;
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">Loading projects...</div>
-      </div>
+      <AnimatedBackground>
+        <div className="h-screen flex overflow-hidden">
+          <OrshSidebar 
+            userName={userProfile?.full_name || 'User'}
+            userTitle={userProfile?.position || 'Team Member'}
+            userAvatar={userProfile?.avatar_url || ''}
+            language={selectedLanguage}
+            onNavigate={handleNavigate}
+            onLogout={onBack}
+            currentPage="projects"
+          />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-muted-foreground">Loading projects...</div>
+          </div>
+        </div>
+      </AnimatedBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Simple Header with Breadcrumb - matches other pages */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container flex h-16 items-center gap-4 px-4">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink 
-                  onClick={onBack}
-                  className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
-                >
-                  <Home className="h-4 w-4" />
-                  <span>Home</span>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="font-medium">
-                  Project Management
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          
-          <div className="ml-auto">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              size="sm"
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t.createProject || 'Create Project'}
-            </Button>
-          </div>
-        </div>
-      </div>
+    <AnimatedBackground>
+      <div className="h-screen flex overflow-hidden">
+        {/* ORSH Sidebar */}
+        <OrshSidebar 
+          userName={userProfile?.full_name || 'User'}
+          userTitle={userProfile?.position || 'Team Member'}
+          userAvatar={userProfile?.avatar_url || ''}
+          language={selectedLanguage}
+          onNavigate={handleNavigate}
+          onLogout={onBack}
+          currentPage="projects"
+        />
 
-      <div className="container py-6 space-y-6 px-4">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header with Breadcrumb */}
+          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+            <div className="container flex h-16 items-center gap-4 px-4">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink 
+                      onClick={onBack}
+                      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                    >
+                      <Home className="h-4 w-4" />
+                      <span>Home</span>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="font-medium">
+                      Project Management
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+              
+              <div className="ml-auto">
+                <Button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.createProject || 'Create Project'}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="container py-6 space-y-6 px-4">
         {/* Projects Table */}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b border-blue-100/60">
@@ -246,6 +306,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           )}
         </CardContent>
       </Card>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Add Project Modal */}
@@ -270,7 +333,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         onClose={() => setEditProject(null)}
         project={editProject}
       />
-    </div>
+    </AnimatedBackground>
   );
 };
 
