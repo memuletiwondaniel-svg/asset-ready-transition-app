@@ -561,6 +561,10 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
       <ViewProjectModal 
         open={!!viewProject}
         onClose={() => setViewProject(null)}
+        onEdit={() => {
+          setEditProject(viewProject);
+          setViewProject(null);
+        }}
         project={viewProject}
         plantName={viewProject ? getPlantName(viewProject.plant_id) : undefined}
         stationName={viewProject ? getStationName(viewProject.station_id) : undefined}

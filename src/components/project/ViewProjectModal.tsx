@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink } from 'lucide-react';
+import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface ViewProjectModalProps {
   open: boolean;
   onClose: () => void;
+  onEdit?: () => void;
   project: any;
   plantName?: string;
   stationName?: string;
@@ -20,12 +22,14 @@ interface ViewProjectModalProps {
 
 export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({ 
   open, 
-  onClose, 
+  onClose,
+  onEdit,
   project,
   plantName,
   stationName,
   hubName
 }) => {
+  const navigate = useNavigate();
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
@@ -399,7 +403,34 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
         </Tabs>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t shrink-0 bg-card">
+        <div className="flex justify-between gap-3 px-6 py-4 border-t shrink-0 bg-card">
+          <div className="flex gap-3">
+            <Button 
+              type="button" 
+              variant="default"
+              onClick={() => {
+                navigate(`/project/${project.id}`);
+                onClose();
+              }}
+              className="bg-gradient-to-r from-primary to-accent text-white"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              View Details
+            </Button>
+            {onEdit && (
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  onEdit();
+                  onClose();
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Project
+              </Button>
+            )}
+          </div>
           <Button 
             type="button" 
             variant="outline" 
