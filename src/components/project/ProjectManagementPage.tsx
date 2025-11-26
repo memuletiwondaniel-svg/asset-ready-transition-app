@@ -5,10 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, ArrowLeft, Home } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { ThemeToggle } from '@/components/admin/ThemeToggle';
-import LanguageSelector from '@/components/admin/LanguageSelector';
-import UserProfileDropdown from '@/components/admin/UserProfileDropdown';
-import AdminHeader from '@/components/admin/AdminHeader';
 import { getCurrentTranslations } from '@/utils/translations';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
@@ -19,7 +15,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { AddProjectModal } from './AddProjectModal';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
-import OrshLogo from '../ui/OrshLogo';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,10 +37,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
-  const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
   
   // Get translations
-  const t = translations || getCurrentTranslations(currentLanguage);
+  const t = translations || getCurrentTranslations(selectedLanguage);
 
   const getProjectId = (project: any) => {
     return `${project.project_id_prefix}${project.project_id_number}`;
@@ -99,55 +93,43 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Breadcrumb */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b shadow-sm">
-        <div className="container flex h-20 items-center justify-between gap-4">
-          {/* Left - Breadcrumb Navigation */}
-          <div className="flex items-center min-w-0 flex-1">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink 
-                    onClick={onBack}
-                    className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <Home className="h-4 w-4" />
-                    <span className="hidden sm:inline">Home</span>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink 
-                    onClick={onBack}
-                    className="cursor-pointer hover:text-foreground transition-colors hidden sm:inline"
-                  >
-                    Administration
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden sm:inline" />
-                <BreadcrumbItem className="hidden sm:inline">
-                  <BreadcrumbPage className="font-medium">
-                    Project Management
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-
-          {/* Right - Controls */}
-          <div className="flex items-center gap-3 justify-end flex-1">
-            <OrshLogo size="medium" />
-            <ThemeToggle />
-            <LanguageSelector 
-              selectedLanguage={currentLanguage}
-              onLanguageChange={setCurrentLanguage}
-            />
-            <UserProfileDropdown translations={t} />
+      {/* Simple Header with Breadcrumb - matches other pages */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container flex h-16 items-center gap-4 px-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink 
+                  onClick={onBack}
+                  className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-medium">
+                  Project Management
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          
+          <div className="ml-auto">
+            <Button 
+              onClick={() => setIsAddModalOpen(true)}
+              size="sm"
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t.createProject || 'Create Project'}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="container py-6 space-y-6">
+      <div className="container py-6 space-y-6 px-4">
         {/* Projects Table */}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b border-blue-100/60">
