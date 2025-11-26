@@ -406,7 +406,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredAndSortedProjects.map((project) => (
-                        <SortableProjectCard
+                         <SortableProjectCard
                           key={project.id}
                           project={project}
                           plantName={getPlantName(project.plant_id)}
@@ -414,7 +414,10 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                           hubName={getHubName(project.hub_id)}
                           isFavorite={favoriteProjects.includes(project.id)}
                           onToggleFavorite={() => toggleFavorite(project.id)}
-                          onView={() => setViewProject(project)}
+                          onView={() => {
+                            console.log('ProjectManagementPage: onView called for project:', project.id);
+                            setViewProject(project);
+                          }}
                           onEdit={() => setEditProject(project)}
                           onDelete={() => handleDeleteProject(project)}
                           translations={t}
