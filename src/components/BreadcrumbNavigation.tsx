@@ -170,17 +170,19 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       <Breadcrumb>
         <BreadcrumbList className="text-xs">
           {crumbsToShow.map((crumb, index) => (
-            <>
-              <BreadcrumbItem key={`item-${index}`}>
-                <BreadcrumbLink 
-                  onClick={crumb.onClick} 
-                  className="cursor-pointer hover:text-foreground transition-colors text-xs"
-                >
-                  {crumb.label}
+            <React.Fragment key={`crumb-${index}`}>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <span 
+                    onClick={crumb.onClick}
+                    className="cursor-pointer hover:text-foreground transition-colors text-xs"
+                  >
+                    {crumb.label}
+                  </span>
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator key={`sep-${index}`} className="text-xs" />
-            </>
+              <BreadcrumbSeparator className="text-xs" />
+            </React.Fragment>
           ))}
           <BreadcrumbItem>
             <BreadcrumbPage className="font-semibold text-foreground text-xs">
