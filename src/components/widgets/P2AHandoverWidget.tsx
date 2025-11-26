@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, ExternalLink } from 'lucide-react';
+import { Key, ExternalLink, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
@@ -10,9 +10,10 @@ interface P2AHandoverWidgetProps {
   projectId: string;
   dragAttributes?: any;
   dragListeners?: any;
+  onHide?: () => void;
 }
 
-export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
+export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId, dragAttributes, dragListeners, onHide }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -24,15 +25,31 @@ export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId,
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-blue-500/20 group">
       <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
-        <CardTitle className="text-lg flex items-center gap-3">
-          <StyledWidgetIcon 
-            Icon={Key}
-            gradientFrom="from-blue-500"
-            gradientTo="to-cyan-500"
-            glowFrom="from-blue-500/40"
-            glowTo="to-cyan-500/40"
-          />
-          <span>P2A Handover</span>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={Key}
+              gradientFrom="from-blue-500"
+              gradientTo="to-cyan-500"
+              glowFrom="from-blue-500/40"
+              glowTo="to-cyan-500/40"
+            />
+            <span>P2A Handover</span>
+          </div>
+          {onHide && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide();
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+              title="Hide widget"
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">

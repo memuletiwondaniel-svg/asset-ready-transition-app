@@ -52,19 +52,10 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide })
 
   return (
     <div ref={setNodeRef} style={style} className="group/widget relative">
-      {/* Hide button - visible on hover */}
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={onHide}
-        className="absolute top-2 right-2 z-10 opacity-0 group-hover/widget:opacity-100 transition-opacity h-7 w-7"
-        title="Hide widget"
-      >
-        <EyeOff className="h-4 w-4" />
-      </Button>
       {React.cloneElement(children as React.ReactElement, {
         dragAttributes: attributes,
         dragListeners: listeners,
+        onHide,
       })}
     </div>
   );
