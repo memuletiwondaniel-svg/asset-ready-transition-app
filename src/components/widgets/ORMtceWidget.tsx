@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Wrench, Plus, ExternalLink } from 'lucide-react';
+import { Wrench, Plus, ExternalLink, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
@@ -10,9 +10,10 @@ interface ORMtceWidgetProps {
   projectId: string;
   dragAttributes?: any;
   dragListeners?: any;
+  onHide?: () => void;
 }
 
-export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
+export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId, dragAttributes, dragListeners, onHide }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -35,6 +36,20 @@ export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId, dragAttri
             />
             <span>OR Maintenance</span>
           </div>
+          {onHide && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide();
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+              title="Hide widget"
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={() => navigate('/orm')}>
             <Plus className="h-4 w-4 mr-1" />
             New Plan

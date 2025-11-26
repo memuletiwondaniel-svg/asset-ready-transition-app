@@ -1,16 +1,18 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DollarSign, TrendingUp, TrendingDown, EyeOff } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface OwnersCostWidgetProps {
   projectId: string;
   dragAttributes?: any;
   dragListeners?: any;
+  onHide?: () => void;
 }
 
-export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
+export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId, dragAttributes, dragListeners, onHide }) => {
   // Mock data - replace with actual data fetching
   const costData = {
     budget: 5000000,
@@ -32,15 +34,31 @@ export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId, d
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-amber-500/20 group">
       <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
-        <CardTitle className="text-lg flex items-center gap-3">
-          <StyledWidgetIcon 
-            Icon={DollarSign}
-            gradientFrom="from-amber-500"
-            gradientTo="to-yellow-500"
-            glowFrom="from-amber-500/40"
-            glowTo="to-yellow-500/40"
-          />
-          <span>Owners Cost</span>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={DollarSign}
+              gradientFrom="from-amber-500"
+              gradientTo="to-yellow-500"
+              glowFrom="from-amber-500/40"
+              glowTo="to-yellow-500/40"
+            />
+            <span>Owners Cost</span>
+          </div>
+          {onHide && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide();
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+              title="Hide widget"
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

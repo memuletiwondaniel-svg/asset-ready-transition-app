@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { AlertTriangle, ExternalLink, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
@@ -10,9 +10,10 @@ interface PSSRSummaryWidgetProps {
   projectId: string;
   dragAttributes?: any;
   dragListeners?: any;
+  onHide?: () => void;
 }
 
-export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
+export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId, dragAttributes, dragListeners, onHide }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -31,15 +32,31 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId,
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
       <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
-        <CardTitle className="text-lg flex items-center gap-3">
-          <StyledWidgetIcon 
-            Icon={AlertTriangle}
-            gradientFrom="from-red-500"
-            gradientTo="to-orange-500"
-            glowFrom="from-red-500/40"
-            glowTo="to-orange-500/40"
-          />
-          <span>PSSR / SoF</span>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={AlertTriangle}
+              gradientFrom="from-red-500"
+              gradientTo="to-orange-500"
+              glowFrom="from-red-500/40"
+              glowTo="to-orange-500/40"
+            />
+            <span>PSSR / SoF</span>
+          </div>
+          {onHide && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onHide();
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+              title="Hide widget"
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
