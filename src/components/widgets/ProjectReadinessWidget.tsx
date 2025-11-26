@@ -126,7 +126,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           <CardTitle className="text-lg">
             Project Overview
           </CardTitle>
-          <Button onClick={onEditProject} size="sm" variant="outline" className="gap-2">
+          <Button onClick={onEditProject} size="sm" variant="outline" className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Edit className="h-4 w-4" />
             Edit Project
           </Button>
