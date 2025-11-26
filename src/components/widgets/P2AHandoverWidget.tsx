@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRightLeft, Plus, ExternalLink } from 'lucide-react';
+import { Key, Plus, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface P2AHandoverWidgetProps {
@@ -23,7 +23,7 @@ export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId 
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ArrowRightLeft className="h-5 w-5 text-primary" />
+            <Key className="h-5 w-5 text-primary" />
             P2A Handover
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/p2a')}>
@@ -35,7 +35,7 @@ export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId 
       <CardContent className="space-y-3">
         {handovers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <ArrowRightLeft className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <Key className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p className="mb-3">No handovers yet</p>
             <Button size="sm" onClick={() => navigate('/p2a')}>
               Create First Handover

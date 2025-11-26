@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileCheck, Plus, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Plus, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface PSSRSummaryWidgetProps {
@@ -30,7 +30,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId 
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileCheck className="h-5 w-5 text-primary" />
+            <AlertTriangle className="h-5 w-5 text-primary" />
             PSSR / SoF
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/pssr')}>
