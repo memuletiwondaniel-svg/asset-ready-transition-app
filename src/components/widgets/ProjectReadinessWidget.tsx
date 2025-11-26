@@ -120,56 +120,74 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   }
 
   return (
-    <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30">
+    <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30 group">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <CardTitle className="text-lg">
             Project Overview
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-lg font-bold">
-              {readinessData.overall}%
-            </Badge>
-            <Button onClick={onEditProject} size="sm" variant="outline" className="gap-2">
-              <Edit className="h-4 w-4" />
-              Edit
-            </Button>
-          </div>
+          <Button onClick={onEditProject} size="sm" variant="outline" className="gap-2">
+            <Edit className="h-4 w-4" />
+            Edit Project
+          </Button>
         </div>
+        
+        {/* Project Image & Key Info Banner */}
+        {project && (
+          <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+            <div className="flex items-center gap-4 p-4">
+              {project.project_scope_image_url && (
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 ring-2 ring-primary/20">
+                  <img 
+                    src={project.project_scope_image_url} 
+                    alt={project.project_title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-bold text-foreground mb-1 truncate">
+                  {project.project_title}
+                </h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">Plant:</span>
+                    <span className="font-medium truncate">{plant?.name || 'N/A'}</span>
+                  </div>
+                  {station && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">Station:</span>
+                      <span className="font-medium truncate">{station.name}</span>
+                    </div>
+                  )}
+                  {hub && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">Hub:</span>
+                      <span className="font-medium truncate">{hub.name}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <div className="text-center p-3 bg-background/50 backdrop-blur-sm rounded-lg border border-primary/20">
+                  <div className="text-3xl font-bold text-primary mb-1">
+                    {readinessData.overall}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Readiness
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         <ScrollArea className="h-full pr-4">
           <div className="space-y-6">
-            {/* Project Info */}
-            {project && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                  <Building className="h-4 w-4" />
-                  Project Information
-                </h3>
-                <div className="space-y-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Plant:</span>
-                      <p className="font-medium">{plant?.name || 'N/A'}</p>
-                    </div>
-                    {station && (
-                      <div>
-                        <span className="text-muted-foreground">Station:</span>
-                        <p className="font-medium">{station.name}</p>
-                      </div>
-                    )}
-                    {hub && (
-                      <div>
-                        <span className="text-muted-foreground">Hub:</span>
-                        <p className="font-medium">{hub.name}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Project Scope */}
             {project?.project_scope && (
               <div className="space-y-3">
