@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, Plus, ExternalLink } from 'lucide-react';
+import { CalendarCheck, Plus, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ORPActivityPlanWidgetProps {
@@ -23,7 +23,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ pr
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" />
+            <CalendarCheck className="h-5 w-5 text-primary" />
             OR Activity Plan
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/orp')}>
@@ -35,7 +35,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ pr
       <CardContent className="space-y-3">
         {plans.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <ClipboardList className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p className="mb-3">No activity plans yet</p>
             <Button size="sm" onClick={() => navigate('/orp')}>
               Create First Plan
