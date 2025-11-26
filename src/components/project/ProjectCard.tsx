@@ -38,8 +38,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   translations: t,
 }) => {
   return (
-    <Card className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-300 hover:shadow-xl hover:border-primary/40 hover:-translate-y-1 ${isDragging ? 'opacity-50' : ''}`}>
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-accent/5 transition-all duration-300" />
+    <Card className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/60 hover:-translate-y-2 hover:scale-[1.02] ${isDragging ? 'opacity-50' : ''}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-accent/0 to-primary/0 group-hover:from-primary/20 group-hover:via-accent/15 group-hover:to-primary/20 transition-all duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent group-hover:from-primary/10 group-hover:via-transparent group-hover:to-accent/10 transition-all duration-500" />
       
       <CardContent className="relative p-6">
         <div className="flex items-start justify-between mb-4">
