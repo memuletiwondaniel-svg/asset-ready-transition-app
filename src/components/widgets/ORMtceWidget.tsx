@@ -24,7 +24,7 @@ export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId, dragAttri
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-emerald-500/20 group">
       <CardHeader>
-        <div className="flex items-center gap-2 mb-2" {...dragAttributes} {...dragListeners}>
+        <div className="flex items-center gap-2 mb-2 opacity-0 group-hover/widget:opacity-100 transition-opacity" {...dragAttributes} {...dragListeners}>
           <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
         </div>
         <CardTitle className="text-lg flex items-center justify-between">

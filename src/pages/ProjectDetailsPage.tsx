@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Eye, EyeOff } from 'lucide-react';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -31,9 +31,10 @@ import { useToast } from '@/hooks/use-toast';
 interface SortableWidgetProps {
   id: string;
   children: React.ReactNode;
+  onHide: () => void;
 }
 
-const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children }) => {
+const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide }) => {
   const {
     attributes,
     listeners,
@@ -50,7 +51,17 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children }) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className="group/widget relative">
+      {/* Hide button - visible on hover */}
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={onHide}
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover/widget:opacity-100 transition-opacity h-7 w-7"
+        title="Hide widget"
+      >
+        <EyeOff className="h-4 w-4" />
+      </Button>
       {React.cloneElement(children as React.ReactElement, {
         dragAttributes: attributes,
         dragListeners: listeners,
@@ -74,6 +85,10 @@ export default function ProjectDetailsPage() {
     const saved = localStorage.getItem(`project-widget-order-${id}`);
     return saved ? JSON.parse(saved) : ['orp', 'pssr', 'p2a', 'cost', 'orm'];
   });
+  const [hiddenWidgets, setHiddenWidgets] = useState<string[]>(() => {
+    const saved = localStorage.getItem(`project-hidden-widgets-${id}`);
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -95,6 +110,10 @@ export default function ProjectDetailsPage() {
     localStorage.setItem(`project-widget-order-${id}`, JSON.stringify(widgetOrder));
   }, [widgetOrder, id]);
 
+  useEffect(() => {
+    localStorage.setItem(`project-hidden-widgets-${id}`, JSON.stringify(hiddenWidgets));
+  }, [hiddenWidgets, id]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -111,6 +130,24 @@ export default function ProjectDetailsPage() {
       });
     }
   };
+
+  const handleHideWidget = (widgetId: string) => {
+    setHiddenWidgets(prev => [...prev, widgetId]);
+    toast({
+      title: "Widget hidden",
+      description: "Widget has been hidden from view.",
+    });
+  };
+
+  const handleShowWidget = (widgetId: string) => {
+    setHiddenWidgets(prev => prev.filter(id => id !== widgetId));
+    toast({
+      title: "Widget shown",
+      description: "Widget is now visible.",
+    });
+  };
+
+  const visibleWidgets = widgetOrder.filter(id => !hiddenWidgets.includes(id));
 
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
@@ -190,17 +227,22 @@ export default function ProjectDetailsPage() {
                 </h1>
                 <p className="text-muted-foreground mt-1">Project Dashboard</p>
               </div>
-              <Button onClick={() => setEditModalOpen(true)} className="gap-2">
-                <Edit className="h-4 w-4" />
-                Edit Project
-              </Button>
+              {hiddenWidgets.length > 0 && (
+                <Button onClick={() => setHiddenWidgets([])} variant="outline" size="sm">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Show All Widgets ({hiddenWidgets.length})
+                </Button>
+              )}
             </div>
 
             {/* Project Widgets Dashboard */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Large Overview Widget */}
               <div className="lg:row-span-3">
-                <ProjectReadinessWidget projectId={id || ''} />
+                <ProjectReadinessWidget 
+                  projectId={id || ''} 
+                  onEditProject={() => setEditModalOpen(true)}
+                />
               </div>
               
               {/* Right Column - Draggable Widgets */}
@@ -210,10 +252,14 @@ export default function ProjectDetailsPage() {
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
                 >
-                  <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+                  <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {widgetOrder.map((widgetId) => (
-                        <SortableWidget key={widgetId} id={widgetId}>
+                      {visibleWidgets.map((widgetId) => (
+                        <SortableWidget 
+                          key={widgetId} 
+                          id={widgetId}
+                          onHide={() => handleHideWidget(widgetId)}
+                        >
                           {renderWidget(widgetId)}
                         </SortableWidget>
                       ))}
