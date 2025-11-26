@@ -22,6 +22,7 @@ import { ORMDetailsPage } from "@/components/orm/ORMDetailsPage";
 import { ORMAnalyticsDashboard } from "@/components/orm/ORMAnalyticsDashboard";
 import { ORMResourceCapacityDashboard } from "@/components/orm/ORMResourceCapacityDashboard";
 import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPreferences";
+import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
                     <Route path="/users" element={<Index />} />
                     <Route path="/manage-checklist" element={<Index />} />
                     <Route path="/admin-tools" element={<Index />} />
+                    <Route path="/projects" element={<ProjectManagementPage />} />
         <Route path="/operation-readiness" element={<ORPLandingPage />} />
         <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
         <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
