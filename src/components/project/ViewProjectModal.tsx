@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ViewProjectModalProps {
   open: boolean;
@@ -24,6 +26,66 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
   stationName,
   hubName
 }) => {
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && project?.id) {
+      fetchProjectData();
+    }
+  }, [open, project?.id]);
+
+  const fetchProjectData = async () => {
+    if (!project?.id) return;
+    
+    setLoading(true);
+    try {
+      // Fetch team members
+      const { data: teamData, error: teamError } = await (supabase as any)
+        .from('project_team_members')
+        .select('*')
+        .eq('project_id', project.id);
+      
+      if (teamError) {
+        console.error('Error fetching team members:', teamError);
+      } else if (teamData) {
+        setTeamMembers(teamData);
+      }
+
+      // Fetch milestones
+      const { data: milestonesData, error: milestonesError } = await (supabase as any)
+        .from('project_milestones')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('target_completion_date', { ascending: true });
+      
+      if (milestonesError) {
+        console.error('Error fetching milestones:', milestonesError);
+      } else if (milestonesData) {
+        setMilestones(milestonesData);
+      }
+
+      // Fetch documents
+      const { data: documentsData, error: documentsError } = await (supabase as any)
+        .from('project_documents')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false });
+      
+      if (documentsError) {
+        console.error('Error fetching documents:', documentsError);
+      } else if (documentsData) {
+        setDocuments(documentsData);
+      }
+    } catch (error) {
+      console.error('Error fetching project data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!project) return null;
 
   const getProjectId = () => {
@@ -172,10 +234,42 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
-                    <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Team member information will be available in future updates</p>
-                  </div>
+                  {loading ? (
+                    <p className="text-muted-foreground text-center py-8">Loading team members...</p>
+                  ) : teamMembers.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
+                      <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No team members assigned yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {teamMembers.map((member) => (
+                        <div key={member.id} className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <Avatar className="h-12 w-12">
+                            {member.avatar_url ? (
+                              <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                            ) : (
+                              <AvatarFallback className="bg-primary/10">
+                                <UserCircle className="h-6 w-6 text-primary" />
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-foreground">{member.user_name || 'Unassigned'}</p>
+                            <p className="text-sm text-muted-foreground">{member.position || 'No position'}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant="outline" className="shrink-0">
+                              {member.role}
+                            </Badge>
+                            {member.is_lead && (
+                              <Badge className="shrink-0 bg-primary text-xs">Lead</Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </ScrollArea>
@@ -192,10 +286,47 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
-                    <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Project milestones will be available in future updates</p>
-                  </div>
+                  {loading ? (
+                    <p className="text-muted-foreground text-center py-8">Loading milestones...</p>
+                  ) : milestones.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
+                      <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No milestones defined yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {milestones.map((milestone) => (
+                        <div key={milestone.id} className="p-4 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-medium text-foreground text-lg">{milestone.milestone_name}</h4>
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                milestone.status === 'completed' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' :
+                                milestone.status === 'in_progress' ? 'bg-blue-500/10 text-blue-700 border-blue-500/20' :
+                                'bg-muted text-muted-foreground'
+                              }
+                            >
+                              {milestone.status || 'pending'}
+                            </Badge>
+                          </div>
+                          {milestone.description && (
+                            <p className="text-sm text-muted-foreground mb-3">{milestone.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                {milestone.target_completion_date 
+                                  ? new Date(milestone.target_completion_date).toLocaleDateString()
+                                  : 'No date set'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </ScrollArea>
@@ -212,10 +343,55 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
-                    <FileCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Project documents will be available in future updates</p>
-                  </div>
+                  {loading ? (
+                    <p className="text-muted-foreground text-center py-8">Loading documents...</p>
+                  ) : documents.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
+                      <FileCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No documents uploaded yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="p-4 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-foreground truncate mb-1">{doc.document_name}</h4>
+                              {doc.description && (
+                                <p className="text-sm text-muted-foreground mb-2">{doc.description}</p>
+                              )}
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+                                <Badge variant="outline" className="text-xs">
+                                  {doc.document_type || 'Document'}
+                                </Badge>
+                                <span className="text-xs">
+                                  {new Date(doc.created_at).toLocaleDateString()}
+                                </span>
+                                {doc.file_size && (
+                                  <span className="text-xs">
+                                    {(doc.file_size / 1024).toFixed(2)} KB
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {doc.file_url && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="shrink-0"
+                              >
+                                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                                  <ExternalLink className="h-4 w-4" />
+                                  View
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </ScrollArea>
