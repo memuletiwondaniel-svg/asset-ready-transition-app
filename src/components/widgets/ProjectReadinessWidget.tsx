@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, AlertCircle, Clock, Users, Target, FileText, UserCircle, Building, MapPin, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertCircle, Clock, Users, Target, FileText, UserCircle, Building, MapPin, Calendar, Edit } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -14,9 +15,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProjectReadinessWidgetProps {
   projectId: string;
+  onEditProject: () => void;
 }
 
-export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId }) => {
+export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onEditProject }) => {
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -120,12 +122,20 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   return (
     <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center justify-between">
-          Project Overview & Readiness
-          <Badge variant="outline" className="text-lg font-bold">
-            {readinessData.overall}%
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">
+            Project Overview
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-lg font-bold">
+              {readinessData.overall}%
+            </Badge>
+            <Button onClick={onEditProject} size="sm" variant="outline" className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         <ScrollArea className="h-full pr-4">
