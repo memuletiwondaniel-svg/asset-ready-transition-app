@@ -149,21 +149,11 @@ export const ProjectDetailsPage = () => {
 
             {/* Header */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/projects')}
-                  className="gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Projects
-                </Button>
-                <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    {getProjectId()} - {project.project_title}
-                  </h1>
-                  <p className="text-muted-foreground mt-1">Project Details</p>
-                </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  {getProjectId()} - {project.project_title}
+                </h1>
+                <p className="text-muted-foreground mt-1">Project Details</p>
               </div>
               <Button onClick={() => setEditModalOpen(true)} className="gap-2">
                 <Edit className="h-4 w-4" />
