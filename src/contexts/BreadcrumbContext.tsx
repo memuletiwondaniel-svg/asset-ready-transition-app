@@ -55,6 +55,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     '/admin-tools': 'Admin Tools',
     '/manage-checklist': 'Manage Checklist',
     '/projects': 'Projects',
+    '/project': 'Projects',
   };
 
   const buildBreadcrumbsFromPath = useCallback((customLabels?: Record<string, string>): BreadcrumbItem[] => {
@@ -73,6 +74,12 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       
+      // Special handling for project routes
+      let navigationPath = currentPath;
+      if (segment === 'project') {
+        navigationPath = '/projects';
+      }
+      
       // Get label from custom labels, route labels, metadata, or format the segment
       const label = customLabels?.[currentPath] || 
                    metadata[currentPath] ||
@@ -84,7 +91,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       crumbs.push({
         label,
         path: currentPath,
-        onClick: () => navigate(currentPath)
+        onClick: () => navigate(navigationPath)
       });
     });
 
