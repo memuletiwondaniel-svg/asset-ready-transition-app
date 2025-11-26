@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Plus, ExternalLink, GripVertical } from 'lucide-react';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 
@@ -30,10 +30,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId,
 
   return (
     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
-      <CardHeader>
-        <div className="flex items-center gap-2 mb-2 opacity-0 group-hover/widget:opacity-100 transition-opacity" {...dragAttributes} {...dragListeners}>
-          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
-        </div>
+      <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
         <CardTitle className="text-lg flex items-center gap-3">
           <StyledWidgetIcon 
             Icon={AlertTriangle}
