@@ -51,11 +51,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card 
-      className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/20 hover:border-purple-500/60 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
+      className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/20 hover:border-orange-500/60 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 via-pink-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:via-pink-500/15 group-hover:to-blue-500/20 transition-all duration-500" />
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent group-hover:from-fuchsia-500/10 group-hover:via-transparent group-hover:to-indigo-500/10 transition-all duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 via-amber-500/0 to-yellow-500/0 group-hover:from-orange-500/20 group-hover:via-amber-500/15 group-hover:to-yellow-500/20 transition-all duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent group-hover:from-red-500/10 group-hover:via-transparent group-hover:to-rose-500/10 transition-all duration-500" />
       
       <CardContent className="relative p-6">
         <div className="flex items-start justify-between mb-4">
