@@ -2,14 +2,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Wrench, Plus, ExternalLink } from 'lucide-react';
+import { Wrench, Plus, ExternalLink, GripVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface ORMtceWidgetProps {
   projectId: string;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
-export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId }) => {
+export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -21,10 +24,19 @@ export const ORMtceWidget: React.FC<ORMtceWidgetProps> = ({ projectId }) => {
   return (
     <Card className="h-full">
       <CardHeader>
+        <div className="flex items-center gap-2 mb-2" {...dragAttributes} {...dragListeners}>
+          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+        </div>
         <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-primary" />
-            OR Maintenance
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={Wrench}
+              gradientFrom="from-emerald-500"
+              gradientTo="to-teal-500"
+              glowFrom="from-emerald-500/40"
+              glowTo="to-teal-500/40"
+            />
+            <span>OR Maintenance</span>
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/orm')}>
             <Plus className="h-4 w-4 mr-1" />

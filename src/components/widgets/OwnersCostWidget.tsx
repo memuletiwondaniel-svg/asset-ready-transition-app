@@ -1,13 +1,16 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, GripVertical } from 'lucide-react';
+import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface OwnersCostWidgetProps {
   projectId: string;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
-export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId }) => {
+export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
   // Mock data - replace with actual data fetching
   const costData = {
     budget: 5000000,
@@ -29,9 +32,18 @@ export const OwnersCostWidget: React.FC<OwnersCostWidgetProps> = ({ projectId })
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-primary" />
-          Owners Cost
+        <div className="flex items-center gap-2 mb-2" {...dragAttributes} {...dragListeners}>
+          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+        </div>
+        <CardTitle className="text-lg flex items-center gap-3">
+          <StyledWidgetIcon 
+            Icon={DollarSign}
+            gradientFrom="from-amber-500"
+            gradientTo="to-yellow-500"
+            glowFrom="from-amber-500/40"
+            glowTo="to-yellow-500/40"
+          />
+          <span>Owners Cost</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
