@@ -118,7 +118,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   }
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center justify-between">
           Project Overview & Readiness
