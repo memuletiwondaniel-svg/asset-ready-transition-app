@@ -9,6 +9,15 @@ interface WorkspacesWidgetProps {
 export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, className }) => {
   const workspaces = [
     {
+      id: 'projects',
+      title: 'Projects',
+      description: 'Project Management & Tracking',
+      icon: FolderKanban,
+      gradient: 'from-indigo-500/20 to-violet-500/20',
+      iconBg: 'bg-gradient-to-br from-indigo-500 to-violet-500',
+      iconColor: 'text-white'
+    },
+    {
       id: 'safe-startup',
       title: 'Safe Start-Up',
       description: 'PSSR & Safety Checklists',
@@ -42,15 +51,6 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       icon: Key,
       gradient: 'from-purple-500/20 to-pink-500/20',
       iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
-      iconColor: 'text-white'
-    },
-    {
-      id: 'projects',
-      title: 'Projects',
-      description: 'Project Management & Tracking',
-      icon: FolderKanban,
-      gradient: 'from-indigo-500/20 to-violet-500/20',
-      iconBg: 'bg-gradient-to-br from-indigo-500 to-violet-500',
       iconColor: 'text-white'
     },
     {
