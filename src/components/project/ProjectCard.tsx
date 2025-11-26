@@ -41,7 +41,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   dragListeners,
   dragAttributes,
 }) => {
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    console.log('ProjectCard clicked:', project.id);
+    console.log('Click target:', e.target);
+    console.log('Current target:', e.currentTarget);
     onView();
   };
 
