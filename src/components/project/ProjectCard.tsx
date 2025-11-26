@@ -41,19 +41,43 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   dragListeners,
   dragAttributes,
 }) => {
+  const handleViewClick = () => {
+    console.log('View clicked for project:', project.id);
+    onView();
+  };
+
+  const handleEditClick = () => {
+    console.log('Edit clicked for project:', project.id);
+    onEdit();
+  };
+
+  const handleDeleteClick = () => {
+    console.log('Delete clicked for project:', project.id);
+    onDelete();
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    console.log('Card clicked, target:', e.target);
+    const target = e.target as HTMLElement;
+    
+    // Don't trigger if clicking on interactive elements
+    if (
+      target.closest('button') || 
+      target.closest('[role="menuitem"]') ||
+      target.closest('[data-radix-dropdown-menu-content]')
+    ) {
+      console.log('Clicked on interactive element, not opening modal');
+      return;
+    }
+    
+    console.log('Opening view modal');
+    onView();
+  };
+
   return (
     <Card 
       className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-500 hover:shadow-xl hover:shadow-orange-500/20 hover:border-orange-500/60 hover:-translate-y-1 hover:scale-[1.01] cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
-      onClick={(e) => {
-        // Check if click is directly on the card or its content, not on buttons
-        const target = e.target as HTMLElement;
-        const isButton = target.tagName === 'BUTTON' || target.closest('button');
-        const isDropdown = target.closest('[role="menu"]') || target.closest('[data-radix-popper-content-wrapper]');
-        
-        if (!isButton && !isDropdown) {
-          onView();
-        }
-      }}
+      onClick={handleCardClick}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 via-amber-500/0 to-yellow-500/0 group-hover:from-orange-500/20 group-hover:via-amber-500/15 group-hover:to-yellow-500/20 transition-all duration-500" />
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent group-hover:from-red-500/10 group-hover:via-transparent group-hover:to-rose-500/10 transition-all duration-500" />
@@ -109,23 +133,32 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50">
               <DropdownMenuItem 
-                onClick={onView}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewClick();
+                }}
                 className="flex items-center cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
               >
                 <Eye className="h-4 w-4 mr-2 text-primary" />
                 <span className="text-primary">{t.viewDetails}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={onEdit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick();
+                }}
                 className="flex items-center cursor-pointer hover:bg-accent/10 focus:bg-accent/10"
               >
                 <Edit3 className="h-4 w-4 mr-2 text-accent" />
                 <span className="text-accent">{t.editProject}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick();
+                }}
                 className="flex items-center cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10"
               >
                 <Trash2 className="h-4 w-4 mr-2 text-destructive" />
