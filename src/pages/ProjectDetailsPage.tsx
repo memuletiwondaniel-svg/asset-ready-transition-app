@@ -23,6 +23,41 @@ import { PSSRSummaryWidget } from '@/components/widgets/PSSRSummaryWidget';
 import { P2AHandoverWidget } from '@/components/widgets/P2AHandoverWidget';
 import { OwnersCostWidget } from '@/components/widgets/OwnersCostWidget';
 import { ORMtceWidget } from '@/components/widgets/ORMtceWidget';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useToast } from '@/hooks/use-toast';
+
+interface SortableWidgetProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      {React.cloneElement(children as React.ReactElement, {
+        dragAttributes: attributes,
+        dragListeners: listeners,
+      })}
+    </div>
+  );
+};
 
 export default function ProjectDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,8 +67,18 @@ export default function ProjectDetailsPage() {
   const { plants } = usePlants();
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
+  const { toast } = useToast();
 
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem(`project-widget-order-${id}`);
+    return saved ? JSON.parse(saved) : ['orp', 'pssr', 'p2a', 'cost', 'orm'];
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
 
   const project = projects.find(p => p.id === id);
   const plant = plants.find(p => p.id === project?.plant_id);
@@ -45,6 +90,44 @@ export default function ProjectDetailsPage() {
       updateMetadata('title', `${project.project_id_prefix}${project.project_id_number} - ${project.project_title}`);
     }
   }, [project, updateMetadata]);
+
+  useEffect(() => {
+    localStorage.setItem(`project-widget-order-${id}`, JSON.stringify(widgetOrder));
+  }, [widgetOrder, id]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setWidgetOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      
+      toast({
+        title: "Widget rearranged",
+        description: "Your widget layout has been saved.",
+      });
+    }
+  };
+
+  const renderWidget = (widgetId: string) => {
+    switch (widgetId) {
+      case 'orp':
+        return <ORPActivityPlanWidget projectId={id || ''} />;
+      case 'pssr':
+        return <PSSRSummaryWidget projectId={id || ''} />;
+      case 'p2a':
+        return <P2AHandoverWidget projectId={id || ''} />;
+      case 'cost':
+        return <OwnersCostWidget projectId={id || ''} />;
+      case 'orm':
+        return <ORMtceWidget projectId={id || ''} />;
+      default:
+        return null;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -120,13 +203,23 @@ export default function ProjectDetailsPage() {
                 <ProjectReadinessWidget projectId={id || ''} />
               </div>
               
-              {/* Right Column - Other Widgets */}
-              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ORPActivityPlanWidget projectId={id || ''} />
-                <PSSRSummaryWidget projectId={id || ''} />
-                <P2AHandoverWidget projectId={id || ''} />
-                <OwnersCostWidget projectId={id || ''} />
-                <ORMtceWidget projectId={id || ''} />
+              {/* Right Column - Draggable Widgets */}
+              <div className="lg:col-span-2">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {widgetOrder.map((widgetId) => (
+                        <SortableWidget key={widgetId} id={widgetId}>
+                          {renderWidget(widgetId)}
+                        </SortableWidget>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             </div>
           </div>
@@ -143,5 +236,4 @@ export default function ProjectDetailsPage() {
       </div>
     </AnimatedBackground>
   );
-};
-export { ProjectDetailsPage };
+}

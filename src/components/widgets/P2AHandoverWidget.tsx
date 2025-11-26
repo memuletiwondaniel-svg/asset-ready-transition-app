@@ -2,14 +2,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, Plus, ExternalLink } from 'lucide-react';
+import { Key, Plus, ExternalLink, GripVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface P2AHandoverWidgetProps {
   projectId: string;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
-export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId }) => {
+export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -21,10 +24,19 @@ export const P2AHandoverWidget: React.FC<P2AHandoverWidgetProps> = ({ projectId 
   return (
     <Card className="h-full">
       <CardHeader>
+        <div className="flex items-center gap-2 mb-2" {...dragAttributes} {...dragListeners}>
+          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+        </div>
         <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Key className="h-5 w-5 text-primary" />
-            P2A Handover
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={Key}
+              gradientFrom="from-blue-500"
+              gradientTo="to-cyan-500"
+              glowFrom="from-blue-500/40"
+              glowTo="to-cyan-500/40"
+            />
+            <span>P2A Handover</span>
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/p2a')}>
             <Plus className="h-4 w-4 mr-1" />

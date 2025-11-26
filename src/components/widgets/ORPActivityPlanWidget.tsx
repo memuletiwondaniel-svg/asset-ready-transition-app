@@ -2,14 +2,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarCheck, Plus, ExternalLink } from 'lucide-react';
+import { CalendarCheck, Plus, ExternalLink, GripVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface ORPActivityPlanWidgetProps {
   projectId: string;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
-export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ projectId }) => {
+export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -21,10 +24,19 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ pr
   return (
     <Card className="h-full">
       <CardHeader>
+        <div className="flex items-center gap-2 mb-2" {...dragAttributes} {...dragListeners}>
+          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+        </div>
         <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CalendarCheck className="h-5 w-5 text-primary" />
-            OR Activity Plan
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={CalendarCheck}
+              gradientFrom="from-purple-500"
+              gradientTo="to-violet-500"
+              glowFrom="from-purple-500/40"
+              glowTo="to-violet-500/40"
+            />
+            <span>OR Activity Plan</span>
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/orp')}>
             <Plus className="h-4 w-4 mr-1" />

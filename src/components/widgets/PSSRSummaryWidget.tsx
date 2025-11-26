@@ -2,14 +2,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Plus, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Plus, ExternalLink, GripVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { StyledWidgetIcon } from './StyledWidgetIcon';
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
-export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId }) => {
+export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId, dragAttributes, dragListeners }) => {
   const navigate = useNavigate();
 
   // Mock data - replace with actual data fetching
@@ -28,10 +31,19 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId 
   return (
     <Card className="h-full">
       <CardHeader>
+        <div className="flex items-center gap-2 mb-2" {...dragAttributes} {...dragListeners}>
+          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+        </div>
         <CardTitle className="text-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-primary" />
-            PSSR / SoF
+          <div className="flex items-center gap-3">
+            <StyledWidgetIcon 
+              Icon={AlertTriangle}
+              gradientFrom="from-red-500"
+              gradientTo="to-orange-500"
+              glowFrom="from-red-500/40"
+              glowTo="to-orange-500/40"
+            />
+            <span>PSSR / SoF</span>
           </div>
           <Button size="sm" variant="ghost" onClick={() => navigate('/pssr')}>
             <Plus className="h-4 w-4 mr-1" />
