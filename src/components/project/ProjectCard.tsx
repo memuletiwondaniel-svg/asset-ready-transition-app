@@ -41,18 +41,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   dragListeners,
   dragAttributes,
 }) => {
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Only trigger onView if clicking on the card itself, not on interactive elements
-    const target = e.target as HTMLElement;
-    if (!target.closest('button') && !target.closest('[role="menuitem"]')) {
-      onView();
-    }
-  };
-
   return (
     <Card 
       className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-500 hover:shadow-xl hover:shadow-orange-500/20 hover:border-orange-500/60 hover:-translate-y-1 hover:scale-[1.01] cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
-      onClick={handleCardClick}
+      onClick={(e) => {
+        // Check if click is directly on the card or its content, not on buttons
+        const target = e.target as HTMLElement;
+        const isButton = target.tagName === 'BUTTON' || target.closest('button');
+        const isDropdown = target.closest('[role="menu"]') || target.closest('[data-radix-popper-content-wrapper]');
+        
+        if (!isButton && !isDropdown) {
+          onView();
+        }
+      }}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 via-amber-500/0 to-yellow-500/0 group-hover:from-orange-500/20 group-hover:via-amber-500/15 group-hover:to-yellow-500/20 transition-all duration-500" />
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent group-hover:from-red-500/10 group-hover:via-transparent group-hover:to-rose-500/10 transition-all duration-500" />
