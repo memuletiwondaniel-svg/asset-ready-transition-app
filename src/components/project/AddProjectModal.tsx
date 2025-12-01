@@ -174,7 +174,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
   }
 
   return (
-    <Dialog open={open} onOpenChange={() => {}} modal={true}>
+    <Dialog open={open} onOpenChange={onClose} modal={true}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
