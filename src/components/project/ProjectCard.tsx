@@ -193,13 +193,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors duration-200">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hub</span>
-            <p className="text-sm font-semibold text-foreground mt-1">
-              {hubName || 'Not assigned'}
-            </p>
-          </div>
-
           {/* Team Info */}
           {project.team_count > 0 && (
             <div className="flex items-center gap-2 py-2 border-t border-border/30">
