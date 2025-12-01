@@ -130,9 +130,12 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
           {teamMembers.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Users className="h-5 w-5 mr-2" />
-                  Project Team ({teamMembers.length} members)
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <Users className="h-5 w-5" />
+                  Project Team
+                  <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+                    {teamMembers.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -197,9 +200,12 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
           {milestones.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Project Milestones ({milestones.length} milestones)
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Project Milestones
+                  <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+                    {milestones.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -230,9 +236,12 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
           {documents.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Supporting Documents ({documents.length} documents)
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <FileText className="h-5 w-5" />
+                  Supporting Documents
+                  <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+                    {documents.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
