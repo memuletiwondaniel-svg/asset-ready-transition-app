@@ -234,7 +234,6 @@ export default function ProjectDetailsPage() {
               <div className="lg:row-span-3">
                 <ProjectReadinessWidget 
                   projectId={id || ''} 
-                  onEditProject={() => setEditModalOpen(true)}
                   onViewDetails={() => setViewModalOpen(true)}
                 />
               </div>
