@@ -759,7 +759,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
 
             {/* Search and Actions Bar */}
             {/* Search and Filters Bar */}
-            <Card className="border-border/40 shadow-sm animate-fade-in">
+            <Card className="border-border/40 shadow-sm animate-fade-in sticky top-0 z-20 bg-card/95 backdrop-blur-md">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
                   {/* Search Input */}
