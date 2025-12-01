@@ -22,6 +22,16 @@ export interface Project {
   plant_name?: string;
   station_name?: string;
   hub_name?: string;
+  // Enhanced data
+  team_count?: number;
+  team_lead_name?: string;
+  team_lead_avatar?: string;
+  milestone_count?: number;
+  completed_milestone_count?: number;
+  next_milestone_name?: string;
+  next_milestone_date?: string;
+  is_scorecard?: boolean;
+  document_count?: number;
 }
 
 export interface ProjectTeamMember {
@@ -129,11 +139,61 @@ export const useProjects = () => {
             hub_name = hub?.name;
           }
 
+          // Fetch team members count and lead
+          const { data: teamMembers } = await supabase
+            .from('project_team_members')
+            .select('id, is_lead, user_id')
+            .eq('project_id', project.id);
+          
+          const team_count = teamMembers?.length || 0;
+          const teamLead = teamMembers?.find(m => m.is_lead);
+          let team_lead_name, team_lead_avatar;
+          
+          if (teamLead) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', teamLead.user_id)
+              .maybeSingle();
+            team_lead_name = profile?.full_name;
+            team_lead_avatar = profile?.avatar_url;
+          }
+
+          // Fetch milestones count and progress
+          const { data: milestones } = await supabase
+            .from('project_milestones')
+            .select('id, milestone_name, milestone_date, is_scorecard_project')
+            .eq('project_id', project.id)
+            .order('milestone_date', { ascending: true });
+          
+          const milestone_count = milestones?.length || 0;
+          const now = new Date();
+          const completed_milestone_count = milestones?.filter(m => new Date(m.milestone_date) < now).length || 0;
+          const nextMilestone = milestones?.find(m => new Date(m.milestone_date) >= now);
+          const is_scorecard = milestones?.some(m => m.is_scorecard_project) || false;
+
+          // Fetch documents count
+          const { data: documents } = await supabase
+            .from('project_documents')
+            .select('id')
+            .eq('project_id', project.id);
+          
+          const document_count = documents?.length || 0;
+
           return {
             ...project,
             plant_name,
             station_name,
             hub_name,
+            team_count,
+            team_lead_name,
+            team_lead_avatar,
+            milestone_count,
+            completed_milestone_count,
+            next_milestone_name: nextMilestone?.milestone_name,
+            next_milestone_date: nextMilestone?.milestone_date,
+            is_scorecard,
+            document_count,
           };
         })
       );
