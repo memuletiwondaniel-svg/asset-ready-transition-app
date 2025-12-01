@@ -658,9 +658,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   }
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 flex flex-col overflow-hidden">
       <AnimatedBackground>
-        <div className="relative z-10">
+        <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
           <AdminHeader 
             icon={<Users className="w-6 h-6" />} 
             iconGradient="from-blue-500 to-blue-600"
@@ -673,7 +673,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             ]}
           />
 
-          <div className="max-w-7xl mx-auto p-6 space-y-6">
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-7xl mx-auto p-6 space-y-6">
             {/* Stats Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
               <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent hover:shadow-lg transition-all duration-300 group">
@@ -998,6 +999,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+          </div>
         </div>
       </AnimatedBackground>
     </div>
