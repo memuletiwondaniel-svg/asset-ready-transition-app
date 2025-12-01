@@ -209,7 +209,7 @@ export default function ProjectDetailsPage() {
       <div className="flex h-screen">
         <OrshSidebar />
         <div className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6 space-y-6 h-full flex flex-col">
+          <div className="container mx-auto p-6 space-y-6">
             <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />
 
             {/* Header */}
@@ -229,9 +229,9 @@ export default function ProjectDetailsPage() {
             </div>
 
             {/* Project Widgets Dashboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Large Overview Widget */}
-              <div className="lg:row-span-3 overflow-auto">
+              <div className="lg:row-span-3">
                 <ProjectReadinessWidget 
                   projectId={id || ''} 
                   onEditProject={() => setEditModalOpen(true)}
@@ -240,7 +240,7 @@ export default function ProjectDetailsPage() {
               </div>
               
               {/* Right Column - Draggable Widgets */}
-              <div className="lg:col-span-2 overflow-auto min-h-0">
+              <div className="lg:col-span-2">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
