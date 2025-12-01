@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar, Plus, X, CalendarDays } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -23,7 +24,8 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
   const [newMilestone, setNewMilestone] = useState({
     milestone_name: '',
     milestone_date: undefined as Date | undefined,
-    is_scorecard_project: false
+    is_scorecard_project: false,
+    status: 'pending' as 'pending' | 'in_progress' | 'completed'
   });
 
   const addMilestone = () => {
@@ -37,7 +39,8 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
       setNewMilestone({ 
         milestone_name: '', 
         milestone_date: undefined, 
-        is_scorecard_project: false 
+        is_scorecard_project: false,
+        status: 'pending'
       });
     }
   };
@@ -132,7 +135,22 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="font-medium text-gray-900 min-w-0 flex-1">{milestone.milestone_name}</span>
+                    <Checkbox 
+                      checked={milestone.status === 'completed'}
+                      onCheckedChange={(checked) => {
+                        setMilestones(prev => prev.map(m => 
+                          m.id === milestone.id 
+                            ? { ...m, status: checked ? 'completed' : 'pending' }
+                            : m
+                        ));
+                      }}
+                    />
+                    <span className={cn(
+                      "font-medium min-w-0 flex-1",
+                      milestone.status === 'completed' ? 'line-through text-muted-foreground' : 'text-gray-900'
+                    )}>
+                      {milestone.milestone_name}
+                    </span>
                     <span className="text-sm text-gray-600 whitespace-nowrap">
                       {format(new Date(milestone.milestone_date), "do MMMM yyyy")}
                     </span>

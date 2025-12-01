@@ -207,14 +207,14 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">Project ID</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">Project ID:</span>
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                       {getProjectId()}
                     </Badge>
                   </div>
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">Status</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">Status:</span>
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
                       Active
                     </Badge>
