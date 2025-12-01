@@ -24,7 +24,6 @@ interface ProjectCardProps {
   translations: any;
   dragListeners?: any;
   dragAttributes?: any;
-  colorIndex?: number;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -41,7 +40,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   translations: t,
   dragListeners,
   dragAttributes,
-  colorIndex = 0,
 }) => {
   const handleCardClick = (e: React.MouseEvent) => {
     console.log('ProjectCard clicked:', project.id);
@@ -50,61 +48,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     onView();
   };
 
-  // Define color schemes
-  const colorSchemes = [
-    {
-      shadow: 'hover:shadow-orange-500/20',
-      border: 'hover:border-orange-500/60',
-      gradient1: 'group-hover:from-orange-500/20 group-hover:via-amber-500/15 group-hover:to-yellow-500/20',
-      gradient2: 'group-hover:from-red-500/10 group-hover:via-transparent group-hover:to-rose-500/10',
-      text: 'group-hover:from-orange-600 group-hover:to-amber-600',
-    },
-    {
-      shadow: 'hover:shadow-blue-500/20',
-      border: 'hover:border-blue-500/60',
-      gradient1: 'group-hover:from-blue-500/20 group-hover:via-cyan-500/15 group-hover:to-sky-500/20',
-      gradient2: 'group-hover:from-blue-500/10 group-hover:via-transparent group-hover:to-cyan-500/10',
-      text: 'group-hover:from-blue-600 group-hover:to-cyan-600',
-    },
-    {
-      shadow: 'hover:shadow-purple-500/20',
-      border: 'hover:border-purple-500/60',
-      gradient1: 'group-hover:from-purple-500/20 group-hover:via-pink-500/15 group-hover:to-fuchsia-500/20',
-      gradient2: 'group-hover:from-violet-500/10 group-hover:via-transparent group-hover:to-purple-500/10',
-      text: 'group-hover:from-purple-600 group-hover:to-pink-600',
-    },
-    {
-      shadow: 'hover:shadow-green-500/20',
-      border: 'hover:border-green-500/60',
-      gradient1: 'group-hover:from-green-500/20 group-hover:via-emerald-500/15 group-hover:to-teal-500/20',
-      gradient2: 'group-hover:from-green-500/10 group-hover:via-transparent group-hover:to-emerald-500/10',
-      text: 'group-hover:from-green-600 group-hover:to-emerald-600',
-    },
-    {
-      shadow: 'hover:shadow-rose-500/20',
-      border: 'hover:border-rose-500/60',
-      gradient1: 'group-hover:from-rose-500/20 group-hover:via-red-500/15 group-hover:to-pink-500/20',
-      gradient2: 'group-hover:from-red-500/10 group-hover:via-transparent group-hover:to-rose-500/10',
-      text: 'group-hover:from-rose-600 group-hover:to-red-600',
-    },
-    {
-      shadow: 'hover:shadow-indigo-500/20',
-      border: 'hover:border-indigo-500/60',
-      gradient1: 'group-hover:from-indigo-500/20 group-hover:via-violet-500/15 group-hover:to-purple-500/20',
-      gradient2: 'group-hover:from-indigo-500/10 group-hover:via-transparent group-hover:to-violet-500/10',
-      text: 'group-hover:from-indigo-600 group-hover:to-violet-600',
-    },
-  ];
-
-  const scheme = colorSchemes[colorIndex % colorSchemes.length];
-
   return (
     <Card 
-      className={`group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card transition-all duration-500 hover:shadow-xl ${scheme.shadow} ${scheme.border} hover:-translate-y-1 hover:scale-[1.01] cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
+      className={`group relative overflow-hidden border-border/50 bg-card transition-all duration-200 ease-out hover:shadow-lg hover:shadow-black/5 hover:border-border hover:-translate-y-0.5 cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent ${scheme.gradient1} transition-all duration-500`} />
-      <div className={`absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent ${scheme.gradient2} transition-all duration-500`} />
       
       <CardContent className="relative p-4">
         <div className="flex items-start justify-between mb-3">
@@ -140,7 +88,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   />
                 </Button>
               </div>
-              <h3 className={`font-bold text-base text-foreground group-hover:bg-gradient-to-r ${scheme.text} group-hover:bg-clip-text group-hover:text-transparent transition-all duration-200 truncate`}>
+              <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors duration-200 truncate">
                 {project.project_title}
               </h3>
             </div>
@@ -193,7 +141,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         <div className="space-y-2">
-          <div className="p-2.5 rounded-lg bg-gradient-to-r from-muted/30 to-muted/20 group-hover:from-muted/50 group-hover:to-muted/40 transition-colors duration-200">
+          <div className="p-2.5 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors duration-200">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Plant</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm font-semibold text-foreground">
@@ -207,7 +155,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-gradient-to-r from-muted/30 to-muted/20 group-hover:from-muted/50 group-hover:to-muted/40 transition-colors duration-200">
+          <div className="p-2.5 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors duration-200">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hub</span>
             <p className="text-sm font-semibold text-foreground mt-1">
               {hubName || 'Not assigned'}
