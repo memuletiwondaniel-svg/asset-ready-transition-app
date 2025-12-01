@@ -9,6 +9,7 @@ import PSSRStepTwo from './PSSRStepTwo';
 import PSSRStepThree from './PSSRStepThree';
 import PSSRStepFour from './PSSRStepFour';
 import PSSRStepSix from './PSSRStepSix';
+import { useProjects } from '@/hooks/useProjects';
 interface CreatePSSRWorkflowProps {
   onBack: () => void;
   onComplete?: () => void;
@@ -53,6 +54,22 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
   const [pssrData, setPssrData] = useState<PSSRData>({});
   const [pssrId, setPssrId] = useState<string | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  
+  // Fetch projects from database
+  const { projects: dbProjects, isLoading: isLoadingProjects } = useProjects();
+  
+  // Map projects to expected format
+  const projects = React.useMemo(() => 
+    dbProjects?.map(p => ({
+      id: p.id,
+      name: `${p.project_id_prefix}${p.project_id_number} - ${p.project_title}`,
+      plant: p.plant_name || '',
+      subdivision: p.station_name || '',
+      scope: p.project_scope || '',
+      hubLead: { name: 'Hub Lead', email: '', avatar: '', status: 'green' as const },
+      others: []
+    })) || [], 
+  [dbProjects]);
   const steps = [{
     number: 1,
     title: 'Enter PSSR Information',
@@ -176,7 +193,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
             projectTeam: {},
             hsse: {}
           }
-        }} setFormData={setFormDataAdapter} projects={[]} assets={['Umm Qasr (UQ)', 'KAZ', 'NRNGL', 'BNGL', 'Compression Station (CS)']} reasons={['Start-up or Commissioning of a new Asset', 'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy', 'Restart following a process safety incident', 'Restart following a Turn Around (TAR) Event or Major Maintenance Activity', 'Others (Specify)']} projectSearchOpen={false} setProjectSearchOpen={() => {}} showAddProjectWidget={false} setShowAddProjectWidget={() => {}} onProjectSelect={() => {}} onFileUpload={e => {
+        }} setFormData={setFormDataAdapter} projects={projects} assets={['Umm Qasr (UQ)', 'KAZ', 'NRNGL', 'BNGL', 'Compression Station (CS)']} reasons={['Start-up or Commissioning of a new Asset', 'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy', 'Restart following a process safety incident', 'Restart following a Turn Around (TAR) Event or Major Maintenance Activity', 'Others (Specify)']} projectSearchOpen={false} setProjectSearchOpen={() => {}} showAddProjectWidget={false} setShowAddProjectWidget={() => {}} onProjectSelect={() => {}} onFileUpload={e => {
           const files = Array.from(e.target.files || []);
           setPssrData(prev => ({
             ...prev,
