@@ -268,19 +268,34 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                   <SelectValue placeholder="Choose a project" />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md max-h-[300px]">
-                  {projects.map(project => (
-                    <SelectItem key={project.id} value={project.id} className="py-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="font-medium">{project.name}</div>
-                        {project.plant && (
-                          <div className="text-xs text-muted-foreground">Plant: {project.plant}</div>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={8} 
+                  className="bg-white dark:bg-gray-800 z-[9999] shadow-xl border border-gray-200 dark:border-gray-700 rounded-md max-h-[300px] overflow-y-auto"
+                >
+                  {projects.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No projects available
+                    </div>
+                  ) : (
+                    projects.map(project => (
+                      <SelectItem 
+                        key={project.id} 
+                        value={project.id} 
+                        className="py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{project.name}</div>
+                          {project.plant && (
+                            <div className="text-xs text-muted-foreground">Plant: {project.plant}</div>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">{projects.length} projects available</p>
             </div>
           )}
 
