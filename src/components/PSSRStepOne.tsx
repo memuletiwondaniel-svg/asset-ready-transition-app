@@ -5,12 +5,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { FileText, Building2, User, Calendar } from 'lucide-react';
+import { FileText, Building2, User, Calendar, Plus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
+import { AddProjectModal } from './project/AddProjectModal';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 import { useProjectTeamMembers, useProjectMilestones } from '@/hooks/useProjects';
 interface FormData {
@@ -71,6 +74,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onContextAction,
   onNewProjectCreate
 }) => {
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const selectedProject = projects.find(p => p.id === formData.projectId);
   
   // Fetch team members and milestones for selected project
@@ -286,23 +290,34 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <SelectContent 
                   position="popper" 
                   sideOffset={8} 
-                  className="bg-white dark:bg-gray-800 z-[9999] shadow-xl border border-gray-200 dark:border-gray-700 rounded-md max-h-[300px] overflow-y-auto"
+                  className="bg-white dark:bg-gray-800 z-[9999] shadow-xl border border-gray-200 dark:border-gray-700 rounded-md max-h-[400px] overflow-y-auto"
                 >
-                  {projects.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      No projects available
-                    </div>
-                  ) : (
-                    projects.map(project => (
-                      <SelectItem 
-                        key={project.id} 
-                        value={project.id} 
-                        className="py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <div className="font-medium text-gray-900 dark:text-gray-100">{project.name}</div>
-                      </SelectItem>
-                    ))
+                  {projects.length > 0 && projects.map(project => (
+                    <SelectItem 
+                      key={project.id} 
+                      value={project.id} 
+                      className="py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{project.name}</div>
+                    </SelectItem>
+                  ))}
+                  
+                  {projects.length > 0 && (
+                    <Separator className="my-2" />
                   )}
+                  
+                  <div 
+                    className="p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAddProjectModal(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
+                      <Plus className="h-4 w-4" />
+                      <span>Create New Project</span>
+                    </div>
+                  </div>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">{projects.length} projects available</p>
@@ -495,6 +510,12 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           <FileUploadSection files={formData.files} onFileUpload={onFileUpload} onRemoveFile={onRemoveFile} />
         </CardContent>
       </Card>
+      
+      {/* Add Project Modal */}
+      <AddProjectModal 
+        open={showAddProjectModal} 
+        onClose={() => setShowAddProjectModal(false)} 
+      />
     </div>;
 };
 export default PSSRStepOne;
