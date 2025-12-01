@@ -299,6 +299,36 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
             </div>
           )}
 
+          {/* Display Selected Project Details */}
+          {selectedProject && (
+            <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Building2 className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-900">Selected Project Details</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-600 font-medium">Project Name</p>
+                  <p className="text-sm text-gray-900 mt-1">{selectedProject.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 font-medium">Plant</p>
+                  <p className="text-sm text-gray-900 mt-1">{selectedProject.plant}</p>
+                </div>
+                {selectedProject.subdivision && (
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium">Subdivision</p>
+                    <p className="text-sm text-gray-900 mt-1">{selectedProject.subdivision}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs text-gray-600 font-medium">Scope</p>
+                  <p className="text-sm text-gray-900 mt-1">{selectedProject.scope || 'Not specified'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
             <div className="space-y-2">
