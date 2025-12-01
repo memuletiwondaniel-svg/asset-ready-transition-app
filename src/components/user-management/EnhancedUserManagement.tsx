@@ -918,11 +918,21 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                         {filteredUsers.map((user, index) => (
                           <TableRow 
                             key={user.user_id}
-                            className="hover:bg-muted/50 transition-colors border-border/40"
+                            className="hover:bg-muted/50 transition-colors border-border/40 cursor-pointer"
                             style={{ animationDelay: `${index * 50}ms` }}
+                            onClick={() => setSelectedUser(user as any)}
                           >
                             {columns.filter(col => col.visible).map((column) => (
-                              <TableCell key={column.id} style={{ width: column.width, minWidth: column.minWidth }}>
+                              <TableCell 
+                                key={column.id} 
+                                style={{ width: column.width, minWidth: column.minWidth }}
+                                onClick={(e) => {
+                                  // Stop propagation for actions column to prevent row click
+                                  if (column.id === 'actions') {
+                                    e.stopPropagation();
+                                  }
+                                }}
+                              >
                                 {renderCellContent(column.id, user)}
                               </TableCell>
                             ))}
