@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Link as LinkIcon, File } from 'lucide-react';
+import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Link as LinkIcon, File, FileSpreadsheet, FileImage, Presentation, FileCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,6 +39,49 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
     if (!avatarUrl) return null;
     if (avatarUrl.startsWith('http')) return avatarUrl;
     return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+  };
+
+  // Helper function to get document type-specific icons
+  const getDocumentIcon = (doc: any) => {
+    const extension = doc.file_extension?.toLowerCase() || '';
+    const docType = doc.document_type?.toLowerCase() || '';
+    
+    // PDF files
+    if (extension === 'pdf' || docType.includes('pdf')) {
+      return <FileText className="h-5 w-5 text-red-500" />;
+    }
+    // Word documents
+    if (['doc', 'docx'].includes(extension) || docType.includes('word')) {
+      return <FileText className="h-5 w-5 text-blue-600" />;
+    }
+    // Excel spreadsheets
+    if (['xls', 'xlsx', 'csv'].includes(extension) || docType.includes('excel') || docType.includes('spreadsheet')) {
+      return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
+    }
+    // PowerPoint
+    if (['ppt', 'pptx'].includes(extension) || docType.includes('powerpoint') || docType.includes('presentation')) {
+      return <Presentation className="h-5 w-5 text-orange-500" />;
+    }
+    // Images
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension) || docType.includes('image')) {
+      return <FileImage className="h-5 w-5 text-purple-500" />;
+    }
+    // Code files
+    if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'xml'].includes(extension)) {
+      return <FileCode className="h-5 w-5 text-gray-600" />;
+    }
+    // Default file icon
+    return <File className="h-5 w-5 text-muted-foreground" />;
+  };
+
+  // Helper function to format short date
+  const formatShortDate = (dateString: string) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      day: 'numeric',
+      month: 'short', 
+      year: 'numeric' 
+    });
   };
 
   useEffect(() => {
@@ -292,9 +335,6 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                                   <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
                                   <p className="text-xs text-muted-foreground">{member.role}</p>
                                 </div>
-                                {member.is_lead && (
-                                  <Badge className="shrink-0 text-xs">Lead</Badge>
-                                )}
                               </div>
                             </div>
                           );
@@ -355,30 +395,48 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                     No milestones defined for this project yet.
                   </p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {milestones.map((milestone) => (
-                      <div key={milestone.id} className="p-4 border rounded-lg bg-muted/30">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-foreground">{milestone.milestone_name}</h4>
-                            {milestone.is_scorecard_project && (
-                              <Badge variant="default" className="text-xs">⭐ Scorecard</Badge>
-                            )}
-                          </div>
-                          <Badge 
-                            variant="outline" 
-                            className={
-                              milestone.status === 'completed' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' :
-                              milestone.status === 'in_progress' ? 'bg-blue-500/10 text-blue-700 border-blue-500/20' :
+                      <div 
+                        key={milestone.id} 
+                        className="relative p-4 border rounded-xl bg-gradient-to-br from-background to-muted/30 hover:shadow-md transition-all group"
+                      >
+                        {/* Status indicator dot */}
+                        <div 
+                          className={`absolute top-4 right-4 h-3 w-3 rounded-full ${
+                            milestone.status === 'completed' ? 'bg-emerald-500' :
+                            milestone.status === 'in_progress' ? 'bg-blue-500' :
+                            'bg-muted-foreground/30'
+                          }`} 
+                        />
+                        
+                        {/* Date chip at top */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                          <Calendar className="h-3 w-3" />
+                          {formatShortDate(milestone.milestone_date)}
+                        </div>
+                        
+                        {/* Milestone name */}
+                        <h4 className="font-semibold text-foreground text-sm mb-2 pr-6">
+                          {milestone.milestone_name}
+                        </h4>
+                        
+                        {/* Footer with status and scorecard */}
+                        <div className="flex items-center gap-2 mt-auto flex-wrap">
+                          <span 
+                            className={`text-xs px-2 py-0.5 rounded-full ${
+                              milestone.status === 'completed' ? 'bg-emerald-500/10 text-emerald-700' :
+                              milestone.status === 'in_progress' ? 'bg-blue-500/10 text-blue-700' :
                               'bg-muted text-muted-foreground'
-                            }
+                            }`}
                           >
                             {milestone.status || 'pending'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(milestone.milestone_date)}</span>
+                          </span>
+                          {milestone.is_scorecard_project && (
+                            <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700">
+                              Scorecard
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -409,11 +467,9 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                       <div key={doc.id} className="p-4 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
-                            {doc.link_type === 'file' ? (
-                              <File className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                            ) : (
-                              <LinkIcon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                            )}
+                            <div className="shrink-0 mt-0.5">
+                              {doc.link_type === 'file' ? getDocumentIcon(doc) : <LinkIcon className="h-5 w-5 text-blue-500" />}
+                            </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium text-foreground truncate">{doc.document_name}</h4>
                               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
