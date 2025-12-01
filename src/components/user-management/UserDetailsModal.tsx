@@ -43,9 +43,10 @@ interface UserDetailsModalProps {
   user: User;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
-const UserDetailsModal = ({ user, isOpen, onClose }: UserDetailsModalProps) => {
+const UserDetailsModal = ({ user, isOpen, onClose, onEdit }: UserDetailsModalProps) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -244,9 +245,11 @@ const UserDetailsModal = ({ user, isOpen, onClose }: UserDetailsModalProps) => {
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button variant="outline">
-              Edit User
-            </Button>
+            {onEdit && (
+              <Button variant="outline" onClick={onEdit}>
+                Edit User
+              </Button>
+            )}
             <Button variant="outline">
               Assign to Project
             </Button>
