@@ -216,7 +216,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
       if (error) throw error;
 
-      return data.avatarUrl;
+      console.log('Avatar upload response:', data);
+      return data.publicUrl;
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({
