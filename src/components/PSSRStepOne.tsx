@@ -299,12 +299,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                         value={project.id} 
                         className="py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        <div className="flex flex-col gap-1">
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{project.name}</div>
-                          {project.plant && (
-                            <div className="text-xs text-muted-foreground">Plant: {project.plant}</div>
-                          )}
-                        </div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{project.name}</div>
                       </SelectItem>
                     ))
                   )}
