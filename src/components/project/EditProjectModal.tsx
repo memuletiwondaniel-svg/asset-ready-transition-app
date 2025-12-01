@@ -211,48 +211,126 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
 
       updateProject({ id: project.id, updates: projectData });
 
-      // 2. Update team members - delete existing and insert new
+      // 2. Update team members - delete existing and insert new (filter invalid)
       await supabase.from('project_team_members').delete().eq('project_id', project.id);
       
       if (teamMembers.length > 0) {
-        const teamData = teamMembers.map(member => ({
-          project_id: project.id,
-          user_id: member.user_id,
-          role: member.role,
-          is_lead: member.is_lead || false
-        }));
-        await supabase.from('project_team_members').insert(teamData);
+        const validTeamMembers = teamMembers.filter(member => 
+          member.user_id && 
+          member.user_id.trim() !== '' && 
+          member.user_id !== 'undefined'
+        );
+        
+        const skippedMembers = teamMembers.length - validTeamMembers.length;
+        
+        if (validTeamMembers.length > 0) {
+          const teamData = validTeamMembers.map(member => ({
+            project_id: project.id,
+            user_id: member.user_id,
+            role: member.role,
+            is_lead: member.is_lead || false
+          }));
+          
+          const { error: teamError } = await supabase
+            .from('project_team_members')
+            .insert(teamData);
+            
+          if (teamError) {
+            console.error('Error saving team members:', teamError);
+            throw teamError;
+          }
+        }
+        
+        if (skippedMembers > 0) {
+          toast({
+            title: "Note",
+            description: `${skippedMembers} team member(s) without selected users were skipped`,
+            variant: "default"
+          });
+        }
       }
 
-      // 3. Update milestones - delete existing and insert new
+      // 3. Update milestones - delete existing and insert new (filter invalid)
       await supabase.from('project_milestones').delete().eq('project_id', project.id);
       
       if (milestones.length > 0) {
-        const { data: { user } } = await supabase.auth.getUser();
-        const milestoneData = milestones.map(m => ({
-          project_id: project.id,
-          milestone_name: m.milestone_name,
-          milestone_date: m.milestone_date,
-          is_scorecard_project: m.is_scorecard_project || false,
-          created_by: user?.id || ''
-        }));
-        await supabase.from('project_milestones').insert(milestoneData);
+        const validMilestones = milestones.filter(m => 
+          m.milestone_name && 
+          m.milestone_name.trim() !== '' &&
+          m.milestone_date
+        );
+        
+        const skippedMilestones = milestones.length - validMilestones.length;
+        
+        if (validMilestones.length > 0) {
+          const { data: { user } } = await supabase.auth.getUser();
+          const milestoneData = validMilestones.map(m => ({
+            project_id: project.id,
+            milestone_name: m.milestone_name,
+            milestone_date: m.milestone_date,
+            is_scorecard_project: m.is_scorecard_project || false,
+            created_by: user?.id || ''
+          }));
+          
+          const { error: milestoneError } = await supabase
+            .from('project_milestones')
+            .insert(milestoneData);
+            
+          if (milestoneError) {
+            console.error('Error saving milestones:', milestoneError);
+            throw milestoneError;
+          }
+        }
+        
+        if (skippedMilestones > 0) {
+          toast({
+            title: "Note",
+            description: `${skippedMilestones} incomplete milestone(s) were skipped`,
+            variant: "default"
+          });
+        }
       }
 
-      // 4. Update documents - delete existing and insert new
+      // 4. Update documents - delete existing and insert new (filter invalid)
       await supabase.from('project_documents').delete().eq('project_id', project.id);
       
       if (documents.length > 0) {
-        const { data: { user } } = await supabase.auth.getUser();
-        const docData = documents.map(d => ({
-          project_id: project.id,
-          document_name: d.document_name,
-          document_type: d.document_type || 'General',
-          link_url: d.file_url,
-          link_type: d.link_type,
-          uploaded_by: user?.id || ''
-        }));
-        await supabase.from('project_documents').insert(docData);
+        const validDocuments = documents.filter(d =>
+          d.document_name &&
+          d.document_name.trim() !== '' &&
+          (d.file_url || d.link_url)
+        );
+        
+        const skippedDocuments = documents.length - validDocuments.length;
+        
+        if (validDocuments.length > 0) {
+          const { data: { user } } = await supabase.auth.getUser();
+          const docData = validDocuments.map(d => ({
+            project_id: project.id,
+            document_name: d.document_name,
+            document_type: d.document_type || 'General',
+            link_url: d.file_url,
+            link_type: d.link_type,
+            uploaded_by: user?.id || ''
+          }));
+          
+          const { error: docError } = await supabase
+            .from('project_documents')
+            .insert(docData);
+            
+          if (docError) {
+            console.error('Error saving documents:', docError);
+            throw docError;
+          }
+        }
+        
+        if (skippedDocuments > 0) {
+          toast({
+            title: "Note",
+            description: `${skippedDocuments} incomplete document(s) were skipped`,
+            variant: "default"
+          });
+        }
       }
       
       // Log activity
