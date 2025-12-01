@@ -45,7 +45,11 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
       setShowAddProjectWidget(true);
       onProjectSearchOpenChange(false);
     } else {
-      onProjectSelect(value);
+      const selectedProject = projects.find(p => p.id === value);
+      if (selectedProject) {
+        onProjectSelect(value);
+        onProjectSearchOpenChange(false);
+      }
     }
   };
 
@@ -91,18 +95,21 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
               variant="outline"
               role="combobox"
               aria-expanded={projectSearchOpen}
-              className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors"
+              className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors bg-background"
             >
               {projectId || "Search projects..."}
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search projects..." className="h-9" />
-              <CommandList>
+          <PopoverContent className="w-[500px] p-0 bg-white border-2 shadow-xl z-[200]" align="start">
+            <Command className="bg-white">
+              <CommandInput 
+                placeholder="Type to search projects by ID or name..." 
+                className="h-12 border-b-2 border-gray-100" 
+              />
+              <CommandList className="max-h-[400px] bg-white">
                 <CommandEmpty>
-                  <div className="p-6 text-center">
+                  <div className="p-6 text-center bg-white">
                     <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
                       <Search className="h-6 w-6 text-gray-400" />
                     </div>
@@ -119,27 +126,33 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                     </Button>
                   </div>
                 </CommandEmpty>
-                <CommandGroup>
+                <CommandGroup className="bg-white">
                   {projects.map((project) => (
                     <CommandItem
                       key={project.id}
-                      value={`${project.id} ${project.name}`}
+                      value={`${project.id} ${project.name} ${project.plant}`}
                       onSelect={() => handleProjectSelect(project.id)}
-                      className="py-3"
+                      className="py-3 px-4 cursor-pointer hover:bg-blue-50 transition-colors"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="font-medium">{project.id}</span>
-                        <span className="text-gray-600">- {project.name}</span>
+                      <div className="flex flex-col gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span className="font-semibold text-gray-900">{project.id}</span>
+                          <span className="text-gray-500">•</span>
+                          <span className="text-gray-700 flex-1">{project.name}</span>
+                        </div>
+                        <div className="ml-4 text-xs text-gray-500">
+                          Plant: {project.plant}
+                        </div>
                       </div>
                     </CommandItem>
                   ))}
                   <CommandItem
-                    value="add-new-project"
+                    value="add-new-project create new"
                     onSelect={() => handleProjectSelect('add-new')}
-                    className="py-3 border-t border-gray-200 bg-blue-50"
+                    className="py-3 px-4 border-t-2 border-gray-200 bg-blue-50 hover:bg-blue-100 cursor-pointer sticky bottom-0"
                   >
-                    <div className="flex items-center gap-2 text-blue-600 font-medium">
+                    <div className="flex items-center gap-2 text-blue-600 font-medium w-full">
                       <Plus className="h-4 w-4" />
                       Add New Project
                     </div>
