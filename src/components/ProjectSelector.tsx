@@ -40,6 +40,10 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
 }) => {
   const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
 
+  console.log('ProjectSelector - Projects count:', projects.length);
+  console.log('ProjectSelector - Current projectId:', projectId);
+  console.log('ProjectSelector - Search open:', projectSearchOpen);
+
   const handleProjectSelect = (value: string) => {
     if (value === 'add-new') {
       setShowAddProjectWidget(true);
@@ -95,31 +99,43 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
               variant="outline"
               role="combobox"
               aria-expanded={projectSearchOpen}
-              className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors bg-background"
+              className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors bg-white hover:bg-gray-50"
+              type="button"
             >
-              {projectId || "Search projects..."}
+              <span className="text-left flex-1">{projectId || "Search projects..."}</span>
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[500px] p-0 bg-white border-2 shadow-xl z-[200]" align="start">
+          <PopoverContent 
+            className="w-[500px] p-0 bg-white border-2 shadow-xl z-[300]" 
+            align="start" 
+            side="bottom"
+            sideOffset={8}
+            avoidCollisions={true}
+            collisionPadding={20}
+          >
             <Command className="bg-white">
               <CommandInput 
                 placeholder="Type to search projects by ID or name..." 
-                className="h-12 border-b-2 border-gray-100" 
+                className="h-12 border-b-2 border-gray-100 bg-white" 
               />
-              <CommandList className="max-h-[400px] bg-white">
+              <CommandList className="max-h-[400px] bg-white overflow-y-auto">
                 <CommandEmpty>
                   <div className="p-6 text-center bg-white">
                     <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
                       <Search className="h-6 w-6 text-gray-400" />
                     </div>
                     <p className="text-sm text-gray-600 mb-4">
-                      No projects found matching your search.
+                      {projects.length === 0 
+                        ? "No projects available yet. Create your first project!"
+                        : "No projects found matching your search."
+                      }
                     </p>
                     <Button
                       variant="outline"
                       onClick={() => handleProjectSelect('add-new')}
                       className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                      type="button"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add New Project
@@ -132,7 +148,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                       key={project.id}
                       value={`${project.id} ${project.name} ${project.plant}`}
                       onSelect={() => handleProjectSelect(project.id)}
-                      className="py-3 px-4 cursor-pointer hover:bg-blue-50 transition-colors"
+                      className="py-3 px-4 cursor-pointer hover:bg-blue-50 transition-colors bg-white"
                     >
                       <div className="flex flex-col gap-1 w-full">
                         <div className="flex items-center gap-2">
@@ -147,16 +163,18 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                       </div>
                     </CommandItem>
                   ))}
-                  <CommandItem
-                    value="add-new-project create new"
-                    onSelect={() => handleProjectSelect('add-new')}
-                    className="py-3 px-4 border-t-2 border-gray-200 bg-blue-50 hover:bg-blue-100 cursor-pointer sticky bottom-0"
-                  >
-                    <div className="flex items-center gap-2 text-blue-600 font-medium w-full">
-                      <Plus className="h-4 w-4" />
-                      Add New Project
-                    </div>
-                  </CommandItem>
+                  {projects.length > 0 && (
+                    <CommandItem
+                      value="add-new-project create new"
+                      onSelect={() => handleProjectSelect('add-new')}
+                      className="py-3 px-4 border-t-2 border-gray-200 bg-blue-50 hover:bg-blue-100 cursor-pointer sticky bottom-0"
+                    >
+                      <div className="flex items-center gap-2 text-blue-600 font-medium w-full">
+                        <Plus className="h-4 w-4" />
+                        Add New Project
+                      </div>
+                    </CommandItem>
+                  )}
                 </CommandGroup>
               </CommandList>
             </Command>
