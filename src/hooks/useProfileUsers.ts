@@ -26,7 +26,13 @@ export const useProfileUsers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, full_name, position, avatar_url')
+        .select(`
+          user_id, 
+          full_name, 
+          position, 
+          avatar_url,
+          role_name:roles!profiles_role_fkey(name)
+        `)
         .eq('is_active', true)
         .not('full_name', 'is', null);
 
@@ -35,7 +41,7 @@ export const useProfileUsers = () => {
       return data?.map(profile => ({
         user_id: profile.user_id,
         full_name: profile.full_name || '',
-        role: profile.position || '',
+        role: (profile.role_name as any)?.name || '',
         position: profile.position || '',
         avatar_url: getFullAvatarUrl(profile.avatar_url)
       })) || [];
