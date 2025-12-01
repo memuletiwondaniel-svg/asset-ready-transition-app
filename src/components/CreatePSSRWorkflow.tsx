@@ -176,7 +176,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
             projectTeam: {},
             hsse: {}
           }
-        }} setFormData={setFormDataAdapter} projects={[]} setProjects={() => {}} assets={['Umm Qasr (UQ)', 'KAZ', 'NRNGL', 'BNGL', 'Compression Station (CS)']} reasons={['Start-up or Commissioning of a new Asset', 'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy', 'Restart following a process safety incident', 'Restart following a Turn Around (TAR) Event or Major Maintenance Activity', 'Others (Specify)']} projectSearchOpen={false} setProjectSearchOpen={() => {}} showAddProjectWidget={false} setShowAddProjectWidget={() => {}} onProjectSelect={() => {}} onFileUpload={e => {
+        }} setFormData={setFormDataAdapter} projects={[]} assets={['Umm Qasr (UQ)', 'KAZ', 'NRNGL', 'BNGL', 'Compression Station (CS)']} reasons={['Start-up or Commissioning of a new Asset', 'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy', 'Restart following a process safety incident', 'Restart following a Turn Around (TAR) Event or Major Maintenance Activity', 'Others (Specify)']} projectSearchOpen={false} setProjectSearchOpen={() => {}} showAddProjectWidget={false} setShowAddProjectWidget={() => {}} onProjectSelect={() => {}} onFileUpload={e => {
           const files = Array.from(e.target.files || []);
           setPssrData(prev => ({
             ...prev,
@@ -187,7 +187,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
             ...prev,
             files: (prev.files || []).filter((_, i) => i !== index)
           }));
-        }} onContextAction={() => {}} />;
+        }} onContextAction={() => {}} onNewProjectCreate={() => {}} />;
       case 2:
         return <PSSRStepTwo formData={{
           asset: pssrData.asset || '',

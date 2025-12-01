@@ -45,7 +45,6 @@ interface PSSRStepOneProps {
   formData: FormData;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   projects: Project[];
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   assets: string[];
   reasons: string[];
   projectSearchOpen: boolean;
@@ -56,13 +55,13 @@ interface PSSRStepOneProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
   onContextAction: (action: string, person: any) => void;
+  onNewProjectCreate: (project: Project) => void;
 }
 
 const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   formData,
   setFormData,
   projects,
-  setProjects,
   assets,
   reasons,
   projectSearchOpen,
@@ -70,7 +69,8 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onProjectSelect,
   onFileUpload,
   onRemoveFile,
-  onContextAction
+  onContextAction,
+  onNewProjectCreate
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
   const { data: pssrReasons = [] } = usePSSRReasons();
@@ -86,14 +86,8 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   }, [formData.reason, pssrReasons]);
 
   const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(prevProjects => 
-      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
-    );
-  };
-
-  const handleNewProjectCreate = (newProject: Project) => {
-    setProjects(prevProjects => [...prevProjects, newProject]);
-    setFormData(prev => ({ ...prev, projectId: newProject.id, projectName: newProject.name }));
+    // Project update will be handled by parent component
+    console.log('Project updated:', updatedProject);
   };
 
   return (
@@ -302,7 +296,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     onProjectSearchOpenChange={setProjectSearchOpen}
                     onProjectSelect={onProjectSelect}
                     onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
-                    onNewProjectCreate={handleNewProjectCreate}
+                    onNewProjectCreate={onNewProjectCreate}
                   />
                 </div>
               </div>
