@@ -122,7 +122,8 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           id: m.id,
           milestone_name: m.milestone_name,
           milestone_date: m.milestone_date,
-          is_scorecard_project: m.is_scorecard_project
+          is_scorecard_project: m.is_scorecard_project,
+          status: m.status || 'pending'
         }));
         setMilestones(formattedMilestones);
       }
@@ -139,8 +140,11 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           id: d.id,
           document_name: d.document_name,
           document_type: d.document_type,
-          file_url: d.link_url,
-          link_type: d.link_type
+          file_path: d.file_path,
+          link_url: d.link_url,
+          link_type: d.link_type,
+          file_extension: d.file_extension,
+          file_size: d.file_size
         }));
         setDocuments(formattedDocs);
       }
@@ -271,6 +275,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             milestone_name: m.milestone_name,
             milestone_date: m.milestone_date,
             is_scorecard_project: m.is_scorecard_project || false,
+            status: m.status || 'pending',
             created_by: user?.id || ''
           }));
           

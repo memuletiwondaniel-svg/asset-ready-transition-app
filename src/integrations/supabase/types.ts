@@ -2618,6 +2618,7 @@ export type Database = {
           milestone_date: string
           milestone_name: string
           project_id: string
+          status: string | null
         }
         Insert: {
           created_at?: string
@@ -2627,6 +2628,7 @@ export type Database = {
           milestone_date: string
           milestone_name: string
           project_id: string
+          status?: string | null
         }
         Update: {
           created_at?: string
@@ -2636,6 +2638,7 @@ export type Database = {
           milestone_date?: string
           milestone_name?: string
           project_id?: string
+          status?: string | null
         }
         Relationships: [
           {
