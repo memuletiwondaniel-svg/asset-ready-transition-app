@@ -25,8 +25,13 @@ const getProjectColor = (projectId: string) => {
     { bg: 'from-indigo-500/10 to-indigo-600/10', text: 'text-indigo-600', border: 'border-indigo-500/20' },
   ];
   
-  const hash = projectId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colors[hash % colors.length];
+  // DJB2 hash algorithm - better distribution than simple sum
+  let hash = 5381;
+  for (let i = 0; i < projectId.length; i++) {
+    hash = ((hash << 5) + hash) ^ projectId.charCodeAt(i);
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
 };
 
 interface ProjectCardProps {
