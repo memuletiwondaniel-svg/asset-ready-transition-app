@@ -150,23 +150,17 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                         
                         switch (role) {
                           case 'Project Manager':
-                            return userRole.includes('proj manager') || 
-                                   userRole.includes('project manager') ||
-                                   userPos.includes('proj manager') ||
-                                   userPos.includes('project manager');
+                            return userRole === 'proj manager' || 
+                                   userRole === 'project manager';
                           case 'Project Engineer':
-                            return userRole.includes('proj engr') || 
-                                   userRole.includes('project eng') ||
-                                   userPos.includes('proj eng') ||
-                                   userPos.includes('project eng');
+                            return userRole === 'proj engr' || 
+                                   userRole === 'project engineer';
                           case 'Commissioning Lead':
-                            return userRole.includes('commissioning') ||
-                                   userPos.includes('commissioning');
+                            return userRole === 'commissioning lead';
                           case 'Construction Lead':
-                            return userRole.includes('construction') ||
-                                   userPos.includes('construction');
+                            return userRole === 'construction lead';
                           case 'ORA Lead':
-                            return userRole.includes('ora') ||
+                            return userRole === 'ora lead' ||
                                    userPos.includes('ora');
                           default:
                             return true;
