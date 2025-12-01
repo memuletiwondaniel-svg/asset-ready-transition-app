@@ -15,6 +15,7 @@ import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
+import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectReadinessWidget } from '@/components/widgets/ProjectReadinessWidget';
@@ -72,6 +73,7 @@ export default function ProjectDetailsPage() {
   const { toast } = useToast();
 
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`project-widget-order-${id}`);
     return saved ? JSON.parse(saved) : ['orp', 'pssr', 'p2a', 'cost', 'orm'];
@@ -233,6 +235,7 @@ export default function ProjectDetailsPage() {
                 <ProjectReadinessWidget 
                   projectId={id || ''} 
                   onEditProject={() => setEditModalOpen(true)}
+                  onViewDetails={() => setViewModalOpen(true)}
                 />
               </div>
               
@@ -267,6 +270,22 @@ export default function ProjectDetailsPage() {
               project={project}
               open={editModalOpen}
               onClose={() => setEditModalOpen(false)}
+            />
+          )}
+
+          {/* View Project Modal */}
+          {viewModalOpen && (
+            <ViewProjectModal
+              open={viewModalOpen}
+              onClose={() => setViewModalOpen(false)}
+              project={project}
+              plantName={plant?.name}
+              stationName={station?.name}
+              hubName={hub?.name}
+              onEdit={() => {
+                setViewModalOpen(false);
+                setEditModalOpen(true);
+              }}
             />
           )}
         </div>

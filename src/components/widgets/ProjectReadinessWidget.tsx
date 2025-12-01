@@ -16,9 +16,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface ProjectReadinessWidgetProps {
   projectId: string;
   onEditProject: () => void;
+  onViewDetails?: () => void;
 }
 
-export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onEditProject }) => {
+export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onEditProject, onViewDetails }) => {
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -121,12 +122,20 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   return (
     <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30 group">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 cursor-pointer" onClick={onViewDetails}>
         <div className="flex items-center justify-between mb-4">
-          <CardTitle className="text-lg">
+          <CardTitle className="text-lg hover:text-primary transition-colors">
             Project Overview
           </CardTitle>
-          <Button onClick={onEditProject} size="sm" variant="outline" className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditProject();
+            }} 
+            size="sm" 
+            variant="outline" 
+            className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
             <Edit className="h-4 w-4" />
             Edit Project
           </Button>
