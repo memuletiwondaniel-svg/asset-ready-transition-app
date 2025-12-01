@@ -24,7 +24,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   iconGradient = 'from-purple-500 to-purple-600'
 }) => {
   return (
-    <div className="sticky top-0 z-50 bg-card border-b border-border">
+    <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Left side - Breadcrumb Navigation */}
