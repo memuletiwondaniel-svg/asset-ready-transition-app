@@ -160,14 +160,19 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
       {...attributes}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center flex-1">
+        <div 
+          className={`flex items-center flex-1 ${column.sortable ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+          onClick={() => column.sortable && onSort(column.id)}
+        >
           {column.label}
-          {column.sortable && sortDirection && (
+          {column.sortable && (
             <div className="ml-1">
               {sortDirection === 'asc' ? (
                 <ChevronUp className="h-4 w-4" />
-              ) : (
+              ) : sortDirection === 'desc' ? (
                 <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4 opacity-0 group-hover:opacity-30" />
               )}
             </div>
           )}
@@ -519,8 +524,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             bValue = b.company || '';
             break;
           case 'role':
-            aValue = a.role || '';
-            bValue = b.role || '';
+            aValue = a.position || a.role || '';
+            bValue = b.position || b.role || '';
             break;
           case 'status':
             aValue = a.status || '';
