@@ -279,7 +279,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
             <Avatar className="h-11 w-11 ring-2 ring-border/10 shadow-sm hover:shadow-md transition-all duration-200 hover:ring-primary/20">
               {user.avatar_url ? (
                 <AvatarImage 
-                  src={`https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`} 
+                  src={user.avatar_url.startsWith('http') 
+                    ? `${user.avatar_url}?t=${Date.now()}` 
+                    : `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}?t=${Date.now()}`}
                   alt={user.full_name || 'User'} 
                   className="object-cover"
                   onError={(e) => {
