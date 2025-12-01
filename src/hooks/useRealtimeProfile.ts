@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -16,28 +16,30 @@ export const useRealtimeProfile = (userId: string | undefined) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
+  const fetchProfile = useCallback(async () => {
     if (!userId) return;
 
-    // Fetch initial profile
-    const fetchProfile = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, avatar_url, position, email, company, phone_number')
-        .eq('user_id', userId)
-        .single();
+    const { data } = await supabase
+      .from('profiles')
+      .select('user_id, full_name, avatar_url, position, email, company, phone_number')
+      .eq('user_id', userId)
+      .single();
 
-      if (data) {
-        const avatarUrl = data.avatar_url?.startsWith('http') 
-          ? data.avatar_url 
-          : data.avatar_url 
-            ? supabase.storage.from('user-avatars').getPublicUrl(data.avatar_url).data.publicUrl 
-            : null;
-        
-        setProfile({ ...data, avatar_url: avatarUrl });
-      }
-    };
+    if (data) {
+      const avatarUrl = data.avatar_url?.startsWith('http') 
+        ? data.avatar_url 
+        : data.avatar_url 
+          ? supabase.storage.from('user-avatars').getPublicUrl(data.avatar_url).data.publicUrl 
+          : null;
+      
+      // Add cache-busting to avatar URL
+      const avatarUrlWithCacheBust = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null;
+      
+      setProfile({ ...data, avatar_url: avatarUrlWithCacheBust });
+    }
+  }, [userId]);
 
+  useEffect(() => {
     fetchProfile();
 
     // Subscribe to real-time updates
@@ -59,7 +61,10 @@ export const useRealtimeProfile = (userId: string | undefined) => {
               ? supabase.storage.from('user-avatars').getPublicUrl(newData.avatar_url).data.publicUrl 
               : null;
           
-          setProfile({ ...newData, avatar_url: avatarUrl });
+          // Add cache-busting to avatar URL
+          const avatarUrlWithCacheBust = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null;
+          
+          setProfile({ ...newData, avatar_url: avatarUrlWithCacheBust });
           
           // Invalidate related queries
           queryClient.invalidateQueries({ queryKey: ['profile-users'] });
@@ -70,7 +75,7 @@ export const useRealtimeProfile = (userId: string | undefined) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, queryClient]);
+  }, [userId, queryClient, fetchProfile]);
 
-  return profile;
+  return { profile, refetch: fetchProfile };
 };
