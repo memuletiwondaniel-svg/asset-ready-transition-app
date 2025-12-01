@@ -193,7 +193,17 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
             projectTeam: {},
             hsse: {}
           }
-        }} setFormData={setFormDataAdapter} projects={projects} assets={['Umm Qasr (UQ)', 'KAZ', 'NRNGL', 'BNGL', 'Compression Station (CS)']} reasons={['Start-up or Commissioning of a new Asset', 'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy', 'Restart following a process safety incident', 'Restart following a Turn Around (TAR) Event or Major Maintenance Activity', 'Others (Specify)']} projectSearchOpen={false} setProjectSearchOpen={() => {}} showAddProjectWidget={false} setShowAddProjectWidget={() => {}} onProjectSelect={() => {}} onFileUpload={e => {
+        }} setFormData={setFormDataAdapter} projects={projects} assets={['Umm Qasr (UQ)', 'KAZ', 'NRNGL', 'BNGL', 'Compression Station (CS)']} reasons={['Start-up or Commissioning of a new Asset', 'Restart following significant modification to existing Hardware, Safeguarding or Operating Philosophy', 'Restart following a process safety incident', 'Restart following a Turn Around (TAR) Event or Major Maintenance Activity', 'Others (Specify)']} projectSearchOpen={false} setProjectSearchOpen={() => {}} showAddProjectWidget={false} setShowAddProjectWidget={() => {}} onProjectSelect={(projectId) => {
+          const selectedProject = projects.find(p => p.id === projectId);
+          if (selectedProject) {
+            setPssrData(prev => ({
+              ...prev,
+              projectId: selectedProject.id,
+              projectName: selectedProject.name,
+              asset: selectedProject.plant || prev.asset
+            }));
+          }
+        }} onFileUpload={e => {
           const files = Array.from(e.target.files || []);
           setPssrData(prev => ({
             ...prev,
