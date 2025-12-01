@@ -161,7 +161,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full pr-4">
+        <ScrollArea className="h-full pr-4 overscroll-contain">
           <div className="space-y-6">
             {/* Project Scope */}
             {project?.project_scope && (
