@@ -254,7 +254,35 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
               </div>}
           </div>
 
-          {formData.reason === 'Start-Up or Commissioning of a new Facility or Project'}
+          {/* Project Selection Field - Always Mandatory */}
+          {formData.reason && (
+            <div className="space-y-3">
+              <Label htmlFor="project" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                Select Project *
+              </Label>
+              <Select 
+                value={formData.projectId} 
+                onValueChange={onProjectSelect}
+              >
+                <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
+                  <SelectValue placeholder="Choose a project" />
+                </SelectTrigger>
+                <SelectContent position="popper" sideOffset={8} className="bg-white z-[100] shadow-xl border rounded-md max-h-[300px]">
+                  {projects.map(project => (
+                    <SelectItem key={project.id} value={project.id} className="py-3">
+                      <div className="flex flex-col gap-1">
+                        <div className="font-medium">{project.id} - {project.name}</div>
+                        {project.plant && (
+                          <div className="text-xs text-muted-foreground">Plant: {project.plant}</div>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-3">
             <Label htmlFor="scope" className="text-sm font-semibold text-gray-700">PSSR Scope *</Label>
