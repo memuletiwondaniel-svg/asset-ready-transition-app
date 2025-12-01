@@ -135,8 +135,76 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
     };
 
     try {
-      createProject(projectData);
-      
+      // 1. Create the project
+      const { data: newProject, error: projectError } = await supabase
+        .from('projects')
+        .insert([projectData])
+        .select()
+        .single();
+
+      if (projectError) {
+        throw projectError;
+      }
+
+      // 2. Save team members
+      if (teamMembers.length > 0) {
+        const teamData = teamMembers.map(member => ({
+          project_id: newProject.id,
+          user_id: member.user_id,
+          role: member.role,
+          is_lead: member.is_lead || false
+        }));
+        
+        const { error: teamError } = await supabase
+          .from('project_team_members')
+          .insert(teamData);
+        
+        if (teamError) {
+          console.error('Error saving team members:', teamError);
+        }
+      }
+
+      // 3. Save milestones
+      if (milestones.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const milestoneData = milestones.map(m => ({
+          project_id: newProject.id,
+          milestone_name: m.milestone_name,
+          milestone_date: m.milestone_date,
+          is_scorecard_project: m.is_scorecard_project || false,
+          created_by: user?.id || ''
+        }));
+        
+        const { error: milestoneError } = await supabase
+          .from('project_milestones')
+          .insert(milestoneData);
+        
+        if (milestoneError) {
+          console.error('Error saving milestones:', milestoneError);
+        }
+      }
+
+      // 4. Save documents
+      if (documents.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const docData = documents.map(d => ({
+          project_id: newProject.id,
+          document_name: d.document_name,
+          document_type: d.document_type || 'General',
+          link_url: d.file_url,
+          link_type: d.link_type,
+          uploaded_by: user?.id || ''
+        }));
+        
+        const { error: docError } = await supabase
+          .from('project_documents')
+          .insert(docData);
+        
+        if (docError) {
+          console.error('Error saving documents:', docError);
+        }
+      }
+
       // Log activity
       logActivity({
         activityType: 'project_created',
@@ -146,11 +214,21 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
           project_title: formData.project_title
         }
       });
+
+      toast({
+        title: "Success",
+        description: "Project created successfully with all team members, milestones, and documents",
+      });
+
+      handleClose();
     } catch (error) {
       console.error('Error creating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create project. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    handleClose();
   };
 
   const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
