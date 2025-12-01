@@ -5,17 +5,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { FileText, Building2, User, Calendar, Search, Plus, Check } from 'lucide-react';
+import { FileText, Building2, User, Calendar } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
-import AddNewProjectWidget from './AddNewProjectWidget';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
 import { useProjectTeamMembers, useProjectMilestones } from '@/hooks/useProjects';
 interface FormData {
@@ -76,8 +71,6 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onContextAction,
   onNewProjectCreate
 }) => {
-  const [showAddProjectWidget, setShowAddProjectWidget] = useState(false);
-  
   const selectedProject = projects.find(p => p.id === formData.projectId);
   
   // Fetch team members and milestones for selected project
@@ -283,106 +276,40 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                 <Building2 className="h-4 w-4 text-blue-600" />
                 Select Project *
               </Label>
-              <Popover open={projectSearchOpen} onOpenChange={setProjectSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={projectSearchOpen}
-                    className="h-12 w-full justify-between border-2 border-gray-200 hover:border-blue-500 focus:border-blue-500 transition-colors bg-white"
-                  >
-                    <span className="text-left flex-1">
-                      {formData.projectId 
-                        ? projects.find(p => p.id === formData.projectId)?.name 
-                        : "Search projects..."}
-                    </span>
-                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-[600px] p-0 bg-white border-2 shadow-xl z-[9999]" 
-                  align="start" 
-                  side="bottom"
-                  sideOffset={8}
+              <Select 
+                value={formData.projectId} 
+                onValueChange={onProjectSelect}
+              >
+                <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
+                  <SelectValue placeholder="Choose a project" />
+                </SelectTrigger>
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={8} 
+                  className="bg-white dark:bg-gray-800 z-[9999] shadow-xl border border-gray-200 dark:border-gray-700 rounded-md max-h-[300px] overflow-y-auto"
                 >
-                  <Command className="bg-white">
-                    <CommandInput 
-                      placeholder="Type to search projects by ID or name..." 
-                      className="h-12 border-b-2 border-gray-100 bg-white" 
-                    />
-                    <CommandList className="max-h-[400px] bg-white overflow-y-auto">
-                      <CommandEmpty>
-                        <div className="p-6 text-center bg-white">
-                          <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
-                            <Search className="h-6 w-6 text-gray-400" />
-                          </div>
-                          <p className="text-sm text-gray-600 mb-4">
-                            {projects.length === 0 
-                              ? "No projects available yet. Create your first project!"
-                              : "No projects found matching your search."
-                            }
-                          </p>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setProjectSearchOpen(false);
-                              setShowAddProjectWidget(true);
-                            }}
-                            className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                            type="button"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create New Project
-                          </Button>
+                  {projects.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No projects available
+                    </div>
+                  ) : (
+                    projects.map(project => (
+                      <SelectItem 
+                        key={project.id} 
+                        value={project.id} 
+                        className="py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{project.name}</div>
+                          {project.plant && (
+                            <div className="text-xs text-muted-foreground">Plant: {project.plant}</div>
+                          )}
                         </div>
-                      </CommandEmpty>
-                      <CommandGroup className="bg-white">
-                        {projects.map((project) => (
-                          <CommandItem
-                            key={project.id}
-                            value={`${project.id} ${project.name}`}
-                            onSelect={() => {
-                              onProjectSelect(project.id);
-                              setProjectSearchOpen(false);
-                            }}
-                            className="py-3 px-4 cursor-pointer hover:bg-blue-50 transition-colors bg-white"
-                          >
-                            <div className="flex items-center gap-3 w-full">
-                              <Check
-                                className={cn(
-                                  "h-4 w-4",
-                                  formData.projectId === project.id ? "opacity-100 text-blue-600" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex flex-col gap-1 flex-1">
-                                <span className="font-semibold text-gray-900">{project.name}</span>
-                                {project.scope && (
-                                  <span className="text-xs text-gray-500">{project.scope}</span>
-                                )}
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                        {projects.length > 0 && (
-                          <CommandItem
-                            value="create-new-project-option"
-                            onSelect={() => {
-                              setProjectSearchOpen(false);
-                              setShowAddProjectWidget(true);
-                            }}
-                            className="py-3 px-4 border-t-2 border-gray-200 bg-blue-50 hover:bg-blue-100 cursor-pointer sticky bottom-0"
-                          >
-                            <div className="flex items-center gap-2 text-blue-600 font-medium w-full">
-                              <Plus className="h-4 w-4" />
-                              Create New Project
-                            </div>
-                          </CommandItem>
-                        )}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               <p className="text-xs text-muted-foreground">{projects.length} projects available</p>
             </div>
           )}
@@ -573,29 +500,6 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
           <FileUploadSection files={formData.files} onFileUpload={onFileUpload} onRemoveFile={onRemoveFile} />
         </CardContent>
       </Card>
-
-      {/* Add New Project Widget */}
-      <AddNewProjectWidget
-        open={showAddProjectWidget}
-        onClose={() => setShowAddProjectWidget(false)}
-        onSubmit={(projectData) => {
-          const newProject: Project = {
-            id: projectData.projectId,
-            name: projectData.projectTitle,
-            plant: projectData.plant,
-            subdivision: projectData.csLocation,
-            scope: projectData.projectScope,
-            hubLead: {
-              ...projectData.projectHubLead,
-              role: 'Project Hub Lead'
-            },
-            others: []
-          };
-          onNewProjectCreate(newProject);
-          setShowAddProjectWidget(false);
-        }}
-        editMode={false}
-      />
     </div>;
 };
 export default PSSRStepOne;
