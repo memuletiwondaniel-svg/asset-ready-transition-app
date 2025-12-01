@@ -145,35 +145,36 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                   <EnhancedCombobox
                     options={allUsers
                       .filter(user => {
-                        const pos = (user.position || '').toLowerCase().trim();
+                        const userRole = (user.role || '').toLowerCase().trim();
+                        const userPos = (user.position || '').toLowerCase().trim();
+                        
                         switch (role) {
-                          case 'Project Manager': {
-                            const keywords = ['project', 'proj', 'pm'];
-                            return keywords.some(k => pos.includes(k));
-                          }
-                          case 'Project Engineer': {
-                            const keywords = ['project', 'proj', 'pm'];
-                            return keywords.some(k => pos.includes(k));
-                          }
-                          case 'Commissioning Lead': {
-                            const keywords = ['commissioning', 'commission'];
-                            return keywords.some(k => pos.includes(k));
-                          }
-                          case 'Construction Lead': {
-                            const keywords = ['construction', 'construct'];
-                            return keywords.some(k => pos.includes(k));
-                          }
-                          case 'ORA Lead': {
-                            const keywords = ['ora'];
-                            return keywords.some(k => pos.includes(k));
-                          }
+                          case 'Project Manager':
+                            return userRole.includes('proj manager') || 
+                                   userRole.includes('project manager') ||
+                                   userPos.includes('proj manager') ||
+                                   userPos.includes('project manager');
+                          case 'Project Engineer':
+                            return userRole.includes('proj engr') || 
+                                   userRole.includes('project eng') ||
+                                   userPos.includes('proj eng') ||
+                                   userPos.includes('project eng');
+                          case 'Commissioning Lead':
+                            return userRole.includes('commissioning') ||
+                                   userPos.includes('commissioning');
+                          case 'Construction Lead':
+                            return userRole.includes('construction') ||
+                                   userPos.includes('construction');
+                          case 'ORA Lead':
+                            return userRole.includes('ora') ||
+                                   userPos.includes('ora');
                           default:
                             return true;
                         }
                       })
                       .map(user => ({
                         value: user.user_id,
-                        label: `${user.full_name} ${user.position ? `(${user.position})` : ''}`
+                        label: `${user.full_name}${user.role ? ` (${user.role})` : user.position ? ` (${user.position})` : ''}`
                       }))
                     }
                     value={assignedMember?.user_id || ''}
