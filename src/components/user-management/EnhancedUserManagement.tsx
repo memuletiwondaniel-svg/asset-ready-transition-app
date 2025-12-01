@@ -478,6 +478,21 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       }
       
       setUsers(data || []);
+      
+      // Update selectedUser and editingUser with fresh data if they exist
+      if (selectedUser && data) {
+        const updatedUser = data.find((u: User) => u.user_id === selectedUser.user_id);
+        if (updatedUser) {
+          setSelectedUser(updatedUser);
+        }
+      }
+      
+      if (editingUser && data) {
+        const updatedUser = data.find((u: User) => u.user_id === editingUser.user_id);
+        if (updatedUser) {
+          setEditingUser(updatedUser);
+        }
+      }
     } catch (error) {
       toast.error('An error occurred while fetching users');
       console.error('Error:', error);
