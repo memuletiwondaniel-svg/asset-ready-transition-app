@@ -34,13 +34,20 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const station = stations.find(s => s.id === project?.station_id);
   const hub = hubs.find(h => h.id === project?.hub_id);
 
+  // Helper function to convert relative avatar paths to full Supabase storage URLs
+  const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
+    if (!avatarUrl) return null;
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+  };
+
   useEffect(() => {
     const fetchProjectData = async () => {
       if (!projectId) return;
       
       setLoading(true);
       try {
-        // Fetch team members
+        // Fetch team members with profile data
         const { data: teamData, error: teamError } = await (supabase as any)
           .from('project_team_members')
           .select('*')
@@ -48,7 +55,24 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           .limit(5);
         
         if (!teamError && teamData) {
-          setTeamMembers(teamData);
+          // Fetch profiles for team members
+          const userIds = teamData.map((m: any) => m.user_id).filter(Boolean);
+          if (userIds.length > 0) {
+            const { data: profilesData } = await (supabase as any)
+              .from('profiles')
+              .select('user_id, full_name, avatar_url, position')
+              .in('user_id', userIds);
+            
+            // Merge team data with profiles
+            const enrichedTeamData = teamData.map((member: any) => ({
+              ...member,
+              profiles: profilesData?.find((p: any) => p.user_id === member.user_id)
+            }));
+            
+            setTeamMembers(enrichedTeamData);
+          } else {
+            setTeamMembers(teamData);
+          }
         }
 
         // Fetch milestones
@@ -56,7 +80,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           .from('project_milestones')
           .select('*')
           .eq('project_id', projectId)
-          .order('target_date', { ascending: true })
+          .order('milestone_date', { ascending: true })
           .limit(5);
         
         if (!milestonesError && milestonesData) {
@@ -248,26 +272,29 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 {teamMembers.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No team members assigned</p>
                 ) : (
-                  teamMembers.map((member) => (
-                    <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
-                      <Avatar className="h-8 w-8">
-                        {member.avatar_url ? (
-                          <AvatarImage src={member.avatar_url} alt={member.user_name} />
-                        ) : (
-                          <AvatarFallback className="bg-primary/10">
-                            <UserCircle className="h-4 w-4 text-primary" />
-                          </AvatarFallback>
+                  teamMembers.map((member) => {
+                    const profile = member.profiles;
+                    return (
+                      <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
+                        <Avatar className="h-8 w-8">
+                          {profile?.avatar_url ? (
+                            <AvatarImage src={getAvatarUrl(profile.avatar_url)} alt={profile?.full_name} />
+                          ) : (
+                            <AvatarFallback className="bg-primary/10">
+                              <UserCircle className="h-4 w-4 text-primary" />
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{profile?.full_name || 'Unassigned'}</p>
+                          <p className="text-xs text-muted-foreground truncate">{member.role || 'No role'}</p>
+                        </div>
+                        {member.is_lead && (
+                          <Badge className="text-xs" variant="outline">Lead</Badge>
                         )}
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{member.user_name || 'Unassigned'}</p>
-                        <p className="text-xs text-muted-foreground truncate">{member.position || 'No position'}</p>
                       </div>
-                      {member.is_lead && (
-                        <Badge className="text-xs" variant="outline">Lead</Badge>
-                      )}
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -293,10 +320,10 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                           {milestone.status || 'pending'}
                         </Badge>
                       </div>
-                      {milestone.target_date && (
+                      {milestone.milestone_date && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
-                          <span>{new Date(milestone.target_date).toLocaleDateString()}</span>
+                          <span>{new Date(milestone.milestone_date).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
