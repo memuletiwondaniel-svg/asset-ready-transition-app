@@ -367,7 +367,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   if (activeView === 'users') {
     return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 flex flex-col overflow-hidden">
           <EnhancedUserManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
       </div>;
