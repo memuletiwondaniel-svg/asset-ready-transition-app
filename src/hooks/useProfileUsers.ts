@@ -24,24 +24,29 @@ export const useProfileUsers = () => {
   return useQuery({
     queryKey: ['profile-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch profiles with role UUIDs
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          user_id, 
-          full_name, 
-          position, 
-          avatar_url,
-          role_name:roles!profiles_role_fkey(name)
-        `)
+        .select('user_id, full_name, position, avatar_url, role')
         .eq('is_active', true)
         .not('full_name', 'is', null);
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      return data?.map(profile => ({
+      // Fetch all roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('roles')
+        .select('id, name');
+
+      if (rolesError) throw rolesError;
+
+      // Create role lookup map
+      const roleMap = new Map(roles?.map(r => [r.id, r.name]) || []);
+
+      return profiles?.map(profile => ({
         user_id: profile.user_id,
         full_name: profile.full_name || '',
-        role: (profile.role_name as any)?.name || '',
+        role: roleMap.get(profile.role) || '',
         position: profile.position || '',
         avatar_url: getFullAvatarUrl(profile.avatar_url)
       })) || [];
@@ -53,18 +58,29 @@ export const useProfileUsersByRole = (role: string) => {
   return useQuery({
     queryKey: ['profile-users-by-role', role],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch profiles with role UUIDs
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, position, avatar_url')
+        .select('user_id, full_name, position, avatar_url, role')
         .eq('is_active', true)
         .not('full_name', 'is', null);
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      return data?.map(profile => ({
+      // Fetch all roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('roles')
+        .select('id, name');
+
+      if (rolesError) throw rolesError;
+
+      // Create role lookup map
+      const roleMap = new Map(roles?.map(r => [r.id, r.name]) || []);
+
+      return profiles?.map(profile => ({
         user_id: profile.user_id,
         full_name: profile.full_name || '',
-        role: profile.position || '',
+        role: roleMap.get(profile.role) || '',
         position: profile.position || '',
         avatar_url: getFullAvatarUrl(profile.avatar_url)
       })) || [];
