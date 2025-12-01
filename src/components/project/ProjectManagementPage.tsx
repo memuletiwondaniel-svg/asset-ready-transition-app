@@ -354,16 +354,13 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                 </div>
               </div>
               
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button 
-                  onClick={() => setIsAddModalOpen(true)}
-                  size="sm"
-                  className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity text-xs sm:text-sm"
-                >
-                  <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  {t.createProject || 'Create Project'}
-                </Button>
-              </div>
+              <Button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-md hover:shadow-lg transition-all"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {t.createProject || 'Create Project'}
+              </Button>
             </div>
           </div>
 
