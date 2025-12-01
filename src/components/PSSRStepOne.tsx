@@ -369,7 +369,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                   </div>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src="" />
+                      <AvatarImage src={projectManager.avatar_url || ''} />
                       <AvatarFallback className="bg-blue-600 text-white">
                         {projectManager.user_name?.split(' ').map(n => n[0]).join('') || 'PM'}
                       </AvatarFallback>
