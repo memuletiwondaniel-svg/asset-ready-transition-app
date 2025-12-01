@@ -135,39 +135,60 @@ export const ProjectSummaryModal: React.FC<ProjectSummaryModalProps> = ({
                   Project Team ({teamMembers.length} members)
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {teamMembers.map((member, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.avatar_url} alt={member.user_name} />
-                        <AvatarFallback className="text-sm">
-                          {member.user_name ? member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="default" className="text-sm">
-                            {member.user_name || 'Unknown User'}
-                          </Badge>
-                          <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60 text-sm">
-                            {member.role}
-                          </Badge>
-                          {member.position && (
-                            <Badge variant="outline" className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-sm">
-                              {member.position}
-                            </Badge>
-                          )}
-                          {member.is_lead && (
-                            <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-sm">
-                              Lead
-                            </Badge>
-                          )}
+              <CardContent className="space-y-4">
+                {/* Required Roles */}
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Required Roles</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {teamMembers
+                      .filter(member => ['Project Manager', 'Project Engineer', 'Commissioning Lead', 
+                                         'Construction Lead', 'ORA Lead'].includes(member.role))
+                      .map((member, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                            <AvatarFallback className="text-sm">
+                              {member.user_name ? member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{member.user_name || 'Unknown User'}</p>
+                            <p className="text-sm text-primary font-medium">{member.role}</p>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
                 </div>
+                
+                {/* Additional Team Members (if any) */}
+                {teamMembers.filter(m => !['Project Manager', 'Project Engineer', 'Commissioning Lead', 
+                                           'Construction Lead', 'ORA Lead'].includes(m.role)).length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-3">Additional Members</h4>
+                    <div className="space-y-2">
+                      {teamMembers
+                        .filter(m => !['Project Manager', 'Project Engineer', 'Commissioning Lead', 
+                                       'Construction Lead', 'ORA Lead'].includes(m.role))
+                        .map((member, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                              <AvatarFallback className="text-sm">
+                                {member.user_name ? member.user_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{member.user_name || 'Unknown User'}</p>
+                                <span className="text-muted-foreground">-</span>
+                                <p className="text-sm text-muted-foreground">{member.role}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
