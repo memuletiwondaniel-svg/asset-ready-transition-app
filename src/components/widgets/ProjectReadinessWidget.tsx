@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar, Edit } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -14,11 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProjectReadinessWidgetProps {
   projectId: string;
-  onEditProject: () => void;
   onViewDetails?: () => void;
 }
 
-export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onEditProject, onViewDetails }) => {
+export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails }) => {
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -27,6 +26,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isScopeExpanded, setIsScopeExpanded] = useState(false);
 
   const project = projects.find(p => p.id === projectId);
   const plant = plants.find(p => p.id === project?.plant_id);
@@ -125,32 +125,15 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   return (
     <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/30 group">
       <CardHeader className="pb-4 cursor-pointer" onClick={onViewDetails}>
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle className="text-lg hover:text-primary transition-colors">
-            Project Overview
-          </CardTitle>
-          <Button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditProject();
-            }} 
-            size="sm" 
-            variant="outline" 
-            className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Edit className="h-4 w-4" />
-            Edit Project
-          </Button>
-        </div>
+        <CardTitle className="text-lg hover:text-primary transition-colors mb-4">
+          Project Overview
+        </CardTitle>
         
         {/* Project Key Info Banner */}
         {project && (
           <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
             <div className="flex items-center justify-between gap-4 p-4">
               <div className="flex-1 min-w-0">
-                <h3 className="text-xl font-bold text-foreground mb-2 truncate">
-                  {project.project_title}
-                </h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
                   <div className="flex items-center gap-1.5">
                     <Building className="h-3.5 w-3.5 text-muted-foreground" />
@@ -187,10 +170,23 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   <FileText className="h-4 w-4" />
                   Project Scope
                 </h3>
-                <div className="pl-6">
-                  <p className="text-sm text-foreground/90">
+                <div className="pl-6 space-y-2">
+                  <p className={`text-sm text-foreground/90 ${!isScopeExpanded ? 'line-clamp-6' : ''}`}>
                     {project.project_scope}
                   </p>
+                  {project.project_scope.length > 300 && (
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="p-0 h-auto text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsScopeExpanded(!isScopeExpanded);
+                      }}
+                    >
+                      {isScopeExpanded ? 'Show Less' : 'Read More'}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -198,11 +194,14 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             {/* Project Image */}
             {project?.project_scope_image_url && (
               <div className="space-y-3">
-                <div className="relative rounded-xl overflow-hidden border border-primary/20 shadow-lg">
+                <div 
+                  className="relative rounded-xl overflow-hidden border border-primary/20 shadow-lg cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                  onClick={onViewDetails}
+                >
                   <img 
                     src={project.project_scope_image_url} 
                     alt={project.project_title}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
                   />
                 </div>
               </div>
