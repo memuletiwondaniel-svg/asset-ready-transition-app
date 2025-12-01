@@ -42,6 +42,7 @@ export interface ProjectTeamMember {
   is_lead: boolean;
   created_at: string;
   user_name?: string;
+  avatar_url?: string;
 }
 
 export interface ProjectMilestone {
@@ -332,10 +333,24 @@ export const useProjectTeamMembers = (projectId?: string) => {
         throw error;
       }
 
-      return (data as any[]).map((member: any) => ({
-        ...member,
-        user_name: 'Team Member', // Will be populated when we have user data
-      })) as ProjectTeamMember[];
+      // Fetch profiles for each team member to get actual names and avatars
+      const membersWithNames = await Promise.all(
+        (data || []).map(async (member: any) => {
+          const { data: profile } = await (supabase as any)
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('user_id', member.user_id)
+            .maybeSingle();
+          
+          return {
+            ...member,
+            user_name: profile?.full_name || 'Unknown User',
+            avatar_url: profile?.avatar_url || '',
+          };
+        })
+      );
+
+      return membersWithNames as ProjectTeamMember[];
     },
     enabled: !!projectId,
   });
