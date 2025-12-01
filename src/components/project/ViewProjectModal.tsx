@@ -36,9 +36,13 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
 
   useEffect(() => {
     if (open && project?.id) {
+      // Clear previous state to ensure fresh data
+      setTeamMembers([]);
+      setMilestones([]);
+      setDocuments([]);
       fetchProjectData();
     }
-  }, [open, project?.id]);
+  }, [open, project?.id, project?.updated_at]);
 
   const fetchProjectData = async () => {
     if (!project?.id) return;

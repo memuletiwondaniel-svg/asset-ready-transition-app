@@ -243,7 +243,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
         const validDocuments = documents.filter(d =>
           d.document_name &&
           d.document_name.trim() !== '' &&
-          (d.file_url || d.link_url)
+          (d.file_path || d.link_url)
         );
         
         const skippedDocuments = documents.length - validDocuments.length;
@@ -254,8 +254,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
             project_id: newProject.id,
             document_name: d.document_name,
             document_type: d.document_type || 'General',
-            link_url: d.file_url,
+            file_path: d.file_path,
+            link_url: d.link_url,
             link_type: d.link_type,
+            file_extension: d.file_extension,
+            file_size: d.file_size,
             uploaded_by: user?.id || ''
           }));
           

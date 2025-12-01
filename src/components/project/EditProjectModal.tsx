@@ -23,12 +23,14 @@ import { supabase } from '@/integrations/supabase/client';
 interface EditProjectModalProps {
   open: boolean;
   onClose: () => void;
+  onSave?: (project: any) => void;
   project: any;
 }
 
 export const EditProjectModal: React.FC<EditProjectModalProps> = ({ 
   open, 
-  onClose, 
+  onClose,
+  onSave,
   project
 }) => {
   const { updateProject, isUpdating } = useProjects();
@@ -298,7 +300,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         const validDocuments = documents.filter(d =>
           d.document_name &&
           d.document_name.trim() !== '' &&
-          (d.file_url || d.link_url)
+          (d.file_path || d.link_url)
         );
         
         const skippedDocuments = documents.length - validDocuments.length;
@@ -309,8 +311,11 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             project_id: project.id,
             document_name: d.document_name,
             document_type: d.document_type || 'General',
-            link_url: d.file_url,
+            file_path: d.file_path,
+            link_url: d.link_url,
             link_type: d.link_type,
+            file_extension: d.file_extension,
+            file_size: d.file_size,
             uploaded_by: user?.id || ''
           }));
           
@@ -348,7 +353,12 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         description: "Project updated successfully",
       });
 
-      onClose();
+      // Call onSave with updated project data if provided
+      if (onSave) {
+        onSave({ ...project, ...projectData });
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error('Error updating project:', error);
       toast({

@@ -590,6 +590,10 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
       <EditProjectModal 
         open={!!editProject}
         onClose={() => setEditProject(null)}
+        onSave={(updatedProject) => {
+          setEditProject(null);
+          setViewProject(updatedProject);
+        }}
         project={editProject}
       />
 
