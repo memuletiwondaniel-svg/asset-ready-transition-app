@@ -13,6 +13,22 @@ import {
 import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical, Users, Calendar, FileText, Trophy } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
+const getProjectColor = (projectId: string) => {
+  const colors = [
+    { bg: 'from-blue-500/10 to-blue-600/10', text: 'text-blue-600', border: 'border-blue-500/20' },
+    { bg: 'from-emerald-500/10 to-emerald-600/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+    { bg: 'from-violet-500/10 to-violet-600/10', text: 'text-violet-600', border: 'border-violet-500/20' },
+    { bg: 'from-amber-500/10 to-amber-600/10', text: 'text-amber-600', border: 'border-amber-500/20' },
+    { bg: 'from-rose-500/10 to-rose-600/10', text: 'text-rose-600', border: 'border-rose-500/20' },
+    { bg: 'from-cyan-500/10 to-cyan-600/10', text: 'text-cyan-600', border: 'border-cyan-500/20' },
+    { bg: 'from-orange-500/10 to-orange-600/10', text: 'text-orange-600', border: 'border-orange-500/20' },
+    { bg: 'from-indigo-500/10 to-indigo-600/10', text: 'text-indigo-600', border: 'border-indigo-500/20' },
+  ];
+  
+  const hash = projectId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+};
+
 interface ProjectCardProps {
   project: any;
   plantName?: string;
@@ -60,6 +76,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     ? (project.completed_milestone_count / project.milestone_count) * 100 
     : 0;
 
+  const projectColor = getProjectColor(`${project.project_id_prefix}${project.project_id_number}`);
+
   return (
     <Card 
       className={`group relative overflow-hidden border-border/50 bg-card transition-all duration-200 ease-out group-hover/cards:opacity-60 hover:!opacity-100 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.01] hover:ring-1 hover:ring-primary/20 cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
@@ -79,7 +97,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
-                <Badge variant="outline" className="bg-gradient-to-r from-primary/10 to-accent/10 text-primary border-primary/20 text-xs font-semibold px-2 py-0.5">
+                <Badge 
+                  variant="outline" 
+                  className={`bg-gradient-to-r ${projectColor.bg} ${projectColor.text} ${projectColor.border} text-xs font-semibold px-2 py-0.5`}
+                >
                   {project.project_id_prefix}{project.project_id_number}
                 </Badge>
                 <Button
