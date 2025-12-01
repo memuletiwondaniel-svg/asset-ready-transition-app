@@ -272,7 +272,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                   {projects.map(project => (
                     <SelectItem key={project.id} value={project.id} className="py-3">
                       <div className="flex flex-col gap-1">
-                        <div className="font-medium">{project.id} - {project.name}</div>
+                        <div className="font-medium">{project.name}</div>
                         {project.plant && (
                           <div className="text-xs text-muted-foreground">Plant: {project.plant}</div>
                         )}

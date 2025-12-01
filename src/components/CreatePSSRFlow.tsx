@@ -84,8 +84,8 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   // Convert database projects to the format expected by the UI
   const projects: Project[] = React.useMemo(() => {
     const mapped = dbProjects?.map(p => ({
-      id: `${p.project_id_prefix} ${p.project_id_number}`,
-      name: p.project_title,
+      id: p.id, // Use actual UUID from database
+      name: `${p.project_id_prefix}${p.project_id_number} - ${p.project_title}`,
       plant: p.plant_name || '',
       subdivision: p.station_name,
       scope: p.project_scope || '',
@@ -99,7 +99,7 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     })) || [];
     
     console.log('🎯 Mapped projects for UI:', mapped.length, 'projects');
-    console.log('🎯 Project IDs:', mapped.map(p => p.id));
+    console.log('🎯 Projects:', mapped.map(p => ({ id: p.id, name: p.name })));
     
     return mapped;
   }, [dbProjects]);
