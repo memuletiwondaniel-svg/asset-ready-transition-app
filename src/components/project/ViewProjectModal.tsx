@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Eye, Link as LinkIcon, File } from 'lucide-react';
+import { FileText, Calendar, Users, MapPin, Building, Target, FileCheck, UserCircle, ExternalLink, Edit, Link as LinkIcon, File } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -132,22 +132,11 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
             </DialogTitle>
             <div className="flex gap-2">
               {onEdit && (
-                <Button variant="outline" size="sm" onClick={onEdit}>
+                <Button variant="default" size="sm" onClick={onEdit}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Project
                 </Button>
               )}
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={() => {
-                  navigate(`/projects/${project.id}`);
-                  onClose();
-                }}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View Details
-              </Button>
             </div>
           </div>
         </DialogHeader>
@@ -252,99 +241,109 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
               </CardContent>
             </Card>
 
-            {/* Project Team */}
-            {teamMembers.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg gap-2">
-                    <Users className="h-5 w-5" />
-                    Project Team
-                    <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
-                      {teamMembers.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Required Roles */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-foreground">Required Roles</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {requiredRoleMembers.map((member) => {
-                        const profile = member.profiles;
-                        return (
-                          <div key={member.id} className="p-3 border rounded-lg bg-muted/30">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                {profile?.avatar_url ? (
-                                  <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                                ) : (
-                                  <AvatarFallback className="bg-primary/10">
-                                    <UserCircle className="h-5 w-5 text-primary" />
-                                  </AvatarFallback>
-                                )}
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
-                                <p className="text-xs text-muted-foreground">{member.role}</p>
-                              </div>
-                              {member.is_lead && (
-                                <Badge className="shrink-0 text-xs">Lead</Badge>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Additional Members */}
-                  {additionalMembers.length > 0 && (
-                    <div className="space-y-3 pt-3 border-t">
-                      <h4 className="font-medium text-foreground">Additional Team Members</h4>
-                      <div className="space-y-2">
-                        {additionalMembers.map((member) => {
+            {/* Project Team - Always show */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <Users className="h-5 w-5" />
+                  Project Team
+                  <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+                    {teamMembers.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {teamMembers.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-8">
+                    No team members assigned to this project yet.
+                  </p>
+                ) : (
+                  <>
+                    {/* Required Roles */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-foreground">Required Roles</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {requiredRoleMembers.map((member) => {
                           const profile = member.profiles;
                           return (
-                            <div key={member.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-                              <Avatar className="h-10 w-10">
-                                {profile?.avatar_url ? (
-                                  <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                                ) : (
-                                  <AvatarFallback className="bg-primary/10">
-                                    <UserCircle className="h-5 w-5 text-primary" />
-                                  </AvatarFallback>
+                            <div key={member.id} className="p-3 border rounded-lg bg-muted/30">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                  {profile?.avatar_url ? (
+                                    <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                                  ) : (
+                                    <AvatarFallback className="bg-primary/10">
+                                      <UserCircle className="h-5 w-5 text-primary" />
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
+                                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                                </div>
+                                {member.is_lead && (
+                                  <Badge className="shrink-0 text-xs">Lead</Badge>
                                 )}
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
-                                <p className="text-xs text-muted-foreground">{profile?.position || 'No position'}</p>
                               </div>
-                              <Badge variant="outline" className="shrink-0 text-xs">
-                                {member.role}
-                              </Badge>
                             </div>
                           );
                         })}
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Project Milestones */}
-            {milestones.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Project Milestones
-                    <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
-                      {milestones.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                    {/* Additional Members */}
+                    {additionalMembers.length > 0 && (
+                      <div className="space-y-3 pt-3 border-t">
+                        <h4 className="font-medium text-foreground">Additional Team Members</h4>
+                        <div className="space-y-2">
+                          {additionalMembers.map((member) => {
+                            const profile = member.profiles;
+                            return (
+                              <div key={member.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                                <Avatar className="h-10 w-10">
+                                  {profile?.avatar_url ? (
+                                    <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                                  ) : (
+                                    <AvatarFallback className="bg-primary/10">
+                                      <UserCircle className="h-5 w-5 text-primary" />
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-foreground text-sm">{profile?.full_name || 'Unassigned'}</p>
+                                  <p className="text-xs text-muted-foreground">{profile?.position || 'No position'}</p>
+                                </div>
+                                <Badge variant="outline" className="shrink-0 text-xs">
+                                  {member.role}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Project Milestones - Always show */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Project Milestones
+                  <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+                    {milestones.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {milestones.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-8">
+                    No milestones defined for this project yet.
+                  </p>
+                ) : (
                   <div className="space-y-3">
                     {milestones.map((milestone) => (
                       <div key={milestone.id} className="p-4 border rounded-lg bg-muted/30">
@@ -373,23 +372,27 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
 
-            {/* Supporting Documents */}
-            {documents.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg gap-2">
-                    <FileText className="h-5 w-5" />
-                    Supporting Documents
-                    <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
-                      {documents.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+            {/* Supporting Documents - Always show */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg gap-2">
+                  <FileText className="h-5 w-5" />
+                  Supporting Documents
+                  <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium">
+                    {documents.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {documents.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-8">
+                    No documents uploaded for this project yet.
+                  </p>
+                ) : (
                   <div className="space-y-3">
                     {documents.map((doc) => (
                       <div key={doc.id} className="p-4 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -426,22 +429,10 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Empty State */}
-            {!loading && teamMembers.length === 0 && milestones.length === 0 && documents.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-lg">
-                <p>No team members, milestones, or documents have been added yet.</p>
-                {onEdit && (
-                  <Button variant="outline" size="sm" onClick={onEdit} className="mt-4">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Project to Add Details
-                  </Button>
                 )}
-              </div>
-            )}
+              </CardContent>
+            </Card>
+
           </div>
         </ScrollArea>
 
