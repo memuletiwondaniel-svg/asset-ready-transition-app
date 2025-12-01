@@ -440,7 +440,6 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                           onEdit={() => setEditProject(project)}
                           onDelete={() => handleDeleteProject(project)}
                           translations={t}
-                          colorIndex={index}
                         />
                       ))}
                     </div>
