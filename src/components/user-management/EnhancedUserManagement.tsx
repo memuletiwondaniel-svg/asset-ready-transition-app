@@ -280,8 +280,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
               {user.avatar_url ? (
                 <AvatarImage 
                   src={user.avatar_url.startsWith('http') 
-                    ? `${user.avatar_url}?t=${Date.now()}` 
-                    : `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}?t=${Date.now()}`}
+                    ? `${user.avatar_url}?width=88&height=88&resize=cover` 
+                    : `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}?width=88&height=88&resize=cover`}
                   alt={user.full_name || 'User'} 
                   className="object-cover"
                   onError={(e) => {
