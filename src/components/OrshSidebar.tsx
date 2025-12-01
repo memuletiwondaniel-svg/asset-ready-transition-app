@@ -72,7 +72,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   }, []);
 
   // Real-time profile updates
-  const realtimeProfile = useRealtimeProfile(currentUserId);
+  const { profile: realtimeProfile, refetch: refetchProfile } = useRealtimeProfile(currentUserId);
   
   // User presence tracking
   const onlineUsers = useUserPresence(currentUserId);
@@ -384,12 +384,12 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         open={profileModalOpen} 
         onOpenChange={setProfileModalOpen} 
         onProfileUpdated={() => {
-          // Real-time updates will handle this automatically
+          refetchProfile();
           toast({
             title: "Profile updated",
             description: "Your profile has been updated successfully.",
           });
-        }} 
+        }}
       />
 
       {/* ORSH Chat Dialog */}
