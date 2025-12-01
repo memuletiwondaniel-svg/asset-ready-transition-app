@@ -1321,15 +1321,23 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       )}
                     </>
                   ) : (
-                    /* View Mode - Only show Position */
-                    isTitleReady() && (
+                    /* View Mode - Show Role and Position */
+                    <div className="space-y-4">
                       <div>
-                        <Label>Position</Label>
+                        <Label>Role</Label>
                         <div className="p-3 bg-muted rounded-md border">
-                          <span className="font-medium text-primary">{generateTitle()}</span>
+                          <span className="font-medium">{formData.role || user.role || 'Not assigned'}</span>
                         </div>
                       </div>
-                    )
+                      {isTitleReady() && (
+                        <div>
+                          <Label>Position</Label>
+                          <div className="p-3 bg-muted rounded-md border">
+                            <span className="font-medium text-primary">{generateTitle()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
