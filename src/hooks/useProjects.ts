@@ -1,4 +1,5 @@
 /* @ts-nocheck */
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +62,8 @@ export const useProjects = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  console.log('🎬 useProjects hook called');
+
   const {
     data: projects = [],
     isLoading,
@@ -68,30 +71,85 @@ export const useProjects = () => {
   } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
+      console.log('🔍 Fetching projects from Supabase...');
+      
       const { data, error } = await supabase
         .from('projects')
-        .select(`
-          *,
-          plant:plant_id(name),
-          station:station_id(name),
-          hub:hub_id(name)
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching projects:', error);
+        console.error('❌ Error fetching projects:', error);
+        toast({
+          title: 'Error loading projects',
+          description: error.message,
+          variant: 'destructive',
+        });
         throw error;
       }
 
-      return data.map(project => ({
-        ...project,
-        plant_name: project.plant?.name,
-        station_name: project.station?.name,
-        hub_name: project.hub?.name,
-      })) as Project[];
+      console.log('✅ Projects fetched successfully:', data?.length || 0, 'projects');
+      console.log('Projects data:', data);
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ No projects found in database');
+        return [];
+      }
+
+      // Fetch related data separately to avoid join issues
+      const enrichedProjects = await Promise.all(
+        (data || []).map(async (project) => {
+          let plant_name, station_name, hub_name;
+
+          if (project.plant_id) {
+            const { data: plant } = await supabase
+              .from('plant')
+              .select('name')
+              .eq('id', project.plant_id)
+              .maybeSingle();
+            plant_name = plant?.name;
+          }
+
+          if (project.station_id) {
+            const { data: station } = await supabase
+              .from('station')
+              .select('name')
+              .eq('id', project.station_id)
+              .maybeSingle();
+            station_name = station?.name;
+          }
+
+          if (project.hub_id) {
+            const { data: hub } = await supabase
+              .from('hubs')
+              .select('name')
+              .eq('id', project.hub_id)
+              .maybeSingle();
+            hub_name = hub?.name;
+          }
+
+          return {
+            ...project,
+            plant_name,
+            station_name,
+            hub_name,
+          };
+        })
+      );
+
+      console.log('✅ Enriched projects:', enrichedProjects);
+      return enrichedProjects as Project[];
     },
+    retry: 1,
+    staleTime: 30000, // 30 seconds
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
+
+  React.useEffect(() => {
+    console.log('📊 useProjects state - loading:', isLoading, 'projects:', projects?.length || 0, 'error:', error);
+  }, [isLoading, projects, error]);
 
   const createProjectMutation = useMutation({
     mutationFn: async (projectData: Omit<Project, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'is_active'>) => {

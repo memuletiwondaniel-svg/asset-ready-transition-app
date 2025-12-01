@@ -39,6 +39,13 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
     isCreating 
   } = useProjects();
   const { toast } = useToast();
+
+  // Debug logging for projects
+  React.useEffect(() => {
+    console.log('📊 CreatePSSRFlow - dbProjects:', dbProjects?.length || 0);
+    console.log('📊 CreatePSSRFlow - isLoading:', isLoading);
+    console.log('📊 CreatePSSRFlow - dbProjects data:', dbProjects);
+  }, [dbProjects, isLoading]);
   const [formData, setFormData] = useState({
     asset: '',
     reason: '',
@@ -75,20 +82,27 @@ const CreatePSSRFlow: React.FC<CreatePSSRFlowProps> = ({ onBack }) => {
   ];
 
   // Convert database projects to the format expected by the UI
-  const projects: Project[] = dbProjects?.map(p => ({
-    id: `${p.project_id_prefix} ${p.project_id_number}`,
-    name: p.project_title,
-    plant: p.plant_name || '',
-    subdivision: p.station_name,
-    scope: p.project_scope || '',
-    hubLead: {
-      name: 'Hub Lead',
-      email: '',
-      avatar: '',
-      status: 'green'
-    },
-    others: []
-  })) || [];
+  const projects: Project[] = React.useMemo(() => {
+    const mapped = dbProjects?.map(p => ({
+      id: `${p.project_id_prefix} ${p.project_id_number}`,
+      name: p.project_title,
+      plant: p.plant_name || '',
+      subdivision: p.station_name,
+      scope: p.project_scope || '',
+      hubLead: {
+        name: 'Hub Lead',
+        email: '',
+        avatar: '',
+        status: 'green'
+      },
+      others: []
+    })) || [];
+    
+    console.log('🎯 Mapped projects for UI:', mapped.length, 'projects');
+    console.log('🎯 Project IDs:', mapped.map(p => p.id));
+    
+    return mapped;
+  }, [dbProjects]);
 
   const handleContinue = () => {
     setShowConfirmDialog(true);
