@@ -88,7 +88,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
             onValueChange={setSearchValue}
             className="border-0 focus:ring-0"
           />
-          <CommandList className="max-h-60 overflow-y-auto">
+          <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
               {filteredOptions.map((option) => (

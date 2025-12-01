@@ -87,7 +87,7 @@ export function EnhancedCombobox({
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList className="max-h-[200px] overflow-y-auto">
+          <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
             <CommandEmpty>
               {emptyText}
               {shouldShowCreateOption && (
