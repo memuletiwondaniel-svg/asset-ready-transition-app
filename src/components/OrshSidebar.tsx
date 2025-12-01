@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { UserProfileModal } from '@/components/user-management/UserProfileModal';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import OrshLogo from '@/components/ui/OrshLogo';
 import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, User, Shield, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, Users, FileText, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench } from 'lucide-react';
 import { useTheme } from '@/components/ui/theme-provider';
@@ -94,7 +93,6 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   ];
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -115,56 +113,53 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           {!isSidebarCollapsed ? <OrshLogo size="medium" className="animate-fade-in" /> : <OrshLogo size="small" />}
         </div>
         
-        {/* User Profile Section */}
-        <Collapsible open={userMenuOpen} onOpenChange={setUserMenuOpen}>
-          <CollapsibleTrigger asChild>
-            {isSidebarCollapsed ? <div role="button" tabIndex={0} className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer">
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarImage src={displayAvatar} alt={displayName} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                    {displayName.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div> : <Button variant="ghost" className="w-full p-3 h-auto hover:bg-muted/50 justify-start">
-                <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
-                  <AvatarImage src={displayAvatar} alt={displayName} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                    {displayName.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <>
-                  <div className="flex-1 text-left animate-fade-in">
-                    <p className="text-sm font-medium">{displayName}</p>
-                    <p className="text-xs text-muted-foreground">{displayTitle}</p>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
-                </>
-              </Button>}
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 mt-1 animate-fade-in">
-            {isSidebarCollapsed ? <>
-                <Button variant="ghost" size="icon" onClick={() => setProfileModalOpen(true)} className="w-full h-9" title="Edit Profile">
-                  <User className="h-4 w-4" />
-                </Button>
-              </> : <>
-                <Button variant="ghost" size="sm" onClick={() => setProfileModalOpen(true)} className="w-full justify-start h-9 pl-10">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Edit Profile</span>
-                </Button>
-                
-                {/* Profile Completion Indicator */}
-                {realtimeProfile && (
-                  <div className="px-3 pt-2">
-                    <ProfileCompletionIndicator
-                      profile={realtimeProfile}
-                      onOpenProfile={() => setProfileModalOpen(true)}
-                      collapsed={false}
-                    />
-                  </div>
-                )}
-              </>}
-          </CollapsibleContent>
-        </Collapsible>
+        {/* User Profile Section - Direct click to open modal */}
+        {isSidebarCollapsed ? (
+          <div 
+            role="button" 
+            tabIndex={0} 
+            onClick={() => setProfileModalOpen(true)}
+            onKeyDown={(e) => e.key === 'Enter' && setProfileModalOpen(true)}
+            className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer transition-colors"
+          >
+            <Avatar className="h-10 w-10 flex-shrink-0">
+              <AvatarImage src={displayAvatar} alt={displayName} />
+              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                {displayName.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        ) : (
+          <>
+            <Button 
+              variant="ghost" 
+              onClick={() => setProfileModalOpen(true)}
+              className="w-full p-3 h-auto hover:bg-muted/50 justify-start transition-colors"
+            >
+              <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
+                <AvatarImage src={displayAvatar} alt={displayName} />
+                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                  {displayName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-left animate-fade-in">
+                <p className="text-sm font-medium">{displayName}</p>
+                <p className="text-xs text-muted-foreground">{displayTitle}</p>
+              </div>
+            </Button>
+            
+            {/* Profile Completion Indicator */}
+            {realtimeProfile && (
+              <div className="px-3 pt-2">
+                <ProfileCompletionIndicator
+                  profile={realtimeProfile}
+                  onOpenProfile={() => setProfileModalOpen(true)}
+                  collapsed={false}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Navigation Menu */}
