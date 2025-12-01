@@ -44,6 +44,14 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   console.log('ProjectSelector - Current projectId:', projectId);
   console.log('ProjectSelector - Search open:', projectSearchOpen);
 
+  React.useEffect(() => {
+    console.log('ProjectSelector mounted/updated with projects:', projects);
+  }, [projects]);
+
+  React.useEffect(() => {
+    console.log('projectSearchOpen changed to:', projectSearchOpen);
+  }, [projectSearchOpen]);
+
   const handleProjectSelect = (value: string) => {
     if (value === 'add-new') {
       setShowAddProjectWidget(true);
@@ -93,7 +101,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
     <>
       <div className="space-y-3">
         <Label htmlFor="projectId" className="text-sm font-semibold text-gray-700">Project ID</Label>
-        <Popover open={projectSearchOpen} onOpenChange={onProjectSearchOpenChange}>
+        <Popover open={projectSearchOpen} onOpenChange={onProjectSearchOpenChange} modal={false}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -101,6 +109,12 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
               aria-expanded={projectSearchOpen}
               className="h-12 w-full justify-between border-2 border-gray-200 focus:border-blue-500 transition-colors bg-white hover:bg-gray-50"
               type="button"
+              onClick={(e) => {
+                console.log('Button clicked! Current state:', projectSearchOpen);
+                e.preventDefault();
+                e.stopPropagation();
+                onProjectSearchOpenChange(!projectSearchOpen);
+              }}
             >
               <span className="text-left flex-1">{projectId || "Search projects..."}</span>
               <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -113,6 +127,10 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
             sideOffset={8}
             avoidCollisions={true}
             collisionPadding={20}
+            onOpenAutoFocus={(e) => {
+              console.log('Popover opened and focused');
+              e.preventDefault();
+            }}
           >
             <Command className="bg-white">
               <CommandInput 
