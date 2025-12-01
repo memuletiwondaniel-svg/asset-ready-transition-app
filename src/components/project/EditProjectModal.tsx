@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, FileText, Image } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
@@ -14,6 +15,9 @@ import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useToast } from '@/hooks/use-toast';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { ProjectTeamSection } from './ProjectTeamSection';
+import { ProjectMilestonesSection } from './ProjectMilestonesSection';
+import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EditProjectModalProps {
@@ -45,11 +49,15 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     hub_id: '',
   });
 
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize form data when project changes
+  // Load existing project data
   useEffect(() => {
-    if (project) {
+    if (open && project) {
       setFormData({
         project_id_prefix: project.project_id_prefix || '',
         project_id_number: project.project_id_number || '',
@@ -60,8 +68,86 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         project_scope_image_url: project.project_scope_image_url || '',
         hub_id: project.hub_id || '',
       });
+      
+      // Fetch existing team members, milestones, and documents
+      fetchProjectDetails();
     }
-  }, [project]);
+  }, [open, project]);
+
+  const fetchProjectDetails = async () => {
+    if (!project?.id) return;
+    
+    setLoading(true);
+    try {
+      // Fetch team members
+      const { data: teamData, error: teamError } = await supabase
+        .from('project_team_members')
+        .select('*')
+        .eq('project_id', project.id);
+      
+      if (!teamError && teamData) {
+        // Fetch profiles separately
+        const userIds = teamData.map(m => m.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url, position')
+          .in('user_id', userIds);
+        
+        const formattedTeam = teamData.map(member => {
+          const profile = profilesData?.find(p => p.user_id === member.user_id);
+          return {
+            id: member.id,
+            role: member.role,
+            user_id: member.user_id,
+            user_name: profile?.full_name || '',
+            is_lead: member.is_lead,
+            avatar_url: profile?.avatar_url || '',
+            position: profile?.position || ''
+          };
+        });
+        setTeamMembers(formattedTeam);
+      }
+
+      // Fetch milestones
+      const { data: milestonesData, error: milestonesError } = await supabase
+        .from('project_milestones')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('milestone_date', { ascending: true });
+      
+      if (!milestonesError && milestonesData) {
+        const formattedMilestones = milestonesData.map(m => ({
+          id: m.id,
+          milestone_name: m.milestone_name,
+          milestone_date: m.milestone_date,
+          is_scorecard_project: m.is_scorecard_project
+        }));
+        setMilestones(formattedMilestones);
+      }
+
+      // Fetch documents
+      const { data: documentsData, error: documentsError } = await supabase
+        .from('project_documents')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false });
+      
+      if (!documentsError && documentsData) {
+        const formattedDocs = documentsData.map(d => ({
+          id: d.id,
+          document_name: d.document_name,
+          document_type: d.document_type,
+          file_url: d.link_url,
+          link_type: d.link_type
+        }));
+        setDocuments(formattedDocs);
+      }
+    } catch (error) {
+      console.error('Error fetching project details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleImageDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -110,19 +196,64 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
       return;
     }
 
-    const projectData = {
-      project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
-      project_id_number: formData.project_id_number,
-      project_title: formData.project_title,
-      project_scope: formData.project_scope,
-      project_scope_image_url: formData.project_scope_image_url,
-      plant_id: formData.plant_id || undefined,
-      station_id: formData.station_id || undefined,
-      hub_id: formData.hub_id || undefined,
-    };
-
     try {
+      // 1. Update project basic info
+      const projectData = {
+        project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
+        project_id_number: formData.project_id_number,
+        project_title: formData.project_title,
+        project_scope: formData.project_scope,
+        project_scope_image_url: formData.project_scope_image_url,
+        plant_id: formData.plant_id || undefined,
+        station_id: formData.station_id || undefined,
+        hub_id: formData.hub_id || undefined,
+      };
+
       updateProject({ id: project.id, updates: projectData });
+
+      // 2. Update team members - delete existing and insert new
+      await supabase.from('project_team_members').delete().eq('project_id', project.id);
+      
+      if (teamMembers.length > 0) {
+        const teamData = teamMembers.map(member => ({
+          project_id: project.id,
+          user_id: member.user_id,
+          role: member.role,
+          is_lead: member.is_lead || false
+        }));
+        await supabase.from('project_team_members').insert(teamData);
+      }
+
+      // 3. Update milestones - delete existing and insert new
+      await supabase.from('project_milestones').delete().eq('project_id', project.id);
+      
+      if (milestones.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const milestoneData = milestones.map(m => ({
+          project_id: project.id,
+          milestone_name: m.milestone_name,
+          milestone_date: m.milestone_date,
+          is_scorecard_project: m.is_scorecard_project || false,
+          created_by: user?.id || ''
+        }));
+        await supabase.from('project_milestones').insert(milestoneData);
+      }
+
+      // 4. Update documents - delete existing and insert new
+      await supabase.from('project_documents').delete().eq('project_id', project.id);
+      
+      if (documents.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const docData = documents.map(d => ({
+          project_id: project.id,
+          document_name: d.document_name,
+          document_type: d.document_type || 'General',
+          link_url: d.file_url,
+          link_type: d.link_type,
+          uploaded_by: user?.id || ''
+        }));
+        await supabase.from('project_documents').insert(docData);
+      }
       
       // Log activity
       logActivity({
@@ -134,8 +265,14 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         }
       });
       
+      toast({
+        title: "Success",
+        description: "Project updated successfully",
+      });
+
       onClose();
     } catch (error) {
+      console.error('Error updating project:', error);
       toast({
         title: "Error",
         description: "Failed to update project",
@@ -150,227 +287,248 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose} modal={true}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Edit Project
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center text-lg">
-                <FileText className="h-5 w-5 mr-2" />
-                Project Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Project ID */}
-              <div className="space-y-2">
-                <Label htmlFor="project_id">Project ID *</Label>
-                <div className="flex gap-2">
-                  <EnhancedCombobox
-                    options={prefixOptions}
-                    value={formData.project_id_prefix}
-                    onValueChange={(value) => 
-                      setFormData(prev => ({ ...prev, project_id_prefix: value as 'DP' | 'ST' | 'MoC' }))
-                    }
-                    placeholder="Prefix"
-                    allowCreate={false}
-                    className="w-32"
-                  />
-                  <Input
-                    value={formData.project_id_number}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
-                      setFormData(prev => ({ ...prev, project_id_number: value }));
-                    }}
-                    placeholder="Enter numbers only"
-                    className="flex-1"
-                  />
-                </div>
-                {formData.project_id_prefix && formData.project_id_number && (
-                  <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60">
-                    {formData.project_id_prefix}{formData.project_id_number}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Project Title */}
-              <div className="space-y-2">
-                <Label htmlFor="project_title">Project Title *</Label>
-                <Input
-                  id="project_title"
-                  value={formData.project_title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
-                  placeholder="Enter project title"
-                  required
-                />
-              </div>
-
-              {/* Plant, Station, and Hub */}
-              <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+        <ScrollArea className="flex-1 px-6 py-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Project Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Project ID */}
                 <div className="space-y-2">
-                  <Label htmlFor="plant">Plant</Label>
-                  <EnhancedCombobox
-                    options={plants.map(plant => ({ value: plant.id, label: plant.name }))}
-                    value={formData.plant_id}
-                    onValueChange={(value) => {
-                      setFormData(prev => ({ ...prev, plant_id: value, station_id: '' }));
-                    }}
-                    onCreateNew={async (name) => {
-                      await createPlant(name);
-                    }}
-                    placeholder="Select or create plant"
-                    emptyText="No plants found"
-                    createText="Create plant"
-                    className="w-full"
+                  <Label htmlFor="project_id">Project ID *</Label>
+                  <div className="flex gap-2">
+                    <EnhancedCombobox
+                      options={prefixOptions}
+                      value={formData.project_id_prefix}
+                      onValueChange={(value) => 
+                        setFormData(prev => ({ ...prev, project_id_prefix: value as 'DP' | 'ST' | 'MoC' }))
+                      }
+                      placeholder="Prefix"
+                      allowCreate={false}
+                      className="w-32"
+                    />
+                    <Input
+                      value={formData.project_id_number}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData(prev => ({ ...prev, project_id_number: value }));
+                      }}
+                      placeholder="Enter numbers only"
+                      className="flex-1"
+                    />
+                  </div>
+                  {formData.project_id_prefix && formData.project_id_number && (
+                    <Badge variant="outline" className="bg-blue-100/80 text-blue-700 border-blue-200/60">
+                      {formData.project_id_prefix}{formData.project_id_number}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Project Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="project_title">Project Title *</Label>
+                  <Input
+                    id="project_title"
+                    value={formData.project_title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
+                    placeholder="Enter project title"
+                    required
                   />
                 </div>
 
-                {showStationField && (
+                {/* Plant, Station, and Hub */}
+                <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
                   <div className="space-y-2">
-                    <Label htmlFor="station">Station</Label>
+                    <Label htmlFor="plant">Plant</Label>
                     <EnhancedCombobox
-                      options={stations.map(station => ({ value: station.id, label: station.name }))}
-                      value={formData.station_id}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
-                      onCreateNew={async (name) => {
-                        await createStation(name);
+                      options={plants.map(plant => ({ value: plant.id, label: plant.name }))}
+                      value={formData.plant_id}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, plant_id: value, station_id: '' }));
                       }}
-                      placeholder="Select or create station"
-                      emptyText="No stations found"
-                      createText="Create station"
+                      onCreateNew={async (name) => {
+                        await createPlant(name);
+                      }}
+                      placeholder="Select or create plant"
+                      emptyText="No plants found"
+                      createText="Create plant"
                       className="w-full"
                     />
                   </div>
-                )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="hub">Hub (Optional)</Label>
-                  <EnhancedCombobox
-                    options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
-                    value={formData.hub_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
-                    onCreateNew={async (name) => {
-                      await createHub(name);
-                    }}
-                    placeholder="Select or create hub"
-                    emptyText="No hubs found"
-                    createText="Create hub"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Project Scope */}
-              <div className="space-y-2">
-                <Label htmlFor="project_scope">Project Scope</Label>
-                <div className="space-y-3">
-                  <Textarea
-                    id="project_scope"
-                    value={formData.project_scope}
-                    onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
-                    placeholder="Describe the project scope..."
-                    rows={4}
-                  />
-                  
-                  {/* Drag and Drop Image Area */}
-                  <div className="space-y-2">
-                    <Label>Project Scope Image (Optional)</Label>
-                    <div
-                      className={`
-                        border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
-                        ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-                        ${formData.project_scope_image_url ? 'bg-gray-50' : ''}
-                      `}
-                      onDrop={handleImageDrop}
-                      onDragOver={handleImageDragOver}
-                      onDragLeave={handleImageDragLeave}
-                      onClick={() => document.getElementById('project_scope_image_edit')?.click()}
-                    >
-                      {formData.project_scope_image_url ? (
-                        <div className="relative">
-                          <img 
-                            src={formData.project_scope_image_url} 
-                            alt="Project Scope" 
-                            className="w-full max-h-48 object-contain rounded-lg mx-auto"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFormData(prev => ({ ...prev, project_scope_image_url: '' }));
-                            }}
-                            className="absolute top-2 right-2 bg-red-100 hover:bg-red-200 text-red-600 z-10"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex justify-center">
-                            <Image className="h-12 w-12 text-gray-400" />
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            <span className="font-medium">Drag and drop an image here</span>
-                            <br />
-                            or click to browse files
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            PNG, JPG, GIF up to 10MB
-                          </div>
-                        </div>
-                      )}
+                  {showStationField && (
+                    <div className="space-y-2">
+                      <Label htmlFor="station">Station</Label>
+                      <EnhancedCombobox
+                        options={stations.map(station => ({ value: station.id, label: station.name }))}
+                        value={formData.station_id}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, station_id: value }))}
+                        onCreateNew={async (name) => {
+                          await createStation(name);
+                        }}
+                        placeholder="Select or create station"
+                        emptyText="No stations found"
+                        createText="Create station"
+                        className="w-full"
+                      />
                     </div>
-                    <Input
-                      id="project_scope_image_edit"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              project_scope_image_url: event.target?.result as string 
-                            }));
-                          };
-                          reader.readAsDataURL(file);
-                        }
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="hub">Hub (Optional)</Label>
+                    <EnhancedCombobox
+                      options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
+                      value={formData.hub_id}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
+                      onCreateNew={async (name) => {
+                        await createHub(name);
                       }}
-                      className="hidden"
+                      placeholder="Select or create hub"
+                      emptyText="No hubs found"
+                      createText="Create hub"
+                      className="w-full"
                     />
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isUpdating}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              disabled={isUpdating}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-            >
-              {isUpdating ? 'Updating...' : 'Update Project'}
-            </Button>
-          </div>
-        </form>
+                {/* Project Scope */}
+                <div className="space-y-2">
+                  <Label htmlFor="project_scope">Project Scope</Label>
+                  <div className="space-y-3">
+                    <Textarea
+                      id="project_scope"
+                      value={formData.project_scope}
+                      onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
+                      placeholder="Describe the project scope..."
+                      rows={4}
+                    />
+                    
+                    {/* Drag and Drop Image Area */}
+                    <div className="space-y-2">
+                      <Label>Project Scope Image (Optional)</Label>
+                      <div
+                        className={`
+                          border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
+                          ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                          ${formData.project_scope_image_url ? 'bg-gray-50' : ''}
+                        `}
+                        onDrop={handleImageDrop}
+                        onDragOver={handleImageDragOver}
+                        onDragLeave={handleImageDragLeave}
+                        onClick={() => document.getElementById('project_scope_image_edit')?.click()}
+                      >
+                        {formData.project_scope_image_url ? (
+                          <div className="relative">
+                            <img 
+                              src={formData.project_scope_image_url} 
+                              alt="Project Scope" 
+                              className="w-full max-h-48 object-contain rounded-lg mx-auto"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFormData(prev => ({ ...prev, project_scope_image_url: '' }));
+                              }}
+                              className="absolute top-2 right-2 bg-red-100 hover:bg-red-200 text-red-600 z-10"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex justify-center">
+                              <Image className="h-12 w-12 text-gray-400" />
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <span className="font-medium">Drag and drop an image here</span>
+                              <br />
+                              or click to browse files
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              PNG, JPG, GIF up to 10MB
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <Input
+                        id="project_scope_image_edit"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                project_scope_image_url: event.target?.result as string 
+                              }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Project Team */}
+            <ProjectTeamSection 
+              teamMembers={teamMembers}
+              setTeamMembers={setTeamMembers}
+            />
+
+            {/* Milestones */}
+            <ProjectMilestonesSection 
+              milestones={milestones}
+              setMilestones={setMilestones}
+            />
+
+            {/* Documents */}
+            <EnhancedProjectDocumentsSection 
+              documents={documents}
+              setDocuments={setDocuments}
+            />
+          </form>
+        </ScrollArea>
+
+        {/* Actions */}
+        <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            disabled={isUpdating || loading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit"
+            onClick={handleSubmit}
+            disabled={isUpdating || loading}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+          >
+            {isUpdating ? 'Updating...' : 'Update Project'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
