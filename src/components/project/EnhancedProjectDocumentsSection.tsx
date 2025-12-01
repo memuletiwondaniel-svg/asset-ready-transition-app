@@ -344,21 +344,11 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                     }
                     <div className="flex flex-col">
                       <span className="font-medium text-gray-900">{doc.document_name}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {doc.document_type === 'file' ? 'File' : 'Link'}
-                        </Badge>
-                        {doc.link_type && (
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {doc.link_type}
-                          </Badge>
-                        )}
-                        {doc.file_extension && (
-                          <Badge variant="outline" className="text-xs uppercase">
-                            {doc.file_extension}
-                          </Badge>
-                        )}
-                      </div>
+                      {doc.file_extension && (
+                        <span className="text-xs text-muted-foreground uppercase">
+                          {doc.file_extension} file
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Button
