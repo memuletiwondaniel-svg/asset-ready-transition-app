@@ -472,14 +472,11 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium text-foreground truncate">{doc.document_name}</h4>
-                              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
-                                <Badge variant="outline" className="text-xs">
-                                  {doc.document_type || 'Document'}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {doc.link_type === 'file' ? 'File' : 'Link'}
-                                </Badge>
-                              </div>
+                              {doc.file_extension && (
+                                <span className="text-xs text-muted-foreground uppercase mt-1 block">
+                                  {doc.file_extension} file
+                                </span>
+                              )}
                             </div>
                           </div>
                           {doc.link_url && (
