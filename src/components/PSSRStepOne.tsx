@@ -254,8 +254,8 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
               </div>}
           </div>
 
-          {/* Project Selection Field - Always Mandatory */}
-          {formData.reason && (
+          {/* Project Selection Field - Only for Start-Up or Commissioning */}
+          {formData.reason === 'Start-Up or Commissioning of a new Facility or Project' && (
             <div className="space-y-3">
               <Label htmlFor="project" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-blue-600" />
