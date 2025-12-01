@@ -100,7 +100,23 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose 
       return;
     }
 
-    // Show summary page instead of creating immediately
+    // Validate that at least one required role has been assigned
+    const validTeamMembers = teamMembers.filter(member => 
+      member.user_id && 
+      member.user_id.trim() !== '' && 
+      member.user_id !== 'undefined'
+    );
+    
+    if (validTeamMembers.length === 0) {
+      toast({
+        title: "Validation Warning",
+        description: "Please assign at least one team member before creating the project",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Show summary page
     setShowSummary(true);
   };
 
