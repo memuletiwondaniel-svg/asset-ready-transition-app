@@ -31,6 +31,7 @@ import { useFields } from "@/hooks/useFields";
 import { useDisciplines } from "@/hooks/useDisciplines";
 import { useHubs } from "@/hooks/useHubs";
 import { useLogActivity } from "@/hooks/useActivityLogs";
+import { AvatarCropDialog } from "@/components/user-management/AvatarCropDialog";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -83,6 +84,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   
   // Get role names from the database
   const roleNames = roles.map(role => role.name);
@@ -385,14 +388,34 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
       return;
     }
 
+    // Create preview and open crop dialog
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImageToCrop(result);
+      setShowCropDialog(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Convert blob to file
+    const file = new File([croppedBlob], "avatar.png", { type: "image/png" });
     setProfileImage(file);
     
-    // Create preview
+    // Create preview from blob
     const reader = new FileReader();
     reader.onload = (e) => {
       setProfileImagePreview(e.target?.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(croppedBlob);
+    
+    setShowCropDialog(false);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropDialog(false);
+    setImageToCrop(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -418,6 +441,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const clearImage = () => {
     setProfileImage(null);
     setProfileImagePreview(null);
+    setImageToCrop(null);
   };
 
   const uploadProfileImage = async (userId: string): Promise<string | null> => {
@@ -1284,6 +1308,16 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
           </div>
         )}
       </DialogContent>
+
+      {/* Avatar Crop Dialog */}
+      {showCropDialog && imageToCrop && (
+        <AvatarCropDialog
+          open={showCropDialog}
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Dialog>
   );
 };
