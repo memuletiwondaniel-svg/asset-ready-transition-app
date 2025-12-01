@@ -247,7 +247,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
         newSort = null;
       }
       
-      return { ...prev, [columnId]: newSort };
+      // Clear all other column sorts and only set the current column
+      return { [columnId]: newSort };
     });
   };
 
