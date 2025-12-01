@@ -164,10 +164,9 @@ serve(async (req) => {
               functional_email: !!isFunctionalEmail,
               functional_email_address: functionalEmail ?? null,
               status: 'active',
-              role: finalRole,
-              final_role: finalRole,
-              discipline_id: disciplineId,
-              commission_id: commissionId,
+              position: finalRole,
+              discipline: disciplineId,
+              commission: commissionId,
               account_status: 'active',
             }, { onConflict: 'user_id' });
 
@@ -252,10 +251,9 @@ serve(async (req) => {
         personal_email: personalEmail ?? null,
         functional_email: !!isFunctionalEmail,
         status: 'active',
-        role: finalRole,
-        final_role: finalRole,
-        discipline_id: disciplineId,
-        commission_id: commissionId,
+        position: finalRole,
+        discipline: disciplineId,
+        commission: commissionId,
         account_status: 'active',
       }, { onConflict: 'user_id' });
 
