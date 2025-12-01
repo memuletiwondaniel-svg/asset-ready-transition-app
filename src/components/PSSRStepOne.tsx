@@ -287,18 +287,16 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
             <div className="p-6 bg-blue-50 rounded-xl">
               
               <div className="mb-4">
-                <div className="w-64">
-                  <ProjectSelector
-                    projectId={formData.projectId}
-                    projectName={formData.projectName}
-                    projects={projects}
-                    projectSearchOpen={projectSearchOpen}
-                    onProjectSearchOpenChange={setProjectSearchOpen}
-                    onProjectSelect={onProjectSelect}
-                    onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
-                    onNewProjectCreate={onNewProjectCreate}
-                  />
-                </div>
+                <ProjectSelector
+                  projectId={formData.projectId}
+                  projectName={formData.projectName}
+                  projects={projects}
+                  projectSearchOpen={projectSearchOpen}
+                  onProjectSearchOpenChange={setProjectSearchOpen}
+                  onProjectSelect={onProjectSelect}
+                  onProjectNameChange={(name) => setFormData(prev => ({...prev, projectName: name}))}
+                  onNewProjectCreate={onNewProjectCreate}
+                />
               </div>
 
               {/* Project Details */}
