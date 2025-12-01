@@ -17,6 +17,16 @@ import { AddProjectModal } from './AddProjectModal';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
 import { ProjectCard } from './ProjectCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ProjectFilters } from './ProjectFilters';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
@@ -97,6 +107,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlant, setSelectedPlant] = useState('all');
   const [selectedHub, setSelectedHub] = useState('all');
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
@@ -241,19 +252,27 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     return hubs.find(h => h.id === hubId)?.name;
   };
 
-  const handleDeleteProject = async (project: any) => {
+  const handleDeleteProject = (project: any) => {
+    setProjectToDelete(project);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+    
     try {
-      deleteProject(project.id);
+      deleteProject(projectToDelete.id);
       
       // Log activity
       logActivity({
         activityType: 'project_deleted',
-        description: `Deleted project: ${project.project_id_prefix}${project.project_id_number} - ${project.project_title}`,
+        description: `Deleted project: ${projectToDelete.project_id_prefix}${projectToDelete.project_id_number} - ${projectToDelete.project_title}`,
         metadata: {
-          project_id: `${project.project_id_prefix}${project.project_id_number}`,
-          project_title: project.project_title
+          project_id: `${projectToDelete.project_id_prefix}${projectToDelete.project_id_number}`,
+          project_title: projectToDelete.project_title
         }
       });
+      
+      setProjectToDelete(null);
     } catch (error) {
       console.error('Error deleting project:', error);
     }
@@ -577,6 +596,28 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         onClose={() => setEditProject(null)}
         project={editProject}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete project{' '}
+              <span className="font-semibold text-foreground">
+                {projectToDelete?.project_id_prefix}{projectToDelete?.project_id_number} - {projectToDelete?.project_title}
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteProject} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AnimatedBackground>
   );
 };
