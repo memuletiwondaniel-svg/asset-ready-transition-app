@@ -1011,15 +1011,39 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete <strong>{userToDelete?.full_name}</strong>? 
-              This action cannot be undone and will permanently remove the user's account and all associated data.
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+              <AlertDialogTitle className="text-xl">Delete User Account</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 pt-2">
+                <p>
+                  You are about to permanently delete the account for:
+                </p>
+                <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-3">
+                  <p className="font-semibold text-foreground">{userToDelete?.full_name}</p>
+                  <p className="text-sm text-muted-foreground">{userToDelete?.email}</p>
+                </div>
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3">
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Warning: This action cannot be undone
+                  </p>
+                  <ul className="mt-2 text-sm text-muted-foreground list-disc list-inside space-y-1">
+                    <li>User account will be permanently deleted</li>
+                    <li>All associated data will be removed</li>
+                    <li>User will lose access to all projects</li>
+                    <li>Activity history will be preserved for audit</li>
+                  </ul>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel onClick={() => setUserToDelete(null)}>
               Cancel
             </AlertDialogCancel>
@@ -1027,7 +1051,8 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
               onClick={confirmDeleteUser}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete User
+              <Trash2 className="h-4 w-4 mr-2" />
+              Yes, Delete User
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
