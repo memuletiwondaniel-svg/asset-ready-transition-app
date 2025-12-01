@@ -41,37 +41,48 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
     return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
   };
 
-  // Helper function to get document type-specific icons
-  const getDocumentIcon = (doc: any) => {
-    const extension = doc.file_extension?.toLowerCase() || '';
-    const docType = doc.document_type?.toLowerCase() || '';
+  // Helper function to get file type-specific icons
+  const getFileIcon = (extension: string) => {
+    const ext = extension?.toLowerCase() || '';
     
-    // PDF files
-    if (extension === 'pdf' || docType.includes('pdf')) {
-      return <FileText className="h-5 w-5 text-red-500" />;
+    switch (ext) {
+      case 'pdf':
+        return <FileText className="h-5 w-5 text-red-500" />;
+      case 'doc':
+      case 'docx':
+        return <FileText className="h-5 w-5 text-blue-600" />;
+      case 'xls':
+      case 'xlsx':
+        return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
+      case 'ppt':
+      case 'pptx':
+        return <Presentation className="h-5 w-5 text-orange-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+      case 'svg':
+        return <FileImage className="h-5 w-5 text-purple-500" />;
+      case 'csv':
+      case 'txt':
+      case 'js':
+      case 'ts':
+      case 'jsx':
+      case 'tsx':
+      case 'html':
+      case 'css':
+      case 'json':
+      case 'xml':
+        return <FileCode className="h-5 w-5 text-gray-600" />;
+      default:
+        return <File className="h-5 w-5 text-muted-foreground" />;
     }
-    // Word documents
-    if (['doc', 'docx'].includes(extension) || docType.includes('word')) {
-      return <FileText className="h-5 w-5 text-blue-600" />;
-    }
-    // Excel spreadsheets
-    if (['xls', 'xlsx', 'csv'].includes(extension) || docType.includes('excel') || docType.includes('spreadsheet')) {
-      return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
-    }
-    // PowerPoint
-    if (['ppt', 'pptx'].includes(extension) || docType.includes('powerpoint') || docType.includes('presentation')) {
-      return <Presentation className="h-5 w-5 text-orange-500" />;
-    }
-    // Images
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension) || docType.includes('image')) {
-      return <FileImage className="h-5 w-5 text-purple-500" />;
-    }
-    // Code files
-    if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'xml'].includes(extension)) {
-      return <FileCode className="h-5 w-5 text-gray-600" />;
-    }
-    // Default file icon
-    return <File className="h-5 w-5 text-muted-foreground" />;
+  };
+
+  // Helper function to get link type-specific icons
+  const getLinkIcon = (linkType: string) => {
+    return <LinkIcon className="h-5 w-5 text-blue-500" />;
   };
 
   // Helper function to format short date
@@ -468,7 +479,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
                             <div className="shrink-0 mt-0.5">
-                              {doc.link_type === 'file' ? getDocumentIcon(doc) : <LinkIcon className="h-5 w-5 text-blue-500" />}
+                              {doc.document_type === 'file' ? getFileIcon(doc.file_extension) : getLinkIcon(doc.link_type)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium text-foreground truncate">{doc.document_name}</h4>
