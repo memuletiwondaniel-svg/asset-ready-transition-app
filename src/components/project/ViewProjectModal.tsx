@@ -34,6 +34,13 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Helper function to convert relative avatar paths to full Supabase storage URLs
+  const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
+    if (!avatarUrl) return null;
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+  };
+
   useEffect(() => {
     if (open && project?.id) {
       // Clear previous state to ensure fresh data
@@ -270,11 +277,11 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                         {requiredRoleMembers.map((member) => {
                           const profile = member.profiles;
                           return (
-                            <div key={member.id} className="p-3 border rounded-lg bg-muted/30">
+                              <div key={member.id} className="p-3 border rounded-lg bg-muted/30">
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                  {profile?.avatar_url ? (
-                                    <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                                  {getAvatarUrl(profile?.avatar_url) ? (
+                                    <AvatarImage src={getAvatarUrl(profile?.avatar_url)!} alt={profile?.full_name || 'Team member'} />
                                   ) : (
                                     <AvatarFallback className="bg-primary/10">
                                       <UserCircle className="h-5 w-5 text-primary" />
@@ -305,8 +312,8 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                             return (
                               <div key={member.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
                                 <Avatar className="h-10 w-10">
-                                  {profile?.avatar_url ? (
-                                    <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                                  {getAvatarUrl(profile?.avatar_url) ? (
+                                    <AvatarImage src={getAvatarUrl(profile?.avatar_url)!} alt={profile?.full_name || 'Team member'} />
                                   ) : (
                                     <AvatarFallback className="bg-primary/10">
                                       <UserCircle className="h-5 w-5 text-primary" />
