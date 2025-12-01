@@ -150,17 +150,27 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                         
                         switch (role) {
                           case 'Project Manager':
-                            return userRole === 'proj manager' || 
-                                   userRole === 'project manager';
+                            return userRole.includes('proj manager') || 
+                                   userRole.includes('project manager') ||
+                                   userPos.includes('proj manager') ||
+                                   userPos.includes('project manager');
                           case 'Project Engineer':
-                            return userRole === 'proj engr' || 
-                                   userRole === 'project engineer';
+                            return userRole.includes('proj eng') || 
+                                   userRole.includes('project eng') ||
+                                   userPos.includes('proj eng') ||
+                                   userPos.includes('project eng');
                           case 'Commissioning Lead':
-                            return userRole === 'commissioning lead';
+                            return userRole.includes('commissioning lead') ||
+                                   userPos.includes('commissioning lead') ||
+                                   userRole.includes('commissioning') ||
+                                   userPos.includes('commissioning');
                           case 'Construction Lead':
-                            return userRole === 'construction lead';
+                            return userRole.includes('construction lead') ||
+                                   userPos.includes('construction lead') ||
+                                   userRole.includes('construction') ||
+                                   userPos.includes('construction');
                           case 'ORA Lead':
-                            return userRole === 'ora lead' ||
+                            return userRole.includes('ora') ||
                                    userPos.includes('ora');
                           default:
                             return true;
