@@ -50,11 +50,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card 
-      className={`group relative overflow-hidden border-border/50 bg-card transition-all duration-200 ease-out hover:shadow-lg hover:shadow-black/5 hover:border-border hover:-translate-y-0.5 cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
+      className={`group relative overflow-hidden border-border/50 bg-card transition-all duration-200 ease-out group-hover/cards:opacity-60 hover:!opacity-100 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.01] hover:ring-1 hover:ring-primary/20 cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
     >
       
-      <CardContent className="relative p-4">
+      <CardContent className="relative p-4 transition-all duration-200">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2 flex-1">
             <div 

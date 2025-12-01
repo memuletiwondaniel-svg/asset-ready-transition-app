@@ -423,7 +423,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                     items={filteredAndSortedProjects.map((p) => p.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="group/cards grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredAndSortedProjects.map((project, index) => (
                         <SortableProjectCard
                           key={project.id}
