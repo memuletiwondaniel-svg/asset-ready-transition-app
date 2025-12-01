@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Clock, Users, Target, FileText, UserCircle, Building, MapPin, Calendar, Edit } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building, MapPin, Calendar, Edit } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -96,27 +95,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
     fetchProjectData();
   }, [projectId]);
 
-  // Mock readiness data - replace with actual calculation
-  const readinessData = {
-    overall: 75,
-    categories: [
-      { name: 'Documentation', progress: 80, status: 'on-track' },
-      { name: 'Resources', progress: 70, status: 'on-track' },
-      { name: 'Equipment', progress: 85, status: 'on-track' },
-      { name: 'Safety', progress: 65, status: 'at-risk' }
-    ]
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'on-track':
-        return <CheckCircle className="h-4 w-4 text-emerald-500" />;
-      case 'at-risk':
-        return <AlertCircle className="h-4 w-4 text-amber-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
 
   const getMilestoneStatusColor = (status: string) => {
     switch (status) {
@@ -195,16 +173,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   )}
                 </div>
               </div>
-              <div className="flex-shrink-0">
-                <div className="text-center p-3 bg-background/50 backdrop-blur-sm rounded-lg border border-primary/20">
-                  <div className="text-3xl font-bold text-primary mb-1">
-                    {readinessData.overall}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Readiness
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -239,28 +207,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 </div>
               </div>
             )}
-
-            {/* Readiness Status */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Readiness Status
-              </h3>
-              <div className="space-y-3 pl-6">
-                {readinessData.categories.map((category) => (
-                  <div key={category.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(category.status)}
-                        <span className="font-medium">{category.name}</span>
-                      </div>
-                      <span className="text-muted-foreground">{category.progress}%</span>
-                    </div>
-                    <Progress value={category.progress} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Team Members */}
             <div className="space-y-3">
