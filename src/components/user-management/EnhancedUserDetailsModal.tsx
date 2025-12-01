@@ -378,7 +378,19 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       });
       
       setSystemRole(user.roles?.[0] || 'user');
-      setLocalAvatarUrl(user.avatar_url ? `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}` : null);
+      
+      // Handle avatar URL - check if it's already a full URL or just a path
+      let avatarUrl = null;
+      if (user.avatar_url) {
+        if (user.avatar_url.startsWith('http')) {
+          avatarUrl = user.avatar_url;
+        } else {
+          avatarUrl = `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`;
+        }
+        // Add cache-busting
+        avatarUrl = `${avatarUrl}?t=${Date.now()}`;
+      }
+      setLocalAvatarUrl(avatarUrl);
       
       fetchDatabaseOptions();
       fetchActivityLogs();
@@ -873,7 +885,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                 <Avatar className="h-14 w-14 ring-2 ring-border">
                   {(localAvatarUrl || user.avatar_url) && (
                     <AvatarImage 
-                      src={localAvatarUrl ?? `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}`}
+                      src={localAvatarUrl ?? (user.avatar_url?.startsWith('http') 
+                        ? `${user.avatar_url}?t=${Date.now()}` 
+                        : `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${user.avatar_url}?t=${Date.now()}`)}
                       alt={user.full_name || 'User'} 
                     />
                   )}
