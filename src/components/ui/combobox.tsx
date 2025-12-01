@@ -109,7 +109,7 @@ export function Combobox({
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">{/* Enhanced scroll styling */}
+          <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">{/* Enhanced scroll styling */}
             <CommandEmpty>
               {showAddCustomOption ? (
                 <div className="p-2">
@@ -202,7 +202,7 @@ export function MultiSelectCombobox({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg">
         <Command shouldFilter={false}>
           <CommandInput placeholder={searchPlaceholder} value={search} onValueChange={setSearch} />
-          <CommandList className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+          <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
             <CommandEmpty>No results.</CommandEmpty>
             <CommandGroup>
               {filtered.map((opt) => (
