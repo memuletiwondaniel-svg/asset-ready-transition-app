@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -85,6 +86,7 @@ const SortableProjectCard = ({ project, ...props }: any) => {
 };
 
 const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translations }: ProjectManagementPageProps) => {
+  const navigate = useNavigate();
   const { projects, isLoading, deleteProject } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -470,7 +472,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                         {filteredAndSortedProjects.map((project, index) => (
                           <TableRow
                             key={project.id}
-                            className={`border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-300 ${
+                            onClick={() => navigate(`/project/${project.id}`)}
+                            className={`cursor-pointer border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-300 ${
                               index % 2 === 0 ? 'bg-white/60' : 'bg-blue-50/20'
                             }`}
                           >
@@ -478,7 +481,10 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => toggleFavorite(project.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleFavorite(project.id);
+                                }}
                                 className="h-8 w-8 p-0"
                               >
                                 <Star
@@ -492,7 +498,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                             </TableCell>
                             <TableCell className="px-6 py-4">
                               <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
