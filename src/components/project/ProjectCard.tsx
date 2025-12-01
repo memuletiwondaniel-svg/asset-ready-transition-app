@@ -212,7 +212,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   {project.completed_milestone_count}/{project.milestone_count}
                 </span>
               </div>
-              <Progress value={milestoneProgress} className="h-1.5" />
+              <Progress value={milestoneProgress} className="h-1.5" indicatorClassName="bg-emerald-500" />
             </div>
           )}
 
