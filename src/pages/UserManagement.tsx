@@ -361,7 +361,11 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
               </TableHeader>
               <TableBody>
                 {sortedUsers.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow 
+                    key={user.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => setSelectedUser(user)}
+                  >
                     <TableCell className="font-medium">
                       {user.firstName} {user.lastName}
                     </TableCell>
@@ -418,14 +422,17 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                         {user.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         {user.status === 'awaiting authentication' ? (
                           <>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => openApprovalModal(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openApprovalModal(user);
+                              }}
                               className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
                             >
                               <CheckCircle className="h-4 w-4" />
@@ -437,17 +444,13 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => setSelectedUser(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUser(user);
+                              }}
                               title="View Details"
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title="Edit User"
-                            >
-                              <Edit className="h-4 w-4" />
                             </Button>
                           </>
                         )}
@@ -474,6 +477,10 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
           user={selectedUser}
           isOpen={!!selectedUser}
           onClose={() => setSelectedUser(null)}
+          onEdit={() => {
+            // TODO: Open edit user modal
+            console.log('Edit user:', selectedUser);
+          }}
         />
       )}
 
