@@ -156,7 +156,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
     <TableHead 
       ref={setNodeRef} 
       style={style}
-      className={`relative select-none ${isDragging ? 'opacity-50' : ''}`}
+      className={`relative select-none group ${isDragging ? 'opacity-50' : ''}`}
       {...attributes}
     >
       <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
         <div className="flex items-center">
           <div 
             {...listeners}
-            className="cursor-grab hover:cursor-grabbing p-1"
+            className="cursor-grab hover:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
