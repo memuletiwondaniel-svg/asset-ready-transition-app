@@ -195,7 +195,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                       isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                     )}
                   >
-                    <Icon className="mr-2 h-4 w-4" />
+                    <Icon className={cn(
+                      "mr-2 h-4 w-4 transition-colors",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )} />
                     <span>{item.label}</span>
                     {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                       <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
@@ -235,7 +238,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
                   )}
                   title={item.label}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={cn(
+                    "h-4 w-4 transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )} />
                   {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
                       {unreadChatCount}
@@ -263,17 +269,17 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           {/* Theme Toggle Row */}
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
             {theme === 'dark' ? <>
-                <Sun className="w-4 h-4" />
+                <Sun className="w-4 h-4 text-muted-foreground" />
                 {!isSidebarCollapsed && <span className="ml-2">Light Mode</span>}
               </> : <>
-                <Moon className="w-4 h-4" />
+                <Moon className="w-4 h-4 text-muted-foreground" />
                 {!isSidebarCollapsed && <span className="ml-2">Dark Mode</span>}
               </>}
           </Button>
 
           {/* Notifications Row */}
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Notifications">
-            <Bell className="w-4 h-4" />
+            <Bell className="w-4 h-4 text-muted-foreground" />
             {!isSidebarCollapsed && <span className="ml-2">Notifications</span>}
           </Button>
 
@@ -281,7 +287,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Language">
-                <Languages className="w-4 h-4" />
+                <Languages className="w-4 h-4 text-muted-foreground" />
                 {!isSidebarCollapsed && <span className="ml-2">Language</span>}
               </Button>
             </DropdownMenuTrigger>
@@ -302,13 +308,13 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
           {/* Widgets Row */}
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowWidgets} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Widgets">
-            <LayoutGrid className="w-4 h-4" />
+            <LayoutGrid className="w-4 h-4 text-muted-foreground" />
             {!isSidebarCollapsed && <span className="ml-2">Widgets</span>}
           </Button>
 
           {/* Take Tour Row */}
           <Button variant="outline" size={isSidebarCollapsed ? "icon" : "sm"} onClick={onShowOnboarding} className={`w-full h-9 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-start'} animate-fade-in`} title="Take Tour">
-            <Clock className="w-4 h-4" />
+            <Clock className="w-4 h-4 text-muted-foreground" />
             {!isSidebarCollapsed && <span className="ml-2">Take Tour</span>}
           </Button>
 
@@ -323,7 +329,10 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
             )} 
             title="Admin Tools"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className={cn(
+              "w-4 h-4 transition-colors",
+              currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
+            )} />
             {!isSidebarCollapsed && <span className="ml-2">Admin Tools</span>}
           </Button>
         </div>
