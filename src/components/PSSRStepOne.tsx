@@ -5,11 +5,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { FileText, Building2 } from 'lucide-react';
+import { FileText, Building2, User, Calendar } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
+import { useProjectTeamMembers, useProjectMilestones } from '@/hooks/useProjects';
 interface FormData {
   asset: string;
   reason: string;
@@ -36,6 +39,7 @@ interface Project {
   scope: string;
   hubLead: any;
   others: any[];
+  rawData?: any; // Full project data from database
 }
 interface PSSRStepOneProps {
   formData: FormData;
@@ -68,6 +72,17 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onNewProjectCreate
 }) => {
   const selectedProject = projects.find(p => p.id === formData.projectId);
+  
+  // Fetch team members and milestones for selected project
+  const { teamMembers = [] } = useProjectTeamMembers(selectedProject?.id);
+  const { milestones = [] } = useProjectMilestones(selectedProject?.id);
+  
+  // Find project manager (team lead)
+  const projectManager = teamMembers.find(member => member.is_lead);
+  
+  // Filter scorecard milestones
+  const scorecardMilestones = milestones.filter(m => m.is_scorecard_project);
+  
   const {
     data: pssrReasons = []
   } = usePSSRReasons();
@@ -301,31 +316,95 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
 
           {/* Display Selected Project Details */}
           {selectedProject && (
-            <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg space-y-3">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg space-y-4">
+              <div className="flex items-center gap-2 mb-3">
                 <Building2 className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-gray-900">Selected Project Details</h3>
+                <h3 className="font-semibold text-gray-900 text-lg">Selected Project Details</h3>
               </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-600 font-medium">Project Name</p>
-                  <p className="text-sm text-gray-900 mt-1">{selectedProject.name}</p>
+                <div className="bg-white p-3 rounded-md shadow-sm">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Project Name</p>
+                  <p className="text-sm text-gray-900 font-semibold">{selectedProject.name}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-600 font-medium">Plant</p>
-                  <p className="text-sm text-gray-900 mt-1">{selectedProject.plant}</p>
+                <div className="bg-white p-3 rounded-md shadow-sm">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Plant</p>
+                  <p className="text-sm text-gray-900">{selectedProject.plant}</p>
                 </div>
                 {selectedProject.subdivision && (
-                  <div>
-                    <p className="text-xs text-gray-600 font-medium">Subdivision</p>
-                    <p className="text-sm text-gray-900 mt-1">{selectedProject.subdivision}</p>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-xs text-gray-600 font-medium mb-1">Subdivision</p>
+                    <p className="text-sm text-gray-900">{selectedProject.subdivision}</p>
                   </div>
                 )}
-                <div>
-                  <p className="text-xs text-gray-600 font-medium">Scope</p>
-                  <p className="text-sm text-gray-900 mt-1">{selectedProject.scope || 'Not specified'}</p>
+                <div className="bg-white p-3 rounded-md shadow-sm">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Scope</p>
+                  <p className="text-sm text-gray-900">{selectedProject.scope || 'Not specified'}</p>
                 </div>
               </div>
+
+              {/* Project Manager */}
+              {projectManager && (
+                <div className="bg-white p-4 rounded-md shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="h-4 w-4 text-blue-600" />
+                    <p className="text-xs text-gray-600 font-medium">Project Manager</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="bg-blue-600 text-white">
+                        {projectManager.user_name?.split(' ').map(n => n[0]).join('') || 'PM'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{projectManager.user_name || 'Project Manager'}</p>
+                      <p className="text-xs text-gray-600">{projectManager.role}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Milestones */}
+              {milestones.length > 0 && (
+                <div className="bg-white p-4 rounded-md shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <p className="text-xs text-gray-600 font-medium">Milestones</p>
+                    {scorecardMilestones.length > 0 && (
+                      <Badge variant="secondary" className="ml-auto">
+                        {scorecardMilestones.length} Scorecard
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {milestones.map((milestone) => (
+                      <div 
+                        key={milestone.id} 
+                        className={`flex items-center justify-between p-2 rounded ${
+                          milestone.is_scorecard_project ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{milestone.milestone_name}</p>
+                          <p className="text-xs text-gray-600">
+                            {new Date(milestone.milestone_date).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                        {milestone.is_scorecard_project && (
+                          <Badge variant="default" className="bg-amber-500 text-white">
+                            Scorecard
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

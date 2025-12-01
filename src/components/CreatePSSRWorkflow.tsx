@@ -58,7 +58,7 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
   // Fetch projects from database
   const { projects: dbProjects, isLoading: isLoadingProjects } = useProjects();
   
-  // Map projects to expected format
+  // Map projects to expected format - include full project data
   const projects = React.useMemo(() => 
     dbProjects?.map(p => ({
       id: p.id,
@@ -67,7 +67,8 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
       subdivision: p.station_name || '',
       scope: p.project_scope || '',
       hubLead: { name: 'Hub Lead', email: '', avatar: '', status: 'green' as const },
-      others: []
+      others: [],
+      rawData: p // Store full project data for fetching related info
     })) || [], 
   [dbProjects]);
   const steps = [{
