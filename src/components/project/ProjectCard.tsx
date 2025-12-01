@@ -2,13 +2,16 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical } from 'lucide-react';
+import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical, Users, Calendar, FileText, Trophy } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 interface ProjectCardProps {
   project: any;
@@ -47,6 +50,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     console.log('Current target:', e.currentTarget);
     onView();
   };
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const milestoneProgress = project.milestone_count > 0 
+    ? (project.completed_milestone_count / project.milestone_count) * 100 
+    : 0;
 
   return (
     <Card 
@@ -162,13 +174,90 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </p>
           </div>
 
+          {/* Team Info */}
+          {project.team_count > 0 && (
+            <div className="flex items-center gap-2 py-2 border-t border-border/30">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+              <div className="flex items-center gap-1.5 flex-1">
+                {project.team_lead_name && (
+                  <>
+                    <Avatar className="h-5 w-5 border border-border/50">
+                      <AvatarImage src={project.team_lead_avatar} />
+                      <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                        {getInitials(project.team_lead_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-medium text-foreground truncate">
+                      {project.team_lead_name}
+                    </span>
+                  </>
+                )}
+                {project.team_count > 1 && (
+                  <span className="text-xs text-muted-foreground">
+                    +{project.team_count - 1} more
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Milestone Progress */}
+          {project.milestone_count > 0 && (
+            <div className="space-y-1.5 py-2 border-t border-border/30">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Milestones
+                </span>
+                <span className="text-xs font-semibold text-foreground">
+                  {project.completed_milestone_count}/{project.milestone_count}
+                </span>
+              </div>
+              <Progress value={milestoneProgress} className="h-1.5" />
+            </div>
+          )}
+
+          {/* Next Milestone */}
+          {project.next_milestone_name && project.next_milestone_date && (
+            <div className="flex items-start gap-2 py-2 border-t border-border/30">
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">
+                  {project.next_milestone_name}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {new Date(project.next_milestone_date).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Footer with badges and stats */}
           <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <Badge variant="outline" className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 text-emerald-600 border-emerald-500/20 font-medium text-xs">
-              {t.active || 'Active'}
-            </Badge>
-            <span className="text-xs text-muted-foreground font-medium">
-              {new Date(project.created_at).toLocaleDateString()}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="outline" className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 text-emerald-600 border-emerald-500/20 font-medium text-xs">
+                {t.active || 'Active'}
+              </Badge>
+              {project.is_scorecard && (
+                <Badge variant="outline" className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-600 border-amber-500/20 font-medium text-xs">
+                  <Trophy className="h-2.5 w-2.5 mr-1" />
+                  Scorecard
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {project.document_count > 0 && (
+                <div className="flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  <span className="font-medium">{project.document_count}</span>
+                </div>
+              )}
+              <span className="text-[10px]">
+                {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>
