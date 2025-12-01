@@ -75,6 +75,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
   onNewProjectCreate
 }) => {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [projectSelectOpen, setProjectSelectOpen] = useState(false);
   const selectedProject = projects.find(p => p.id === formData.projectId);
   
   // Fetch team members and milestones for selected project
@@ -282,7 +283,12 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
               </Label>
               <Select 
                 value={formData.projectId} 
-                onValueChange={onProjectSelect}
+                onValueChange={(value) => {
+                  onProjectSelect(value);
+                  setProjectSelectOpen(false);
+                }}
+                open={projectSelectOpen}
+                onOpenChange={setProjectSelectOpen}
               >
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 transition-colors">
                   <SelectValue placeholder="Choose a project" />
@@ -310,6 +316,7 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     className="p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setProjectSelectOpen(false);
                       setShowAddProjectModal(true);
                     }}
                   >
