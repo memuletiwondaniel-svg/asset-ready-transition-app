@@ -273,52 +273,58 @@ const CreatePSSRWorkflow: React.FC<CreatePSSRWorkflowProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Modern Progress Bar - Sticky */}
         <Card className="mb-6 bg-card/60 backdrop-blur-sm border-border/40 sticky top-4 z-10">
-          <CardContent className="p-8">
-            <div className="space-y-6">
-              {/* Header */}
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {/* Compact Header - Single Row */}
               <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    PSSR Creation Progress
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {completedSteps.size} of {steps.length} steps completed
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-4xl font-bold text-primary">{Math.round(progressPercentage)}%</div>
-                  <p className="text-xs text-muted-foreground">Complete</p>
+                <span className="text-sm text-muted-foreground">
+                  Step {currentStep} of {steps.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Progress value={progressPercentage} className="h-2 w-32" />
+                  <span className="text-sm font-semibold text-primary">
+                    {Math.round(progressPercentage)}%
+                  </span>
                 </div>
               </div>
               
-              {/* Progress Bar */}
-              <div className="relative">
-                <Progress value={progressPercentage} className="h-4" />
-              </div>
-              
-              {/* Step indicators - Modern clickable cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                {steps.map(step => {
-                const isComplete = completedSteps.has(step.number);
-                const isCurrent = step.number === currentStep;
-                return <button key={step.number} onClick={() => setCurrentStep(step.number)} className={`relative group text-center p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${isComplete ? 'bg-primary/10 border-primary text-primary shadow-md' : isCurrent ? 'bg-gradient-to-br from-blue-500/20 via-purple-500/15 to-indigo-500/20 border-blue-500 shadow-lg ring-2 ring-blue-400/30' : 'bg-background/40 border-border/40 text-muted-foreground hover:border-primary/30'}`}>
-                      {/* Step Number/Icon */}
-                      <div className={`flex items-center justify-center mx-auto w-10 h-10 rounded-full mb-2 transition-all ${isComplete ? 'bg-primary text-primary-foreground' : isCurrent ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 text-white font-bold shadow-md' : 'bg-muted/50 text-muted-foreground'}`}>
-                        {isComplete ? <CheckCircle2 className="h-5 w-5" /> : <span className="text-sm font-bold">{step.number}</span>}
-                      </div>
+              {/* Compact Step Indicators - Horizontal Line */}
+              <div className="flex items-center justify-between">
+                {steps.map((step, index) => {
+                  const isComplete = completedSteps.has(step.number);
+                  const isCurrent = step.number === currentStep;
+                  
+                  return (
+                    <React.Fragment key={step.number}>
+                      <button
+                        onClick={() => setCurrentStep(step.number)}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
+                          isComplete 
+                            ? 'bg-primary text-primary-foreground' 
+                            : isCurrent 
+                              ? 'bg-primary text-primary-foreground ring-2 ring-primary/30' 
+                              : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {isComplete ? <CheckCircle2 className="h-4 w-4" /> : step.number}
+                        </div>
+                        <span className={`text-[10px] font-medium max-w-16 text-center leading-tight ${
+                          isCurrent ? 'text-primary' : 'text-muted-foreground'
+                        }`}>
+                          {step.title.replace('Enter ', '').replace('PSSR ', '')}
+                        </span>
+                      </button>
                       
-                      {/* Step Title - without step number */}
-                      <p className={`text-xs font-semibold leading-tight line-clamp-2 ${isCurrent ? 'text-blue-700 dark:text-blue-400' : ''}`}>
-                        {step.title}
-                      </p>
-                      
-                      {/* Current Indicator */}
-                      {isCurrent && <>
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 animate-pulse shadow-md" />
-                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse pointer-events-none" />
-                        </>}
-                    </button>;
-              })}
+                      {/* Connecting line */}
+                      {index < steps.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-2 ${
+                          completedSteps.has(step.number) ? 'bg-primary' : 'bg-muted'
+                        }`} />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
