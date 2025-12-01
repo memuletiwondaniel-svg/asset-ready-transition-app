@@ -110,6 +110,11 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
         {/* Project Details Grid - Optimized Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div className="p-2 bg-blue-50 rounded-md">
+            <span className="text-xs text-gray-600 block mb-1">Project ID</span>
+            <span className="text-sm font-medium text-gray-900">{currentProject.id}</span>
+          </div>
+          
+          <div className="p-2 bg-blue-50 rounded-md">
             <span className="text-xs text-gray-600 block mb-1">Project Name</span>
             <span className="text-sm font-medium text-gray-900">{currentProject.name}</span>
           </div>
@@ -125,6 +130,11 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ project, onContextActio
               <span className="text-sm font-medium text-gray-900">{currentProject.subdivision}</span>
             </div>
           )}
+
+          <div className="p-2 bg-green-50 rounded-md">
+            <span className="text-xs text-gray-600 block mb-1">Project Manager</span>
+            <span className="text-sm font-medium text-gray-900">{currentProject.hubLead.name}</span>
+          </div>
 
           {currentProject.milestone && (
             <div className="p-2 bg-green-50 rounded-md">
