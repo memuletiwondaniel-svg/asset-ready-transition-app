@@ -74,12 +74,17 @@ const PSSRStepSix: React.FC<PSSRStepSixProps> = ({
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const { data: pssrs, error } = await supabase
+      let query = supabase
         .from('pssrs')
         .select('*')
-        .eq('user_id', user.user.id)
-        .neq('id', currentPssrId) // Exclude current PSSR
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.user.id);
+
+      // Only exclude current PSSR if it has an ID (i.e., already saved)
+      if (currentPssrId) {
+        query = query.neq('id', currentPssrId);
+      }
+
+      const { data: pssrs, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setAvailablePSSRs(pssrs || []);
