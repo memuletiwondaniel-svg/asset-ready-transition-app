@@ -97,7 +97,7 @@ export const P2ALandingPage: React.FC = () => {
         currentPage="p2a-handover"
         onNavigate={(section) => {
           if (section === 'home') navigate('/');
-          else if (section === 'safe-startup') navigate('/safe-startup');
+          else if (section === 'pssr') navigate('/pssr');
           else if (section === 'operation-readiness') navigate('/operation-readiness');
           else if (section === 'user-management') navigate('/users');
           else if (section === 'admin-tools') navigate('/admin-tools');

@@ -752,9 +752,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     icon: FileText
   }];
   const workspaceCards = [{
-    id: 'safe-startup',
-    title: 'Safe Start-Up',
-    description: 'Manage PSSR processes and safety checklists',
+    id: 'pssr',
+    title: 'PSSR',
+    description: 'Pre-Start Up Safety Review & Checklists',
     icon: ClipboardList,
     gradient: 'from-blue-500 to-blue-600',
     bgTone: 'bg-blue-500/5'

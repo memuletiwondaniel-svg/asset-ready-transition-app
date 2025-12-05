@@ -47,7 +47,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
 
   const breadcrumbs = customBreadcrumbs || buildBreadcrumbsFromPath();
   const location = useLocation();
-  const crumbsToShow = location.pathname === '/safe-startup' ? breadcrumbs : breadcrumbs.slice(0, -1);
+  const crumbsToShow = location.pathname === '/pssr' ? breadcrumbs : breadcrumbs.slice(0, -1);
 
   const backHistory = history.slice(0, currentHistoryIndex).reverse();
   const forwardHistory = history.slice(currentHistoryIndex + 1);

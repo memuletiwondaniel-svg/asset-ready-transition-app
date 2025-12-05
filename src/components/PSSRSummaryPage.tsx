@@ -691,12 +691,12 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
         userTitle={userProfile?.position || 'Team Member'} 
         userAvatar={userProfile?.avatar_url || ''} 
         language="en" 
-        currentPage="safe-startup" 
+        currentPage="pssr" 
         onNavigate={section => {
       console.log('PSSR page navigation:', section);
       if (section === 'home') {
         onBack();
-      } else if (section === 'safe-startup') {
+      } else if (section === 'pssr') {
         setActiveView('list');
       } else {
         // Navigate to other sections via router

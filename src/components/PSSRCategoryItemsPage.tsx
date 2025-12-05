@@ -63,14 +63,14 @@ const PSSRCategoryItemsPage: React.FC<PSSRCategoryItemsPageProps> = ({
       return crumb;
     }
     // PSSR breadcrumb - navigate to PSSR list
-    if (crumb.path === '/safe-startup') {
+    if (crumb.path === '/pssr') {
       return {
         ...crumb,
         onClick: onBackToList || (() => {})
       };
     }
     // PSSR ID breadcrumb - navigate to PSSR dashboard
-    if (crumb.path === `/safe-startup/${pssrId}`) {
+    if (crumb.path === `/pssr/${pssrId}`) {
       return {
         ...crumb,
         onClick: onBack

@@ -73,8 +73,8 @@ const Index = () => {
       title: "Operation Readiness",
       subtitle: "Start-Up & Handover",
       description: "Transform your project start-up and handover experience with the ORSH platform.",
-      safeStartup: "Safe Start-Up",
-      safeStartupDesc: "Manage the safe introduction of hydrocarbons into a new facility using the Pre-Start Up Safety Review (PSSR) process and checklists",
+      safeStartup: "PSSR",
+      safeStartupDesc: "Pre-Start Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists",
       p2oHandover: "P2O Handover",
       p2oHandoverDesc: "Seamless transition and handover from construction and commissioning to Asset Operation",
       accessButton: "Access ORSH Platform",
@@ -86,8 +86,8 @@ const Index = () => {
       title: "جاهزية العمليات",
       subtitle: "البدء والتسليم",
       description: "حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH.",
-      safeStartup: "البدء الآمن",
-      safeStartupDesc: "إدارة الإدخال الآمن للهيدروكربونات في منشأة جديدة باستخدام عملية مراجعة السلامة قبل البدء وقوائم التحقق",
+      safeStartup: "PSSR",
+      safeStartupDesc: "مراجعة السلامة قبل البدء - إدارة الإدخال الآمن للهيدروكربونات في المنشآت الجديدة باستخدام قوائم PSSR",
       p2oHandover: "تسليم P2O",
       p2oHandoverDesc: "انتقال وتسليم سلس من البناء والتشغيل إلى تشغيل الأصول",
       accessButton: "الوصول إلى منصة ORSH",
@@ -99,8 +99,8 @@ const Index = () => {
       title: "Préparation Opérationnelle",
       subtitle: "Démarrage et Remise",
       description: "Transformez votre expérience de démarrage et de remise de projet avec la plateforme ORSH.",
-      safeStartup: "Démarrage Sécurisé",
-      safeStartupDesc: "Gérer l'introduction sécurisée des hydrocarbures dans une nouvelle installation en utilisant le processus de révision de sécurité avant démarrage (PSSR) et les listes de contrôle",
+      safeStartup: "PSSR",
+      safeStartupDesc: "Revue de Sécurité Pré-Démarrage - Gérer l'introduction sécurisée des hydrocarbures dans de nouvelles installations avec des listes PSSR",
       p2oHandover: "Remise P2O",
       p2oHandoverDesc: "Transition et remise transparentes de la construction et de la mise en service à l'exploitation des actifs",
       accessButton: "Accéder à la Plateforme ORSH",
@@ -112,8 +112,8 @@ const Index = () => {
       title: "Kesediaan Operasi",
       subtitle: "Permulaan & Penyerahan",
       description: "Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform ORSH.",
-      safeStartup: "Permulaan Selamat",
-      safeStartupDesc: "Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan proses Kajian Keselamatan Pra-Permulaan (PSSR) dan senarai semak",
+      safeStartup: "PSSR",
+      safeStartupDesc: "Kajian Keselamatan Pra-Permulaan - Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan senarai semak PSSR",
       p2oHandover: "Penyerahan P2O",
       p2oHandoverDesc: "Peralihan dan penyerahan yang lancar dari pembinaan dan komisioning kepada Operasi Aset",
       accessButton: "Akses Platform ORSH",
@@ -125,8 +125,8 @@ const Index = () => {
       title: "Операционная Готовность",
       subtitle: "Запуск и Передача",
       description: "Преобразуйте опыт запуска и передачи проекта с помощью платформы ORSH.",
-      safeStartup: "Безопасный Запуск",
-      safeStartupDesc: "Управление безопасным введением углеводородов в новое предприятие с использованием процесса предпускового обзора безопасности (PSSR) и контрольных списков",
+      safeStartup: "PSSR",
+      safeStartupDesc: "Предпусковой обзор безопасности - Управление безопасным введением углеводородов в новые объекты с использованием контрольных списков PSSR",
       p2oHandover: "Передача P2O",
       p2oHandoverDesc: "Бесшовный переход и передача от строительства и ввода в эксплуатацию к эксплуатации активов",
       accessButton: "Доступ к Платформе ORSH",
@@ -151,7 +151,7 @@ const Index = () => {
   // Show specific section based on navigation
   if (isAuthenticated && currentSection) {
     switch (currentSection) {
-      case 'safe-startup':
+      case 'pssr':
         return <PSSRSummaryPage onBack={handleBackToLanding} />;
       case 'users':
       case 'user-management':
@@ -245,7 +245,7 @@ const Index = () => {
                 
                 {/* Feature Highlights - Enhanced Microsoft Fluent Design */}
                 <div className="grid grid-cols-2 gap-6">
-                  {/* Safe Start-up Card */}
+                  {/* PSSR Card */}
                   <div className="relative group transform hover:scale-[1.02] transition-all duration-500">
                     {/* Animated background glow */}
                     <div className="absolute -inset-4 bg-gradient-to-r from-red-600/30 via-orange-500/20 to-yellow-400/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse-subtle"></div>

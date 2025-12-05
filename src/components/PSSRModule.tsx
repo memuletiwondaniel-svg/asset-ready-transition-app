@@ -416,7 +416,7 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
                   <ClipboardList className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">Safe Start-Up</h1>
+                  <h1 className="text-2xl font-bold text-foreground">PSSR</h1>
                   <p className="text-sm text-muted-foreground font-medium">Pre-Start-Up Safety Review System</p>
                 </div>
               </div>
