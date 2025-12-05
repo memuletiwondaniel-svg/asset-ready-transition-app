@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { FullscreenWidgetModal } from './FullscreenWidgetModal';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, ExternalLink, Target } from 'lucide-react';
+import { ExternalLink, Target } from 'lucide-react';
 import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
@@ -35,7 +34,6 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   reason,
   dateInitiated,
   pssrLead,
-  tier = 'Tier 1',
   description,
   images = [],
   projectData,
@@ -62,48 +60,9 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
 
   const widgetContent = (
     <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-      <div className="space-y-5">
+      <div className="space-y-4">
         
-        {/* Key Info Row - Horizontal cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Asset</label>
-            <p className="text-sm font-semibold text-foreground truncate">{asset}</p>
-          </div>
-          
-          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Tier</label>
-            <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700 text-xs">
-              {tier}
-            </Badge>
-          </div>
-
-          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Date Initiated</label>
-            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-              <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="truncate">
-                {new Date(dateInitiated).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">PSSR Lead</label>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center flex-shrink-0">
-                <User className="h-2.5 w-2.5 text-primary" />
-              </div>
-              <p className="text-sm font-medium text-foreground truncate">{pssrLead}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Project & Reason Row */}
+        {/* Project & Reason Row - Top */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Project</label>
@@ -120,6 +79,30 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
           <div className="space-y-1.5">
             <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reason for PSSR</label>
             <p className="text-sm text-foreground line-clamp-2">{reason}</p>
+          </div>
+        </div>
+
+        {/* Asset, Date, PSSR Lead Row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Asset</label>
+            <p className="text-sm font-semibold text-foreground truncate">{asset}</p>
+          </div>
+
+          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Date Initiated</label>
+            <p className="text-sm font-medium text-foreground truncate">
+              {new Date(dateInitiated).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </p>
+          </div>
+
+          <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">PSSR Lead</label>
+            <p className="text-sm font-medium text-foreground truncate">{pssrLead}</p>
           </div>
         </div>
 
