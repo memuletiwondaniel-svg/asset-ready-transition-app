@@ -7,8 +7,7 @@ import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { AlertTriangle, GripVertical } from 'lucide-react';
 import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
-import { PSSRItemStatisticsWidget } from '@/components/widgets/PSSRItemStatisticsWidget';
-import { PSSRProgressWidget } from '@/components/widgets/PSSRProgressWidget';
+import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRRecentActivitiesWidget } from '@/components/widgets/PSSRRecentActivitiesWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRPendingTasksWidget } from '@/components/widgets/PSSRPendingTasksWidget';
@@ -30,12 +29,11 @@ interface PSSRDashboardProps {
 
 const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
-  { id: 'widget-2', name: 'Item Statistics', visible: true, size: 'medium' },
-  { id: 'widget-3', name: 'Checklist Items', visible: true, size: 'large' },
-  { id: 'widget-4', name: 'Recent Activities', visible: true, size: 'medium' },
-  { id: 'widget-5', name: 'Key Activities', visible: true, size: 'medium' },
-  { id: 'widget-6', name: 'Pending Tasks', visible: true, size: 'medium' },
-  { id: 'widget-7', name: 'Linked PSSRs', visible: true, size: 'medium' },
+  { id: 'widget-2', name: 'Checklist Progress', visible: true, size: 'large' },
+  { id: 'widget-3', name: 'Recent Activities', visible: true, size: 'medium' },
+  { id: 'widget-4', name: 'Key Activities', visible: true, size: 'medium' },
+  { id: 'widget-5', name: 'Pending Tasks', visible: true, size: 'medium' },
+  { id: 'widget-6', name: 'Linked PSSRs', visible: true, size: 'medium' },
 ];
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
@@ -509,39 +507,36 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       />
                     ),
                     'widget-2': (
-                      <PSSRItemStatisticsWidget
+                      <PSSRChecklistProgressWidget
                         totalItems={pssrData.statistics.totalItems}
                         draftItems={pssrData.statistics.draftItems}
                         underReviewItems={pssrData.statistics.underReviewItems}
                         approvedItems={pssrData.statistics.approvedItems}
-                      />
-                    ),
-                    'widget-3': (
-                      <PSSRProgressWidget
                         overallProgress={pssrData.progress}
                         categoryProgress={pssrData.categoryProgress}
                         onCategoryClick={onNavigateToCategory}
+                        onStatClick={(filter) => console.log('Stat clicked:', filter)}
                       />
                     ),
-                    'widget-4': (
+                    'widget-3': (
                       <PSSRRecentActivitiesWidget
                         activities={pssrData.recentActivities}
                         maxItems={8}
                       />
                     ),
-                    'widget-5': (
+                    'widget-4': (
                       <PSSRKeyActivitiesWidget
                         activities={pssrData.keyActivities}
                         onActivityClick={(type) => console.log('Activity clicked:', type)}
                       />
                     ),
-                    'widget-6': (
+                    'widget-5': (
                       <PSSRPendingTasksWidget
                         reviewers={pssrData.reviewers}
                         approvers={pssrData.approvers}
                       />
                     ),
-                    'widget-7': (
+                    'widget-6': (
                       <PSSRLinkedPSSRsWidget
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onPSSRClick={(id) => console.log('PSSR clicked:', id)}
@@ -553,7 +548,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                   const widget = widgetMap[widgetId];
                   if (!widget) return null;
 
-                  const colSpanClass = widgetId === 'widget-1' ? 'lg:col-span-3' : '';
+                  const colSpanClass = widgetId === 'widget-1' ? 'lg:col-span-3' : 
+                                       widgetId === 'widget-2' ? 'lg:col-span-2' : '';
 
                   return (
                     <SortableWidget key={widgetId} id={widgetId}>
