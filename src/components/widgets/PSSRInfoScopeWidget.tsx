@@ -65,10 +65,6 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">PSSR ID</label>
-              <p className="text-sm font-semibold text-foreground">{pssrId}</p>
-            </div>
-            <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Asset</label>
               <p className="text-sm font-semibold text-foreground">{asset}</p>
             </div>
