@@ -709,107 +709,111 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
         {/* Modern Minimalist Header */}
         <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm">
           <div className="max-w-[1400px] mx-auto px-6 py-5">
-            {/* Single row with Breadcrumb on left and Title centered */}
-            <div className="relative flex items-center">
-              {/* Breadcrumb - Left aligned */}
-              <div className="flex-shrink-0">
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    {(() => {
-                    const breadcrumbs = getBreadcrumbs();
-                    const totalItems = breadcrumbs.length;
-                    return breadcrumbs.map((crumb, index) => {
-                      const Icon = crumb.icon || Home;
-                      const isLast = index === breadcrumbs.length - 1;
-                      const isFirst = index === 0;
-
-                      // Determine which items to hide based on screen size
-                      const shouldHideOnSmall = totalItems > 2 && !isFirst && !isLast;
-                      const shouldHideOnMedium = totalItems > 3 && !isFirst && !isLast && index !== 1;
-
-                      // Show ellipsis before the last item if there are hidden items
-                      const shouldShowEllipsisSmall = totalItems > 2 && index === totalItems - 1;
-                      const shouldShowEllipsisMedium = totalItems > 3 && index === totalItems - 1;
-
-                      // Get hidden items for dropdown
-                      const hiddenItemsSmall = totalItems > 2 ? breadcrumbs.slice(1, -1) : [];
-                      const hiddenItemsMedium = totalItems > 3 ? breadcrumbs.filter((_, i) => i !== 0 && i !== totalItems - 1 && i !== 1) : [];
-                      return <React.Fragment key={index}>
-                            {/* Ellipsis dropdown for small screens */}
-                            {shouldShowEllipsisSmall && hiddenItemsSmall.length > 0 && <>
-                                <BreadcrumbItem className="md:hidden">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger className="flex items-center gap-1 hover:text-foreground transition-colors">
-                                      <BreadcrumbEllipsis className="h-4 w-4" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="bg-popover z-50">
-                                      {hiddenItemsSmall.map((hiddenCrumb, hiddenIndex) => {
-                                  const HiddenIcon = hiddenCrumb.icon || Home;
-                                  return <DropdownMenuItem key={hiddenIndex} onClick={hiddenCrumb.onClick} className="flex items-center gap-2 cursor-pointer">
-                                            {hiddenCrumb.icon && <HiddenIcon className="h-3.5 w-3.5" />}
-                                            {hiddenCrumb.label}
-                                          </DropdownMenuItem>;
-                                })}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator className="md:hidden" />
-                              </>}
-                            
-                            {/* Ellipsis dropdown for medium screens */}
-                            {shouldShowEllipsisMedium && hiddenItemsMedium.length > 0 && <>
-                                <BreadcrumbItem className="hidden md:block lg:hidden">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger className="flex items-center gap-1 hover:text-foreground transition-colors">
-                                      <BreadcrumbEllipsis className="h-4 w-4" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="bg-popover z-50">
-                                      {hiddenItemsMedium.map((hiddenCrumb, hiddenIndex) => {
-                                  const HiddenIcon = hiddenCrumb.icon || Home;
-                                  return <DropdownMenuItem key={hiddenIndex} onClick={hiddenCrumb.onClick} className="flex items-center gap-2 cursor-pointer">
-                                            {hiddenCrumb.icon && <HiddenIcon className="h-3.5 w-3.5" />}
-                                            {hiddenCrumb.label}
-                                          </DropdownMenuItem>;
-                                })}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator className="hidden md:block lg:hidden" />
-                              </>}
-                            
-                            {/* Actual breadcrumb item */}
-                            <BreadcrumbItem className={shouldHideOnSmall ? 'hidden md:block' : shouldHideOnMedium ? 'hidden lg:block' : ''}>
-                              {isLast ? <BreadcrumbPage className="flex items-center gap-1.5">
-                                  {crumb.icon && <Icon className="h-3.5 w-3.5" />}
-                                  {crumb.label}
-                                </BreadcrumbPage> : <BreadcrumbLink asChild>
-                                  <button onClick={crumb.onClick} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
-                                    {crumb.icon && <Icon className="h-3.5 w-3.5" />}
-                                    {crumb.label}
-                                  </button>
-                                </BreadcrumbLink>}
+            {/* Breadcrumb at top */}
+            <Breadcrumb>
+              <BreadcrumbList>
+                {(() => {
+                  const breadcrumbs = getBreadcrumbs();
+                  const totalItems = breadcrumbs.length;
+                  return breadcrumbs.map((crumb, index) => {
+                    const Icon = crumb.icon || Home;
+                    const isLast = index === breadcrumbs.length - 1;
+                    const isFirst = index === 0;
+                    const shouldHideOnSmall = totalItems > 2 && !isFirst && !isLast;
+                    const shouldHideOnMedium = totalItems > 3 && !isFirst && !isLast && index !== 1;
+                    const shouldShowEllipsisSmall = totalItems > 2 && index === totalItems - 1;
+                    const shouldShowEllipsisMedium = totalItems > 3 && index === totalItems - 1;
+                    const hiddenItemsSmall = totalItems > 2 ? breadcrumbs.slice(1, -1) : [];
+                    const hiddenItemsMedium = totalItems > 3 ? breadcrumbs.filter((_, i) => i !== 0 && i !== totalItems - 1 && i !== 1) : [];
+                    
+                    return (
+                      <React.Fragment key={index}>
+                        {shouldShowEllipsisSmall && hiddenItemsSmall.length > 0 && (
+                          <>
+                            <BreadcrumbItem className="md:hidden">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="flex items-center gap-1 hover:text-foreground transition-colors">
+                                  <BreadcrumbEllipsis className="h-4 w-4" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="bg-popover z-50">
+                                  {hiddenItemsSmall.map((hiddenCrumb, hiddenIndex) => {
+                                    const HiddenIcon = hiddenCrumb.icon || Home;
+                                    return (
+                                      <DropdownMenuItem key={hiddenIndex} onClick={hiddenCrumb.onClick} className="flex items-center gap-2 cursor-pointer">
+                                        {hiddenCrumb.icon && <HiddenIcon className="h-3.5 w-3.5" />}
+                                        {hiddenCrumb.label}
+                                      </DropdownMenuItem>
+                                    );
+                                  })}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </BreadcrumbItem>
-                            {!isLast && <BreadcrumbSeparator className={shouldHideOnSmall ? 'hidden md:block' : shouldHideOnMedium ? 'hidden lg:block' : ''} />}
-                          </React.Fragment>;
-                    });
-                  })()}
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-
-              {/* Centered Title */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg">
-                  <AlertTriangle className="h-5 w-5 text-white animate-pulse" />
+                            <BreadcrumbSeparator className="md:hidden" />
+                          </>
+                        )}
+                        
+                        {shouldShowEllipsisMedium && hiddenItemsMedium.length > 0 && (
+                          <>
+                            <BreadcrumbItem className="hidden md:block lg:hidden">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="flex items-center gap-1 hover:text-foreground transition-colors">
+                                  <BreadcrumbEllipsis className="h-4 w-4" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="bg-popover z-50">
+                                  {hiddenItemsMedium.map((hiddenCrumb, hiddenIndex) => {
+                                    const HiddenIcon = hiddenCrumb.icon || Home;
+                                    return (
+                                      <DropdownMenuItem key={hiddenIndex} onClick={hiddenCrumb.onClick} className="flex items-center gap-2 cursor-pointer">
+                                        {hiddenCrumb.icon && <HiddenIcon className="h-3.5 w-3.5" />}
+                                        {hiddenCrumb.label}
+                                      </DropdownMenuItem>
+                                    );
+                                  })}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator className="hidden md:block lg:hidden" />
+                          </>
+                        )}
+                        
+                        <BreadcrumbItem className={shouldHideOnSmall ? 'hidden md:block' : shouldHideOnMedium ? 'hidden lg:block' : ''}>
+                          {isLast ? (
+                            <BreadcrumbPage className="flex items-center gap-1.5">
+                              {crumb.icon && <Icon className="h-3.5 w-3.5" />}
+                              {crumb.label}
+                            </BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink asChild>
+                              <button onClick={crumb.onClick} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                                {crumb.icon && <Icon className="h-3.5 w-3.5" />}
+                                {crumb.label}
+                              </button>
+                            </BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                        {!isLast && <BreadcrumbSeparator className={shouldHideOnSmall ? 'hidden md:block' : shouldHideOnMedium ? 'hidden lg:block' : ''} />}
+                      </React.Fragment>
+                    );
+                  });
+                })()}
+              </BreadcrumbList>
+            </Breadcrumb>
+            
+            {/* Icon and Title below breadcrumb - matching Projects page layout */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
+                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-foreground tracking-tight">Pre-Start-Up Safety Review</h1>
-                  
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                    Pre-Start-Up Safety Review
+                  </h1>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                    Manage and track all PSSR activities
+                  </p>
                 </div>
               </div>
-
-              {/* Header Actions - Right aligned */}
-              
             </div>
           </div>
         </header>
