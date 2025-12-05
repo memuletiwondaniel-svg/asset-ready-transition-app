@@ -8,7 +8,6 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { AlertTriangle, GripVertical } from 'lucide-react';
 import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
-import { PSSRRecentActivitiesWidget } from '@/components/widgets/PSSRRecentActivitiesWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
@@ -30,10 +29,9 @@ interface PSSRDashboardProps {
 const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
   { id: 'widget-2', name: 'Checklist Progress', visible: true, size: 'large' },
-  { id: 'widget-3', name: 'Recent Activities', visible: true, size: 'medium' },
-  { id: 'widget-4', name: 'Key Activities', visible: true, size: 'medium' },
-  { id: 'widget-5', name: 'Reviewers & Approvals', visible: true, size: 'medium' },
-  { id: 'widget-6', name: 'Linked PSSRs', visible: true, size: 'medium' },
+  { id: 'widget-3', name: 'Key Activities', visible: true, size: 'medium' },
+  { id: 'widget-4', name: 'Reviewers & Approvals', visible: true, size: 'medium' },
+  { id: 'widget-5', name: 'Linked PSSRs', visible: true, size: 'medium' },
 ];
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
@@ -136,19 +134,17 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   };
 
   const getWidgetColSpan = (size: 'small' | 'medium' | 'large', widgetId: string) => {
-    // Widget 1 (Info & Scope) always spans 2 columns
+    // Widget 1 (Info & Scope) always spans full width
     if (widgetId === 'widget-1') {
+      return 'lg:col-span-3';
+    }
+    
+    // Widget 2 (Checklist Progress) spans 2 columns
+    if (widgetId === 'widget-2') {
       return 'lg:col-span-2';
     }
     
-    // Widget 3 (Checklist Items) gets special treatment
-    if (widgetId === 'widget-3') {
-      if (size === 'large') return 'lg:col-span-2 xl:col-span-3';
-      if (size === 'medium') return 'lg:col-span-2';
-      return 'lg:col-span-1';
-    }
-    
-    // Other widgets
+    // Other widgets based on size
     if (size === 'large') return 'lg:col-span-2';
     return 'lg:col-span-1';
   };
@@ -267,65 +263,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         status: 'In Progress',
         progress: 45,
         relationship: 'Dependent'
-      }
-    ],
-
-    // Recent activities
-    recentActivities: [
-      {
-        id: 'act-1',
-        type: 'approval' as const,
-        user: {
-          name: 'Dr. Sarah Wilson',
-          avatar: '/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png'
-        },
-        description: 'Approved checklist item "Emergency Shutdown System Verification"',
-        timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-        category: 'Process Safety'
-      },
-      {
-        id: 'act-2',
-        type: 'comment' as const,
-        user: {
-          name: 'John Smith',
-          avatar: '/lovable-uploads/b229716e-e39e-41cb-91d3-2c30dd517fa8.png'
-        },
-        description: 'Added comment on "Pressure Relief Device Testing" requesting additional documentation',
-        timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-        category: 'Hardware Integrity'
-      },
-      {
-        id: 'act-3',
-        type: 'upload' as const,
-        user: {
-          name: 'Maria Garcia',
-          avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png'
-        },
-        description: 'Uploaded inspection report for "Piping Integrity Check"',
-        timestamp: new Date(Date.now() - 5 * 3600000).toISOString(),
-        category: 'Documentation'
-      },
-      {
-        id: 'act-4',
-        type: 'update' as const,
-        user: {
-          name: 'Ahmed Al-Rashid',
-          avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png'
-        },
-        description: 'Updated status of "Control System Functional Test" to Under Review',
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        category: 'Organization'
-      },
-      {
-        id: 'act-5',
-        type: 'assignment' as const,
-        user: {
-          name: 'Omar Hassan',
-          avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png'
-        },
-        description: 'Assigned "Fire & Gas Detection System Review" to Engineering Team',
-        timestamp: new Date(Date.now() - 2 * 86400000).toISOString(),
-        category: 'Health & Safety'
       }
     ]
   };
@@ -519,18 +456,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       />
                     ),
                     'widget-3': (
-                      <PSSRRecentActivitiesWidget
-                        activities={pssrData.recentActivities}
-                        maxItems={8}
-                      />
-                    ),
-                    'widget-4': (
                       <PSSRKeyActivitiesWidget
                         activities={pssrData.keyActivities}
                         onActivityClick={(type) => console.log('Activity clicked:', type)}
                       />
                     ),
-                    'widget-5': (
+                    'widget-4': (
                       <PSSRReviewersApprovalsWidget
                         reviewers={pssrData.reviewers}
                         approvers={pssrData.approvers}
@@ -538,7 +469,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         onPersonClick={(personId) => console.log('Person clicked:', personId)}
                       />
                     ),
-                    'widget-6': (
+                    'widget-5': (
                       <PSSRLinkedPSSRsWidget
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onPSSRClick={(id) => console.log('PSSR clicked:', id)}

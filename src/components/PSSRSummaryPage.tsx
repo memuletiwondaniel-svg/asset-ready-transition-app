@@ -15,7 +15,6 @@ import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Sear
 import { WidgetCard } from './widgets/WidgetCard';
 import { PSSRStatisticsWidget } from './widgets/PSSRStatisticsWidget';
 import { PSSRQuickActionsWidget } from './widgets/PSSRQuickActionsWidget';
-import { PSSRRecentActivitiesWidget } from './widgets/PSSRRecentActivitiesWidget';
 import { PSSRReviewsWidget } from './widgets/PSSRReviewsWidget';
 import { SortableWidget } from './widgets/SortableWidget';
 import PSSRFilters from './PSSRFilters';
