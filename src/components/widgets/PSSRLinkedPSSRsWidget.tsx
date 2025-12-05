@@ -2,7 +2,6 @@ import React from 'react';
 import { WidgetCard } from './WidgetCard';
 import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Link2, CheckCircle2, Clock, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
@@ -103,14 +102,9 @@ export const PSSRLinkedPSSRsWidget: React.FC<PSSRLinkedPSSRsWidgetProps> = ({
               </Button>
             </div>
 
-            <div className="space-y-2 pl-6">
-              <div className="flex items-center justify-between">
-                {getStatusBadge(pssr.status)}
-                <span className="text-xs font-semibold text-primary">
-                  {pssr.progress}%
-                </span>
-              </div>
-              <Progress value={pssr.progress} className="h-2" />
+            <div className="flex items-center justify-between pl-6 mt-2">
+              {getStatusBadge(pssr.status)}
+              <span className="text-xs text-muted-foreground">{pssr.progress}% complete</span>
             </div>
           </div>
         ))

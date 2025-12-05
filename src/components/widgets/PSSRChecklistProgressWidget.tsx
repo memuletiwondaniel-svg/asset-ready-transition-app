@@ -10,10 +10,6 @@ import {
   FileText, 
   Users, 
   HeartPulse,
-  CheckCircle2,
-  Clock,
-  Eye,
-  AlertCircle,
   Maximize2
 } from 'lucide-react';
 
@@ -101,18 +97,15 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
 const StatusPill: React.FC<{
   label: string;
   value: number;
-  icon: React.ElementType;
-  colorClass: string;
+  dotClass: string;
   bgClass: string;
   onClick?: () => void;
-}> = ({ label, value, icon: Icon, colorClass, bgClass, onClick }) => (
+}> = ({ label, value, dotClass, bgClass, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group`}
+    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group`}
   >
-    <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center ${colorClass} bg-background/50`}>
-      <Icon className="h-3.5 w-3.5" />
-    </div>
+    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotClass}`} />
     <div className="text-left">
       <p className="text-base sm:text-lg font-bold text-foreground leading-none">{value}</p>
       <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{label}</p>
@@ -195,19 +188,19 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   };
 
   const statusPills = [
-    { label: 'Draft', value: draftItems, icon: Clock, colorClass: 'text-gray-500', bgClass: 'bg-gray-500/10', filter: 'draft' },
-    { label: 'Review', value: underReviewItems, icon: Eye, colorClass: 'text-yellow-500', bgClass: 'bg-yellow-500/10', filter: 'under_review' },
-    { label: 'Approved', value: approvedItems, icon: CheckCircle2, colorClass: 'text-green-500', bgClass: 'bg-green-500/10', filter: 'approved' },
-    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, icon: AlertCircle, colorClass: 'text-red-500', bgClass: 'bg-red-500/10', filter: 'actions' }] : []),
+    { label: 'Draft', value: draftItems, dotClass: 'bg-gray-400', bgClass: 'bg-gray-500/10', filter: 'draft' },
+    { label: 'Review', value: underReviewItems, dotClass: 'bg-yellow-500', bgClass: 'bg-yellow-500/10', filter: 'under_review' },
+    { label: 'Approved', value: approvedItems, dotClass: 'bg-green-500', bgClass: 'bg-green-500/10', filter: 'approved' },
+    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, dotClass: 'bg-red-500', bgClass: 'bg-red-500/10', filter: 'actions' }] : []),
   ];
 
   return (
     <WidgetCard 
       title="Checklist Progress"
-      className={`min-h-[400px] ${
-        widgetSize === 'compact' ? 'h-[400px]' :
-        widgetSize === 'standard' ? 'h-[480px]' :
-        'h-[560px]'
+      className={`min-h-[700px] ${
+        widgetSize === 'compact' ? 'h-[700px]' :
+        widgetSize === 'standard' ? 'h-[850px]' :
+        'h-[1000px]'
       }`}
       widgetId={widgetId}
       dragAttributes={dragAttributes}
@@ -245,8 +238,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                 key={pill.label}
                 label={pill.label}
                 value={pill.value}
-                icon={pill.icon}
-                colorClass={pill.colorClass}
+                dotClass={pill.dotClass}
                 bgClass={pill.bgClass}
                 onClick={() => onStatClick?.(pill.filter)}
               />
