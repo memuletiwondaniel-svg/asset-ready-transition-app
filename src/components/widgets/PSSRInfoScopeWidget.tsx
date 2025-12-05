@@ -79,11 +79,11 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
       <div className="space-y-4">
         
         {/* Project - Full Width */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Project</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Project</label>
           <Button
             variant="link"
-            className="h-auto p-0 text-sm font-semibold text-primary hover:text-primary/80 text-left break-words whitespace-normal justify-start"
+            className="h-auto p-0 text-sm font-semibold text-primary hover:text-primary/80 text-left break-words whitespace-normal justify-start w-fit"
             onClick={handleProjectClick}
           >
             <span className="line-clamp-2">{projectId} - {projectName}</span>
