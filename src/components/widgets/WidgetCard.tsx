@@ -19,6 +19,7 @@ export interface WidgetCardProps {
   widgetId?: string;
   enableFullscreen?: boolean;
   headerAction?: React.ReactNode;
+  showHeaderActionOnHover?: boolean;
 }
 
 export const WidgetCard: React.FC<WidgetCardProps> = ({
@@ -35,6 +36,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   widgetId,
   enableFullscreen = true,
   headerAction,
+  showHeaderActionOnHover = false,
 }) => {
   const { setFullscreenWidget } = useWidgetSize();
   
@@ -65,7 +67,11 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
           <CardTitle className="text-lg font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">{title}</CardTitle>
         </div>
         <div className="flex items-center gap-1 relative z-10">
-          {headerAction}
+          {headerAction && (
+            <div className={`transition-all duration-200 ${showHeaderActionOnHover ? 'opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:translate-x-0' : ''}`}>
+              {headerAction}
+            </div>
+          )}
           <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 relative z-10">
