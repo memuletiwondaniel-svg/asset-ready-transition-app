@@ -396,17 +396,17 @@ const PSSRModule: React.FC = () => {
       <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel="PSSR" />
         
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
           <div className="min-w-0 flex items-center gap-3">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-              <ClipboardList className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
+              <ClipboardList className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                PSSR
+                Pre-Start-Up Safety Review
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Pre-Start-Up Safety Review System
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                Manage and track all PSSR activities
               </p>
             </div>
           </div>
