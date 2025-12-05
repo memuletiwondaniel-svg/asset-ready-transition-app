@@ -553,7 +553,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                   const widget = widgetMap[widgetId];
                   if (!widget) return null;
 
-                  const colSpanClass = widgetId === 'widget-1' ? 'lg:col-span-2' : '';
+                  const colSpanClass = widgetId === 'widget-1' ? 'lg:col-span-3' : '';
 
                   return (
                     <SortableWidget key={widgetId} id={widgetId}>
