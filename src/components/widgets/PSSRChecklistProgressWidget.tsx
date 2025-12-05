@@ -1,5 +1,6 @@
 import React from 'react';
 import { WidgetCard } from './WidgetCard';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
@@ -12,10 +13,11 @@ import {
   CheckCircle2,
   Clock,
   Eye,
-  AlertCircle
+  AlertCircle,
+  Maximize2
 } from 'lucide-react';
 
-interface CategoryProgress {
+export interface CategoryProgress {
   name: string;
   completed: number;
   total: number;
@@ -37,6 +39,7 @@ interface PSSRChecklistProgressWidgetProps {
   // Interactions
   onStatClick?: (filter: string) => void;
   onCategoryClick?: (categoryName: string) => void;
+  onViewAll?: () => void;
   
   // Drag support
   dragAttributes?: any;
@@ -163,6 +166,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   categoryProgress,
   onStatClick,
   onCategoryClick,
+  onViewAll,
   dragAttributes,
   dragListeners,
 }) => {
@@ -208,6 +212,17 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
       widgetId={widgetId}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
+      headerAction={
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onViewAll}
+          className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+          View All
+        </Button>
+      }
     >
       <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         <div className="space-y-4">

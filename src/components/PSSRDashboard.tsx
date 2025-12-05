@@ -11,6 +11,8 @@ import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistP
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
+import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
+import { FullChecklistProgressOverlay } from '@/components/widgets/FullChecklistProgressOverlay';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetCustomizationToolbar, WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import { WidgetSizeControl } from '@/components/widgets/WidgetSizeControl';
@@ -51,6 +53,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   });
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+
+  // Checklist overlay state
+  const [checklistOverlay, setChecklistOverlay] = useState<{
+    type: 'filtered' | 'full';
+    filterType?: 'status' | 'category';
+    filterValue?: string;
+    isOpen: boolean;
+  }>({ type: 'full', isOpen: false });
 
   // Widget order state - persisted in localStorage
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
@@ -267,6 +277,81 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     ]
   };
 
+  // Mock checklist items for overlays
+  const checklistItems: ChecklistItemData[] = [
+    // Hardware Integrity items
+    { unique_id: 'HI-001', description: 'Verify all pressure safety valves are calibrated and tested', category: 'Hardware Integrity', topic: 'Pressure Systems', status: 'approved', response: 'YES', responsible: 'Process Engineer', approver: 'TA Process' },
+    { unique_id: 'HI-002', description: 'Confirm piping stress analysis is completed and documented', category: 'Hardware Integrity', topic: 'Piping', status: 'under_review', response: null, responsible: 'Mechanical TA', approver: 'Engr. Manager' },
+    { unique_id: 'HI-003', description: 'Review material certifications for all critical components', category: 'Hardware Integrity', topic: 'Materials', status: 'draft', response: null, responsible: 'QA Engineer', approver: 'QA Manager' },
+    { unique_id: 'HI-004', description: 'Verify vessel inspection reports are current', category: 'Hardware Integrity', topic: 'Vessels', status: 'approved', response: 'YES', responsible: 'Inspection Lead', approver: 'TA Mechanical' },
+    { unique_id: 'HI-005', description: 'Confirm rotating equipment alignment checks completed', category: 'Hardware Integrity', topic: 'Rotating Equipment', status: 'approved', response: 'YES', responsible: 'Mechanical Lead', approver: 'TA Mechanical' },
+    // Process Safety items
+    { unique_id: 'PS-001', description: 'Verify emergency shutdown system testing is complete', category: 'Process Safety', topic: 'ESD', status: 'approved', response: 'YES', responsible: 'Instrument Engineer', approver: 'Safety Manager' },
+    { unique_id: 'PS-002', description: 'Confirm HAZOP recommendations are closed', category: 'Process Safety', topic: 'HAZOP', status: 'under_review', response: null, responsible: 'Process Engineer', approver: 'TA Safety' },
+    { unique_id: 'PS-003', description: 'Review fire and gas detection system commissioning', category: 'Process Safety', topic: 'F&G', status: 'approved', response: 'YES', responsible: 'Safety Engineer', approver: 'Safety Manager' },
+    { unique_id: 'PS-004', description: 'Verify relief valve settings match design specifications', category: 'Process Safety', topic: 'Relief Systems', status: 'draft', response: null, responsible: 'Process Engineer', approver: 'TA Process' },
+    // Documentation items
+    { unique_id: 'DOC-001', description: 'Confirm P&IDs are marked up and as-built', category: 'Documentation', topic: 'Drawings', status: 'approved', response: 'YES', responsible: 'Document Controller', approver: 'Engr. Manager' },
+    { unique_id: 'DOC-002', description: 'Verify operating procedures are approved and available', category: 'Documentation', topic: 'Procedures', status: 'approved', response: 'YES', responsible: 'Operations Engineer', approver: 'Operations Manager' },
+    { unique_id: 'DOC-003', description: 'Confirm training records are complete', category: 'Documentation', topic: 'Training', status: 'under_review', response: null, responsible: 'Training Coordinator', approver: 'HR Manager' },
+    // Organization items
+    { unique_id: 'ORG-001', description: 'Verify operations team staffing is complete', category: 'Organization', topic: 'Staffing', status: 'approved', response: 'YES', responsible: 'Operations Manager', approver: 'Plant Manager' },
+    { unique_id: 'ORG-002', description: 'Confirm shift handover procedures are established', category: 'Organization', topic: 'Shift Ops', status: 'approved', response: 'YES', responsible: 'Operations Lead', approver: 'Operations Manager' },
+    { unique_id: 'ORG-003', description: 'Review emergency response team assignments', category: 'Organization', topic: 'Emergency Response', status: 'under_review', response: null, responsible: 'Safety Officer', approver: 'Safety Manager' },
+    // Health & Safety items
+    { unique_id: 'HSE-001', description: 'Verify PPE requirements are communicated', category: 'Health & Safety', topic: 'PPE', status: 'approved', response: 'YES', responsible: 'HSE Officer', approver: 'HSE Manager' },
+    { unique_id: 'HSE-002', description: 'Confirm first aid stations are stocked and accessible', category: 'Health & Safety', topic: 'First Aid', status: 'approved', response: 'YES', responsible: 'HSE Officer', approver: 'HSE Manager' },
+    { unique_id: 'HSE-003', description: 'Review confined space entry procedures', category: 'Health & Safety', topic: 'Confined Space', status: 'under_review', response: null, responsible: 'Safety Engineer', approver: 'Safety Manager' },
+    { unique_id: 'HSE-004', description: 'Verify emergency evacuation routes are posted', category: 'Health & Safety', topic: 'Evacuation', status: 'approved', response: 'YES', responsible: 'HSE Officer', approver: 'HSE Manager' },
+  ];
+
+  // Overlay handlers
+  const handleStatClick = (filter: string) => {
+    const statusMap: Record<string, string> = {
+      'draft': 'Draft',
+      'under_review': 'Under Review',
+      'approved': 'Approved',
+      'actions': 'Open Actions'
+    };
+    setChecklistOverlay({
+      type: 'filtered',
+      filterType: 'status',
+      filterValue: filter,
+      isOpen: true
+    });
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
+    setChecklistOverlay({
+      type: 'filtered',
+      filterType: 'category',
+      filterValue: categoryName,
+      isOpen: true
+    });
+    // Also call original navigation if provided
+    onNavigateToCategory?.(categoryName);
+  };
+
+  const handleViewAllChecklist = () => {
+    setChecklistOverlay({
+      type: 'full',
+      isOpen: true
+    });
+  };
+
+  const getFilterTitle = () => {
+    if (checklistOverlay.filterType === 'status') {
+      const titles: Record<string, string> = {
+        'draft': 'Draft Items',
+        'under_review': 'Items Under Review',
+        'approved': 'Approved Items',
+        'actions': 'Open Actions'
+      };
+      return titles[checklistOverlay.filterValue || ''] || 'Checklist Items';
+    }
+    return checklistOverlay.filterValue || 'Checklist Items';
+  };
+
   // Update metadata with Project ID only for breadcrumb display
   useEffect(() => {
     updateMetadata(`/pssr/${pssrId}`, pssrData.projectId);
@@ -451,8 +536,9 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         approvedItems={pssrData.statistics.approvedItems}
                         overallProgress={pssrData.progress}
                         categoryProgress={pssrData.categoryProgress}
-                        onCategoryClick={onNavigateToCategory}
-                        onStatClick={(filter) => console.log('Stat clicked:', filter)}
+                        onCategoryClick={handleCategoryClick}
+                        onStatClick={handleStatClick}
+                        onViewAll={handleViewAllChecklist}
                       />
                     ),
                     'widget-3': (
@@ -502,6 +588,30 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           </DndContext>
         </main>
       </div>
+
+      {/* Checklist Items Overlay - Filtered View */}
+      {checklistOverlay.type === 'filtered' && checklistOverlay.filterType && checklistOverlay.filterValue && (
+        <ChecklistItemsOverlay
+          isOpen={checklistOverlay.isOpen}
+          onClose={() => setChecklistOverlay(prev => ({ ...prev, isOpen: false }))}
+          filterType={checklistOverlay.filterType}
+          filterValue={checklistOverlay.filterValue}
+          items={checklistItems}
+          title={getFilterTitle()}
+        />
+      )}
+
+      {/* Full Checklist Progress Overlay */}
+      {checklistOverlay.type === 'full' && (
+        <FullChecklistProgressOverlay
+          isOpen={checklistOverlay.isOpen}
+          onClose={() => setChecklistOverlay(prev => ({ ...prev, isOpen: false }))}
+          categoryProgress={pssrData.categoryProgress}
+          items={checklistItems}
+          statistics={pssrData.statistics}
+          overallProgress={pssrData.progress}
+        />
+      )}
 
       <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <AlertDialogContent>
