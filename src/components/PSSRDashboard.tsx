@@ -6,8 +6,7 @@ import { OrshSidebar } from '@/components/OrshSidebar';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { AlertTriangle, GripVertical } from 'lucide-react';
-import { PSSRInformationWidget } from '@/components/widgets/PSSRInformationWidget';
-import { PSSRScopeWidget } from '@/components/widgets/PSSRScopeWidget';
+import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRItemStatisticsWidget } from '@/components/widgets/PSSRItemStatisticsWidget';
 import { PSSRProgressWidget } from '@/components/widgets/PSSRProgressWidget';
 import { PSSRRecentActivitiesWidget } from '@/components/widgets/PSSRRecentActivitiesWidget';
@@ -30,14 +29,13 @@ interface PSSRDashboardProps {
 }
 
 const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
-  { id: 'widget-1', name: 'PSSR Information', visible: true, size: 'medium' },
-  { id: 'widget-2', name: 'PSSR Scope', visible: true, size: 'medium' },
-  { id: 'widget-3', name: 'Item Statistics', visible: true, size: 'medium' },
-  { id: 'widget-4', name: 'Checklist Items', visible: true, size: 'large' },
-  { id: 'widget-5', name: 'Recent Activities', visible: true, size: 'medium' },
-  { id: 'widget-6', name: 'Key Activities', visible: true, size: 'medium' },
-  { id: 'widget-7', name: 'Pending Tasks', visible: true, size: 'medium' },
-  { id: 'widget-8', name: 'Linked PSSRs', visible: true, size: 'medium' },
+  { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
+  { id: 'widget-2', name: 'Item Statistics', visible: true, size: 'medium' },
+  { id: 'widget-3', name: 'Checklist Items', visible: true, size: 'large' },
+  { id: 'widget-4', name: 'Recent Activities', visible: true, size: 'medium' },
+  { id: 'widget-5', name: 'Key Activities', visible: true, size: 'medium' },
+  { id: 'widget-6', name: 'Pending Tasks', visible: true, size: 'medium' },
+  { id: 'widget-7', name: 'Linked PSSRs', visible: true, size: 'medium' },
 ];
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
@@ -140,8 +138,13 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   };
 
   const getWidgetColSpan = (size: 'small' | 'medium' | 'large', widgetId: string) => {
-    // Widget 4 (Progress) gets special treatment
-    if (widgetId === 'widget-4') {
+    // Widget 1 (Info & Scope) always spans 2 columns
+    if (widgetId === 'widget-1') {
+      return 'lg:col-span-2';
+    }
+    
+    // Widget 3 (Checklist Items) gets special treatment
+    if (widgetId === 'widget-3') {
       if (size === 'large') return 'lg:col-span-2 xl:col-span-3';
       if (size === 'medium') return 'lg:col-span-2';
       return 'lg:col-span-1';
@@ -492,7 +495,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
                   const widgetMap: Record<string, JSX.Element> = {
                     'widget-1': (
-                      <PSSRInformationWidget
+                      <PSSRInfoScopeWidget
                         pssrId={pssrData.id}
                         asset={pssrData.asset}
                         projectId={pssrData.projectId}
@@ -501,15 +504,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         dateInitiated={pssrData.created}
                         pssrLead={pssrData.initiator}
                         tier={pssrData.tier}
-                      />
-                    ),
-                    'widget-2': (
-                      <PSSRScopeWidget
                         description={pssrData.scope}
                         images={pssrData.scopeImages}
                       />
                     ),
-                    'widget-3': (
+                    'widget-2': (
                       <PSSRItemStatisticsWidget
                         totalItems={pssrData.statistics.totalItems}
                         draftItems={pssrData.statistics.draftItems}
@@ -517,32 +516,32 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         approvedItems={pssrData.statistics.approvedItems}
                       />
                     ),
-                    'widget-4': (
+                    'widget-3': (
                       <PSSRProgressWidget
                         overallProgress={pssrData.progress}
                         categoryProgress={pssrData.categoryProgress}
                         onCategoryClick={onNavigateToCategory}
                       />
                     ),
-                    'widget-5': (
+                    'widget-4': (
                       <PSSRRecentActivitiesWidget
                         activities={pssrData.recentActivities}
                         maxItems={8}
                       />
                     ),
-                    'widget-6': (
+                    'widget-5': (
                       <PSSRKeyActivitiesWidget
                         activities={pssrData.keyActivities}
                         onActivityClick={(type) => console.log('Activity clicked:', type)}
                       />
                     ),
-                    'widget-7': (
+                    'widget-6': (
                       <PSSRPendingTasksWidget
                         reviewers={pssrData.reviewers}
                         approvers={pssrData.approvers}
                       />
                     ),
-                    'widget-8': (
+                    'widget-7': (
                       <PSSRLinkedPSSRsWidget
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onPSSRClick={(id) => console.log('PSSR clicked:', id)}
@@ -550,10 +549,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                     ),
                   };
 
+                  const colSpanClass = widgetId === 'widget-1' ? 'lg:col-span-2' : '';
+
                   return (
                     <SortableWidget key={widgetId} id={widgetId}>
                       {({ attributes, listeners }) => (
-                        <div className="h-full">
+                        <div className={`h-full ${colSpanClass}`}>
                           {React.cloneElement(widgetMap[widgetId], {
                             dragAttributes: attributes,
                             dragListeners: listeners,
