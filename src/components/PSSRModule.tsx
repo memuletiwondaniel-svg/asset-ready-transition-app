@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck, Settings, LayoutGrid, LayoutList, Kanban } from 'lucide-react';
+import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck, Settings, LayoutGrid, LayoutList, Kanban } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import CreatePSSRFlow from '@/components/CreatePSSRFlow';
 import PSSRDetails from '@/components/PSSRDetails';
@@ -26,12 +26,9 @@ import PSSRFilters from './PSSRFilters';
 import PSSRList from './PSSRList';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import ManageChecklistPage from './ManageChecklistPage';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 
-interface PSSRModuleProps {
-  onBack: () => void;
-}
-
-const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
+const PSSRModule: React.FC = () => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
@@ -395,63 +392,54 @@ const PSSRModule: React.FC<PSSRModuleProps> = ({ onBack }) => {
       </div>
       
       <div className="relative z-10">
-      {/* Modern Header */}
-      <header className="fluent-navigation sticky top-0 z-50 border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <Button 
-                variant="ghost" 
-                onClick={onBack} 
-                className="fluent-button hover:bg-secondary/80 group"
-              >
-                <ArrowLeft className="h-4 w-4 mr-3 group-hover:-translate-x-1 transition-transform duration-200" />
-                <span className="font-medium">Back to Dashboard</span>
-              </Button>
-              
-              <div className="h-8 w-px bg-border"></div>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
-                  <ClipboardList className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">PSSR</h1>
-                  <p className="text-sm text-muted-foreground font-medium">Pre-Start-Up Safety Review System</p>
-                </div>
-              </div>
+      {/* Header */}
+      <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+        <BreadcrumbNavigation currentPageLabel="PSSR" />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+          <div className="min-w-0 flex items-center gap-3">
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
+              <ClipboardList className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-
-            {/* Header Actions */}
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline"
-                className="fluent-button border-border/50 hover:bg-secondary/50"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              {userRole === 'admin' && (
-                <Button 
-                  variant="outline"
-                  onClick={() => setActiveView('manage-checklist')}
-                  className="fluent-button border-border/50 hover:bg-secondary/50"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Checklists
-                </Button>
-              )}
-              <Button 
-                onClick={() => setActiveView('create')}
-                className="fluent-button bg-primary hover:bg-primary-hover text-primary-foreground shadow-fluent-md hover:shadow-fluent-lg group"
-              >
-                <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                New PSSR
-              </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                PSSR
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Pre-Start-Up Safety Review System
+              </p>
             </div>
           </div>
+          
+          {/* Header Actions */}
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline"
+              className="border-border/50 hover:bg-secondary/50"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            {userRole === 'admin' && (
+              <Button 
+                variant="outline"
+                onClick={() => setActiveView('manage-checklist')}
+                className="border-border/50 hover:bg-secondary/50"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Manage Checklists
+              </Button>
+            )}
+            <Button 
+              onClick={() => setActiveView('create')}
+              className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New PSSR
+            </Button>
+          </div>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-8">
 
