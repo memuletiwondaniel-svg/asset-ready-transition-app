@@ -420,54 +420,54 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         }}
       />
       
-      <div className="flex-1 relative z-10">
+      <div className="flex-1 relative z-10 w-full lg:w-auto">
         {/* Modern Header */}
         <header className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
-          <div className="px-8 py-4">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
             {/* Breadcrumb Navigation with History */}
             <BreadcrumbNavigation 
               currentPageLabel={pssrData.projectId}
               customBreadcrumbs={customizedBreadcrumbs}
-              className="mb-4"
+              className="mb-3 sm:mb-4 ml-10 lg:ml-0"
             />
 
             {/* Header Content */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg">
-                    <AlertTriangle className="h-6 w-6 text-white animate-pulse" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 ml-10 lg:ml-0">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg flex-shrink-0">
+                    <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white animate-pulse" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-xl font-bold text-foreground">{pssrData.id}</h1>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h1 className="text-lg sm:text-xl font-bold text-foreground">{pssrData.id}</h1>
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1.5 ${getStatusColor(pssrData.status)}`}
+                        className={`flex items-center gap-1 sm:gap-1.5 text-xs ${getStatusColor(pssrData.status)}`}
                       >
                         {getStatusIcon(pssrData.status)}
-                        {pssrData.status}
+                        <span className="hidden xs:inline">{pssrData.status}</span>
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{pssrData.title}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">{pssrData.title}</p>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="text-sm font-medium text-foreground">{pssrData.progress}% Complete</div>
-                  <div className="text-xs text-muted-foreground">12 days remaining</div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xs sm:text-sm font-medium text-foreground">{pssrData.progress}% Complete</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">12 days remaining</div>
                 </div>
-                <Progress value={pssrData.progress} className="w-32 h-2" />
+                <Progress value={pssrData.progress} className="w-20 sm:w-32 h-2" />
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content - Widget Grid with Drag and Drop */}
-        <main className="px-8 py-6">
-          <div className="flex items-center justify-between mb-6">
+        <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <WidgetCustomizationToolbar
               widgets={widgetSettings}
               onVisibilityChange={handleVisibilityChange}
