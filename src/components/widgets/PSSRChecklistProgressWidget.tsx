@@ -105,14 +105,14 @@ const StatusPill: React.FC<{
 }> = ({ label, value, icon: Icon, colorClass, bgClass, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group min-w-0 overflow-hidden`}
+    className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group`}
   >
     <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center ${colorClass} bg-background/50`}>
       <Icon className="h-3.5 w-3.5" />
     </div>
-    <div className="text-left min-w-0 flex-1">
+    <div className="text-left">
       <p className="text-base sm:text-lg font-bold text-foreground leading-none">{value}</p>
-      <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide truncate">{label}</p>
+      <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{label}</p>
     </div>
   </button>
 );
