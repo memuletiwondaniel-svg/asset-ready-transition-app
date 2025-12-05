@@ -4,7 +4,7 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Eye, Bell, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 export interface ApprovalPerson {
@@ -22,6 +22,7 @@ export interface ApprovalPerson {
 interface PSSRReviewersApprovalsWidgetProps {
   reviewers: ApprovalPerson[];
   approvers: ApprovalPerson[];
+  sofApprovers?: ApprovalPerson[];
   onSendReminder?: (personId: string) => void;
   onPersonClick?: (personId: string) => void;
   dragAttributes?: any;
@@ -172,8 +173,9 @@ const StageSection: React.FC<{
 const ApprovalProgress: React.FC<{
   reviewers: ApprovalPerson[];
   approvers: ApprovalPerson[];
-}> = ({ reviewers, approvers }) => {
-  const allPeople = [...reviewers, ...approvers];
+  sofApprovers?: ApprovalPerson[];
+}> = ({ reviewers, approvers, sofApprovers = [] }) => {
+  const allPeople = [...reviewers, ...approvers, ...sofApprovers];
   const completed = allPeople.filter(p => p.pendingTasks === 0).length;
   const total = allPeople.length;
 
@@ -200,6 +202,7 @@ const ApprovalProgress: React.FC<{
 export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidgetProps> = ({
   reviewers,
   approvers,
+  sofApprovers = [],
   onSendReminder,
   onPersonClick,
   dragAttributes,
@@ -210,7 +213,8 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
 
   // Determine current stage based on pending tasks
   const reviewersComplete = reviewers.every(r => r.pendingTasks === 0);
-  const currentStage = reviewersComplete ? 'approval' : 'review';
+  const approversComplete = approvers.every(a => a.pendingTasks === 0);
+  const currentStage = !reviewersComplete ? 'review' : !approversComplete ? 'pssr-approval' : 'sof-approval';
 
   const widgetContent = (
     <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
@@ -233,27 +237,46 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         </div>
       )}
 
-      {/* Approval Stage */}
+      {/* PSSR Approval Stage */}
       {approvers.length > 0 && (
         <StageSection
-          title="Approval Stage"
+          title="PSSR Approval"
           icon={<CheckCircle2 className="h-4 w-4" />}
           people={approvers}
-          isCurrentStage={currentStage === 'approval'}
+          isCurrentStage={currentStage === 'pssr-approval'}
+          onSendReminder={onSendReminder}
+          onPersonClick={onPersonClick}
+        />
+      )}
+
+      {/* Visual Connector */}
+      {approvers.length > 0 && sofApprovers.length > 0 && (
+        <div className="flex justify-center py-1">
+          <div className="w-0.5 h-4 bg-gradient-to-b from-border to-border/30 rounded-full" />
+        </div>
+      )}
+
+      {/* SoF Approval Stage */}
+      {sofApprovers.length > 0 && (
+        <StageSection
+          title="SoF Approval"
+          icon={<ShieldCheck className="h-4 w-4" />}
+          people={sofApprovers}
+          isCurrentStage={currentStage === 'sof-approval'}
           onSendReminder={onSendReminder}
           onPersonClick={onPersonClick}
         />
       )}
 
       {/* Progress Summary */}
-      <ApprovalProgress reviewers={reviewers} approvers={approvers} />
+      <ApprovalProgress reviewers={reviewers} approvers={approvers} sofApprovers={sofApprovers} />
     </div>
   );
 
   return (
     <>
       <WidgetCard 
-        title="Reviewers & Approvals" 
+        title="Approval" 
         className={`min-h-[500px] md:min-h-[560px] lg:min-h-[600px] ${
           widgetSize === 'compact' ? 'h-[500px] md:h-[560px] lg:h-[600px]' :
           widgetSize === 'standard' ? 'h-[650px] md:h-[700px] lg:h-[750px]' :
@@ -266,7 +289,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         {widgetContent}
       </WidgetCard>
 
-      <FullscreenWidgetModal widgetId={widgetId} title="Reviewers & Approvals">
+      <FullscreenWidgetModal widgetId={widgetId} title="Approval">
         {widgetContent}
       </FullscreenWidgetModal>
     </>

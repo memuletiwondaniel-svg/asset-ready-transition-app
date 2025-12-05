@@ -133,10 +133,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
         {/* Scope Images - Hero Layout */}
         {hasImages && (
           <div className="border-t border-border/40 pt-4 space-y-2">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-              Scope Images
-            </label>
-            <div 
+            <div
               className="relative group rounded-xl overflow-hidden border border-border/40 bg-muted/20 aspect-video max-w-2xl cursor-pointer"
               onClick={() => setSelectedImage(images[0])}
             >

@@ -196,7 +196,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
 
   return (
     <WidgetCard 
-      title="Checklist Progress"
+      title="Checklist"
       className={`min-h-[700px] ${
         widgetSize === 'compact' ? 'h-[700px]' :
         widgetSize === 'standard' ? 'h-[850px]' :
