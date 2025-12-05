@@ -549,13 +549,17 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                     ),
                   };
 
+                  // Guard against undefined widgets (e.g., from old localStorage)
+                  const widget = widgetMap[widgetId];
+                  if (!widget) return null;
+
                   const colSpanClass = widgetId === 'widget-1' ? 'lg:col-span-2' : '';
 
                   return (
                     <SortableWidget key={widgetId} id={widgetId}>
                       {({ attributes, listeners }) => (
                         <div className={`h-full ${colSpanClass}`}>
-                          {React.cloneElement(widgetMap[widgetId], {
+                          {React.cloneElement(widget, {
                             dragAttributes: attributes,
                             dragListeners: listeners,
                           })}
