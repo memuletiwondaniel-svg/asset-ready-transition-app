@@ -97,16 +97,14 @@ const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({
 const StatusPill: React.FC<{
   label: string;
   value: number;
-  dotClass: string;
   bgClass: string;
   onClick?: () => void;
-}> = ({ label, value, dotClass, bgClass, onClick }) => (
+}> = ({ label, value, bgClass, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group`}
+    className={`flex items-center justify-center px-3 sm:px-4 py-2.5 rounded-lg ${bgClass} hover:opacity-80 transition-all cursor-pointer group`}
   >
-    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotClass}`} />
-    <div className="text-left">
+    <div className="text-center">
       <p className="text-base sm:text-lg font-bold text-foreground leading-none">{value}</p>
       <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{label}</p>
     </div>
@@ -188,10 +186,10 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   };
 
   const statusPills = [
-    { label: 'Draft', value: draftItems, dotClass: 'bg-gray-400', bgClass: 'bg-gray-500/10', filter: 'draft' },
-    { label: 'Review', value: underReviewItems, dotClass: 'bg-yellow-500', bgClass: 'bg-yellow-500/10', filter: 'under_review' },
-    { label: 'Approved', value: approvedItems, dotClass: 'bg-green-500', bgClass: 'bg-green-500/10', filter: 'approved' },
-    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, dotClass: 'bg-red-500', bgClass: 'bg-red-500/10', filter: 'actions' }] : []),
+    { label: 'Draft', value: draftItems, bgClass: 'bg-gray-500/10', filter: 'draft' },
+    { label: 'Review', value: underReviewItems, bgClass: 'bg-yellow-500/10', filter: 'under_review' },
+    { label: 'Approved', value: approvedItems, bgClass: 'bg-green-500/10', filter: 'approved' },
+    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, bgClass: 'bg-red-500/10', filter: 'actions' }] : []),
   ];
 
   return (
@@ -238,7 +236,6 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
                 key={pill.label}
                 label={pill.label}
                 value={pill.value}
-                dotClass={pill.dotClass}
                 bgClass={pill.bgClass}
                 onClick={() => onStatClick?.(pill.filter)}
               />
