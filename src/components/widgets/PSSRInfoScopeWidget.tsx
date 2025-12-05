@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { WidgetCard } from './WidgetCard';
 import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Target } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ExternalLink, Target, Pencil, ZoomIn } from 'lucide-react';
 import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
@@ -22,6 +23,7 @@ interface PSSRInfoScopeWidgetProps {
   stationName?: string;
   hubName?: string;
   onNavigateToProject?: () => void;
+  onEdit?: () => void;
   dragAttributes?: any;
   dragListeners?: any;
 }
@@ -41,10 +43,12 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   stationName,
   hubName,
   onNavigateToProject,
+  onEdit,
   dragAttributes,
   dragListeners,
 }) => {
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-info-scope';
 
@@ -57,6 +61,18 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   };
 
   const hasImages = images && images.length > 0;
+
+  const headerAction = onEdit ? (
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      onClick={onEdit} 
+      className="h-7 gap-1.5 text-xs font-medium hover:bg-primary/10"
+    >
+      <Pencil className="h-3.5 w-3.5" />
+      Edit
+    </Button>
+  ) : undefined;
 
   const widgetContent = (
     <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
@@ -115,27 +131,45 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
           <p className="text-sm text-foreground leading-relaxed">{description}</p>
         </div>
 
-        {/* Scope Images */}
+        {/* Scope Images - Hero Layout */}
         {hasImages && (
           <div className="border-t border-border/40 pt-4 space-y-2">
             <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
               Scope Images
             </label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {images.map((image, index) => (
-                <div 
-                  key={index}
-                  className="relative group rounded-lg overflow-hidden border border-border/40 bg-muted/20 aspect-video"
-                >
-                  <img
-                    src={image}
-                    alt={`PSSR Scope ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-              ))}
+            <div 
+              className="relative group rounded-xl overflow-hidden border border-border/40 bg-muted/20 aspect-video max-w-2xl cursor-pointer"
+              onClick={() => setSelectedImage(images[0])}
+            >
+              <img
+                src={images[0]}
+                alt="PSSR Scope"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                <span className="text-white text-sm flex items-center gap-1.5 bg-black/30 px-3 py-1.5 rounded-full">
+                  <ZoomIn className="h-4 w-4" />
+                  Click to view full size
+                </span>
+              </div>
             </div>
+            {images.length > 1 && (
+              <div className="flex gap-2 mt-2">
+                {images.slice(1).map((image, index) => (
+                  <div 
+                    key={index}
+                    className="relative group rounded-lg overflow-hidden border border-border/40 bg-muted/20 w-20 h-14 cursor-pointer"
+                    onClick={() => setSelectedImage(image)}
+                  >
+                    <img
+                      src={image}
+                      alt={`PSSR Scope ${index + 2}`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -146,6 +180,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
     <>
       <WidgetCard 
         title="Overview"
+        headerAction={headerAction}
         className={`min-h-[500px] md:min-h-[560px] lg:min-h-[600px] ${
           widgetSize === 'compact' ? 'h-[500px] md:h-[560px] lg:h-[600px]' :
           widgetSize === 'standard' ? 'h-[650px] md:h-[700px] lg:h-[750px]' :
@@ -161,6 +196,19 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
       <FullscreenWidgetModal widgetId={widgetId} title="Overview">
         {widgetContent}
       </FullscreenWidgetModal>
+
+      {/* Image Lightbox */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl p-2 bg-background/95 backdrop-blur-sm">
+          {selectedImage && (
+            <img 
+              src={selectedImage} 
+              alt="PSSR Scope - Full Size" 
+              className="w-full h-auto rounded-lg max-h-[80vh] object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {projectData && (
         <ViewProjectModal
