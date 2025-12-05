@@ -31,9 +31,9 @@ interface PSSRDashboardProps {
 
 const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
-  { id: 'widget-2', name: 'Checklist Progress', visible: true, size: 'large' },
+  { id: 'widget-2', name: 'Checklist', visible: true, size: 'large' },
   { id: 'widget-3', name: 'Key Activities', visible: true, size: 'medium' },
-  { id: 'widget-4', name: 'Reviewers & Approvals', visible: true, size: 'medium' },
+  { id: 'widget-4', name: 'Approval', visible: true, size: 'medium' },
   { id: 'widget-5', name: 'Linked PSSRs', visible: true, size: 'medium' },
 ];
 
@@ -256,6 +256,26 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png',
         pendingTasks: 1,
         isOnline: true
+      }
+    ],
+
+    // SoF Approvers
+    sofApprovers: [
+      {
+        id: '5',
+        name: 'Dr. Ahmed Al-Rashid',
+        role: 'Plant Director',
+        avatar: '/lovable-uploads/5b18a1c1-2b59-4e34-917a-910364fedaf6.png',
+        pendingTasks: 1,
+        isOnline: true
+      },
+      {
+        id: '6',
+        name: 'James Chen',
+        role: 'Operations Manager',
+        avatar: '/lovable-uploads/6cb38356-79ac-4435-9d01-220ab79e63cc.png',
+        pendingTasks: 1,
+        isOnline: false
       }
     ],
 
@@ -553,6 +573,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       <PSSRReviewersApprovalsWidget
                         reviewers={pssrData.reviewers}
                         approvers={pssrData.approvers}
+                        sofApprovers={pssrData.sofApprovers}
                         onSendReminder={(personId) => console.log('Send reminder to:', personId)}
                         onPersonClick={(personId) => console.log('Person clicked:', personId)}
                       />
