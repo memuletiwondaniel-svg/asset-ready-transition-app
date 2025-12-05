@@ -175,7 +175,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   return (
     <>
       <WidgetCard 
-        title="PSSR Information & Scope" 
+        title="Overview"
         className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
           widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
           widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
@@ -188,7 +188,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
         {widgetContent}
       </WidgetCard>
 
-      <FullscreenWidgetModal widgetId={widgetId} title="PSSR Information & Scope">
+      <FullscreenWidgetModal widgetId={widgetId} title="Overview">
         {widgetContent}
       </FullscreenWidgetModal>
 
