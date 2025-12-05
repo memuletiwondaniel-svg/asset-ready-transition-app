@@ -11,6 +11,7 @@ import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistP
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
+import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
 import { FullChecklistProgressOverlay } from '@/components/widgets/FullChecklistProgressOverlay';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
@@ -53,6 +54,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   });
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   // Checklist overlay state
   const [checklistOverlay, setChecklistOverlay] = useState<{
@@ -175,7 +177,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     tier: 'Tier 1',
     scope: 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
     scopeImages: [
-      '/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png',
       '/lovable-uploads/a389c47e-ef05-4852-85d3-e4be66d1eb1e.png'
     ],
     
@@ -526,6 +527,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         tier={pssrData.tier}
                         description={pssrData.scope}
                         images={pssrData.scopeImages}
+                        onEdit={() => setEditModalOpen(true)}
                       />
                     ),
                     'widget-2': (
@@ -630,6 +632,17 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit PSSR Modal */}
+      <EditPSSRModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        pssrData={pssrData}
+        onSave={(updatedData) => {
+          console.log('PSSR data updated:', updatedData);
+          setEditModalOpen(false);
+        }}
+      />
     </div>
   );
 };
