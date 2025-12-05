@@ -4,8 +4,7 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Clock, Eye, Pause, Bell, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 export interface ApprovalPerson {
@@ -45,22 +44,13 @@ const PersonApprovalCard: React.FC<{
 
   // Determine status based on pendingTasks or explicit status
   const status = person.status || (person.pendingTasks === 0 ? 'completed' : 'in_progress');
-  
-  const getBorderColor = () => {
-    switch (status) {
-      case 'completed': return 'border-l-green-500';
-      case 'in_progress': return 'border-l-amber-500';
-      case 'waiting': return 'border-l-muted';
-      default: return 'border-l-muted';
-    }
-  };
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'completed': return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'in_progress': return <Clock className="h-4 w-4 text-amber-500" />;
-      case 'waiting': return <Pause className="h-4 w-4 text-muted-foreground" />;
-      default: return <Clock className="h-4 w-4 text-muted-foreground" />;
+      case 'completed': return <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" />;
+      case 'in_progress': return <div className="w-2 h-2 rounded-full bg-primary" />;
+      case 'waiting': return <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />;
+      default: return <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />;
     }
   };
 
@@ -69,9 +59,9 @@ const PersonApprovalCard: React.FC<{
       return person.completedAt ? `Completed ${person.completedAt}` : 'Completed';
     }
     if (status === 'waiting') {
-      return 'Waiting for previous step';
+      return 'Waiting';
     }
-    return `${person.pendingTasks} item${person.pendingTasks !== 1 ? 's' : ''} pending`;
+    return `${person.pendingTasks} pending`;
   };
 
   return (
@@ -79,62 +69,58 @@ const PersonApprovalCard: React.FC<{
       onClick={() => onPersonClick?.(person.id)}
       className={`
         relative flex items-center gap-3 p-3 rounded-lg 
-        border-l-4 ${getBorderColor()} 
-        border border-border/40 bg-card/50
+        border border-border/40 
+        ${isCurrentAction ? 'bg-primary/5 border-primary/30' : 'bg-card/50'}
+        ${status === 'completed' ? 'opacity-60' : ''}
         hover:bg-accent/10 hover:border-primary/30 
         transition-all cursor-pointer group
       `}
     >
-      {/* Avatar with online status */}
-      <div className="relative flex-shrink-0">
-        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-          <AvatarImage src={person.avatar} alt={person.name} />
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-semibold text-sm">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div
-          className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${
-            person.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'
-          }`}
-        />
-      </div>
+      {/* Avatar */}
+      <Avatar className="h-9 w-9 border border-border/50">
+        <AvatarImage src={person.avatar} alt={person.name} />
+        <AvatarFallback className="bg-muted text-muted-foreground font-medium text-xs">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
       
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground truncate">{person.name}</p>
+          <p className={`text-sm font-medium truncate ${status === 'completed' ? 'text-muted-foreground' : 'text-foreground'}`}>
+            {person.name}
+          </p>
           {isCurrentAction && (
-            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-[10px] px-1.5 py-0 animate-pulse">
-              ACTION NEEDED
+            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">
+              ACTION
             </Badge>
           )}
           {isNextInQueue && !isCurrentAction && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500/50 text-blue-600">
-              NEXT
-            </Badge>
+            <span className="text-[10px] text-muted-foreground">Next</span>
           )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{person.role}</p>
-        <div className="flex items-center gap-1.5 mt-1">
-          {getStatusIcon()}
-          <span className="text-[11px] text-muted-foreground">{getStatusText()}</span>
-        </div>
+      </div>
+
+      {/* Status */}
+      <div className="flex items-center gap-2">
+        {getStatusIcon()}
+        <span className="text-[11px] text-muted-foreground">{getStatusText()}</span>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {status === 'in_progress' && onSendReminder && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-primary"
+            className="h-7 w-7 text-muted-foreground hover:text-primary"
             onClick={(e) => {
               e.stopPropagation();
               onSendReminder(person.id);
             }}
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-3.5 w-3.5" />
           </Button>
         )}
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -190,15 +176,23 @@ const ApprovalProgress: React.FC<{
   const allPeople = [...reviewers, ...approvers];
   const completed = allPeople.filter(p => p.pendingTasks === 0).length;
   const total = allPeople.length;
-  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
     <div className="mt-4 pt-4 border-t border-border/50">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">Workflow Progress</span>
-        <span className="text-xs font-semibold text-foreground">{completed}/{total} complete</span>
+        <div className="flex items-center gap-1.5">
+          {allPeople.map((person, index) => (
+            <div
+              key={person.id}
+              className={`w-2 h-2 rounded-full ${
+                person.pendingTasks === 0 ? 'bg-muted-foreground' : 'bg-muted-foreground/20'
+              }`}
+            />
+          ))}
+          <span className="text-xs text-muted-foreground ml-2">{completed}/{total}</span>
+        </div>
       </div>
-      <Progress value={percentage} className="h-2" />
     </div>
   );
 };
@@ -260,10 +254,10 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
     <>
       <WidgetCard 
         title="Reviewers & Approvals" 
-        className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
-          widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
-          widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
-          'h-[450px] md:h-[500px] lg:h-[520px]'
+        className={`min-h-[500px] md:min-h-[560px] lg:min-h-[600px] ${
+          widgetSize === 'compact' ? 'h-[500px] md:h-[560px] lg:h-[600px]' :
+          widgetSize === 'standard' ? 'h-[650px] md:h-[700px] lg:h-[750px]' :
+          'h-[850px] md:h-[900px] lg:h-[950px]'
         }`}
         widgetId={widgetId}
         dragAttributes={dragAttributes}

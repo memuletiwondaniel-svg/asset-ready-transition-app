@@ -146,10 +146,10 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
     <>
       <WidgetCard 
         title="Overview"
-        className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
-          widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
-          widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
-          'h-[450px] md:h-[500px] lg:h-[520px]'
+        className={`min-h-[500px] md:min-h-[560px] lg:min-h-[600px] ${
+          widgetSize === 'compact' ? 'h-[500px] md:h-[560px] lg:h-[600px]' :
+          widgetSize === 'standard' ? 'h-[650px] md:h-[700px] lg:h-[750px]' :
+          'h-[850px] md:h-[900px] lg:h-[950px]'
         }`}
         widgetId={widgetId}
         dragAttributes={dragAttributes}
