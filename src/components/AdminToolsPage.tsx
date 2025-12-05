@@ -77,8 +77,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'projects':
         setActiveView('projects');
         break;
-      case 'safe-startup':
-        navigate('/safe-startup');
+      case 'pssr':
+        navigate('/pssr');
         break;
       default:
         navigate(`/${section}`);

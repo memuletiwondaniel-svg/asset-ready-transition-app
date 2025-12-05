@@ -331,7 +331,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   // Update metadata with Project ID only for breadcrumb display
   useEffect(() => {
-    updateMetadata(`/safe-startup/${pssrId}`, pssrData.projectId);
+    updateMetadata(`/pssr/${pssrId}`, pssrData.projectId);
   }, [pssrId, pssrData.projectId, updateMetadata]);
 
   // Build breadcrumbs from current path and customize PSSR link to call onBack
@@ -339,7 +339,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   
   // Override the PSSR breadcrumb onClick to navigate back to the list
   const customizedBreadcrumbs = breadcrumbs.map((crumb) => {
-    if (crumb.path === '/safe-startup') {
+    if (crumb.path === '/pssr') {
       return {
         ...crumb,
         onClick: onBack
@@ -403,13 +403,13 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
       {/* ORSH Sidebar */}
       <OrshSidebar 
-        currentPage="safe-startup"
+        currentPage="pssr"
         onNavigate={(section) => {
           console.log('Dashboard navigation:', section);
           if (section === 'home') {
             onBack();
-          } else if (section === 'safe-startup') {
-            // Already on safe-startup, do nothing or refresh
+          } else if (section === 'pssr') {
+            // Already on pssr, do nothing or refresh
           } else {
             // Navigate to other sections
             navigate(`/${section}`);

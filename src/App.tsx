@@ -41,7 +41,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<AuthPage />} />
-                    <Route path="/safe-startup" element={<Index />} />
+                    <Route path="/pssr" element={<Index />} />
                     <Route path="/users" element={<Index />} />
                     <Route path="/manage-checklist" element={<Index />} />
                     <Route path="/admin-tools" element={<Index />} />

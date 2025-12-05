@@ -85,7 +85,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
   const navigationItems: NavigationItem[] = [
     { label: 'Home', icon: Home, path: '/', section: 'home' },
     { label: 'Ask ORSH AI', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
-    { label: 'Safe Start-Up', icon: AlertTriangle, path: '/safe-startup', section: 'safe-startup' },
+    { label: 'PSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
     { label: 'OR Plans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
     { label: 'OR Maintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
     { label: 'P2A Handover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },

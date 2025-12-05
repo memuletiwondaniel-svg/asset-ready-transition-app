@@ -18,9 +18,9 @@ export const WorkspacesWidget: React.FC<WorkspacesWidgetProps> = ({ onNavigate, 
       iconColor: 'text-white'
     },
     {
-      id: 'safe-startup',
-      title: 'Safe Start-Up',
-      description: 'PSSR & Safety Checklists',
+      id: 'pssr',
+      title: 'PSSR',
+      description: 'Pre-Start Up Safety Review & Checklists',
       icon: AlertTriangle,
       gradient: 'from-amber-500/20 to-orange-500/20',
       iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
