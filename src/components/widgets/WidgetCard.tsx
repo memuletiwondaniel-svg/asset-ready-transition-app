@@ -5,7 +5,7 @@ import { MoreVertical, Eye, EyeOff, Maximize2, Minimize2, Settings, GripVertical
 import { Button } from '@/components/ui/button';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
-interface WidgetCardProps {
+export interface WidgetCardProps {
   title: string;
   children: React.ReactNode;
   className?: string;
@@ -18,6 +18,7 @@ interface WidgetCardProps {
   dragListeners?: any;
   widgetId?: string;
   enableFullscreen?: boolean;
+  headerAction?: React.ReactNode;
 }
 
 export const WidgetCard: React.FC<WidgetCardProps> = ({
@@ -33,6 +34,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   dragListeners,
   widgetId,
   enableFullscreen = true,
+  headerAction,
 }) => {
   const { setFullscreenWidget } = useWidgetSize();
   
@@ -62,7 +64,9 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
           </Button>
           <CardTitle className="text-lg font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">{title}</CardTitle>
         </div>
-        <DropdownMenu>
+        <div className="flex items-center gap-1 relative z-10">
+          {headerAction}
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 relative z-10">
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
@@ -104,6 +108,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent className="p-4 flex-1 min-h-0">
         {children}
