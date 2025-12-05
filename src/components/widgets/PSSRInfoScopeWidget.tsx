@@ -69,24 +69,13 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
               <p className="text-sm font-semibold text-foreground">{asset}</p>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Project ID</label>
-              <Button
-                variant="link"
-                className="h-auto p-0 text-sm font-semibold text-primary hover:text-primary/80"
-                onClick={handleProjectClick}
-              >
-                {projectId}
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Project Name</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Project</label>
               <Button
                 variant="link"
                 className="h-auto p-0 text-sm font-semibold text-primary hover:text-primary/80 text-left"
                 onClick={handleProjectClick}
               >
-                {projectName}
+                {projectId} - {projectName}
                 <ExternalLink className="h-3 w-3 ml-1" />
               </Button>
             </div>
