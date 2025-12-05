@@ -10,7 +10,7 @@ import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRRecentActivitiesWidget } from '@/components/widgets/PSSRRecentActivitiesWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
-import { PSSRPendingTasksWidget } from '@/components/widgets/PSSRPendingTasksWidget';
+import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetCustomizationToolbar, WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
@@ -32,7 +32,7 @@ const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-2', name: 'Checklist Progress', visible: true, size: 'large' },
   { id: 'widget-3', name: 'Recent Activities', visible: true, size: 'medium' },
   { id: 'widget-4', name: 'Key Activities', visible: true, size: 'medium' },
-  { id: 'widget-5', name: 'Pending Tasks', visible: true, size: 'medium' },
+  { id: 'widget-5', name: 'Reviewers & Approvals', visible: true, size: 'medium' },
   { id: 'widget-6', name: 'Linked PSSRs', visible: true, size: 'medium' },
 ];
 
@@ -531,9 +531,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                       />
                     ),
                     'widget-5': (
-                      <PSSRPendingTasksWidget
+                      <PSSRReviewersApprovalsWidget
                         reviewers={pssrData.reviewers}
                         approvers={pssrData.approvers}
+                        onSendReminder={(personId) => console.log('Send reminder to:', personId)}
+                        onPersonClick={(personId) => console.log('Person clicked:', personId)}
                       />
                     ),
                     'widget-6': (
