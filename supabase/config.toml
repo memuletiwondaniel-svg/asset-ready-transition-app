@@ -97,27 +97,23 @@ verify_jwt = false
 [functions.submit-registration-request]
 verify_jwt = false
 
-# New function to update profile avatar via service role
 [functions.update-user-avatar]
 verify_jwt = false
 
-# New function to update user profile via service role
 [functions.update-user-profile]
 verify_jwt = false
 
-# Function to upload user avatar and update profile atomically
 [functions.upload-user-avatar]
 verify_jwt = false
 
-# Function to translate content using Lovable AI
 [functions.translate-content]
 verify_jwt = false
 
-# Function for AI chat with Lovable AI
 [functions.ai-chat]
 verify_jwt = false
 
-# Function to parse documents for AI chat
 [functions.parse-document]
 verify_jwt = false
 
+[functions.send-pssr-approval-ready]
+verify_jwt = false

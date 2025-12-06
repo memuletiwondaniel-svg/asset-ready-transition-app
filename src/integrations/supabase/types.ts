@@ -2803,30 +2803,36 @@ export type Database = {
           approver_level: number
           approver_name: string
           approver_role: string
+          comments: string | null
           created_at: string
           id: string
           pssr_id: string
           status: string
+          user_id: string | null
         }
         Insert: {
           approved_at?: string | null
           approver_level: number
           approver_name: string
           approver_role: string
+          comments?: string | null
           created_at?: string
           id?: string
           pssr_id: string
           status?: string
+          user_id?: string | null
         }
         Update: {
           approved_at?: string | null
           approver_level?: number
           approver_name?: string
           approver_role?: string
+          comments?: string | null
           created_at?: string
           id?: string
           pssr_id?: string
           status?: string
+          user_id?: string | null
         }
         Relationships: [
           {
