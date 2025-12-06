@@ -4,7 +4,8 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText } from 'lucide-react';
+import { SOFCertificateModal } from '@/components/sof/SOFCertificateModal';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChecklistCompletionBanner } from '@/components/pssr/ChecklistCompletionBanner';
@@ -36,6 +37,10 @@ interface PSSRReviewersApprovalsWidgetProps {
   // New props for enhanced functionality
   pssrId?: string;
   pssrTitle?: string;
+  pssrReason?: string;
+  plantName?: string;
+  facilityName?: string;
+  projectName?: string;
   checklistCompletion?: {
     percentage: number;
     total: number;
@@ -310,6 +315,10 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   dragListeners,
   pssrId,
   pssrTitle = 'PSSR',
+  pssrReason = '',
+  plantName,
+  facilityName,
+  projectName,
   checklistCompletion,
   currentUserId,
   currentUserApproverId,
@@ -321,6 +330,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-reviewers-approvals';
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
 
   // Calculate stage completion
   const checklistComplete = !checklistCompletion || checklistCompletion.percentage === 100;
@@ -419,16 +429,30 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
 
       {/* SoF Approval Stage */}
       {sofApprovers.length > 0 && (
-        <StageSection
-          title="SoF Approval"
-          icon={<ShieldCheck className="h-4 w-4" />}
-          people={sofApprovers}
-          isCurrentStage={currentStage === 'sof-approval'}
-          isLocked={sofApprovalLocked}
-          lockReason="Complete PSSR approval to unlock SoF approval"
-          onSendReminder={onSendReminder}
-          onPersonClick={onPersonClick}
-        />
+        <>
+          <StageSection
+            title="SoF Approval"
+            icon={<ShieldCheck className="h-4 w-4" />}
+            people={sofApprovers}
+            isCurrentStage={currentStage === 'sof-approval'}
+            isLocked={sofApprovalLocked}
+            lockReason="Complete PSSR approval to unlock SoF approval"
+            onSendReminder={onSendReminder}
+            onPersonClick={onPersonClick}
+          />
+          
+          {/* View SoF Certificate Button */}
+          {pssrId && (
+            <Button
+              variant="outline"
+              className="w-full mt-2"
+              onClick={() => setShowCertificateModal(true)}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {sofApprovalLocked ? 'Preview SoF Certificate' : 'View SoF Certificate'}
+            </Button>
+          )}
+        </>
       )}
 
       {/* Approval History */}
@@ -468,6 +492,19 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
       <FullscreenWidgetModal widgetId={widgetId} title="Approval Workflow">
         {widgetContent}
       </FullscreenWidgetModal>
+
+      {/* SoF Certificate Modal */}
+      {pssrId && (
+        <SOFCertificateModal
+          open={showCertificateModal}
+          onOpenChange={setShowCertificateModal}
+          pssrId={pssrId}
+          pssrReason={pssrReason}
+          plantName={plantName}
+          facilityName={facilityName}
+          projectName={projectName}
+        />
+      )}
     </>
   );
 };
