@@ -621,22 +621,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 <Cog className="h-4 w-4 mr-1.5" />
                 Matrix
               </TabsTrigger>
-              {showTieInTab && (
-                <TabsTrigger 
-                  value="tie-in"
-                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-                >
-                  Tie-in Scopes
-                </TabsTrigger>
-              )}
-              {showMOCTab && (
-                <TabsTrigger 
-                  value="moc"
-                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-                >
-                  MOC Scopes
-                </TabsTrigger>
-              )}
               <TabsTrigger
                 value="checklists"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
@@ -658,6 +642,22 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 <BookOpen className="h-4 w-4 mr-1.5" />
                 Topics
               </TabsTrigger>
+              {showTieInTab && (
+                <TabsTrigger 
+                  value="tie-in"
+                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                >
+                  Tie-in Scopes
+                </TabsTrigger>
+              )}
+              {showMOCTab && (
+                <TabsTrigger 
+                  value="moc"
+                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                >
+                  MOC Scopes
+                </TabsTrigger>
+              )}
             </TabsList>
 
           {/* Tie-in Scopes Tab */}

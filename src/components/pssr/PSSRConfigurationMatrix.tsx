@@ -115,6 +115,12 @@ const PSSRConfigurationMatrix: React.FC = () => {
   });
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Reason Details Overlay State
+  const [reasonDetailsDialog, setReasonDetailsDialog] = useState<{
+    open: boolean;
+    config: LocalConfiguration | null;
+  }>({ open: false, config: null });
+
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -502,23 +508,20 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[38%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[44%]">
                         PSSR Reason
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[14%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[16%]">
                         Checklist
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[17%]">
                         PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[17%]">
                         SoF Approvers
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%] text-right pr-4">
-                        
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -529,20 +532,19 @@ const PSSRConfigurationMatrix: React.FC = () => {
                         id={config.reason_id}
                         isDirty={config.isDirty}
                       >
-                        {/* Reason Name with Order Number - Inline Editable */}
+                        {/* Reason Name with Order Number - Clickable to open details */}
                         <TableCell className="font-medium overflow-hidden">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div 
+                            className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReasonDetailsDialog({ open: true, config });
+                            }}
+                          >
                             <span className="text-xs font-semibold text-muted-foreground shrink-0">#{index + 1}</span>
-                            <div className="flex-1 min-w-0">
-                              <InlineEditableCell
-                                value={config.reason_name}
-                                onSave={(newValue) => handleInlineEditName(config.reason_id, newValue)}
-                                placeholder="Enter reason name"
-                                maxLength={100}
-                                validate={validateName}
-                                wrap={true}
-                              />
-                            </div>
+                            <span className="flex-1 min-w-0 whitespace-normal break-words">
+                              {config.reason_name}
+                            </span>
                             {config.isDirty && (
                               <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
                                 Modified
@@ -613,29 +615,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             disabledTooltip="Already assigned as PSSR Approver"
                           />
                         </TableCell>
-
-                        {/* Delete Action */}
-                        <TableCell className="text-right pr-4">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => setDeleteDialog({
-                                  open: true,
-                                  reasonId: config.reason_id,
-                                  reasonName: config.reason_name
-                                })}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Delete reason</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
                       </SortableRow>
                     ))}
 
@@ -644,7 +623,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       className="hover:bg-accent/30 cursor-pointer border-dashed border-t"
                       onClick={() => setShowAddReasonDialog(true)}
                     >
-                      <TableCell colSpan={6} className="py-4">
+                      <TableCell colSpan={5} className="py-4">
                         <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                           <Plus className="h-4 w-4" />
                           <span className="text-sm font-medium">Add new PSSR reason...</span>
@@ -654,7 +633,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
                     {sortedConfigs.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
                           <p className="mb-4">No PSSR reasons configured yet.</p>
                           <Button 
@@ -812,6 +791,165 @@ const PSSRConfigurationMatrix: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reason Details Overlay Dialog */}
+      <Dialog open={reasonDetailsDialog.open} onOpenChange={(open) => !open && setReasonDetailsDialog({ open: false, config: null })}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              PSSR Reason Details
+            </DialogTitle>
+            <DialogDescription>
+              View and manage configuration for this PSSR reason.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {reasonDetailsDialog.config && (
+            <div className="space-y-6 py-4">
+              {/* Reason Name */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Reason Name</Label>
+                <InlineEditableCell
+                  value={reasonDetailsDialog.config.reason_name}
+                  onSave={async (newValue) => {
+                    await handleInlineEditName(reasonDetailsDialog.config!.reason_id, newValue);
+                    setReasonDetailsDialog(prev => ({
+                      ...prev,
+                      config: prev.config ? { ...prev.config, reason_name: newValue } : null
+                    }));
+                  }}
+                  placeholder="Enter reason name"
+                  maxLength={100}
+                  validate={validateName}
+                  showEditHint={true}
+                />
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Status</Label>
+                <div className="flex items-center gap-3">
+                  <Badge 
+                    variant={reasonDetailsDialog.config.is_active ? "default" : "secondary"}
+                    className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shadow-fluent-xs font-medium"
+                    onClick={() => {
+                      handleToggleActive(reasonDetailsDialog.config!.reason_id, reasonDetailsDialog.config!.is_active);
+                      setReasonDetailsDialog(prev => ({
+                        ...prev,
+                        config: prev.config ? { ...prev.config, is_active: !prev.config.is_active } : null
+                      }));
+                    }}
+                  >
+                    {reasonDetailsDialog.config.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">Click to toggle</span>
+                </div>
+              </div>
+
+              {/* Assigned Checklist */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Assigned Checklist</Label>
+                <Select
+                  value={reasonDetailsDialog.config.checklist_id || 'none'}
+                  onValueChange={(value) => {
+                    handleChecklistChange(reasonDetailsDialog.config!.reason_id, value);
+                    setReasonDetailsDialog(prev => ({
+                      ...prev,
+                      config: prev.config ? { ...prev.config, checklist_id: value === 'none' ? null : value } : null
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select checklist" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      <span className="text-muted-foreground">Not configured</span>
+                    </SelectItem>
+                    {checklists.map((checklist) => (
+                      <SelectItem key={checklist.id} value={checklist.id}>
+                        {checklist.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* PSSR Approvers */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">PSSR Approvers</Label>
+                <RoleMultiSelect
+                  roles={roles}
+                  selectedRoleIds={reasonDetailsDialog.config.pssr_approver_role_ids}
+                  onToggle={(roleId) => {
+                    handlePSSRApproverToggle(reasonDetailsDialog.config!.reason_id, roleId);
+                    const currentRoles = reasonDetailsDialog.config!.pssr_approver_role_ids;
+                    const newRoles = currentRoles.includes(roleId)
+                      ? currentRoles.filter(id => id !== roleId)
+                      : [...currentRoles, roleId];
+                    const newSofRoles = reasonDetailsDialog.config!.sof_approver_role_ids.filter(id => !newRoles.includes(id));
+                    setReasonDetailsDialog(prev => ({
+                      ...prev,
+                      config: prev.config ? { ...prev.config, pssr_approver_role_ids: newRoles, sof_approver_role_ids: newSofRoles } : null
+                    }));
+                  }}
+                  placeholder="Select PSSR Approvers"
+                  disabledRoleIds={[]}
+                />
+              </div>
+
+              {/* SoF Approvers */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">SoF Approvers</Label>
+                <RoleMultiSelect
+                  roles={roles}
+                  selectedRoleIds={reasonDetailsDialog.config.sof_approver_role_ids}
+                  onToggle={(roleId) => {
+                    if (!reasonDetailsDialog.config!.pssr_approver_role_ids.includes(roleId)) {
+                      handleSoFApproverToggle(reasonDetailsDialog.config!.reason_id, roleId);
+                      const currentRoles = reasonDetailsDialog.config!.sof_approver_role_ids;
+                      const newRoles = currentRoles.includes(roleId)
+                        ? currentRoles.filter(id => id !== roleId)
+                        : [...currentRoles, roleId];
+                      setReasonDetailsDialog(prev => ({
+                        ...prev,
+                        config: prev.config ? { ...prev.config, sof_approver_role_ids: newRoles } : null
+                      }));
+                    }
+                  }}
+                  placeholder="Select SoF Approvers"
+                  disabledRoleIds={reasonDetailsDialog.config.pssr_approver_role_ids}
+                  disabledTooltip="Already assigned as PSSR Approver"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setDeleteDialog({
+                  open: true,
+                  reasonId: reasonDetailsDialog.config?.reason_id || null,
+                  reasonName: reasonDetailsDialog.config?.reason_name || ''
+                });
+                setReasonDetailsDialog({ open: false, config: null });
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Reason
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setReasonDetailsDialog({ open: false, config: null })}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 };
