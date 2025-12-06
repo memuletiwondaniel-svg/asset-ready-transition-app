@@ -6,18 +6,38 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, GripVertical, Trash2 } from 'lucide-react';
+import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useChecklists } from '@/hooks/useChecklists';
 import { useRoles } from '@/hooks/useRoles';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface LocalConfiguration {
   reason_id: string;
@@ -26,7 +46,56 @@ interface LocalConfiguration {
   pssr_approver_role_ids: string[];
   sof_approver_role_ids: string[];
   isDirty: boolean;
+  is_active: boolean;
+  display_order: number;
 }
+
+// Sortable Row Component
+interface SortableRowProps {
+  id: string;
+  children: React.ReactNode;
+  isDirty: boolean;
+}
+
+const SortableRow: React.FC<SortableRowProps> = ({ id, children, isDirty }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={`
+        transition-all duration-200 hover:bg-accent/30
+        ${isDirty ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}
+        ${isDragging ? 'relative z-50 shadow-2xl scale-[1.02] bg-card' : ''}
+      `}
+    >
+      <TableCell className="w-12">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-2 rounded-md hover:bg-accent/50 transition-all duration-200"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+        </div>
+      </TableCell>
+      {children}
+    </TableRow>
+  );
+};
 
 const PSSRConfigurationMatrix: React.FC = () => {
   const queryClient = useQueryClient();
@@ -37,13 +106,34 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
   const [localConfigs, setLocalConfigs] = useState<LocalConfiguration[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // Add Reason Dialog State
   const [showAddReasonDialog, setShowAddReasonDialog] = useState(false);
   const [newReasonName, setNewReasonName] = useState('');
   const [newReasonChecklist, setNewReasonChecklist] = useState<string | null>(null);
   const [isAddingReason, setIsAddingReason] = useState(false);
+
+  // Delete Dialog State
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; reasonId: string | null; reasonName: string }>({
+    open: false,
+    reasonId: null,
+    reasonName: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Drag state
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Initialize local configs from fetched data
   useEffect(() => {
@@ -55,12 +145,20 @@ const PSSRConfigurationMatrix: React.FC = () => {
         pssr_approver_role_ids: config.pssr_approver_role_ids || [],
         sof_approver_role_ids: config.sof_approver_role_ids || [],
         isDirty: false,
+        is_active: config.reason?.is_active ?? true,
+        display_order: config.reason?.display_order ?? 0,
       })));
     }
   }, [configurations]);
 
   const hasUnsavedChanges = useMemo(() => 
     localConfigs.some(c => c.isDirty), 
+    [localConfigs]
+  );
+
+  // Sort configs by display_order
+  const sortedConfigs = useMemo(() => 
+    [...localConfigs].sort((a, b) => a.display_order - b.display_order),
     [localConfigs]
   );
 
@@ -143,6 +241,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
       pssr_approver_role_ids: config.pssr_approver_role_ids || [],
       sof_approver_role_ids: config.sof_approver_role_ids || [],
       isDirty: false,
+      is_active: config.reason?.is_active ?? true,
+      display_order: config.reason?.display_order ?? 0,
     })));
     toast.info('Changes discarded');
   };
@@ -196,13 +296,134 @@ const PSSRConfigurationMatrix: React.FC = () => {
     }
   };
 
-  const getRoleName = (roleId: string) => {
-    return roles.find(r => r.id === roleId)?.name || 'Unknown Role';
+  // Inline edit reason name
+  const handleInlineEditName = async (reasonId: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('pssr_reasons')
+        .update({ name: newName.trim() })
+        .eq('id', reasonId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
+      toast.success('Reason name updated');
+    } catch (error) {
+      console.error('Error updating name:', error);
+      toast.error('Failed to update name');
+      throw error;
+    }
   };
 
-  const getChecklistName = (checklistId: string | null) => {
-    if (!checklistId) return 'Not configured';
-    return checklists.find(c => c.id === checklistId)?.name || 'Unknown Checklist';
+  // Toggle active status
+  const handleToggleActive = async (reasonId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('pssr_reasons')
+        .update({ is_active: !currentStatus })
+        .eq('id', reasonId);
+
+      if (error) throw error;
+
+      setLocalConfigs(prev => prev.map(config => 
+        config.reason_id === reasonId 
+          ? { ...config, is_active: !currentStatus }
+          : config
+      ));
+
+      queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
+      toast.success(`Reason ${!currentStatus ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
+  // Delete reason
+  const handleDeleteReason = async () => {
+    if (!deleteDialog.reasonId) return;
+    
+    setIsDeleting(true);
+    try {
+      // Delete configuration first (foreign key)
+      const { error: configError } = await supabase
+        .from('pssr_reason_configuration')
+        .delete()
+        .eq('reason_id', deleteDialog.reasonId);
+
+      if (configError) throw configError;
+
+      // Delete the reason
+      const { error: reasonError } = await supabase
+        .from('pssr_reasons')
+        .delete()
+        .eq('id', deleteDialog.reasonId);
+
+      if (reasonError) throw reasonError;
+
+      queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
+      toast.success('PSSR Reason deleted successfully');
+      setDeleteDialog({ open: false, reasonId: null, reasonName: '' });
+    } catch (error: any) {
+      console.error('Error deleting reason:', error);
+      toast.error(error.message || 'Failed to delete reason');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedConfigs.findIndex(c => c.reason_id === active.id);
+    const newIndex = sortedConfigs.findIndex(c => c.reason_id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedConfigs = arrayMove(sortedConfigs, oldIndex, newIndex);
+
+    try {
+      // Update display_order for all affected items
+      const updates = reorderedConfigs.map((config, index) => ({
+        id: config.reason_id,
+        display_order: index + 1
+      }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('pssr_reasons')
+          .update({ display_order: update.display_order })
+          .eq('id', update.id);
+
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
+      queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
+      toast.success('Order updated successfully');
+    } catch (error) {
+      console.error('Error reordering:', error);
+      toast.error('Failed to update order');
+    }
+  };
+
+  // Validation for name
+  const validateName = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return { valid: false, error: 'Name cannot be empty' };
+    if (trimmed.length > 100) return { valid: false, error: 'Name must be less than 100 characters' };
+    return { valid: true };
   };
 
   const isLoading = isLoadingConfigs || isLoadingChecklists || isLoadingRoles;
@@ -226,7 +447,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
             <div className="space-y-1.5">
               <CardTitle className="text-2xl font-semibold">PSSR Reason Configuration Matrix</CardTitle>
               <CardDescription className="text-base">
-                Configure which checklist, PSSR approvers, and SoF approvers are assigned for each PSSR reason
+                Manage PSSR reasons and configure checklist, PSSR approvers, and SoF approvers for each
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -274,118 +495,193 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
         <CardContent className="p-0">
           <ScrollArea className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-border/40 hover:bg-transparent">
-                  <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[250px]">
-                    PSSR Reason
-                  </TableHead>
-                  <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px]">
-                    Assigned Checklist
-                  </TableHead>
-                  <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[250px]">
-                    PSSR Approver Roles
-                  </TableHead>
-                  <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[250px]">
-                    SoF Approver Roles
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {localConfigs.map((config) => (
-                  <TableRow 
-                    key={config.reason_id}
-                    className={`transition-all duration-200 hover:bg-accent/30 ${config.isDirty ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}`}
-                  >
-                    {/* Reason Name */}
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <span className="text-foreground">{config.reason_name}</span>
-                        {config.isDirty && (
-                          <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
-                            Modified
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-
-                    {/* Checklist Selection */}
-                    <TableCell>
-                      <Select
-                        value={config.checklist_id || 'none'}
-                        onValueChange={(value) => handleChecklistChange(config.reason_id, value)}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortedConfigs.map(c => c.reason_id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-border/40 hover:bg-transparent">
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-16">
+                        Order
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px]">
+                        PSSR Reason
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px]">
+                        Assigned Checklist
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[220px]">
+                        PSSR Approver Roles
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[220px]">
+                        SoF Approver Roles
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-16 text-right pr-4">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedConfigs.map((config, index) => (
+                      <SortableRow 
+                        key={config.reason_id} 
+                        id={config.reason_id}
+                        isDirty={config.isDirty}
                       >
-                        <SelectTrigger className="h-9 w-full max-w-[220px]">
-                          <SelectValue placeholder="Select checklist" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="text-muted-foreground">Not configured</span>
-                          </SelectItem>
-                          {checklists.map((checklist) => (
-                            <SelectItem key={checklist.id} value={checklist.id}>
-                              {checklist.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
+                        {/* Order Number */}
+                        <TableCell className="text-sm font-semibold text-muted-foreground">
+                          #{index + 1}
+                        </TableCell>
 
-                    {/* PSSR Approver Roles */}
-                    <TableCell>
-                      <RoleMultiSelect
-                        roles={roles}
-                        selectedRoleIds={config.pssr_approver_role_ids}
-                        onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
-                        placeholder="Select PSSR Approvers"
-                        disabledRoleIds={[]}
-                      />
-                    </TableCell>
+                        {/* Reason Name - Inline Editable */}
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <InlineEditableCell
+                              value={config.reason_name}
+                              onSave={(newValue) => handleInlineEditName(config.reason_id, newValue)}
+                              placeholder="Enter reason name"
+                              maxLength={100}
+                              validate={validateName}
+                            />
+                            {config.isDirty && (
+                              <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
+                                Modified
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
 
-                    {/* SoF Approver Roles */}
-                    <TableCell>
-                      <RoleMultiSelect
-                        roles={roles}
-                        selectedRoleIds={config.sof_approver_role_ids}
-                        onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
-                        placeholder="Select SoF Approvers"
-                        disabledRoleIds={config.pssr_approver_role_ids}
-                        disabledTooltip="Already assigned as PSSR Approver"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        {/* Status Toggle */}
+                        <TableCell>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant={config.is_active ? "default" : "secondary"}
+                                className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shadow-fluent-xs font-medium"
+                                onClick={() => handleToggleActive(config.reason_id, config.is_active)}
+                              >
+                                {config.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Click to {config.is_active ? 'disable' : 'enable'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
 
-                {/* Inline Add Row */}
-                <TableRow 
-                  className="hover:bg-accent/30 cursor-pointer border-dashed border-t"
-                  onClick={() => setShowAddReasonDialog(true)}
-                >
-                  <TableCell colSpan={4} className="py-4">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                      <Plus className="h-4 w-4" />
-                      <span className="text-sm font-medium">Add new PSSR reason...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                        {/* Checklist Selection */}
+                        <TableCell>
+                          <Select
+                            value={config.checklist_id || 'none'}
+                            onValueChange={(value) => handleChecklistChange(config.reason_id, value)}
+                          >
+                            <SelectTrigger className="h-9 w-full max-w-[200px]">
+                              <SelectValue placeholder="Select checklist" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">
+                                <span className="text-muted-foreground">Not configured</span>
+                              </SelectItem>
+                              {checklists.map((checklist) => (
+                                <SelectItem key={checklist.id} value={checklist.id}>
+                                  {checklist.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
 
-                {localConfigs.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                      <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                      <p className="mb-4">No PSSR reasons configured yet.</p>
-                      <Button 
-                        onClick={() => setShowAddReasonDialog(true)}
-                        className="fluent-button"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First PSSR Reason
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                        {/* PSSR Approver Roles */}
+                        <TableCell>
+                          <RoleMultiSelect
+                            roles={roles}
+                            selectedRoleIds={config.pssr_approver_role_ids}
+                            onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
+                            placeholder="Select PSSR Approvers"
+                            disabledRoleIds={[]}
+                          />
+                        </TableCell>
+
+                        {/* SoF Approver Roles */}
+                        <TableCell>
+                          <RoleMultiSelect
+                            roles={roles}
+                            selectedRoleIds={config.sof_approver_role_ids}
+                            onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
+                            placeholder="Select SoF Approvers"
+                            disabledRoleIds={config.pssr_approver_role_ids}
+                            disabledTooltip="Already assigned as PSSR Approver"
+                          />
+                        </TableCell>
+
+                        {/* Delete Action */}
+                        <TableCell className="text-right pr-4">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => setDeleteDialog({
+                                  open: true,
+                                  reasonId: config.reason_id,
+                                  reasonName: config.reason_name
+                                })}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete reason</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                      </SortableRow>
+                    ))}
+
+                    {/* Inline Add Row */}
+                    <TableRow 
+                      className="hover:bg-accent/30 cursor-pointer border-dashed border-t"
+                      onClick={() => setShowAddReasonDialog(true)}
+                    >
+                      <TableCell colSpan={8} className="py-4">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                          <Plus className="h-4 w-4" />
+                          <span className="text-sm font-medium">Add new PSSR reason...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+
+                    {sortedConfigs.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                          <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                          <p className="mb-4">No PSSR reasons configured yet.</p>
+                          <Button 
+                            onClick={() => setShowAddReasonDialog(true)}
+                            className="fluent-button"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Your First PSSR Reason
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </SortableContext>
+            </DndContext>
           </ScrollArea>
         </CardContent>
       </Card>
@@ -496,6 +792,37 @@ const PSSRConfigurationMatrix: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, reasonId: null, reasonName: '' })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete PSSR Reason?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>"{deleteDialog.reasonName}"</strong>? 
+              This action cannot be undone and will also remove all associated configuration.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteReason}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 };
@@ -526,7 +853,7 @@ const RoleMultiSelect: React.FC<RoleMultiSelectProps> = ({
       <Button
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 w-full max-w-[220px] justify-between text-left font-normal"
+        className="h-9 w-full max-w-[200px] justify-between text-left font-normal"
       >
         <span className={selectedCount === 0 ? 'text-muted-foreground' : ''}>
           {selectedCount === 0 ? placeholder : `${selectedCount} role(s) selected`}
