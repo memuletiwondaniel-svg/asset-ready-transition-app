@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Printer, Download, CheckCircle2, Clock, Lock, AlertTriangle } from 'lucide-react';
+import { Printer, Download, CheckCircle2, Clock, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -28,7 +28,6 @@ interface SOFCertificateProps {
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
-  previewMode?: boolean;
 }
 
 export const SOFCertificate: React.FC<SOFCertificateProps> = ({
@@ -40,14 +39,10 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   approvers,
   issuedAt,
   status,
-  previewMode = false,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const certificateText = getCertificateText(pssrReason);
   const isProcessSafetyIncidence = pssrReason.toLowerCase().includes('process safety incidence');
-  
-  // Show as draft if in preview mode or not yet issued
-  const isDraft = previewMode || status !== 'ISSUED';
 
   const handlePrint = () => {
     window.print();
@@ -80,7 +75,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       const imgY = 10;
 
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`${certificateNumber}${isDraft ? '-DRAFT' : ''}.pdf`);
+      pdf.save(`${certificateNumber}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
@@ -99,59 +94,27 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
     }
   };
 
-  const getSignatureText = (approver: SOFApprover) => {
-    if (approver.signature_data) return null;
-    if (approver.status === 'LOCKED') return 'Locked';
-    if (isDraft) return 'Not yet signed';
-    return 'Awaiting signature';
-  };
-
   return (
     <div className="space-y-4">
-      {/* Preview Banner */}
-      {isDraft && (
-        <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg p-3 flex items-center gap-3 print:hidden">
-          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-amber-400">Preview Mode</p>
-            <p className="text-sm text-amber-300/80">
-              This is a preview of the certificate. Final certificate will be generated upon all approvals.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Action Buttons */}
       <div className="flex justify-end gap-2 print:hidden">
         <Button variant="outline" onClick={handlePrint}>
           <Printer className="w-4 h-4 mr-2" />
-          Print {isDraft ? 'Draft' : ''}
+          Print
         </Button>
         <Button onClick={handleExportPDF}>
           <Download className="w-4 h-4 mr-2" />
-          Export {isDraft ? 'Draft ' : ''}PDF
+          Export PDF
         </Button>
       </div>
 
       {/* Certificate */}
       <Card 
         ref={certificateRef} 
-        className="bg-white text-black p-8 max-w-4xl mx-auto print:shadow-none print:border-2 print:border-black relative overflow-hidden"
+        className="bg-white text-black p-8 max-w-4xl mx-auto print:shadow-none print:border-2 print:border-black"
       >
-        {/* Draft Watermark */}
-        {isDraft && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <div 
-              className="text-gray-300 text-[120px] font-bold tracking-widest opacity-20 select-none"
-              style={{ transform: 'rotate(-35deg)' }}
-            >
-              DRAFT
-            </div>
-          </div>
-        )}
-
         {/* Header with Logo */}
-        <div className="text-center border-b-2 border-black pb-6 mb-6 relative z-20">
+        <div className="text-center border-b-2 border-black pb-6 mb-6">
           <img 
             src="/images/bgc-logo.png" 
             alt="Basrah Gas Company Logo" 
@@ -162,15 +125,10 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           <div className="w-full h-1 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-4" />
           <h3 className="text-3xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
           <p className="text-sm text-gray-600 mt-2">Certificate No: {certificateNumber}</p>
-          {isDraft && (
-            <Badge className="mt-2 bg-amber-100 text-amber-700 border-amber-300">
-              DRAFT - PENDING APPROVAL
-            </Badge>
-          )}
         </div>
 
         {/* Facility Information */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 relative z-20">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-gray-800 mb-3">Facility Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             {plantName && (
@@ -199,7 +157,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
 
         {/* Certificate Text */}
-        <div className="mb-8 relative z-20">
+        <div className="mb-8">
           <p className="text-gray-800 leading-relaxed mb-4">
             {isProcessSafetyIncidence 
               ? "This Statement of Fitness confirms that following a process safety incidence at the above-referenced facility:"
@@ -227,7 +185,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
 
         {/* Approvals Section */}
-        <div className="border-t-2 border-gray-300 pt-6 relative z-20">
+        <div className="border-t-2 border-gray-300 pt-6">
           <h4 className="font-bold text-gray-800 mb-4 text-lg">APPROVALS</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {approvers.sort((a, b) => a.approver_level - b.approver_level).map((approver) => (
@@ -251,7 +209,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                     />
                   ) : (
                     <span className="text-gray-400 text-sm italic">
-                      {getSignatureText(approver)}
+                      {approver.status === 'LOCKED' ? 'Locked' : 'Awaiting signature'}
                     </span>
                   )}
                 </div>
@@ -278,22 +236,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500 relative z-20">
-          {isDraft ? (
-            <>
-              <p className="font-medium text-amber-600">
-                This is a preview copy. Final certificate will be generated upon all approvals.
-              </p>
-              <p className="mt-1">Generated on: {format(new Date(), 'dd MMMM yyyy, HH:mm:ss')}</p>
-            </>
-          ) : (
-            <>
-              {issuedAt && (
-                <p>Issued on: {format(new Date(issuedAt), 'dd MMMM yyyy, HH:mm:ss')}</p>
-              )}
-              <p className="mt-1">This document is electronically generated and valid without physical signature.</p>
-            </>
+        <div className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+          {issuedAt && (
+            <p>Issued on: {format(new Date(issuedAt), 'dd MMMM yyyy, HH:mm:ss')}</p>
           )}
+          <p className="mt-1">This document is electronically generated and valid without physical signature.</p>
         </div>
       </Card>
 
