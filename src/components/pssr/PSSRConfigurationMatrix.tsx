@@ -530,17 +530,18 @@ const PSSRConfigurationMatrix: React.FC = () => {
                         isDirty={config.isDirty}
                       >
                         {/* Reason Name with Order Number - Inline Editable */}
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
+                        <TableCell className="font-medium overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0">
                             <span className="text-xs font-semibold text-muted-foreground shrink-0">#{index + 1}</span>
-                            <InlineEditableCell
-                              value={config.reason_name}
-                              onSave={(newValue) => handleInlineEditName(config.reason_id, newValue)}
-                              placeholder="Enter reason name"
-                              maxLength={100}
-                              validate={validateName}
-                              className="flex-1"
-                            />
+                            <div className="flex-1 min-w-0 truncate">
+                              <InlineEditableCell
+                                value={config.reason_name}
+                                onSave={(newValue) => handleInlineEditName(config.reason_id, newValue)}
+                                placeholder="Enter reason name"
+                                maxLength={100}
+                                validate={validateName}
+                              />
+                            </div>
                             {config.isDirty && (
                               <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
                                 Modified
