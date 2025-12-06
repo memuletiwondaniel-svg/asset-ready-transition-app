@@ -502,22 +502,22 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[30%]">
                         PSSR Reason
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[16%]">
                         Checklist
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
                         PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
                         SoF Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%] text-right pr-4">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%] text-right pr-4">
                         
                       </TableHead>
                     </TableRow>
@@ -533,7 +533,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                         <TableCell className="font-medium overflow-hidden">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-xs font-semibold text-muted-foreground shrink-0">#{index + 1}</span>
-                            <div className="flex-1 min-w-0 truncate">
+                            <div className="flex-1 min-w-0">
                               <InlineEditableCell
                                 value={config.reason_name}
                                 onSave={(newValue) => handleInlineEditName(config.reason_id, newValue)}
