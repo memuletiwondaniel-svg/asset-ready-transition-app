@@ -22,6 +22,7 @@ export interface ConfigurationWithDetails extends PSSRReasonConfiguration {
     id: string;
     name: string;
     is_active: boolean;
+    display_order: number;
   } | null;
   checklist: {
     id: string;
@@ -47,7 +48,7 @@ export const usePSSRReasonConfigurations = () => {
       // Get all reasons for joining
       const { data: reasons, error: reasonsError } = await supabase
         .from('pssr_reasons')
-        .select('id, name, is_active')
+        .select('id, name, is_active, display_order')
         .order('display_order');
 
       if (reasonsError) throw reasonsError;

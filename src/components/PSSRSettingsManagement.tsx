@@ -63,7 +63,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
   const queryClient = useQueryClient();
   const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('reasons');
+  const [activeTab, setActiveTab] = useState('configuration');
   
   const t = getCurrentTranslations(currentLanguage);
   
@@ -543,25 +543,21 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
            content.some(item => item.toLowerCase().includes(query));
   };
 
-  const showReasonsTab = tabMatches('reasons', allReasons.map(r => r.name));
   const showTieInTab = tabMatches('tie-in scopes', allTieInScopes.map(s => s.code + s.description));
   const showMOCTab = tabMatches('moc scopes', allMOCScopes.map(s => s.name));
 
   // Auto-switch to first visible tab if current tab is hidden by search
   React.useEffect(() => {
     if (searchQuery.trim()) {
-      if (activeTab === 'reasons' && !showReasonsTab) {
-        if (showTieInTab) setActiveTab('tie-in');
-        else if (showMOCTab) setActiveTab('moc');
-      } else if (activeTab === 'tie-in' && !showTieInTab) {
-        if (showReasonsTab) setActiveTab('reasons');
-        else if (showMOCTab) setActiveTab('moc');
+      if (activeTab === 'tie-in' && !showTieInTab) {
+        if (showMOCTab) setActiveTab('moc');
+        else setActiveTab('configuration');
       } else if (activeTab === 'moc' && !showMOCTab) {
-        if (showReasonsTab) setActiveTab('reasons');
-        else if (showTieInTab) setActiveTab('tie-in');
+        if (showTieInTab) setActiveTab('tie-in');
+        else setActiveTab('configuration');
       }
     }
-  }, [searchQuery, activeTab, showReasonsTab, showTieInTab, showMOCTab]);
+  }, [searchQuery, activeTab, showTieInTab, showMOCTab]);
 
   return (
     <div className="flex-1 overflow-auto">
@@ -609,7 +605,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 {searchQuery && (
                   <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg animate-scale-in mt-4">
                     <p className="text-sm text-foreground font-medium">
-                      Found {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length} {[showReasonsTab, showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} matching your search
+                      Found {[showTieInTab, showMOCTab].filter(Boolean).length} {[showTieInTab, showMOCTab].filter(Boolean).length === 1 ? 'section' : 'sections'} matching your search
                     </p>
                   </div>
                 )}
@@ -618,14 +614,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Modern Tab Navigation */}
             <TabsList className="inline-flex h-12 w-full overflow-x-auto bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm gap-1 scrollbar-none">
-              {showReasonsTab && (
-                <TabsTrigger 
-                  value="reasons" 
-                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-                >
-                  PSSR Reasons
-                </TabsTrigger>
-              )}
+              <TabsTrigger 
+                value="configuration"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                <Cog className="h-4 w-4 mr-1.5" />
+                Matrix
+              </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
@@ -642,14 +637,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   MOC Scopes
                 </TabsTrigger>
               )}
-              <TabsTrigger 
-                value="configuration"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                <Cog className="h-4 w-4 mr-1.5" />
-                Matrix
-              </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="checklists"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
@@ -671,178 +659,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 Topics
               </TabsTrigger>
             </TabsList>
-
-          {/* PSSR Reasons Tab */}
-          <TabsContent value="reasons" className="animate-fade-in-up">
-            <Card className="fluent-card border-border/40">
-              <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <CardTitle className="text-2xl font-semibold">PSSR Reasons</CardTitle>
-                    <CardDescription className="text-base">Manage available reasons for creating a PSSR</CardDescription>
-                  </div>
-                  <Button 
-                    onClick={() => setEditDialog({ open: true, type: 'reason', item: {} })}
-                    className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Reason
-                  </Button>
-                </div>
-                {selectedReasons.size > 0 && (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-6 p-4 bg-accent/10 border border-accent/20 rounded-xl animate-scale-in">
-                    <span className="text-sm font-medium text-foreground">
-                      {selectedReasons.size} item{selectedReasons.size !== 1 ? 's' : ''} selected
-                    </span>
-                    <div className="flex flex-wrap gap-2 sm:ml-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('reason', true)}
-                        className="fluent-button shadow-fluent-xs"
-                      >
-                        <Check className="h-4 w-4 mr-1.5" />
-                        Enable
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkToggleActive('reason', false)}
-                        className="fluent-button shadow-fluent-xs"
-                      >
-                        <X className="h-4 w-4 mr-1.5" />
-                        Disable
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => openBulkDeleteDialog('reason')}
-                        className="fluent-button shadow-fluent-xs"
-                      >
-                        <Trash className="h-4 w-4 mr-1.5" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent className="p-0">
-                {allReasons.length === 0 ? (
-                  <div className="p-6">
-                    <TableSkeleton rows={5} columns={6} />
-                  </div>
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={(event) => handleDragStart(event, 'reason')}
-                    onDragEnd={(event) => handleDragEnd(event, 'reason')}
-                  >
-                    <SortableContext
-                      items={allReasons.map(r => r.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-b border-border/40 hover:bg-transparent">
-                              <TableHead className="w-14 pl-6">
-                                <Checkbox
-                                  checked={allReasons.length > 0 && selectedReasons.size === allReasons.length}
-                                  onCheckedChange={(checked) => toggleSelectAll('reason', checked as boolean)}
-                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                />
-                              </TableHead>
-                              <TableHead className="w-14"></TableHead>
-                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</TableHead>
-                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</TableHead>
-                              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right pr-6">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {allReasons.map((reason, index) => (
-                              <SortableRow key={reason.id} id={reason.id}>
-                                <TableCell className="pl-6">
-                                  <Checkbox
-                                    checked={selectedReasons.has(reason.id)}
-                                    onCheckedChange={() => toggleSelectItem('reason', reason.id)}
-                                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                  />
-                                </TableCell>
-                                <TableCell className="text-sm font-semibold text-muted-foreground">
-                                  #{reason.display_order}
-                                </TableCell>
-                                <TableCell className="font-medium text-foreground">
-                                  <InlineEditableCell
-                                    value={reason.name}
-                                    onSave={(newValue) => handleInlineEdit('reason', reason.id, 'name', newValue)}
-                                    placeholder="Enter reason name"
-                                    maxLength={100}
-                                    validate={validateName}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge 
-                                        variant={reason.is_active ? "default" : "secondary"}
-                                        className="cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shadow-fluent-xs font-medium"
-                                        onClick={() => handleToggleActive('reason', reason.id, reason.is_active)}
-                                      >
-                                        {reason.is_active ? 'Active' : 'Inactive'}
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="bg-popover border shadow-fluent-md">
-                                      <p className="text-sm">Click to {reason.is_active ? 'disable' : 'enable'}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TableCell>
-                                <TableCell className="text-right pr-6">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => setEditDialog({ open: true, type: 'reason', item: reason })}
-                                          className="h-9 w-9 hover:bg-accent/50 transition-all duration-200"
-                                        >
-                                          <Edit2 className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="bg-popover border shadow-fluent-md">
-                                        <p className="text-sm">Edit reason</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => setDeleteDialog({ open: true, type: 'reason', id: reason.id })}
-                                          className="h-9 w-9 text-destructive hover:bg-destructive/10 transition-all duration-200"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="bg-popover border shadow-fluent-md">
-                                        <p className="text-sm">Delete reason</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </div>
-                                </TableCell>
-                              </SortableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                  </SortableContext>
-                </DndContext>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Tie-in Scopes Tab */}
           <TabsContent value="tie-in" className="animate-fade-in-up">
