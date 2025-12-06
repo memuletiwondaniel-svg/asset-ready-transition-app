@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -502,19 +502,19 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[30%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[38%]">
                         PSSR Reason
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[16%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[14%]">
                         Checklist
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
                         PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
                         SoF Approvers
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%] text-right pr-4">
@@ -835,13 +835,31 @@ const RoleMultiSelect: React.FC<RoleMultiSelectProps> = ({
   disabledTooltip,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const selectedCount = selectedRoleIds.length;
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <Button
         variant="outline"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
         className="h-9 w-full justify-between text-left font-normal"
       >
         <span className={selectedCount === 0 ? 'text-muted-foreground' : ''}>
@@ -850,55 +868,47 @@ const RoleMultiSelect: React.FC<RoleMultiSelectProps> = ({
       </Button>
 
       {isOpen && (
-        <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute z-50 mt-1 w-64 bg-popover border border-border rounded-md shadow-lg">
-            <ScrollArea className="max-h-[200px]">
-              <div className="p-2 space-y-1">
-                {roles.map((role) => {
-                  const isDisabled = disabledRoleIds.includes(role.id);
-                  const isSelected = selectedRoleIds.includes(role.id);
+        <div className="absolute z-50 mt-1 w-64 bg-popover border border-border rounded-md shadow-lg">
+          <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
+            {roles.map((role) => {
+              const isDisabled = disabledRoleIds.includes(role.id);
+              const isSelected = selectedRoleIds.includes(role.id);
 
-                  return (
-                    <Tooltip key={role.id}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                            isDisabled 
-                              ? 'opacity-50 cursor-not-allowed bg-muted/30' 
-                              : 'hover:bg-accent'
-                          }`}
-                          onClick={() => !isDisabled && onToggle(role.id)}
-                        >
-                          <Checkbox
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            className="pointer-events-none"
-                          />
-                          <span className="text-sm flex-1">{role.name}</span>
-                          {isDisabled && (
-                            <Lock className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      {isDisabled && disabledTooltip && (
-                        <TooltipContent side="right">
-                          <p>{disabledTooltip}</p>
-                        </TooltipContent>
+              return (
+                <Tooltip key={role.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
+                        isDisabled 
+                          ? 'opacity-50 cursor-not-allowed bg-muted/30' 
+                          : 'hover:bg-accent'
+                      }`}
+                      onClick={() => !isDisabled && onToggle(role.id)}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        className="pointer-events-none"
+                      />
+                      <span className="text-sm flex-1">{role.name}</span>
+                      {isDisabled && (
+                        <Lock className="h-3 w-3 text-muted-foreground" />
                       )}
-                    </Tooltip>
-                  );
-                })}
-                {roles.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-2">No roles available</p>
-                )}
-              </div>
-            </ScrollArea>
+                    </div>
+                  </TooltipTrigger>
+                  {isDisabled && disabledTooltip && (
+                    <TooltipContent side="right">
+                      <p>{disabledTooltip}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              );
+            })}
+            {roles.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-2">No roles available</p>
+            )}
           </div>
-        </>
+        </div>
       )}
 
       {/* Display selected roles as badges */}
