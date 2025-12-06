@@ -508,19 +508,19 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[44%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[34%]">
                         PSSR Reason
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[16%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
                         Checklist
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[17%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
                         PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[17%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
                         SoF Approvers
                       </TableHead>
                     </TableRow>
@@ -541,7 +541,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                               setReasonDetailsDialog({ open: true, config });
                             }}
                           >
-                            <span className="text-xs font-semibold text-muted-foreground shrink-0">#{index + 1}</span>
+                            <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
                             <span className="flex-1 min-w-0 whitespace-normal break-words">
                               {config.reason_name}
                             </span>
