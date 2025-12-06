@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,7 @@ import UserProfileDropdown from './admin/UserProfileDropdown';
 import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
+import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
 import {
   DndContext,
   closestCenter,
@@ -613,7 +614,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Modern Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm">
+            <TabsList className="grid w-full grid-cols-4 h-12 bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm">
               {showReasonsTab && (
                 <TabsTrigger 
                   value="reasons" 
@@ -638,6 +639,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   MOC Scopes
                 </TabsTrigger>
               )}
+              <TabsTrigger 
+                value="configuration"
+                className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                <Cog className="h-4 w-4 mr-1.5" />
+                Configuration Matrix
+              </TabsTrigger>
             </TabsList>
 
           {/* PSSR Reasons Tab */}
@@ -1159,6 +1167,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 </DndContext>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Configuration Matrix Tab */}
+          <TabsContent value="configuration" className="animate-fade-in-up">
+            <PSSRConfigurationMatrix />
           </TabsContent>
         </Tabs>
 

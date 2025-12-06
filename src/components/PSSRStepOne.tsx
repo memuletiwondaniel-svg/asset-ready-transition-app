@@ -5,16 +5,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { FileText, Building2, User, Calendar, Plus } from 'lucide-react';
+import { FileText, Building2, User, Calendar, Plus, CheckCircle2, Info } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import ProjectSelector from './ProjectSelector';
 import ProjectDetails from './ProjectDetails';
 import FileUploadSection from './FileUploadSection';
 import { AddProjectModal } from './project/AddProjectModal';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
+import { usePSSRConfigurationByReasonName } from '@/hooks/usePSSRReasonConfiguration';
 import { useProjectTeamMembers, useProjectMilestones } from '@/hooks/useProjects';
 interface FormData {
   asset: string;
@@ -33,6 +35,11 @@ interface FormData {
     projectTeam: {};
     hsse: {};
   };
+  // Configuration-based fields
+  configuredChecklistId?: string;
+  configuredChecklistName?: string;
+  pssrApproverRoles?: Array<{ id: string; name: string }>;
+  sofApproverRoles?: Array<{ id: string; name: string }>;
 }
 interface Project {
   id: string;
@@ -102,11 +109,28 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
     data: mocScopes = []
   } = usePSSRMOCScopes();
 
+  // Fetch configuration based on selected reason
+  const { data: reasonConfig } = usePSSRConfigurationByReasonName(formData.reason || null);
+
   // Update selected reason ID when formData.reason changes
   useEffect(() => {
     const selectedReason = pssrReasons.find(r => r.name === formData.reason);
     setSelectedReasonId(selectedReason?.id || null);
   }, [formData.reason, pssrReasons]);
+
+  // Apply configuration when reason changes
+  useEffect(() => {
+    if (reasonConfig) {
+      setFormData(prev => ({
+        ...prev,
+        configuredChecklistId: reasonConfig.checklist?.id || undefined,
+        configuredChecklistName: reasonConfig.checklist?.name || undefined,
+        pssrApproverRoles: reasonConfig.pssrApproverRoles || [],
+        sofApproverRoles: reasonConfig.sofApproverRoles || [],
+      }));
+    }
+  }, [reasonConfig, setFormData]);
+
   const handleProjectUpdate = (updatedProject: Project) => {
     // Project update will be handled by parent component
     console.log('Project updated:', updatedProject);
@@ -153,6 +177,27 @@ const PSSRStepOne: React.FC<PSSRStepOneProps> = ({
                     </SelectItem>)}
                 </SelectContent>
               </Select>
+
+              {/* Show pre-configured info when reason is selected */}
+              {formData.reason && reasonConfig && (reasonConfig.checklist || reasonConfig.pssrApproverRoles?.length > 0 || reasonConfig.sofApproverRoles?.length > 0) && (
+                <Alert className="mt-3 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    <strong>Pre-configured:</strong> Based on this reason, the following will be auto-assigned:
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {reasonConfig.checklist && (
+                        <li>• <strong>Checklist:</strong> {reasonConfig.checklist.name}</li>
+                      )}
+                      {reasonConfig.pssrApproverRoles?.length > 0 && (
+                        <li>• <strong>PSSR Approvers:</strong> {reasonConfig.pssrApproverRoles.map(r => r.name).join(', ')}</li>
+                      )}
+                      {reasonConfig.sofApproverRoles?.length > 0 && (
+                        <li>• <strong>SoF Approvers:</strong> {reasonConfig.sofApproverRoles.map(r => r.name).join(', ')}</li>
+                      )}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             {/* Sub-options for "Restart following plant changes or modifications" */}
