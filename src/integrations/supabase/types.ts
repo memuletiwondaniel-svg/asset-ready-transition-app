@@ -3243,6 +3243,119 @@ export type Database = {
         }
         Relationships: []
       }
+      sof_approvers: {
+        Row: {
+          approved_at: string | null
+          approver_level: number
+          approver_name: string
+          approver_role: string
+          comments: string | null
+          created_at: string
+          id: string
+          pssr_id: string
+          signature_data: string | null
+          sof_certificate_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_level?: number
+          approver_name: string
+          approver_role: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          pssr_id: string
+          signature_data?: string | null
+          sof_certificate_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approver_level?: number
+          approver_name?: string
+          approver_role?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          pssr_id?: string
+          signature_data?: string | null
+          sof_certificate_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sof_approvers_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sof_approvers_sof_certificate_id_fkey"
+            columns: ["sof_certificate_id"]
+            isOneToOne: false
+            referencedRelation: "sof_certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sof_certificates: {
+        Row: {
+          certificate_number: string
+          certificate_text: string
+          created_at: string
+          facility_name: string | null
+          id: string
+          issued_at: string | null
+          plant_name: string | null
+          project_name: string | null
+          pssr_id: string
+          pssr_reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          certificate_number: string
+          certificate_text: string
+          created_at?: string
+          facility_name?: string | null
+          id?: string
+          issued_at?: string | null
+          plant_name?: string | null
+          project_name?: string | null
+          pssr_id: string
+          pssr_reason: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          certificate_number?: string
+          certificate_text?: string
+          created_at?: string
+          facility_name?: string | null
+          id?: string
+          issued_at?: string | null
+          plant_name?: string | null
+          project_name?: string | null
+          pssr_id?: string
+          pssr_reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sof_certificates_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: true
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       station: {
         Row: {
           created_at: string
@@ -3578,6 +3691,30 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_signatures: {
+        Row: {
+          created_at: string
+          id: string
+          signature_data: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          signature_data: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          signature_data?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_tasks: {
         Row: {
