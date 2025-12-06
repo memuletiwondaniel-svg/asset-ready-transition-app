@@ -617,11 +617,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Modern Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-7 h-12 bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm">
+            <TabsList className="inline-flex h-12 w-full overflow-x-auto bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm gap-1 scrollbar-none">
               {showReasonsTab && (
                 <TabsTrigger 
                   value="reasons" 
-                  className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
                 >
                   PSSR Reasons
                 </TabsTrigger>
@@ -629,7 +629,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
-                  className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
                 >
                   Tie-in Scopes
                 </TabsTrigger>
@@ -637,35 +637,35 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               {showMOCTab && (
                 <TabsTrigger 
                   value="moc"
-                  className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                  className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
                 >
                   MOC Scopes
                 </TabsTrigger>
               )}
               <TabsTrigger 
                 value="configuration"
-                className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <Cog className="h-4 w-4 mr-1.5" />
                 Matrix
               </TabsTrigger>
               <TabsTrigger 
                 value="checklists"
-                className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <ClipboardList className="h-4 w-4 mr-1.5" />
                 Checklists
               </TabsTrigger>
               <TabsTrigger 
                 value="categories"
-                className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <Users className="h-4 w-4 mr-1.5" />
                 Categories
               </TabsTrigger>
               <TabsTrigger 
                 value="topics"
-                className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <BookOpen className="h-4 w-4 mr-1.5" />
                 Topics
