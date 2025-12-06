@@ -12,6 +12,7 @@ interface InlineEditableCellProps {
   className?: string;
   maxLength?: number;
   validate?: (value: string) => { valid: boolean; error?: string };
+  wrap?: boolean;
 }
 
 export const InlineEditableCell: React.FC<InlineEditableCellProps> = ({
@@ -22,6 +23,7 @@ export const InlineEditableCell: React.FC<InlineEditableCellProps> = ({
   className,
   maxLength,
   validate,
+  wrap = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -102,8 +104,10 @@ export const InlineEditableCell: React.FC<InlineEditableCellProps> = ({
         )}
         onClick={() => setIsEditing(true)}
       >
-        <span className="truncate">{value || <span className="text-muted-foreground italic">{placeholder}</span>}</span>
-        <span className="ml-2 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground transition-opacity">
+        <span className={wrap ? "whitespace-normal break-words" : "truncate"}>
+          {value || <span className="text-muted-foreground italic">{placeholder}</span>}
+        </span>
+        <span className="ml-2 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground transition-opacity shrink-0">
           Click to edit
         </span>
       </div>
