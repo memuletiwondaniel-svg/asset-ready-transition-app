@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useChecklistItems } from '@/hooks/useChecklistItems';
 import { usePSSRReasons, usePSSRTieInScopes, usePSSRMOCScopes } from '@/hooks/usePSSRReasons';
-import { useUsers } from '@/hooks/useUsers';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { EditChecklistItemDialog } from '@/components/checklist/EditChecklistItemDialog';
@@ -67,7 +67,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
   const { data: pssrReasons = [] } = usePSSRReasons();
   const { data: tieInScopes = [] } = usePSSRTieInScopes();
   const { data: mocScopes = [] } = usePSSRMOCScopes();
-  const { users } = useUsers();
+  const { data: profileUsers = [], isLoading: usersLoading } = useProfileUsers();
   
   const [formData, setFormData] = useState<NewChecklistData>({
     name: '',
@@ -87,8 +87,8 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
   }, [pssrReasons]);
 
   const activeUsers = useMemo(() => {
-    return users?.filter(u => u.status === 'active') || [];
-  }, [users]);
+    return profileUsers || [];
+  }, [profileUsers]);
 
   const categories = useMemo(() => {
     const categoryMap = new Map();
@@ -231,7 +231,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
     switch(step) {
       case 1: return 'Basic Information';
       case 2: return 'Select PSSR Items';
-      case 3: return 'Select Approvers';
+      case 3: return 'Checklist Template Approvers';
       case 4: return 'Review & Confirm';
       default: return '';
     }
@@ -349,7 +349,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
       {/* Step 2: Select Items */}
       {currentStep === 2 && (
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 280px)', maxHeight: '600px' }}>
           <div className="space-y-3 pb-4 px-6 flex-shrink-0">
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -390,7 +390,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
 
           <Separator className="flex-shrink-0" />
 
-          <ScrollArea className="flex-1 min-h-0">
+          <ScrollArea className="flex-1 overflow-auto" style={{ height: 'calc(100% - 100px)' }}>
             <div className="space-y-2 px-6 py-4 pb-6">
               {filteredItems.length === 0 ? (
                 <div className="text-center py-12">
@@ -486,7 +486,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
         </div>
       )}
 
-      {/* Step 3: Select Approvers */}
+      {/* Step 3: Checklist Template Approvers */}
       {currentStep === 3 && (
         <ScrollArea className="flex-1 px-6">
           <div className="space-y-6 pb-6">
@@ -494,20 +494,27 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
                 <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                  Select Approvers <span className="text-destructive">*</span>
+                  Checklist Template Approvers <span className="text-destructive">*</span>
                 </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Select authorities who can approve this checklist template for organizational use
+                </p>
               </div>
               <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-primary/30 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Add users who need to approve this checklist
+                    Add users who need to approve this checklist template
                   </p>
                   <Badge variant="secondary" className="text-xs font-semibold">
                     {formData.approvers.length} selected
                   </Badge>
                 </div>
 
-                {activeUsers.length === 0 ? (
+                {usersLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                  </div>
+                ) : activeUsers.length === 0 ? (
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
                     <p className="text-sm text-amber-700 dark:text-amber-300">
                       <UserCheck className="w-4 h-4 inline mr-2" />
@@ -528,14 +535,14 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                     <SelectContent className="max-h-[300px] z-[100] bg-popover">
                       {activeUsers.map((user) => (
                         <SelectItem 
-                          key={user.id} 
-                          value={user.id}
-                          disabled={formData.approvers.includes(user.id)}
+                          key={user.user_id} 
+                          value={user.user_id}
+                          disabled={formData.approvers.includes(user.user_id)}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{user.firstName} {user.lastName}</span>
-                            {user.email && (
-                              <span className="text-xs text-muted-foreground">({user.email})</span>
+                            <span className="font-medium">{user.full_name}</span>
+                            {user.role && (
+                              <span className="text-xs text-muted-foreground">({user.role})</span>
                             )}
                           </div>
                         </SelectItem>
@@ -548,10 +555,10 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 {formData.approvers.length > 0 && (
                   <div className="space-y-2 mt-4">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Selected Approvers (Order matters)
+                      Selected Template Approvers (Order matters)
                     </p>
                     {formData.approvers.map((approverId, index) => {
-                      const user = activeUsers.find(u => u.id === approverId);
+                      const user = activeUsers.find(u => u.user_id === approverId);
                       if (!user) return null;
                       return (
                         <Card key={approverId} className="border-primary/20 bg-primary/5">
@@ -561,13 +568,13 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                                 {index + 1}
                               </Badge>
                               <div className="flex-1">
-                                <p className="font-semibold text-sm">{user.firstName} {user.lastName}</p>
+                                <p className="font-semibold text-sm">{user.full_name}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  {user.email && <span>{user.email}</span>}
-                                  {user.company && (
+                                  {user.role && <span>{user.role}</span>}
+                                  {user.position && (
                                     <>
                                       <span>•</span>
-                                      <span>{user.company}</span>
+                                      <span>{user.position}</span>
                                     </>
                                   )}
                                 </div>

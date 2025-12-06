@@ -10,8 +10,6 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
-import ManageChecklistPage from "./ManageChecklistPage";
-import ProjectManagementPage from "./project/ProjectManagementPage";
 import PSSRSettingsManagement from "./PSSRSettingsManagement";
 import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
@@ -74,9 +72,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       case 'users':
         setActiveView('users');
         break;
-      case 'projects':
-        setActiveView('projects');
-        break;
       case 'pssr':
         navigate('/pssr');
         break;
@@ -84,7 +79,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         navigate(`/${section}`);
     }
   };
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'checklist' | 'projects' | 'pssr-settings' | 'activity-log'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [userStatsAnimating, setUserStatsAnimating] = useState(false);
@@ -226,37 +221,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }, {
     id: 'pssr-settings',
     title: 'PSSR Configuration',
-    description: 'Manage PSSR reasons, tie-in scopes, and MOC options',
+    description: 'Manage PSSR reasons, configuration matrix, checklists, categories, and topics',
     icon: Settings,
     gradient: 'from-emerald-500 to-emerald-600',
-    tooltip: 'Configure PSSR reasons, tie-in scopes, and Management of Change settings',
+    tooltip: 'Configure PSSR reasons, tie-in scopes, MOC settings, checklists, and approver matrix',
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('pssr-settings')
-  }, {
-    id: 'checklist',
-    title: 'Checklist Management',
-    description: 'Manage checklists, categories, topics, and translations',
-    icon: ClipboardList,
-    gradient: 'from-purple-500 to-purple-600',
-    tooltip: 'Configure checklists, categories, topics, and translation settings',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('checklist')
-  }, {
-    id: 'projects',
-    title: t.manageProject,
-    description: t.manageProjectDesc,
-    icon: FolderOpen,
-    gradient: 'from-orange-500 to-orange-600',
-    tooltip: 'Manage projects, milestones, team members, and documents',
-    stats: {
-      total: projectStats.total,
-      label: 'projects',
-      isAnimating: projectStatsAnimating
-    },
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('projects')
   }, {
     id: 'activity-log',
     title: 'Activity Log',
@@ -311,18 +282,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           onClick: undefined
         });
         break;
-      case 'checklist':
-        crumbs.push({
-          label: 'Admin Tools',
-          icon: Sliders,
-          onClick: () => setActiveView('dashboard')
-        });
-        crumbs.push({
-          label: 'Checklist Management',
-          icon: ClipboardList,
-          onClick: undefined
-        });
-        break;
       case 'pssr-settings':
         crumbs.push({
           label: 'Admin Tools',
@@ -332,18 +291,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         crumbs.push({
           label: 'PSSR Configuration',
           icon: Settings,
-          onClick: undefined
-        });
-        break;
-      case 'projects':
-        crumbs.push({
-          label: 'Admin Tools',
-          icon: Sliders,
-          onClick: () => setActiveView('dashboard')
-        });
-        crumbs.push({
-          label: 'Project Management',
-          icon: FolderOpen,
           onClick: undefined
         });
         break;
@@ -372,27 +319,11 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </div>
       </div>;
   }
-  if (activeView === 'checklist') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-y-auto">
-          <ManageChecklistPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
-        </div>
-      </div>;
-  }
   if (activeView === 'pssr-settings') {
     return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
         <div className="flex-1 overflow-y-auto">
           <PSSRSettingsManagement onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
-        </div>
-      </div>;
-  }
-  if (activeView === 'projects') {
-    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
-      <OrshSidebar userName={userProfile?.full_name || 'User'} userTitle={userProfile?.position || 'Team Member'} userAvatar={userProfile?.avatar_url || ''} language={language} onLanguageChange={setLanguage} currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
-        <div className="flex-1 overflow-y-auto">
-          <ProjectManagementPage onBack={() => setActiveView('dashboard')} selectedLanguage={language} translations={t} />
         </div>
       </div>;
   }
