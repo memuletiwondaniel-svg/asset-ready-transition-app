@@ -540,6 +540,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 placeholder="Enter reason name"
                                 maxLength={100}
                                 validate={validateName}
+                                wrap={true}
                               />
                             </div>
                             {config.isDirty && (
