@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, GripVertical, Trash2 } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2 } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useChecklists } from '@/hooks/useChecklists';
@@ -77,21 +77,15 @@ const SortableRow: React.FC<SortableRowProps> = ({ id, children, isDirty }) => {
     <TableRow
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       className={`
+        cursor-grab active:cursor-grabbing
         transition-all duration-200 hover:bg-accent/30
         ${isDirty ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}
         ${isDragging ? 'relative z-50 shadow-2xl scale-[1.02] bg-card' : ''}
       `}
     >
-      <TableCell className="w-12">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-2 rounded-md hover:bg-accent/50 transition-all duration-200"
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-        </div>
-      </TableCell>
       {children}
     </TableRow>
   );
@@ -505,30 +499,26 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 items={sortedConfigs.map(c => c.reason_id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Table>
+                <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-16">
-                        Order
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
                         PSSR Reason
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[10%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px]">
-                        Assigned Checklist
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                        Checklist
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[220px]">
-                        PSSR Approver Roles
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
+                        PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[220px]">
-                        SoF Approver Roles
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
+                        SoF Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-16 text-right pr-4">
-                        Actions
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%] text-right pr-4">
+                        
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -539,20 +529,17 @@ const PSSRConfigurationMatrix: React.FC = () => {
                         id={config.reason_id}
                         isDirty={config.isDirty}
                       >
-                        {/* Order Number */}
-                        <TableCell className="text-sm font-semibold text-muted-foreground">
-                          #{index + 1}
-                        </TableCell>
-
-                        {/* Reason Name - Inline Editable */}
+                        {/* Reason Name with Order Number - Inline Editable */}
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-muted-foreground shrink-0">#{index + 1}</span>
                             <InlineEditableCell
                               value={config.reason_name}
                               onSave={(newValue) => handleInlineEditName(config.reason_id, newValue)}
                               placeholder="Enter reason name"
                               maxLength={100}
                               validate={validateName}
+                              className="flex-1"
                             />
                             {config.isDirty && (
                               <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
@@ -586,7 +573,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             value={config.checklist_id || 'none'}
                             onValueChange={(value) => handleChecklistChange(config.reason_id, value)}
                           >
-                            <SelectTrigger className="h-9 w-full max-w-[200px]">
+                            <SelectTrigger className="h-9 w-full">
                               <SelectValue placeholder="Select checklist" />
                             </SelectTrigger>
                             <SelectContent>
@@ -655,7 +642,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       className="hover:bg-accent/30 cursor-pointer border-dashed border-t"
                       onClick={() => setShowAddReasonDialog(true)}
                     >
-                      <TableCell colSpan={8} className="py-4">
+                      <TableCell colSpan={6} className="py-4">
                         <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                           <Plus className="h-4 w-4" />
                           <span className="text-sm font-medium">Add new PSSR reason...</span>
@@ -665,7 +652,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
                     {sortedConfigs.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
                           <p className="mb-4">No PSSR reasons configured yet.</p>
                           <Button 
@@ -853,7 +840,7 @@ const RoleMultiSelect: React.FC<RoleMultiSelectProps> = ({
       <Button
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 w-full max-w-[200px] justify-between text-left font-normal"
+        className="h-9 w-full justify-between text-left font-normal"
       >
         <span className={selectedCount === 0 ? 'text-muted-foreground' : ''}>
           {selectedCount === 0 ? placeholder : `${selectedCount} role(s) selected`}
