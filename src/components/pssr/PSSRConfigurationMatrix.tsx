@@ -502,13 +502,13 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
                         PSSR Reason
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[10%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
                         Checklist
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
@@ -517,7 +517,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[22%]">
                         SoF Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[6%] text-right pr-4">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%] text-right pr-4">
                         
                       </TableHead>
                     </TableRow>
