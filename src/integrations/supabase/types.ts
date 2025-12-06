@@ -2969,6 +2969,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pssr_reason_configuration: {
+        Row: {
+          checklist_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          pssr_approver_role_ids: string[] | null
+          reason_id: string
+          sof_approver_role_ids: string[] | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          checklist_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          pssr_approver_role_ids?: string[] | null
+          reason_id: string
+          sof_approver_role_ids?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          checklist_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          pssr_approver_role_ids?: string[] | null
+          reason_id?: string
+          sof_approver_role_ids?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_reason_configuration_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_reason_configuration_reason_id_fkey"
+            columns: ["reason_id"]
+            isOneToOne: true
+            referencedRelation: "pssr_reasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_reason_sub_options: {
         Row: {
           created_at: string
