@@ -164,36 +164,21 @@ const getCurrentSeasonalTheme = (): BackgroundTheme => {
 
 export const BackgroundThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customTheme, setCustomThemeState] = useState<BackgroundThemeConfig | null>(() => {
-    try {
-      const saved = localStorage.getItem(CUSTOM_THEME_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      console.error('Error reading custom theme from localStorage:', e);
-      return null;
-    }
+    const saved = localStorage.getItem(CUSTOM_THEME_KEY);
+    return saved ? JSON.parse(saved) : null;
   });
 
   const [seasonalThemeEnabled, setSeasonalThemeEnabledState] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(SEASONAL_ENABLED_KEY);
-      return saved === 'true';
-    } catch (e) {
-      console.error('Error reading seasonal enabled from localStorage:', e);
-      return false;
-    }
+    const saved = localStorage.getItem(SEASONAL_ENABLED_KEY);
+    return saved === 'true';
   });
 
   const [theme, setThemeState] = useState<BackgroundTheme>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (seasonalThemeEnabled) {
-        return getCurrentSeasonalTheme();
-      }
-      return (saved as BackgroundTheme) || 'default';
-    } catch (e) {
-      console.error('Error reading theme from localStorage:', e);
-      return 'default';
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (seasonalThemeEnabled) {
+      return getCurrentSeasonalTheme();
     }
+    return (saved as BackgroundTheme) || 'default';
   });
 
   // Update theme when seasonal mode is toggled or season changes

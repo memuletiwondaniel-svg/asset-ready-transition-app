@@ -17,7 +17,7 @@ import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import OrshLogo from "@/components/ui/OrshLogo";
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
-  const { session, signOut, loading } = useAuth();
+  const { session, signOut } = useAuth();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,18 +25,6 @@ const Index = () => {
   
   // Get current section from URL path
   const currentSection = location.pathname === '/' ? null : location.pathname.slice(1);
-
-  // Show loading state while auth is initializing
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
   
   const handleAuthenticated = () => {
     setShowAuth(false);
