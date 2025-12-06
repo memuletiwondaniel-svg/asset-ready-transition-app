@@ -613,13 +613,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Modern Tab Navigation */}
-            <TabsList className="inline-flex h-12 w-full overflow-x-auto bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm gap-1 scrollbar-none">
+            <TabsList className="inline-flex h-12 w-full overflow-x-auto bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm gap-2 scrollbar-none">
               <TabsTrigger 
                 value="configuration"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <Cog className="h-4 w-4 mr-1.5" />
-                Matrix
+                PSSR Reasons
               </TabsTrigger>
               <TabsTrigger
                 value="checklists"
