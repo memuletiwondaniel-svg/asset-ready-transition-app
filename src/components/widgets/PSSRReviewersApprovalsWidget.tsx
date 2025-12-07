@@ -4,7 +4,7 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText, ChevronDown, Filter } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChecklistCompletionBanner } from '@/components/pssr/ChecklistCompletionBanner';
@@ -13,6 +13,7 @@ import { ApprovalHistoryPanel } from '@/components/pssr/ApprovalHistoryPanel';
 import { PSSRApprover } from '@/hooks/usePSSRApprovers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SOFCertificate } from '@/components/sof/SOFCertificate';
+import { ApproverPendingItemsOverlay, PendingItem } from './ApproverPendingItemsOverlay';
 
 export interface ApprovalPerson {
   id: string;
@@ -55,6 +56,9 @@ interface PSSRReviewersApprovalsWidgetProps {
   plantName?: string;
   facilityName?: string;
   projectName?: string;
+  // Pending items for overlay
+  pendingItemsByApprover?: Record<string, PendingItem[]>;
+  onPendingItemClick?: (itemId: string) => void;
 }
 
 const PersonApprovalCard: React.FC<{
@@ -89,8 +93,11 @@ const PersonApprovalCard: React.FC<{
     if (status === 'completed') {
       return person.completedAt ? `Approved ${person.completedAt}` : 'Approved';
     }
-    if (isLocked || status === 'waiting') {
-      return 'Waiting';
+    if (isLocked) {
+      return ''; // Don't show "Waiting" for locked stages
+    }
+    if (status === 'waiting') {
+      return ''; // Don't show "Waiting" status
     }
     return `${person.pendingTasks} pending`;
   };
@@ -132,11 +139,6 @@ const PersonApprovalCard: React.FC<{
                 }`}>
                   {person.name}
                 </p>
-                {isCurrentAction && !isLocked && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">
-                    ACTION
-                  </Badge>
-                )}
                 {isNextInQueue && !isCurrentAction && !isLocked && (
                   <span className="text-[10px] text-muted-foreground">Next</span>
                 )}
@@ -149,9 +151,11 @@ const PersonApprovalCard: React.FC<{
             {/* Status */}
             <div className="flex items-center gap-2">
               {getStatusIcon()}
-              <span className={`text-[11px] ${isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
-                {getStatusText()}
-              </span>
+              {getStatusText() && (
+                <span className={`text-[11px] ${isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
+                  {getStatusText()}
+                </span>
+              )}
             </div>
 
             {/* Actions */}
@@ -359,10 +363,15 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   plantName,
   facilityName,
   projectName,
+  pendingItemsByApprover = {},
+  onPendingItemClick,
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-reviewers-approvals';
   const [showCertificatePreview, setShowCertificatePreview] = useState(false);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [selectedApprover, setSelectedApprover] = useState<ApprovalPerson | null>(null);
+  const [isApproverOverlayOpen, setIsApproverOverlayOpen] = useState(false);
 
   // Calculate stage completion
   const checklistComplete = !checklistCompletion || checklistCompletion.percentage === 100;
@@ -388,8 +397,42 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   // Check if current user can approve
   const canApprove = currentUserApproverId && onApprove && onReject && !pssrApprovalLocked;
 
+  // Filter people based on showPendingOnly
+  const filterPending = (people: ApprovalPerson[]) => {
+    if (!showPendingOnly) return people;
+    return people.filter(p => p.pendingTasks > 0 && p.status !== 'completed');
+  };
+
+  const filteredReviewers = filterPending(reviewers);
+  const filteredApprovers = filterPending(approvers);
+  const filteredSofApprovers = filterPending(sofApprovers);
+
+  // Handle approver click to open overlay
+  const handleApproverClick = (personId: string) => {
+    const allPeople = [...reviewers, ...approvers, ...sofApprovers];
+    const person = allPeople.find(p => p.id === personId);
+    if (person) {
+      setSelectedApprover(person);
+      setIsApproverOverlayOpen(true);
+    }
+    onPersonClick?.(personId);
+  };
+
   const widgetContent = (
     <div className="h-full flex flex-col">
+      {/* Filter toggle */}
+      <div className="flex items-center justify-end mb-3">
+        <Button
+          variant={showPendingOnly ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setShowPendingOnly(!showPendingOnly)}
+          className="h-7 gap-1.5 text-xs"
+        >
+          <Filter className="h-3.5 w-3.5" />
+          {showPendingOnly ? 'Show All' : 'Pending Only'}
+        </Button>
+      </div>
+
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto pr-2 scrollbar-auto-hide space-y-4">
         {/* Checklist Completion Banner */}
@@ -401,16 +444,16 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
           />
         )}
 
-        {/* Review Stage */}
-        {reviewers.length > 0 && (
+        {/* PSSR Review Stage */}
+        {filteredReviewers.length > 0 && (
           <StageSection
-            title="Review Stage"
+            title="PSSR REVIEW"
             icon={<Eye className="h-4 w-4" />}
-            people={reviewers}
+            people={filteredReviewers}
             isCurrentStage={currentStage === 'review'}
             isLocked={false}
             onSendReminder={onSendReminder}
-            onPersonClick={onPersonClick}
+            onPersonClick={handleApproverClick}
           />
         )}
 
@@ -426,16 +469,16 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         )}
 
         {/* PSSR Approval Stage */}
-        {approvers.length > 0 && (
+        {filteredApprovers.length > 0 && (
           <StageSection
             title="PSSR Approval"
             icon={<CheckCircle2 className="h-4 w-4" />}
-            people={approvers}
+            people={filteredApprovers}
             isCurrentStage={currentStage === 'pssr-approval'}
             isLocked={pssrApprovalLocked}
             lockReason={pssrApprovalLockReason}
             onSendReminder={onSendReminder}
-            onPersonClick={onPersonClick}
+            onPersonClick={handleApproverClick}
           />
         )}
 
@@ -470,16 +513,16 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         )}
 
         {/* SoF Approval Stage */}
-        {sofApprovers.length > 0 && (
+        {filteredSofApprovers.length > 0 && (
           <StageSection
             title="SoF Approval"
             icon={<ShieldCheck className="h-4 w-4" />}
-            people={sofApprovers}
+            people={filteredSofApprovers}
             isCurrentStage={currentStage === 'sof-approval'}
             isLocked={sofApprovalLocked}
             lockReason="Complete PSSR approval to unlock SoF approval"
             onSendReminder={onSendReminder}
-            onPersonClick={onPersonClick}
+            onPersonClick={handleApproverClick}
           />
         )}
 
@@ -556,6 +599,15 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
           />
         </DialogContent>
       </Dialog>
+
+      {/* Approver Pending Items Overlay */}
+      <ApproverPendingItemsOverlay
+        open={isApproverOverlayOpen}
+        onOpenChange={setIsApproverOverlayOpen}
+        approver={selectedApprover}
+        pendingItems={selectedApprover ? (pendingItemsByApprover[selectedApprover.id] || []) : []}
+        onItemClick={onPendingItemClick}
+      />
 
       <FullscreenWidgetModal widgetId={widgetId} title="Approvals">
         {widgetContent}
