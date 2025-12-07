@@ -288,6 +288,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
       widgetId={widgetId}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
+      showHeaderActionOnHover={true}
       headerAction={
         <Button 
           variant="ghost" 
