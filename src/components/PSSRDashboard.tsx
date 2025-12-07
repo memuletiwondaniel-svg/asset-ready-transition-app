@@ -515,7 +515,9 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         tier={pssrData.tier}
                         description={pssrData.scope}
                         images={pssrData.scopeImages}
+                        linkedPSSRs={pssrData.linkedPSSRs}
                         onEdit={() => setEditModalOpen(true)}
+                        onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
                     ),
                     'widget-2': (

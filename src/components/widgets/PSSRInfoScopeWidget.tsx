@@ -3,9 +3,18 @@ import { WidgetCard } from './WidgetCard';
 import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ExternalLink, Target, Pencil, ZoomIn } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ExternalLink, Target, Pencil, ZoomIn, Link2, ChevronDown, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { ViewProjectModal } from '@/components/project/ViewProjectModal';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
+
+interface LinkedPSSR {
+  id: string;
+  title: string;
+  status: string;
+  progress: number;
+  relationship: string;
+}
 
 interface PSSRInfoScopeWidgetProps {
   pssrId: string;
@@ -22,8 +31,10 @@ interface PSSRInfoScopeWidgetProps {
   plantName?: string;
   stationName?: string;
   hubName?: string;
+  linkedPSSRs?: LinkedPSSR[];
   onNavigateToProject?: () => void;
   onEdit?: () => void;
+  onPSSRClick?: (pssrId: string) => void;
   dragAttributes?: any;
   dragListeners?: any;
 }
@@ -42,15 +53,40 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   plantName,
   stationName,
   hubName,
+  linkedPSSRs = [],
   onNavigateToProject,
   onEdit,
+  onPSSRClick,
   dragAttributes,
   dragListeners,
 }) => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [linkedExpanded, setLinkedExpanded] = useState(true);
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-info-scope';
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
+      case 'in progress':
+        return <Clock className="h-3.5 w-3.5 text-blue-500" />;
+      default:
+        return <AlertCircle className="h-3.5 w-3.5 text-amber-500" />;
+    }
+  };
+
+  const getRelationshipColor = (relationship: string) => {
+    switch (relationship.toLowerCase()) {
+      case 'predecessor':
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
+      case 'dependent':
+        return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300';
+      default:
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+    }
+  };
 
   const handleProjectClick = () => {
     if (projectData) {
@@ -162,6 +198,53 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
                       alt={`PSSR Scope ${index + 2}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Linked PSSRs Section */}
+        {linkedPSSRs && linkedPSSRs.length > 0 && (
+          <div className="border-t border-border/40 pt-4 space-y-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:bg-accent/5 py-1.5 px-1 rounded-md transition-colors"
+              onClick={() => setLinkedExpanded(!linkedExpanded)}
+            >
+              <Link2 className="h-3.5 w-3.5 text-primary" />
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex-1 cursor-pointer">
+                Linked PSSRs
+              </label>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-5">
+                {linkedPSSRs.length}
+              </Badge>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
+                linkedExpanded ? '' : '-rotate-90'
+              }`} />
+            </div>
+
+            {linkedExpanded && (
+              <div className="space-y-2 mt-2">
+                {linkedPSSRs.map((pssr) => (
+                  <div 
+                    key={pssr.id}
+                    className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors group"
+                    onClick={() => onPSSRClick?.(pssr.id)}
+                  >
+                    {getStatusIcon(pssr.status)}
+                    <span className="text-xs font-semibold text-primary">{pssr.id}</span>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-[9px] px-1.5 py-0 h-4 border-0 ${getRelationshipColor(pssr.relationship)}`}
+                    >
+                      {pssr.relationship}
+                    </Badge>
+                    <span className="flex-1 text-[11px] text-muted-foreground truncate">
+                      {pssr.title}
+                    </span>
+                    <span className="text-[11px] font-medium text-foreground">{pssr.progress}%</span>
+                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 ))}
               </div>
