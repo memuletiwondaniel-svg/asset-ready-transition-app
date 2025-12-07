@@ -118,9 +118,9 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           <img 
             src="/images/bgc-logo.png" 
             alt="Basrah Gas Company Logo" 
-            className="h-24 mx-auto mb-4"
+            className="h-20 mx-auto mb-3"
           />
-          <div className="w-full h-1 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-4" />
+          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-3" />
           <h3 className="text-3xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
           <p className="text-sm text-gray-600 mt-2">Certificate No: {certificateNumber}</p>
         </div>
@@ -155,7 +155,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
         {/* Certificate Text */}
         <div className="mb-8">
-          <p className="text-gray-800 leading-relaxed mb-4">
+          <p className="text-base text-gray-800 leading-relaxed mb-4">
             {isProcessSafetyIncidence 
               ? "This Statement of Fitness confirms that following a process safety incidence at the above-referenced facility:"
               : "This Statement of Fitness (SoF) certificate confirms that for the above referenced facility:"
@@ -163,7 +163,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           </p>
           
           {!isProcessSafetyIncidence && (
-            <p className="text-gray-700 mb-4 italic">
+            <p className="text-base text-gray-700 mb-4 italic">
               Requirement 7 of the Asset Integrity Process Safety Management (AIPSM) Manual has been met:
             </p>
           )}
@@ -180,20 +180,20 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 return (
                   <div key={index} className="flex items-start ml-6 gap-3">
                     <span className="font-semibold text-gray-800 min-w-[20px]">{letter}.</span>
-                    <span className="text-gray-700 text-sm leading-relaxed">{text}</span>
+                    <span className="text-gray-700 text-base leading-relaxed">{text}</span>
                   </div>
                 );
               }
               
               return (
-                <p key={index} className="text-gray-700 text-sm leading-relaxed">
+                <p key={index} className="text-gray-700 text-base leading-relaxed">
                   {line}
                 </p>
               );
             })}
           </div>
 
-          <p className="text-gray-800 font-semibold mt-6 pt-4 border-t border-gray-200">
+          <p className="text-base text-gray-800 font-semibold mt-6 pt-4 border-t border-gray-200">
             The Facility therefore meets the criteria necessary to (re-)introduce hydrocarbons, process fluids or hazardous energy.
           </p>
         </div>
