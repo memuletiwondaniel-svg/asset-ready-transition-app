@@ -576,6 +576,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         sofApprovers={pssrData.sofApprovers}
                         onSendReminder={(personId) => console.log('Send reminder to:', personId)}
                         onPersonClick={(personId) => console.log('Person clicked:', personId)}
+                        pssrId={pssrId}
+                        pssrReason={pssrData.reason}
+                        plantName={pssrData.asset}
+                        facilityName={pssrData.asset}
+                        projectName={pssrData.projectName}
                       />
                     ),
                     'widget-5': (
