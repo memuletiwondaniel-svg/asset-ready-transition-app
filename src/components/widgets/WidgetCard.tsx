@@ -50,7 +50,10 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
 
   return (
     <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} flex flex-col h-full ${className || ''}`}>
-      <CardHeader className="border-b border-border/40 pb-3 pt-3 flex flex-row items-center justify-between space-y-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent relative overflow-hidden">
+      <CardHeader 
+        className="border-b border-border/40 pb-3 pt-3 flex flex-row items-center justify-between space-y-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent relative overflow-hidden cursor-pointer select-none"
+        onDoubleClick={handleFullscreen}
+      >
         {/* Subtle shine effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         
