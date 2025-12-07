@@ -175,20 +175,20 @@ const KeyActivityItem: React.FC<{
       case 'Completed':
         return {
           icon: CheckCircle2,
-          bgClass: 'bg-green-500/20 text-green-600',
-          badgeClass: 'bg-green-500/10 text-green-600 border-green-500/30'
+          bgClass: 'bg-muted text-green-600',
+          badgeClass: 'bg-muted text-green-600 border-border'
         };
       case 'Scheduled':
         return {
           icon: Clock,
-          bgClass: 'bg-blue-500/20 text-blue-600',
-          badgeClass: 'bg-blue-500/10 text-blue-600 border-blue-500/30'
+          bgClass: 'bg-muted text-muted-foreground',
+          badgeClass: 'bg-muted text-muted-foreground border-border'
         };
       default:
         return {
           icon: AlertCircle,
-          bgClass: 'bg-gray-500/20 text-gray-500',
-          badgeClass: 'bg-gray-500/10 text-gray-500 border-gray-500/30'
+          bgClass: 'bg-muted text-muted-foreground/60',
+          badgeClass: 'bg-muted text-muted-foreground/60 border-border'
         };
     }
   };
@@ -249,22 +249,16 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
     return FileText;
   };
 
-  const getCategoryColors = (index: number) => {
-    const colors = [
-      { colorClass: 'bg-blue-500/20 text-blue-600', progressClass: 'bg-blue-500' },
-      { colorClass: 'bg-purple-500/20 text-purple-600', progressClass: 'bg-purple-500' },
-      { colorClass: 'bg-amber-500/20 text-amber-600', progressClass: 'bg-amber-500' },
-      { colorClass: 'bg-cyan-500/20 text-cyan-600', progressClass: 'bg-cyan-500' },
-      { colorClass: 'bg-emerald-500/20 text-emerald-600', progressClass: 'bg-emerald-500' },
-    ];
-    return colors[index % colors.length];
+  const getCategoryColors = () => {
+    // Unified primary color for all categories - cleaner, less busy
+    return { colorClass: 'bg-primary/10 text-primary', progressClass: 'bg-primary' };
   };
 
   const statusPills = [
-    { label: 'Draft', value: draftItems, bgClass: 'bg-gray-500/10', filter: 'draft' },
-    { label: 'Review', value: underReviewItems, bgClass: 'bg-yellow-500/10', filter: 'under_review' },
-    { label: 'Approved', value: approvedItems, bgClass: 'bg-green-500/10', filter: 'approved' },
-    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, bgClass: 'bg-red-500/10', filter: 'actions' }] : []),
+    { label: 'Draft', value: draftItems, bgClass: 'bg-muted/50', filter: 'draft' },
+    { label: 'Review', value: underReviewItems, bgClass: 'bg-muted/50', filter: 'under_review' },
+    { label: 'Approved', value: approvedItems, bgClass: 'bg-muted/50', filter: 'approved' },
+    ...(openActions > 0 ? [{ label: 'Actions', value: openActions, bgClass: 'bg-muted/50', filter: 'actions' }] : []),
   ];
 
   return (
@@ -325,8 +319,8 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
               Progress by Category
             </h4>
             <div className="space-y-1">
-              {categoryProgress.map((category, index) => {
-                const colors = getCategoryColors(index);
+              {categoryProgress.map((category) => {
+                const colors = getCategoryColors();
                 return (
                   <CategoryProgressRow
                     key={category.name}
