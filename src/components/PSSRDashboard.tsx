@@ -11,6 +11,7 @@ import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistP
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
 import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
+import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
 import { FullChecklistProgressOverlay } from '@/components/widgets/FullChecklistProgressOverlay';
@@ -33,7 +34,8 @@ const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-2', name: 'Checklist', visible: true, size: 'large' },
   { id: 'widget-3', name: 'Key Activities', visible: true, size: 'medium' },
   { id: 'widget-4', name: 'Approval', visible: true, size: 'medium' },
-  { id: 'widget-5', name: 'Linked PSSRs', visible: true, size: 'medium' },
+  { id: 'widget-5', name: 'Linked PSSRs', visible: false, size: 'medium' }, // Hidden - integrated into Overview
+  { id: 'widget-6', name: 'Overview', visible: true, size: 'medium' },
 ];
 
 const PSSRDashboard: React.FC<PSSRDashboardProps> = ({ 
@@ -551,6 +553,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                     ),
                     'widget-5': (
                       <PSSRLinkedPSSRsWidget
+                        linkedPSSRs={pssrData.linkedPSSRs}
+                        onPSSRClick={(id) => console.log('PSSR clicked:', id)}
+                      />
+                    ),
+                    'widget-6': (
+                      <OverviewStatsWidget
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
