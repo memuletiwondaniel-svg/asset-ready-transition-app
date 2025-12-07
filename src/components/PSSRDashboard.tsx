@@ -8,7 +8,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { AlertTriangle, GripVertical } from 'lucide-react';
 import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
-import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
+
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
 
 import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
@@ -32,7 +32,6 @@ interface PSSRDashboardProps {
 const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
   { id: 'widget-2', name: 'Progress', visible: true, size: 'large' },
-  { id: 'widget-3', name: 'Key Activities', visible: true, size: 'medium' },
   { id: 'widget-4', name: 'Approval', visible: true, size: 'medium' },
   { id: 'widget-6', name: 'Overview', visible: true, size: 'medium' },
 ];
@@ -531,12 +530,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         onCategoryClick={handleCategoryClick}
                         onStatClick={handleStatClick}
                         onViewAll={handleViewAllChecklist}
-                        onActivityClick={(type) => console.log('Activity clicked:', type)}
-                      />
-                    ),
-                    'widget-3': (
-                      <PSSRKeyActivitiesWidget
-                        activities={pssrData.keyActivities}
                         onActivityClick={(type) => console.log('Activity clicked:', type)}
                       />
                     ),
