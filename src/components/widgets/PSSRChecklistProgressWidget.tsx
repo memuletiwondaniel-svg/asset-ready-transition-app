@@ -205,7 +205,7 @@ const KeyActivityItem: React.FC<{
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0 text-left">
-        <span className="text-sm font-medium text-foreground truncate block">{name}</span>
+        <span className="text-xs font-medium text-foreground truncate block">{name}</span>
         {date && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
