@@ -423,23 +423,21 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   const hasCompletedItems = [...reviewers, ...approvers, ...sofApprovers].some(p => p.pendingTasks === 0 || p.status === 'completed');
   const showFilterButton = hasPendingItems && hasCompletedItems;
 
+  // Filter button for header
+  const filterHeaderAction = showFilterButton ? (
+    <Button
+      variant={showPendingOnly ? "secondary" : "ghost"}
+      size="sm"
+      onClick={() => setShowPendingOnly(!showPendingOnly)}
+      className="h-7 gap-1.5 text-xs"
+    >
+      <Filter className="h-3.5 w-3.5" />
+      {showPendingOnly ? 'Show All' : 'Pending Only'}
+    </Button>
+  ) : null;
+
   const widgetContent = (
     <div className="h-full flex flex-col">
-      {/* Filter toggle - only show when there's a mix of pending and completed */}
-      {showFilterButton && (
-        <div className="flex items-center justify-end mb-3">
-          <Button
-            variant={showPendingOnly ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setShowPendingOnly(!showPendingOnly)}
-            className="h-7 gap-1.5 text-xs"
-          >
-            <Filter className="h-3.5 w-3.5" />
-            {showPendingOnly ? 'Show All' : 'Pending Only'}
-          </Button>
-        </div>
-      )}
-
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto pr-2 scrollbar-auto-hide space-y-4">
         {/* Checklist Completion Banner */}
@@ -571,6 +569,8 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         widgetId={widgetId}
         dragAttributes={dragAttributes}
         dragListeners={dragListeners}
+        headerAction={filterHeaderAction}
+        showHeaderActionOnHover={true}
       >
         {widgetContent}
       </WidgetCard>
