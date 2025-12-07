@@ -284,7 +284,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
         </Button>
       }
     >
-      <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <div className="h-full overflow-y-auto pr-2 scrollbar-auto-hide">
         <div className="space-y-4">
           {/* Hero Section - Circular Progress + Stats */}
           <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-xl">

@@ -391,7 +391,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   const widgetContent = (
     <div className="h-full flex flex-col">
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
+      <div className="flex-1 overflow-y-auto pr-2 scrollbar-auto-hide space-y-4">
         {/* Checklist Completion Banner */}
         {checklistCompletion && (
           <ChecklistCompletionBanner
