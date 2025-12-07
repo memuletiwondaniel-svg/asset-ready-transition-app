@@ -10,7 +10,7 @@ import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
-
+import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
 import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
@@ -51,14 +51,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   // Widget settings state - persisted in localStorage
   const [widgetSettings, setWidgetSettings] = useState<WidgetSettings[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-settings-${pssrId}`);
-    if (saved) {
-      const parsedSettings = JSON.parse(saved);
-      // Merge with defaults to include any new widgets
-      const existingIds = parsedSettings.map((w: WidgetSettings) => w.id);
-      const newWidgets = DEFAULT_WIDGET_SETTINGS.filter(w => !existingIds.includes(w.id));
-      return [...parsedSettings, ...newWidgets];
-    }
-    return DEFAULT_WIDGET_SETTINGS;
+    return saved ? JSON.parse(saved) : DEFAULT_WIDGET_SETTINGS;
   });
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -76,12 +69,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-order-${pssrId}`);
     if (saved) {
-      const parsedOrder = JSON.parse(saved);
-      // Add any new widget IDs that aren't in the saved order
-      const newWidgetIds = DEFAULT_WIDGET_SETTINGS
-        .map(w => w.id)
-        .filter(id => !parsedOrder.includes(id));
-      return [...parsedOrder, ...newWidgetIds];
+      return JSON.parse(saved);
     }
     return DEFAULT_WIDGET_SETTINGS.map(w => w.id);
   });
@@ -561,6 +549,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         plantName={pssrData.asset}
                         facilityName={pssrData.asset}
                         projectName={pssrData.projectName}
+                      />
+                    ),
+                    'widget-5': (
+                      <PSSRLinkedPSSRsWidget
+                        linkedPSSRs={pssrData.linkedPSSRs}
+                        onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
                     ),
                     'widget-6': (
