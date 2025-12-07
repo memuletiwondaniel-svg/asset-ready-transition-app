@@ -43,40 +43,40 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   const getCategoryColors = (name: string) => {
     const colorMap: Record<string, { bg: string; icon: string; progress: string; border: string }> = {
       'Hardware Integrity': {
-        bg: 'bg-blue-500/10',
+        bg: 'bg-blue-500/20 dark:bg-blue-500/30',
         icon: 'text-blue-600 dark:text-blue-400',
-        progress: '[&>div]:bg-blue-500/40',
-        border: 'border-blue-500/40 hover:border-blue-500/60'
+        progress: '[&>div]:bg-blue-500/50',
+        border: 'border-blue-500/30 hover:border-blue-500/50'
       },
       'Process Safety': {
-        bg: 'bg-emerald-500/10',
-        icon: 'text-emerald-600 dark:text-emerald-400',
-        progress: '[&>div]:bg-emerald-500/40',
-        border: 'border-emerald-500/40 hover:border-emerald-500/60'
+        bg: 'bg-orange-500/20 dark:bg-orange-500/30',
+        icon: 'text-orange-600 dark:text-orange-400',
+        progress: '[&>div]:bg-orange-500/50',
+        border: 'border-orange-500/30 hover:border-orange-500/50'
       },
       'Documentation': {
-        bg: 'bg-amber-500/10',
+        bg: 'bg-amber-500/20 dark:bg-amber-500/30',
         icon: 'text-amber-600 dark:text-amber-400',
-        progress: '[&>div]:bg-amber-500/40',
-        border: 'border-amber-500/40 hover:border-amber-500/60'
+        progress: '[&>div]:bg-amber-500/50',
+        border: 'border-amber-500/30 hover:border-amber-500/50'
       },
       'Organization': {
-        bg: 'bg-purple-500/10',
+        bg: 'bg-purple-500/20 dark:bg-purple-500/30',
         icon: 'text-purple-600 dark:text-purple-400',
-        progress: '[&>div]:bg-purple-500/40',
-        border: 'border-purple-500/40 hover:border-purple-500/60'
+        progress: '[&>div]:bg-purple-500/50',
+        border: 'border-purple-500/30 hover:border-purple-500/50'
       },
       'Health & Safety': {
-        bg: 'bg-red-500/10',
+        bg: 'bg-red-500/20 dark:bg-red-500/30',
         icon: 'text-red-600 dark:text-red-400',
-        progress: '[&>div]:bg-red-500/40',
-        border: 'border-red-500/40 hover:border-red-500/60'
+        progress: '[&>div]:bg-red-500/50',
+        border: 'border-red-500/30 hover:border-red-500/50'
       },
       'General': {
-        bg: 'bg-slate-500/10',
+        bg: 'bg-slate-500/20 dark:bg-slate-500/30',
         icon: 'text-slate-600 dark:text-slate-400',
-        progress: '[&>div]:bg-slate-500/40',
-        border: 'border-slate-500/40 hover:border-slate-500/60'
+        progress: '[&>div]:bg-slate-500/50',
+        border: 'border-slate-500/30 hover:border-slate-500/50'
       }
     };
     return colorMap[name] || colorMap['General'];
@@ -129,7 +129,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center transition-colors`}>
+                      <div className={`w-8 h-8 rounded-full ${colors.bg} flex items-center justify-center transition-colors`}>
                         <Icon className={`h-4 w-4 ${colors.icon}`} />
                       </div>
                       <span className="text-sm font-medium text-foreground">{category.name}</span>
