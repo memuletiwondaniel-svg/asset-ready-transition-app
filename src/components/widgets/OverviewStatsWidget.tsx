@@ -77,7 +77,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   };
 
   return (
-    <Card className="glass-card glass-card-hover overflow-hidden min-h-[380px] md:min-h-[420px] lg:min-h-[450px]">
+    <Card className="glass-card glass-card-hover overflow-hidden min-h-[550px] md:min-h-[620px] lg:min-h-[680px] h-[550px] md:h-[620px] lg:h-[680px]">
       <CardHeader className="border-b border-border/40 py-3">
         <CardTitle className="text-lg font-bold">Overview</CardTitle>
       </CardHeader>
