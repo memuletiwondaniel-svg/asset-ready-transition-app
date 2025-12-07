@@ -216,30 +216,24 @@ const StageSection: React.FC<{
       <div className="space-y-2">
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={`flex items-center gap-2 mb-2 p-2 rounded-lg transition-colors ${
-              isLocked ? 'bg-muted/30' : isCurrentStage ? 'bg-primary/5' : ''
-            }`}>
-              <div className={`p-1.5 rounded-md ${
-                isLocked ? 'bg-muted text-muted-foreground' :
-                isCurrentStage ? 'bg-primary/10 text-primary' : 
-                completedCount === people.length ? 'bg-green-500/10 text-green-600' :
-                'bg-muted text-muted-foreground'
+            <div className="flex items-center gap-2 py-2 border-b border-border/40">
+              <span className={`${
+                isLocked ? 'text-muted-foreground/60' :
+                completedCount === people.length ? 'text-green-600' :
+                isCurrentStage ? 'text-primary' : 'text-muted-foreground'
               }`}>
-                {isLocked ? <Lock className="h-4 w-4" /> : icon}
-              </div>
-              <h4 className={`text-xs font-semibold uppercase tracking-wide ${
-                isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'
+                {isLocked ? <Lock className="h-3.5 w-3.5" /> : React.cloneElement(icon as React.ReactElement, { className: 'h-3.5 w-3.5' })}
+              </span>
+              <h4 className={`text-xs font-medium uppercase tracking-wide ${
+                isLocked ? 'text-muted-foreground/60' : 'text-muted-foreground'
               }`}>
                 {title}
               </h4>
-              <Badge 
-                variant={completedCount === people.length ? 'default' : 'secondary'} 
-                className={`text-[10px] px-1.5 py-0 ml-auto ${
-                  completedCount === people.length ? 'bg-green-500 text-white' : ''
-                }`}
-              >
-              {completedCount}/{people.length}
-              </Badge>
+              <span className={`text-[10px] font-medium ml-auto ${
+                completedCount === people.length ? 'text-green-600' : 'text-muted-foreground'
+              }`}>
+                {completedCount}/{people.length}
+              </span>
             </div>
           </TooltipTrigger>
           {isLocked && lockReason && (
