@@ -159,7 +159,7 @@ const CategoryProgressRow: React.FC<{
         />
       </div>
     </div>
-    <span className="text-sm font-semibold text-foreground w-12 text-right">{percentage}%</span>
+    
   </button>
 );
 
