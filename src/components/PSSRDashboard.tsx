@@ -51,7 +51,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   // Widget settings state - persisted in localStorage
   const [widgetSettings, setWidgetSettings] = useState<WidgetSettings[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-settings-${pssrId}`);
-    return saved ? JSON.parse(saved) : DEFAULT_WIDGET_SETTINGS;
+    if (saved) {
+      const parsedSettings = JSON.parse(saved);
+      // Merge with defaults to include any new widgets
+      const existingIds = parsedSettings.map((w: WidgetSettings) => w.id);
+      const newWidgets = DEFAULT_WIDGET_SETTINGS.filter(w => !existingIds.includes(w.id));
+      return [...parsedSettings, ...newWidgets];
+    }
+    return DEFAULT_WIDGET_SETTINGS;
   });
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -69,7 +76,12 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-order-${pssrId}`);
     if (saved) {
-      return JSON.parse(saved);
+      const parsedOrder = JSON.parse(saved);
+      // Add any new widget IDs that aren't in the saved order
+      const newWidgetIds = DEFAULT_WIDGET_SETTINGS
+        .map(w => w.id)
+        .filter(id => !parsedOrder.includes(id));
+      return [...parsedOrder, ...newWidgetIds];
     }
     return DEFAULT_WIDGET_SETTINGS.map(w => w.id);
   });
