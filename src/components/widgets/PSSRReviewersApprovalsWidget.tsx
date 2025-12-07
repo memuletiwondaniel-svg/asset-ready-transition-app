@@ -106,7 +106,7 @@ const PersonApprovalCard: React.FC<{
               relative flex items-center gap-3 p-3 rounded-lg 
               border transition-all
               ${isLocked 
-                ? 'border-border/20 bg-muted/20 opacity-50 cursor-not-allowed' 
+                ? 'border-border/30 bg-muted/20 opacity-75 cursor-not-allowed'
                 : isCurrentAction 
                   ? 'bg-primary/5 border-primary/30 cursor-pointer hover:bg-primary/10' 
                   : status === 'completed'
@@ -117,7 +117,7 @@ const PersonApprovalCard: React.FC<{
             `}
           >
             {/* Avatar */}
-            <Avatar className={`h-9 w-9 border ${isLocked ? 'opacity-50' : 'border-border/50'}`}>
+            <Avatar className={`h-9 w-9 border ${isLocked ? 'border-border/40' : 'border-border/50'}`}>
               <AvatarImage src={person.avatar} alt={person.name} />
               <AvatarFallback className="bg-muted text-muted-foreground font-medium text-xs">
                 {initials}
@@ -128,7 +128,7 @@ const PersonApprovalCard: React.FC<{
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <p className={`text-sm font-medium truncate ${
-                  isLocked ? 'text-muted-foreground/50' : 
+                  isLocked ? 'text-muted-foreground' :
                   status === 'completed' ? 'text-green-700 dark:text-green-400' : 'text-foreground'
                 }`}>
                   {person.name}
@@ -142,7 +142,7 @@ const PersonApprovalCard: React.FC<{
                   <span className="text-[10px] text-muted-foreground">Next</span>
                 )}
               </div>
-              <p className={`text-xs truncate ${isLocked ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+              <p className={`text-xs truncate ${isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
                 {person.role}
               </p>
             </div>
@@ -150,7 +150,7 @@ const PersonApprovalCard: React.FC<{
             {/* Status */}
             <div className="flex items-center gap-2">
               {getStatusIcon()}
-              <span className={`text-[11px] ${isLocked ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+              <span className={`text-[11px] ${isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
                 {getStatusText()}
               </span>
             </div>
@@ -214,14 +214,14 @@ const StageSection: React.FC<{
   
   return (
     <TooltipProvider>
-      <div className={`space-y-2 ${isLocked ? 'opacity-60' : ''}`}>
+      <div className="space-y-2">
         <Tooltip>
           <TooltipTrigger asChild>
             <div className={`flex items-center gap-2 mb-2 p-2 rounded-lg transition-colors ${
               isLocked ? 'bg-muted/30' : isCurrentStage ? 'bg-primary/5' : ''
             }`}>
               <div className={`p-1.5 rounded-md ${
-                isLocked ? 'bg-muted text-muted-foreground/50' :
+                isLocked ? 'bg-muted text-muted-foreground' :
                 isCurrentStage ? 'bg-primary/10 text-primary' : 
                 completedCount === people.length ? 'bg-green-500/10 text-green-600' :
                 'bg-muted text-muted-foreground'
@@ -229,7 +229,7 @@ const StageSection: React.FC<{
                 {isLocked ? <Lock className="h-4 w-4" /> : icon}
               </div>
               <h4 className={`text-xs font-semibold uppercase tracking-wide ${
-                isLocked ? 'text-muted-foreground/50' : 'text-muted-foreground'
+                isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'
               }`}>
                 {title}
               </h4>
