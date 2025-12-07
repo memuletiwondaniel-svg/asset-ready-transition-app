@@ -264,10 +264,10 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   return (
     <WidgetCard 
       title="Progress"
-      className={`min-h-[516px] md:min-h-[581px] lg:min-h-[639px] ${
-        widgetSize === 'compact' ? 'h-[516px] md:h-[581px] lg:h-[639px]' :
-        widgetSize === 'standard' ? 'h-[675px] md:h-[732px] lg:h-[798px]' :
-        'h-[863px] md:h-[920px] lg:h-[985px]'
+      className={`min-h-[521px] md:min-h-[587px] lg:min-h-[645px] ${
+        widgetSize === 'compact' ? 'h-[521px] md:h-[587px] lg:h-[645px]' :
+        widgetSize === 'standard' ? 'h-[682px] md:h-[739px] lg:h-[806px]' :
+        'h-[872px] md:h-[929px] lg:h-[995px]'
       }`}
       widgetId={widgetId}
       dragAttributes={dragAttributes}
