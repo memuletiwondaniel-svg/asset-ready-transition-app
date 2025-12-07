@@ -79,27 +79,25 @@ const PersonApprovalCard: React.FC<{
   // Determine status based on pendingTasks or explicit status
   const status = person.status || (person.pendingTasks === 0 ? 'completed' : 'in_progress');
 
-  const getStatusIcon = () => {
-    if (isLocked) return <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />;
-    switch (status) {
-      case 'completed': return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
-      case 'in_progress': return <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />;
-      case 'waiting': return <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />;
-      default: return <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />;
-    }
-  };
-
-  const getStatusText = () => {
+  const getStatusDisplay = () => {
     if (status === 'completed') {
-      return person.completedAt ? `Approved ${person.completedAt}` : 'Approved';
+      return (
+        <>
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+          <span className="text-[11px] text-muted-foreground">
+            {person.completedAt ? `Approved ${person.completedAt}` : 'Approved'}
+          </span>
+        </>
+      );
     }
-    if (isLocked) {
-      return ''; // Don't show "Waiting" for locked stages
+    if (!isLocked && person.pendingTasks > 0) {
+      return (
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">
+          {person.pendingTasks} pending
+        </Badge>
+      );
     }
-    if (status === 'waiting') {
-      return ''; // Don't show "Waiting" status
-    }
-    return `${person.pendingTasks} pending`;
+    return null;
   };
 
   return (
@@ -150,12 +148,7 @@ const PersonApprovalCard: React.FC<{
 
             {/* Status */}
             <div className="flex items-center gap-2">
-              {getStatusIcon()}
-              {getStatusText() && (
-                <span className={`text-[11px] ${isLocked ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
-                  {getStatusText()}
-                </span>
-              )}
+              {getStatusDisplay()}
             </div>
 
             {/* Actions */}
