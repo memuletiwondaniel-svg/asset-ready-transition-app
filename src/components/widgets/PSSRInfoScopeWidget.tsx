@@ -111,7 +111,7 @@ export const PSSRInfoScopeWidget: React.FC<PSSRInfoScopeWidgetProps> = ({
   ) : undefined;
 
   const widgetContent = (
-    <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+    <div className="h-full overflow-y-auto pr-2 scrollbar-auto-hide">
       <div className="space-y-4">
         
         {/* Project - Full Width */}
