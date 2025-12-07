@@ -10,7 +10,7 @@ import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
-import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
+
 import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
@@ -34,7 +34,6 @@ const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-2', name: 'Checklist', visible: true, size: 'large' },
   { id: 'widget-3', name: 'Key Activities', visible: true, size: 'medium' },
   { id: 'widget-4', name: 'Approval', visible: true, size: 'medium' },
-  { id: 'widget-5', name: 'Linked PSSRs', visible: false, size: 'medium' }, // Hidden - integrated into Overview
   { id: 'widget-6', name: 'Overview', visible: true, size: 'medium' },
 ];
 
@@ -551,12 +550,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         plantName={pssrData.asset}
                         facilityName={pssrData.asset}
                         projectName={pssrData.projectName}
-                      />
-                    ),
-                    'widget-5': (
-                      <PSSRLinkedPSSRsWidget
-                        linkedPSSRs={pssrData.linkedPSSRs}
-                        onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
                     ),
                     'widget-6': (
