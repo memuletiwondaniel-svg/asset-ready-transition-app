@@ -256,16 +256,16 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
       return { colorClass: 'bg-blue-300/10 text-blue-400', progressClass: 'bg-blue-300/50' };
     }
     if (name.includes('process') || name.includes('safety')) {
-      return { colorClass: 'bg-orange-300/10 text-orange-400', progressClass: 'bg-orange-300/50' };
+      return { colorClass: 'bg-rose-300/10 text-rose-400', progressClass: 'bg-rose-300/50' };
     }
     if (name.includes('documentation') || name.includes('document')) {
-      return { colorClass: 'bg-amber-300/10 text-amber-400', progressClass: 'bg-amber-300/50' };
+      return { colorClass: 'bg-yellow-300/10 text-yellow-500', progressClass: 'bg-yellow-400/50' };
     }
     if (name.includes('organization') || name.includes('org')) {
-      return { colorClass: 'bg-purple-300/10 text-purple-400', progressClass: 'bg-purple-300/50' };
+      return { colorClass: 'bg-violet-300/10 text-violet-400', progressClass: 'bg-violet-300/50' };
     }
     if (name.includes('health') || name.includes('hse')) {
-      return { colorClass: 'bg-teal-300/10 text-teal-400', progressClass: 'bg-teal-300/50' };
+      return { colorClass: 'bg-emerald-300/10 text-emerald-400', progressClass: 'bg-emerald-300/50' };
     }
     return { colorClass: 'bg-primary/5 text-primary/70', progressClass: 'bg-primary/50' };
   };
