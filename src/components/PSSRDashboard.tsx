@@ -15,6 +15,7 @@ import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
 import { FullChecklistProgressOverlay } from '@/components/widgets/FullChecklistProgressOverlay';
+import { ScheduleActivityModal } from '@/components/widgets/ScheduleActivityModal';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import BackgroundSlideshow from '@/components/BackgroundSlideshow';
@@ -54,6 +55,15 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  
+  // Activity modal state
+  const [activityModal, setActivityModal] = useState<{
+    isOpen: boolean;
+    activityName: string;
+    activityType: string;
+    existingDate?: string;
+    existingAttendees?: number;
+  }>({ isOpen: false, activityName: '', activityType: '' });
 
   // Checklist overlay state
   const [checklistOverlay, setChecklistOverlay] = useState<{
@@ -336,6 +346,19 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     });
   };
 
+  const handleActivityClick = (activityType: string) => {
+    const activity = pssrData.keyActivities.find(a => a.type === activityType || a.name === activityType);
+    if (activity) {
+      setActivityModal({
+        isOpen: true,
+        activityName: activity.name,
+        activityType: activity.type || activity.name,
+        existingDate: activity.date,
+        existingAttendees: activity.attendees
+      });
+    }
+  };
+
   const getFilterTitle = () => {
     if (checklistOverlay.filterType === 'status') {
       const titles: Record<string, string> = {
@@ -523,7 +546,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         onCategoryClick={handleCategoryClick}
                         onStatClick={handleStatClick}
                         onViewAll={handleViewAllChecklist}
-                        onActivityClick={(type) => console.log('Activity clicked:', type)}
+                        onActivityClick={handleActivityClick}
                       />
                     ),
                     'widget-4': (
@@ -625,6 +648,16 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
           console.log('PSSR data updated:', updatedData);
           setEditModalOpen(false);
         }}
+      />
+
+      {/* Schedule Activity Modal */}
+      <ScheduleActivityModal
+        open={activityModal.isOpen}
+        onOpenChange={(open) => setActivityModal(prev => ({ ...prev, isOpen: open }))}
+        activityName={activityModal.activityName}
+        activityType={activityModal.activityType}
+        existingDate={activityModal.existingDate}
+        existingAttendees={activityModal.existingAttendees}
       />
     </div>
   );
