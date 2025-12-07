@@ -85,13 +85,13 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   const getHeightClass = () => {
     switch (widgetSize) {
       case 'compact':
-        return 'min-h-[550px] md:min-h-[620px] lg:min-h-[680px] h-[550px] md:h-[620px] lg:h-[680px]';
+        return 'min-h-[280px] md:min-h-[300px] lg:min-h-[320px] h-[280px] md:h-[300px] lg:h-[320px]';
       case 'standard':
-        return 'min-h-[720px] md:min-h-[780px] lg:min-h-[850px] h-[720px] md:h-[780px] lg:h-[850px]';
+        return 'min-h-[350px] md:min-h-[380px] lg:min-h-[400px] h-[350px] md:h-[380px] lg:h-[400px]';
       case 'tall':
-        return 'min-h-[920px] md:min-h-[980px] lg:min-h-[1050px] h-[920px] md:h-[980px] lg:h-[1050px]';
+        return 'min-h-[420px] md:min-h-[460px] lg:min-h-[500px] h-[420px] md:h-[460px] lg:h-[500px]';
       default:
-        return 'min-h-[550px] md:min-h-[620px] lg:min-h-[680px] h-[550px] md:h-[620px] lg:h-[680px]';
+        return 'min-h-[280px] md:min-h-[300px] lg:min-h-[320px] h-[280px] md:h-[300px] lg:h-[320px]';
     }
   };
 
