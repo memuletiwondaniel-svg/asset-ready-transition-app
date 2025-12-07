@@ -63,18 +63,6 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
     }
   };
 
-  const getRelationshipColor = (relationship: string) => {
-    switch (relationship.toLowerCase()) {
-      case 'prerequisite':
-        return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'dependent':
-        return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
-      case 'related':
-        return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
-      default:
-        return 'bg-muted text-muted-foreground border-border';
-    }
-  };
 
   return (
     <Card className="glass-card glass-card-hover overflow-hidden">
@@ -123,27 +111,18 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
 
             {/* Expanded list */}
             {linkedExpanded && (
-              <div className="space-y-2 mt-2">
+              <div className="space-y-1 mt-2">
                 {linkedPSSRs.map((pssr) => (
                   <div 
                     key={pssr.id}
-                    className="flex items-center gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group"
+                    className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors cursor-pointer group"
                     onClick={() => onPSSRClick?.(pssr.id)}
                   >
+                    <span className="text-xs font-medium text-primary">{pssr.id}</span>
+                    <span className="text-[10px] text-muted-foreground">•</span>
+                    <span className="text-[10px] text-muted-foreground truncate flex-1">{pssr.relationship}</span>
+                    <span className="text-[10px] text-muted-foreground">{pssr.progress}%</span>
                     {getStatusIcon(pssr.status)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-primary truncate">{pssr.id}</span>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-[9px] px-1 py-0 ${getRelationshipColor(pssr.relationship)}`}
-                        >
-                          {pssr.relationship}
-                        </Badge>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground truncate">{pssr.title}</p>
-                    </div>
-                    <span className="text-[10px] font-medium text-muted-foreground">{pssr.progress}%</span>
                     <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 ))}

@@ -10,7 +10,7 @@ import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
 import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRKeyActivitiesWidget } from '@/components/widgets/PSSRKeyActivitiesWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
-import { PSSRLinkedPSSRsWidget } from '@/components/widgets/PSSRLinkedPSSRsWidget';
+
 import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
@@ -549,12 +549,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         plantName={pssrData.asset}
                         facilityName={pssrData.asset}
                         projectName={pssrData.projectName}
-                      />
-                    ),
-                    'widget-5': (
-                      <PSSRLinkedPSSRsWidget
-                        linkedPSSRs={pssrData.linkedPSSRs}
-                        onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
                     ),
                     'widget-6': (
