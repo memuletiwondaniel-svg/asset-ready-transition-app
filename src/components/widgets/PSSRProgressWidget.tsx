@@ -67,10 +67,10 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
         border: 'border-purple-500/30 hover:border-purple-500/50'
       },
       'Health & Safety': {
-        bg: 'bg-red-500/20 dark:bg-red-500/30',
-        icon: 'text-red-600 dark:text-red-400',
-        progress: '[&>div]:bg-red-500/50',
-        border: 'border-red-500/30 hover:border-red-500/50'
+        bg: 'bg-teal-500/20 dark:bg-teal-500/30',
+        icon: 'text-teal-600 dark:text-teal-400',
+        progress: '[&>div]:bg-teal-500/50',
+        border: 'border-teal-500/30 hover:border-teal-500/50'
       },
       'General': {
         bg: 'bg-slate-500/20 dark:bg-slate-500/30',
