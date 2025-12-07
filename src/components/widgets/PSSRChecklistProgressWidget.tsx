@@ -10,7 +10,11 @@ import {
   FileText, 
   Users, 
   HeartPulse,
-  Maximize2
+  Maximize2,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
 
 export interface CategoryProgress {
@@ -18,6 +22,14 @@ export interface CategoryProgress {
   completed: number;
   total: number;
   percentage: number;
+}
+
+interface KeyActivity {
+  name: string;
+  status: 'Completed' | 'Scheduled' | 'Not Scheduled';
+  date?: string;
+  attendees?: number;
+  type?: string;
 }
 
 interface PSSRChecklistProgressWidgetProps {
@@ -32,10 +44,14 @@ interface PSSRChecklistProgressWidgetProps {
   overallProgress: number;
   categoryProgress: CategoryProgress[];
   
+  // Key Activities
+  keyActivities?: KeyActivity[];
+  
   // Interactions
   onStatClick?: (filter: string) => void;
   onCategoryClick?: (categoryName: string) => void;
   onViewAll?: () => void;
+  onActivityClick?: (type: string) => void;
   
   // Drag support
   dragAttributes?: any;
@@ -147,6 +163,63 @@ const CategoryProgressRow: React.FC<{
   </button>
 );
 
+// Key Activity Item Component
+const KeyActivityItem: React.FC<{
+  name: string;
+  status: 'Completed' | 'Scheduled' | 'Not Scheduled';
+  date?: string;
+  onClick?: () => void;
+}> = ({ name, status, date, onClick }) => {
+  const getStatusConfig = () => {
+    switch (status) {
+      case 'Completed':
+        return {
+          icon: CheckCircle2,
+          bgClass: 'bg-green-500/20 text-green-600',
+          badgeClass: 'bg-green-500/10 text-green-600 border-green-500/30'
+        };
+      case 'Scheduled':
+        return {
+          icon: Clock,
+          bgClass: 'bg-blue-500/20 text-blue-600',
+          badgeClass: 'bg-blue-500/10 text-blue-600 border-blue-500/30'
+        };
+      default:
+        return {
+          icon: AlertCircle,
+          bgClass: 'bg-gray-500/20 text-gray-500',
+          badgeClass: 'bg-gray-500/10 text-gray-500 border-gray-500/30'
+        };
+    }
+  };
+
+  const config = getStatusConfig();
+  const Icon = config.icon;
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+    >
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.bgClass}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0 text-left">
+        <span className="text-sm font-medium text-foreground truncate block">{name}</span>
+        {date && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </div>
+        )}
+      </div>
+      <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${config.badgeClass}`}>
+        {status}
+      </span>
+    </button>
+  );
+};
+
 export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetProps> = ({
   totalItems,
   draftItems,
@@ -155,9 +228,11 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
   openActions = 0,
   overallProgress,
   categoryProgress,
+  keyActivities,
   onStatClick,
   onCategoryClick,
   onViewAll,
+  onActivityClick,
   dragAttributes,
   dragListeners,
 }) => {
@@ -268,6 +343,29 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
               })}
             </div>
           </div>
+
+          {/* Key Activities Section */}
+          {keyActivities && keyActivities.length > 0 && (
+            <>
+              <Separator className="my-2" />
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
+                  Key Activities
+                </h4>
+                <div className="space-y-1">
+                  {keyActivities.map((activity) => (
+                    <KeyActivityItem
+                      key={activity.name}
+                      name={activity.name}
+                      status={activity.status}
+                      date={activity.date}
+                      onClick={() => onActivityClick?.(activity.type || activity.name)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </WidgetCard>

@@ -527,9 +527,11 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         approvedItems={pssrData.statistics.approvedItems}
                         overallProgress={pssrData.progress}
                         categoryProgress={pssrData.categoryProgress}
+                        keyActivities={pssrData.keyActivities}
                         onCategoryClick={handleCategoryClick}
                         onStatClick={handleStatClick}
                         onViewAll={handleViewAllChecklist}
+                        onActivityClick={(type) => console.log('Activity clicked:', type)}
                       />
                     ),
                     'widget-3': (
