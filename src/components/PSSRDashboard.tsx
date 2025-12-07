@@ -15,8 +15,7 @@ import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ChecklistItemsOverlay, ChecklistItemData } from '@/components/widgets/ChecklistItemsOverlay';
 import { FullChecklistProgressOverlay } from '@/components/widgets/FullChecklistProgressOverlay';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
-import { WidgetCustomizationToolbar, WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
-import { WidgetSizeControl } from '@/components/widgets/WidgetSizeControl';
+import { WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import BackgroundSlideshow from '@/components/BackgroundSlideshow';
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -109,29 +108,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     }
   };
 
-  const handleVisibilityChange = (widgetId: string, visible: boolean) => {
-    setWidgetSettings(prev =>
-      prev.map(w => w.id === widgetId ? { ...w, visible } : w)
-    );
-    toast({
-      title: visible ? 'Widget Shown' : 'Widget Hidden',
-      description: `${widgetSettings.find(w => w.id === widgetId)?.name} has been ${visible ? 'shown' : 'hidden'}.`
-    });
-  };
-
-  const handleSizeChange = (widgetId: string, size: 'small' | 'medium' | 'large') => {
-    setWidgetSettings(prev =>
-      prev.map(w => w.id === widgetId ? { ...w, size } : w)
-    );
-    toast({
-      title: 'Widget Size Changed',
-      description: `${widgetSettings.find(w => w.id === widgetId)?.name} is now ${size}.`
-    });
-  };
-
-  const handleResetLayout = () => {
-    setResetDialogOpen(true);
-  };
 
   const confirmResetLayout = () => {
     setWidgetSettings(DEFAULT_WIDGET_SETTINGS);
@@ -508,16 +484,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
 
         {/* Main Content - Widget Grid with Drag and Drop */}
         <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <WidgetCustomizationToolbar
-              widgets={widgetSettings}
-              onVisibilityChange={handleVisibilityChange}
-              onSizeChange={handleSizeChange}
-              onResetLayout={handleResetLayout}
-            />
-            <WidgetSizeControl />
-          </div>
-
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
