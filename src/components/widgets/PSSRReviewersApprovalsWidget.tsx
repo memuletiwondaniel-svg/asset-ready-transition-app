@@ -4,13 +4,15 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChecklistCompletionBanner } from '@/components/pssr/ChecklistCompletionBanner';
 import { ApprovalActionPanel } from '@/components/pssr/ApprovalActionPanel';
 import { ApprovalHistoryPanel } from '@/components/pssr/ApprovalHistoryPanel';
 import { PSSRApprover } from '@/hooks/usePSSRApprovers';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SOFCertificate } from '@/components/sof/SOFCertificate';
 
 export interface ApprovalPerson {
   id: string;
@@ -48,6 +50,11 @@ interface PSSRReviewersApprovalsWidgetProps {
   onReject?: (approverId: string, comments: string) => Promise<void>;
   approvalHistory?: PSSRApprover[];
   isApprovalLoading?: boolean;
+  // SoF Certificate props
+  pssrReason?: string;
+  plantName?: string;
+  facilityName?: string;
+  projectName?: string;
 }
 
 const PersonApprovalCard: React.FC<{
@@ -318,9 +325,14 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   onReject,
   approvalHistory = [],
   isApprovalLoading = false,
+  pssrReason,
+  plantName,
+  facilityName,
+  projectName,
 }) => {
   const { widgetSize } = useWidgetSize();
   const widgetId = 'pssr-reviewers-approvals';
+  const [showCertificatePreview, setShowCertificatePreview] = useState(false);
 
   // Calculate stage completion
   const checklistComplete = !checklistCompletion || checklistCompletion.percentage === 100;
@@ -427,16 +439,31 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
 
       {/* SoF Approval Stage */}
       {sofApprovers.length > 0 && (
-        <StageSection
-          title="SoF Approval"
-          icon={<ShieldCheck className="h-4 w-4" />}
-          people={sofApprovers}
-          isCurrentStage={currentStage === 'sof-approval'}
-          isLocked={sofApprovalLocked}
-          lockReason="Complete PSSR approval to unlock SoF approval"
-          onSendReminder={onSendReminder}
-          onPersonClick={onPersonClick}
-        />
+        <>
+          <StageSection
+            title="SoF Approval"
+            icon={<ShieldCheck className="h-4 w-4" />}
+            people={sofApprovers}
+            isCurrentStage={currentStage === 'sof-approval'}
+            isLocked={sofApprovalLocked}
+            lockReason="Complete PSSR approval to unlock SoF approval"
+            onSendReminder={onSendReminder}
+            onPersonClick={onPersonClick}
+          />
+          
+          {/* View SoF Certificate Button */}
+          <div className="flex justify-center mt-3">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowCertificatePreview(true)}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              View SoF Certificate
+            </Button>
+          </div>
+        </>
       )}
 
       {/* Approval History */}
@@ -472,6 +499,33 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
       >
         {widgetContent}
       </WidgetCard>
+
+      {/* SoF Certificate Preview Modal */}
+      <Dialog open={showCertificatePreview} onOpenChange={setShowCertificatePreview}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Statement of Fitness Certificate</DialogTitle>
+          </DialogHeader>
+          <SOFCertificate
+            certificateNumber={`SOF-${pssrId?.substring(0, 8).toUpperCase() || 'DRAFT'}`}
+            pssrReason={pssrReason || 'Standard PSSR'}
+            plantName={plantName}
+            facilityName={facilityName}
+            projectName={projectName}
+            approvers={sofApprovers.map((a, index) => ({
+              id: a.id,
+              approver_name: a.name,
+              approver_role: a.role,
+              approver_level: a.order || index + 1,
+              status: sofApprovalLocked ? 'LOCKED' : (a.status === 'completed' ? 'APPROVED' : 'PENDING'),
+              comments: a.comments,
+              approved_at: a.completedAt,
+              signature_data: undefined,
+            }))}
+            status={sofApprovalLocked ? 'LOCKED' : 'DRAFT'}
+          />
+        </DialogContent>
+      </Dialog>
 
       <FullscreenWidgetModal widgetId={widgetId} title="Approval Workflow">
         {widgetContent}
