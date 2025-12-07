@@ -92,7 +92,7 @@ const PersonApprovalCard: React.FC<{
     }
     if (!isLocked && person.pendingTasks > 0) {
       return (
-        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
           {person.pendingTasks} pending
         </Badge>
       );
