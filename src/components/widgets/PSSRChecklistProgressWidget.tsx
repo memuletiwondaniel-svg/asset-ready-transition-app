@@ -253,21 +253,21 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
     const name = categoryName.toLowerCase();
     
     if (name.includes('hardware') || name.includes('integrity')) {
-      return { colorClass: 'bg-blue-500/20 text-blue-600', progressClass: 'bg-blue-500' };
+      return { colorClass: 'bg-blue-400/15 text-blue-500', progressClass: 'bg-blue-400/70' };
     }
     if (name.includes('process') || name.includes('safety')) {
-      return { colorClass: 'bg-orange-500/20 text-orange-600', progressClass: 'bg-orange-500' };
+      return { colorClass: 'bg-orange-400/15 text-orange-500', progressClass: 'bg-orange-400/70' };
     }
     if (name.includes('documentation') || name.includes('document')) {
-      return { colorClass: 'bg-amber-500/20 text-amber-600', progressClass: 'bg-amber-500' };
+      return { colorClass: 'bg-amber-400/15 text-amber-500', progressClass: 'bg-amber-400/70' };
     }
     if (name.includes('organization') || name.includes('org')) {
-      return { colorClass: 'bg-purple-500/20 text-purple-600', progressClass: 'bg-purple-500' };
+      return { colorClass: 'bg-purple-400/15 text-purple-500', progressClass: 'bg-purple-400/70' };
     }
     if (name.includes('health') || name.includes('hse')) {
-      return { colorClass: 'bg-teal-500/20 text-teal-600', progressClass: 'bg-teal-500' };
+      return { colorClass: 'bg-teal-400/15 text-teal-500', progressClass: 'bg-teal-400/70' };
     }
-    return { colorClass: 'bg-primary/10 text-primary', progressClass: 'bg-primary' };
+    return { colorClass: 'bg-primary/10 text-primary', progressClass: 'bg-primary/70' };
   };
 
   const statusPills = [
