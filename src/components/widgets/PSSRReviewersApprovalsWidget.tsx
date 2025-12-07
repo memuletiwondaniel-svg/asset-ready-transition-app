@@ -76,7 +76,7 @@ const PersonApprovalCard: React.FC<{
   const status = person.status || (person.pendingTasks === 0 ? 'completed' : 'in_progress');
 
   const getStatusIcon = () => {
-    if (isLocked) return <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />;
+    if (isLocked) return <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />;
     switch (status) {
       case 'completed': return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
       case 'in_progress': return <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />;
@@ -86,11 +86,10 @@ const PersonApprovalCard: React.FC<{
   };
 
   const getStatusText = () => {
-    if (isLocked) return 'Locked';
     if (status === 'completed') {
       return person.completedAt ? `Approved ${person.completedAt}` : 'Approved';
     }
-    if (status === 'waiting') {
+    if (isLocked || status === 'waiting') {
       return 'Waiting';
     }
     return `${person.pendingTasks} pending`;
