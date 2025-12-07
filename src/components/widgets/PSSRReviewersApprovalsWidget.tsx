@@ -507,7 +507,12 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             <DialogTitle>Statement of Fitness Certificate</DialogTitle>
           </DialogHeader>
           <SOFCertificate
-            certificateNumber={`SOF-${pssrId?.substring(0, 8).toUpperCase() || 'DRAFT'}`}
+            certificateNumber={(() => {
+              if (!pssrId) return 'SOF-DRAFT';
+              const year = new Date().getFullYear();
+              const numericPart = pssrId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
+              return `SOF-${year}-${numericPart}`;
+            })()}
             pssrReason={pssrReason || 'Standard PSSR'}
             plantName={plantName}
             facilityName={facilityName}
