@@ -126,31 +126,31 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
 
         {/* Facility Information */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold text-gray-800 mb-3">Facility Information</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
+          <h4 className="font-semibold text-gray-800 mb-4 text-base">Facility Information</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
             {plantName && (
-              <div>
-                <span className="text-gray-500">Plant:</span>
-                <span className="ml-2 font-medium text-gray-800">{plantName}</span>
+              <div className="py-1">
+                <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Plant</span>
+                <span className="font-medium text-gray-800">{plantName}</span>
               </div>
             )}
             {facilityName && (
-              <div>
-                <span className="text-gray-500">Facility:</span>
-                <span className="ml-2 font-medium text-gray-800">{facilityName}</span>
+              <div className="py-1">
+                <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Facility</span>
+                <span className="font-medium text-gray-800">{facilityName}</span>
               </div>
             )}
             {projectName && (
-              <div>
-                <span className="text-gray-500">Project:</span>
-                <span className="ml-2 font-medium text-gray-800">{projectName}</span>
+              <div className="py-1">
+                <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Project</span>
+                <span className="font-medium text-gray-800">{projectName}</span>
               </div>
             )}
           </div>
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <span className="text-gray-500 text-sm">PSSR Reason:</span>
-            <span className="ml-2 font-medium text-gray-800 text-sm">{pssrReason}</span>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">PSSR Reason</span>
+            <span className="font-medium text-gray-800 text-sm">{pssrReason}</span>
           </div>
         </div>
 
