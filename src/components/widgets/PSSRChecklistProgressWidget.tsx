@@ -61,7 +61,7 @@ interface PSSRChecklistProgressWidgetProps {
 // Circular Progress Component
 const CircularProgress: React.FC<{ percentage: number; size?: number }> = ({ 
   percentage, 
-  size = 100 
+  size = 120 
 }) => {
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
@@ -140,25 +140,26 @@ const CategoryProgressRow: React.FC<{
 }> = ({ name, completed, total, percentage, icon: Icon, colorClass, progressClass, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
   >
-    <div className={`w-6 h-6 rounded-md flex items-center justify-center ${colorClass}`}>
-      <Icon className="h-3.5 w-3.5" />
+    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass}`}>
+      <Icon className="h-4 w-4" />
     </div>
     <div className="flex-1 min-w-0">
-      <div className="flex items-center justify-between mb-0.5">
-        <span className="text-xs font-medium text-foreground truncate">{name}</span>
-        <span className="text-[10px] text-muted-foreground ml-2 flex-shrink-0">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-foreground truncate">{name}</span>
+        <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
           {completed}/{total}
         </span>
       </div>
-      <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden">
+      <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden">
         <div 
           className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${progressClass}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
     </div>
+    
   </button>
 );
 
@@ -198,21 +199,21 @@ const KeyActivityItem: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
     >
-      <div className={`w-6 h-6 rounded-md flex items-center justify-center ${config.bgClass}`}>
-        <Icon className="h-3.5 w-3.5" />
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.bgClass}`}>
+        <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0 text-left">
-        <span className="text-xs font-medium text-foreground truncate block">{name}</span>
+        <span className="text-sm font-medium text-foreground truncate block">{name}</span>
         {date && (
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Calendar className="h-2.5 w-2.5" />
-            {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </div>
         )}
       </div>
-      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${config.badgeClass}`}>
+      <span className={`text-[10px] font-medium px-2 py-1 rounded-full border ${config.badgeClass}`}>
         {status}
       </span>
     </button>
@@ -300,16 +301,16 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
       }
     >
       <div className="h-full overflow-y-auto pr-2 scrollbar-auto-hide">
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Hero Section - Circular Progress + Stats */}
-          <div className="flex items-center gap-4 p-3 bg-muted/20 rounded-xl">
+          <div className="flex items-center gap-6 p-4 bg-muted/20 rounded-xl">
             <CircularProgress percentage={overallProgress} />
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-foreground mb-0.5">
+              <h3 className="text-xl font-bold text-foreground mb-1">
                 {approvedItems} of {totalItems}
               </h3>
-              <p className="text-xs text-muted-foreground mb-2">Items completed</p>
-              <Progress value={overallProgress} className="h-1.5" />
+              <p className="text-sm text-muted-foreground mb-3">Items completed</p>
+              <Progress value={overallProgress} className="h-2" />
             </div>
           </div>
 
@@ -326,14 +327,14 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             ))}
           </div>
 
-          <Separator className="my-1.5" />
+          <Separator className="my-2" />
 
           {/* Category Progress Section */}
           <div>
-            <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
               Progress by Category
             </h4>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {categoryProgress.map((category) => {
                 const colors = getCategoryColors(category.name);
                 return (
@@ -356,12 +357,12 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
           {/* Key Activities Section */}
           {keyActivities && keyActivities.length > 0 && (
             <>
-              <Separator className="my-1.5" />
+              <Separator className="my-2" />
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
                   Key Activities
                 </h4>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {keyActivities.map((activity) => (
                     <KeyActivityItem
                       key={activity.name}
