@@ -31,7 +31,7 @@ interface PSSRDashboardProps {
 
 const DEFAULT_WIDGET_SETTINGS: WidgetSettings[] = [
   { id: 'widget-1', name: 'PSSR Info & Scope', visible: true, size: 'large' },
-  { id: 'widget-2', name: 'Checklist', visible: true, size: 'large' },
+  { id: 'widget-2', name: 'Progress', visible: true, size: 'large' },
   { id: 'widget-3', name: 'Key Activities', visible: true, size: 'medium' },
   { id: 'widget-4', name: 'Approval', visible: true, size: 'medium' },
   { id: 'widget-6', name: 'Overview', visible: true, size: 'medium' },
