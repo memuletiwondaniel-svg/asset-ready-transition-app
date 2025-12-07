@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle2, Clock, FileText, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, Clock, FileText, AlertCircle, Bell, Send, X } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export interface PendingItem {
   id: string;
@@ -27,6 +30,7 @@ interface ApproverPendingItemsOverlayProps {
   } | null;
   pendingItems: PendingItem[];
   onItemClick?: (itemId: string) => void;
+  onSendReminder?: (personId: string, message: string) => Promise<void>;
 }
 
 export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayProps> = ({
@@ -35,7 +39,12 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
   approver,
   pendingItems,
   onItemClick,
+  onSendReminder,
 }) => {
+  const [showReminderForm, setShowReminderForm] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+
   if (!approver) return null;
 
   const initials = approver.name
@@ -44,6 +53,41 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
     .join('')
     .toUpperCase()
     .substring(0, 2);
+
+  const defaultMessage = `Hi ${approver.name},\n\nThis is a friendly reminder that you have ${pendingItems.length} pending item(s) requiring your attention.\n\nPlease review and complete these items at your earliest convenience.\n\nThank you.`;
+
+  const handleOpenReminderForm = () => {
+    setReminderMessage(defaultMessage);
+    setShowReminderForm(true);
+  };
+
+  const handleCancelReminder = () => {
+    setShowReminderForm(false);
+    setReminderMessage('');
+  };
+
+  const handleSendReminder = async () => {
+    if (!onSendReminder || !reminderMessage.trim()) return;
+    
+    setIsSending(true);
+    try {
+      await onSendReminder(approver.id, reminderMessage);
+      toast({
+        title: 'Reminder Sent',
+        description: `Reminder has been sent to ${approver.name}.`,
+      });
+      setShowReminderForm(false);
+      setReminderMessage('');
+    } catch (error) {
+      toast({
+        title: 'Failed to Send',
+        description: 'Could not send the reminder. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const getStatusIcon = (status: PendingItem['status']) => {
     switch (status) {
@@ -80,6 +124,8 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
     return acc;
   }, {} as Record<string, PendingItem[]>);
 
+  const hasPendingItems = pendingItems.length > 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -91,15 +137,79 @@ export const ApproverPendingItemsOverlay: React.FC<ApproverPendingItemsOverlayPr
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div>
+            <div className="flex-1">
               <div className="text-lg font-semibold">{approver.name}</div>
               <div className="text-sm text-muted-foreground font-normal">{approver.role}</div>
             </div>
-            <Badge variant="secondary" className="ml-auto">
-              {pendingItems.length} pending items
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {pendingItems.length} pending items
+              </Badge>
+              {hasPendingItems && onSendReminder && !showReminderForm && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenReminderForm}
+                  className="gap-1.5"
+                >
+                  <Bell className="h-3.5 w-3.5" />
+                  Send Reminder
+                </Button>
+              )}
+            </div>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Reminder Form */}
+        {showReminderForm && (
+          <div className="border border-border rounded-lg p-4 bg-muted/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" />
+                Send Reminder to {approver.name}
+              </h4>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={handleCancelReminder}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <Textarea
+              value={reminderMessage}
+              onChange={(e) => setReminderMessage(e.target.value)}
+              placeholder="Enter your reminder message..."
+              className="min-h-[120px] resize-none"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelReminder}
+                disabled={isSending}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendReminder}
+                disabled={isSending || !reminderMessage.trim()}
+                className="gap-1.5"
+              >
+                {isSending ? (
+                  <>Sending...</>
+                ) : (
+                  <>
+                    <Send className="h-3.5 w-3.5" />
+                    Send Reminder
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <ScrollArea className="max-h-[60vh] pr-4">
           {pendingItems.length === 0 ? (
