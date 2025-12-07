@@ -4,7 +4,7 @@ import { FullscreenWidgetModal } from './FullscreenWidgetModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText } from 'lucide-react';
+import { CheckCircle2, Eye, Bell, ChevronRight, ShieldCheck, Lock, MessageSquare, FileText, ChevronDown } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChecklistCompletionBanner } from '@/components/pssr/ChecklistCompletionBanner';
@@ -207,6 +207,8 @@ const StageSection: React.FC<{
   onSendReminder?: (personId: string) => void;
   onPersonClick?: (personId: string) => void;
 }> = ({ title, icon, people, isCurrentStage, isLocked, lockReason, onSendReminder, onPersonClick }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
   // Find the first person with pending tasks (action needed)
   const currentActionIndex = people.findIndex(p => p.pendingTasks > 0);
   const completedCount = people.filter(p => p.pendingTasks === 0 || p.status === 'completed').length;
@@ -216,7 +218,10 @@ const StageSection: React.FC<{
       <div className="space-y-2">
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 py-2 border-b border-border/40">
+            <div 
+              className="flex items-center gap-2 py-2 border-b border-border/40 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
               <span className={`${
                 isLocked ? 'text-muted-foreground/60' :
                 completedCount === people.length ? 'text-green-600' :
@@ -234,6 +239,9 @@ const StageSection: React.FC<{
               }`}>
                 {completedCount}/{people.length}
               </span>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
+                isExpanded ? '' : '-rotate-90'
+              }`} />
             </div>
           </TooltipTrigger>
           {isLocked && lockReason && (
@@ -242,19 +250,51 @@ const StageSection: React.FC<{
             </TooltipContent>
           )}
         </Tooltip>
-        <div className="space-y-2">
-          {people.map((person, index) => (
-            <PersonApprovalCard
-              key={person.id}
-              person={person}
-              isCurrentAction={index === currentActionIndex && isCurrentStage && !isLocked}
-              isNextInQueue={index === currentActionIndex + 1 && isCurrentStage && !isLocked}
-              isLocked={isLocked}
-              onSendReminder={onSendReminder}
-              onPersonClick={onPersonClick}
-            />
-          ))}
-        </div>
+        
+        {/* Collapsed preview - show stacked avatars */}
+        {!isExpanded && people.length > 0 && (
+          <div className="flex items-center gap-2 py-2 pl-5">
+            <div className="flex -space-x-2">
+              {people.slice(0, 4).map(person => {
+                const initials = person.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                const isCompleted = person.pendingTasks === 0 || person.status === 'completed';
+                return (
+                  <Avatar 
+                    key={person.id} 
+                    className={`h-6 w-6 border-2 border-background ${isCompleted ? 'ring-1 ring-green-500' : ''}`}
+                  >
+                    <AvatarImage src={person.avatar} alt={person.name} />
+                    <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                );
+              })}
+            </div>
+            {people.length > 4 && (
+              <span className="text-xs text-muted-foreground">
+                +{people.length - 4} more
+              </span>
+            )}
+          </div>
+        )}
+        
+        {/* Expanded view - show full person cards */}
+        {isExpanded && (
+          <div className="space-y-2">
+            {people.map((person, index) => (
+              <PersonApprovalCard
+                key={person.id}
+                person={person}
+                isCurrentAction={index === currentActionIndex && isCurrentStage && !isLocked}
+                isNextInQueue={index === currentActionIndex + 1 && isCurrentStage && !isLocked}
+                isLocked={isLocked}
+                onSendReminder={onSendReminder}
+                onPersonClick={onPersonClick}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );
