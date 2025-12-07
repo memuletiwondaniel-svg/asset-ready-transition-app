@@ -517,7 +517,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   return (
     <>
       <WidgetCard 
-        title="Approval Workflow" 
+        title="Approvals" 
         className={`min-h-[550px] md:min-h-[620px] lg:min-h-[680px] ${
           widgetSize === 'compact' ? 'h-[550px] md:h-[620px] lg:h-[680px]' :
           widgetSize === 'standard' ? 'h-[720px] md:h-[780px] lg:h-[850px]' :
@@ -562,7 +562,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         </DialogContent>
       </Dialog>
 
-      <FullscreenWidgetModal widgetId={widgetId} title="Approval Workflow">
+      <FullscreenWidgetModal widgetId={widgetId} title="Approvals">
         {widgetContent}
       </FullscreenWidgetModal>
     </>
