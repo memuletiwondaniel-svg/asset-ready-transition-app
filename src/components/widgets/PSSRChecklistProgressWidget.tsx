@@ -249,8 +249,24 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
     return FileText;
   };
 
-  const getCategoryColors = () => {
-    // Unified primary color for all categories - cleaner, less busy
+  const getCategoryColors = (categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    
+    if (name.includes('hardware') || name.includes('integrity')) {
+      return { colorClass: 'bg-blue-500/20 text-blue-600', progressClass: 'bg-blue-500' };
+    }
+    if (name.includes('process') || name.includes('safety')) {
+      return { colorClass: 'bg-orange-500/20 text-orange-600', progressClass: 'bg-orange-500' };
+    }
+    if (name.includes('documentation') || name.includes('document')) {
+      return { colorClass: 'bg-amber-500/20 text-amber-600', progressClass: 'bg-amber-500' };
+    }
+    if (name.includes('organization') || name.includes('org')) {
+      return { colorClass: 'bg-purple-500/20 text-purple-600', progressClass: 'bg-purple-500' };
+    }
+    if (name.includes('health') || name.includes('hse')) {
+      return { colorClass: 'bg-teal-500/20 text-teal-600', progressClass: 'bg-teal-500' };
+    }
     return { colorClass: 'bg-primary/10 text-primary', progressClass: 'bg-primary' };
   };
 
@@ -320,7 +336,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             </h4>
             <div className="space-y-1">
               {categoryProgress.map((category) => {
-                const colors = getCategoryColors();
+                const colors = getCategoryColors(category.name);
                 return (
                   <CategoryProgressRow
                     key={category.name}
