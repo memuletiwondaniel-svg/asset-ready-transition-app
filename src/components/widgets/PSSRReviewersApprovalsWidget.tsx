@@ -238,11 +238,8 @@ const StageSection: React.FC<{
                   completedCount === people.length ? 'bg-green-500 text-white' : ''
                 }`}
               >
-                {completedCount}/{people.length}
+              {completedCount}/{people.length}
               </Badge>
-              {isLocked && (
-                <Lock className="h-3 w-3 text-muted-foreground/50" />
-              )}
             </div>
           </TooltipTrigger>
           {isLocked && lockReason && (
