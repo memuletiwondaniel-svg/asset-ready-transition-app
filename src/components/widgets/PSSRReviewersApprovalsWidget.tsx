@@ -12,7 +12,7 @@ import { ApprovalActionPanel } from '@/components/pssr/ApprovalActionPanel';
 import { ApprovalHistoryPanel } from '@/components/pssr/ApprovalHistoryPanel';
 import { PSSRApprover } from '@/hooks/usePSSRApprovers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { SOFCertificate } from '@/components/sof/SOFCertificate';
+import { SOFCertificateNavigator } from '@/components/sof/SOFCertificateNavigator';
 import { ApproverPendingItemsOverlay, PendingItem } from './ApproverPendingItemsOverlay';
 
 export interface ApprovalPerson {
@@ -555,35 +555,39 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
         {widgetContent}
       </WidgetCard>
 
-      {/* SoF Certificate Preview Modal */}
+      {/* SoF Certificate Preview Modal with Navigator */}
       <Dialog open={showCertificatePreview} onOpenChange={setShowCertificatePreview}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="p-4 pb-0">
             <DialogTitle>Statement of Fitness Certificate</DialogTitle>
           </DialogHeader>
-          <SOFCertificate
-            certificateNumber={(() => {
-              if (!pssrId) return 'SOF-DRAFT';
-              const year = new Date().getFullYear();
-              const numericPart = pssrId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
-              return `SOF-${year}-${numericPart}`;
-            })()}
-            pssrReason={pssrReason || 'Standard PSSR'}
-            plantName={plantName}
-            facilityName={facilityName}
-            projectName={projectName}
-            approvers={sofApprovers.map((a, index) => ({
-              id: a.id,
-              approver_name: a.name,
-              approver_role: a.role,
-              approver_level: a.order || index + 1,
-              status: sofApprovalLocked ? 'LOCKED' : (a.status === 'completed' ? 'APPROVED' : 'PENDING'),
-              comments: a.comments,
-              approved_at: a.completedAt,
-              signature_data: undefined,
-            }))}
-            status={sofApprovalLocked ? 'LOCKED' : 'DRAFT'}
-          />
+          <div className="h-[calc(90vh-80px)]">
+            <SOFCertificateNavigator
+              pssrId={pssrId || ''}
+              certificateNumber={(() => {
+                if (!pssrId) return 'SOF-DRAFT';
+                const year = new Date().getFullYear();
+                const numericPart = pssrId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
+                return `SOF-${year}-${numericPart}`;
+              })()}
+              pssrReason={pssrReason || 'Standard PSSR'}
+              plantName={plantName}
+              facilityName={facilityName}
+              projectName={projectName}
+              approvers={sofApprovers.map((a, index) => ({
+                id: a.id,
+                approver_name: a.name,
+                approver_role: a.role,
+                approver_level: a.order || index + 1,
+                status: sofApprovalLocked ? 'LOCKED' : (a.status === 'completed' ? 'APPROVED' : 'PENDING'),
+                comments: a.comments,
+                approved_at: a.completedAt,
+                signature_data: undefined,
+              }))}
+              issuedAt={undefined}
+              status={sofApprovalLocked ? 'LOCKED' : 'DRAFT'}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
