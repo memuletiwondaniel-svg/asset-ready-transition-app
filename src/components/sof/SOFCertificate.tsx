@@ -169,12 +169,29 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
             </p>
           )}
 
-          <div className="space-y-2 pl-4">
-            {certificateText.split('\n').filter(line => line.trim()).map((line, index) => (
-              <p key={index} className="text-gray-700 text-sm leading-relaxed">
-                {line}
-              </p>
-            ))}
+          <div className="space-y-2">
+            {certificateText.split('\n').filter(line => line.trim()).map((line, index) => {
+              // Check if this is a bullet point (starts with a letter followed by period)
+              const isBulletItem = /^[a-h]\.\s/.test(line.trim());
+              
+              if (isBulletItem) {
+                const letter = line.trim().charAt(0);
+                const text = line.trim().substring(3);
+                
+                return (
+                  <div key={index} className="flex items-start ml-6 gap-3">
+                    <span className="font-semibold text-gray-800 min-w-[20px]">{letter}.</span>
+                    <span className="text-gray-700 text-sm leading-relaxed">{text}</span>
+                  </div>
+                );
+              }
+              
+              return (
+                <p key={index} className="text-gray-700 text-sm leading-relaxed">
+                  {line}
+                </p>
+              );
+            })}
           </div>
 
           <p className="text-gray-800 font-semibold mt-6 pt-4 border-t border-gray-200">
