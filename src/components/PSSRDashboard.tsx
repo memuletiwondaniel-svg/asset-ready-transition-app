@@ -471,13 +471,6 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-right flex-shrink-0">
-                  <div className="text-xs sm:text-sm font-medium text-foreground">{pssrData.progress}% Complete</div>
-                  <div className="text-[10px] sm:text-xs text-muted-foreground">12 days remaining</div>
-                </div>
-                <Progress value={pssrData.progress} className="w-20 sm:w-32 h-2" />
-              </div>
             </div>
           </div>
         </header>
