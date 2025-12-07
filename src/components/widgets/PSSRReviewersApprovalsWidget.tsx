@@ -389,87 +389,88 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   const canApprove = currentUserApproverId && onApprove && onReject && !pssrApprovalLocked;
 
   const widgetContent = (
-    <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
-      {/* Checklist Completion Banner */}
-      {checklistCompletion && (
-        <ChecklistCompletionBanner
-          completionPercentage={checklistCompletion.percentage}
-          totalItems={checklistCompletion.total}
-          completedItems={checklistCompletion.completed}
-        />
-      )}
+    <div className="h-full flex flex-col">
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent space-y-4">
+        {/* Checklist Completion Banner */}
+        {checklistCompletion && (
+          <ChecklistCompletionBanner
+            completionPercentage={checklistCompletion.percentage}
+            totalItems={checklistCompletion.total}
+            completedItems={checklistCompletion.completed}
+          />
+        )}
 
-      {/* Review Stage */}
-      {reviewers.length > 0 && (
-        <StageSection
-          title="Review Stage"
-          icon={<Eye className="h-4 w-4" />}
-          people={reviewers}
-          isCurrentStage={currentStage === 'review'}
-          isLocked={false}
-          onSendReminder={onSendReminder}
-          onPersonClick={onPersonClick}
-        />
-      )}
+        {/* Review Stage */}
+        {reviewers.length > 0 && (
+          <StageSection
+            title="Review Stage"
+            icon={<Eye className="h-4 w-4" />}
+            people={reviewers}
+            isCurrentStage={currentStage === 'review'}
+            isLocked={false}
+            onSendReminder={onSendReminder}
+            onPersonClick={onPersonClick}
+          />
+        )}
 
-      {/* Visual Connector */}
-      {reviewers.length > 0 && approvers.length > 0 && (
-        <div className="flex justify-center py-1">
-          <div className={`w-0.5 h-4 rounded-full ${
-            reviewersComplete 
-              ? 'bg-gradient-to-b from-green-500 to-green-500/30' 
-              : 'bg-gradient-to-b from-border to-border/30'
-          }`} />
-        </div>
-      )}
+        {/* Visual Connector */}
+        {reviewers.length > 0 && approvers.length > 0 && (
+          <div className="flex justify-center py-1">
+            <div className={`w-0.5 h-4 rounded-full ${
+              reviewersComplete 
+                ? 'bg-gradient-to-b from-green-500 to-green-500/30' 
+                : 'bg-gradient-to-b from-border to-border/30'
+            }`} />
+          </div>
+        )}
 
-      {/* PSSR Approval Stage */}
-      {approvers.length > 0 && (
-        <StageSection
-          title="PSSR Approval"
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          people={approvers}
-          isCurrentStage={currentStage === 'pssr-approval'}
-          isLocked={pssrApprovalLocked}
-          lockReason={pssrApprovalLockReason}
-          onSendReminder={onSendReminder}
-          onPersonClick={onPersonClick}
-        />
-      )}
+        {/* PSSR Approval Stage */}
+        {approvers.length > 0 && (
+          <StageSection
+            title="PSSR Approval"
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            people={approvers}
+            isCurrentStage={currentStage === 'pssr-approval'}
+            isLocked={pssrApprovalLocked}
+            lockReason={pssrApprovalLockReason}
+            onSendReminder={onSendReminder}
+            onPersonClick={onPersonClick}
+          />
+        )}
 
-      {/* Approval Action Panel - shown when current user can approve */}
-      {canApprove && currentStage === 'pssr-approval' && (
-        <ApprovalActionPanel
-          pssrId={pssrId || ''}
-          pssrTitle={pssrTitle}
-          approverId={currentUserApproverId}
-          approverRole={currentUserRole || 'Approver'}
-          onApprove={async (comments) => {
-            await onApprove(currentUserApproverId, comments);
-          }}
-          onReject={async (comments) => {
-            await onReject(currentUserApproverId, comments);
-          }}
-          isLoading={isApprovalLoading}
-          isLocked={pssrApprovalLocked}
-          lockedReason="Complete the checklist to enable approval"
-        />
-      )}
+        {/* Approval Action Panel - shown when current user can approve */}
+        {canApprove && currentStage === 'pssr-approval' && (
+          <ApprovalActionPanel
+            pssrId={pssrId || ''}
+            pssrTitle={pssrTitle}
+            approverId={currentUserApproverId}
+            approverRole={currentUserRole || 'Approver'}
+            onApprove={async (comments) => {
+              await onApprove(currentUserApproverId, comments);
+            }}
+            onReject={async (comments) => {
+              await onReject(currentUserApproverId, comments);
+            }}
+            isLoading={isApprovalLoading}
+            isLocked={pssrApprovalLocked}
+            lockedReason="Complete the checklist to enable approval"
+          />
+        )}
 
-      {/* Visual Connector */}
-      {approvers.length > 0 && sofApprovers.length > 0 && (
-        <div className="flex justify-center py-1">
-          <div className={`w-0.5 h-4 rounded-full ${
-            approversComplete 
-              ? 'bg-gradient-to-b from-green-500 to-green-500/30' 
-              : 'bg-gradient-to-b from-border to-border/30'
-          }`} />
-        </div>
-      )}
+        {/* Visual Connector */}
+        {approvers.length > 0 && sofApprovers.length > 0 && (
+          <div className="flex justify-center py-1">
+            <div className={`w-0.5 h-4 rounded-full ${
+              approversComplete 
+                ? 'bg-gradient-to-b from-green-500 to-green-500/30' 
+                : 'bg-gradient-to-b from-border to-border/30'
+            }`} />
+          </div>
+        )}
 
-      {/* SoF Approval Stage */}
-      {sofApprovers.length > 0 && (
-        <>
+        {/* SoF Approval Stage */}
+        {sofApprovers.length > 0 && (
           <StageSection
             title="SoF Approval"
             icon={<ShieldCheck className="h-4 w-4" />}
@@ -480,37 +481,31 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             onSendReminder={onSendReminder}
             onPersonClick={onPersonClick}
           />
-          
-          {/* View SoF Certificate Button */}
-          <div className="flex justify-center mt-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowCertificatePreview(true)}
-              className="gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              View SoF Certificate
-            </Button>
-          </div>
-        </>
-      )}
+        )}
 
-      {/* Approval History */}
-      {approvalHistory.length > 0 && (
-        <ApprovalHistoryPanel
-          approvers={approvalHistory}
-          title="Approval History"
-        />
-      )}
+        {/* Approval History */}
+        {approvalHistory.length > 0 && (
+          <ApprovalHistoryPanel
+            approvers={approvalHistory}
+            title="Approval History"
+          />
+        )}
+      </div>
 
-      {/* Progress Summary */}
-      <ApprovalProgress 
-        reviewers={reviewers} 
-        approvers={approvers} 
-        sofApprovers={sofApprovers}
-        checklistComplete={checklistComplete}
-      />
+      {/* Fixed bottom section - View SoF Certificate */}
+      {sofApprovers.length > 0 && (
+        <div className="flex-shrink-0 pt-3 mt-3 border-t border-border/50">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowCertificatePreview(true)}
+            className="w-full gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            View SoF Certificate
+          </Button>
+        </div>
+      )}
     </div>
   );
 
