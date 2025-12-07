@@ -328,8 +328,16 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
   const approversComplete = approvers.every(a => a.pendingTasks === 0 || a.status === 'completed');
 
   // Determine current stage and locked states
-  const pssrApprovalLocked = !checklistComplete;
+  // PSSR Approval requires BOTH checklist complete AND review stage complete
+  const pssrApprovalLocked = !checklistComplete || !reviewersComplete;
   const sofApprovalLocked = !approversComplete || pssrApprovalLocked;
+  
+  // Determine the lock reason for PSSR approval
+  const pssrApprovalLockReason = !checklistComplete 
+    ? "Complete the checklist (100%) to unlock PSSR approval"
+    : !reviewersComplete 
+      ? "Complete the review stage to unlock PSSR approval"
+      : undefined;
   
   const currentStage = !reviewersComplete ? 'review' : 
                        !approversComplete ? 'pssr-approval' : 
@@ -381,7 +389,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
           people={approvers}
           isCurrentStage={currentStage === 'pssr-approval'}
           isLocked={pssrApprovalLocked}
-          lockReason="Complete the checklist (100%) to unlock PSSR approval"
+          lockReason={pssrApprovalLockReason}
           onSendReminder={onSendReminder}
           onPersonClick={onPersonClick}
         />
