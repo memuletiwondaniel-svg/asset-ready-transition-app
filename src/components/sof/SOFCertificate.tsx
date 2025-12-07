@@ -111,51 +111,53 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       {/* Certificate */}
       <Card 
         ref={certificateRef} 
-        className="bg-white text-black p-8 max-w-4xl mx-auto print:shadow-none print:border-2 print:border-black"
+        className="bg-white text-black p-6 max-w-4xl mx-auto print:shadow-none print:border-2 print:border-black"
       >
         {/* Header with Logo */}
-        <div className="text-center border-b-2 border-black pb-6 mb-6">
+        <div className="text-center border-b-2 border-black pb-4 mb-4">
           <img 
             src="/images/bgc-logo.png" 
             alt="Basrah Gas Company Logo" 
-            className="h-24 mx-auto mb-4"
+            className="h-20 mx-auto mb-3"
           />
-          <div className="w-full h-1 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-4" />
-          <h3 className="text-3xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
-          <p className="text-sm text-gray-600 mt-2">Certificate No: {certificateNumber}</p>
+          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-3" />
+          <h3 className="text-2xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
+          <p className="text-sm text-gray-600 mt-1">Certificate No: {certificateNumber}</p>
         </div>
 
-        {/* Facility Information */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+        {/* Facility Information - Inline Layout */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             {plantName && (
-              <div className="py-1">
-                <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Plant</span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 text-xs uppercase tracking-wide">Plant:</span>
                 <span className="font-medium text-gray-800">{plantName}</span>
               </div>
             )}
+            {plantName && facilityName && <span className="text-gray-300">|</span>}
             {facilityName && (
-              <div className="py-1">
-                <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Facility</span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 text-xs uppercase tracking-wide">Facility:</span>
                 <span className="font-medium text-gray-800">{facilityName}</span>
               </div>
             )}
+            {facilityName && projectName && <span className="text-gray-300">|</span>}
             {projectName && (
-              <div className="py-1">
-                <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Project</span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 text-xs uppercase tracking-wide">Project:</span>
                 <span className="font-medium text-gray-800">{projectName}</span>
               </div>
             )}
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">PSSR Reason</span>
-            <span className="font-medium text-gray-800 text-sm">{pssrReason}</span>
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 text-sm">
+            <span className="text-gray-500 text-xs uppercase tracking-wide">PSSR Reason:</span>
+            <span className="font-medium text-gray-800">{pssrReason}</span>
           </div>
         </div>
 
         {/* Certificate Text */}
-        <div className="mb-8">
-          <p className="text-gray-800 leading-relaxed mb-4">
+        <div className="mb-6">
+          <p className="text-gray-800 leading-relaxed mb-3 text-sm">
             {isProcessSafetyIncidence 
               ? "This Statement of Fitness confirms that following a process safety incidence at the above-referenced facility:"
               : "This Statement of Fitness (SoF) certificate confirms that for the above referenced facility:"
@@ -163,14 +165,13 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
           </p>
           
           {!isProcessSafetyIncidence && (
-            <p className="text-gray-700 mb-4 italic">
+            <p className="text-gray-700 mb-3 italic text-sm">
               Requirement 7 of the Asset Integrity Process Safety Management (AIPSM) Manual has been met:
             </p>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {certificateText.split('\n').filter(line => line.trim()).map((line, index) => {
-              // Check if this is a bullet point (starts with a letter followed by period)
               const isBulletItem = /^[a-h]\.\s/.test(line.trim());
               
               if (isBulletItem) {
@@ -178,34 +179,34 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 const text = line.trim().substring(3);
                 
                 return (
-                  <div key={index} className="flex items-start ml-6 gap-3">
-                    <span className="font-semibold text-gray-800 min-w-[20px]">{letter}.</span>
-                    <span className="text-gray-700 text-sm leading-relaxed">{text}</span>
+                  <div key={index} className="flex items-start ml-4 gap-2">
+                    <span className="font-semibold text-gray-800 min-w-[16px] text-sm">{letter}.</span>
+                    <span className="text-gray-700 text-sm leading-snug">{text}</span>
                   </div>
                 );
               }
               
               return (
-                <p key={index} className="text-gray-700 text-sm leading-relaxed">
+                <p key={index} className="text-gray-700 text-sm leading-snug">
                   {line}
                 </p>
               );
             })}
           </div>
 
-          <p className="text-gray-800 font-semibold mt-6 pt-4 border-t border-gray-200">
+          <p className="text-gray-800 font-semibold mt-4 pt-3 border-t border-gray-200 text-sm">
             The Facility therefore meets the criteria necessary to (re-)introduce hydrocarbons, process fluids or hazardous energy.
           </p>
         </div>
 
         {/* Approvals Section */}
-        <div className="border-t-2 border-gray-300 pt-6">
-          <h4 className="font-bold text-gray-800 mb-4 text-lg">APPROVALS</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="border-t-2 border-gray-300 pt-4">
+          <h4 className="font-bold text-gray-800 mb-3 text-base">APPROVALS</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {approvers.sort((a, b) => a.approver_level - b.approver_level).map((approver) => (
               <div 
                 key={approver.id} 
-                className={`border rounded-lg p-4 ${
+                className={`border rounded-lg p-3 ${
                   approver.status === 'APPROVED' 
                     ? 'border-green-300 bg-green-50' 
                     : approver.status === 'LOCKED'
@@ -214,15 +215,15 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 }`}
               >
                 {/* Signature Area */}
-                <div className="h-20 border-b border-gray-300 mb-3 flex items-center justify-center">
+                <div className="h-14 border-b border-gray-300 mb-2 flex items-center justify-center">
                   {approver.signature_data ? (
                     <img 
                       src={approver.signature_data} 
                       alt={`${approver.approver_name}'s signature`}
-                      className="max-h-16 max-w-full object-contain"
+                      className="max-h-12 max-w-full object-contain"
                     />
                   ) : (
-                    <span className="text-gray-400 text-sm italic">
+                    <span className="text-gray-400 text-xs italic">
                       {approver.status === 'LOCKED' ? 'Locked' : 'Awaiting signature'}
                     </span>
                   )}
@@ -230,18 +231,18 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 
                 {/* Approver Details */}
                 <div className="text-center">
-                  <p className="font-semibold text-gray-800">{approver.approver_name}</p>
-                  <p className="text-sm text-gray-600">{approver.approver_role}</p>
+                  <p className="font-semibold text-gray-800 text-sm">{approver.approver_name}</p>
+                  <p className="text-xs text-gray-600">{approver.approver_role}</p>
                   {approver.approved_at && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {format(new Date(approver.approved_at), 'dd MMM yyyy, HH:mm')}
                     </p>
                   )}
-                  <div className="mt-2">
+                  <div className="mt-1.5">
                     {getStatusBadge(approver.status)}
                   </div>
                   {approver.comments && (
-                    <p className="text-xs text-gray-500 mt-2 italic">"{approver.comments}"</p>
+                    <p className="text-xs text-gray-500 mt-1 italic line-clamp-2">"{approver.comments}"</p>
                   )}
                 </div>
               </div>
@@ -250,11 +251,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+        <div className="mt-6 pt-3 border-t border-gray-200 text-center text-xs text-gray-500">
           {issuedAt && (
             <p>Issued on: {format(new Date(issuedAt), 'dd MMMM yyyy, HH:mm:ss')}</p>
           )}
-          <p className="mt-1">This document is electronically generated and valid without physical signature.</p>
+          <p className="mt-0.5">This document is electronically generated and valid without physical signature.</p>
         </div>
       </Card>
 
