@@ -518,10 +518,10 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
     <>
       <WidgetCard 
         title="Approval Workflow" 
-        className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
-          widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
-          widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
-          'h-[420px] md:h-[460px] lg:h-[500px]'
+        className={`min-h-[550px] md:min-h-[620px] lg:min-h-[680px] ${
+          widgetSize === 'compact' ? 'h-[550px] md:h-[620px] lg:h-[680px]' :
+          widgetSize === 'standard' ? 'h-[720px] md:h-[780px] lg:h-[850px]' :
+          'h-[920px] md:h-[980px] lg:h-[1050px]'
         }`}
         widgetId={widgetId}
         dragAttributes={dragAttributes}

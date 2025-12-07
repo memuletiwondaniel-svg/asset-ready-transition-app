@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { WidgetCard } from '@/components/widgets/WidgetCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList, CheckCircle, Clock, Link2, ChevronDown, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface LinkedPSSR {
   id: string;
@@ -15,18 +14,13 @@ interface LinkedPSSR {
 interface OverviewStatsWidgetProps {
   linkedPSSRs?: LinkedPSSR[];
   onPSSRClick?: (pssrId: string) => void;
-  dragAttributes?: any;
-  dragListeners?: any;
 }
 
 export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   linkedPSSRs = [],
-  onPSSRClick,
-  dragAttributes,
-  dragListeners
+  onPSSRClick
 }) => {
   const [linkedExpanded, setLinkedExpanded] = useState(false);
-  const { widgetSize } = useWidgetSize();
 
   const stats = [
     {
@@ -82,28 +76,12 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
     }
   };
 
-  const getHeightClass = () => {
-    switch (widgetSize) {
-      case 'compact':
-        return 'min-h-[280px] md:min-h-[300px] lg:min-h-[320px] h-[280px] md:h-[300px] lg:h-[320px]';
-      case 'standard':
-        return 'min-h-[350px] md:min-h-[380px] lg:min-h-[400px] h-[350px] md:h-[380px] lg:h-[400px]';
-      case 'tall':
-        return 'min-h-[420px] md:min-h-[460px] lg:min-h-[500px] h-[420px] md:h-[460px] lg:h-[500px]';
-      default:
-        return 'min-h-[280px] md:min-h-[300px] lg:min-h-[320px] h-[280px] md:h-[300px] lg:h-[320px]';
-    }
-  };
-
   return (
-    <WidgetCard
-      title="Overview"
-      className={getHeightClass()}
-      widgetId="overview-stats"
-      dragAttributes={dragAttributes}
-      dragListeners={dragListeners}
-    >
-      <div className="h-full flex flex-col">
+    <Card className="glass-card glass-card-hover overflow-hidden min-h-[380px] md:min-h-[420px] lg:min-h-[450px]">
+      <CardHeader className="border-b border-border/40 py-3">
+        <CardTitle className="text-lg font-bold">Overview</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4">
         <div className="space-y-3">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -126,12 +104,9 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
           })}
         </div>
 
-        {/* Spacer to push Linked PSSRs to bottom */}
-        <div className="flex-1" />
-
         {/* Linked PSSRs Section */}
         {linkedPSSRs.length > 0 && (
-          <div className="pt-3 border-t border-border/40">
+          <div className="mt-4 pt-3 border-t border-border/40">
             <div 
               className="flex items-center gap-2 py-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
               onClick={() => setLinkedExpanded(!linkedExpanded)}
@@ -176,7 +151,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
             )}
           </div>
         )}
-      </div>
-    </WidgetCard>
+      </CardContent>
+    </Card>
   );
 };
