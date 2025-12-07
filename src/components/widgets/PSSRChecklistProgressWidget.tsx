@@ -262,7 +262,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
       return { colorClass: 'bg-yellow-300/10 text-yellow-500', progressClass: 'bg-yellow-400/50' };
     }
     if (name.includes('organization') || name.includes('org')) {
-      return { colorClass: 'bg-violet-300/10 text-violet-400', progressClass: 'bg-violet-300/50' };
+      return { colorClass: 'bg-violet-300/10 text-violet-400', progressClass: 'bg-violet-300/40' };
     }
     if (name.includes('health') || name.includes('hse')) {
       return { colorClass: 'bg-emerald-300/10 text-emerald-400', progressClass: 'bg-emerald-300/50' };
