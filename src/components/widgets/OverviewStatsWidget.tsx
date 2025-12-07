@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { ClipboardList, CheckCircle, Clock, Link2, ChevronDown, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useWidgetSize } from '@/contexts/WidgetSizeContext';
 
 interface LinkedPSSR {
   id: string;
@@ -14,13 +15,18 @@ interface LinkedPSSR {
 interface OverviewStatsWidgetProps {
   linkedPSSRs?: LinkedPSSR[];
   onPSSRClick?: (pssrId: string) => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   linkedPSSRs = [],
-  onPSSRClick
+  onPSSRClick,
+  dragAttributes,
+  dragListeners
 }) => {
   const [linkedExpanded, setLinkedExpanded] = useState(false);
+  const { widgetSize } = useWidgetSize();
 
   const stats = [
     {
@@ -76,82 +82,96 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
     }
   };
 
+  const getHeightClass = () => {
+    switch (widgetSize) {
+      case 'compact':
+        return 'min-h-[550px] md:min-h-[620px] lg:min-h-[680px] h-[550px] md:h-[620px] lg:h-[680px]';
+      case 'standard':
+        return 'min-h-[720px] md:min-h-[780px] lg:min-h-[850px] h-[720px] md:h-[780px] lg:h-[850px]';
+      case 'tall':
+        return 'min-h-[920px] md:min-h-[980px] lg:min-h-[1050px] h-[920px] md:h-[980px] lg:h-[1050px]';
+      default:
+        return 'min-h-[550px] md:min-h-[620px] lg:min-h-[680px] h-[550px] md:h-[620px] lg:h-[680px]';
+    }
+  };
+
   return (
-    <Card className="glass-card glass-card-hover overflow-hidden min-h-[550px] md:min-h-[620px] lg:min-h-[680px] h-[550px] md:h-[620px] lg:h-[680px]">
-      <CardHeader className="border-b border-border/40 py-3">
-        <CardTitle className="text-lg font-bold">Overview</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.id}
-                className={`flex items-center justify-between p-3 rounded-lg bg-gradient-to-r ${stat.bgGradient} border ${stat.border}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    <p className="text-lg font-bold">{stat.value}</p>
-                  </div>
+    <WidgetCard
+      title="Overview"
+      className={getHeightClass()}
+      widgetId="overview-stats"
+      dragAttributes={dragAttributes}
+      dragListeners={dragListeners}
+    >
+      <div className="space-y-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.id}
+              className={`flex items-center justify-between p-3 rounded-lg bg-gradient-to-r ${stat.bgGradient} border ${stat.border}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="text-lg font-bold">{stat.value}</p>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Linked PSSRs Section */}
-        {linkedPSSRs.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-border/40">
-            <div 
-              className="flex items-center gap-2 py-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
-              onClick={() => setLinkedExpanded(!linkedExpanded)}
-            >
-              <Link2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium flex-1">Linked PSSRs</span>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                {linkedPSSRs.length}
-              </Badge>
-              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
-                linkedExpanded ? '' : '-rotate-90'
-              }`} />
             </div>
+          );
+        })}
+      </div>
 
-            {/* Expanded list */}
-            {linkedExpanded && (
-              <div className="space-y-2 mt-2">
-                {linkedPSSRs.map((pssr) => (
-                  <div 
-                    key={pssr.id}
-                    className="flex items-center gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group"
-                    onClick={() => onPSSRClick?.(pssr.id)}
-                  >
-                    {getStatusIcon(pssr.status)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-primary truncate">{pssr.id}</span>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-[9px] px-1 py-0 ${getRelationshipColor(pssr.relationship)}`}
-                        >
-                          {pssr.relationship}
-                        </Badge>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground truncate">{pssr.title}</p>
-                    </div>
-                    <span className="text-[10px] font-medium text-muted-foreground">{pssr.progress}%</span>
-                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Linked PSSRs Section */}
+      {linkedPSSRs.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-border/40">
+          <div 
+            className="flex items-center gap-2 py-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-sm"
+            onClick={() => setLinkedExpanded(!linkedExpanded)}
+          >
+            <Link2 className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium flex-1">Linked PSSRs</span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+              {linkedPSSRs.length}
+            </Badge>
+            <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
+              linkedExpanded ? '' : '-rotate-90'
+            }`} />
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Expanded list */}
+          {linkedExpanded && (
+            <div className="space-y-2 mt-2">
+              {linkedPSSRs.map((pssr) => (
+                <div 
+                  key={pssr.id}
+                  className="flex items-center gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={() => onPSSRClick?.(pssr.id)}
+                >
+                  {getStatusIcon(pssr.status)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-primary truncate">{pssr.id}</span>
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[9px] px-1 py-0 ${getRelationshipColor(pssr.relationship)}`}
+                      >
+                        {pssr.relationship}
+                      </Badge>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground truncate">{pssr.title}</p>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">{pssr.progress}%</span>
+                  <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </WidgetCard>
   );
 };
