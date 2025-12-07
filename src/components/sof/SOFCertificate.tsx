@@ -127,7 +127,6 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
         {/* Facility Information */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
-          <h4 className="font-semibold text-gray-800 mb-4 text-base">Facility Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
             {plantName && (
               <div className="py-1">
