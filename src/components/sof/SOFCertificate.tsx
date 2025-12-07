@@ -120,8 +120,6 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
             alt="Basrah Gas Company Logo" 
             className="h-24 mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">شركة غاز البصرة</h1>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">Basrah Gas Company</h2>
           <div className="w-full h-1 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-4" />
           <h3 className="text-3xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
           <p className="text-sm text-gray-600 mt-2">Certificate No: {certificateNumber}</p>
