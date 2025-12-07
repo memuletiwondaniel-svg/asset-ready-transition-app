@@ -334,7 +334,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
               Progress by Category
             </h4>
-            <div className="space-y-1">
+            <div className="space-y-0">
               {categoryProgress.map((category) => {
                 const colors = getCategoryColors(category.name);
                 return (
