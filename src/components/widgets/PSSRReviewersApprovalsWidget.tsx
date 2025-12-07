@@ -161,19 +161,6 @@ const PersonApprovalCard: React.FC<{
             {/* Actions */}
             {!isLocked && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {status === 'in_progress' && onSendReminder && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSendReminder(person.id);
-                    }}
-                  >
-                    <Bell className="h-3.5 w-3.5" />
-                  </Button>
-                )}
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             )}
