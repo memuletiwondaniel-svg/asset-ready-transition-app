@@ -46,6 +46,13 @@ export const useRealtimeProfile = (userId: string | undefined) => {
     if (data) {
       const avatarUrl = getAvatarUrl(data.avatar_url, false);
       previousAvatarRef.current = data.avatar_url;
+      
+      // Preload avatar image before updating state
+      if (avatarUrl) {
+        const img = new Image();
+        img.src = avatarUrl;
+      }
+      
       setProfile({ ...data, avatar_url: avatarUrl });
     }
   }, [userId, getAvatarUrl]);
