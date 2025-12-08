@@ -94,8 +94,8 @@ export const OnlineUsersIndicator: React.FC<OnlineUsersIndicatorProps> = ({
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <Avatar className="h-8 w-8 border-2 border-card cursor-pointer hover:scale-110 transition-transform">
-                      <AvatarImage src={getAvatarUrl(user.avatar_url) || undefined} />
-                      <AvatarFallback className="text-xs bg-primary/10">
+                      {getAvatarUrl(user.avatar_url) && <AvatarImage src={getAvatarUrl(user.avatar_url) || undefined} />}
+                      <AvatarFallback delayMs={600} className="text-xs bg-primary/10">
                         {initials}
                       </AvatarFallback>
                     </Avatar>

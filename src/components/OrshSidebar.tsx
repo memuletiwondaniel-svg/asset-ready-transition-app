@@ -31,9 +31,9 @@ interface OrshSidebarProps {
 }
 
 export const OrshSidebar: React.FC<OrshSidebarProps> = ({
-  userName = 'Daniel',
-  userTitle = 'ORA Engr.',
-  userAvatar = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
+  userName = 'User',
+  userTitle = '',
+  userAvatar = '',
   language = 'en',
   onLanguageChange,
   onNavigate,
