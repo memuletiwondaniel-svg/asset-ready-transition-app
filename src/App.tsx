@@ -7,7 +7,6 @@ import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
 import { WidgetSizeProvider } from "@/contexts/WidgetSizeContext";
-import { PageTransition } from "@/components/PageTransition";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -25,7 +24,15 @@ import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPref
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 
-const queryClient = new QueryClient();
+// Create QueryClient outside component to prevent recreation on every render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,8 +44,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <BreadcrumbProvider>
-                <PageTransition>
-                  <Routes>
+                <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/pssr" element={<Index />} />
@@ -58,10 +64,9 @@ const App = () => (
           <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
           <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
             <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </PageTransition>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
               </BreadcrumbProvider>
             </BrowserRouter>
           </TooltipProvider>

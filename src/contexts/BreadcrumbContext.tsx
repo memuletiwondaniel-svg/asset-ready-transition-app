@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface BreadcrumbItem {
@@ -102,9 +102,18 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setMetadata(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  // Track navigation history
+  // Track previous path to avoid unnecessary updates
+  const previousPathRef = useRef<string>('');
+
+  // Track navigation history - only when path actually changes
   useEffect(() => {
     const currentPath = location.pathname;
+    
+    // Skip if path hasn't changed
+    if (previousPathRef.current === currentPath) {
+      return;
+    }
+    previousPathRef.current = currentPath;
     
     // Get label from metadata or route labels
     const label = metadata[currentPath] || 
@@ -137,7 +146,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setCurrentHistoryIndex(newHistory.length - 1);
       }
     }
-  }, [location.pathname, metadata, currentHistoryIndex, history]);
+  }, [location.pathname]); // Reduced dependencies to prevent cascade
 
   const goBack = useCallback(() => {
     if (currentHistoryIndex > 0) {
@@ -171,26 +180,41 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setBreadcrumbs([]);
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    breadcrumbs,
+    setBreadcrumbs,
+    addBreadcrumb,
+    clearBreadcrumbs,
+    buildBreadcrumbsFromPath,
+    metadata,
+    setMetadata,
+    updateMetadata,
+    history,
+    currentHistoryIndex,
+    canGoBack,
+    canGoForward,
+    goBack,
+    goForward,
+    clearHistory
+  }), [
+    breadcrumbs,
+    addBreadcrumb,
+    clearBreadcrumbs,
+    buildBreadcrumbsFromPath,
+    metadata,
+    updateMetadata,
+    history,
+    currentHistoryIndex,
+    canGoBack,
+    canGoForward,
+    goBack,
+    goForward,
+    clearHistory
+  ]);
+
   return (
-    <BreadcrumbContext.Provider
-      value={{
-        breadcrumbs,
-        setBreadcrumbs,
-        addBreadcrumb,
-        clearBreadcrumbs,
-        buildBreadcrumbsFromPath,
-        metadata,
-        setMetadata,
-        updateMetadata,
-        history,
-        currentHistoryIndex,
-        canGoBack,
-        canGoForward,
-        goBack,
-        goForward,
-        clearHistory
-      }}
-    >
+    <BreadcrumbContext.Provider value={contextValue}>
       {children}
     </BreadcrumbContext.Provider>
   );
