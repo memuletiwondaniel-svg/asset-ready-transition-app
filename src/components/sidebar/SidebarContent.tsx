@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import OrshLogo from '@/components/ui/OrshLogo';
 import { Home, Settings, ChevronDown, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench } from 'lucide-react';
@@ -37,6 +38,7 @@ interface UserProfile {
 interface SidebarContentProps {
   isMobile?: boolean;
   isCollapsed: boolean;
+  isProfileLoading?: boolean;
   displayName: string;
   displayTitle: string;
   displayAvatar: string;
@@ -72,6 +74,7 @@ const navigationItems: NavigationItem[] = [
 export const SidebarContent = memo<SidebarContentProps>(({
   isMobile = false,
   isCollapsed,
+  isProfileLoading = false,
   displayName,
   displayTitle,
   displayAvatar,
@@ -109,12 +112,16 @@ export const SidebarContent = memo<SidebarContentProps>(({
             onKeyDown={(e) => e.key === 'Enter' && onProfileClick()}
             className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer transition-colors"
           >
-            <Avatar className="h-10 w-10 flex-shrink-0">
-              {displayAvatar && <AvatarImage src={displayAvatar} alt={displayName} />}
-              <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
-                {displayName.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            {isProfileLoading ? (
+              <Skeleton className="h-10 w-10 rounded-full" />
+            ) : (
+              <Avatar className="h-10 w-10 flex-shrink-0">
+                <AvatarImage src={displayAvatar} alt={displayName} />
+                <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
+                  {displayName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
           </div>
         ) : (
           <>
@@ -123,15 +130,28 @@ export const SidebarContent = memo<SidebarContentProps>(({
               onClick={onProfileClick}
               className="w-full p-3 h-auto hover:bg-muted/50 justify-start transition-colors"
             >
-              <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
-                {displayAvatar && <AvatarImage src={displayAvatar} alt={displayName} />}
-                <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
-                  {displayName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              {isProfileLoading ? (
+                <Skeleton className="h-10 w-10 rounded-full flex-shrink-0 mr-3" />
+              ) : (
+                <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
+                  <AvatarImage src={displayAvatar} alt={displayName} />
+                  <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
+                    {displayName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-medium truncate">{displayName}</p>
-                <p className="text-xs text-muted-foreground truncate">{displayTitle}</p>
+                {isProfileLoading ? (
+                  <>
+                    <Skeleton className="h-4 w-24 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium truncate">{displayName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{displayTitle}</p>
+                  </>
+                )}
               </div>
             </Button>
             

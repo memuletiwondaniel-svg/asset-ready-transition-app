@@ -120,6 +120,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           <SidebarContent
             isMobile={true}
             isCollapsed={false}
+            isProfileLoading={!!currentUserId && !realtimeProfile}
             displayName={displayName}
             displayTitle={displayTitle}
             displayAvatar={displayAvatar}
@@ -153,6 +154,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
         <SidebarContent
           isMobile={false}
           isCollapsed={isSidebarCollapsed}
+          isProfileLoading={!!currentUserId && !realtimeProfile}
           displayName={displayName}
           displayTitle={displayTitle}
           displayAvatar={displayAvatar}
