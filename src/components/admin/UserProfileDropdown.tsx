@@ -52,8 +52,8 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className={`h-9 w-9 p-0 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/50 hover:border-primary/50 transition-all duration-200 ${className}`}>
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">
+              {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+              <AvatarFallback delayMs={600} className="text-xs bg-primary text-primary-foreground font-semibold">
                 {user.initials}
               </AvatarFallback>
             </Avatar>
@@ -65,8 +65,8 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
           <div className="p-4 border-b border-border/50">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                <AvatarFallback delayMs={600} className="bg-primary text-primary-foreground text-lg">
                   {user.initials}
                 </AvatarFallback>
               </Avatar>

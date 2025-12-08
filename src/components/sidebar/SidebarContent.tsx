@@ -110,8 +110,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
             className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer transition-colors"
           >
             <Avatar className="h-10 w-10 flex-shrink-0">
-              <AvatarImage src={displayAvatar} alt={displayName} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+              {displayAvatar && <AvatarImage src={displayAvatar} alt={displayName} />}
+              <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
                 {displayName.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -124,8 +124,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
               className="w-full p-3 h-auto hover:bg-muted/50 justify-start transition-colors"
             >
               <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
-                <AvatarImage src={displayAvatar} alt={displayName} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
+                {displayAvatar && <AvatarImage src={displayAvatar} alt={displayName} />}
+                <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
                   {displayName.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
