@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -15,6 +15,24 @@ interface UserProfile {
 export const useRealtimeProfile = (userId: string | undefined) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const queryClient = useQueryClient();
+  const previousAvatarRef = useRef<string | null>(null);
+
+  const getAvatarUrl = useCallback((avatarPath: string | null, forceRefresh = false) => {
+    if (!avatarPath) return null;
+    
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+    
+    const publicUrl = supabase.storage.from('user-avatars').getPublicUrl(avatarPath).data.publicUrl;
+    
+    // Only add cache-busting if avatar changed or force refresh
+    if (forceRefresh) {
+      return `${publicUrl}?t=${Date.now()}`;
+    }
+    
+    return publicUrl;
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     if (!userId) return;
@@ -26,25 +44,18 @@ export const useRealtimeProfile = (userId: string | undefined) => {
       .single();
 
     if (data) {
-      const avatarUrl = data.avatar_url?.startsWith('http') 
-        ? data.avatar_url 
-        : data.avatar_url 
-          ? supabase.storage.from('user-avatars').getPublicUrl(data.avatar_url).data.publicUrl 
-          : null;
-      
-      // Add cache-busting to avatar URL
-      const avatarUrlWithCacheBust = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null;
-      
-      setProfile({ ...data, avatar_url: avatarUrlWithCacheBust });
+      const avatarUrl = getAvatarUrl(data.avatar_url, false);
+      previousAvatarRef.current = data.avatar_url;
+      setProfile({ ...data, avatar_url: avatarUrl });
     }
-  }, [userId]);
+  }, [userId, getAvatarUrl]);
 
   useEffect(() => {
     fetchProfile();
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel('profile-changes')
+      .channel(`profile-changes-${userId}`)
       .on(
         'postgres_changes',
         {
@@ -55,16 +66,13 @@ export const useRealtimeProfile = (userId: string | undefined) => {
         },
         (payload) => {
           const newData = payload.new as UserProfile;
-          const avatarUrl = newData.avatar_url?.startsWith('http') 
-            ? newData.avatar_url 
-            : newData.avatar_url 
-              ? supabase.storage.from('user-avatars').getPublicUrl(newData.avatar_url).data.publicUrl 
-              : null;
           
-          // Add cache-busting to avatar URL
-          const avatarUrlWithCacheBust = avatarUrl ? `${avatarUrl}?t=${Date.now()}` : null;
+          // Check if avatar actually changed
+          const avatarChanged = newData.avatar_url !== previousAvatarRef.current;
+          const avatarUrl = getAvatarUrl(newData.avatar_url, avatarChanged);
           
-          setProfile({ ...newData, avatar_url: avatarUrlWithCacheBust });
+          previousAvatarRef.current = newData.avatar_url;
+          setProfile({ ...newData, avatar_url: avatarUrl });
           
           // Invalidate related queries
           queryClient.invalidateQueries({ queryKey: ['profile-users'] });
@@ -75,7 +83,7 @@ export const useRealtimeProfile = (userId: string | undefined) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, queryClient, fetchProfile]);
+  }, [userId, queryClient, fetchProfile, getAvatarUrl]);
 
   return { profile, refetch: fetchProfile };
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PresenceUser {
@@ -8,8 +8,25 @@ interface PresenceUser {
   online_at: string;
 }
 
+// Deep comparison for presence users
+const areUsersEqual = (a: PresenceUser[], b: PresenceUser[]): boolean => {
+  if (a.length !== b.length) return false;
+  const aIds = a.map(u => u.user_id).sort();
+  const bIds = b.map(u => u.user_id).sort();
+  return aIds.every((id, i) => id === bIds[i]);
+};
+
 export const useUserPresence = (currentUserId: string | undefined) => {
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([]);
+  const onlineUsersRef = useRef<PresenceUser[]>([]);
+
+  const updateOnlineUsers = useCallback((newUsers: PresenceUser[]) => {
+    // Only update state if users actually changed
+    if (!areUsersEqual(onlineUsersRef.current, newUsers)) {
+      onlineUsersRef.current = newUsers;
+      setOnlineUsers(newUsers);
+    }
+  }, []);
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -48,7 +65,7 @@ export const useUserPresence = (currentUserId: string | undefined) => {
           });
         });
         
-        setOnlineUsers(users);
+        updateOnlineUsers(users);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -64,7 +81,7 @@ export const useUserPresence = (currentUserId: string | undefined) => {
       channel.untrack();
       supabase.removeChannel(channel);
     };
-  }, [currentUserId]);
+  }, [currentUserId, updateOnlineUsers]);
 
   return onlineUsers;
 };
