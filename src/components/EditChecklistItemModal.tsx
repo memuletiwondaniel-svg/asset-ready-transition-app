@@ -902,7 +902,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
                 target.style.height = 'auto';
                 target.style.height = Math.max(60, target.scrollHeight) + 'px';
               }} 
-              className="min-h-[60px] resize-none bg-background border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+              className="min-h-[60px] resize-none bg-background border-2 border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/20 transition-all duration-200" 
               style={{
                 height: 'auto',
                 minHeight: '60px'
@@ -931,7 +931,7 @@ const EditChecklistItemModal: React.FC<EditChecklistItemModalProps> = ({
               placeholder="Help future users understand what documentation or evidence is needed" 
               value={formData.evidenceGuidance} 
               onChange={e => updateFormData('evidenceGuidance', e.target.value)} 
-              className="min-h-[40px] resize-none bg-background border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" 
+              className="min-h-[40px] resize-none bg-background border-2 border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/20 transition-all duration-200" 
               rows={2} 
             />
             {errors.evidenceGuidance && (

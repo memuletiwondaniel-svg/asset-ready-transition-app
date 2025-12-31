@@ -67,7 +67,7 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
                 onChange={handleProjectIdChange}
                 placeholder="425"
                 required
-                className="h-10 pl-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 w-32"
+                className="h-10 pl-12 border-gray-300 focus:border-blue-500 focus-visible:ring-inset focus-visible:ring-blue-500/20 w-32"
               />
             </div>
           </div>
@@ -82,7 +82,7 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
               onChange={(e) => setFormData((prev: any) => ({ ...prev, projectTitle: e.target.value }))}
               placeholder="Enter comprehensive project title"
               required
-              className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+              className="h-10 border-gray-300 focus:border-blue-500 focus-visible:ring-inset focus-visible:ring-blue-500/20"
             />
           </div>
         </div>
@@ -137,7 +137,7 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
                 value={formData.projectMilestone}
                 onChange={(e) => setFormData((prev: any) => ({ ...prev, projectMilestone: e.target.value }))}
                 placeholder={`Enter ${currentYear} milestone`}
-                className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-10 border-gray-300 focus:border-blue-500 focus-visible:ring-inset focus-visible:ring-blue-500/20"
               />
             </div>
 
@@ -170,7 +170,7 @@ export const ProjectInformationSection: React.FC<ProjectInformationSectionProps>
               placeholder="Describe the comprehensive project scope, objectives, and deliverables..."
               rows={5}
               required
-              className="resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+              className="resize-none border-gray-300 focus:border-blue-500 focus-visible:ring-inset focus-visible:ring-blue-500/20"
             />
           </div>
         </div>

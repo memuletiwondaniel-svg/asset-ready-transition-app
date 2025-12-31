@@ -445,7 +445,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
           placeholder="Search by ID, description, topic, category, approver, or responsible..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/60 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+          className="pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/60 focus:border-blue-400 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-100"
         />
       </div>
 

@@ -153,7 +153,7 @@ const PSSRAdvancedSearch: React.FC<PSSRAdvancedSearchProps> = ({
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            className="w-full h-10 pl-10 pr-10 rounded-md border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="w-full h-10 pl-10 pr-10 rounded-md border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           />
           {value && (
             <Button
