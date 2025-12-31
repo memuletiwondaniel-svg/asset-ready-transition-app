@@ -412,6 +412,9 @@ const ChecklistItemsLibrary: React.FC = () => {
                     <SelectValue placeholder="Add discipline..." />
                   </SelectTrigger>
                   <SelectContent>
+                    {!formData.approving_authorities.includes('Operations') && (
+                      <SelectItem value="Operations">Operations</SelectItem>
+                    )}
                     {disciplines?.filter(d => !formData.approving_authorities.includes(d.name)).map(discipline => (
                       <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
                     ))}
@@ -436,6 +439,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                   <SelectItem value="Project Engr">Project Engr</SelectItem>
                   <SelectItem value="Commissioning">Commissioning</SelectItem>
                   <SelectItem value="ORA">ORA</SelectItem>
+                  <SelectItem value="Operations">Operations</SelectItem>
                   {disciplines?.map(discipline => (
                     <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
                   ))}
