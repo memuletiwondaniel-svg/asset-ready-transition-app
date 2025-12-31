@@ -26,10 +26,7 @@ import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
-import CreatePSSRWorkflow from './CreatePSSRWorkflow';
 import PSSRDashboard from './PSSRDashboard';
-import PSSRCategoryItemsPage from './PSSRCategoryItemsPage';
-import ManageChecklistPage from './ManageChecklistPage';
 import { OrshSidebar } from './OrshSidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
@@ -671,17 +668,8 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   };
 
   // Render different views
-  if (activeView === 'create') {
-    return <CreatePSSRWorkflow onBack={() => setActiveView('list')} />;
-  }
   if (activeView === 'details' && selectedPSSR) {
     return <PSSRDashboard pssrId={selectedPSSR} onBack={() => setActiveView('list')} onNavigateToCategory={handleNavigateToCategory} />;
-  }
-  if (activeView === 'category-items' && selectedCategory && selectedPSSR) {
-    return <PSSRCategoryItemsPage categoryName={selectedCategory} pssrId={selectedPSSR} onBack={() => setActiveView('details')} onBackToList={() => setActiveView('list')} />;
-  }
-  if (activeView === 'manage-checklist') {
-    return <ManageChecklistPage onBack={() => setActiveView('list')} />;
   }
   return <div className="h-screen flex w-full overflow-hidden">
       {/* ORSH Sidebar - Fixed */}

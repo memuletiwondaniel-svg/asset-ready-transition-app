@@ -12,9 +12,7 @@ import { Loader2, Save, Trash2, FileText, Settings, Users, CheckCircle, AlertCir
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useChecklists } from '@/hooks/useChecklists';
 import { useRoles } from '@/hooks/useRoles';
-import { useChecklistItems } from '@/hooks/useChecklistItems';
 import { useDisciplines } from '@/hooks/useDisciplines';
 import { PSSRReasonStatus } from '@/hooks/usePSSRReasons';
 
@@ -55,9 +53,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   onDelete,
 }) => {
   const queryClient = useQueryClient();
-  const { data: checklists = [] } = useChecklists();
   const { roles = [] } = useRoles();
-  const { data: checklistItems = [] } = useChecklistItems();
   const { disciplines = [] } = useDisciplines();
 
   const [activeTab, setActiveTab] = useState('details');
