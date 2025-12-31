@@ -20,6 +20,7 @@ import {
   useDeleteChecklistItem,
   ChecklistItem,
 } from '@/hooks/usePSSRChecklistLibrary';
+import { useDisciplines } from '@/hooks/useDisciplines';
 
 interface ItemFormData {
   unique_id: string;
@@ -35,6 +36,7 @@ const ChecklistItemsLibrary: React.FC = () => {
   const { data: items, isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: categories, isLoading: categoriesLoading } = usePSSRChecklistCategories();
   const { data: topics, isLoading: topicsLoading } = usePSSRChecklistTopics();
+  const { disciplines } = useDisciplines();
   
   const createItem = useCreateChecklistItem();
   const updateItem = useUpdateChecklistItem();
@@ -376,12 +378,21 @@ const ChecklistItemsLibrary: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Approving Authority</Label>
-              <Input
+              <Label>Approver (Discipline)</Label>
+              <Select
                 value={formData.approving_authority}
-                onChange={(e) => setFormData(prev => ({ ...prev, approving_authority: e.target.value }))}
-                placeholder="e.g., TA-Process, Ops Coach, ORA"
-              />
+                onValueChange={(value) => setFormData(prev => ({ ...prev, approving_authority: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select discipline..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {disciplines?.map(discipline => (
+                    <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
