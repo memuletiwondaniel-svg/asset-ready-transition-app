@@ -584,6 +584,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               >
                 PSSR Reasons
               </TabsTrigger>
+              <TabsTrigger 
+                value="checklist-items"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                Checklist Items
+              </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
@@ -600,12 +606,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   MOC Scopes
                 </TabsTrigger>
               )}
-              <TabsTrigger 
-                value="checklist-items"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                Checklist Items
-              </TabsTrigger>
             </TabsList>
 
           {/* Tie-in Scopes Tab */}
