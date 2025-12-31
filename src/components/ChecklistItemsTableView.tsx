@@ -3,8 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { FileText, GripVertical, Search } from 'lucide-react';
-import { ChecklistItem } from '@/hooks/useChecklistItems';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { FileText, GripVertical, Search, ChevronDown, Users, UserCheck } from 'lucide-react';
+import { ChecklistItem, useUpdateChecklistItem } from '@/hooks/useChecklistItems';
+import { useDisciplines } from '@/hooks/useDisciplines';
+import { usePositions } from '@/hooks/usePositions';
+import { useChecklistCategories } from '@/hooks/useChecklistCategories';
+import { useChecklistTopics } from '@/hooks/useChecklistTopics';
+import { useChecklistItemDisciplines } from '@/hooks/useChecklistItemDisciplines';
+import { useChecklistItemDeliveringParties } from '@/hooks/useChecklistItemDeliveringParties';
 import {
   DndContext,
   closestCenter,
@@ -69,9 +78,11 @@ interface Column {
 
 const defaultColumns: Column[] = [
   { id: 'id', label: 'ID', icon: FileText, width: 'w-24' },
-  { id: 'description', label: 'Description', width: 'flex-1 min-w-0' },
-  { id: 'category', label: 'Category', width: 'w-auto' },
-  { id: 'topic', label: 'Topic', width: 'w-32' },
+  { id: 'description', label: 'Description', width: 'min-w-[200px]' },
+  { id: 'approvers', label: 'Approvers', icon: UserCheck, width: 'w-40' },
+  { id: 'responsible', label: 'Responsible', icon: Users, width: 'w-40' },
+  { id: 'category', label: 'Category', width: 'w-36' },
+  { id: 'topic', label: 'Topic', width: 'w-36' },
 ];
 
 // Sortable Header Component
@@ -98,21 +109,21 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({ column }) => {
     <TableHead 
       ref={setNodeRef}
       style={style}
-      className={`font-semibold text-gray-700 px-4 py-4 relative group ${column.width} ${
+      className={`font-semibold text-gray-700 px-3 py-3 relative group ${column.width} ${
         isDragging ? 'opacity-50' : ''
       }`}
       {...attributes}
     >
-      <div className="flex items-center gap-2 justify-between">
-        <div className="flex items-center gap-2">
-          {column.icon && <column.icon className="h-4 w-4" />}
-          <span>{column.label}</span>
+      <div className="flex items-center gap-1.5 justify-between">
+        <div className="flex items-center gap-1.5">
+          {column.icon && <column.icon className="h-3.5 w-3.5" />}
+          <span className="text-xs">{column.label}</span>
         </div>
         <div 
           {...listeners}
-          className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity p-1"
+          className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity p-0.5"
         >
-          <GripVertical className="h-4 w-4 text-gray-400" />
+          <GripVertical className="h-3.5 w-3.5 text-gray-400" />
         </div>
       </div>
     </TableHead>
@@ -127,6 +138,25 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
 }) => {
   const [columns, setColumns] = useState<Column[]>(defaultColumns);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch data for dropdowns
+  const { disciplines = [] } = useDisciplines();
+  const { data: positions = [] } = usePositions();
+  const { data: categories = [] } = useChecklistCategories();
+  const { data: topics = [] } = useChecklistTopics();
+  
+  // Fetch and manage assignments
+  const { 
+    getDisciplinesForItem, 
+    assignDisciplines 
+  } = useChecklistItemDisciplines();
+  
+  const { 
+    getDeliveringPartyForItem, 
+    assignDeliveringParty 
+  } = useChecklistItemDeliveringParties();
+  
+  const updateChecklistItem = useUpdateChecklistItem();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -147,6 +177,49 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
       });
     }
   };
+
+  // Handle approver (discipline) toggle
+  const handleApproverToggle = (itemId: string, disciplineId: string, checked: boolean) => {
+    const currentDisciplines = getDisciplinesForItem(itemId);
+    const currentIds = currentDisciplines.map(d => d.id);
+    
+    let newIds: string[];
+    if (checked) {
+      newIds = [...currentIds, disciplineId];
+    } else {
+      newIds = currentIds.filter(id => id !== disciplineId);
+    }
+    
+    assignDisciplines.mutate({ 
+      checklistItemId: itemId, 
+      disciplineIds: newIds 
+    });
+  };
+
+  // Handle responsible party change
+  const handleResponsibleChange = (itemId: string, positionId: string | null) => {
+    assignDeliveringParty.mutate({ 
+      checklistItemId: itemId, 
+      positionId 
+    });
+  };
+
+  // Handle category change
+  const handleCategoryChange = (itemId: string, categoryName: string) => {
+    updateChecklistItem.mutate({ 
+      itemId, 
+      updateData: { category: categoryName }
+    });
+  };
+
+  // Handle topic change
+  const handleTopicChange = (itemId: string, topicName: string) => {
+    updateChecklistItem.mutate({ 
+      itemId, 
+      updateData: { topic: topicName }
+    });
+  };
+
   // Filter and sort items
   const filteredAndSortedItems = useMemo(() => {
     let filtered = items;
@@ -202,37 +275,162 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
   }
 
   const renderCellContent = (column: Column, item: ChecklistItem) => {
+    const itemId = item.unique_id;
+    
     switch (column.id) {
       case 'id':
         return (
           <Badge 
             variant="outline" 
-            className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium group-hover:bg-primary/10 group-hover:border-primary/30 group-hover:text-primary group-hover:scale-105 transition-all duration-300"
+            className="bg-gray-100/80 text-gray-700 border-gray-200/60 text-xs font-medium"
           >
             {item.unique_id || 'XX-YY'}
           </Badge>
         );
+      
+      case 'approvers': {
+        const assignedDisciplines = getDisciplinesForItem(itemId);
+        const assignedCount = assignedDisciplines.length;
+        
+        return (
+          <Popover>
+            <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-between text-xs h-8 px-2"
+              >
+                <span className="truncate">
+                  {assignedCount > 0 
+                    ? assignedCount === 1 
+                      ? assignedDisciplines[0].name 
+                      : `${assignedCount} selected`
+                    : 'Select...'
+                  }
+                </span>
+                <ChevronDown className="h-3 w-3 ml-1 shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-56 p-2 max-h-64 overflow-y-auto" 
+              align="start"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-1">
+                {disciplines.map(discipline => {
+                  const isChecked = assignedDisciplines.some(d => d.id === discipline.id);
+                  return (
+                    <div 
+                      key={discipline.id} 
+                      className="flex items-center space-x-2 p-1.5 hover:bg-muted rounded-md cursor-pointer"
+                      onClick={() => handleApproverToggle(itemId, discipline.id, !isChecked)}
+                    >
+                      <Checkbox
+                        id={`${itemId}-${discipline.id}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => handleApproverToggle(itemId, discipline.id, !!checked)}
+                      />
+                      <label 
+                        htmlFor={`${itemId}-${discipline.id}`}
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        {discipline.name}
+                      </label>
+                    </div>
+                  );
+                })}
+                {disciplines.length === 0 && (
+                  <p className="text-xs text-muted-foreground p-2">No disciplines available</p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
+      }
+      
+      case 'responsible': {
+        const deliveringParty = getDeliveringPartyForItem(itemId);
+        
+        return (
+          <Select
+            value={deliveringParty?.id || ''}
+            onValueChange={(value) => handleResponsibleChange(itemId, value || null)}
+          >
+            <SelectTrigger 
+              className="w-full text-xs h-8 px-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent onClick={(e) => e.stopPropagation()}>
+              <SelectItem value="">None</SelectItem>
+              {positions.map(position => (
+                <SelectItem key={position.id} value={position.id}>
+                  {position.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      }
+      
       case 'category':
         return (
-          <Badge 
-            variant="outline" 
-            className={`${getCategoryColor(item.category)} text-xs font-medium whitespace-nowrap group-hover:scale-105 transition-all duration-300`}
+          <Select
+            value={item.category || ''}
+            onValueChange={(value) => handleCategoryChange(itemId, value)}
           >
-            {item.category}
-          </Badge>
+            <SelectTrigger 
+              className="w-full text-xs h-8 px-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent onClick={(e) => e.stopPropagation()}>
+              {categories.map(cat => (
+                <SelectItem key={cat.id} value={cat.name}>
+                  <Badge 
+                    variant="outline" 
+                    className={`${getCategoryColor(cat.name)} text-xs`}
+                  >
+                    {cat.name}
+                  </Badge>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
+      
       case 'topic':
-        return item.topic ? (
-          <span className="text-sm text-gray-700 font-medium">{item.topic}</span>
-        ) : (
-          <span className="text-sm text-gray-400 italic">No topic</span>
+        return (
+          <Select
+            value={item.topic || ''}
+            onValueChange={(value) => handleTopicChange(itemId, value)}
+          >
+            <SelectTrigger 
+              className="w-full text-xs h-8 px-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent onClick={(e) => e.stopPropagation()}>
+              <SelectItem value="">None</SelectItem>
+              {topics.map(topic => (
+                <SelectItem key={topic.id} value={topic.name}>
+                  {topic.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
+      
       case 'description':
         return (
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap group-hover:text-primary transition-colors duration-300">
+          <p className="text-xs text-gray-800 leading-relaxed line-clamp-2">
             {item.description}
           </p>
         );
+      
       default:
         return null;
     }
@@ -272,7 +470,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
               {filteredAndSortedItems.map((item, index) => (
                 <TableRow 
                   key={item.unique_id} 
-                  className={`group border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent hover:shadow-lg hover:scale-[1.01] hover:border-l-4 hover:border-l-primary transition-all duration-300 cursor-pointer border-l-4 border-l-transparent ${
+                  className={`group border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all duration-200 cursor-pointer ${
                     index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'
                   }`}
                   onClick={() => onViewItem(item)}
@@ -280,7 +478,7 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
                   {columns.map((column) => (
                     <TableCell 
                       key={column.id} 
-                      className={`px-4 py-4 ${column.width} group-hover:text-primary transition-colors`}
+                      className={`px-3 py-2 ${column.width}`}
                     >
                       {renderCellContent(column, item)}
                     </TableCell>
@@ -291,6 +489,15 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
           </Table>
         </DndContext>
         </div>
+      </div>
+      
+      {/* Legend */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span className="font-medium">Total: {filteredAndSortedItems.length} items</span>
+        <span>•</span>
+        <span>Click row to view details</span>
+        <span>•</span>
+        <span>Use dropdowns to configure inline</span>
       </div>
     </div>
   );
