@@ -50,6 +50,7 @@ interface ManageChecklistPageProps {
   onBack: () => void;
   selectedLanguage?: string;
   translations?: any;
+  embedded?: boolean;
 }
 
 interface NewChecklistData {
@@ -64,7 +65,8 @@ interface NewChecklistData {
 const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
   onBack,
   selectedLanguage = "English",
-  translations = {}
+  translations = {},
+  embedded = false
 }) => {
   const [currentLanguage, setCurrentLanguage] = useState(selectedLanguage);
 
@@ -298,7 +300,189 @@ const ManageChecklistPage: React.FC<ManageChecklistPageProps> = ({
       });
   }, [checklists, searchQuery, filterCategory, sortBy]);
 
-  // Render the main page layout with modal overlays
+  // Render embedded version (no header, no tabs - just checklists)
+  if (embedded) {
+    return (
+      <div className="space-y-6">
+        {/* Search and Actions Card */}
+        <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search checklists by name, reason, or creator..." 
+                  value={searchQuery} 
+                  onChange={e => setSearchQuery(e.target.value)} 
+                  className="pl-10 bg-background/50 border-border/50 h-11"
+                />
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-full sm:w-[140px] bg-background/50 border-border/50 h-11">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={openCreateChecklist} 
+                  className="gap-2 shadow-md hover:shadow-lg transition-shadow h-11 px-6"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create New
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Checklists Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => <CardSkeleton key={i} />)}
+          </div>
+        ) : filteredChecklists.length === 0 ? (
+          <Card className="p-16 text-center bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
+            <div className="flex flex-col items-center gap-6">
+              <div className="rounded-full bg-primary/10 p-6">
+                <FileText className="h-16 w-16 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-semibold">No checklists found</h3>
+                <p className="text-muted-foreground max-w-md">
+                  {searchQuery 
+                    ? 'Try adjusting your search or filters to find what you\'re looking for' 
+                    : 'Get started by creating your first checklist to manage your projects efficiently'}
+                </p>
+              </div>
+              {!searchQuery && (
+                <Button 
+                  onClick={openCreateChecklist}
+                  size="lg" 
+                  className="gap-2 shadow-md"
+                >
+                  <Plus className="h-5 w-5" />
+                  Create Your First Checklist
+                </Button>
+              )}
+            </div>
+          </Card>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredChecklists.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredChecklists.map(checklist => (
+                  <SortableChecklistCard 
+                    key={checklist.id} 
+                    checklist={checklist} 
+                    onSelect={setSelectedChecklist} 
+                    onEdit={handleEdit} 
+                    onDelete={handleDeleteClick} 
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+
+        {/* Modals for embedded mode */}
+        <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b border-border/50">
+              <DialogHeader>
+                <DialogTitle className="text-xl">Create New Checklist</DialogTitle>
+                <DialogDescription>
+                  Set up a new safety checklist for your project
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="overflow-y-auto px-6 py-6">
+              <CreateChecklistModal 
+                onComplete={handleCreateComplete} 
+                onCancel={() => setShowCreateForm(false)}
+                selectedLanguage={currentLanguage}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {editingChecklist && (
+          <Sheet open={showEditForm} onOpenChange={setShowEditForm}>
+            <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Edit Checklist</SheetTitle>
+                <SheetDescription>
+                  Update your checklist information
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6">
+                <EditChecklistForm 
+                  checklist={editingChecklist} 
+                  onBack={() => { setShowEditForm(false); setEditingChecklist(null); }} 
+                  onSave={handleEditComplete} 
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        <Sheet open={showSuccessPage} onOpenChange={setShowSuccessPage}>
+          <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+            <div className="mt-6">
+              <ChecklistSuccessPage 
+                checklistName={createdChecklistName} 
+                onViewChecklists={handleBackToChecklists} 
+                onCreateAnother={() => { setShowSuccessPage(false); setShowCreateForm(true); }} 
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {selectedChecklist && (
+          <div className="fixed inset-0 z-50 bg-background">
+            <ChecklistDetailsPage 
+              checklist={selectedChecklist} 
+              onBack={() => setSelectedChecklist(null)} 
+              selectedLanguage={currentLanguage} 
+              translations={t} 
+            />
+          </div>
+        )}
+
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the checklist "{checklistToDelete?.name}". This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
+  // Render the main page layout with modal overlays (full mode)
   return (
     <div className="flex-1 overflow-auto">
       <AnimatedBackground>

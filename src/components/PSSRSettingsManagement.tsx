@@ -1008,7 +1008,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
 
           {/* Full Checklists Tab */}
           <TabsContent value="full-checklists" className="animate-fade-in-up">
-            <ManageChecklistPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} />
+            <ManageChecklistPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} embedded={true} />
           </TabsContent>
         </Tabs>
 
