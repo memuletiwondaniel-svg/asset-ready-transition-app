@@ -19,6 +19,7 @@ interface WizardState {
   category: CategoryType | null;
   subCategory: SubCategoryType;
   reasonName: string;
+  description: string;
   
   // Step 3 - Reason Approvers (who approves the reason for use)
   reasonApproverRoleIds: string[];
@@ -46,6 +47,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     category: null,
     subCategory: null,
     reasonName: '',
+    description: '',
     reasonApproverRoleIds: [],
     pssrApproverRoleIds: [],
     sofApproverRoleIds: [],
@@ -57,6 +59,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       category: null,
       subCategory: null,
       reasonName: '',
+      description: '',
       reasonApproverRoleIds: [],
       pssrApproverRoleIds: [],
       sofApproverRoleIds: [],
@@ -143,6 +146,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         .from('pssr_reasons')
         .insert({
           name: wizardState.reasonName.trim(),
+          description: wizardState.description.trim() || null,
           category: wizardState.category,
           sub_category: wizardState.subCategory,
           is_active: true,
@@ -247,9 +251,11 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
               category={wizardState.category}
               subCategory={wizardState.subCategory}
               reasonName={wizardState.reasonName}
+              description={wizardState.description}
               onCategoryChange={(category) => setWizardState(prev => ({ ...prev, category }))}
               onSubCategoryChange={(subCategory) => setWizardState(prev => ({ ...prev, subCategory }))}
               onReasonNameChange={(reasonName) => setWizardState(prev => ({ ...prev, reasonName }))}
+              onDescriptionChange={(description) => setWizardState(prev => ({ ...prev, description }))}
             />
           )}
 
