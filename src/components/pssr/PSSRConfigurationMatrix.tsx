@@ -43,7 +43,6 @@ import { CSS } from '@dnd-kit/utilities';
 interface LocalConfiguration {
   reason_id: string;
   reason_name: string;
-  checklist_id: string | null;
   pssr_approver_role_ids: string[];
   sof_approver_role_ids: string[];
   isDirty: boolean;
@@ -149,7 +148,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
       setLocalConfigs(configurations.map(config => ({
         reason_id: config.reason_id,
         reason_name: config.reason?.name || '',
-        checklist_id: config.checklist_id,
         pssr_approver_role_ids: config.pssr_approver_role_ids || [],
         sof_approver_role_ids: config.sof_approver_role_ids || [],
         isDirty: false,
@@ -173,14 +171,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
     [...localConfigs].sort((a, b) => a.display_order - b.display_order),
     [localConfigs]
   );
-
-  const handleChecklistChange = (reasonId: string, checklistId: string | null) => {
-    setLocalConfigs(prev => prev.map(config => 
-      config.reason_id === reasonId 
-        ? { ...config, checklist_id: checklistId === 'none' ? null : checklistId, isDirty: true }
-        : config
-    ));
-  };
 
   const handlePSSRApproverToggle = (reasonId: string, roleId: string) => {
     setLocalConfigs(prev => prev.map(config => {
@@ -233,7 +223,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
     try {
       await upsertMutation.mutateAsync(dirtyConfigs.map(c => ({
         reason_id: c.reason_id,
-        checklist_id: c.checklist_id,
         pssr_approver_role_ids: c.pssr_approver_role_ids,
         sof_approver_role_ids: c.sof_approver_role_ids,
       })));
@@ -249,7 +238,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
     setLocalConfigs(configurations.map(config => ({
       reason_id: config.reason_id,
       reason_name: config.reason?.name || '',
-      checklist_id: config.checklist_id,
       pssr_approver_role_ids: config.pssr_approver_role_ids || [],
       sof_approver_role_ids: config.sof_approver_role_ids || [],
       isDirty: false,
@@ -394,7 +382,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
     return { valid: true };
   };
 
-  const isLoading = isLoadingConfigs || isLoadingChecklists || isLoadingRoles;
+  const isLoading = isLoadingConfigs || isLoadingRoles;
 
   if (isLoading) {
     return (
@@ -469,9 +457,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
-                        Checklist
-                      </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
                         PSSR Approvers
                       </TableHead>
@@ -527,28 +512,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                               </p>
                             </TooltipContent>
                           </Tooltip>
-                        </TableCell>
-
-                        {/* Checklist Selection */}
-                        <TableCell>
-                          <Select
-                            value={config.checklist_id || 'none'}
-                            onValueChange={(value) => handleChecklistChange(config.reason_id, value)}
-                          >
-                            <SelectTrigger className="h-9 w-full">
-                              <SelectValue placeholder="Select checklist" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">
-                                <span className="text-muted-foreground">Not configured</span>
-                              </SelectItem>
-                              {checklists.map((checklist) => (
-                                <SelectItem key={checklist.id} value={checklist.id}>
-                                  {checklist.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                         </TableCell>
 
                         {/* PSSR Approver Roles */}
@@ -685,7 +648,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
           subCategory={editOverlay.config.sub_category}
           status={editOverlay.config.status}
           reasonApproverRoleIds={editOverlay.config.reason_approver_role_ids}
-          checklistId={editOverlay.config.checklist_id}
           pssrApproverRoleIds={editOverlay.config.pssr_approver_role_ids}
           sofApproverRoleIds={editOverlay.config.sof_approver_role_ids}
           onDelete={() => {
