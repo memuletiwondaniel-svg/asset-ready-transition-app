@@ -25,7 +25,6 @@ interface EditPSSRReasonOverlayProps {
   subCategory: string | null;
   status: PSSRReasonStatus;
   reasonApproverRoleIds: string[];
-  checklistId: string | null;
   pssrApproverRoleIds: string[];
   sofApproverRoleIds: string[];
   onDelete: () => void;
@@ -47,7 +46,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   subCategory: initialSubCategory,
   status: initialStatus,
   reasonApproverRoleIds: initialReasonApproverRoleIds,
-  checklistId: initialChecklistId,
   pssrApproverRoleIds: initialPssrApproverRoleIds,
   sofApproverRoleIds: initialSofApproverRoleIds,
   onDelete,
@@ -65,7 +63,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const [subCategory, setSubCategory] = useState<string | null>(initialSubCategory);
   const [status, setStatus] = useState<PSSRReasonStatus>(initialStatus);
   const [reasonApproverRoleIds, setReasonApproverRoleIds] = useState<string[]>(initialReasonApproverRoleIds);
-  const [checklistId, setChecklistId] = useState<string | null>(initialChecklistId);
   const [pssrApproverRoleIds, setPssrApproverRoleIds] = useState<string[]>(initialPssrApproverRoleIds);
   const [sofApproverRoleIds, setSofApproverRoleIds] = useState<string[]>(initialSofApproverRoleIds);
 
@@ -76,10 +73,9 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
     setSubCategory(initialSubCategory);
     setStatus(initialStatus);
     setReasonApproverRoleIds(initialReasonApproverRoleIds);
-    setChecklistId(initialChecklistId);
     setPssrApproverRoleIds(initialPssrApproverRoleIds);
     setSofApproverRoleIds(initialSofApproverRoleIds);
-  }, [initialReasonName, initialCategory, initialSubCategory, initialStatus, initialReasonApproverRoleIds, initialChecklistId, initialPssrApproverRoleIds, initialSofApproverRoleIds]);
+  }, [initialReasonName, initialCategory, initialSubCategory, initialStatus, initialReasonApproverRoleIds, initialPssrApproverRoleIds, initialSofApproverRoleIds]);
 
   const handleSave = async () => {
     if (!reasonName.trim()) {
@@ -107,7 +103,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
       const { error: configError } = await supabase
         .from('pssr_reason_configuration')
         .update({
-          checklist_id: checklistId,
           pssr_approver_role_ids: pssrApproverRoleIds,
           sof_approver_role_ids: sofApproverRoleIds,
         })
@@ -198,19 +193,15 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
             </div>
           </div>
           <DialogDescription>
-            Manage PSSR reason details, checklist items, and approver configuration.
+            Manage PSSR reason details and approver configuration.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="details" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Details
-            </TabsTrigger>
-            <TabsTrigger value="items" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Checklist Items
             </TabsTrigger>
             <TabsTrigger value="approvers" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -284,23 +275,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                     </Select>
                   </div>
                 )}
-
-                <div className="space-y-2 col-span-2">
-                  <Label>Associated Checklist</Label>
-                  <Select value={checklistId || 'none'} onValueChange={(v) => setChecklistId(v === 'none' ? null : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select checklist" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not configured</SelectItem>
-                      {checklists.map((checklist) => (
-                        <SelectItem key={checklist.id} value={checklist.id}>
-                          {checklist.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               {/* Status Actions */}
@@ -329,44 +303,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   </Button>
                 </div>
               )}
-            </TabsContent>
-
-            {/* Items Tab */}
-            <TabsContent value="items" className="mt-4">
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Configure which checklist items are applicable for this PSSR Reason and assign approving disciplines.
-                </p>
-                
-                <div className="border rounded-lg">
-                  <div className="max-h-[400px] overflow-y-auto">
-                    {checklistItems.length === 0 ? (
-                      <div className="p-8 text-center text-muted-foreground">
-                        <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No checklist items available.</p>
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {checklistItems.slice(0, 20).map((item) => (
-                          <div key={item.unique_id} className="p-3 hover:bg-muted/30 transition-colors">
-                            <div className="flex items-start gap-3">
-                              <Checkbox id={item.unique_id} />
-                              <div className="flex-1 min-w-0">
-                                <label htmlFor={item.unique_id} className="text-sm font-medium cursor-pointer">
-                                  {item.unique_id} - {item.description}
-                                </label>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Category: {item.category}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
             </TabsContent>
 
             {/* Approvers Tab */}

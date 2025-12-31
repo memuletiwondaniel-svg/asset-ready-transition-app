@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 export interface PSSRReasonConfiguration {
   id: string;
   reason_id: string;
-  checklist_id: string | null;
   pssr_approver_role_ids: string[];
   sof_approver_role_ids: string[];
   created_at: string;
@@ -14,7 +13,6 @@ export interface PSSRReasonConfiguration {
   updated_by: string | null;
   // Joined data
   reason_name?: string;
-  checklist_name?: string;
 }
 
 export interface ConfigurationWithDetails extends PSSRReasonConfiguration {
@@ -23,10 +21,6 @@ export interface ConfigurationWithDetails extends PSSRReasonConfiguration {
     name: string;
     is_active: boolean;
     display_order: number;
-  } | null;
-  checklist: {
-    id: string;
-    name: string;
   } | null;
   pssr_approver_roles: Array<{ id: string; name: string }>;
   sof_approver_roles: Array<{ id: string; name: string }>;
@@ -53,13 +47,6 @@ export const usePSSRReasonConfigurations = () => {
 
       if (reasonsError) throw reasonsError;
 
-      // Get all checklists for joining
-      const { data: checklists, error: checklistsError } = await supabase
-        .from('checklists')
-        .select('id, name');
-
-      if (checklistsError) throw checklistsError;
-
       // Get all roles for joining
       const { data: roles, error: rolesError } = await supabase
         .from('roles')
@@ -74,9 +61,6 @@ export const usePSSRReasonConfigurations = () => {
       
       const result: ConfigurationWithDetails[] = (reasons || []).map(reason => {
         const config = configMap.get(reason.id);
-        const checklist = config?.checklist_id 
-          ? (checklists || []).find(c => c.id === config.checklist_id) 
-          : null;
         
         const pssrApproverRoleIds = config?.pssr_approver_role_ids || [];
         const sofApproverRoleIds = config?.sof_approver_role_ids || [];
@@ -84,7 +68,6 @@ export const usePSSRReasonConfigurations = () => {
         return {
           id: config?.id || '',
           reason_id: reason.id,
-          checklist_id: config?.checklist_id || null,
           pssr_approver_role_ids: pssrApproverRoleIds,
           sof_approver_role_ids: sofApproverRoleIds,
           created_at: config?.created_at || '',
@@ -92,7 +75,6 @@ export const usePSSRReasonConfigurations = () => {
           created_by: config?.created_by || null,
           updated_by: config?.updated_by || null,
           reason: reason,
-          checklist: checklist || null,
           pssr_approver_roles: (roles || []).filter(r => pssrApproverRoleIds.includes(r.id)),
           sof_approver_roles: (roles || []).filter(r => sofApproverRoleIds.includes(r.id)),
         };
@@ -130,7 +112,6 @@ export const useUpsertPSSRReasonConfiguration = () => {
   return useMutation({
     mutationFn: async (configs: Array<{
       reason_id: string;
-      checklist_id: string | null;
       pssr_approver_role_ids: string[];
       sof_approver_role_ids: string[];
     }>) => {
@@ -151,7 +132,6 @@ export const useUpsertPSSRReasonConfiguration = () => {
           const { error } = await supabase
             .from('pssr_reason_configuration')
             .update({
-              checklist_id: config.checklist_id,
               pssr_approver_role_ids: config.pssr_approver_role_ids,
               sof_approver_role_ids: config.sof_approver_role_ids,
               updated_by: userId,
@@ -166,7 +146,6 @@ export const useUpsertPSSRReasonConfiguration = () => {
             .from('pssr_reason_configuration')
             .insert({
               reason_id: config.reason_id,
-              checklist_id: config.checklist_id,
               pssr_approver_role_ids: config.pssr_approver_role_ids,
               sof_approver_role_ids: config.sof_approver_role_ids,
               created_by: userId,
@@ -218,17 +197,6 @@ export const usePSSRConfigurationByReasonName = (reasonName: string | null) => {
       if (configError && configError.code !== 'PGRST116') throw configError;
       if (!config) return null;
 
-      // Get checklist details if configured
-      let checklist = null;
-      if (config.checklist_id) {
-        const { data: checklistData } = await supabase
-          .from('checklists')
-          .select('id, name, selected_items')
-          .eq('id', config.checklist_id)
-          .single();
-        checklist = checklistData;
-      }
-
       // Get roles details
       const { data: roles } = await supabase
         .from('roles')
@@ -244,7 +212,6 @@ export const usePSSRConfigurationByReasonName = (reasonName: string | null) => {
 
       return {
         ...config,
-        checklist,
         pssrApproverRoles,
         sofApproverRoles,
       };

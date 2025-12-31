@@ -306,58 +306,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
               }}
             />
           )}
-              type="reason"
-              selectedRoleIds={wizardState.reasonApproverRoleIds}
-              onRoleToggle={(roleId) => {
-                setWizardState(prev => {
-                  const current = prev.reasonApproverRoleIds;
-                  const newRoles = current.includes(roleId)
-                    ? current.filter(id => id !== roleId)
-                    : [...current, roleId];
-                  return { ...prev, reasonApproverRoleIds: newRoles };
-                });
-              }}
-            />
-          )}
-
-          {currentStep === 4 && (
-            <WizardStepApprovers
-              type="pssr"
-              selectedRoleIds={wizardState.pssrApproverRoleIds}
-              onRoleToggle={(roleId) => {
-                setWizardState(prev => {
-                  const current = prev.pssrApproverRoleIds;
-                  const newRoles = current.includes(roleId)
-                    ? current.filter(id => id !== roleId)
-                    : [...current, roleId];
-                  // Remove from SoF if added to PSSR
-                  const newSofRoles = prev.sofApproverRoleIds.filter(id => !newRoles.includes(id));
-                  return { ...prev, pssrApproverRoleIds: newRoles, sofApproverRoleIds: newSofRoles };
-                });
-              }}
-            />
-          )}
-
-          {currentStep === 5 && (
-            <WizardStepApprovers
-              type="sof"
-              selectedRoleIds={wizardState.sofApproverRoleIds}
-              disabledRoleIds={wizardState.pssrApproverRoleIds}
-              onRoleToggle={(roleId) => {
-                if (wizardState.pssrApproverRoleIds.includes(roleId)) {
-                  toast.error('This role is already assigned as a PSSR Approver');
-                  return;
-                }
-                setWizardState(prev => {
-                  const current = prev.sofApproverRoleIds;
-                  const newRoles = current.includes(roleId)
-                    ? current.filter(id => id !== roleId)
-                    : [...current, roleId];
-                  return { ...prev, sofApproverRoleIds: newRoles };
-                });
-              }}
-            />
-          )}
         </div>
 
         {/* Footer Navigation */}
