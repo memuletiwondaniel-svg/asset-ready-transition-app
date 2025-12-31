@@ -424,12 +424,23 @@ const ChecklistItemsLibrary: React.FC = () => {
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Responsible Party
               </label>
-              <Input
-                value={formData.responsible_party}
-                onChange={(e) => setFormData(prev => ({ ...prev, responsible_party: e.target.value }))}
-                placeholder="e.g., Operations Team"
-                className="placeholder:text-muted-foreground/60 placeholder:italic"
-              />
+              <Select
+                value={formData.responsible_party || 'none'}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, responsible_party: value === 'none' ? '' : value }))}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select responsible party..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="Project Engr">Project Engr</SelectItem>
+                  <SelectItem value="Commissioning">Commissioning</SelectItem>
+                  <SelectItem value="ORA">ORA</SelectItem>
+                  {disciplines?.map(discipline => (
+                    <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
