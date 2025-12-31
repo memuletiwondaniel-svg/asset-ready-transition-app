@@ -372,8 +372,33 @@ const ChecklistItemsLibrary: React.FC = () => {
               />
             </div>
 
-            {/* Approvers Section */}
+            {/* Responsible Party Section */}
             <div className="border-t border-border/40 pt-5 space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Responsible Party
+              </label>
+              <Select
+                value={formData.responsible_party || 'none'}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, responsible_party: value === 'none' ? '' : value }))}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select responsible party..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="Project Engr">Project Engr</SelectItem>
+                  <SelectItem value="Commissioning">Commissioning</SelectItem>
+                  <SelectItem value="ORA">ORA</SelectItem>
+                  <SelectItem value="Operations">Operations</SelectItem>
+                  {disciplines?.map(discipline => (
+                    <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Approvers Section */}
+            <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Approvers <span className="text-muted-foreground/60 normal-case font-normal">(Disciplines)</span>
               </label>
@@ -421,30 +446,6 @@ const ChecklistItemsLibrary: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Responsible Party
-              </label>
-              <Select
-                value={formData.responsible_party || 'none'}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, responsible_party: value === 'none' ? '' : value }))}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select responsible party..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="Project Engr">Project Engr</SelectItem>
-                  <SelectItem value="Commissioning">Commissioning</SelectItem>
-                  <SelectItem value="ORA">ORA</SelectItem>
-                  <SelectItem value="Operations">Operations</SelectItem>
-                  {disciplines?.map(discipline => (
-                    <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
