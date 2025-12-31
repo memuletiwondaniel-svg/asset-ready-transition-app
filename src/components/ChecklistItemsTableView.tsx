@@ -353,17 +353,17 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
         
         return (
           <Select
-            value={deliveringParty?.id || ''}
-            onValueChange={(value) => handleResponsibleChange(itemId, value || null)}
+            value={deliveringParty?.id || '__none__'}
+            onValueChange={(value) => handleResponsibleChange(itemId, value === '__none__' ? null : value)}
           >
             <SelectTrigger 
-              className="w-full text-xs h-8 px-2"
+              className="w-full text-xs h-8 px-2 bg-background"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
-            <SelectContent onClick={(e) => e.stopPropagation()}>
-              <SelectItem value="">None</SelectItem>
+            <SelectContent className="bg-background z-50" onClick={(e) => e.stopPropagation()}>
+              <SelectItem value="__none__">None</SelectItem>
               {positions.map(position => (
                 <SelectItem key={position.id} value={position.id}>
                   {position.name}
@@ -377,16 +377,16 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
       case 'category':
         return (
           <Select
-            value={item.category || ''}
-            onValueChange={(value) => handleCategoryChange(itemId, value)}
+            value={item.category || '__none__'}
+            onValueChange={(value) => handleCategoryChange(itemId, value === '__none__' ? '' : value)}
           >
             <SelectTrigger 
-              className="w-full text-xs h-8 px-2"
+              className="w-full text-xs h-8 px-2 bg-background"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
-            <SelectContent onClick={(e) => e.stopPropagation()}>
+            <SelectContent className="bg-background z-50" onClick={(e) => e.stopPropagation()}>
               {categories.map(cat => (
                 <SelectItem key={cat.id} value={cat.name}>
                   <Badge 
@@ -404,17 +404,17 @@ const ChecklistItemsTableView: React.FC<ChecklistItemsTableViewProps> = ({
       case 'topic':
         return (
           <Select
-            value={item.topic || ''}
-            onValueChange={(value) => handleTopicChange(itemId, value)}
+            value={item.topic || '__none__'}
+            onValueChange={(value) => handleTopicChange(itemId, value === '__none__' ? '' : value)}
           >
             <SelectTrigger 
-              className="w-full text-xs h-8 px-2"
+              className="w-full text-xs h-8 px-2 bg-background"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
-            <SelectContent onClick={(e) => e.stopPropagation()}>
-              <SelectItem value="">None</SelectItem>
+            <SelectContent className="bg-background z-50" onClick={(e) => e.stopPropagation()}>
+              <SelectItem value="__none__">None</SelectItem>
               {topics.map(topic => (
                 <SelectItem key={topic.id} value={topic.name}>
                   {topic.name}
