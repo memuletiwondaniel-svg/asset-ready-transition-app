@@ -148,8 +148,8 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
       {/* Desktop Sidebar */}
       <aside 
         className={`hidden md:flex flex-col border-r border-border/40 bg-background/95 backdrop-blur-sm transition-[width] duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'w-16' : 'w-72'
-        } h-screen relative`}
+          isSidebarCollapsed ? 'w-16' : 'w-64 lg:w-72'
+        } h-screen flex-shrink-0 relative`}
       >
         <SidebarContent
           isMobile={false}

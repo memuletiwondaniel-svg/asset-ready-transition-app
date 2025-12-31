@@ -83,6 +83,25 @@
     min-width: 44px;
   }
   
+  /* Responsive widget container */
+  .widget-container {
+    @apply min-h-[250px] md:min-h-[300px] lg:min-h-[350px];
+    @apply max-h-[80vh] lg:max-h-[600px];
+  }
+
+  /* Responsive dashboard grid */
+  .dashboard-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+    @apply gap-3 md:gap-4 lg:gap-6;
+    @apply auto-rows-auto;
+  }
+
+  /* Panel responsive width */
+  .side-panel {
+    @apply w-full lg:w-80;
+    @apply max-h-[50vh] lg:max-h-none;
+  }
+  
   /* Responsive text utilities */
   .text-responsive-xs {
     @apply text-[10px] sm:text-xs;
