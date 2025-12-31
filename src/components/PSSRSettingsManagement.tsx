@@ -567,7 +567,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             icon={<Settings className="w-6 h-6" />} 
             iconGradient="from-emerald-500 to-emerald-600"
             title="PSSR Configuration" 
-            description="Manage PSSR reasons, tie-in scopes, and Management of Change options"
+            description="Manage PSSR reasons and checklist items"
             customBreadcrumbs={[
               { label: 'Home', path: '/', onClick: onBack },
               { label: 'Administration', path: '/admin-tools', onClick: onBack },
