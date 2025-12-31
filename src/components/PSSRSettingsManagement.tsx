@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog, ClipboardList, Users, BookOpen } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog, ClipboardList, Users, BookOpen, UserCheck } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +26,7 @@ import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
+import ChecklistItemConfigurationMatrix from './pssr/ChecklistItemConfigurationMatrix';
 import ChecklistManagementPage from './ChecklistManagementPage';
 import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
 import ChecklistTopicsManagement from './ChecklistTopicsManagement';
@@ -641,6 +642,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               >
                 <BookOpen className="h-4 w-4 mr-1.5" />
                 Topics
+              </TabsTrigger>
+              <TabsTrigger 
+                value="item-config"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                <UserCheck className="h-4 w-4 mr-1.5" />
+                Item Approvers
               </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 

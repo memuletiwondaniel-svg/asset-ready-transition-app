@@ -136,6 +136,136 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_item_approval_responses: {
+        Row: {
+          approved_at: string | null
+          approver_user_id: string | null
+          checklist_item_id: string
+          comments: string | null
+          condition_description: string | null
+          condition_priority: string | null
+          condition_target_date: string | null
+          created_at: string
+          discipline_id: string
+          id: string
+          pssr_id: string
+          rejected_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_user_id?: string | null
+          checklist_item_id: string
+          comments?: string | null
+          condition_description?: string | null
+          condition_priority?: string | null
+          condition_target_date?: string | null
+          created_at?: string
+          discipline_id: string
+          id?: string
+          pssr_id: string
+          rejected_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_user_id?: string | null
+          checklist_item_id?: string
+          comments?: string | null
+          condition_description?: string | null
+          condition_priority?: string | null
+          condition_target_date?: string | null
+          created_at?: string
+          discipline_id?: string
+          id?: string
+          pssr_id?: string
+          rejected_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_item_approval_responses_discipline_id_fkey"
+            columns: ["discipline_id"]
+            isOneToOne: false
+            referencedRelation: "discipline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_item_approval_responses_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_item_approving_disciplines: {
+        Row: {
+          checklist_item_id: string
+          created_at: string
+          discipline_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_item_id: string
+          created_at?: string
+          discipline_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_item_id?: string
+          created_at?: string
+          discipline_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_item_approving_disciplines_discipline_id_fkey"
+            columns: ["discipline_id"]
+            isOneToOne: false
+            referencedRelation: "discipline"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_item_delivering_parties: {
+        Row: {
+          checklist_item_id: string
+          created_at: string
+          id: string
+          position_id: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_item_id: string
+          created_at?: string
+          id?: string
+          position_id: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_item_id?: string
+          created_at?: string
+          id?: string
+          position_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_item_delivering_parties_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           Approver: string | null
