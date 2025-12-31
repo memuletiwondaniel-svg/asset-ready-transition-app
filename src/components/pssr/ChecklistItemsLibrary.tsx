@@ -273,7 +273,11 @@ const ChecklistItemsLibrary: React.FC = () => {
                   </TableRow>
                 ) : (
                   filteredItems.map(item => (
-                    <TableRow key={item.id}>
+                    <TableRow 
+                      key={item.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleOpenEdit(item)}
+                    >
                       <TableCell className="font-mono text-sm">{item.unique_id}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{item.category?.name}</Badge>
@@ -286,10 +290,10 @@ const ChecklistItemsLibrary: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(item)}>
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleOpenEdit(item); }}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteConfirmItem(item)}>
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDeleteConfirmItem(item); }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
