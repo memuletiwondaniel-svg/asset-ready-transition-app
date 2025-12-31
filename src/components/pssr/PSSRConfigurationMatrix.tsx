@@ -14,7 +14,6 @@ import { Label } from '@/components/ui/label';
 import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
-import { useChecklists } from '@/hooks/useChecklists';
 import { useRoles } from '@/hooks/useRoles';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -107,7 +106,6 @@ const SortableRow: React.FC<SortableRowProps> = ({ id, children, isDirty }) => {
 const PSSRConfigurationMatrix: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: configurations = [], isLoading: isLoadingConfigs } = usePSSRReasonConfigurations();
-  const { data: checklists = [], isLoading: isLoadingChecklists } = useChecklists();
   const { roles = [], isLoading: isLoadingRoles } = useRoles();
   const upsertMutation = useUpsertPSSRReasonConfiguration();
 

@@ -12,7 +12,7 @@ import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
-import ManageChecklistPage from "@/components/ManageChecklistPage";
+
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import OrshLogo from "@/components/ui/OrshLogo";
 const Index = () => {
@@ -156,8 +156,6 @@ const Index = () => {
       case 'users':
       case 'user-management':
         return <UserManagement onBack={handleBackToLanding} />;
-      case 'manage-checklist':
-        return <ManageChecklistPage onBack={handleBackToLanding} />;
       case 'admin-tools':
         return <AdminToolsPage onBack={handleBackToLanding} />;
       case 'projects':

@@ -20,19 +20,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, MoreVertical, Users, Calendar, Pin, PinOff, ShieldCheck, Settings, LayoutGrid, LayoutList, Kanban } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import CreatePSSRFlow from '@/components/CreatePSSRFlow';
+
 import PSSRDetails from '@/components/PSSRDetails';
 import PSSRFilters from './PSSRFilters';
 import PSSRList from './PSSRList';
 import DraggablePSSRCard from './DraggablePSSRCard';
-import ManageChecklistPage from './ManageChecklistPage';
+
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 
 const PSSRModule: React.FC = () => {
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
   
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'manage-checklist'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'details'>('list');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -323,10 +323,6 @@ const PSSRModule: React.FC = () => {
     }
   };
 
-  if (activeView === 'create') {
-    return <CreatePSSRFlow onBack={() => setActiveView('list')} />;
-  }
-
   if (activeView === 'details' && selectedPSSR) {
     return (
       <PSSRDetails 
@@ -334,10 +330,6 @@ const PSSRModule: React.FC = () => {
         onBack={() => setActiveView('list')} 
       />
     );
-  }
-
-  if (activeView === 'manage-checklist') {
-    return <ManageChecklistPage onBack={() => setActiveView('list')} />;
   }
 
   return (
@@ -420,16 +412,6 @@ const PSSRModule: React.FC = () => {
               <Filter className="h-4 w-4 mr-2" />
               Export
             </Button>
-            {userRole === 'admin' && (
-              <Button 
-                variant="outline"
-                onClick={() => setActiveView('manage-checklist')}
-                className="border-border/50 hover:bg-secondary/50"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Manage Checklists
-              </Button>
-            )}
             <Button 
               onClick={() => setActiveView('create')}
               className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"

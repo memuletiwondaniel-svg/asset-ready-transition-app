@@ -3,7 +3,7 @@ import { FileText, MessageSquare, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
-import { SOFChecklistBrowser } from './SOFChecklistBrowser';
+
 
 interface SOFApprover {
   id: string;
@@ -75,9 +75,7 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
           <SOFCommentsPanel pssrId={pssrId} />
         );
       case 'checklists':
-        return (
-          <SOFChecklistBrowser pssrId={pssrId} />
-        );
+        return null;
       default:
         return null;
     }

@@ -26,9 +26,6 @@ import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
-import ChecklistItemConfigurationMatrix from './pssr/ChecklistItemConfigurationMatrix';
-import ManageChecklistPage from './ManageChecklistPage';
-import ChecklistManagementPage from './ChecklistManagementPage';
 import {
   DndContext,
   closestCenter,
@@ -586,18 +583,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               >
                 PSSR Reasons
               </TabsTrigger>
-              <TabsTrigger
-                value="full-checklists"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                Checklist
-              </TabsTrigger>
-              <TabsTrigger
-                value="checklists"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                Items
-              </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
@@ -970,15 +955,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             <PSSRConfigurationMatrix />
           </TabsContent>
 
-          {/* Full Checklists Tab */}
-          <TabsContent value="full-checklists" className="animate-fade-in-up">
-            <ManageChecklistPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} embedded={true} />
-          </TabsContent>
-
-          {/* Items Tab */}
-          <TabsContent value="checklists" className="animate-fade-in-up">
-            <ChecklistManagementPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} />
-          </TabsContent>
         </Tabs>
 
         {/* Edit/Create Dialog */}

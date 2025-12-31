@@ -65,7 +65,7 @@ const UserAuthenticationPage: React.FC<UserAuthenticationPageProps> = ({ token, 
     { value: 'edit_pssr_checklist_approvers', label: 'Edit PSSR Checklist item Default approvers and PSSR Approvers', description: 'Can modify PSSR checklist approvers and default settings' },
     { value: 'manage_users', label: 'Edit, Create or Authenticate New User', description: 'Full user management capabilities' },
     { value: 'manage_projects', label: 'Edit or Create New Project', description: 'Can create and modify project information' },
-    { value: 'manage_pssr_master_checklist', label: 'Edit or Create New PSSR Master Checklist', description: 'Can manage master PSSR checklists' },
+    
     { value: 'manage_operation_readiness_plan', label: 'Create or Approve Operation Readiness Plan', description: 'Can create and approve operational readiness plans' },
     { value: 'manage_training_plan', label: 'Create or Approve Training Plan', description: 'Can create and approve training plans' },
     { value: 'manage_pac', label: 'Create or Approve PAC or PAC line Item', description: 'Can manage Project Acceptance Certificates' },

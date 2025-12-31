@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import WizardStepCategory, { CategoryType, SubCategoryType } from './wizard/WizardStepCategory';
-import WizardStepItems, { ItemConfiguration } from './wizard/WizardStepItems';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
 
 interface AddPSSRReasonWizardProps {
@@ -21,9 +20,6 @@ interface WizardState {
   subCategory: SubCategoryType;
   reasonName: string;
   
-  // Step 2
-  itemConfigurations: ItemConfiguration[];
-  
   // Step 3 - Reason Approvers (who approves the reason for use)
   reasonApproverRoleIds: string[];
   
@@ -36,10 +32,9 @@ interface WizardState {
 
 const STEPS = [
   { id: 1, title: 'Category & Reason', description: 'Select category and enter reason name' },
-  { id: 2, title: 'PSSR Items', description: 'Configure applicable checklist items' },
-  { id: 3, title: 'Reason Approvers', description: 'Select who approves the PSSR reason for use' },
-  { id: 4, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
-  { id: 5, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 2, title: 'Reason Approvers', description: 'Select who approves the PSSR reason for use' },
+  { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
+  { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
 ];
 
 const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenChange }) => {
@@ -51,7 +46,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     category: null,
     subCategory: null,
     reasonName: '',
-    itemConfigurations: [],
     reasonApproverRoleIds: [],
     pssrApproverRoleIds: [],
     sofApproverRoleIds: [],
@@ -63,7 +57,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       category: null,
       subCategory: null,
       reasonName: '',
-      itemConfigurations: [],
       reasonApproverRoleIds: [],
       pssrApproverRoleIds: [],
       sofApproverRoleIds: [],
@@ -174,59 +167,10 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
 
       if (configError) throw configError;
 
-      // 3. Save item discipline assignments (if any)
-      const itemsWithDisciplines = wizardState.itemConfigurations.filter(c => c.disciplineIds.length > 0);
-      if (itemsWithDisciplines.length > 0) {
-        const disciplineInserts = itemsWithDisciplines.flatMap(config =>
-          config.disciplineIds.map(disciplineId => ({
-            checklist_item_id: config.checklistItemId,
-            discipline_id: disciplineId,
-          }))
-        );
-
-        // Delete existing and insert new (for each item)
-        for (const config of itemsWithDisciplines) {
-          await supabase
-            .from('checklist_item_approving_disciplines')
-            .delete()
-            .eq('checklist_item_id', config.checklistItemId);
-        }
-
-        const { error: disciplineError } = await supabase
-          .from('checklist_item_approving_disciplines')
-          .insert(disciplineInserts);
-
-        if (disciplineError) {
-          console.error('Failed to save discipline assignments:', disciplineError);
-        }
-      }
-
-      // 4. Save item delivering party assignments (if any)
-      const itemsWithPositions = wizardState.itemConfigurations.filter(c => c.positionId);
-      if (itemsWithPositions.length > 0) {
-        for (const config of itemsWithPositions) {
-          await supabase
-            .from('checklist_item_delivering_parties')
-            .delete()
-            .eq('checklist_item_id', config.checklistItemId);
-
-          if (config.positionId) {
-            await supabase
-              .from('checklist_item_delivering_parties')
-              .insert({
-                checklist_item_id: config.checklistItemId,
-                position_id: config.positionId,
-              });
-          }
-        }
-      }
-
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons'] });
-      queryClient.invalidateQueries({ queryKey: ['checklist-item-disciplines'] });
-      queryClient.invalidateQueries({ queryKey: ['checklist-item-delivering-parties'] });
 
       toast.success('PSSR Reason created successfully!');
       handleClose();
@@ -310,16 +254,58 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           )}
 
           {currentStep === 2 && (
-            <WizardStepItems
-              itemConfigurations={wizardState.itemConfigurations}
-              onItemConfigurationsChange={(itemConfigurations) => 
-                setWizardState(prev => ({ ...prev, itemConfigurations }))
-              }
+            <WizardStepApprovers
+              type="reason"
+              selectedRoleIds={wizardState.reasonApproverRoleIds}
+              onRoleToggle={(roleId) => {
+                setWizardState(prev => {
+                  const current = prev.reasonApproverRoleIds;
+                  const newRoles = current.includes(roleId)
+                    ? current.filter(id => id !== roleId)
+                    : [...current, roleId];
+                  return { ...prev, reasonApproverRoleIds: newRoles };
+                });
+              }}
             />
           )}
 
           {currentStep === 3 && (
             <WizardStepApprovers
+              type="pssr"
+              selectedRoleIds={wizardState.pssrApproverRoleIds}
+              onRoleToggle={(roleId) => {
+                setWizardState(prev => {
+                  const current = prev.pssrApproverRoleIds;
+                  const newRoles = current.includes(roleId)
+                    ? current.filter(id => id !== roleId)
+                    : [...current, roleId];
+                  const newSofRoles = prev.sofApproverRoleIds.filter(id => !newRoles.includes(id));
+                  return { ...prev, pssrApproverRoleIds: newRoles, sofApproverRoleIds: newSofRoles };
+                });
+              }}
+            />
+          )}
+
+          {currentStep === 4 && (
+            <WizardStepApprovers
+              type="sof"
+              selectedRoleIds={wizardState.sofApproverRoleIds}
+              disabledRoleIds={wizardState.pssrApproverRoleIds}
+              onRoleToggle={(roleId) => {
+                if (wizardState.pssrApproverRoleIds.includes(roleId)) {
+                  toast.error('This role is already assigned as a PSSR Approver');
+                  return;
+                }
+                setWizardState(prev => {
+                  const current = prev.sofApproverRoleIds;
+                  const newRoles = current.includes(roleId)
+                    ? current.filter(id => id !== roleId)
+                    : [...current, roleId];
+                  return { ...prev, sofApproverRoleIds: newRoles };
+                });
+              }}
+            />
+          )}
               type="reason"
               selectedRoleIds={wizardState.reasonApproverRoleIds}
               onRoleToggle={(roleId) => {
