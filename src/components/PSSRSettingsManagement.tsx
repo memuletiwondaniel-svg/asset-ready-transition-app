@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog, ClipboardList, Users, BookOpen, UserCheck, FileText } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog, UserCheck, FileText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,9 +27,6 @@ import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
 import ChecklistItemConfigurationMatrix from './pssr/ChecklistItemConfigurationMatrix';
-import ChecklistManagementPage from './ChecklistManagementPage';
-import ChecklistCategoriesManagement from './ChecklistCategoriesManagement';
-import ChecklistTopicsManagement from './ChecklistTopicsManagement';
 import ManageChecklistPage from './ManageChecklistPage';
 import {
   DndContext,
@@ -624,32 +621,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 PSSR Reasons
               </TabsTrigger>
               <TabsTrigger
-                value="checklists"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                <ClipboardList className="h-4 w-4 mr-1.5" />
-                Items
-              </TabsTrigger>
-              <TabsTrigger
                 value="full-checklists"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <FileText className="h-4 w-4 mr-1.5" />
                 Checklist
-              </TabsTrigger>
-              <TabsTrigger 
-                value="categories"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                <Users className="h-4 w-4 mr-1.5" />
-                Categories
-              </TabsTrigger>
-              <TabsTrigger 
-                value="topics"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                <BookOpen className="h-4 w-4 mr-1.5" />
-                Topics
               </TabsTrigger>
               <TabsTrigger 
                 value="item-config"
@@ -1030,24 +1006,9 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             <PSSRConfigurationMatrix />
           </TabsContent>
 
-          {/* Checklists Tab */}
-          <TabsContent value="checklists" className="animate-fade-in-up">
-            <ChecklistManagementPage onBack={() => setActiveTab('reasons')} selectedLanguage={currentLanguage} />
-          </TabsContent>
-
           {/* Full Checklists Tab */}
           <TabsContent value="full-checklists" className="animate-fade-in-up">
             <ManageChecklistPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} />
-          </TabsContent>
-
-          {/* Categories Tab */}
-          <TabsContent value="categories" className="animate-fade-in-up">
-            <ChecklistCategoriesManagement onBack={() => setActiveTab('reasons')} selectedLanguage={currentLanguage} />
-          </TabsContent>
-
-          {/* Topics Tab */}
-          <TabsContent value="topics" className="animate-fade-in-up">
-            <ChecklistTopicsManagement onBack={() => setActiveTab('reasons')} selectedLanguage={currentLanguage} />
           </TabsContent>
         </Tabs>
 
