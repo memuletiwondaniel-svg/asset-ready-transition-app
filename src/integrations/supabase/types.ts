@@ -3196,27 +3196,33 @@ export type Database = {
       }
       pssr_reasons: {
         Row: {
+          category: string | null
           created_at: string
           display_order: number
           id: string
           is_active: boolean
           name: string
+          sub_category: string | null
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           display_order: number
           id?: string
           is_active?: boolean
           name: string
+          sub_category?: string | null
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           display_order?: number
           id?: string
           is_active?: boolean
           name?: string
+          sub_category?: string | null
           updated_at?: string
         }
         Relationships: []
