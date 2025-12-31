@@ -28,7 +28,7 @@ interface ItemFormData {
   topic_id: string | null;
   description: string;
   supporting_evidence: string;
-  approving_authority: string;
+  approving_authorities: string[];
   responsible_party: string;
 }
 
@@ -54,7 +54,7 @@ const ChecklistItemsLibrary: React.FC = () => {
     topic_id: null,
     description: '',
     supporting_evidence: '',
-    approving_authority: '',
+    approving_authorities: [],
     responsible_party: '',
   });
 
@@ -105,7 +105,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       topic_id: null,
       description: '',
       supporting_evidence: '',
-      approving_authority: '',
+      approving_authorities: [],
       responsible_party: '',
     });
     setIsFormOpen(true);
@@ -119,7 +119,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       topic_id: item.topic_id,
       description: item.description,
       supporting_evidence: item.supporting_evidence || '',
-      approving_authority: item.approving_authority || '',
+      approving_authorities: item.approving_authority ? item.approving_authority.split(',').map(s => s.trim()) : [],
       responsible_party: item.responsible_party || '',
     });
     setIsFormOpen(true);
@@ -144,7 +144,7 @@ const ChecklistItemsLibrary: React.FC = () => {
       topic_id: formData.topic_id || null,
       description: formData.description.trim(),
       supporting_evidence: formData.supporting_evidence.trim() || null,
-      approving_authority: formData.approving_authority.trim() || null,
+      approving_authority: formData.approving_authorities.length > 0 ? formData.approving_authorities.join(', ') : null,
       responsible_party: formData.responsible_party.trim() || null,
       is_active: true,
       version: editingItem ? editingItem.version + 1 : 1,
@@ -382,21 +382,48 @@ const ChecklistItemsLibrary: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Approver (Discipline)</Label>
-              <Select
-                value={formData.approving_authority}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, approving_authority: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select discipline..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {disciplines?.map(discipline => (
-                    <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Approvers (Disciplines)</Label>
+              <div className="space-y-2">
+                {formData.approving_authorities.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.approving_authorities.map((auth) => (
+                      <Badge key={auth} variant="secondary" className="flex items-center gap-1">
+                        {auth}
+                        <button
+                          type="button"
+                          className="ml-1 hover:text-destructive"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            approving_authorities: prev.approving_authorities.filter(a => a !== auth)
+                          }))}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <Select
+                  value=""
+                  onValueChange={(value) => {
+                    if (value && !formData.approving_authorities.includes(value)) {
+                      setFormData(prev => ({
+                        ...prev,
+                        approving_authorities: [...prev.approving_authorities, value]
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Add discipline..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {disciplines?.filter(d => !formData.approving_authorities.includes(d.name)).map(discipline => (
+                      <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
