@@ -26,6 +26,7 @@ import OrshLogo from './ui/OrshLogo';
 import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
+import ChecklistItemsLibrary from './pssr/ChecklistItemsLibrary';
 import {
   DndContext,
   closestCenter,
@@ -599,6 +600,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   MOC Scopes
                 </TabsTrigger>
               )}
+              <TabsTrigger 
+                value="checklist-items"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                Checklist Items
+              </TabsTrigger>
             </TabsList>
 
           {/* Tie-in Scopes Tab */}
@@ -953,6 +960,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           {/* Configuration Matrix Tab */}
           <TabsContent value="configuration" className="animate-fade-in-up">
             <PSSRConfigurationMatrix />
+          </TabsContent>
+
+          {/* Checklist Items Library Tab */}
+          <TabsContent value="checklist-items" className="animate-fade-in-up">
+            <ChecklistItemsLibrary />
           </TabsContent>
 
         </Tabs>

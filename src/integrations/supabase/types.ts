@@ -2542,6 +2542,108 @@ export type Database = {
           },
         ]
       }
+      pssr_checklist_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          ref_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          ref_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          ref_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pssr_checklist_items: {
+        Row: {
+          approving_authority: string | null
+          category_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_active: boolean
+          responsible_party: string | null
+          sequence_number: number
+          supporting_evidence: string | null
+          topic_id: string | null
+          unique_id: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          approving_authority?: string | null
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          responsible_party?: string | null
+          sequence_number?: number
+          supporting_evidence?: string | null
+          topic_id?: string | null
+          unique_id: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          approving_authority?: string | null
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          responsible_party?: string | null
+          sequence_number?: number
+          supporting_evidence?: string | null
+          topic_id?: string | null
+          unique_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_checklist_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_checklist_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_checklist_items_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_checklist_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_checklist_responses: {
         Row: {
           action_owner: string | null
@@ -2606,6 +2708,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pssr_checklist_topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       pssr_links: {
         Row: {
