@@ -584,7 +584,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 value="configuration"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
-                <Cog className="h-4 w-4 mr-1.5" />
+                <FileText className="h-4 w-4 mr-1.5" />
                 PSSR Reasons
               </TabsTrigger>
               <TabsTrigger

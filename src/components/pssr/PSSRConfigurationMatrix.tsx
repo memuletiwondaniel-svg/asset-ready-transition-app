@@ -414,11 +414,11 @@ const PSSRConfigurationMatrix: React.FC = () => {
       <Card className="fluent-card border-border/40">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <CardTitle className="text-2xl font-semibold">PSSR Reason</CardTitle>
-              <CardDescription className="text-base">
-                Manage PSSR reasons and configure checklist, PSSR approvers, and SoF approvers for each
-              </CardDescription>
+              <p className="text-xs text-muted-foreground/80">
+                Manage PSSR reasons, Checklist, Approvers and SoF approvers
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Button 
@@ -439,28 +439,18 @@ const PSSRConfigurationMatrix: React.FC = () => {
                   Cancel
                 </Button>
               )}
-              <Button 
-                onClick={() => setShowSaveDialog(true)}
-                disabled={!hasUnsavedChanges || upsertMutation.isPending}
-                className="fluent-button shadow-fluent-sm hover:shadow-fluent-md"
-              >
-                {upsertMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save Configuration
-              </Button>
             </div>
           </div>
 
-          {/* Warning Banner */}
-          <Alert className="mt-4 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <strong>Note:</strong> Changes to this configuration will only apply to newly created PSSRs. Existing PSSRs will not be affected.
-            </AlertDescription>
-          </Alert>
+          {/* Warning Banner - only show when there are configs */}
+          {sortedConfigs.length > 0 && (
+            <Alert className="mt-4 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                <strong>Note:</strong> Changes to this configuration will only apply to newly created PSSRs. Existing PSSRs will not be affected.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
 
         <CardContent className="p-0">
