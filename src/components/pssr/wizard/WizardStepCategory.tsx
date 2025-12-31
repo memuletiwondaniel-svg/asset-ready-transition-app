@@ -1,6 +1,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Building2, Shield, Wrench } from 'lucide-react';
@@ -12,9 +13,11 @@ interface WizardStepCategoryProps {
   category: CategoryType | null;
   subCategory: SubCategoryType;
   reasonName: string;
+  description: string;
   onCategoryChange: (category: CategoryType) => void;
   onSubCategoryChange: (subCategory: SubCategoryType) => void;
   onReasonNameChange: (name: string) => void;
+  onDescriptionChange: (description: string) => void;
 }
 
 const categoryOptions: { value: CategoryType; label: string; icon: React.ReactNode; description: string }[] = [
@@ -42,9 +45,11 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
   category,
   subCategory,
   reasonName,
+  description,
   onCategoryChange,
   onSubCategoryChange,
   onReasonNameChange,
+  onDescriptionChange,
 }) => {
   return (
     <div className="space-y-6">
@@ -126,6 +131,23 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
         />
         <p className="text-sm text-muted-foreground">
           {reasonName.length}/100 characters
+        </p>
+      </div>
+
+      {/* Additional Description */}
+      <div className="space-y-3">
+        <Label htmlFor="description" className="text-base font-medium">Additional Description</Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="Provide additional context or details about this PSSR reason..."
+          maxLength={500}
+          rows={4}
+          className="text-base resize-none"
+        />
+        <p className="text-sm text-muted-foreground">
+          {description.length}/500 characters (optional)
         </p>
       </div>
     </div>
