@@ -255,8 +255,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                 <TableRow>
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead className="w-32">Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="w-48">Supporting Evidence</TableHead>
+                  <TableHead className="flex-1">Description</TableHead>
                   <TableHead className="w-48">Approving Authority</TableHead>
                   <TableHead className="w-24 text-right">Actions</TableHead>
                 </TableRow>
@@ -264,7 +263,7 @@ const ChecklistItemsLibrary: React.FC = () => {
               <TableBody>
                 {filteredItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       {items?.length === 0 
                         ? 'No checklist items yet. Click "Add Item" to create one.'
                         : 'No items match your search criteria.'}
@@ -277,11 +276,8 @@ const ChecklistItemsLibrary: React.FC = () => {
                       <TableCell>
                         <Badge variant="outline">{item.category?.name}</Badge>
                       </TableCell>
-                      <TableCell className="max-w-md">
-                        <p className="line-clamp-2">{item.description}</p>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {item.supporting_evidence || '-'}
+                      <TableCell>
+                        <p>{item.description}</p>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {item.approving_authority || '-'}
