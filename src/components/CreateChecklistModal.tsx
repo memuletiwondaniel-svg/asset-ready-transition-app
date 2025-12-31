@@ -283,8 +283,8 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 value={formData.reason} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
               >
-                <SelectTrigger className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
-                  <SelectValue placeholder="Choose a reason..." className="text-muted-foreground/60 italic" />
+                <SelectTrigger className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors [&>span[data-placeholder]]:text-muted-foreground/50 [&>span[data-placeholder]]:italic">
+                  <SelectValue placeholder="Choose a reason..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] z-[100] bg-popover">
                   {checklistReasons.map((reason) => (
