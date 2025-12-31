@@ -268,10 +268,10 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
               </Label>
               <Input
                 id="checklistName"
-                placeholder="Enter a descriptive name..."
+                placeholder="e.g., Q4 Safety Inspection Checklist"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors placeholder:text-muted-foreground/60 placeholder:italic"
               />
             </div>
 
@@ -284,7 +284,7 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, reason: value }))}
               >
                 <SelectTrigger className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors">
-                  <SelectValue placeholder="Select the primary reason..." />
+                  <SelectValue placeholder="Choose a reason..." className="text-muted-foreground/60 italic" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] z-[100] bg-popover">
                   {checklistReasons.map((reason) => (
@@ -303,10 +303,10 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 </Label>
                 <Input
                   id="customReason"
-                  placeholder="Enter your custom reason..."
+                  placeholder="e.g., Special equipment installation"
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
-                  className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                  className="h-11 rounded-lg border-border/60 bg-background hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors placeholder:text-muted-foreground/60 placeholder:italic"
                 />
               </div>
             )}
@@ -319,9 +319,9 @@ const CreateChecklistModal: React.FC<CreateChecklistModalProps> = ({
                 id="comments"
                 value={formData.comments}
                 onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                className="flex min-h-[100px] w-full rounded-lg border border-border/60 bg-background px-3 py-2.5 text-sm hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none resize-none transition-colors"
+                className="flex min-h-[100px] w-full rounded-lg border border-border/60 bg-background px-3 py-2.5 text-sm hover:border-border focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none resize-none transition-colors placeholder:text-muted-foreground/60 placeholder:italic"
                 rows={4}
-                placeholder="Enter any additional notes..."
+                placeholder="Add any additional context or notes here..."
               />
             </div>
           </div>
