@@ -10,7 +10,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2 } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
@@ -20,6 +19,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import AddPSSRReasonWizard from './AddPSSRReasonWizard';
 import {
   DndContext,
   closestCenter,
@@ -101,11 +101,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
   const [localConfigs, setLocalConfigs] = useState<LocalConfiguration[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
-  // Add Reason Dialog State
-  const [showAddReasonDialog, setShowAddReasonDialog] = useState(false);
-  const [newReasonName, setNewReasonName] = useState('');
-  const [newReasonChecklist, setNewReasonChecklist] = useState<string | null>(null);
-  const [isAddingReason, setIsAddingReason] = useState(false);
+  // Add Reason Wizard State
+  const [showAddReasonWizard, setShowAddReasonWizard] = useState(false);
 
   // Delete Dialog State
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; reasonId: string | null; reasonName: string }>({
@@ -247,54 +244,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
     toast.info('Changes discarded');
   };
 
-  const handleAddReason = async () => {
-    if (!newReasonName.trim()) {
-      toast.error('Please enter a reason name');
-      return;
-    }
-
-    setIsAddingReason(true);
-    try {
-      // 1. Insert new reason into pssr_reasons
-      const { data: newReason, error: reasonError } = await supabase
-        .from('pssr_reasons')
-        .insert({
-          name: newReasonName.trim(),
-          is_active: true,
-          display_order: localConfigs.length + 1
-        })
-        .select()
-        .single();
-
-      if (reasonError) throw reasonError;
-
-      // 2. Create initial configuration
-      const { error: configError } = await supabase
-        .from('pssr_reason_configuration')
-        .insert({
-          reason_id: newReason.id,
-          checklist_id: newReasonChecklist === 'none' ? null : newReasonChecklist,
-          pssr_approver_role_ids: [],
-          sof_approver_role_ids: []
-        });
-
-      if (configError) throw configError;
-
-      // 3. Refresh data
-      queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
-      queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
-      
-      toast.success('PSSR Reason added successfully');
-      setShowAddReasonDialog(false);
-      setNewReasonName('');
-      setNewReasonChecklist(null);
-    } catch (error: any) {
-      console.error('Failed to add reason:', error);
-      toast.error(error.message || 'Failed to add PSSR reason');
-    } finally {
-      setIsAddingReason(false);
-    }
-  };
 
   // Inline edit reason name
   const handleInlineEditName = async (reasonId: string, newName: string) => {
@@ -453,7 +402,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline"
-                onClick={() => setShowAddReasonDialog(true)}
+                onClick={() => setShowAddReasonWizard(true)}
                 className="fluent-button"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -621,7 +570,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                     {/* Inline Add Row */}
                     <TableRow 
                       className="hover:bg-accent/30 cursor-pointer border-dashed border-t"
-                      onClick={() => setShowAddReasonDialog(true)}
+                      onClick={() => setShowAddReasonWizard(true)}
                     >
                       <TableCell colSpan={5} className="py-4">
                         <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -637,7 +586,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
                           <p className="mb-4">No PSSR reasons configured yet.</p>
                           <Button 
-                            onClick={() => setShowAddReasonDialog(true)}
+                            onClick={() => setShowAddReasonWizard(true)}
                             className="fluent-button"
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -687,79 +636,11 @@ const PSSRConfigurationMatrix: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Reason Dialog */}
-      <Dialog open={showAddReasonDialog} onOpenChange={setShowAddReasonDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" />
-              Add New PSSR Reason
-            </DialogTitle>
-            <DialogDescription>
-              Create a new PSSR reason and optionally assign it a checklist.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reason-name">Reason Name *</Label>
-              <Input
-                id="reason-name"
-                value={newReasonName}
-                onChange={(e) => setNewReasonName(e.target.value)}
-                placeholder="Enter PSSR reason name..."
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reason-checklist">Assigned Checklist (Optional)</Label>
-              <Select
-                value={newReasonChecklist || 'none'}
-                onValueChange={(value) => setNewReasonChecklist(value === 'none' ? null : value)}
-              >
-                <SelectTrigger id="reason-checklist">
-                  <SelectValue placeholder="Select a checklist" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
-                    <span className="text-muted-foreground">No checklist assigned</span>
-                  </SelectItem>
-                  {checklists.map((checklist) => (
-                    <SelectItem key={checklist.id} value={checklist.id}>
-                      {checklist.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                You can configure approvers after adding the reason.
-              </p>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowAddReasonDialog(false);
-                setNewReasonName('');
-                setNewReasonChecklist(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddReason} 
-              disabled={isAddingReason || !newReasonName.trim()}
-            >
-              {isAddingReason ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4 mr-2" />
-              )}
-              Add Reason
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add Reason Wizard */}
+      <AddPSSRReasonWizard 
+        open={showAddReasonWizard} 
+        onOpenChange={setShowAddReasonWizard} 
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, reasonId: null, reasonName: '' })}>
