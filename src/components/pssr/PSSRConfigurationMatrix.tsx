@@ -445,7 +445,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <CardTitle className="text-2xl font-semibold">PSSR Reason Configuration Matrix</CardTitle>
+              <CardTitle className="text-2xl font-semibold">PSSR Reason</CardTitle>
               <CardDescription className="text-base">
                 Manage PSSR reasons and configure checklist, PSSR approvers, and SoF approvers for each
               </CardDescription>
