@@ -627,7 +627,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
                 <ClipboardList className="h-4 w-4 mr-1.5" />
-                Checklists
+                Items
               </TabsTrigger>
               <TabsTrigger 
                 value="categories"
