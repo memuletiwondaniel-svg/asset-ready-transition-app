@@ -256,7 +256,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead className="w-32">Category</TableHead>
                   <TableHead className="flex-1">Description</TableHead>
-                  <TableHead className="w-48">Approving Authority</TableHead>
+                  <TableHead className="w-48">Approver</TableHead>
                   <TableHead className="w-24 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
