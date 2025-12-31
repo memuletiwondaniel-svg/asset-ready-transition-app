@@ -591,19 +591,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       </SortableRow>
                     ))}
 
-                    {/* Inline Add Row */}
-                    <TableRow 
-                      className="hover:bg-accent/30 cursor-pointer border-dashed border-t"
-                      onClick={() => setShowAddReasonWizard(true)}
-                    >
-                      <TableCell colSpan={5} className="py-4">
-                        <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                          <Plus className="h-4 w-4" />
-                          <span className="text-sm font-medium">Add new PSSR reason...</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-
                     {sortedConfigs.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
