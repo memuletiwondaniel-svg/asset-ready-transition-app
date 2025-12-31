@@ -601,13 +601,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 <ClipboardList className="h-4 w-4 mr-1.5" />
                 Items
               </TabsTrigger>
-              <TabsTrigger 
-                value="item-config"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                <UserCheck className="h-4 w-4 mr-1.5" />
-                Item Approvers
-              </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
