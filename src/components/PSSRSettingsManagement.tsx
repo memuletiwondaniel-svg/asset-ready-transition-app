@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog, UserCheck, FileText } from 'lucide-react';
+import { Home, Plus, Edit2, Trash2, Search, X, GripVertical, Trash, Check, Settings, Cog, UserCheck, FileText, ClipboardList } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePSSRReasons, usePSSRReasonSubOptions, usePSSRTieInScopes, usePSSRMOCScopes, PSSRReason, PSSRTieInScope, PSSRMOCScope } from '@/hooks/usePSSRReasons';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
 import ChecklistItemConfigurationMatrix from './pssr/ChecklistItemConfigurationMatrix';
 import ManageChecklistPage from './ManageChecklistPage';
+import ChecklistManagementPage from './ChecklistManagementPage';
 import {
   DndContext,
   closestCenter,
@@ -627,6 +628,13 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 <FileText className="h-4 w-4 mr-1.5" />
                 Checklist
               </TabsTrigger>
+              <TabsTrigger
+                value="checklists"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                <ClipboardList className="h-4 w-4 mr-1.5" />
+                Items
+              </TabsTrigger>
               <TabsTrigger 
                 value="item-config"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
@@ -1009,6 +1017,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           {/* Full Checklists Tab */}
           <TabsContent value="full-checklists" className="animate-fade-in-up">
             <ManageChecklistPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} embedded={true} />
+          </TabsContent>
+
+          {/* Items Tab */}
+          <TabsContent value="checklists" className="animate-fade-in-up">
+            <ChecklistManagementPage onBack={() => setActiveTab('configuration')} selectedLanguage={currentLanguage} />
           </TabsContent>
         </Tabs>
 
