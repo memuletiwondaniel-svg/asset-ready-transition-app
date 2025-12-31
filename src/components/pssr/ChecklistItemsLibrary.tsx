@@ -280,7 +280,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                         <p>{item.description}</p>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {item.approving_authority || '-'}
+                        {item.approving_authority?.replace(/^TA-/i, '') || '-'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
