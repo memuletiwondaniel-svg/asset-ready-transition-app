@@ -25,7 +25,6 @@ import { useDisciplines } from '@/hooks/useDisciplines';
 interface ItemFormData {
   unique_id: string;
   category_id: string;
-  topic_id: string | null;
   description: string;
   supporting_evidence: string;
   approving_authorities: string[];
@@ -51,7 +50,6 @@ const ChecklistItemsLibrary: React.FC = () => {
   const [formData, setFormData] = useState<ItemFormData>({
     unique_id: '',
     category_id: '',
-    topic_id: null,
     description: '',
     supporting_evidence: '',
     approving_authorities: [],
@@ -102,7 +100,6 @@ const ChecklistItemsLibrary: React.FC = () => {
     setFormData({
       unique_id: '',
       category_id: categories?.[0]?.id || '',
-      topic_id: null,
       description: '',
       supporting_evidence: '',
       approving_authorities: [],
@@ -116,7 +113,6 @@ const ChecklistItemsLibrary: React.FC = () => {
     setFormData({
       unique_id: item.unique_id,
       category_id: item.category_id,
-      topic_id: item.topic_id,
       description: item.description,
       supporting_evidence: item.supporting_evidence || '',
       approving_authorities: item.approving_authority ? item.approving_authority.split(',').map(s => s.trim()) : [],
@@ -141,7 +137,7 @@ const ChecklistItemsLibrary: React.FC = () => {
     const payload = {
       unique_id: formData.unique_id || generateNextUniqueId(formData.category_id),
       category_id: formData.category_id,
-      topic_id: formData.topic_id || null,
+      topic_id: null,
       description: formData.description.trim(),
       supporting_evidence: formData.supporting_evidence.trim() || null,
       approving_authority: formData.approving_authorities.length > 0 ? formData.approving_authorities.join(', ') : null,
@@ -349,25 +345,6 @@ const ChecklistItemsLibrary: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Topic <span className="text-muted-foreground/60 normal-case font-normal">(Optional)</span>
-              </label>
-              <Select 
-                value={formData.topic_id || 'none'} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, topic_id: v === 'none' ? null : v }))}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select topic" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No Topic</SelectItem>
-                  {topics?.map(topic => (
-                    <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Description Section */}
             <div className="border-t border-border/40 pt-5 space-y-2">
