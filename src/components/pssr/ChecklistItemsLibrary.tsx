@@ -319,12 +319,15 @@ const ChecklistItemsLibrary: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
+            {/* Category & ID Section */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Category *</Label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Category <span className="text-destructive">*</span>
+                </label>
                 <Select value={formData.category_id} onValueChange={handleCategoryChange}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -335,22 +338,26 @@ const ChecklistItemsLibrary: React.FC = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Unique ID</Label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Unique ID
+                </label>
                 <Input 
                   value={formData.unique_id || generateNextUniqueId(formData.category_id)} 
                   disabled 
-                  className="bg-muted"
+                  className="bg-muted/50 border-muted font-mono"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Topic (Optional)</Label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Topic <span className="text-muted-foreground/60 normal-case font-normal">(Optional)</span>
+              </label>
               <Select 
                 value={formData.topic_id || 'none'} 
                 onValueChange={(v) => setFormData(prev => ({ ...prev, topic_id: v === 'none' ? null : v }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Select topic" />
                 </SelectTrigger>
                 <SelectContent>
@@ -362,36 +369,46 @@ const ChecklistItemsLibrary: React.FC = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Description *</Label>
+            {/* Description Section */}
+            <div className="border-t border-border/40 pt-5 space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Description <span className="text-destructive">*</span>
+              </label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Enter the checklist item description..."
+                className="placeholder:text-muted-foreground/60 placeholder:italic min-h-[80px]"
                 rows={3}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Supporting Evidence</Label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Supporting Evidence
+              </label>
               <Input
                 value={formData.supporting_evidence}
                 onChange={(e) => setFormData(prev => ({ ...prev, supporting_evidence: e.target.value }))}
                 placeholder="e.g., Signed-off ITR-B, Test Records"
+                className="placeholder:text-muted-foreground/60 placeholder:italic"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Approvers (Disciplines)</Label>
-              <div className="space-y-2">
+            {/* Approvers Section */}
+            <div className="border-t border-border/40 pt-5 space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Approvers <span className="text-muted-foreground/60 normal-case font-normal">(Disciplines)</span>
+              </label>
+              <div className="space-y-3">
                 {formData.approving_authorities.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
                     {formData.approving_authorities.map((auth) => (
-                      <Badge key={auth} variant="secondary" className="flex items-center gap-1">
+                      <Badge key={auth} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
                         {auth}
                         <button
                           type="button"
-                          className="ml-1 hover:text-destructive"
+                          className="ml-1 hover:text-destructive transition-colors"
                           onClick={() => setFormData(prev => ({
                             ...prev,
                             approving_authorities: prev.approving_authorities.filter(a => a !== auth)
@@ -414,7 +431,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                     }
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Add discipline..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -427,11 +444,14 @@ const ChecklistItemsLibrary: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Responsible Party</Label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Responsible Party
+              </label>
               <Input
                 value={formData.responsible_party}
                 onChange={(e) => setFormData(prev => ({ ...prev, responsible_party: e.target.value }))}
                 placeholder="e.g., Operations Team"
+                className="placeholder:text-muted-foreground/60 placeholder:italic"
               />
             </div>
           </div>
