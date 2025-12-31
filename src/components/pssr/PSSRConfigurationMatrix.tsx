@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useChecklists } from '@/hooks/useChecklists';
@@ -20,6 +20,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import AddPSSRReasonWizard from './AddPSSRReasonWizard';
+import EditPSSRReasonOverlay from './EditPSSRReasonOverlay';
+import { PSSRReasonStatus } from '@/hooks/usePSSRReasons';
 import {
   DndContext,
   closestCenter,
@@ -48,7 +50,18 @@ interface LocalConfiguration {
   isDirty: boolean;
   is_active: boolean;
   display_order: number;
+  category: string | null;
+  sub_category: string | null;
+  status: PSSRReasonStatus;
+  reason_approver_role_ids: string[];
 }
+
+const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; className: string }> = {
+  draft: { label: 'Draft', className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+  awaiting_approval: { label: 'Pending', className: 'bg-amber-100 text-amber-700 border-amber-300' },
+  approved: { label: 'Approved', className: 'bg-green-100 text-green-700' },
+  in_use: { label: 'In Use', className: 'bg-blue-100 text-blue-700' },
+};
 
 // Sortable Row Component
 interface SortableRowProps {
@@ -113,7 +126,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Reason Details Overlay State
-  const [reasonDetailsDialog, setReasonDetailsDialog] = useState<{
+  const [editOverlay, setEditOverlay] = useState<{
     open: boolean;
     config: LocalConfiguration | null;
   }>({ open: false, config: null });
@@ -144,6 +157,10 @@ const PSSRConfigurationMatrix: React.FC = () => {
         isDirty: false,
         is_active: config.reason?.is_active ?? true,
         display_order: config.reason?.display_order ?? 0,
+        category: (config.reason as any)?.category || null,
+        sub_category: (config.reason as any)?.sub_category || null,
+        status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
+        reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
       })));
     }
   }, [configurations]);

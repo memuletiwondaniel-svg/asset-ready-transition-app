@@ -3202,6 +3202,8 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          reason_approver_role_ids: string[] | null
+          status: string | null
           sub_category: string | null
           updated_at: string
         }
@@ -3212,6 +3214,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          reason_approver_role_ids?: string[] | null
+          status?: string | null
           sub_category?: string | null
           updated_at?: string
         }
@@ -3222,6 +3226,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          reason_approver_role_ids?: string[] | null
+          status?: string | null
           sub_category?: string | null
           updated_at?: string
         }

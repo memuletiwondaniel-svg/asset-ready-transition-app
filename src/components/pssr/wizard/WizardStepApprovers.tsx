@@ -8,7 +8,7 @@ import { Lock, Info, Users, CheckCircle2 } from 'lucide-react';
 import { useRoles } from '@/hooks/useRoles';
 
 interface WizardStepApproversProps {
-  type: 'pssr' | 'sof';
+  type: 'pssr' | 'sof' | 'reason';
   selectedRoleIds: string[];
   disabledRoleIds?: string[];
   onRoleToggle: (roleId: string) => void;
@@ -22,13 +22,25 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
 }) => {
   const { roles = [], isLoading } = useRoles();
 
-  const title = type === 'pssr' ? 'PSSR Approvers' : 'SoF Approvers';
-  const description = type === 'pssr'
-    ? 'Select the roles that are authorized to approve PSSRs for this reason.'
-    : 'Select the roles that are authorized to sign the Statement of Fitness for this reason.';
-  const infoMessage = type === 'pssr'
-    ? 'Users with these roles will be able to review and approve PSSRs created with this reason.'
-    : 'Users with these roles will be able to sign the final Statement of Fitness. A role cannot be both a PSSR Approver and SoF Approver.';
+  const config = {
+    reason: {
+      title: 'Reason Approvers',
+      description: 'Select the roles that can approve this PSSR Reason for use (e.g., TSE Manager, ORA Lead, P&M Director).',
+      infoMessage: 'Users with these roles will be able to approve the PSSR Reason before it becomes available for creating PSSRs.',
+    },
+    pssr: {
+      title: 'PSSR Approvers',
+      description: 'Select the roles that are authorized to approve PSSRs for this reason.',
+      infoMessage: 'Users with these roles will be able to review and approve PSSRs created with this reason.',
+    },
+    sof: {
+      title: 'SoF Approvers',
+      description: 'Select the roles that are authorized to sign the Statement of Fitness for this reason.',
+      infoMessage: 'Users with these roles will be able to sign the final Statement of Fitness. A role cannot be both a PSSR Approver and SoF Approver.',
+    },
+  };
+
+  const { title, description, infoMessage } = config[type];
 
   if (isLoading) {
     return (
