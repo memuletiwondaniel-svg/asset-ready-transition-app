@@ -779,7 +779,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         <AnimatedParticles />
       </div>
 
-      <div className="h-screen flex overflow-hidden">
+      <div className="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
         {/* ORSH Sidebar Component */}
         <OrshSidebar userName={userProfile?.full_name || 'User'} userTitle={userProfile?.position || 'Team Member'} userAvatar={userProfile?.avatar_url || ''} language={language} onLanguageChange={setLanguage} onNavigate={onNavigate} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} onLogout={onBack} showWidgets={showWidgetManagement} currentPage="home" searchHistory={searchHistory} onSearchHistoryClick={item => {
         setUserInput(item);
@@ -787,7 +787,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       }} showSearchHistory={showHistory} onToggleSearchHistory={() => setShowHistory(!showHistory)} />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex gap-6 p-6 overflow-y-auto">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto">
           <div className={`flex-1 flex flex-col gap-6 transition-all duration-500 ${tasksPanelExpanded ? 'hidden' : ''}`}>
             {/* Welcome User Banner - Ask ORSH AI */}
             <Card className="glass-card overflow-hidden animate-fade-in border-2 border-primary/20 shadow-lg transition-all duration-300">
@@ -812,7 +812,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     </Button>
                   </div>
                   
-                  {!welcomeBannerCollapsed && <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 animate-fade-in">
+                  {!welcomeBannerCollapsed && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 mt-3 md:mt-4 animate-fade-in">
                       <Button variant="outline" onClick={() => {
                     setInitialPrompt('How can I help you today?');
                     setChatOpen(true);
@@ -885,9 +885,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 </div>
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-3 gap-4 animate-smooth-in stagger-2" style={{
-                  height: messages.length > 0 ? '48%' : '68%'
-                }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 animate-smooth-in stagger-2">
                       {widgets.filter(w => w.isVisible).map(widget => <SortableWidgetWrapper key={widget.id} id={widget.id} isExpanded={widget.isExpanded}>
                           <WidgetCard title={widget.title} isExpanded={widget.isExpanded} isVisible={widget.isVisible} onToggleVisibility={() => handleToggleVisibility(widget.id)} onToggleExpand={() => handleToggleExpand(widget.id)}>
                             {widget.id === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
@@ -902,7 +900,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Tasks Panel */}
-          {tasksPanelVisible && !tasksPanelExpanded && <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 group ${isTasksPanelCollapsed ? 'w-16' : 'w-80'}`} data-tour="tasks">
+          {tasksPanelVisible && !tasksPanelExpanded && <Card className={`glass-panel shadow-xl transition-all duration-500 animate-smooth-in stagger-3 group ${isTasksPanelCollapsed ? 'w-14 md:w-16' : 'w-full lg:w-80 lg:flex-shrink-0'}`} data-tour="tasks">
               <CardHeader className="border-b border-border/40 py-4">
                 <div className="flex items-center justify-between">
                   {!isTasksPanelCollapsed && <div className="flex items-center gap-3 flex-1">

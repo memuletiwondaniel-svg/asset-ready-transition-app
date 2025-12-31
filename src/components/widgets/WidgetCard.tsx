@@ -49,7 +49,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
   };
 
   return (
-    <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} flex flex-col h-full ${className || ''}`}>
+    <Card className={`glass-card overflow-hidden border-border/40 shadow-elevation-rest hover:shadow-elevation-hover hover:-translate-y-1 transition-all duration-300 group ${isExpanded ? 'col-span-full' : ''} flex flex-col h-full min-h-[280px] md:min-h-[320px] lg:min-h-[360px] ${className || ''}`}>
       <CardHeader 
         className="border-b border-border/40 pb-3 pt-3 flex flex-row items-center justify-between space-y-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent relative overflow-hidden cursor-pointer select-none"
         onDoubleClick={handleFullscreen}

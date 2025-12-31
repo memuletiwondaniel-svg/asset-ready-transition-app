@@ -136,7 +136,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       onToggleVisibility={onToggleVisibility}
       dragAttributes={dragAttributes}
       dragListeners={dragListeners}
-      className="flex flex-col h-[600px]"
+      className="flex flex-col min-h-[400px] max-h-[70vh] lg:max-h-[600px]"
     >
       <div className="flex flex-col h-full overflow-hidden">
         {/* Search and View Controls - Sticky with scroll shadow */}

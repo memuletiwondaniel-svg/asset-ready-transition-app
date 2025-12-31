@@ -277,7 +277,7 @@ export const DashboardWidgets: React.FC = () => {
             items={visibleWidgets.map(w => w.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 auto-rows-auto">
               {visibleWidgets.map((widget) => (
                 <SortableWidget 
                   key={widget.id} 
