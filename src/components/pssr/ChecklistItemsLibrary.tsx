@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   usePSSRChecklistItems,
@@ -106,7 +107,16 @@ const ChecklistItemsLibrary: React.FC = () => {
     responsible: '',
   });
 
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState({
+    topic: false,
+    responsible: false,
+    supportingEvidence: false,
+    approvers: true,
+  });
+
   const isLoading = itemsLoading || categoriesLoading;
+  const visibleColumnCount = 3 + Object.values(visibleColumns).filter(Boolean).length;
 
   const filteredItems = useMemo(() => {
     if (!items) return [];
@@ -325,6 +335,43 @@ const ChecklistItemsLibrary: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Column Visibility Toggle */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Columns className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.topic}
+                  onCheckedChange={(checked) => setVisibleColumns(prev => ({ ...prev, topic: checked }))}
+                >
+                  Topic
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.responsible}
+                  onCheckedChange={(checked) => setVisibleColumns(prev => ({ ...prev, responsible: checked }))}
+                >
+                  Responsible
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.supportingEvidence}
+                  onCheckedChange={(checked) => setVisibleColumns(prev => ({ ...prev, supportingEvidence: checked }))}
+                >
+                  Supporting Evidence
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.approvers}
+                  onCheckedChange={(checked) => setVisibleColumns(prev => ({ ...prev, approvers: checked }))}
+                >
+                  Approvers
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Stats */}
@@ -346,15 +393,18 @@ const ChecklistItemsLibrary: React.FC = () => {
                 <TableRow>
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead className="w-32">Category</TableHead>
+                  {visibleColumns.topic && <TableHead className="w-32">Topic</TableHead>}
                   <TableHead className="flex-1">Description</TableHead>
-                  <TableHead className="w-48">Approver</TableHead>
+                  {visibleColumns.responsible && <TableHead className="w-40">Responsible</TableHead>}
+                  {visibleColumns.supportingEvidence && <TableHead className="w-48">Supporting Evidence</TableHead>}
+                  {visibleColumns.approvers && <TableHead className="w-48">Approvers</TableHead>}
                   <TableHead className="w-24 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={visibleColumnCount} className="text-center py-8 text-muted-foreground">
                       {items?.length === 0 
                         ? 'No checklist items yet. Click "Add Item" to create one.'
                         : 'No items match your search criteria.'}
@@ -371,12 +421,29 @@ const ChecklistItemsLibrary: React.FC = () => {
                       <TableCell>
                         <Badge variant="outline">{item.categoryData?.name}</Badge>
                       </TableCell>
+                      {visibleColumns.topic && (
+                        <TableCell className="text-sm text-muted-foreground">
+                          {item.topic || '-'}
+                        </TableCell>
+                      )}
                       <TableCell>
                         <p>{item.description}</p>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {item.approvers?.replace(/^TA-/i, '') || '-'}
-                      </TableCell>
+                      {visibleColumns.responsible && (
+                        <TableCell className="text-sm text-muted-foreground">
+                          {item.responsible || '-'}
+                        </TableCell>
+                      )}
+                      {visibleColumns.supportingEvidence && (
+                        <TableCell className="text-sm text-muted-foreground">
+                          {item.supporting_evidence || '-'}
+                        </TableCell>
+                      )}
+                      {visibleColumns.approvers && (
+                        <TableCell className="text-sm text-muted-foreground">
+                          {item.approvers || '-'}
+                        </TableCell>
+                      )}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleOpenEdit(item); }}>
