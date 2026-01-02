@@ -222,7 +222,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogContent className="max-w-2xl h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-lg font-semibold">
@@ -480,7 +480,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
             </div>
           </ScrollArea>
 
-          <DialogFooter className="px-6 py-4 border-t flex-row justify-between">
+          <DialogFooter className="px-6 py-4 border-t flex-row justify-between shrink-0">
             <Button
               variant="ghost"
               size="sm"
