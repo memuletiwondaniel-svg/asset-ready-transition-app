@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Save, Trash2, FileText, Settings, Users, CheckCircle, AlertCircle, Clock, Send } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, Save, Trash2, FileText, CheckCircle, AlertCircle, Clock, Send, Info, X, Users, Shield, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRoles } from '@/hooks/useRoles';
-import { useDisciplines } from '@/hooks/useDisciplines';
 import { usePSSRReasonCategories, usePSSRDeliveryParties } from '@/hooks/usePSSRReasonCategories';
 import { PSSRReasonStatus } from '@/hooks/usePSSRReasons';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface EditPSSRReasonOverlayProps {
   open: boolean;
@@ -31,11 +40,11 @@ interface EditPSSRReasonOverlayProps {
   onDelete: () => void;
 }
 
-const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.ElementType; variant: 'default' | 'secondary' | 'outline' | 'destructive'; className: string }> = {
-  draft: { label: 'Draft', icon: FileText, variant: 'secondary', className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-  awaiting_approval: { label: 'Awaiting Approval', icon: Clock, variant: 'outline', className: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400' },
-  approved: { label: 'Approved', icon: CheckCircle, variant: 'default', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  in_use: { label: 'In Use', icon: AlertCircle, variant: 'default', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.ElementType; className: string }> = {
+  draft: { label: 'Draft', icon: FileText, className: 'bg-muted text-muted-foreground' },
+  awaiting_approval: { label: 'Awaiting Approval', icon: Clock, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  approved: { label: 'Approved', icon: CheckCircle, className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  in_use: { label: 'In Use', icon: AlertCircle, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
 };
 
 const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
@@ -53,12 +62,11 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const { roles = [] } = useRoles();
-  const { disciplines = [] } = useDisciplines();
   const { data: categories = [] } = usePSSRReasonCategories();
   const { data: deliveryParties = [] } = usePSSRDeliveryParties();
 
-  const [activeTab, setActiveTab] = useState('details');
   const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Form state
   const [reasonName, setReasonName] = useState(initialReasonName);
@@ -91,7 +99,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 
     setIsSaving(true);
     try {
-      // Update PSSR Reason
       const { error: reasonError } = await supabase
         .from('pssr_reasons')
         .update({
@@ -105,7 +112,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 
       if (reasonError) throw reasonError;
 
-      // Update configuration
       const { error: configError } = await supabase
         .from('pssr_reason_configuration')
         .update({
@@ -172,24 +178,35 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
     }
   };
 
-  const toggleRoleSelection = (roleId: string, list: string[], setList: (ids: string[]) => void) => {
-    if (list.includes(roleId)) {
-      setList(list.filter(id => id !== roleId));
-    } else {
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    onDelete();
+  };
+
+  const addApprover = (roleId: string, list: string[], setList: (ids: string[]) => void) => {
+    if (!list.includes(roleId)) {
       setList([...list, roleId]);
     }
+  };
+
+  const removeApprover = (roleId: string, list: string[], setList: (ids: string[]) => void) => {
+    setList(list.filter(id => id !== roleId));
+  };
+
+  const getRoleName = (roleId: string) => {
+    return roles.find(r => r.id === roleId)?.name || roleId;
   };
 
   const statusConfig = STATUS_CONFIG[status];
   const StatusIcon = statusConfig.icon;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4">
-          <div className="flex items-center justify-between">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center gap-3">
-              <DialogTitle className="text-xl font-semibold">
+              <DialogTitle className="text-lg font-semibold">
                 Edit PSSR Reason
               </DialogTitle>
               <Badge className={statusConfig.className}>
@@ -197,96 +214,88 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 {statusConfig.label}
               </Badge>
             </div>
-          </div>
-          <DialogDescription>
-            Manage PSSR reason details and approver configuration.
-          </DialogDescription>
-        </DialogHeader>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Configure reason details and approver assignments
+            </DialogDescription>
+          </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="details" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Details
-            </TabsTrigger>
-            <TabsTrigger value="approvers" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Approvers
-            </TabsTrigger>
-            <TabsTrigger value="reason-approvers" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Reason Approvers
-            </TabsTrigger>
-          </TabsList>
-
-          <ScrollArea className="flex-1 px-1">
-            {/* Details Tab */}
-            <TabsContent value="details" className="mt-4 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+          <ScrollArea className="flex-1 max-h-[60vh]">
+            <div className="px-6 py-5 space-y-6">
+              {/* Basic Details Section */}
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Reason Name</Label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Reason Name <span className="text-destructive">*</span>
+                  </label>
                   <Input
                     value={reasonName}
                     onChange={(e) => setReasonName(e.target.value)}
                     placeholder="Enter reason name"
-                    maxLength={100}
+                    className="bg-background"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={status} onValueChange={(v) => setStatus(v as PSSRReasonStatus)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="awaiting_approval">Awaiting Approval</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="in_use">In Use</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Category
+                    </label>
+                    <Select 
+                      value={categoryId || 'none'} 
+                      onValueChange={(v) => {
+                        const newCategoryId = v === 'none' ? null : v;
+                        setCategoryId(newCategoryId);
+                        const selectedCategory = categories.find(c => c.id === newCategoryId);
+                        if (!selectedCategory?.requires_delivery_party) {
+                          setDeliveryPartyId(null);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not specified</SelectItem>
+                        {categories
+                          .filter(cat => cat.is_active)
+                          .sort((a, b) => a.display_order - b.display_order)
+                          .map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select 
-                    value={categoryId || 'none'} 
-                    onValueChange={(v) => {
-                      const newCategoryId = v === 'none' ? null : v;
-                      setCategoryId(newCategoryId);
-                      // Reset delivery party if new category doesn't require it
-                      const selectedCategory = categories.find(c => c.id === newCategoryId);
-                      if (!selectedCategory?.requires_delivery_party) {
-                        setDeliveryPartyId(null);
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not specified</SelectItem>
-                      {categories
-                        .filter(cat => cat.is_active)
-                        .sort((a, b) => a.display_order - b.display_order)
-                        .map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Status
+                    </label>
+                    <Select value={status} onValueChange={(v) => setStatus(v as PSSRReasonStatus)}>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="awaiting_approval">Awaiting Approval</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="in_use">In Use</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {currentCategory?.requires_delivery_party && (
                   <div className="space-y-2">
-                    <Label>Delivery Party</Label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Delivery Party
+                    </label>
                     <Select 
                       value={deliveryPartyId || 'none'} 
                       onValueChange={(v) => setDeliveryPartyId(v === 'none' ? null : v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select delivery party" />
                       </SelectTrigger>
                       <SelectContent>
@@ -307,139 +316,248 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 
               {/* Status Actions */}
               {status === 'draft' && (
-                <div className="bg-muted/30 rounded-lg p-4 border">
-                  <h4 className="font-medium mb-2">Ready to submit?</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Once submitted, this PSSR Reason will be reviewed by the designated approvers before it can be used.
-                  </p>
-                  <Button onClick={handleSubmitForApproval} disabled={isSaving}>
-                    <Send className="h-4 w-4 mr-2" />
-                    Submit for Approval
-                  </Button>
+                <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                  <div className="flex items-start gap-3">
+                    <Send className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium mb-1">Ready to submit?</h4>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        This PSSR Reason will be reviewed by designated approvers before use.
+                      </p>
+                      <Button size="sm" onClick={handleSubmitForApproval} disabled={isSaving}>
+                        Submit for Approval
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {status === 'awaiting_approval' && (
                 <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
-                  <h4 className="font-medium mb-2 text-amber-800 dark:text-amber-200">Awaiting Approval</h4>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
-                    This PSSR Reason is pending approval from the designated approvers.
-                  </p>
-                  <Button onClick={handleApprove} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">Awaiting Approval</h4>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                        This PSSR Reason is pending approval.
+                      </p>
+                      <Button size="sm" onClick={handleApprove} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </TabsContent>
 
-            {/* Approvers Tab */}
-            <TabsContent value="approvers" className="mt-4 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-3">PSSR Approvers</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Select roles that can approve the PSSR.
-                  </p>
-                  <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto space-y-2">
-                    {roles.map((role) => (
-                      <div
-                        key={role.id}
-                        className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => toggleRoleSelection(role.id, pssrApproverRoleIds, setPssrApproverRoleIds)}
-                      >
-                        <Checkbox checked={pssrApproverRoleIds.includes(role.id)} />
-                        <span className="text-sm">{role.name}</span>
-                      </div>
+              {/* PSSR Approvers Section */}
+              <div className="border-t border-border/40 pt-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    PSSR Approvers
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Roles that can approve the PSSR document</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                
+                {pssrApproverRoleIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    {pssrApproverRoleIds.map((roleId) => (
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
+                        {getRoleName(roleId)}
+                        <button
+                          type="button"
+                          className="ml-1 hover:text-destructive transition-colors"
+                          onClick={() => removeApprover(roleId, pssrApproverRoleIds, setPssrApproverRoleIds)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
                   </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-3">SoF Approvers</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Select roles that can approve the Statement of Fitness.
-                  </p>
-                  <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto space-y-2">
-                    {roles.map((role) => {
-                      const isDisabled = pssrApproverRoleIds.includes(role.id);
-                      return (
-                        <div
-                          key={role.id}
-                          className={`flex items-center gap-2 p-2 rounded transition-colors ${
-                            isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/50 cursor-pointer'
-                          }`}
-                          onClick={() => !isDisabled && toggleRoleSelection(role.id, sofApproverRoleIds, setSofApproverRoleIds)}
-                        >
-                          <Checkbox checked={sofApproverRoleIds.includes(role.id)} disabled={isDisabled} />
-                          <span className="text-sm">{role.name}</span>
-                          {isDisabled && <Badge variant="outline" className="text-xs ml-auto">PSSR Approver</Badge>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                )}
+                
+                <Select
+                  value=""
+                  onValueChange={(value) => addApprover(value, pssrApproverRoleIds, setPssrApproverRoleIds)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Add PSSR approver..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles
+                      .filter(role => !pssrApproverRoleIds.includes(role.id))
+                      .map(role => (
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </TabsContent>
 
-            {/* Reason Approvers Tab */}
-            <TabsContent value="reason-approvers" className="mt-4 space-y-4">
-              <div>
-                <h4 className="font-medium mb-3">PSSR Reason Approvers</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Select roles that can approve this PSSR Reason for use (e.g., TSE Manager, ORA Lead, P&M Director). 
-                  This is different from the PSSR/SoF approvers who approve individual PSSRs.
-                </p>
-                <div className="border rounded-lg p-3 max-h-[300px] overflow-y-auto space-y-2">
-                  {roles.map((role) => (
-                    <div
-                      key={role.id}
-                      className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => toggleRoleSelection(role.id, reasonApproverRoleIds, setReasonApproverRoleIds)}
-                    >
-                      <Checkbox checked={reasonApproverRoleIds.includes(role.id)} />
-                      <span className="text-sm">{role.name}</span>
-                    </div>
-                  ))}
+              {/* SoF Approvers Section */}
+              <div className="border-t border-border/40 pt-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    SoF Approvers
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Roles that can approve the Statement of Fitness</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                {reasonApproverRoleIds.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {reasonApproverRoleIds.map((roleId) => {
-                      const role = roles.find(r => r.id === roleId);
-                      return (
-                        <Badge key={roleId} variant="secondary">
-                          {role?.name || 'Unknown'}
-                        </Badge>
-                      );
-                    })}
+                
+                {sofApproverRoleIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    {sofApproverRoleIds.map((roleId) => (
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
+                        {getRoleName(roleId)}
+                        <button
+                          type="button"
+                          className="ml-1 hover:text-destructive transition-colors"
+                          onClick={() => removeApprover(roleId, sofApproverRoleIds, setSofApproverRoleIds)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
                 )}
+                
+                <Select
+                  value=""
+                  onValueChange={(value) => addApprover(value, sofApproverRoleIds, setSofApproverRoleIds)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Add SoF approver..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles
+                      .filter(role => !sofApproverRoleIds.includes(role.id) && !pssrApproverRoleIds.includes(role.id))
+                      .map(role => (
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Roles already assigned as PSSR Approvers are excluded
+                </p>
               </div>
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
 
-        <DialogFooter className="border-t pt-4 gap-2 sm:justify-between">
-          <Button variant="destructive" onClick={onDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Reason
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {/* Reason Approvers Section */}
+              <div className="border-t border-border/40 pt-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Reason Approvers
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">Roles that can approve this PSSR Reason for use (e.g., TSE Manager). Different from PSSR/SoF approvers.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                
+                {reasonApproverRoleIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    {reasonApproverRoleIds.map((roleId) => (
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
+                        {getRoleName(roleId)}
+                        <button
+                          type="button"
+                          className="ml-1 hover:text-destructive transition-colors"
+                          onClick={() => removeApprover(roleId, reasonApproverRoleIds, setReasonApproverRoleIds)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
+                <Select
+                  value=""
+                  onValueChange={(value) => addApprover(value, reasonApproverRoleIds, setReasonApproverRoleIds)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Add reason approver..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles
+                      .filter(role => !reasonApproverRoleIds.includes(role.id))
+                      .map(role => (
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="px-6 py-4 border-t flex-row justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Changes
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={!reasonName.trim() || isSaving}>
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete PSSR Reason</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{reasonName}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteConfirm}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
