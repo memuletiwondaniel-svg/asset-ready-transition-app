@@ -158,7 +158,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Filter commissions for specific roles
   const getFilteredCommissions = () => {
-    if (formData.role === 'Engr. Manager' || formData.role === 'HSE Manager') {
+    if (formData.role === 'Engr. Manager') {
       return commissions;
     }
     return commissions;
@@ -271,13 +271,13 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       return `${role} (${commission})`;
     }
     
-    // Civil TA2 and Tech Safety TA2 - no commission needed
-    if (['Civil TA2', 'Tech Safety TA2'].includes(role)) {
+    // Civil TA2, Tech Safety TA2, and HSE Manager - no drill-down needed
+    if (['Civil TA2', 'Tech Safety TA2', 'HSE Manager'].includes(role)) {
       return role;
     }
     
-    // Engr. Manager and HSE Manager with commission
-    if (['Engr. Manager', 'HSE Manager'].includes(role) && commission) {
+    // Engr. Manager with commission
+    if (role === 'Engr. Manager' && commission) {
       return `${role} - ${commission}`;
     }
     
@@ -384,8 +384,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Validate commission for Engr. Manager and HSE Manager
-      if (['Engr. Manager', 'HSE Manager'].includes(formData.role) && !formData.commission) {
+      // Validate commission for Engr. Manager
+      if (formData.role === 'Engr. Manager' && !formData.commission) {
         toast({
           title: "Missing Commission",
           description: "Please select a commission.",
