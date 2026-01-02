@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Lock, Users, CheckCircle2 } from 'lucide-react';
+import { Users, CheckCircle2, X } from 'lucide-react';
 import { useRoles } from '@/hooks/useRoles';
 import { usePSSRAllowedApproverRoles } from '@/hooks/usePSSRAllowedApproverRoles';
 
@@ -99,9 +99,16 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                 <Badge 
                   key={roleId} 
                   variant="outline" 
-                  className={`text-xs border ${getBadgeColor(index)}`}
+                  className={`text-xs border pr-1 ${getBadgeColor(index)}`}
                 >
                   {role?.name || 'Unknown'}
+                  <button
+                    type="button"
+                    onClick={() => onRoleToggle(roleId)}
+                    className="ml-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="h-3 w-3 text-red-600 dark:text-red-400" />
+                  </button>
                 </Badge>
               );
             })
