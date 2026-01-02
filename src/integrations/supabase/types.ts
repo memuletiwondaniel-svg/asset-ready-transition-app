@@ -3043,6 +3043,7 @@ export type Database = {
       }
       pssr_reason_configuration: {
         Row: {
+          checklist_item_ids: string[] | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -3053,6 +3054,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          checklist_item_ids?: string[] | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -3063,6 +3065,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          checklist_item_ids?: string[] | null
           created_at?: string | null
           created_by?: string | null
           id?: string
