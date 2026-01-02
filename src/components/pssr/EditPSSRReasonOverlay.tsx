@@ -51,6 +51,14 @@ const ALLOWED_PSSR_APPROVER_ROLES = [
   'HSE Manager',
 ];
 
+// Allowed roles for SoF Approvers dropdown
+const ALLOWED_SOF_APPROVER_ROLES = [
+  'Plant Director',
+  'HSE Director',
+  'P&E Director',
+  'P&M Director',
+];
+
 const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.ElementType; className: string }> = {
   draft: { label: 'Draft', icon: FileText, className: 'bg-muted text-muted-foreground' },
   awaiting_approval: { label: 'Awaiting Approval', icon: Clock, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
@@ -459,7 +467,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {roles
-                      .filter(role => !sofApproverRoleIds.includes(role.id) && !pssrApproverRoleIds.includes(role.id))
+                      .filter(role => !sofApproverRoleIds.includes(role.id) && !pssrApproverRoleIds.includes(role.id) && ALLOWED_SOF_APPROVER_ROLES.includes(role.name))
                       .map(role => (
                         <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                       ))}
