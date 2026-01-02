@@ -134,6 +134,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          plant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -142,6 +143,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          plant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -150,9 +152,18 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          plant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "field_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hubs: {
         Row: {
@@ -3229,6 +3240,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          field_id: string | null
           id: string
           is_active: boolean
           name: string
@@ -3237,6 +3249,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          field_id?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -3245,12 +3258,21 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          field_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "station_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_delegations: {
         Row: {
