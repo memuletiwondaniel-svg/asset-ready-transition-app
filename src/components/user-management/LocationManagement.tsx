@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Pencil, Trash2, Building2, MapPin, Radio, ChevronRight, ChevronDown, LayoutGrid, GitBranch } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, MapPin, Radio, ChevronRight, ChevronDown, LayoutGrid, GitBranch, Search, X } from 'lucide-react';
 import { useLocations, Plant, Field, Station } from '@/hooks/useLocations';
 
 type LocationType = 'plant' | 'field' | 'station';
@@ -54,14 +54,90 @@ const LocationManagement: React.FC = () => {
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({ open: false, type: 'plant' });
   const [expandedPlants, setExpandedPlants] = useState<Set<string>>(new Set());
   const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Form state
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formParentId, setFormParentId] = useState<string>('');
 
+  // Search filtering
+  const searchLower = searchQuery.toLowerCase().trim();
+  
+  const searchFilteredPlants = searchLower 
+    ? plants.filter(p => p.name.toLowerCase().includes(searchLower) || p.description?.toLowerCase().includes(searchLower))
+    : plants;
+  
+  const searchFilteredFields = searchLower
+    ? fields.filter(f => f.name.toLowerCase().includes(searchLower) || f.description?.toLowerCase().includes(searchLower))
+    : fields;
+  
+  const searchFilteredStations = searchLower
+    ? stations.filter(s => s.name.toLowerCase().includes(searchLower) || s.description?.toLowerCase().includes(searchLower))
+    : stations;
+
+  // For tree view: show plants that match OR have matching children
+  const getVisiblePlantsForTree = () => {
+    if (!searchLower) return plants;
+    
+    const matchingPlantIds = new Set<string>();
+    
+    // Plants that directly match
+    searchFilteredPlants.forEach(p => matchingPlantIds.add(p.id));
+    
+    // Plants that have matching fields
+    searchFilteredFields.forEach(f => {
+      if (f.plant_id) matchingPlantIds.add(f.plant_id);
+    });
+    
+    // Plants that have fields with matching stations
+    searchFilteredStations.forEach(s => {
+      const field = fields.find(f => f.id === s.field_id);
+      if (field?.plant_id) matchingPlantIds.add(field.plant_id);
+    });
+    
+    return plants.filter(p => matchingPlantIds.has(p.id));
+  };
+
+  const getVisibleFieldsForPlant = (plantId: string) => {
+    const plantFields = getFieldsByPlant(plantId);
+    if (!searchLower) return plantFields;
+    
+    const matchingFieldIds = new Set<string>();
+    
+    // Fields that directly match
+    plantFields.filter(f => 
+      f.name.toLowerCase().includes(searchLower) || 
+      f.description?.toLowerCase().includes(searchLower)
+    ).forEach(f => matchingFieldIds.add(f.id));
+    
+    // Fields that have matching stations
+    searchFilteredStations.forEach(s => {
+      if (plantFields.some(f => f.id === s.field_id)) {
+        matchingFieldIds.add(s.field_id!);
+      }
+    });
+    
+    return plantFields.filter(f => matchingFieldIds.has(f.id));
+  };
+
+  const getVisibleStationsForField = (fieldId: string) => {
+    const fieldStations = getStationsByField(fieldId);
+    if (!searchLower) return fieldStations;
+    
+    return fieldStations.filter(s => 
+      s.name.toLowerCase().includes(searchLower) || 
+      s.description?.toLowerCase().includes(searchLower)
+    );
+  };
+
   const filteredFields = selectedPlant ? getFieldsByPlant(selectedPlant) : fields;
   const filteredStations = selectedField ? getStationsByField(selectedField) : stations;
+  
+  // Column view filtered lists
+  const columnPlants = searchLower ? searchFilteredPlants : plants;
+  const columnFields = searchLower ? searchFilteredFields : filteredFields;
+  const columnStations = searchLower ? searchFilteredStations : filteredStations;
 
   const togglePlantExpanded = (plantId: string) => {
     setExpandedPlants(prev => {
@@ -181,6 +257,8 @@ const LocationManagement: React.FC = () => {
       );
     }
 
+    const visiblePlants = getVisiblePlantsForTree();
+
     if (plants.length === 0) {
       return (
         <div className="text-center py-12 text-muted-foreground">
@@ -194,12 +272,21 @@ const LocationManagement: React.FC = () => {
       );
     }
 
+    if (searchLower && visiblePlants.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground">
+          <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <p>No locations match "{searchQuery}"</p>
+        </div>
+      );
+    }
+
     return (
       <ScrollArea className="h-[500px]">
         <div className="space-y-1 p-2">
-          {plants.map(plant => {
-            const plantFields = getFieldsByPlant(plant.id);
-            const isPlantExpanded = expandedPlants.has(plant.id);
+          {visiblePlants.map(plant => {
+            const plantFields = getVisibleFieldsForPlant(plant.id);
+            const isPlantExpanded = expandedPlants.has(plant.id) || !!searchLower;
             const hasChildren = plantFields.length > 0;
 
             return (
@@ -241,8 +328,8 @@ const LocationManagement: React.FC = () => {
                   <CollapsibleContent>
                     <div className="ml-4 border-l border-border pl-2 space-y-1">
                       {plantFields.map(field => {
-                        const fieldStations = getStationsByField(field.id);
-                        const isFieldExpanded = expandedFields.has(field.id);
+                        const fieldStations = getVisibleStationsForField(field.id);
+                        const isFieldExpanded = expandedFields.has(field.id) || !!searchLower;
                         const hasStations = fieldStations.length > 0;
 
                         return (
@@ -464,9 +551,32 @@ const LocationManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <MapPin className="h-4 w-4" />
-        <span>Manage your location hierarchy: Plants → Fields → Stations</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          <span>Manage your location hierarchy: Plants → Fields → Stations</span>
+        </div>
+        
+        {/* Search Input */}
+        <div className="relative w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search locations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+              onClick={() => setSearchQuery('')}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="tree" className="w-full">
@@ -501,6 +611,11 @@ const LocationManagement: React.FC = () => {
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
                 Location Hierarchy
+                {searchQuery && (
+                  <Badge variant="secondary" className="ml-2">
+                    Filtered
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -514,7 +629,7 @@ const LocationManagement: React.FC = () => {
             {renderLocationCard(
               'Plants',
               <Building2 className="h-4 w-4" />,
-              plants,
+              columnPlants,
               'plant',
               selectedPlant,
               (id) => { setSelectedPlant(id); setSelectedField(null); }
@@ -523,7 +638,7 @@ const LocationManagement: React.FC = () => {
             {renderLocationCard(
               'Fields',
               <MapPin className="h-4 w-4" />,
-              filteredFields,
+              columnFields,
               'field',
               selectedField,
               setSelectedField,
@@ -536,7 +651,7 @@ const LocationManagement: React.FC = () => {
             {renderLocationCard(
               'Stations',
               <Radio className="h-4 w-4" />,
-              filteredStations,
+              columnStations,
               'station',
               null,
               undefined,
