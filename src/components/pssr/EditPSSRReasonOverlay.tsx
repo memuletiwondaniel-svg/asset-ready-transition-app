@@ -372,7 +372,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               {/* PSSR Approvers Section */}
               <div className="border-t border-border/40 pt-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     PSSR Approvers
                   </label>
@@ -425,7 +424,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               {/* SoF Approvers Section */}
               <div className="border-t border-border/40 pt-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     SoF Approvers
                   </label>
