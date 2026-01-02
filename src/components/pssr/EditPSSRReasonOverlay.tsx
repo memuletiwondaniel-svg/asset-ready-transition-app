@@ -54,7 +54,7 @@ const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.Eleme
 
 const STEPS = [
   { id: 1, title: 'Category', description: 'Select PSSR category' },
-  { id: 2, title: 'Reason Details', description: 'Edit reason name and description' },
+  { id: 2, title: 'PSSR Reason', description: 'Edit reason name and description' },
   { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
   { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
   { id: 5, title: 'Checklist Items', description: 'Select applicable checklist items' },
