@@ -1,27 +1,28 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   usePSSRChecklistItems,
   usePSSRChecklistCategories,
+  usePSSRChecklistRoles,
   useCreateChecklistItem,
   useUpdateChecklistItem,
   useDeleteChecklistItem,
   useCreateChecklistCategory,
   ChecklistItem,
 } from '@/hooks/usePSSRChecklistLibrary';
-import { useDisciplines } from '@/hooks/useDisciplines';
+import { getRoleResolutionDescription, BASE_ROLES_FOR_CHECKLIST } from '@/utils/resolveChecklistRole';
 
 interface ItemFormData {
   category: string;
@@ -32,10 +33,48 @@ interface ItemFormData {
   responsible: string;
 }
 
+// Group roles by category for display
+const ROLE_GROUPS = {
+  'TA2 Disciplines': [
+    'Process TA2',
+    'PACO TA2',
+    'Elect TA2',
+    'Static TA2',
+    'Rotating TA2',
+    'Civil TA2',
+    'Tech Safety TA2',
+  ],
+  'Operations': [
+    'ORA Engr.',
+    'ORA Lead',
+    'Ops Coach',
+    'Site Engr.',
+    'Ops Team Lead',
+  ],
+  'Projects': [
+    'Project Engr',
+    'Project Hub Lead',
+    'Project Manager',
+    'Commissioning Lead',
+    'Construction Lead',
+    'Completions Engr',
+    'Project Controls Lead',
+  ],
+  'HSE': [
+    'Ops HSE Adviser',
+    'Environment Engr',
+    'ER Adviser',
+  ],
+  'Other': [
+    'CMMS Engr.',
+    'CMMS Lead',
+  ],
+};
+
 const ChecklistItemsLibrary: React.FC = () => {
   const { data: items, isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: categories, isLoading: categoriesLoading } = usePSSRChecklistCategories();
-  const { disciplines } = useDisciplines();
+  const { data: roles, isLoading: rolesLoading } = usePSSRChecklistRoles();
   
   const createItem = useCreateChecklistItem();
   const updateItem = useUpdateChecklistItem();
@@ -420,9 +459,21 @@ const ChecklistItemsLibrary: React.FC = () => {
 
             {/* Responsible Section */}
             <div className="border-t border-border/40 pt-5 space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Responsible
-              </label>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Responsible
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Roles resolve based on PSSR location context</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Select
                 value={formData.responsible || 'none'}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, responsible: value === 'none' ? '' : value }))}
@@ -432,12 +483,13 @@ const ChecklistItemsLibrary: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="Project Engr">Project Engr</SelectItem>
-                  <SelectItem value="Commissioning">Commissioning</SelectItem>
-                  <SelectItem value="ORA">ORA</SelectItem>
-                  <SelectItem value="Operations">Operations</SelectItem>
-                  {disciplines?.map(discipline => (
-                    <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
+                  {Object.entries(ROLE_GROUPS).map(([group, groupRoles]) => (
+                    <SelectGroup key={group}>
+                      <SelectLabel>{group}</SelectLabel>
+                      {groupRoles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
@@ -445,9 +497,21 @@ const ChecklistItemsLibrary: React.FC = () => {
 
             {/* Approvers Section */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Approvers <span className="text-muted-foreground/60 normal-case font-normal">(Disciplines)</span>
-              </label>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Approvers
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Roles resolve based on PSSR location context</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="space-y-3">
                 {formData.approvers.length > 0 && (
                   <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
@@ -480,14 +544,16 @@ const ChecklistItemsLibrary: React.FC = () => {
                   }}
                 >
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Add discipline..." />
+                    <SelectValue placeholder="Add approver..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {!formData.approvers.includes('Operations') && (
-                      <SelectItem value="Operations">Operations</SelectItem>
-                    )}
-                    {disciplines?.filter(d => !formData.approvers.includes(d.name)).map(discipline => (
-                      <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
+                    {Object.entries(ROLE_GROUPS).map(([group, groupRoles]) => (
+                      <SelectGroup key={group}>
+                        <SelectLabel>{group}</SelectLabel>
+                        {groupRoles.filter(role => !formData.approvers.includes(role)).map(role => (
+                          <SelectItem key={role} value={role}>{role}</SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
