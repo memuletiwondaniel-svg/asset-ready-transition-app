@@ -38,7 +38,7 @@ interface UserFormData {
   customRole: string;
   commission?: string;
   hub: string;
-  associatedProjects: string[];
+  
   authenticator: string;
 }
 
@@ -70,7 +70,6 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     customRole: '',
     commission: '',
     hub: '',
-    associatedProjects: [],
     authenticator: 'Daniel Memuletiwon',
   });
 
@@ -129,7 +128,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return hubs || [];
   };
 
-  const projects = ['Project Alpha', 'Project Beta', 'Project Gamma', 'Project Delta'];
+  
   const authenticators = [
     'Daniel Memuletiwon (ORA Lead)',
     'Ahmed Al-Rashid (Plant Director)',
@@ -180,14 +179,6 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     }));
   };
 
-  const toggleProject = (project: string) => {
-    setFormData(prev => ({
-      ...prev,
-      associatedProjects: prev.associatedProjects.includes(project)
-        ? prev.associatedProjects.filter(p => p !== project)
-        : [...prev.associatedProjects, project]
-    }));
-  };
 
   // Check if role requires hub selection
   const requiresHub = (role: string) => {
@@ -306,7 +297,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       customRole: '',
       commission: '',
       hub: '',
-      associatedProjects: [],
+      
       authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
@@ -595,28 +586,6 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         </CardContent>
       </Card>
 
-      {/* Projects */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Project Association (Optional)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-2">
-            {projects.map(project => (
-              <div key={project} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`project-${project}`}
-                  checked={formData.associatedProjects.includes(project)}
-                  onCheckedChange={() => toggleProject(project)}
-                />
-                <Label htmlFor={`project-${project}`} className="text-sm">
-                  {project}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Authenticator Selection - Only for self-registration */}
       {!isAdminCreated && (
@@ -704,18 +673,6 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               )}
             </div>
           </div>
-          {formData.associatedProjects.length > 0 && (
-            <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Associated Projects</span>
-              <div className="flex flex-wrap gap-1 mt-1.5">
-                {formData.associatedProjects.map(project => (
-                  <Badge key={project} variant="secondary" className="text-xs">
-                    {project}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
           {!isAdminCreated && (
             <div>
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Authenticator</span>
