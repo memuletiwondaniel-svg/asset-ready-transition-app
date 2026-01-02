@@ -14,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRoles } from '@/hooks/useRoles';
 import { useDisciplines } from '@/hooks/useDisciplines';
+import { usePSSRReasonCategories, usePSSRDeliveryParties } from '@/hooks/usePSSRReasonCategories';
 import { PSSRReasonStatus } from '@/hooks/usePSSRReasons';
 
 interface EditPSSRReasonOverlayProps {
@@ -21,8 +22,8 @@ interface EditPSSRReasonOverlayProps {
   onOpenChange: (open: boolean) => void;
   reasonId: string;
   reasonName: string;
-  category: string | null;
-  subCategory: string | null;
+  categoryId: string | null;
+  deliveryPartyId: string | null;
   status: PSSRReasonStatus;
   reasonApproverRoleIds: string[];
   pssrApproverRoleIds: string[];
@@ -42,8 +43,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   onOpenChange,
   reasonId,
   reasonName: initialReasonName,
-  category: initialCategory,
-  subCategory: initialSubCategory,
+  categoryId: initialCategoryId,
+  deliveryPartyId: initialDeliveryPartyId,
   status: initialStatus,
   reasonApproverRoleIds: initialReasonApproverRoleIds,
   pssrApproverRoleIds: initialPssrApproverRoleIds,
@@ -53,29 +54,34 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const queryClient = useQueryClient();
   const { roles = [] } = useRoles();
   const { disciplines = [] } = useDisciplines();
+  const { data: categories = [] } = usePSSRReasonCategories();
+  const { data: deliveryParties = [] } = usePSSRDeliveryParties();
 
   const [activeTab, setActiveTab] = useState('details');
   const [isSaving, setIsSaving] = useState(false);
   
   // Form state
   const [reasonName, setReasonName] = useState(initialReasonName);
-  const [category, setCategory] = useState<string | null>(initialCategory);
-  const [subCategory, setSubCategory] = useState<string | null>(initialSubCategory);
+  const [categoryId, setCategoryId] = useState<string | null>(initialCategoryId);
+  const [deliveryPartyId, setDeliveryPartyId] = useState<string | null>(initialDeliveryPartyId);
   const [status, setStatus] = useState<PSSRReasonStatus>(initialStatus);
   const [reasonApproverRoleIds, setReasonApproverRoleIds] = useState<string[]>(initialReasonApproverRoleIds);
   const [pssrApproverRoleIds, setPssrApproverRoleIds] = useState<string[]>(initialPssrApproverRoleIds);
   const [sofApproverRoleIds, setSofApproverRoleIds] = useState<string[]>(initialSofApproverRoleIds);
 
+  // Get current category to check if it requires delivery party
+  const currentCategory = categories.find(c => c.id === categoryId);
+
   // Reset form when props change
   useEffect(() => {
     setReasonName(initialReasonName);
-    setCategory(initialCategory);
-    setSubCategory(initialSubCategory);
+    setCategoryId(initialCategoryId);
+    setDeliveryPartyId(initialDeliveryPartyId);
     setStatus(initialStatus);
     setReasonApproverRoleIds(initialReasonApproverRoleIds);
     setPssrApproverRoleIds(initialPssrApproverRoleIds);
     setSofApproverRoleIds(initialSofApproverRoleIds);
-  }, [initialReasonName, initialCategory, initialSubCategory, initialStatus, initialReasonApproverRoleIds, initialPssrApproverRoleIds, initialSofApproverRoleIds]);
+  }, [initialReasonName, initialCategoryId, initialDeliveryPartyId, initialStatus, initialReasonApproverRoleIds, initialPssrApproverRoleIds, initialSofApproverRoleIds]);
 
   const handleSave = async () => {
     if (!reasonName.trim()) {
@@ -90,8 +96,8 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
         .from('pssr_reasons')
         .update({
           name: reasonName.trim(),
-          category,
-          sub_category: subCategory,
+          category_id: categoryId,
+          delivery_party_id: deliveryPartyId,
           status,
           reason_approver_role_ids: reasonApproverRoleIds,
         })
@@ -244,33 +250,55 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
 
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select value={category || 'none'} onValueChange={(v) => {
-                    setCategory(v === 'none' ? null : v);
-                    if (v !== 'Project') setSubCategory(null);
-                  }}>
+                  <Select 
+                    value={categoryId || 'none'} 
+                    onValueChange={(v) => {
+                      const newCategoryId = v === 'none' ? null : v;
+                      setCategoryId(newCategoryId);
+                      // Reset delivery party if new category doesn't require it
+                      const selectedCategory = categories.find(c => c.id === newCategoryId);
+                      if (!selectedCategory?.requires_delivery_party) {
+                        setDeliveryPartyId(null);
+                      }
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Not specified</SelectItem>
-                      <SelectItem value="Project">Project</SelectItem>
-                      <SelectItem value="Safety Incidence">Safety Incidence</SelectItem>
-                      <SelectItem value="Ops & Mtce">Ops & Mtce</SelectItem>
+                      {categories
+                        .filter(cat => cat.is_active)
+                        .sort((a, b) => a.display_order - b.display_order)
+                        .map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {category === 'Project' && (
+                {currentCategory?.requires_delivery_party && (
                   <div className="space-y-2">
-                    <Label>Project Type</Label>
-                    <Select value={subCategory || 'none'} onValueChange={(v) => setSubCategory(v === 'none' ? null : v)}>
+                    <Label>Delivery Party</Label>
+                    <Select 
+                      value={deliveryPartyId || 'none'} 
+                      onValueChange={(v) => setDeliveryPartyId(v === 'none' ? null : v)}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder="Select delivery party" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Not specified</SelectItem>
-                        <SelectItem value="P&E">P&E</SelectItem>
-                        <SelectItem value="BFM">BFM</SelectItem>
+                        {deliveryParties
+                          .filter(dp => dp.is_active)
+                          .sort((a, b) => a.display_order - b.display_order)
+                          .map((dp) => (
+                            <SelectItem key={dp.id} value={dp.id}>
+                              {dp.code} - {dp.name}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
