@@ -139,3 +139,79 @@ export const useAddRoleCategory = () => {
 
   return { addCategory };
 };
+
+export const useUpdateRoleCategory = () => {
+  const updateCategory = async (id: string, name: string, description: string, displayOrder: number) => {
+    const { data, error } = await supabase
+      .from('role_category')
+      .update({
+        name,
+        description,
+        display_order: displayOrder,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  };
+
+  return { updateCategory };
+};
+
+export const useDeleteRoleCategory = () => {
+  const deleteCategory = async (id: string) => {
+    const { error } = await supabase
+      .from('role_category')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  return { deleteCategory };
+};
+
+export const useUpdateRole = () => {
+  const updateRole = async (id: string, name: string, description: string, categoryId: string) => {
+    const { data, error } = await supabase
+      .from('roles')
+      .update({
+        name,
+        description,
+        category_id: categoryId,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  };
+
+  return { updateRole };
+};
+
+export const useDeleteRole = () => {
+  const deleteRole = async (id: string) => {
+    const { error } = await supabase
+      .from('roles')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  return { deleteRole };
+};
