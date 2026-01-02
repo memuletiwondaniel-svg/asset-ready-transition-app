@@ -381,12 +381,7 @@ const FunctionsRolesManagement: React.FC = () => {
                           key={role.id}
                           className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex-1">
-                            <p className="font-medium">{role.name}</p>
-                            {role.description && (
-                              <p className="text-sm text-muted-foreground">{role.description}</p>
-                            )}
-                          </div>
+                          <p className="font-medium flex-1">{role.name}</p>
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
