@@ -2401,6 +2401,108 @@ export type Database = {
           },
         ]
       }
+      project_region: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      project_region_plant: {
+        Row: {
+          created_at: string | null
+          id: string
+          plant_id: string
+          region_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          plant_id: string
+          region_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          plant_id?: string
+          region_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_region_plant_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: true
+            referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_region_plant_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "project_region"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_region_station: {
+        Row: {
+          created_at: string | null
+          id: string
+          region_id: string
+          station_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          region_id: string
+          station_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          region_id?: string
+          station_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_region_station_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "project_region"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_region_station_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: true
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_team_members: {
         Row: {
           created_at: string | null
