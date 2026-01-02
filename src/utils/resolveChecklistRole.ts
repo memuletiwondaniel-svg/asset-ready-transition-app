@@ -41,7 +41,7 @@ const NO_SUFFIX_ROLES = [
   'HSE Manager',
   'HSE Director',
   'P&E Director',
-  'Prod Director',
+  'P&M Director',
   'ER Manager',
   'TSE Manager',
   'TSE Engr.',

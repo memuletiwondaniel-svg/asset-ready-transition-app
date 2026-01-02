@@ -157,7 +157,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
     "Ops HSE Lead",
     "Project HSE Lead",
     "ER Lead",
-    "Production Director",
+    "P&M Director",
     "HSE Director",
     "P&E Director"
   ];

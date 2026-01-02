@@ -105,7 +105,7 @@ const AuthenticatorApprovalModal: React.FC<AuthenticatorApprovalModalProps> = ({
     'Ops HSE Lead',
     'Project HSE Lead',
     'ER Lead',
-    'Production Director',
+    'P&M Director',
     'HSE Director',
     'P&E Director'
   ];
