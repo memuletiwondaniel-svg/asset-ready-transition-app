@@ -33,10 +33,11 @@ interface UserFormData {
   phoneNumbers: PhoneNumber[];
   company: string;
   customCompany: string;
-  commission: string;
+  function: string;
   role: string;
   customRole: string;
   discipline?: string;
+  commission?: string;
   hub: string;
   associatedProjects: string[];
   authenticator: string;
@@ -65,10 +66,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     phoneNumbers: [{ countryCode: '+964', number: '' }],
     company: '',
     customCompany: '',
-    commission: '',
+    function: '',
     role: '',
     customRole: '',
     discipline: '',
+    commission: '',
     hub: '',
     associatedProjects: [],
     authenticator: 'Daniel Memuletiwon',
@@ -77,11 +79,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const { data: hubs } = useHubs();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
 
-  // Get roles for the selected commission
-  const getRolesForCommission = () => {
-    if (!formData.commission || !categorizedRoles) return [];
-    const commissionGroup = categorizedRoles.find(g => g.category.name === formData.commission);
-    return commissionGroup?.roles || [];
+  // Get roles for the selected function
+  const getRolesForFunction = () => {
+    if (!formData.function || !categorizedRoles) return [];
+    const functionGroup = categorizedRoles.find(g => g.category.name === formData.function);
+    return functionGroup?.roles || [];
   };
 
   const [emailError, setEmailError] = useState('');
@@ -298,10 +300,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       phoneNumbers: [{ countryCode: '+964', number: '' }],
       company: '',
       customCompany: '',
-      commission: '',
+      function: '',
       role: '',
       customRole: '',
       discipline: '',
+      commission: '',
       hub: '',
       associatedProjects: [],
       authenticator: 'Daniel Memuletiwon',
@@ -478,17 +481,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </div>
 
           <div>
-            <Label>Commission *</Label>
+            <Label>Function *</Label>
             <Select
-              value={formData.commission}
+              value={formData.function}
               onValueChange={(value) => setFormData(prev => ({ 
                 ...prev, 
-                commission: value,
-                role: '' // Reset role when commission changes
+                function: value,
+                role: '' // Reset role when function changes
               }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder={rolesLoading ? "Loading..." : "Select commission"} />
+                <SelectValue placeholder={rolesLoading ? "Loading..." : "Select function"} />
               </SelectTrigger>
               <SelectContent>
                 {categorizedRoles?.map((group) => (
@@ -506,16 +509,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             <Select
               value={formData.role}
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
-              disabled={!formData.commission}
+              disabled={!formData.function}
             >
               <SelectTrigger>
-                <SelectValue placeholder={formData.commission ? "Select role" : "Select commission first"} />
+                <SelectValue placeholder={formData.function ? "Select role" : "Select function first"} />
               </SelectTrigger>
               <SelectContent>
-                {formData.commission === 'Other' ? (
+                {formData.function === 'Other' ? (
                   <SelectItem value="Others (specify)">Others (specify)</SelectItem>
                 ) : (
-                  getRolesForCommission().map((role) => (
+                  getRolesForFunction().map((role) => (
                     <SelectItem key={role.id} value={role.name}>
                       {role.name}
                     </SelectItem>
