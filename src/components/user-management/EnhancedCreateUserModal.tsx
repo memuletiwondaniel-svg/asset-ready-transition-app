@@ -36,7 +36,6 @@ interface UserFormData {
   function: string;
   role: string;
   customRole: string;
-  discipline?: string;
   commission?: string;
   hub: string;
   associatedProjects: string[];
@@ -69,7 +68,6 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     function: '',
     role: '',
     customRole: '',
-    discipline: '',
     commission: '',
     hub: '',
     associatedProjects: [],
@@ -105,17 +103,20 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     { value: 'Others', label: 'Others' }
   ];
 
-  // TA2 specific options (kept for backward compatibility)
-  const disciplines = ['Civil', 'Static', 'PACO', 'Process', 'Technical Safety'];
+  // Commission options
   const commissions = ['Asset', 'Project and Engineering'];
+  const ta2Commissions = ['Project', 'Asset'];
+
+  // Check if TA2 role should show commission field (exclude Civil TA2 and Tech Safety TA2)
+  const shouldShowTA2Commission = (role: string) => {
+    const excludedTA2Roles = ['Civil TA2', 'Tech Safety TA2'];
+    return role.includes('TA2') && !excludedTA2Roles.includes(role);
+  };
 
   // Filter commissions for specific roles
   const getFilteredCommissions = () => {
     if (formData.role === 'Engr. Manager' || formData.role === 'HSE Manager') {
-      return commissions.filter(c => c === 'Asset' || c === 'Project and Engineering');
-    }
-    if (formData.role.includes('TA2')) {
-      return commissions; // All commissions for TA2 roles
+      return commissions;
     }
     return commissions;
   };
@@ -303,7 +304,6 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       function: '',
       role: '',
       customRole: '',
-      discipline: '',
       commission: '',
       hub: '',
       associatedProjects: [],
@@ -574,40 +574,22 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {formData.role.includes('TA2') && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Discipline</Label>
-                <Select
-                  value={formData.discipline}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, discipline: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select discipline" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {disciplines.map(discipline => (
-                      <SelectItem key={discipline} value={discipline}>{discipline}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Commission</Label>
-                <Select
-                  value={formData.commission}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, commission: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select commission" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getFilteredCommissions().map(commission => (
-                      <SelectItem key={commission} value={commission}>{commission}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {shouldShowTA2Commission(formData.role) && (
+            <div>
+              <Label>Commission *</Label>
+              <Select
+                value={formData.commission}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, commission: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select commission" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ta2Commissions.map(commission => (
+                    <SelectItem key={commission} value={commission}>{commission}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </CardContent>
@@ -715,8 +697,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             <div>
               <span className="text-sm font-medium">Role:</span>
               <p className="text-sm">{formData.role === 'Others' ? formData.customRole : formData.role}</p>
-              {formData.role === 'Technical Authority (TA2)' && formData.discipline && (
-                <p className="text-xs text-gray-500">{formData.discipline} - {formData.commission}</p>
+              {formData.role.includes('TA2') && formData.commission && (
+                <p className="text-xs text-gray-500">Commission: {formData.commission}</p>
               )}
             </div>
           </div>
