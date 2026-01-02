@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useRoles } from '@/hooks/useRoles';
@@ -143,6 +143,30 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Collapsible category state - all expanded by default
+  const [expandedCategories, setExpandedCategories] = useState<Set<string | null>>(new Set());
+
+  // Initialize expanded categories when categories load
+  useEffect(() => {
+    if (categories.length > 0) {
+      const allCategoryIds = new Set<string | null>(categories.map(c => c.id));
+      allCategoryIds.add(null); // Include uncategorized
+      setExpandedCategories(allCategoryIds);
+    }
+  }, [categories]);
+
+  const toggleCategory = (categoryId: string | null) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -509,10 +533,18 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       
                       return (
                         <React.Fragment key={category.id}>
-                          {/* Category Header Row */}
-                          <TableRow className="bg-muted/50 hover:bg-muted/50 border-t-2 border-border/60">
+                          {/* Category Header Row - Clickable to expand/collapse */}
+                          <TableRow 
+                            className="bg-muted/50 hover:bg-muted/70 border-t-2 border-border/60 cursor-pointer transition-colors"
+                            onClick={() => toggleCategory(category.id)}
+                          >
                             <TableCell colSpan={4} className="py-3">
                               <div className="flex items-center gap-2">
+                                {expandedCategories.has(category.id) ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
+                                )}
                                 <CategoryIcon icon={category.icon} />
                                 <span className="font-semibold text-sm">{category.name}</span>
                                 <Badge variant="secondary" className="text-xs">
@@ -522,86 +554,88 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             </TableCell>
                           </TableRow>
                           
-                          {/* Category's Reasons */}
-                          {categoryConfigs.length > 0 ? (
-                            categoryConfigs.map((config, index) => (
-                              <SortableRow 
-                                key={config.reason_id} 
-                                id={config.reason_id}
-                                isDirty={config.isDirty}
-                              >
-                                {/* Reason Name with Order Number - Clickable to open details */}
-                                <TableCell className="font-medium overflow-hidden pl-8">
-                                  <div 
-                                    className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditOverlay({ open: true, config });
-                                    }}
-                                  >
-                                    <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
-                                    <span className="flex-1 min-w-0 whitespace-normal break-words">
-                                      {config.reason_name}
-                                    </span>
-                                    {config.isDirty && (
-                                      <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
-                                        Modified
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
+                          {/* Category's Reasons - Only show when expanded */}
+                          {expandedCategories.has(category.id) && (
+                            categoryConfigs.length > 0 ? (
+                              categoryConfigs.map((config, index) => (
+                                <SortableRow 
+                                  key={config.reason_id} 
+                                  id={config.reason_id}
+                                  isDirty={config.isDirty}
+                                >
+                                  {/* Reason Name with Order Number - Clickable to open details */}
+                                  <TableCell className="font-medium overflow-hidden pl-8">
+                                    <div 
+                                      className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditOverlay({ open: true, config });
+                                      }}
+                                    >
+                                      <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
+                                      <span className="flex-1 min-w-0 whitespace-normal break-words">
+                                        {config.reason_name}
+                                      </span>
+                                      {config.isDirty && (
+                                        <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
+                                          Modified
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </TableCell>
 
-                                {/* Status Badge */}
-                                <TableCell>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge 
-                                        className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
-                                      >
-                                        {STATUS_CONFIG[config.status]?.label || config.status}
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>
-                                        {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
-                                        {config.status === 'awaiting_approval' && 'This reason is pending approval'}
-                                        {config.status === 'approved' && 'This reason is approved and ready for use'}
-                                        {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TableCell>
+                                  {/* Status Badge */}
+                                  <TableCell>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Badge 
+                                          className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
+                                        >
+                                          {STATUS_CONFIG[config.status]?.label || config.status}
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
+                                          {config.status === 'awaiting_approval' && 'This reason is pending approval'}
+                                          {config.status === 'approved' && 'This reason is approved and ready for use'}
+                                          {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TableCell>
 
-                                {/* PSSR Approver Roles */}
-                                <TableCell>
-                                  <RoleMultiSelect
-                                    roles={roles}
-                                    selectedRoleIds={config.pssr_approver_role_ids}
-                                    onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
-                                    placeholder="Select PSSR Approvers"
-                                    disabledRoleIds={[]}
-                                  />
-                                </TableCell>
+                                  {/* PSSR Approver Roles */}
+                                  <TableCell>
+                                    <RoleMultiSelect
+                                      roles={roles}
+                                      selectedRoleIds={config.pssr_approver_role_ids}
+                                      onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
+                                      placeholder="Select PSSR Approvers"
+                                      disabledRoleIds={[]}
+                                    />
+                                  </TableCell>
 
-                                {/* SoF Approver Roles */}
-                                <TableCell>
-                                  <RoleMultiSelect
-                                    roles={roles}
-                                    selectedRoleIds={config.sof_approver_role_ids}
-                                    onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
-                                    placeholder="Select SoF Approvers"
-                                    disabledRoleIds={config.pssr_approver_role_ids}
-                                    disabledTooltip="Already assigned as PSSR Approver"
-                                  />
+                                  {/* SoF Approver Roles */}
+                                  <TableCell>
+                                    <RoleMultiSelect
+                                      roles={roles}
+                                      selectedRoleIds={config.sof_approver_role_ids}
+                                      onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
+                                      placeholder="Select SoF Approvers"
+                                      disabledRoleIds={config.pssr_approver_role_ids}
+                                      disabledTooltip="Already assigned as PSSR Approver"
+                                    />
+                                  </TableCell>
+                                </SortableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground pl-8">
+                                  <span className="text-sm italic">No reasons configured for this category</span>
                                 </TableCell>
-                              </SortableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground pl-8">
-                                <span className="text-sm italic">No reasons configured for this category</span>
-                              </TableCell>
-                            </TableRow>
+                              </TableRow>
+                            )
                           )}
                         </React.Fragment>
                       );
@@ -610,9 +644,17 @@ const PSSRConfigurationMatrix: React.FC = () => {
                     {/* Render uncategorized reasons if any */}
                     {(groupedConfigs.get(null) || []).length > 0 && (
                       <React.Fragment>
-                        <TableRow className="bg-muted/30 hover:bg-muted/30 border-t-2 border-border/60">
+                        <TableRow 
+                          className="bg-muted/30 hover:bg-muted/50 border-t-2 border-border/60 cursor-pointer transition-colors"
+                          onClick={() => toggleCategory(null)}
+                        >
                           <TableCell colSpan={4} className="py-3">
                             <div className="flex items-center gap-2">
+                              {expandedCategories.has(null) ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
+                              )}
                               <Info className="h-4 w-4 text-muted-foreground" />
                               <span className="font-semibold text-sm text-muted-foreground">Uncategorized</span>
                               <Badge variant="secondary" className="text-xs">
@@ -621,7 +663,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             </div>
                           </TableCell>
                         </TableRow>
-                        {(groupedConfigs.get(null) || []).map((config, index) => (
+                        {expandedCategories.has(null) && (groupedConfigs.get(null) || []).map((config, index) => (
                           <SortableRow 
                             key={config.reason_id} 
                             id={config.reason_id}
