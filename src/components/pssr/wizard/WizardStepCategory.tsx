@@ -1,8 +1,5 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Building2, AlertTriangle, Wrench, FileText, Loader2, PlusCircle } from 'lucide-react';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
@@ -12,12 +9,8 @@ export type SubCategoryType = 'P&E' | 'BFM' | null;
 interface WizardStepCategoryProps {
   categoryId: string | null;
   subCategory: SubCategoryType;
-  reasonName: string;
-  description: string;
   onCategoryChange: (categoryId: string) => void;
   onSubCategoryChange: (subCategory: SubCategoryType) => void;
-  onReasonNameChange: (name: string) => void;
-  onDescriptionChange: (description: string) => void;
 }
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -31,17 +24,12 @@ const iconMap: Record<string, React.ReactNode> = {
 const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
   categoryId,
   subCategory,
-  reasonName,
-  description,
   onCategoryChange,
   onSubCategoryChange,
-  onReasonNameChange,
-  onDescriptionChange,
 }) => {
   const { data: categories, isLoading } = useActivePSSRReasonCategories();
   
   const selectedCategory = categories?.find(c => c.id === categoryId);
-  const isProjectCategory = selectedCategory?.code === 'PROJECT_STARTUP';
 
   if (isLoading) {
     return (
@@ -110,32 +98,6 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
             </Label>
           </div>
         </RadioGroup>
-      </div>
-
-
-      {/* Reason Name */}
-      <div className="space-y-3">
-        <Label htmlFor="reason-name" className="text-base font-medium">PSSR Reason*</Label>
-        <Input
-          id="reason-name"
-          value={reasonName}
-          onChange={(e) => onReasonNameChange(e.target.value)}
-          placeholder="Enter the name for this PSSR reason..."
-          maxLength={100}
-        />
-      </div>
-
-      {/* Additional Description */}
-      <div className="space-y-3">
-        <Label htmlFor="description" className="text-base font-medium">Additional Description</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Provide additional context or details about this PSSR reason..."
-          maxLength={500}
-          rows={4}
-        />
       </div>
     </div>
   );
