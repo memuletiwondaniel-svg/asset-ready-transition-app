@@ -190,6 +190,53 @@ export const useCreateChecklistCategory = () => {
   });
 };
 
+export const useUpdateChecklistCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ChecklistCategory> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('pssr_checklist_categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pssr-checklist-categories'] });
+      toast.success('Category updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update category');
+    },
+  });
+};
+
+export const useDeleteChecklistCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('pssr_checklist_categories')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pssr-checklist-categories'] });
+      toast.success('Category deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete category');
+    },
+  });
+};
+
 export const useCreateChecklistTopic = () => {
   const queryClient = useQueryClient();
 

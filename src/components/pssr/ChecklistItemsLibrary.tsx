@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   usePSSRChecklistItems,
@@ -18,6 +19,7 @@ import {
   useCreateChecklistItem,
   useUpdateChecklistItem,
   useDeleteChecklistItem,
+  useCreateChecklistCategory,
   ChecklistItem,
 } from '@/hooks/usePSSRChecklistLibrary';
 import { useDisciplines } from '@/hooks/useDisciplines';
@@ -40,12 +42,17 @@ const ChecklistItemsLibrary: React.FC = () => {
   const createItem = useCreateChecklistItem();
   const updateItem = useUpdateChecklistItem();
   const deleteItem = useDeleteChecklistItem();
+  const createCategory = useCreateChecklistCategory();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<ChecklistItem | null>(null);
+  
+  // New category dialog state
+  const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false);
+  const [newCategoryData, setNewCategoryData] = useState({ name: '', ref_id: '', description: '' });
   
   const [formData, setFormData] = useState<ItemFormData>({
     unique_id: '',
@@ -122,11 +129,53 @@ const ChecklistItemsLibrary: React.FC = () => {
   };
 
   const handleCategoryChange = (categoryId: string) => {
+    if (categoryId === '__new__') {
+      setShowNewCategoryDialog(true);
+      return;
+    }
     setFormData(prev => ({
       ...prev,
       category_id: categoryId,
       unique_id: editingItem ? prev.unique_id : generateNextUniqueId(categoryId),
     }));
+  };
+
+  const generateCategoryRefId = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 4);
+  };
+
+  const handleNewCategoryNameChange = (name: string) => {
+    setNewCategoryData(prev => ({
+      ...prev,
+      name,
+      ref_id: generateCategoryRefId(name),
+    }));
+  };
+
+  const handleCreateNewCategory = async () => {
+    if (!newCategoryData.name.trim() || !newCategoryData.ref_id.trim()) return;
+    
+    const result = await createCategory.mutateAsync({
+      name: newCategoryData.name.trim(),
+      ref_id: newCategoryData.ref_id.trim().toUpperCase(),
+      description: newCategoryData.description.trim() || undefined,
+    });
+    
+    // Set the newly created category as selected
+    if (result) {
+      setFormData(prev => ({
+        ...prev,
+        category_id: result.id,
+        unique_id: `${result.ref_id}-01`,
+      }));
+    }
+    
+    setShowNewCategoryDialog(false);
+    setNewCategoryData({ name: '', ref_id: '', description: '' });
   };
 
   const handleSubmit = async () => {
@@ -327,9 +376,16 @@ const ChecklistItemsLibrary: React.FC = () => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories?.map(cat => (
+                    {categories?.filter(c => c.is_active).map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
+                    <Separator className="my-1" />
+                    <SelectItem value="__new__" className="text-primary">
+                      <span className="flex items-center gap-2">
+                        <FolderPlus className="h-4 w-4" />
+                        Add New Category
+                      </span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -481,6 +537,71 @@ const ChecklistItemsLibrary: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* New Category Dialog */}
+      <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>
+              Create a new category for checklist items.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Name <span className="text-destructive">*</span>
+              </label>
+              <Input
+                value={newCategoryData.name}
+                onChange={(e) => handleNewCategoryNameChange(e.target.value)}
+                placeholder="e.g., Technical Integrity"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Reference ID <span className="text-destructive">*</span>
+              </label>
+              <Input
+                value={newCategoryData.ref_id}
+                onChange={(e) => setNewCategoryData(prev => ({ ...prev, ref_id: e.target.value.toUpperCase() }))}
+                placeholder="e.g., TI"
+                className="font-mono uppercase"
+                maxLength={10}
+              />
+              <p className="text-xs text-muted-foreground">
+                Short identifier used in item IDs (e.g., TI-01, PS-02)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                value={newCategoryData.description}
+                onChange={(e) => setNewCategoryData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Optional description..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateNewCategory} 
+              disabled={!newCategoryData.name.trim() || !newCategoryData.ref_id.trim() || createCategory.isPending}
+            >
+              {createCategory.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Create Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

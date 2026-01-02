@@ -27,6 +27,7 @@ import { getCurrentTranslations } from '@/utils/translations';
 import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
 import ChecklistItemsLibrary from './pssr/ChecklistItemsLibrary';
+import ItemCategoriesTab from './pssr/ItemCategoriesTab';
 import {
   DndContext,
   closestCenter,
@@ -590,6 +591,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
               >
                 Checklist Items
               </TabsTrigger>
+              <TabsTrigger 
+                value="item-categories"
+                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
+              >
+                Item Categories
+              </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
@@ -965,6 +972,11 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           {/* Checklist Items Library Tab */}
           <TabsContent value="checklist-items" className="animate-fade-in-up">
             <ChecklistItemsLibrary />
+          </TabsContent>
+
+          {/* Item Categories Tab */}
+          <TabsContent value="item-categories" className="animate-fade-in-up">
+            <ItemCategoriesTab />
           </TabsContent>
 
         </Tabs>
