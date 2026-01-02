@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Info, Users, CheckCircle2 } from 'lucide-react';
 import { useRoles } from '@/hooks/useRoles';
+import { usePSSRAllowedApproverRoles } from '@/hooks/usePSSRAllowedApproverRoles';
 
 interface WizardStepApproversProps {
   type: 'pssr' | 'sof' | 'reason';
@@ -20,7 +21,13 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   disabledRoleIds = [],
   onRoleToggle,
 }) => {
-  const { roles = [], isLoading } = useRoles();
+  const { roles = [], isLoading: rolesLoading } = useRoles();
+  const { allowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
+
+  // For PSSR and SoF approvers, filter to only allowed roles
+  const filteredRoles = (type === 'pssr' || type === 'sof')
+    ? roles.filter(role => allowedRoleIds.includes(role.id))
+    : roles;
 
   const config = {
     reason: {
@@ -42,7 +49,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
 
   const { title, description, infoMessage } = config[type];
 
-  if (isLoading) {
+  if (rolesLoading || allowedLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -73,7 +80,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
       {/* Roles List */}
       <ScrollArea className="h-[300px] border rounded-lg p-4">
         <div className="space-y-2">
-          {roles.map((role) => {
+          {filteredRoles.map((role) => {
             const isSelected = selectedRoleIds.includes(role.id);
             const isDisabled = disabledRoleIds.includes(role.id);
 
@@ -119,7 +126,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
             );
           })}
 
-          {roles.length === 0 && (
+          {filteredRoles.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No roles available.</p>
@@ -137,7 +144,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
             <span className="text-sm text-muted-foreground">None selected</span>
           ) : (
             selectedRoleIds.slice(0, 3).map((roleId) => {
-              const role = roles.find(r => r.id === roleId);
+              const role = filteredRoles.find(r => r.id === roleId) || roles.find(r => r.id === roleId);
               return (
                 <Badge key={roleId} variant="secondary" className="text-xs">
                   {role?.name || 'Unknown'}
