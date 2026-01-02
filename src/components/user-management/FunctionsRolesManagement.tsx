@@ -39,7 +39,7 @@ import {
   Settings,
   ShieldCheck,
   Folder,
-  HardHat,
+  AlertTriangle,
   Activity,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -62,7 +62,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Management': <Users className="h-5 w-5" />,
   'Technical': <Settings className="h-5 w-5" />,
   'Security': <ShieldCheck className="h-5 w-5" />,
-  'Safety': <HardHat className="h-5 w-5" />,
+  'Safety': <AlertTriangle className="h-5 w-5" />,
   'Operations': <Activity className="h-5 w-5" />,
 };
 
@@ -72,7 +72,7 @@ const categoryColors: Record<string, string> = {
   'Management': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   'Technical': 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   'Security': 'bg-red-500/10 text-red-600 dark:text-red-400',
-  'Safety': 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+  'Safety': 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
   'Operations': 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
 };
 
