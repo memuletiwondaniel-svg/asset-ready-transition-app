@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,8 @@ import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
 import { usePlants } from '@/hooks/usePlants';
-import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
+import { useCategorizedRoles, useRoleCategories, useAddRole, useAddRoleCategory } from '@/hooks/useCategorizedRoles';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PhoneNumber {
   countryCode: string;
@@ -77,6 +78,18 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const { data: hubs } = useHubs();
   const { plants, isLoading: plantsLoading } = usePlants();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
+  const { data: roleCategories } = useRoleCategories();
+  const { addRole } = useAddRole();
+  const { addCategory } = useAddRoleCategory();
+  const queryClient = useQueryClient();
+
+  // Add New Role Dialog State
+  const [showAddRoleDialog, setShowAddRoleDialog] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleFunctionId, setNewRoleFunctionId] = useState('');
+  const [showAddFunctionInput, setShowAddFunctionInput] = useState(false);
+  const [newFunctionName, setNewFunctionName] = useState('');
+  const [isAddingRole, setIsAddingRole] = useState(false);
 
   // Get roles for the selected function
   const getRolesForFunction = () => {
@@ -301,14 +314,92 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       customCompany: '',
       function: '',
       role: '',
-    customRole: '',
-    commission: '',
-    hub: '',
-    plant: '',
-    authenticator: 'Daniel Memuletiwon',
+      customRole: '',
+      commission: '',
+      hub: '',
+      plant: '',
+      authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
+    // Reset add role dialog state
+    setShowAddRoleDialog(false);
+    setNewRoleName('');
+    setNewRoleFunctionId('');
+    setShowAddFunctionInput(false);
+    setNewFunctionName('');
     onClose();
+  };
+
+  const handleAddNewRole = async () => {
+    if (!newRoleName.trim()) {
+      toast({ title: 'Error', description: 'Role name is required', variant: 'destructive' });
+      return;
+    }
+    
+    setIsAddingRole(true);
+    try {
+      let categoryId = newRoleFunctionId;
+      
+      // If adding a new function, create it first
+      if (showAddFunctionInput && newFunctionName.trim()) {
+        const maxOrder = roleCategories?.reduce((max, cat) => Math.max(max, cat.display_order), 0) || 0;
+        const newCategory = await addCategory(newFunctionName.trim(), '', maxOrder + 1);
+        categoryId = newCategory.id;
+      }
+      
+      if (!categoryId) {
+        toast({ title: 'Error', description: 'Please select a function', variant: 'destructive' });
+        setIsAddingRole(false);
+        return;
+      }
+      
+      // Add the new role
+      await addRole(newRoleName.trim(), '', categoryId);
+      
+      // Refresh the roles data
+      await queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
+      await queryClient.invalidateQueries({ queryKey: ['role-categories'] });
+      
+      // Get the function name and auto-select the new role
+      const functionName = showAddFunctionInput 
+        ? newFunctionName.trim() 
+        : roleCategories?.find(c => c.id === categoryId)?.name || formData.function;
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        function: functionName,
+        role: newRoleName.trim(),
+        plant: '',
+        hub: ''
+      }));
+      
+      toast({ title: 'Success', description: `Role "${newRoleName}" added successfully` });
+      
+      // Reset and close dialog
+      setShowAddRoleDialog(false);
+      setNewRoleName('');
+      setNewRoleFunctionId('');
+      setShowAddFunctionInput(false);
+      setNewFunctionName('');
+    } catch (error) {
+      console.error('Error adding role:', error);
+      toast({ title: 'Error', description: 'Failed to add role', variant: 'destructive' });
+    } finally {
+      setIsAddingRole(false);
+    }
+  };
+
+  const handleRoleChange = (value: string) => {
+    if (value === '__add_new_role__') {
+      // Pre-select the current function in the dialog
+      const currentFunction = categorizedRoles?.find(g => g.category.name === formData.function);
+      if (currentFunction) {
+        setNewRoleFunctionId(currentFunction.category.id);
+      }
+      setShowAddRoleDialog(true);
+    } else {
+      setFormData(prev => ({ ...prev, role: value, plant: '', hub: '' }));
+    }
   };
 
   const renderForm = () => (
@@ -506,7 +597,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role *</Label>
             <Select
               value={formData.role}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, role: value, plant: '', hub: '' }))}
+              onValueChange={handleRoleChange}
               disabled={!formData.function}
             >
               <SelectTrigger>
@@ -516,11 +607,19 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 {formData.function === 'Other' ? (
                   <SelectItem value="Others (specify)">Others (specify)</SelectItem>
                 ) : (
-                  getRolesForFunction().map((role) => (
-                    <SelectItem key={role.id} value={role.name}>
-                      {role.name}
+                  <>
+                    {getRolesForFunction().map((role) => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__add_new_role__" className="text-primary font-medium">
+                      <span className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add New Role
+                      </span>
                     </SelectItem>
-                  ))
+                  </>
                 )}
               </SelectContent>
             </Select>
@@ -748,6 +847,97 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Add New Role Dialog */}
+      <Dialog open={showAddRoleDialog} onOpenChange={setShowAddRoleDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Role</DialogTitle>
+            <DialogDescription>
+              Create a new role and assign it to a function.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-role-name">Role Name *</Label>
+              <Input
+                id="new-role-name"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                placeholder="e.g., Senior Engineer"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Function *</Label>
+              {!showAddFunctionInput ? (
+                <div className="space-y-2">
+                  <Select value={newRoleFunctionId} onValueChange={setNewRoleFunctionId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a function" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleCategories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowAddFunctionInput(true)}
+                    className="text-primary"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add New Function
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    value={newFunctionName}
+                    onChange={(e) => setNewFunctionName(e.target.value)}
+                    placeholder="e.g., Quality Assurance"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      setShowAddFunctionInput(false);
+                      setNewFunctionName('');
+                    }}
+                  >
+                    Cancel - Select Existing Function
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowAddRoleDialog(false);
+                setNewRoleName('');
+                setNewRoleFunctionId('');
+                setShowAddFunctionInput(false);
+                setNewFunctionName('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddNewRole} disabled={isAddingRole}>
+              {isAddingRole ? 'Adding...' : 'Add Role'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
