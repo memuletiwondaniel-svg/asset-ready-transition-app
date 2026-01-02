@@ -805,21 +805,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </Badge>
               </button>
               
-              <button
-                onClick={() => handleQuickStatusClick('pending_actions')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  quickStatusFilter === 'pending_actions' 
-                    ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 ring-1 ring-orange-500/30' 
-                    : 'hover:bg-orange-500/10 text-muted-foreground hover:text-orange-600'
-                }`}
-              >
-                <AlertTriangle className="h-4 w-4" />
-                <span>Pending Actions</span>
-                <Badge className="h-5 min-w-5 px-1.5 text-xs bg-orange-500/10 text-orange-600 border-orange-500/20">
-                  {users.reduce((sum, u) => sum + (u.pending_actions || 0), 0)}
-                </Badge>
-              </button>
-              
               {quickStatusFilter !== 'all' && (
                 <>
                   <div className="w-px h-6 bg-border" />
