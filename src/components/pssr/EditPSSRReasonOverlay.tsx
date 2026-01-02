@@ -233,9 +233,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 {statusConfig.label}
               </Badge>
             </div>
-            <DialogDescription className="text-sm text-muted-foreground">
-              Configure reason details and approver assignments
-            </DialogDescription>
           </DialogHeader>
 
           <ScrollArea className="flex-1 min-h-0">
