@@ -68,7 +68,7 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
           }}
           className="grid gap-3"
         >
-          {categories?.map((category) => (
+          {categories?.filter(category => category.code !== 'OTHERS').map((category) => (
             <div key={category.id} className="relative">
               <RadioGroupItem
                 value={category.id}
