@@ -404,21 +404,23 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   </div>
                 )}
                 
-                <Select
-                  value=""
-                  onValueChange={(value) => addApprover(value, pssrApproverRoleIds, setPssrApproverRoleIds)}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Add PSSR approver..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles
-                      .filter(role => !pssrApproverRoleIds.includes(role.id) && ALLOWED_PSSR_APPROVER_ROLES.includes(role.name))
-                      .map(role => (
-                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                {roles.filter(role => !pssrApproverRoleIds.includes(role.id) && ALLOWED_PSSR_APPROVER_ROLES.includes(role.name)).length > 0 && (
+                  <Select
+                    value=""
+                    onValueChange={(value) => addApprover(value, pssrApproverRoleIds, setPssrApproverRoleIds)}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Add PSSR approver..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles
+                        .filter(role => !pssrApproverRoleIds.includes(role.id) && ALLOWED_PSSR_APPROVER_ROLES.includes(role.name))
+                        .map(role => (
+                          <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               {/* SoF Approvers Section */}
@@ -456,21 +458,23 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   </div>
                 )}
                 
-                <Select
-                  value=""
-                  onValueChange={(value) => addApprover(value, sofApproverRoleIds, setSofApproverRoleIds)}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Add SoF approver..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles
-                      .filter(role => !sofApproverRoleIds.includes(role.id) && !pssrApproverRoleIds.includes(role.id) && ALLOWED_SOF_APPROVER_ROLES.includes(role.name))
-                      .map(role => (
-                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                {roles.filter(role => !sofApproverRoleIds.includes(role.id) && !pssrApproverRoleIds.includes(role.id) && ALLOWED_SOF_APPROVER_ROLES.includes(role.name)).length > 0 && (
+                  <Select
+                    value=""
+                    onValueChange={(value) => addApprover(value, sofApproverRoleIds, setSofApproverRoleIds)}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Add SoF approver..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles
+                        .filter(role => !sofApproverRoleIds.includes(role.id) && !pssrApproverRoleIds.includes(role.id) && ALLOWED_SOF_APPROVER_ROLES.includes(role.name))
+                        .map(role => (
+                          <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Roles already assigned as PSSR Approvers are excluded
                 </p>
