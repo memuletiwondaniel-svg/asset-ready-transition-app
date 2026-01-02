@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
+import WizardStepReasonDetails from './wizard/WizardStepReasonDetails';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
 import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
 import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
@@ -39,10 +40,11 @@ interface WizardState {
 }
 
 const STEPS = [
-  { id: 1, title: 'Category & Reason', description: 'Select category and enter reason name' },
-  { id: 2, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
-  { id: 3, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
-  { id: 4, title: 'Checklist Items', description: 'Select applicable checklist items' },
+  { id: 1, title: 'Category', description: 'Select PSSR category' },
+  { id: 2, title: 'Reason Details', description: 'Enter reason name and description' },
+  { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
+  { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 5, title: 'Checklist Items', description: 'Select applicable checklist items' },
 ];
 
 const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenChange }) => {
@@ -95,6 +97,8 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           toast.error('Please select a project type (P&E or BFM)');
           return false;
         }
+        return true;
+      case 2:
         if (!wizardState.reasonName.trim()) {
           toast.error('Please enter a reason name');
           return false;
@@ -104,19 +108,19 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           return false;
         }
         return true;
-      case 2:
+      case 3:
         if (wizardState.pssrApproverRoleIds.length === 0) {
           toast.error('Please select at least one PSSR approver role');
           return false;
         }
         return true;
-      case 3:
+      case 4:
         if (wizardState.sofApproverRoleIds.length === 0) {
           toast.error('Please select at least one SoF approver role');
           return false;
         }
         return true;
-      case 4:
+      case 5:
         if (wizardState.checklistItemIds.length === 0) {
           toast.error('Please select at least one checklist item');
           return false;
@@ -263,16 +267,21 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             <WizardStepCategory
               categoryId={wizardState.categoryId}
               subCategory={wizardState.subCategory}
-              reasonName={wizardState.reasonName}
-              description={wizardState.description}
               onCategoryChange={(categoryId) => setWizardState(prev => ({ ...prev, categoryId }))}
               onSubCategoryChange={(subCategory) => setWizardState(prev => ({ ...prev, subCategory }))}
+            />
+          )}
+
+          {currentStep === 2 && (
+            <WizardStepReasonDetails
+              reasonName={wizardState.reasonName}
+              description={wizardState.description}
               onReasonNameChange={(reasonName) => setWizardState(prev => ({ ...prev, reasonName }))}
               onDescriptionChange={(description) => setWizardState(prev => ({ ...prev, description }))}
             />
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 3 && (
             <WizardStepApprovers
               type="pssr"
               selectedRoleIds={wizardState.pssrApproverRoleIds}
@@ -289,7 +298,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <WizardStepApprovers
               type="sof"
               selectedRoleIds={wizardState.sofApproverRoleIds}
@@ -310,7 +319,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 5 && (
             <WizardStepChecklistItems
               selectedItemIds={wizardState.checklistItemIds}
               itemOverrides={wizardState.checklistItemOverrides}

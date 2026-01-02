@@ -15,6 +15,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { usePSSRReasonCategories, usePSSRDeliveryParties } from '@/hooks/usePSSRReasonCategories';
 import { PSSRReasonStatus } from '@/hooks/usePSSRReasons';
 import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
+import WizardStepReasonDetails from './wizard/WizardStepReasonDetails';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
 import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
 import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
@@ -52,10 +53,11 @@ const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.Eleme
 };
 
 const STEPS = [
-  { id: 1, title: 'Category & Reason', description: 'Edit category and reason name' },
-  { id: 2, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
-  { id: 3, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
-  { id: 4, title: 'Checklist Items', description: 'Select applicable checklist items' },
+  { id: 1, title: 'Category', description: 'Select PSSR category' },
+  { id: 2, title: 'Reason Details', description: 'Edit reason name and description' },
+  { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
+  { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 5, title: 'Checklist Items', description: 'Select applicable checklist items' },
 ];
 
 const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
@@ -337,16 +339,21 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               <WizardStepCategory
                 categoryId={formCategoryId}
                 subCategory={subCategory}
-                reasonName={formReasonName}
-                description={description}
                 onCategoryChange={setFormCategoryId}
                 onSubCategoryChange={setSubCategory}
+              />
+            )}
+
+            {currentStep === 2 && (
+              <WizardStepReasonDetails
+                reasonName={formReasonName}
+                description={description}
                 onReasonNameChange={setFormReasonName}
                 onDescriptionChange={setDescription}
               />
             )}
 
-            {currentStep === 2 && (
+            {currentStep === 3 && (
               <WizardStepApprovers
                 type="pssr"
                 selectedRoleIds={pssrApproverRoleIds}
@@ -360,7 +367,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               />
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 4 && (
               <WizardStepApprovers
                 type="sof"
                 selectedRoleIds={sofApproverRoleIds}
@@ -374,7 +381,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               />
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <WizardStepChecklistItems
                 selectedItemIds={checklistItemIds}
                 itemOverrides={checklistItemOverrides}
