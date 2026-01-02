@@ -42,7 +42,8 @@ import {
   EyeOff,
   Columns,
   Home,
-  Layers
+  Layers,
+  MapPin
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
@@ -57,6 +58,7 @@ import EnhancedUserDetailsModal from './EnhancedUserDetailsModal';
 import EnhancedCreateUserModal from './EnhancedCreateUserModal';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import ConfigurationManagement from './ConfigurationManagement';
+import LocationManagement from './LocationManagement';
 
 interface EnhancedUserManagementProps {
   onBack: () => void;
@@ -717,10 +719,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
+              <TabsList className="grid w-full grid-cols-3 max-w-lg mb-6">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Users
+                </TabsTrigger>
+                <TabsTrigger value="locations" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Locations
                 </TabsTrigger>
                 <TabsTrigger value="configuration" className="flex items-center gap-2">
                   <Layers className="h-4 w-4" />
@@ -999,6 +1005,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 </DndContext>
               </CardContent>
             </Card>
+              </TabsContent>
+
+              <TabsContent value="locations" className="mt-0">
+                <LocationManagement />
               </TabsContent>
 
               <TabsContent value="configuration" className="mt-0">
