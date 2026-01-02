@@ -293,7 +293,7 @@ const FunctionsRolesManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Functions & Roles</h2>
+          <h2 className="text-2xl font-semibold">Roles</h2>
           <p className="text-muted-foreground">
             {totalFunctions} functions, {totalRoles} roles
           </p>
@@ -314,7 +314,7 @@ const FunctionsRolesManagement: React.FC = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search functions and roles..."
+          placeholder="Search roles..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
