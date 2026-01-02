@@ -725,6 +725,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                   <Users className="h-4 w-4" />
                   Users
                 </TabsTrigger>
+                <TabsTrigger value="configuration" className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  Roles
+                </TabsTrigger>
                 <TabsTrigger value="locations" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   Asset Hierarchy
@@ -732,10 +736,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <TabsTrigger value="projects" className="flex items-center gap-2">
                   <Home className="h-4 w-4" />
                   Project Hierarchy
-                </TabsTrigger>
-                <TabsTrigger value="configuration" className="flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  Roles
                 </TabsTrigger>
               </TabsList>
 
