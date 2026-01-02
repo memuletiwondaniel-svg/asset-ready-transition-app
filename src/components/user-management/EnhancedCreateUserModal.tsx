@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
-import { GroupedRoleSelector } from './GroupedRoleSelector';
+import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
 
 interface PhoneNumber {
   countryCode: string;
@@ -33,6 +33,7 @@ interface UserFormData {
   phoneNumbers: PhoneNumber[];
   company: string;
   customCompany: string;
+  category: string;
   role: string;
   customRole: string;
   discipline?: string;
@@ -65,6 +66,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     phoneNumbers: [{ countryCode: '+964', number: '' }],
     company: '',
     customCompany: '',
+    category: '',
     role: '',
     customRole: '',
     discipline: '',
@@ -75,6 +77,14 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   });
 
   const { data: hubs } = useHubs();
+  const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
+
+  // Get roles for the selected category
+  const getRolesForCategory = () => {
+    if (!formData.category || !categorizedRoles) return [];
+    const categoryGroup = categorizedRoles.find(g => g.category.name === formData.category);
+    return categoryGroup?.roles || [];
+  };
 
   const [emailError, setEmailError] = useState('');
 
@@ -290,6 +300,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       phoneNumbers: [{ countryCode: '+964', number: '' }],
       company: '',
       customCompany: '',
+      category: '',
       role: '',
       customRole: '',
       discipline: '',
@@ -470,13 +481,51 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </div>
 
           <div>
+            <Label>Category *</Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => setFormData(prev => ({ 
+                ...prev, 
+                category: value,
+                role: '' // Reset role when category changes
+              }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={rolesLoading ? "Loading..." : "Select category"} />
+              </SelectTrigger>
+              <SelectContent>
+                {categorizedRoles?.map((group) => (
+                  <SelectItem key={group.category.id} value={group.category.name}>
+                    {group.category.name}
+                  </SelectItem>
+                ))}
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label>Role *</Label>
-            <GroupedRoleSelector
+            <Select
               value={formData.role}
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
-              placeholder="Select role"
-              includeOther={true}
-            />
+              disabled={!formData.category}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={formData.category ? "Select role" : "Select category first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {formData.category === 'Other' ? (
+                  <SelectItem value="Others (specify)">Others (specify)</SelectItem>
+                ) : (
+                  getRolesForCategory().map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
             {formData.role === 'Others (specify)' && (
               <Input
                 className="mt-2"
