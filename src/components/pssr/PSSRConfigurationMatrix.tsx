@@ -625,7 +625,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 className="fluent-button"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Reason
+                Add Template
               </Button>
               {hasUnsavedChanges && (
                 <Button 
