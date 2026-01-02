@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
+import { usePlants } from '@/hooks/usePlants';
 import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
 
 interface PhoneNumber {
@@ -38,7 +39,7 @@ interface UserFormData {
   customRole: string;
   commission?: string;
   hub: string;
-  
+  plant?: string;
   authenticator: string;
 }
 
@@ -74,6 +75,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   });
 
   const { data: hubs } = useHubs();
+  const { plants, isLoading: plantsLoading } = usePlants();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
 
   // Get roles for the selected function
@@ -185,6 +187,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead'].includes(role);
   };
 
+  // Check if role requires plant selection
+  const requiresPlant = (role: string) => {
+    return ['Plant Director', 'Dep. Plant Director', 'Ops Team Lead', 'Ops Coach', 'Site Engr.', 'Section Head'].includes(role);
+  };
+
   const getPositionTitle = () => {
     if (!formData.role) return '';
     
@@ -294,11 +301,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       customCompany: '',
       function: '',
       role: '',
-      customRole: '',
-      commission: '',
-      hub: '',
-      
-      authenticator: 'Daniel Memuletiwon',
+    customRole: '',
+    commission: '',
+    hub: '',
+    plant: '',
+    authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
     onClose();
@@ -499,7 +506,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role *</Label>
             <Select
               value={formData.role}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, role: value, plant: '', hub: '' }))}
               disabled={!formData.function}
             >
               <SelectTrigger>
@@ -578,6 +585,25 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 <SelectContent>
                   {ta2Commissions.map(commission => (
                     <SelectItem key={commission} value={commission}>{commission}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {requiresPlant(formData.role) && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
+              <Select
+                value={formData.plant}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, plant: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={plantsLoading ? "Loading plants..." : "Select plant"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {plants.map(plant => (
+                    <SelectItem key={plant.id} value={plant.name}>{plant.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -670,6 +696,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               <p className="text-sm mt-1">{formData.role === 'Others' ? formData.customRole : formData.role}</p>
               {formData.role.includes('TA2') && formData.commission && (
                 <p className="text-xs text-gray-500">Commission: {formData.commission}</p>
+              )}
+              {formData.plant && (
+                <p className="text-xs text-gray-500">Plant: {formData.plant}</p>
               )}
             </div>
           </div>
