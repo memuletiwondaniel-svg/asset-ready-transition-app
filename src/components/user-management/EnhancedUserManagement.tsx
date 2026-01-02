@@ -41,7 +41,8 @@ import {
   ChevronDown,
   EyeOff,
   Columns,
-  Home
+  Home,
+  Layers
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
@@ -55,6 +56,7 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import EnhancedUserDetailsModal from './EnhancedUserDetailsModal';
 import EnhancedCreateUserModal from './EnhancedCreateUserModal';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import ConfigurationManagement from './ConfigurationManagement';
 
 interface EnhancedUserManagementProps {
   onBack: () => void;
@@ -220,6 +222,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const [columnSort, setColumnSort] = useState<{ [key: string]: 'asc' | 'desc' | null }>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [activeMainTab, setActiveMainTab] = useState('users');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -704,9 +707,22 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
           ]}
         />
 
-        {/* Scrollable Content Area */}
+        {/* Main Tabs for Users and Configuration */}
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
+            <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Users
+                </TabsTrigger>
+                <TabsTrigger value="configuration" className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  Configuration
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="users" className="space-y-6 mt-0">
             {/* Stats Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
               <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent hover:shadow-lg transition-all duration-300 group">
@@ -977,6 +993,12 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
                 </DndContext>
               </CardContent>
             </Card>
+              </TabsContent>
+
+              <TabsContent value="configuration" className="mt-0">
+                <ConfigurationManagement />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 
