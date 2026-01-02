@@ -477,59 +477,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   Roles already assigned as PSSR Approvers are excluded
                 </p>
               </div>
-
-              {/* Reason Approvers Section */}
-              <div className="border-t border-border/40 pt-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Award className="h-4 w-4 text-muted-foreground" />
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Reason Approvers
-                  </label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="text-xs">Roles that can approve this PSSR Reason for use (e.g., TSE Manager). Different from PSSR/SoF approvers.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                
-                {reasonApproverRoleIds.length > 0 && (
-                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
-                    {reasonApproverRoleIds.map((roleId) => (
-                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 transition-colors hover:bg-accent">
-                        {getRoleName(roleId)}
-                        <button
-                          type="button"
-                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
-                          onClick={() => removeApprover(roleId, reasonApproverRoleIds, setReasonApproverRoleIds)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                
-                <Select
-                  value=""
-                  onValueChange={(value) => addApprover(value, reasonApproverRoleIds, setReasonApproverRoleIds)}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Add reason approver..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles
-                      .filter(role => !reasonApproverRoleIds.includes(role.id))
-                      .map(role => (
-                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </ScrollArea>
 
