@@ -2092,7 +2092,6 @@ export type Database = {
           country_code: string | null
           created_at: string
           department: string | null
-          discipline: string | null
           email: string
           field: string | null
           first_name: string | null
@@ -2140,7 +2139,6 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           department?: string | null
-          discipline?: string | null
           email: string
           field?: string | null
           first_name?: string | null
@@ -2188,7 +2186,6 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           department?: string | null
-          discipline?: string | null
           email?: string
           field?: string | null
           first_name?: string | null
@@ -2232,13 +2229,6 @@ export type Database = {
             columns: ["commission"]
             isOneToOne: false
             referencedRelation: "commission"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_discipline_fkey"
-            columns: ["discipline"]
-            isOneToOne: false
-            referencedRelation: "discipline"
             referencedColumns: ["id"]
           },
           {
