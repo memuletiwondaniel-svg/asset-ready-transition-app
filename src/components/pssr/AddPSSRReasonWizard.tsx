@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -136,8 +136,12 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async () => {
-    if (!validateStep(currentStep)) return;
+  const handleSubmit = async (saveAsDraft: boolean = false) => {
+    // Only validate step if not saving as draft
+    if (!saveAsDraft && !validateStep(currentStep)) return;
+    
+    // For draft, only validate step 1 (category and reason name are required)
+    if (saveAsDraft && !validateStep(1)) return;
 
     setIsSubmitting(true);
     try {
@@ -158,7 +162,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           description: wizardState.description.trim() || null,
           category_id: wizardState.categoryId,
           sub_category: wizardState.subCategory,
-          is_active: true,
+          is_active: saveAsDraft ? false : true,
           display_order: nextDisplayOrder,
           status: 'draft',
         })
@@ -185,11 +189,11 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons'] });
 
-      toast.success('PSSR Reason created successfully!');
+      toast.success(saveAsDraft ? 'PSSR Template saved as draft!' : 'PSSR Template created successfully!');
       handleClose();
     } catch (error: any) {
-      console.error('Failed to create PSSR reason:', error);
-      toast.error(error.message || 'Failed to create PSSR reason');
+      console.error('Failed to create PSSR template:', error);
+      toast.error(error.message || 'Failed to create PSSR template');
     } finally {
       setIsSubmitting(false);
     }
@@ -367,19 +371,38 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Create PSSR Reason
-                  </>
-                )}
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleSubmit(true)} 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save as Draft
+                    </>
+                  )}
+                </Button>
+                <Button onClick={() => handleSubmit(false)} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Create PSSR Template
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </div>
