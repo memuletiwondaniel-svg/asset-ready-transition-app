@@ -42,7 +42,7 @@ import {
 import EnhancedCreateUserModal from "@/components/user-management/EnhancedCreateUserModal";
 import UserDetailsModal from "@/components/user-management/UserDetailsModal";
 import AuthenticatorApprovalModal from "@/components/user-management/AuthenticatorApprovalModal";
-import DisciplinesManagement from "@/components/user-management/DisciplinesManagement";
+import RolesManagement from "@/components/user-management/RolesManagement";
 import { useUsers } from "@/hooks/useUsers";
 import { OrshSidebar } from "@/components/OrshSidebar";
 
@@ -205,9 +205,9 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
                 <Users className="h-4 w-4" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="disciplines" className="flex items-center gap-2">
+              <TabsTrigger value="roles" className="flex items-center gap-2">
                 <Layers className="h-4 w-4" />
-                Disciplines
+                Roles
               </TabsTrigger>
             </TabsList>
 
@@ -482,8 +482,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
         </Card>
             </TabsContent>
 
-            <TabsContent value="disciplines">
-              <DisciplinesManagement />
+            <TabsContent value="roles">
+              <RolesManagement />
             </TabsContent>
           </Tabs>
         </div>
