@@ -87,15 +87,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   // Filter stations by field
   const westQurnaStations = stations.filter(s => ['CS6', 'CS7', 'CS8'].includes(s.name));
   const northRumailaStations = stations.filter(s => ['CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'NCS2', 'NCS4', 'NCS5'].includes(s.name));
+  const southRumailaStations = stations.filter(s => ['Markazia (MK)', 'Rafidiyah (RAF)', 'Shamiyah (SH)', 'Qurainat', 'Qurainat Sweetening', 'Qurainat Temp Comp (QTC)'].includes(s.name));
 
   // Get stations based on selected field
   const getStationsForField = (field: string) => {
     if (field === 'West Qurna (WQ1)') return westQurnaStations;
     if (field === 'North Rumaila') return northRumailaStations;
+    if (field === 'South Rumaila') return southRumailaStations;
     return [];
   };
 
-  const requiresStation = (field: string) => ['West Qurna (WQ1)', 'North Rumaila'].includes(field);
+  const requiresStation = (field: string) => ['West Qurna (WQ1)', 'North Rumaila', 'South Rumaila'].includes(field);
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
   const { data: roleCategories } = useRoleCategories();
   const { addRole } = useAddRole();
