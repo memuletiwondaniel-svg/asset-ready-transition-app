@@ -11,7 +11,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns, Wrench, AlertTriangle, Users, Siren, Shield, BookOpen } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   usePSSRChecklistItems,
@@ -70,6 +71,26 @@ const ROLE_GROUPS = {
     'CMMS Engr.',
     'CMMS Lead',
   ],
+};
+
+// Soft, muted category colors for visual distinction
+const categoryColors: Record<string, string> = {
+  'TI': 'bg-blue-50 text-blue-700/80 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-300/80 dark:border-blue-800/40',
+  'PS': 'bg-rose-50 text-rose-700/80 border-rose-200/60 dark:bg-rose-950/30 dark:text-rose-300/80 dark:border-rose-800/40',
+  'ORG': 'bg-violet-50 text-violet-700/80 border-violet-200/60 dark:bg-violet-950/30 dark:text-violet-300/80 dark:border-violet-800/40',
+  'DOC': 'bg-emerald-50 text-emerald-700/80 border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-300/80 dark:border-emerald-800/40',
+  'ER': 'bg-amber-50 text-amber-700/80 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-300/80 dark:border-amber-800/40',
+  'HSE': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
+};
+
+// Category icons for quick visual recognition
+const categoryIcons: Record<string, React.ReactNode> = {
+  'TI': <Wrench className="h-3 w-3" />,
+  'PS': <AlertTriangle className="h-3 w-3" />,
+  'ORG': <Users className="h-3 w-3" />,
+  'DOC': <BookOpen className="h-3 w-3" />,
+  'ER': <Siren className="h-3 w-3" />,
+  'HSE': <Shield className="h-3 w-3" />,
 };
 
 // Generate display ID from category ref_id and sequence number
@@ -379,11 +400,18 @@ const ChecklistItemsLibrary: React.FC = () => {
             <Badge variant="outline" className="px-3 py-1">
               {filteredItems.length} items
             </Badge>
-            {categoryFilter !== 'all' && (
-              <Badge variant="secondary" className="px-3 py-1">
-                {categories?.find(c => c.id === categoryFilter)?.name}
-              </Badge>
-            )}
+            {categoryFilter !== 'all' && (() => {
+              const cat = categories?.find(c => c.id === categoryFilter);
+              return (
+                <Badge 
+                  variant="outline" 
+                  className={cn("gap-1 px-3 py-1 font-medium", categoryColors[cat?.ref_id || ''])}
+                >
+                  {categoryIcons[cat?.ref_id || '']}
+                  {cat?.name}
+                </Badge>
+              );
+            })()}
           </div>
 
           {/* Items Table */}
@@ -419,7 +447,13 @@ const ChecklistItemsLibrary: React.FC = () => {
                     >
                       <TableCell className="font-mono text-sm font-medium">{generateDisplayId(item.categoryData?.ref_id, item.sequence_number)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.categoryData?.name}</Badge>
+                        <Badge 
+                          variant="outline" 
+                          className={cn("gap-1 font-medium", categoryColors[item.categoryData?.ref_id || ''])}
+                        >
+                          {categoryIcons[item.categoryData?.ref_id || '']}
+                          {item.categoryData?.ref_id}
+                        </Badge>
                       </TableCell>
                       {visibleColumns.topic && (
                         <TableCell className="text-sm text-muted-foreground">
