@@ -207,7 +207,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [quickStatusFilter, setQuickStatusFilter] = useState<'all' | 'active' | 'pending_approval' | 'pending_actions'>('all');
+  
   const [companyFilter, setCompanyFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'name' | 'company' | 'role' | 'last_login' | 'created_at'>('name');
@@ -475,12 +475,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
 
   useEffect(() => {
     filterAndSortUsers();
-  }, [users, searchQuery, statusFilter, companyFilter, roleFilter, columnSort, quickStatusFilter]);
-
-  // Quick status filter click handler
-  const handleQuickStatusClick = (filter: typeof quickStatusFilter) => {
-    setQuickStatusFilter(prev => prev === filter ? 'all' : filter);
-  };
+  }, [users, searchQuery, statusFilter, companyFilter, roleFilter, columnSort]);
 
   const fetchUsers = async (isInitialLoad = false) => {
     try {
@@ -538,17 +533,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
       const matchesCompany = companyFilter === 'all' || user.company === companyFilter;
       const matchesRole = roleFilter === 'all' || user.role === roleFilter;
       
-      // Quick status filter
-      let matchesQuickStatus = true;
-      if (quickStatusFilter === 'active') {
-        matchesQuickStatus = user.status === 'active';
-      } else if (quickStatusFilter === 'pending_approval') {
-        matchesQuickStatus = user.status === 'pending_approval';
-      } else if (quickStatusFilter === 'pending_actions') {
-        matchesQuickStatus = (user.pending_actions || 0) > 0;
-      }
-
-      return matchesSearch && matchesStatus && matchesCompany && matchesRole && matchesQuickStatus;
+      return matchesSearch && matchesStatus && matchesCompany && matchesRole;
     });
 
     // Apply column-based sorting
@@ -756,76 +741,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
               </TabsList>
 
               <TabsContent value="users" className="space-y-4 mt-0">
-            {/* Compact Clickable Stats Bar */}
-            <div className="flex items-center gap-2 p-3 bg-card/80 backdrop-blur-sm border border-border/40 rounded-lg animate-fade-in">
-              <button
-                onClick={() => handleQuickStatusClick('all')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  quickStatusFilter === 'all' 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Users className="h-4 w-4" />
-                <span>All</span>
-                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-background/50">
-                  {users.length}
-                </Badge>
-              </button>
-              
-              <div className="w-px h-6 bg-border" />
-              
-              <button
-                onClick={() => handleQuickStatusClick('active')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  quickStatusFilter === 'active' 
-                    ? 'bg-green-500/15 text-green-600 dark:text-green-400 ring-1 ring-green-500/30' 
-                    : 'hover:bg-green-500/10 text-muted-foreground hover:text-green-600'
-                }`}
-              >
-                <CheckCircle className="h-4 w-4" />
-                <span>Active</span>
-                <Badge className="h-5 min-w-5 px-1.5 text-xs bg-green-500/10 text-green-600 border-green-500/20">
-                  {users.filter(u => u.status === 'active').length}
-                </Badge>
-              </button>
-              
-              <button
-                onClick={() => handleQuickStatusClick('pending_approval')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  quickStatusFilter === 'pending_approval' 
-                    ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 ring-1 ring-yellow-500/30' 
-                    : 'hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-600'
-                }`}
-              >
-                <Clock className="h-4 w-4" />
-                <span>Awaiting Auth</span>
-                <Badge className="h-5 min-w-5 px-1.5 text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
-                  {users.filter(u => u.status === 'pending_approval').length}
-                </Badge>
-              </button>
-              
-              {quickStatusFilter !== 'all' && (
-                <>
-                  <div className="w-px h-6 bg-border" />
-                  <button
-                    onClick={() => setQuickStatusFilter('all')}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    Clear
-                  </button>
-                </>
-              )}
-              
-              <div className="flex-1" />
-              
-              <span className="text-sm text-muted-foreground">
-                {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'}
-              </span>
-            </div>
-
-            {/* Search and Actions Bar */}
             {/* Search and Filters Bar */}
             <Card className="border-border/40 shadow-sm animate-fade-in sticky top-0 z-20 bg-card/95 backdrop-blur-md">
               <CardContent className="p-6">
