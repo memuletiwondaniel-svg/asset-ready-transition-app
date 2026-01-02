@@ -3382,6 +3382,32 @@ export type Database = {
           },
         ]
       }
+      sof_allowed_approver_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sof_allowed_approver_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: true
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sof_approvers: {
         Row: {
           approved_at: string | null
