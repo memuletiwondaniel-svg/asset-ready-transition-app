@@ -9,7 +9,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Building2, MapPin, Radio, ChevronRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Plus, Pencil, Trash2, Building2, MapPin, Radio, ChevronRight, ChevronDown, LayoutGrid, GitBranch } from 'lucide-react';
 import { useLocations, Plant, Field, Station } from '@/hooks/useLocations';
 
 type LocationType = 'plant' | 'field' | 'station';
@@ -50,6 +52,8 @@ const LocationManagement: React.FC = () => {
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [addEditDialog, setAddEditDialog] = useState<AddEditDialogState>({ open: false, type: 'plant', mode: 'add' });
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({ open: false, type: 'plant' });
+  const [expandedPlants, setExpandedPlants] = useState<Set<string>>(new Set());
+  const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
   
   // Form state
   const [formName, setFormName] = useState('');
@@ -59,10 +63,50 @@ const LocationManagement: React.FC = () => {
   const filteredFields = selectedPlant ? getFieldsByPlant(selectedPlant) : fields;
   const filteredStations = selectedField ? getStationsByField(selectedField) : stations;
 
-  const openAddDialog = (type: LocationType) => {
+  const togglePlantExpanded = (plantId: string) => {
+    setExpandedPlants(prev => {
+      const next = new Set(prev);
+      if (next.has(plantId)) {
+        next.delete(plantId);
+      } else {
+        next.add(plantId);
+      }
+      return next;
+    });
+  };
+
+  const toggleFieldExpanded = (fieldId: string) => {
+    setExpandedFields(prev => {
+      const next = new Set(prev);
+      if (next.has(fieldId)) {
+        next.delete(fieldId);
+      } else {
+        next.add(fieldId);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedPlants(new Set(plants.map(p => p.id)));
+    setExpandedFields(new Set(fields.map(f => f.id)));
+  };
+
+  const collapseAll = () => {
+    setExpandedPlants(new Set());
+    setExpandedFields(new Set());
+  };
+
+  const openAddDialog = (type: LocationType, parentId?: string) => {
     setFormName('');
     setFormDescription('');
-    setFormParentId(type === 'field' ? (selectedPlant || '') : type === 'station' ? (selectedField || '') : '');
+    if (type === 'field') {
+      setFormParentId(parentId || selectedPlant || '');
+    } else if (type === 'station') {
+      setFormParentId(parentId || selectedField || '');
+    } else {
+      setFormParentId('');
+    }
     setAddEditDialog({ open: true, type, mode: 'add' });
   };
 
@@ -125,6 +169,200 @@ const LocationManagement: React.FC = () => {
 
   const getTypeLabel = (type: LocationType) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  // Tree View Component
+  const TreeView = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-2 p-4">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      );
+    }
+
+    if (plants.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground">
+          <GitBranch className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <p>No locations configured yet</p>
+          <Button className="mt-4" onClick={() => openAddDialog('plant')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add First Plant
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <ScrollArea className="h-[500px]">
+        <div className="space-y-1 p-2">
+          {plants.map(plant => {
+            const plantFields = getFieldsByPlant(plant.id);
+            const isPlantExpanded = expandedPlants.has(plant.id);
+            const hasChildren = plantFields.length > 0;
+
+            return (
+              <div key={plant.id} className="select-none">
+                <Collapsible open={isPlantExpanded} onOpenChange={() => togglePlantExpanded(plant.id)}>
+                  <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                        {hasChildren ? (
+                          isPlantExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )
+                        ) : (
+                          <div className="w-4" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => togglePlantExpanded(plant.id)}>
+                      <Building2 className="h-4 w-4 text-primary shrink-0" />
+                      <span className="font-medium">{plant.name}</span>
+                      {plantFields.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">{plantFields.length}</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openAddDialog('field', plant.id)} title="Add Field">
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditDialog('plant', plant)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => openDeleteDialog('plant', plant)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="ml-4 border-l border-border pl-2 space-y-1">
+                      {plantFields.map(field => {
+                        const fieldStations = getStationsByField(field.id);
+                        const isFieldExpanded = expandedFields.has(field.id);
+                        const hasStations = fieldStations.length > 0;
+
+                        return (
+                          <div key={field.id}>
+                            <Collapsible open={isFieldExpanded} onOpenChange={() => toggleFieldExpanded(field.id)}>
+                              <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+                                    {hasStations ? (
+                                      isFieldExpanded ? (
+                                        <ChevronDown className="h-3.5 w-3.5" />
+                                      ) : (
+                                        <ChevronRight className="h-3.5 w-3.5" />
+                                      )
+                                    ) : (
+                                      <div className="w-3.5" />
+                                    )}
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={() => toggleFieldExpanded(field.id)}>
+                                  <MapPin className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                  <span className="text-sm">{field.name}</span>
+                                  {fieldStations.length > 0 && (
+                                    <Badge variant="outline" className="ml-1 text-xs py-0">{fieldStations.length}</Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openAddDialog('station', field.id)} title="Add Station">
+                                    <Plus className="h-2.5 w-2.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditDialog('field', field)}>
+                                    <Pencil className="h-2.5 w-2.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive" onClick={() => openDeleteDialog('field', field)}>
+                                    <Trash2 className="h-2.5 w-2.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <CollapsibleContent>
+                                <div className="ml-4 border-l border-border/50 pl-2 space-y-0.5">
+                                  {fieldStations.map(station => (
+                                    <div key={station.id} className="flex items-center group rounded-md hover:bg-accent/50 transition-colors py-1 px-2">
+                                      <Radio className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
+                                      <span className="text-sm text-muted-foreground flex-1">{station.name}</span>
+                                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditDialog('station', station)}>
+                                          <Pencil className="h-2.5 w-2.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive" onClick={() => openDeleteDialog('station', station)}>
+                                          <Trash2 className="h-2.5 w-2.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            );
+          })}
+          
+          {/* Orphaned fields (no plant) */}
+          {fields.filter(f => !f.plant_id).length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-2 px-2">Unassigned Fields</p>
+              {fields.filter(f => !f.plant_id).map(field => {
+                const fieldStations = getStationsByField(field.id);
+                const isFieldExpanded = expandedFields.has(field.id);
+                
+                return (
+                  <div key={field.id} className="ml-2">
+                    <Collapsible open={isFieldExpanded} onOpenChange={() => toggleFieldExpanded(field.id)}>
+                      <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+                            {fieldStations.length > 0 ? (
+                              isFieldExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
+                            ) : (
+                              <div className="w-3.5" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <div className="flex items-center gap-2 flex-1 py-1 px-2">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-sm text-muted-foreground">{field.name}</span>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditDialog('field', field)}>
+                            <Pencil className="h-2.5 w-2.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive" onClick={() => openDeleteDialog('field', field)}>
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <CollapsibleContent>
+                        <div className="ml-4 border-l border-border/50 pl-2 space-y-0.5">
+                          {fieldStations.map(station => (
+                            <div key={station.id} className="flex items-center group rounded-md hover:bg-accent/50 transition-colors py-1 px-2">
+                              <Radio className="h-3 w-3 text-muted-foreground shrink-0 mr-2" />
+                              <span className="text-sm text-muted-foreground flex-1">{station.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    );
   };
 
   const renderLocationCard = (
@@ -231,42 +469,85 @@ const LocationManagement: React.FC = () => {
         <span>Manage your location hierarchy: Plants → Fields → Stations</span>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4">
-        {renderLocationCard(
-          'Plants',
-          <Building2 className="h-4 w-4" />,
-          plants,
-          'plant',
-          selectedPlant,
-          (id) => { setSelectedPlant(id); setSelectedField(null); }
-        )}
+      <Tabs defaultValue="tree" className="w-full">
+        <div className="flex items-center justify-between mb-4">
+          <TabsList>
+            <TabsTrigger value="tree" className="gap-2">
+              <GitBranch className="h-4 w-4" />
+              Tree View
+            </TabsTrigger>
+            <TabsTrigger value="columns" className="gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Columns View
+            </TabsTrigger>
+          </TabsList>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={expandAll}>
+              Expand All
+            </Button>
+            <Button variant="outline" size="sm" onClick={collapseAll}>
+              Collapse All
+            </Button>
+            <Button size="sm" onClick={() => openAddDialog('plant')}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Plant
+            </Button>
+          </div>
+        </div>
 
-        {renderLocationCard(
-          'Fields',
-          <MapPin className="h-4 w-4" />,
-          filteredFields,
-          'field',
-          selectedField,
-          setSelectedField,
-          (item) => {
-            const field = item as Field;
-            return plants.find(p => p.id === field.plant_id)?.name || null;
-          }
-        )}
+        <TabsContent value="tree" className="mt-0">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Location Hierarchy
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TreeView />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        {renderLocationCard(
-          'Stations',
-          <Radio className="h-4 w-4" />,
-          filteredStations,
-          'station',
-          null,
-          undefined,
-          (item) => {
-            const station = item as Station;
-            return fields.find(f => f.id === station.field_id)?.name || null;
-          }
-        )}
-      </div>
+        <TabsContent value="columns" className="mt-0">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {renderLocationCard(
+              'Plants',
+              <Building2 className="h-4 w-4" />,
+              plants,
+              'plant',
+              selectedPlant,
+              (id) => { setSelectedPlant(id); setSelectedField(null); }
+            )}
+
+            {renderLocationCard(
+              'Fields',
+              <MapPin className="h-4 w-4" />,
+              filteredFields,
+              'field',
+              selectedField,
+              setSelectedField,
+              (item) => {
+                const field = item as Field;
+                return plants.find(p => p.id === field.plant_id)?.name || null;
+              }
+            )}
+
+            {renderLocationCard(
+              'Stations',
+              <Radio className="h-4 w-4" />,
+              filteredStations,
+              'station',
+              null,
+              undefined,
+              (item) => {
+                const station = item as Station;
+                return fields.find(f => f.id === station.field_id)?.name || null;
+              }
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Add/Edit Dialog */}
       <Dialog open={addEditDialog.open} onOpenChange={(open) => !open && setAddEditDialog({ ...addEditDialog, open: false })}>
