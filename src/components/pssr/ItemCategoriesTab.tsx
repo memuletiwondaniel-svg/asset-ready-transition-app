@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -122,9 +122,6 @@ const ItemCategoriesTab: React.FC = () => {
                 <FolderOpen className="h-5 w-5" />
                 Item Categories
               </CardTitle>
-              <CardDescription>
-                Manage categories for PSSR checklist items
-              </CardDescription>
             </div>
             <Button onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-2" />
