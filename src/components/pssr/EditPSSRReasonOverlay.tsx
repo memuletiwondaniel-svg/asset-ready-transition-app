@@ -40,6 +40,17 @@ interface EditPSSRReasonOverlayProps {
   onDelete: () => void;
 }
 
+// Allowed roles for PSSR Approvers dropdown
+const ALLOWED_PSSR_APPROVER_ROLES = [
+  'ORA Lead',
+  'Engr. Manager (Asset)',
+  'Engr. Manager (P&E)',
+  'Dep. Plant Director',
+  'Project Manager',
+  'TSE Manager',
+  'HSE Manager',
+];
+
 const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.ElementType; className: string }> = {
   draft: { label: 'Draft', icon: FileText, className: 'bg-muted text-muted-foreground' },
   awaiting_approval: { label: 'Awaiting Approval', icon: Clock, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
@@ -395,7 +406,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {roles
-                      .filter(role => !pssrApproverRoleIds.includes(role.id))
+                      .filter(role => !pssrApproverRoleIds.includes(role.id) && ALLOWED_PSSR_APPROVER_ROLES.includes(role.name))
                       .map(role => (
                         <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                       ))}
