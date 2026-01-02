@@ -24,13 +24,12 @@ import {
 import { useDisciplines } from '@/hooks/useDisciplines';
 
 interface ItemFormData {
-  unique_id: string;
-  category_id: string;
+  category: string;
   topic: string;
   description: string;
   supporting_evidence: string;
-  approving_authorities: string[];
-  responsible_party: string;
+  approvers: string[];
+  responsible: string;
 }
 
 const ChecklistItemsLibrary: React.FC = () => {
@@ -54,13 +53,12 @@ const ChecklistItemsLibrary: React.FC = () => {
   const [newCategoryData, setNewCategoryData] = useState({ name: '', ref_id: '', description: '' });
   
   const [formData, setFormData] = useState<ItemFormData>({
-    unique_id: '',
-    category_id: '',
+    category: '',
     topic: '',
     description: '',
     supporting_evidence: '',
-    approving_authorities: [],
-    responsible_party: '',
+    approvers: [],
+    responsible: '',
   });
 
   const isLoading = itemsLoading || categoriesLoading;
@@ -71,11 +69,11 @@ const ChecklistItemsLibrary: React.FC = () => {
     return items.filter(item => {
       const matchesSearch = 
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.unique_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.approving_authority?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.approvers?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.supporting_evidence?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesCategory = categoryFilter === 'all' || item.category_id === categoryFilter;
+      const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
       
       return matchesSearch && matchesCategory;
     });
@@ -84,7 +82,7 @@ const ChecklistItemsLibrary: React.FC = () => {
   const groupedItems = useMemo(() => {
     const groups: Record<string, ChecklistItem[]> = {};
     filteredItems.forEach(item => {
-      const categoryName = item.category?.name || 'Uncategorized';
+      const categoryName = item.categoryData?.name || 'Uncategorized';
       if (!groups[categoryName]) {
         groups[categoryName] = [];
       }
@@ -93,25 +91,21 @@ const ChecklistItemsLibrary: React.FC = () => {
     return groups;
   }, [filteredItems]);
 
-  const generateNextUniqueId = (categoryId: string) => {
-    const category = categories?.find(c => c.id === categoryId);
-    if (!category || !items) return '';
-    
-    const categoryItems = items.filter(i => i.category_id === categoryId);
-    const nextNum = categoryItems.length + 1;
-    return `${category.ref_id}-${String(nextNum).padStart(2, '0')}`;
+  const getNextSequenceNumber = (categoryId: string) => {
+    if (!items) return 1;
+    const categoryItems = items.filter(i => i.category === categoryId);
+    return categoryItems.length + 1;
   };
 
   const handleOpenCreate = () => {
     setEditingItem(null);
     setFormData({
-      unique_id: '',
-      category_id: categories?.[0]?.id || '',
+      category: categories?.[0]?.id || '',
       topic: '',
       description: '',
       supporting_evidence: '',
-      approving_authorities: [],
-      responsible_party: '',
+      approvers: [],
+      responsible: '',
     });
     setIsFormOpen(true);
   };
@@ -119,13 +113,12 @@ const ChecklistItemsLibrary: React.FC = () => {
   const handleOpenEdit = (item: ChecklistItem) => {
     setEditingItem(item);
     setFormData({
-      unique_id: item.unique_id,
-      category_id: item.category_id,
+      category: item.category,
       topic: item.topic || '',
       description: item.description,
       supporting_evidence: item.supporting_evidence || '',
-      approving_authorities: item.approving_authority ? item.approving_authority.split(',').map(s => s.trim()) : [],
-      responsible_party: item.responsible_party || '',
+      approvers: item.approvers ? item.approvers.split(',').map(s => s.trim()) : [],
+      responsible: item.responsible || '',
     });
     setIsFormOpen(true);
   };
@@ -137,8 +130,7 @@ const ChecklistItemsLibrary: React.FC = () => {
     }
     setFormData(prev => ({
       ...prev,
-      category_id: categoryId,
-      unique_id: editingItem ? prev.unique_id : generateNextUniqueId(categoryId),
+      category: categoryId,
     }));
   };
 
@@ -171,8 +163,7 @@ const ChecklistItemsLibrary: React.FC = () => {
     if (result) {
       setFormData(prev => ({
         ...prev,
-        category_id: result.id,
-        unique_id: `${result.ref_id}-01`,
+        category: result.id,
       }));
     }
     
@@ -181,21 +172,20 @@ const ChecklistItemsLibrary: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.category_id || !formData.description.trim()) {
+    if (!formData.category || !formData.description.trim()) {
       return;
     }
 
     const payload = {
-      unique_id: formData.unique_id || generateNextUniqueId(formData.category_id),
-      category_id: formData.category_id,
+      category: formData.category,
       topic: formData.topic.trim() || null,
       description: formData.description.trim(),
       supporting_evidence: formData.supporting_evidence.trim() || null,
-      approving_authority: formData.approving_authorities.length > 0 ? formData.approving_authorities.join(', ') : null,
-      responsible_party: formData.responsible_party.trim() || null,
+      approvers: formData.approvers.length > 0 ? formData.approvers.join(', ') : null,
+      responsible: formData.responsible.trim() || null,
       is_active: true,
       version: editingItem ? editingItem.version + 1 : 1,
-      sequence_number: editingItem?.sequence_number || (items?.filter(i => i.category_id === formData.category_id).length || 0) + 1,
+      sequence_number: editingItem?.sequence_number || getNextSequenceNumber(formData.category),
     };
 
     if (editingItem) {
@@ -325,15 +315,15 @@ const ChecklistItemsLibrary: React.FC = () => {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleOpenEdit(item)}
                     >
-                      <TableCell className="font-mono text-sm">{item.unique_id}</TableCell>
+                      <TableCell className="font-mono text-sm">{item.id.slice(0, 8)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.category?.name}</Badge>
+                        <Badge variant="outline">{item.categoryData?.name}</Badge>
                       </TableCell>
                       <TableCell>
                         <p>{item.description}</p>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {item.approving_authority?.replace(/^TA-/i, '') || '-'}
+                        {item.approvers?.replace(/^TA-/i, '') || '-'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -367,40 +357,28 @@ const ChecklistItemsLibrary: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Category & ID Section */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Category <span className="text-destructive">*</span>
-                </label>
-                <Select value={formData.category_id} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories?.filter(c => c.is_active).map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                    <Separator className="my-1" />
-                    <SelectItem value="__new__" className="text-primary">
-                      <span className="flex items-center gap-2">
-                        <FolderPlus className="h-4 w-4" />
-                        Add New Category
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Unique ID
-                </label>
-                <Input 
-                  value={formData.unique_id || generateNextUniqueId(formData.category_id)} 
-                  disabled 
-                  className="bg-muted/50 border-muted font-mono"
-                />
-              </div>
+            {/* Category Section */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Category <span className="text-destructive">*</span>
+              </label>
+              <Select value={formData.category} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.filter(c => c.is_active).map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                  <Separator className="my-1" />
+                  <SelectItem value="__new__" className="text-primary">
+                    <span className="flex items-center gap-2">
+                      <FolderPlus className="h-4 w-4" />
+                      Add New Category
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Topic Section */}
@@ -443,17 +421,17 @@ const ChecklistItemsLibrary: React.FC = () => {
               />
             </div>
 
-            {/* Responsible Party Section */}
+            {/* Responsible Section */}
             <div className="border-t border-border/40 pt-5 space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Responsible Party
+                Responsible
               </label>
               <Select
-                value={formData.responsible_party || 'none'}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, responsible_party: value === 'none' ? '' : value }))}
+                value={formData.responsible || 'none'}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, responsible: value === 'none' ? '' : value }))}
               >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select responsible party..." />
+                  <SelectValue placeholder="Select responsible..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
@@ -474,9 +452,9 @@ const ChecklistItemsLibrary: React.FC = () => {
                 Approvers <span className="text-muted-foreground/60 normal-case font-normal">(Disciplines)</span>
               </label>
               <div className="space-y-3">
-                {formData.approving_authorities.length > 0 && (
+                {formData.approvers.length > 0 && (
                   <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
-                    {formData.approving_authorities.map((auth) => (
+                    {formData.approvers.map((auth) => (
                       <Badge key={auth} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
                         {auth}
                         <button
@@ -484,7 +462,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                           className="ml-1 hover:text-destructive transition-colors"
                           onClick={() => setFormData(prev => ({
                             ...prev,
-                            approving_authorities: prev.approving_authorities.filter(a => a !== auth)
+                            approvers: prev.approvers.filter(a => a !== auth)
                           }))}
                         >
                           <X className="h-3 w-3" />
@@ -496,10 +474,10 @@ const ChecklistItemsLibrary: React.FC = () => {
                 <Select
                   value=""
                   onValueChange={(value) => {
-                    if (value && !formData.approving_authorities.includes(value)) {
+                    if (value && !formData.approvers.includes(value)) {
                       setFormData(prev => ({
                         ...prev,
-                        approving_authorities: [...prev.approving_authorities, value]
+                        approvers: [...prev.approvers, value]
                       }));
                     }
                   }}
@@ -508,10 +486,10 @@ const ChecklistItemsLibrary: React.FC = () => {
                     <SelectValue placeholder="Add discipline..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {!formData.approving_authorities.includes('Operations') && (
+                    {!formData.approvers.includes('Operations') && (
                       <SelectItem value="Operations">Operations</SelectItem>
                     )}
-                    {disciplines?.filter(d => !formData.approving_authorities.includes(d.name)).map(discipline => (
+                    {disciplines?.filter(d => !formData.approvers.includes(d.name)).map(discipline => (
                       <SelectItem key={discipline.id} value={discipline.name}>{discipline.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -524,7 +502,7 @@ const ChecklistItemsLibrary: React.FC = () => {
             <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
             <Button 
               onClick={handleSubmit} 
-              disabled={!formData.category_id || !formData.description.trim() || createItem.isPending || updateItem.isPending}
+              disabled={!formData.category || !formData.description.trim() || createItem.isPending || updateItem.isPending}
             >
               {(createItem.isPending || updateItem.isPending) && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -541,7 +519,7 @@ const ChecklistItemsLibrary: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Checklist Item</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteConfirmItem?.unique_id}"? This will mark the item as inactive.
+              Are you sure you want to delete this item? This will mark the item as inactive.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
