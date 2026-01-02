@@ -162,8 +162,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       return `${role} (${commission})`;
     }
     
-    // Civil TA2 and Tech Safety TA2 - no commission needed
-    if (['Civil TA2', 'Tech Safety TA2'].includes(role)) {
+    // Civil TA2, Tech Safety TA2, and HSE Manager - no drill-down needed
+    if (['Civil TA2', 'Tech Safety TA2', 'HSE Manager'].includes(role)) {
       return role;
     }
     
@@ -178,8 +178,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       }
     }
     
-    // Engr. Manager and HSE Manager with commission
-    if (['Engr. Manager', 'HSE Manager', 'HSE Lead'].includes(role) && commission) {
+    // Engr. Manager and HSE Lead with commission
+    if (['Engr. Manager', 'HSE Lead'].includes(role) && commission) {
       return `${role} - ${commission}`;
     }
     
@@ -256,8 +256,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Director':
       case 'Engr. Manager':
       case 'HSE Lead':
-      case 'HSE Manager':
         return !!commission;
+      case 'HSE Manager':
+        return true; // No drill-down needed
       case 'Plant Director':
       case 'Dep. Plant Director':
         return !!plant;
