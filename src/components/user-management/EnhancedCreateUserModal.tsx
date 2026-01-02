@@ -166,7 +166,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Filter hubs for specific roles
   const getFilteredHubs = () => {
-    if (['ORA Engr.', 'ORA Lead', 'Project Manager'].includes(formData.role)) {
+    if (['ORA Engr.', 'ORA Lead', 'Project Manager', 'Hub Lead'].includes(formData.role)) {
       return hubs?.filter(h => ['North', 'Central', 'South'].includes(h.name)) || [];
     }
     return hubs || [];
@@ -226,7 +226,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Check if role requires hub selection
   const requiresHub = (role: string) => {
-    return ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead'].includes(role);
+    return ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead', 'Hub Lead'].includes(role);
   };
 
   // Check if role requires plant selection (Plant Director, Dep. Plant Director only - they stop at plant)
