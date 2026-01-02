@@ -26,7 +26,7 @@ export const usePlants = () => {
         .from('plant')
         .select('*')
         .eq('is_active', true)
-        .order('name', { ascending: true });
+        .order('display_order', { ascending: true });
 
       if (fetchError) {
         throw fetchError;
