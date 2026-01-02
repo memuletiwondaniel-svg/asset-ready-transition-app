@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, Users, FileCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
+import { useRoles } from '@/hooks/useRoles';
 
 interface AddPSSRReasonWizardProps {
   open: boolean;
@@ -40,6 +42,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: categories } = useActivePSSRReasonCategories();
+  const { roles = [] } = useRoles();
   
   const [wizardState, setWizardState] = useState<WizardState>({
     categoryId: null,
@@ -284,6 +287,56 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
         </div>
+
+        {/* Selection Summary Bar - Always visible */}
+        {(wizardState.pssrApproverRoleIds.length > 0 || wizardState.sofApproverRoleIds.length > 0) && (
+          <div className="border-t bg-muted/20 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              {wizardState.pssrApproverRoleIds.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground font-medium">PSSR:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {wizardState.pssrApproverRoleIds.slice(0, 2).map((roleId) => {
+                      const role = roles.find(r => r.id === roleId);
+                      return (
+                        <Badge key={roleId} variant="secondary" className="text-xs py-0">
+                          {role?.name || 'Unknown'}
+                        </Badge>
+                      );
+                    })}
+                    {wizardState.pssrApproverRoleIds.length > 2 && (
+                      <Badge variant="outline" className="text-xs py-0">
+                        +{wizardState.pssrApproverRoleIds.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+              {wizardState.sofApproverRoleIds.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <FileCheck className="h-4 w-4 text-green-600" />
+                  <span className="text-muted-foreground font-medium">SoF:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {wizardState.sofApproverRoleIds.slice(0, 2).map((roleId) => {
+                      const role = roles.find(r => r.id === roleId);
+                      return (
+                        <Badge key={roleId} variant="secondary" className="text-xs py-0 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                          {role?.name || 'Unknown'}
+                        </Badge>
+                      );
+                    })}
+                    {wizardState.sofApproverRoleIds.length > 2 && (
+                      <Badge variant="outline" className="text-xs py-0">
+                        +{wizardState.sofApproverRoleIds.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Footer Navigation */}
         <div className="border-t pt-4 flex items-center justify-between">
