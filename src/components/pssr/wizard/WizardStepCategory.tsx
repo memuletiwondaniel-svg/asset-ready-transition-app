@@ -120,7 +120,7 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
 
       {/* Reason Name */}
       <div className="space-y-3">
-        <Label htmlFor="reason-name" className="text-base font-medium">PSSR Reason Name *</Label>
+        <Label htmlFor="reason-name" className="text-base font-medium">PSSR Reason*</Label>
         <Input
           id="reason-name"
           value={reasonName}
