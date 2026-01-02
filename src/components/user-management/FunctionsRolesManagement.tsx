@@ -72,7 +72,7 @@ const categoryColors: Record<string, string> = {
   'Management': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   'Technical': 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   'Security': 'bg-red-500/10 text-red-600 dark:text-red-400',
-  'Safety': 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+  'Safety': 'bg-lime-500/10 text-lime-600 dark:text-lime-400',
   'Operations': 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
 };
 
