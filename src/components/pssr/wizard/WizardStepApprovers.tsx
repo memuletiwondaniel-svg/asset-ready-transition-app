@@ -35,21 +35,18 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
     reason: {
       title: 'Reason Approvers',
       description: 'Select the roles that can approve this PSSR Reason for use (e.g., TSE Manager, ORA Lead, P&M Director).',
-      infoMessage: 'Users with these roles will be able to approve the PSSR Reason before it becomes available for creating PSSRs.',
     },
     pssr: {
       title: 'PSSR Approvers',
-      description: 'Select the roles that are authorized to approve PSSRs for this reason.',
-      infoMessage: 'Users with these roles will be able to review and approve PSSRs created with this reason.',
+      description: 'Users with these roles will be able to review and approve PSSRs created with this reason.',
     },
     sof: {
       title: 'SoF Approvers',
-      description: 'Select the roles that are authorized to sign the Statement of Fitness for this reason.',
-      infoMessage: 'Users with these roles will be able to sign the final Statement of Fitness. A role cannot be both a PSSR Approver and SoF Approver.',
+      description: 'Users with these roles will be able to sign the final Statement of Fitness. A role cannot be both a PSSR Approver and SoF Approver.',
     },
   };
 
-  const { title, description, infoMessage } = config[type];
+  const { title, description } = config[type];
 
   if (rolesLoading || allowedLoading) {
     return (
@@ -77,12 +74,12 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <Label className="text-lg font-medium">{title}</Label>
         </div>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-xs text-muted-foreground/70">{description}</p>
       </div>
 
       {/* Selected Summary - Above info alert */}
