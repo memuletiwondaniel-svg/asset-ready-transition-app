@@ -13,19 +13,18 @@ export interface ChecklistCategory {
 
 export interface ChecklistItem {
   id: string;
-  unique_id: string;
-  category_id: string;
+  category: string;
   topic: string | null;
   description: string;
   supporting_evidence: string | null;
-  approving_authority: string | null;
-  responsible_party: string | null;
+  approvers: string | null;
+  responsible: string | null;
   sequence_number: number;
   is_active: boolean;
   version: number;
   created_at: string;
   updated_at: string;
-  category?: ChecklistCategory;
+  categoryData?: ChecklistCategory;
 }
 
 export const usePSSRChecklistCategories = () => {
@@ -51,9 +50,9 @@ export const usePSSRChecklistItems = () => {
         .from('pssr_checklist_items')
         .select(`
           *,
-          category:pssr_checklist_categories(*)
+          categoryData:pssr_checklist_categories(*)
         `)
-        .order('category_id', { ascending: true })
+        .order('category', { ascending: true })
         .order('sequence_number', { ascending: true });
 
       if (error) throw error;
@@ -66,7 +65,7 @@ export const useCreateChecklistItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (item: Omit<ChecklistItem, 'id' | 'created_at' | 'updated_at' | 'category' | 'topic'>) => {
+    mutationFn: async (item: Omit<ChecklistItem, 'id' | 'created_at' | 'updated_at' | 'categoryData'>) => {
       const { data, error } = await supabase
         .from('pssr_checklist_items')
         .insert(item)

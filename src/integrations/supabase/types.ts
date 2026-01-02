@@ -2577,55 +2577,52 @@ export type Database = {
       }
       pssr_checklist_items: {
         Row: {
-          approving_authority: string | null
-          category_id: string
+          approvers: string | null
+          category: string
           created_at: string
           created_by: string | null
           description: string
           id: string
           is_active: boolean
-          responsible_party: string | null
+          responsible: string | null
           sequence_number: number
           supporting_evidence: string | null
           topic: string | null
           topic_id: string | null
-          unique_id: string
           updated_at: string
           updated_by: string | null
           version: number
         }
         Insert: {
-          approving_authority?: string | null
-          category_id: string
+          approvers?: string | null
+          category: string
           created_at?: string
           created_by?: string | null
           description: string
           id?: string
           is_active?: boolean
-          responsible_party?: string | null
+          responsible?: string | null
           sequence_number?: number
           supporting_evidence?: string | null
           topic?: string | null
           topic_id?: string | null
-          unique_id: string
           updated_at?: string
           updated_by?: string | null
           version?: number
         }
         Update: {
-          approving_authority?: string | null
-          category_id?: string
+          approvers?: string | null
+          category?: string
           created_at?: string
           created_by?: string | null
           description?: string
           id?: string
           is_active?: boolean
-          responsible_party?: string | null
+          responsible?: string | null
           sequence_number?: number
           supporting_evidence?: string | null
           topic?: string | null
           topic_id?: string | null
-          unique_id?: string
           updated_at?: string
           updated_by?: string | null
           version?: number
@@ -2633,7 +2630,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pssr_checklist_items_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category"]
             isOneToOne: false
             referencedRelation: "pssr_checklist_categories"
             referencedColumns: ["id"]
