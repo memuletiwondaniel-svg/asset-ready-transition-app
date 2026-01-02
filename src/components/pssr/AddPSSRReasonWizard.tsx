@@ -93,10 +93,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           toast.error('Please select a category');
           return false;
         }
-        if (selectedCategory?.code === 'PROJECT_STARTUP' && !wizardState.subCategory) {
-          toast.error('Please select a project type (P&E or BFM)');
-          return false;
-        }
         return true;
       case 2:
         if (!wizardState.reasonName.trim()) {
