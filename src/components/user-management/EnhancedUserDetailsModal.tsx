@@ -144,116 +144,161 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   const { data: hubs } = useHubs();
 
-  // Function to generate dynamic title based on role and conditional fields
+  // Function to generate dynamic title/position based on role and conditional fields
   const generateTitle = () => {
-    const { role, commission, plant, station, field, hub } = formData;
+    const { role, commission, plant, station, field, hub, discipline } = formData;
     
     if (!role) return '';
     
-    // Handle hub-based roles first
-    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role) && hub) {
-      switch (role) {
-        case 'Proj Manager':
-          return `Proj Manager – ${hub}`;
-        case 'Proj Engr':
-          return `Proj Engr – ${hub}`;
-        case 'Commissioning Lead':
-          return `Commissioning Lead – ${hub}`;
-        case 'Construction Lead':
-          return `Construction Lead – ${hub}`;
-        case 'ORA Engineer':
-          return `ORA Engineer – ${hub}`;
+    // Hub-based roles
+    const hubRoles = ['Proj Manager', 'Proj Engr', 'Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer', 'ORA Engr.', 'ORA Lead'];
+    if (hubRoles.includes(role) && hub) {
+      return `${role} – ${hub}`;
+    }
+    
+    // Engineering TA2 roles with commission (exclude Civil TA2 and Tech Safety TA2)
+    const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
+    if (ta2RolesWithCommission.includes(role) && commission) {
+      return `${role} (${commission})`;
+    }
+    
+    // Civil TA2 and Tech Safety TA2 - no commission needed
+    if (['Civil TA2', 'Tech Safety TA2'].includes(role)) {
+      return role;
+    }
+    
+    // TA2 with discipline (legacy format support)
+    if (role === 'TA2' && discipline) {
+      if (discipline === 'Tech Safety' || discipline === 'Civil') {
+        return `TA2 ${discipline}`;
+      } else if (commission) {
+        return `TA2 ${discipline} - ${commission}`;
+      } else {
+        return `TA2 ${discipline}`;
       }
     }
     
-    // Handle other role combinations
-    switch (role) {
-      case 'Director':
-        return commission ? `${commission} Director` : '';
-      
-      case 'Plant Director':
-        return plant ? `${plant} Plant Director` : '';
-      
-      case 'Dep. Plant Director':
-        return plant ? `${plant} Dep. Plant Director` : '';
-      
-      case 'Site Engineer':
-        return station ? `Site Engr – ${station}` : '';
-      
-      case 'Ops Coach':
-        return field ? `Ops Coach – ${field}` : '';
-      
-      case 'Ops Team Lead':
-        return field ? `Ops Team Lead – ${field}` : '';
-      
-      case 'Engr. Manager':
-        return commission ? `Engr. Manager – ${commission}` : '';
-      
-      case 'HSE Lead':
-        return commission ? `HSE Lead – ${commission}` : '';
-      
-      case 'ER Lead':
-        return 'ER Lead';
-      
-      case 'TA2':
-        if (formData.discipline) {
-          if (formData.discipline === 'Tech Safety' || formData.discipline === 'Civil') {
-            return `TA2 ${formData.discipline}`;
-          } else if (commission) {
-            return `TA2 ${formData.discipline} - ${commission}`;
-          } else {
-            return `TA2 ${formData.discipline}`;
-          }
-        }
-        return '';
-      
-      default:
-        return '';
+    // Engr. Manager and HSE Manager with commission
+    if (['Engr. Manager', 'HSE Manager', 'HSE Lead'].includes(role) && commission) {
+      return `${role} - ${commission}`;
     }
+    
+    // Director with commission
+    if (role === 'Director' && commission) {
+      return `${commission} Director`;
+    }
+    
+    // Plant Director and Dep. Plant Director - stop at plant
+    if (['Plant Director', 'Dep. Plant Director'].includes(role) && plant) {
+      return `${role} - ${plant}`;
+    }
+    
+    // Site Engineer requires station directly
+    if (role === 'Site Engineer' || role === 'Site Engr.') {
+      if (station) {
+        return `Site Engr. - ${station}`;
+      }
+      return '';
+    }
+    
+    // Ops Coach and Ops Team Lead with field
+    if (['Ops Coach', 'Ops Team Lead'].includes(role) && field) {
+      return `${role} - ${field}`;
+    }
+    
+    // Section Head with field
+    if (role === 'Section Head' && field) {
+      return `Section Head - ${field}`;
+    }
+    
+    // ER Lead - no additional context needed
+    if (role === 'ER Lead') {
+      return 'ER Lead';
+    }
+    
+    // Default: just return the role name
+    return role;
   };
 
   // Check if all required fields for title generation are completed
   const isTitleReady = () => {
-    const { role, commission, plant, station, field, hub } = formData;
+    const { role, commission, plant, station, field, hub, discipline } = formData;
     
     if (!role) return false;
     
     // Hub-based roles
-    if (['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role)) {
+    const hubRoles = ['Proj Manager', 'Proj Engr', 'Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer', 'ORA Engr.', 'ORA Lead'];
+    if (hubRoles.includes(role)) {
       return !!hub;
+    }
+    
+    // TA2 roles with commission requirement
+    const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
+    if (ta2RolesWithCommission.includes(role)) {
+      return !!commission;
+    }
+    
+    // Civil TA2 and Tech Safety TA2 - no additional fields needed
+    if (['Civil TA2', 'Tech Safety TA2'].includes(role)) {
+      return true;
+    }
+    
+    // Legacy TA2 with discipline
+    if (role === 'TA2') {
+      if (!discipline) return false;
+      if (discipline === 'Tech Safety' || discipline === 'Civil') {
+        return true;
+      }
+      return !!commission;
     }
     
     switch (role) {
       case 'Director':
       case 'Engr. Manager':
       case 'HSE Lead':
+      case 'HSE Manager':
         return !!commission;
       case 'Plant Director':
       case 'Dep. Plant Director':
         return !!plant;
       case 'Site Engineer':
+      case 'Site Engr.':
         return !!station;
       case 'Ops Coach':
       case 'Ops Team Lead':
+      case 'Section Head':
         return !!field;
       case 'ER Lead':
-        return true; // ER Lead doesn't need additional fields
-      case 'TA2':
-        if (!formData.discipline) return false;
-        // For Tech Safety and Civil, only discipline is required
-        if (formData.discipline === 'Tech Safety' || formData.discipline === 'Civil') {
-          return true;
-        }
-        // For other disciplines, commission is also required
-        return !!commission;
+        return true;
       default:
-        return false;
+        return true; // Other roles don't need additional fields
     }
   };
 
   // Check if role requires hub selection
   const requiresHub = (role: string) => {
-    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role);
+    return ['Proj Manager', 'Proj Engr', 'Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer', 'ORA Engr.', 'ORA Lead'].includes(role);
+  };
+
+  // Check if role requires direct station selection (Site Engr.)
+  const roleRequiresStation = (role: string) => {
+    return role === 'Site Engr.' || role === 'Site Engineer';
+  };
+
+  // Check if role requires plant selection (Plant Director, Dep. Plant Director only - they stop at plant)
+  const requiresPlant = (role: string) => {
+    return ['Plant Director', 'Dep. Plant Director'].includes(role);
+  };
+
+  // Check if role requires field selection (for Ops roles)
+  const requiresField = (role: string) => {
+    return ['Ops Team Lead', 'Ops Coach', 'Section Head'].includes(role);
+  };
+
+  // Check if TA2 role should show commission field (exclude Civil TA2 and Tech Safety TA2)
+  const shouldShowTA2Commission = (role: string) => {
+    const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
+    return ta2RolesWithCommission.includes(role);
   };
 
   const [systemRole, setSystemRole] = useState('user');
@@ -1262,7 +1307,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
 
-                        {formData.role === 'Site Engineer' && (
+                        {roleRequiresStation(formData.role) && (
                           <div>
                             <Label>Station *</Label>
                             <Combobox
@@ -1279,7 +1324,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
 
-                        {(formData.role === 'Ops Coach' || formData.role === 'Ops Team Lead') && (
+                        {requiresField(formData.role) && (
                           <div>
                             <Label>Field *</Label>
                             <Combobox
@@ -1291,6 +1336,27 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                               emptyText="No fields found"
                               allowCustom={editMode}
                               onAddCustom={handleFieldChange}
+                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                            />
+                          </div>
+                        )}
+
+                        {/* TA2 Roles with Commission (Elect, Rotating, PACO, Static, Process) */}
+                        {shouldShowTA2Commission(formData.role) && (
+                          <div>
+                            <Label>Commission *</Label>
+                            <Combobox
+                              value={formData.commission}
+                              onValueChange={handleCommissionChange}
+                              options={[
+                                { value: 'Project', label: 'Project' },
+                                { value: 'Asset', label: 'Asset' }
+                              ]}
+                              placeholder="Select commission"
+                              searchPlaceholder="Search commissions..."
+                              emptyText="No commissions found"
+                              allowCustom={editMode}
+                              onAddCustom={handleCommissionChange}
                               className={!editMode ? 'bg-muted pointer-events-none' : ''}
                             />
                           </div>
