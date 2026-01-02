@@ -153,7 +153,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         .from('pssr_reason_configuration')
         .insert({
           reason_id: newReason.id,
-          checklist_id: null, // Will be configured separately
           pssr_approver_role_ids: wizardState.pssrApproverRoleIds,
           sof_approver_role_ids: wizardState.sofApproverRoleIds,
         });
