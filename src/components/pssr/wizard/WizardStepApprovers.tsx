@@ -112,10 +112,6 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         </div>
       </div>
 
-      {/* Info hint */}
-      <p className="text-xs text-muted-foreground">
-        {infoMessage}
-      </p>
 
       {/* Roles List - Only show unselected roles */}
       {(() => {
