@@ -241,7 +241,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Reason Name <span className="text-destructive">*</span>
+                    PSSR Reason <span className="text-destructive">*</span>
                   </label>
                   <Input
                     value={reasonName}
