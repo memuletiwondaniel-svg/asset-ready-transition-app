@@ -30,7 +30,10 @@ import {
   X,
   Camera,
   UserCheck,
-  UserX
+  UserX,
+  Key,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -104,6 +107,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [userSessions, setUserSessions] = useState<any[]>([]);
+  
+  // Password reset state
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   
   // Form state matching database fields exactly
   const [formData, setFormData] = useState({
@@ -689,6 +699,66 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       toast.error(`An error occurred while updating user: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error('Please enter both password fields');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          userId: user.user_id,
+          newPassword: newPassword
+        }
+      });
+
+      if (error) {
+        console.error('Password reset error:', error);
+        toast.error('Failed to reset password: ' + error.message);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success('Password reset successfully');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      
+      // Log activity
+      logActivity({
+        activityType: 'admin_password_reset',
+        description: `Admin reset password for user ${user.email}`,
+        metadata: {
+          target_user_id: user.user_id,
+          target_user_email: user.email
+        }
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast.error('Failed to reset password');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -1444,6 +1514,97 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                     disabled={!editMode}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Password Reset Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="h-5 w-5" />
+                  Set New Password
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Set a new password for this user. The user will be required to change it on their next login.
+                </p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-sm text-destructive">Passwords do not match</p>
+                )}
+
+                <Button
+                  onClick={handlePasswordReset}
+                  disabled={resettingPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                  className="w-full"
+                >
+                  {resettingPassword ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Resetting Password...
+                    </>
+                  ) : (
+                    <>
+                      <Key className="h-4 w-4 mr-2" />
+                      Reset Password
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
