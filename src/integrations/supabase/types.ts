@@ -2588,7 +2588,6 @@ export type Database = {
           sequence_number: number
           supporting_evidence: string | null
           topic: string | null
-          topic_id: string | null
           updated_at: string
           updated_by: string | null
           version: number
@@ -2605,7 +2604,6 @@ export type Database = {
           sequence_number?: number
           supporting_evidence?: string | null
           topic?: string | null
-          topic_id?: string | null
           updated_at?: string
           updated_by?: string | null
           version?: number
@@ -2622,7 +2620,6 @@ export type Database = {
           sequence_number?: number
           supporting_evidence?: string | null
           topic?: string | null
-          topic_id?: string | null
           updated_at?: string
           updated_by?: string | null
           version?: number
@@ -2633,13 +2630,6 @@ export type Database = {
             columns: ["category"]
             isOneToOne: false
             referencedRelation: "pssr_checklist_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pssr_checklist_items_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "pssr_checklist_topics"
             referencedColumns: ["id"]
           },
         ]
