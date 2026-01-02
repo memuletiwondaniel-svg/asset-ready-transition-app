@@ -446,6 +446,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
     }
   };
 
+  // Use refs to track modal state without causing re-renders
+  const showCreateUserRef = React.useRef(showCreateUser);
+  const selectedUserRef = React.useRef(selectedUser);
+  const editingUserRef = React.useRef(editingUser);
+
+  // Keep refs in sync
+  React.useEffect(() => {
+    showCreateUserRef.current = showCreateUser;
+    selectedUserRef.current = selectedUser;
+    editingUserRef.current = editingUser;
+  }, [showCreateUser, selectedUser, editingUser]);
+
   useEffect(() => {
     fetchUsers(true);
 
@@ -461,7 +473,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         (payload) => {
           console.log('Profile changed:', payload);
           // Skip refresh if any modal is open to prevent unmounting
-          if (!showCreateUser && !selectedUser && !editingUser) {
+          if (!showCreateUserRef.current && !selectedUserRef.current && !editingUserRef.current) {
             fetchUsers(false);
           }
         }
@@ -471,7 +483,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
     return () => {
       profileSubscription.unsubscribe();
     };
-  }, [showCreateUser, selectedUser, editingUser]);
+  }, []); // Empty dependency array - only run once on mount
 
   useEffect(() => {
     filterAndSortUsers();
