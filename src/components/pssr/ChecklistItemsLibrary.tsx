@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns, Wrench, AlertTriangle, Users, Siren, Shield, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, X, FileText, Loader2, FolderPlus, Info, Columns } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -83,15 +83,6 @@ const categoryColors: Record<string, string> = {
   'HSE': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
 };
 
-// Category icons for quick visual recognition
-const categoryIcons: Record<string, React.ReactNode> = {
-  'TI': <Wrench className="h-3 w-3" />,
-  'PS': <AlertTriangle className="h-3 w-3" />,
-  'ORG': <Users className="h-3 w-3" />,
-  'DOC': <BookOpen className="h-3 w-3" />,
-  'ER': <Siren className="h-3 w-3" />,
-  'HSE': <Shield className="h-3 w-3" />,
-};
 
 // Generate display ID from category ref_id and sequence number
 const generateDisplayId = (categoryRefId: string | undefined, sequenceNumber: number): string => {
@@ -405,9 +396,8 @@ const ChecklistItemsLibrary: React.FC = () => {
               return (
                 <Badge 
                   variant="outline" 
-                  className={cn("gap-1 px-3 py-1 font-medium", categoryColors[cat?.ref_id || ''])}
+                  className={cn("px-3 py-1 font-medium", categoryColors[cat?.ref_id || ''])}
                 >
-                  {categoryIcons[cat?.ref_id || '']}
                   {cat?.name}
                 </Badge>
               );
@@ -449,10 +439,9 @@ const ChecklistItemsLibrary: React.FC = () => {
                       <TableCell>
                         <Badge 
                           variant="outline" 
-                          className={cn("gap-1 font-medium", categoryColors[item.categoryData?.ref_id || ''])}
+                          className={cn("font-medium", categoryColors[item.categoryData?.ref_id || ''])}
                         >
-                          {categoryIcons[item.categoryData?.ref_id || '']}
-                          {item.categoryData?.ref_id}
+                          {item.categoryData?.name}
                         </Badge>
                       </TableCell>
                       {visibleColumns.topic && (
