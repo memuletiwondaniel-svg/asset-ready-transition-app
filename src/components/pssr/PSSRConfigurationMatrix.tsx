@@ -11,10 +11,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useRoles } from '@/hooks/useRoles';
+import { usePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -50,9 +51,21 @@ interface LocalConfiguration {
   display_order: number;
   category: string | null;
   sub_category: string | null;
+  category_id: string | null;
   status: PSSRReasonStatus;
   reason_approver_role_ids: string[];
 }
+
+// Category Icon Helper Component
+const CategoryIcon: React.FC<{ icon: string | null }> = ({ icon }) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    'Building2': <Building2 className="h-4 w-4 text-primary" />,
+    'AlertTriangle': <AlertTriangle className="h-4 w-4 text-amber-500" />,
+    'Wrench': <Wrench className="h-4 w-4 text-blue-500" />,
+    'FileText': <FileText className="h-4 w-4 text-muted-foreground" />,
+  };
+  return <>{iconMap[icon || ''] || null}</>;
+};
 
 const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
@@ -106,6 +119,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: configurations = [], isLoading: isLoadingConfigs } = usePSSRReasonConfigurations();
   const { roles = [], isLoading: isLoadingRoles } = useRoles();
+  const { data: categories = [], isLoading: isLoadingCategories } = usePSSRReasonCategories();
   const upsertMutation = useUpsertPSSRReasonConfiguration();
 
   const [localConfigs, setLocalConfigs] = useState<LocalConfiguration[]>([]);
@@ -155,6 +169,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
         display_order: config.reason?.display_order ?? 0,
         category: (config.reason as any)?.category || null,
         sub_category: (config.reason as any)?.sub_category || null,
+        category_id: (config.reason as any)?.category_id || null,
         status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
         reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
       })));
@@ -171,6 +186,30 @@ const PSSRConfigurationMatrix: React.FC = () => {
     [...localConfigs].sort((a, b) => a.display_order - b.display_order),
     [localConfigs]
   );
+
+  // Group configs by category
+  const groupedConfigs = useMemo(() => {
+    const groups = new Map<string | null, LocalConfiguration[]>();
+    
+    // Initialize groups in category display order
+    const sortedCategories = [...categories].sort((a, b) => a.display_order - b.display_order);
+    sortedCategories.forEach(cat => {
+      groups.set(cat.id, []);
+    });
+    groups.set(null, []); // For uncategorized reasons
+    
+    // Assign configs to groups
+    sortedConfigs.forEach(config => {
+      const categoryId = config.category_id;
+      if (groups.has(categoryId)) {
+        groups.get(categoryId)!.push(config);
+      } else {
+        groups.get(null)!.push(config);
+      }
+    });
+    
+    return groups;
+  }, [sortedConfigs, categories]);
 
   const handlePSSRApproverToggle = (reasonId: string, roleId: string) => {
     setLocalConfigs(prev => prev.map(config => {
@@ -245,6 +284,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
       display_order: config.reason?.display_order ?? 0,
       category: (config.reason as any)?.category || null,
       sub_category: (config.reason as any)?.sub_category || null,
+      category_id: (config.reason as any)?.category_id || null,
       status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
       reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
     })));
@@ -382,7 +422,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
     return { valid: true };
   };
 
-  const isLoading = isLoadingConfigs || isLoadingRoles;
+  const isLoading = isLoadingConfigs || isLoadingRoles || isLoadingCategories;
 
   if (isLoading) {
     return (
@@ -466,82 +506,195 @@ const PSSRConfigurationMatrix: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedConfigs.map((config, index) => (
-                      <SortableRow 
-                        key={config.reason_id} 
-                        id={config.reason_id}
-                        isDirty={config.isDirty}
-                      >
-                        {/* Reason Name with Order Number - Clickable to open details */}
-                        <TableCell className="font-medium overflow-hidden">
-                          <div 
-                            className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditOverlay({ open: true, config });
-                            }}
-                          >
-                            <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
-                            <span className="flex-1 min-w-0 whitespace-normal break-words">
-                              {config.reason_name}
-                            </span>
-                            {config.isDirty && (
-                              <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
-                                Modified
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-
-                        {/* Status Badge */}
-                        <TableCell>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge 
-                                className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
+                    {/* Render categories in order */}
+                    {[...categories].sort((a, b) => a.display_order - b.display_order).map((category) => {
+                      const categoryConfigs = groupedConfigs.get(category.id) || [];
+                      
+                      return (
+                        <React.Fragment key={category.id}>
+                          {/* Category Header Row */}
+                          <TableRow className="bg-muted/50 hover:bg-muted/50 border-t-2 border-border/60">
+                            <TableCell colSpan={4} className="py-3">
+                              <div className="flex items-center gap-2">
+                                <CategoryIcon icon={category.icon} />
+                                <span className="font-semibold text-sm">{category.name}</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  {categoryConfigs.length}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Category's Reasons */}
+                          {categoryConfigs.length > 0 ? (
+                            categoryConfigs.map((config, index) => (
+                              <SortableRow 
+                                key={config.reason_id} 
+                                id={config.reason_id}
+                                isDirty={config.isDirty}
                               >
-                                {STATUS_CONFIG[config.status]?.label || config.status}
+                                {/* Reason Name with Order Number - Clickable to open details */}
+                                <TableCell className="font-medium overflow-hidden pl-8">
+                                  <div 
+                                    className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditOverlay({ open: true, config });
+                                    }}
+                                  >
+                                    <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
+                                    <span className="flex-1 min-w-0 whitespace-normal break-words">
+                                      {config.reason_name}
+                                    </span>
+                                    {config.isDirty && (
+                                      <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
+                                        Modified
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+
+                                {/* Status Badge */}
+                                <TableCell>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge 
+                                        className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
+                                      >
+                                        {STATUS_CONFIG[config.status]?.label || config.status}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>
+                                        {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
+                                        {config.status === 'awaiting_approval' && 'This reason is pending approval'}
+                                        {config.status === 'approved' && 'This reason is approved and ready for use'}
+                                        {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+
+                                {/* PSSR Approver Roles */}
+                                <TableCell>
+                                  <RoleMultiSelect
+                                    roles={roles}
+                                    selectedRoleIds={config.pssr_approver_role_ids}
+                                    onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
+                                    placeholder="Select PSSR Approvers"
+                                    disabledRoleIds={[]}
+                                  />
+                                </TableCell>
+
+                                {/* SoF Approver Roles */}
+                                <TableCell>
+                                  <RoleMultiSelect
+                                    roles={roles}
+                                    selectedRoleIds={config.sof_approver_role_ids}
+                                    onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
+                                    placeholder="Select SoF Approvers"
+                                    disabledRoleIds={config.pssr_approver_role_ids}
+                                    disabledTooltip="Already assigned as PSSR Approver"
+                                  />
+                                </TableCell>
+                              </SortableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground pl-8">
+                                <span className="text-sm italic">No reasons configured for this category</span>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {/* Render uncategorized reasons if any */}
+                    {(groupedConfigs.get(null) || []).length > 0 && (
+                      <React.Fragment>
+                        <TableRow className="bg-muted/30 hover:bg-muted/30 border-t-2 border-border/60">
+                          <TableCell colSpan={4} className="py-3">
+                            <div className="flex items-center gap-2">
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-semibold text-sm text-muted-foreground">Uncategorized</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {(groupedConfigs.get(null) || []).length}
                               </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>
-                                {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
-                                {config.status === 'awaiting_approval' && 'This reason is pending approval'}
-                                {config.status === 'approved' && 'This reason is approved and ready for use'}
-                                {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TableCell>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {(groupedConfigs.get(null) || []).map((config, index) => (
+                          <SortableRow 
+                            key={config.reason_id} 
+                            id={config.reason_id}
+                            isDirty={config.isDirty}
+                          >
+                            <TableCell className="font-medium overflow-hidden pl-8">
+                              <div 
+                                className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditOverlay({ open: true, config });
+                                }}
+                              >
+                                <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
+                                <span className="flex-1 min-w-0 whitespace-normal break-words">
+                                  {config.reason_name}
+                                </span>
+                                {config.isDirty && (
+                                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
+                                    Modified
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge 
+                                    className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
+                                  >
+                                    {STATUS_CONFIG[config.status]?.label || config.status}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>
+                                    {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
+                                    {config.status === 'awaiting_approval' && 'This reason is pending approval'}
+                                    {config.status === 'approved' && 'This reason is approved and ready for use'}
+                                    {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <RoleMultiSelect
+                                roles={roles}
+                                selectedRoleIds={config.pssr_approver_role_ids}
+                                onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
+                                placeholder="Select PSSR Approvers"
+                                disabledRoleIds={[]}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <RoleMultiSelect
+                                roles={roles}
+                                selectedRoleIds={config.sof_approver_role_ids}
+                                onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
+                                placeholder="Select SoF Approvers"
+                                disabledRoleIds={config.pssr_approver_role_ids}
+                                disabledTooltip="Already assigned as PSSR Approver"
+                              />
+                            </TableCell>
+                          </SortableRow>
+                        ))}
+                      </React.Fragment>
+                    )}
 
-                        {/* PSSR Approver Roles */}
-                        <TableCell>
-                          <RoleMultiSelect
-                            roles={roles}
-                            selectedRoleIds={config.pssr_approver_role_ids}
-                            onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
-                            placeholder="Select PSSR Approvers"
-                            disabledRoleIds={[]}
-                          />
-                        </TableCell>
-
-                        {/* SoF Approver Roles */}
-                        <TableCell>
-                          <RoleMultiSelect
-                            roles={roles}
-                            selectedRoleIds={config.sof_approver_role_ids}
-                            onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
-                            placeholder="Select SoF Approvers"
-                            disabledRoleIds={config.pssr_approver_role_ids}
-                            disabledTooltip="Already assigned as PSSR Approver"
-                          />
-                        </TableCell>
-                      </SortableRow>
-                    ))}
-
-                    {sortedConfigs.length === 0 && (
+                    {sortedConfigs.length === 0 && categories.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
                           <p className="mb-4">No PSSR reasons configured yet.</p>
                           <Button 
