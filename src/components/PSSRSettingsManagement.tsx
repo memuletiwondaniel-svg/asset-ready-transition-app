@@ -28,7 +28,6 @@ import AdminHeader from './admin/AdminHeader';
 import PSSRConfigurationMatrix from './pssr/PSSRConfigurationMatrix';
 import ChecklistItemsLibrary from './pssr/ChecklistItemsLibrary';
 import ItemCategoriesTab from './pssr/ItemCategoriesTab';
-import PSSRCategoryManagement from './pssr/PSSRCategoryManagement';
 import {
   DndContext,
   closestCenter,
@@ -581,12 +580,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             {/* Modern Tab Navigation */}
             <TabsList className="inline-flex h-12 w-full overflow-x-auto bg-muted/30 backdrop-blur-sm p-1 rounded-xl border border-border/40 shadow-fluent-sm gap-2 scrollbar-none">
               <TabsTrigger 
-                value="reason-categories"
-                className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
-              >
-                Reason Categories
-              </TabsTrigger>
-              <TabsTrigger 
                 value="configuration"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
@@ -621,11 +614,6 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 </TabsTrigger>
               )}
             </TabsList>
-
-          {/* Reason Categories Tab */}
-          <TabsContent value="reason-categories" className="animate-fade-in-up">
-            <PSSRCategoryManagement />
-          </TabsContent>
 
           {/* Tie-in Scopes Tab */}
           <TabsContent value="tie-in" className="animate-fade-in-up">
