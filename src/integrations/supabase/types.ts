@@ -2587,6 +2587,7 @@ export type Database = {
           responsible_party: string | null
           sequence_number: number
           supporting_evidence: string | null
+          topic: string | null
           topic_id: string | null
           unique_id: string
           updated_at: string
@@ -2604,6 +2605,7 @@ export type Database = {
           responsible_party?: string | null
           sequence_number?: number
           supporting_evidence?: string | null
+          topic?: string | null
           topic_id?: string | null
           unique_id: string
           updated_at?: string
@@ -2621,6 +2623,7 @@ export type Database = {
           responsible_party?: string | null
           sequence_number?: number
           supporting_evidence?: string | null
+          topic?: string | null
           topic_id?: string | null
           unique_id?: string
           updated_at?: string

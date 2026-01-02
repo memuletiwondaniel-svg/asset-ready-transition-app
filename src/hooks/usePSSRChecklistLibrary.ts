@@ -11,19 +11,11 @@ export interface ChecklistCategory {
   is_active: boolean;
 }
 
-export interface ChecklistTopic {
-  id: string;
-  name: string;
-  description: string | null;
-  display_order: number;
-  is_active: boolean;
-}
-
 export interface ChecklistItem {
   id: string;
   unique_id: string;
   category_id: string;
-  topic_id: string | null;
+  topic: string | null;
   description: string;
   supporting_evidence: string | null;
   approving_authority: string | null;
@@ -34,7 +26,6 @@ export interface ChecklistItem {
   created_at: string;
   updated_at: string;
   category?: ChecklistCategory;
-  topic?: ChecklistTopic;
 }
 
 export const usePSSRChecklistCategories = () => {
@@ -52,21 +43,6 @@ export const usePSSRChecklistCategories = () => {
   });
 };
 
-export const usePSSRChecklistTopics = () => {
-  return useQuery({
-    queryKey: ['pssr-checklist-topics'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pssr_checklist_topics')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-      return data as ChecklistTopic[];
-    },
-  });
-};
-
 export const usePSSRChecklistItems = () => {
   return useQuery({
     queryKey: ['pssr-checklist-items'],
@@ -75,8 +51,7 @@ export const usePSSRChecklistItems = () => {
         .from('pssr_checklist_items')
         .select(`
           *,
-          category:pssr_checklist_categories(*),
-          topic:pssr_checklist_topics(*)
+          category:pssr_checklist_categories(*)
         `)
         .order('category_id', { ascending: true })
         .order('sequence_number', { ascending: true });
@@ -237,34 +212,3 @@ export const useDeleteChecklistCategory = () => {
   });
 };
 
-export const useCreateChecklistTopic = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (topic: { name: string; description?: string }) => {
-      const { data: existing } = await supabase
-        .from('pssr_checklist_topics')
-        .select('display_order')
-        .order('display_order', { ascending: false })
-        .limit(1);
-
-      const nextOrder = (existing?.[0]?.display_order || 0) + 1;
-
-      const { data, error } = await supabase
-        .from('pssr_checklist_topics')
-        .insert({ ...topic, display_order: nextOrder })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pssr-checklist-topics'] });
-      toast.success('Topic created successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to create topic');
-    },
-  });
-};
