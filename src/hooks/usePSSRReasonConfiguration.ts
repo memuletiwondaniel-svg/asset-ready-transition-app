@@ -21,6 +21,11 @@ export interface ConfigurationWithDetails extends PSSRReasonConfiguration {
     name: string;
     is_active: boolean;
     display_order: number;
+    category_id: string | null;
+    delivery_party_id: string | null;
+    requires_ati_scopes: boolean;
+    status: string;
+    reason_approver_role_ids: string[];
   } | null;
   pssr_approver_roles: Array<{ id: string; name: string }>;
   sof_approver_roles: Array<{ id: string; name: string }>;
@@ -42,7 +47,7 @@ export const usePSSRReasonConfigurations = () => {
       // Get all reasons for joining
       const { data: reasons, error: reasonsError } = await supabase
         .from('pssr_reasons')
-        .select('id, name, is_active, display_order')
+        .select('id, name, is_active, display_order, category_id, delivery_party_id, requires_ati_scopes, status, reason_approver_role_ids')
         .order('display_order');
 
       if (reasonsError) throw reasonsError;
