@@ -372,11 +372,11 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 {pssrApproverRoleIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
                     {pssrApproverRoleIds.map((roleId) => (
-                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 transition-colors hover:bg-accent">
                         {getRoleName(roleId)}
                         <button
                           type="button"
-                          className="ml-1 hover:text-destructive transition-colors"
+                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
                           onClick={() => removeApprover(roleId, pssrApproverRoleIds, setPssrApproverRoleIds)}
                         >
                           <X className="h-3 w-3" />
@@ -425,11 +425,11 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 {sofApproverRoleIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
                     {sofApproverRoleIds.map((roleId) => (
-                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 transition-colors hover:bg-accent">
                         {getRoleName(roleId)}
                         <button
                           type="button"
-                          className="ml-1 hover:text-destructive transition-colors"
+                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
                           onClick={() => removeApprover(roleId, sofApproverRoleIds, setSofApproverRoleIds)}
                         >
                           <X className="h-3 w-3" />
@@ -481,11 +481,11 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 {reasonApproverRoleIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
                     {reasonApproverRoleIds.map((roleId) => (
-                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5">
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 transition-colors hover:bg-accent">
                         {getRoleName(roleId)}
                         <button
                           type="button"
-                          className="ml-1 hover:text-destructive transition-colors"
+                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
                           onClick={() => removeApprover(roleId, reasonApproverRoleIds, setReasonApproverRoleIds)}
                         >
                           <X className="h-3 w-3" />
