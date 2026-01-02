@@ -302,32 +302,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                   </div>
                 </div>
 
-                {currentCategory?.requires_delivery_party && (
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Delivery Party
-                    </label>
-                    <Select 
-                      value={deliveryPartyId || 'none'} 
-                      onValueChange={(v) => setDeliveryPartyId(v === 'none' ? null : v)}
-                    >
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Select delivery party" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Not specified</SelectItem>
-                        {deliveryParties
-                          .filter(dp => dp.is_active)
-                          .sort((a, b) => a.display_order - b.display_order)
-                          .map((dp) => (
-                            <SelectItem key={dp.id} value={dp.id}>
-                              {dp.code} - {dp.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
 
               {/* Status Actions */}
