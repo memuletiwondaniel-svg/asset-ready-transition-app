@@ -1,0 +1,1 @@
+DELETE FROM pssr_reasons WHERE id = '65efe295-c0b6-47f9-a5aa-566cc92406e2';
