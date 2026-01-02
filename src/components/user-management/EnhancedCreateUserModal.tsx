@@ -17,9 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
-import { usePlants } from '@/hooks/usePlants';
-import { useFields } from '@/hooks/useFields';
-import { useStations } from '@/hooks/useStations';
+import { useLocations } from '@/hooks/useLocations';
 import { useCategorizedRoles, useRoleCategories, useAddRole, useAddRoleCategory } from '@/hooks/useCategorizedRoles';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -80,26 +78,29 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   });
 
   const { data: hubs } = useHubs();
-  const { plants, isLoading: plantsLoading } = usePlants();
-  const { fields, isLoading: fieldsLoading } = useFields();
-  const { stations, isLoading: stationsLoading } = useStations();
+  const { plants, fields, stations, getFieldsByPlant, getStationsByField, isLoading: locationsLoading } = useLocations();
 
-  // Filter stations by field
-  const westQurnaStations = stations.filter(s => ['CS6', 'CS7', 'CS8'].includes(s.name));
-  const northRumailaStations = stations.filter(s => ['CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'NCS2', 'NCS4', 'NCS5'].includes(s.name));
-  const southRumailaStations = stations.filter(s => ['Markazia (MK)', 'Rafidiyah (RAF)', 'Shamiyah (SH)', 'Qurainat', 'Qurainat Sweetening', 'Qurainat Temp Comp (QTC)'].includes(s.name));
-  const zubairStations = stations.filter(s => ['Hammar (HAM)', 'Hammar Mishrif (HM)', 'Hammar New TEG (HNT)', 'Zubair (ZB)', 'Zubair Mishrif (ZM)', 'Zubair Temp Comp (ZTC)'].includes(s.name));
-
-  // Get stations based on selected field
-  const getStationsForField = (field: string) => {
-    if (field === 'West Qurna (WQ1)') return westQurnaStations;
-    if (field === 'North Rumaila') return northRumailaStations;
-    if (field === 'South Rumaila') return southRumailaStations;
-    if (field === 'Zubair') return zubairStations;
-    return [];
+  // Get fields filtered by selected plant (using database relationships)
+  const getFieldsForPlant = (plantName: string) => {
+    const plant = plants.find(p => p.name === plantName);
+    if (!plant) return fields; // Return all fields if no plant selected
+    return getFieldsByPlant(plant.id);
   };
 
-  const requiresStation = (field: string) => ['West Qurna (WQ1)', 'North Rumaila', 'South Rumaila', 'Zubair'].includes(field);
+  // Get stations filtered by selected field (using database relationships)
+  const getStationsForField = (fieldName: string) => {
+    const field = fields.find(f => f.name === fieldName);
+    if (!field) return [];
+    return getStationsByField(field.id);
+  };
+
+  // Check if selected field has any stations linked
+  const requiresStation = (fieldName: string) => {
+    const field = fields.find(f => f.name === fieldName);
+    if (!field) return false;
+    return getStationsByField(field.id).length > 0;
+  };
+
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
   const { data: roleCategories } = useRoleCategories();
   const { addRole } = useAddRole();
@@ -753,7 +754,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, plant: value, field: '' }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={plantsLoading ? "Loading plants..." : "Select plant"} />
+                  <SelectValue placeholder={locationsLoading ? "Loading plants..." : "Select plant"} />
                 </SelectTrigger>
                 <SelectContent>
                   {plants.map(plant => (
@@ -772,10 +773,10 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, field: value, station: '' }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={fieldsLoading ? "Loading fields..." : "Select field"} />
+                  <SelectValue placeholder={locationsLoading ? "Loading fields..." : "Select field"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {fields.map(field => (
+                  {getFieldsForPlant(formData.plant || '').map(field => (
                     <SelectItem key={field.id} value={field.name}>{field.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -791,7 +792,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, station: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={stationsLoading ? "Loading stations..." : "Select station"} />
+                  <SelectValue placeholder={locationsLoading ? "Loading stations..." : "Select station"} />
                 </SelectTrigger>
                 <SelectContent>
                   {getStationsForField(formData.field).map(station => (

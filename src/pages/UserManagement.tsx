@@ -37,12 +37,14 @@ import {
   UserCheck,
   AlertTriangle,
   Home,
-  Layers
+  Layers,
+  MapPin
 } from "lucide-react";
 import EnhancedCreateUserModal from "@/components/user-management/EnhancedCreateUserModal";
 import UserDetailsModal from "@/components/user-management/UserDetailsModal";
 import AuthenticatorApprovalModal from "@/components/user-management/AuthenticatorApprovalModal";
 import ConfigurationManagement from "@/components/user-management/ConfigurationManagement";
+import LocationManagement from "@/components/user-management/LocationManagement";
 import { useUsers } from "@/hooks/useUsers";
 import { OrshSidebar } from "@/components/OrshSidebar";
 
@@ -204,6 +206,10 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Users
+              </TabsTrigger>
+              <TabsTrigger value="locations" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Locations
               </TabsTrigger>
               <TabsTrigger value="configuration" className="flex items-center gap-2">
                 <Layers className="h-4 w-4" />
@@ -480,6 +486,10 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
             </Table>
           </CardContent>
         </Card>
+            </TabsContent>
+
+            <TabsContent value="locations">
+              <LocationManagement />
             </TabsContent>
 
             <TabsContent value="configuration">
