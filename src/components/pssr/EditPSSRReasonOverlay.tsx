@@ -85,7 +85,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const { data: deliveryParties = [] } = usePSSRDeliveryParties();
 
   const [isSaving, setIsSaving] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
   
   // Form state
   const [reasonName, setReasonName] = useState(initialReasonName);
@@ -197,10 +197,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
     }
   };
 
-  const handleDeleteConfirm = () => {
-    setShowDeleteConfirm(false);
-    onDelete();
-  };
+  
 
   const addApprover = (roleId: string, list: string[], setList: (ids: string[]) => void) => {
     if (!list.includes(roleId)) {
@@ -455,7 +452,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               variant="ghost"
               size="sm"
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={onDelete}
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Delete
@@ -473,26 +470,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete PSSR Reason</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{reasonName}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDeleteConfirm}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
