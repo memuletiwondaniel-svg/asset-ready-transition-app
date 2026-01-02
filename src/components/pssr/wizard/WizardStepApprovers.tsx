@@ -22,11 +22,14 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
   onRoleToggle,
 }) => {
   const { roles = [], isLoading: rolesLoading } = useRoles();
-  const { allowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
+  const { allowedRoleIds, sofAllowedRoleIds, isLoading: allowedLoading } = usePSSRAllowedApproverRoles();
 
-  // For PSSR and SoF approvers, filter to only allowed roles
-  const filteredRoles = (type === 'pssr' || type === 'sof')
+  // For PSSR approvers, filter to PSSR allowed roles
+  // For SoF approvers, filter to SoF allowed roles
+  const filteredRoles = type === 'pssr'
     ? roles.filter(role => allowedRoleIds.includes(role.id))
+    : type === 'sof'
+    ? roles.filter(role => sofAllowedRoleIds.includes(role.id))
     : roles;
 
   const config = {
