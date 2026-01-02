@@ -118,7 +118,7 @@ const SortableRow: React.FC<SortableRowProps> = ({ id, children, isDirty }) => {
       {...listeners}
       className={`
         cursor-grab active:cursor-grabbing
-        transition-all duration-200 hover:bg-accent/30
+        transition-all duration-200 hover:bg-muted/50
         ${isDirty ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}
         ${isDragging ? 'relative z-50 shadow-2xl scale-[1.02] bg-card' : ''}
       `}
@@ -854,7 +854,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                   {/* Reason Name with Order Number - Clickable to open details */}
                                   <TableCell className="font-medium overflow-hidden pl-8">
                                     <div 
-                                      className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
+                                      className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setEditOverlay({ open: true, config });
@@ -1435,7 +1435,7 @@ const RoleMultiSelect: React.FC<RoleMultiSelectProps> = ({
                       className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
                         isDisabled 
                           ? 'opacity-50 cursor-not-allowed bg-muted/30' 
-                          : 'hover:bg-accent'
+                          : 'hover:bg-muted/50'
                       }`}
                       onClick={() => !isDisabled && onToggle(role.id)}
                     >
