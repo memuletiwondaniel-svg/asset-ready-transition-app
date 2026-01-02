@@ -156,9 +156,6 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                     )}
                   </div>
-                  {role.description && (
-                    <p className="text-sm text-muted-foreground">{role.description}</p>
-                  )}
                 </div>
                 {isDisabled && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
