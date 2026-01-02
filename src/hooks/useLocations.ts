@@ -45,7 +45,7 @@ export const useLocations = () => {
       .from('plant')
       .select('*')
       .eq('is_active', true)
-      .order('name');
+      .order('display_order');
     
     if (error) {
       console.error('Error fetching plants:', error);
