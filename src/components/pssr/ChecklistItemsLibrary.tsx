@@ -227,11 +227,8 @@ const ChecklistItemsLibrary: React.FC = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                PSSR Checklist Item Library
+                PSSR Checklist Items
               </CardTitle>
-              <CardDescription>
-                Manage the master library of PSSR checklist items across all categories
-              </CardDescription>
             </div>
             <Button onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-2" />
