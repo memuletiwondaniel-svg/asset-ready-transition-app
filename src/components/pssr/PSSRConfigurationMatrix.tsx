@@ -617,7 +617,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 Add Category
               </Button>
               <Button 
-                variant="outline"
                 onClick={() => {
                   setPreselectedCategoryId(null);
                   setShowAddReasonWizard(true);
