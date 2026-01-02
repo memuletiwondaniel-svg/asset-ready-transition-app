@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
+import { GroupedRoleSelector } from './GroupedRoleSelector';
 
 interface PhoneNumber {
   countryCode: string;
@@ -94,46 +95,24 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     { value: 'Others', label: 'Others' }
   ];
 
-  const roles = [
-    'Proj Manager',
-    'Proj Engr',
-    'Commissioning Lead',
-    'Construction Lead',
-    'Engr. Manager',
-    'Technical Authority (TA2)',
-    'Plant Director',
-    'Deputy Plant Director',
-    'HSE Lead',
-    'ORA Engineer',
-    'ER Lead',
-    'Operations Coach',
-    'Operation Readiness & Assurance Engineer',
-    'Site Engineer',
-    'Ops HSE Lead',
-    'Project HSE Lead',
-    'Production Director',
-    'HSE Director',
-    'P&E Director',
-    'Others'
-  ];
-
+  // TA2 specific options (kept for backward compatibility)
   const disciplines = ['Civil', 'Static', 'PACO', 'Process', 'Technical Safety'];
   const commissions = ['Asset', 'Project and Engineering'];
 
   // Filter commissions for specific roles
   const getFilteredCommissions = () => {
-    if (formData.role === 'Engr. Manager' || formData.role === 'HSE Lead') {
+    if (formData.role === 'Engr. Manager' || formData.role === 'HSE Manager') {
       return commissions.filter(c => c === 'Asset' || c === 'Project and Engineering');
     }
-    if (formData.role === 'Technical Authority (TA2)') {
-      return commissions; // All commissions for TA2
+    if (formData.role.includes('TA2')) {
+      return commissions; // All commissions for TA2 roles
     }
     return commissions;
   };
 
   // Filter hubs for specific roles
   const getFilteredHubs = () => {
-    if (formData.role === 'ORA Engineer') {
+    if (formData.role === 'ORA Engr.' || formData.role === 'ORA Lead') {
       return hubs?.filter(h => ['North', 'Central', 'South'].includes(h.name)) || [];
     }
     return hubs || [];
@@ -201,20 +180,20 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Check if role requires hub selection
   const requiresHub = (role: string) => {
-    return ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'].includes(role);
+    return ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead'].includes(role);
   };
 
   const getPositionTitle = () => {
     if (!formData.role) return '';
     
-    const rolesThatRequireHub = ['Proj Manager', 'Proj Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer'];
+    const rolesThatRequireHub = ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead'];
     
     if (rolesThatRequireHub.includes(formData.role) && formData.hub) {
       return `${formData.role} – ${formData.hub}`;
     }
     
-    if (formData.role === 'HSE Lead' && formData.commission) {
-      return `HSE Lead - ${formData.commission}`;
+    if (formData.role === 'HSE Manager' && formData.commission) {
+      return `HSE Manager - ${formData.commission}`;
     }
     
     return formData.role;
@@ -492,20 +471,13 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
           <div>
             <Label>Role *</Label>
-            <Select
+            <GroupedRoleSelector
               value={formData.role}
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map(role => (
-                  <SelectItem key={role} value={role}>{role}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formData.role === 'Others' && (
+              placeholder="Select role"
+              includeOther={true}
+            />
+            {formData.role === 'Others (specify)' && (
               <Input
                 className="mt-2"
                 value={formData.customRole}
@@ -534,7 +506,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {['Engr. Manager', 'HSE Lead'].includes(formData.role) && (
+          {['Engr. Manager', 'HSE Manager'].includes(formData.role) && (
             <div>
               <Label>Commission *</Label>
               <Select
@@ -553,7 +525,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {formData.role === 'Technical Authority (TA2)' && (
+          {formData.role.includes('TA2') && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Discipline</Label>

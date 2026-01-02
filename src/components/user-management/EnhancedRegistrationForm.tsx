@@ -26,6 +26,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import RegistrationSuccessModal from './RegistrationSuccessModal';
+import { GroupedRoleSelector } from './GroupedRoleSelector';
 
 interface RegistrationFormProps {
   isOpen: boolean;
@@ -91,25 +92,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
     { value: 'OTHER', label: 'Others (specify)' }
   ];
 
-  const userRoles = [
-    'Project Manager',
-    'Commissioning Lead',
-    'Construction Lead',
-    'Technical Authority (TA2)',
-    'Plant Director',
-    'Deputy Plant Director',
-    'Operations Coach',
-    'ORA Engineer',
-    'Site Engineer',
-    'Ops HSE Lead',
-    'Project HSE Lead',
-    'ER Lead',
-    'Production Director',
-    'HSE Director',
-    'P&E Director',
-    'Others (specify)'
-  ];
-
+  // TA2 specific options (kept for specific role types)
   const ta2Disciplines = [
     'Civil',
     'Static',
@@ -313,9 +296,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
     onClose(); // Close the registration form after success modal is closed
   };
 
-  const filteredRoles = userRoles.filter(role =>
-    role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Role filtering is now handled by the GroupedRoleSelector component
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -523,21 +504,13 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
 
           <div>
             <Label htmlFor="userRole">User Role *</Label>
-            <Select
+            <GroupedRoleSelector
               value={formData.userRole}
               onValueChange={(value) => setFormData({ ...formData, userRole: value })}
-            >
-              <SelectTrigger className={errors.userRole ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select user role" />
-              </SelectTrigger>
-              <SelectContent>
-                {userRoles.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select user role"
+              error={!!errors.userRole}
+              includeOther={true}
+            />
             {errors.userRole && (
               <p className="text-sm text-red-500 mt-1">{errors.userRole}</p>
             )}
@@ -559,7 +532,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
             </div>
           )}
 
-          {formData.userRole === 'Technical Authority (TA2)' && (
+          {formData.userRole.includes('TA2') && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="ta2Discipline">TA2 Discipline *</Label>
