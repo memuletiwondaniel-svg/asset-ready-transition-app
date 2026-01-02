@@ -166,7 +166,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Filter hubs for specific roles
   const getFilteredHubs = () => {
-    if (formData.role === 'ORA Engr.' || formData.role === 'ORA Lead') {
+    if (['ORA Engr.', 'ORA Lead', 'Project Manager'].includes(formData.role)) {
       return hubs?.filter(h => ['North', 'Central', 'South'].includes(h.name)) || [];
     }
     return hubs || [];
