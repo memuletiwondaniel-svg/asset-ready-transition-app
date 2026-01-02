@@ -649,15 +649,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
             </div>
           </div>
 
-          {/* Warning Banner - only show when there are configs */}
-          {sortedConfigs.length > 0 && (
-            <Alert className="mt-4 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800 dark:text-amber-200">
-                <strong>Note:</strong> Changes to this configuration will only apply to newly created PSSRs. Existing PSSRs will not be affected.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardHeader>
 
         {/* Delivery Parties Collapsible Section */}
