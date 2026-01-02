@@ -94,11 +94,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return getStationsByField(field.id);
   };
 
-  // Check if selected field has any stations linked
-  const requiresStation = (fieldName: string) => {
+  // Check if selected field has any stations linked (for CS plant hierarchy)
+  const fieldRequiresStation = (fieldName: string) => {
     const field = fields.find(f => f.name === fieldName);
     if (!field) return false;
     return getStationsByField(field.id).length > 0;
+  };
+
+  // Check if role requires direct station selection (Site Engr.)
+  const roleRequiresStation = (role: string) => {
+    return role === 'Site Engr.';
   };
 
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
@@ -224,9 +229,14 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead'].includes(role);
   };
 
-  // Check if role requires plant selection
+  // Check if role requires plant selection (Plant Director, Dep. Plant Director only - they stop at plant)
   const requiresPlant = (role: string) => {
-    return ['Plant Director', 'Dep. Plant Director', 'Ops Team Lead', 'Ops Coach', 'Site Engr.', 'Section Head'].includes(role);
+    return ['Plant Director', 'Dep. Plant Director', 'Ops Team Lead', 'Ops Coach', 'Section Head'].includes(role);
+  };
+
+  // Check if role requires field selection (for operations roles in CS plant)
+  const requiresField = (role: string) => {
+    return ['Ops Team Lead', 'Ops Coach', 'Section Head'].includes(role);
   };
 
   const getPositionTitle = () => {
@@ -245,23 +255,54 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return formData.role;
   };
 
-  // Generate position based on role and hub
+  // Generate position based on role and contextual fields
   const generatePosition = () => {
-    const { role, hub } = formData;
-    if (!role || !hub) return '';
+    const { role, hub, commission, plant, station, field } = formData;
+    if (!role) return '';
     
-    switch (role) {
-      case 'Proj Manager':
-        return `Proj Manager – ${hub}`;
-      case 'Proj Engr':
-        return `Proj Engr – ${hub}`;
-      case 'Commissioning Lead':
-        return `Commissioning Lead – ${hub}`;
-      case 'Construction Lead':
-        return `Construction Lead – ${hub}`;
-      default:
-        return '';
+    // Hub-based roles
+    if (requiresHub(role) && hub) {
+      return `${role} – ${hub}`;
     }
+    
+    // Engineering TA2 roles with commission (exclude Civil TA2 and Tech Safety TA2)
+    const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
+    if (ta2RolesWithCommission.includes(role) && commission) {
+      return `${role} (${commission})`;
+    }
+    
+    // Civil TA2 and Tech Safety TA2 - no commission needed
+    if (['Civil TA2', 'Tech Safety TA2'].includes(role)) {
+      return role;
+    }
+    
+    // Engr. Manager and HSE Manager with commission
+    if (['Engr. Manager', 'HSE Manager'].includes(role) && commission) {
+      return `${role} - ${commission}`;
+    }
+    
+    // Plant Director and Dep. Plant Director - stop at plant
+    if (['Plant Director', 'Dep. Plant Director'].includes(role) && plant) {
+      return `${role} - ${plant}`;
+    }
+    
+    // Site Engr. requires station directly
+    if (role === 'Site Engr.' && station) {
+      return `Site Engr. - ${station}`;
+    }
+    
+    // Ops Coach and Ops Team Lead with field
+    if (['Ops Coach', 'Ops Team Lead'].includes(role) && field) {
+      return `${role} - ${field}`;
+    }
+    
+    // Section Head with field
+    if (role === 'Section Head' && field) {
+      return `Section Head - ${field}`;
+    }
+    
+    // Default: just return the role name for roles without additional context
+    return role;
   };
 
   const handleSubmit = () => {
@@ -293,8 +334,18 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Validate field selection when CS plant is selected for operations roles
-      if (requiresPlant(formData.role) && formData.plant === 'CS' && !formData.field) {
+      // Validate plant for roles that require it
+      if (requiresPlant(formData.role) && !formData.plant) {
+        toast({
+          title: "Missing Plant",
+          description: "Please select a plant.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate field selection when CS plant is selected for operations roles that require field
+      if (requiresField(formData.role) && formData.plant === 'CS' && !formData.field) {
         toast({
           title: "Missing Field",
           description: "Please select a field for Compression Station.",
@@ -303,11 +354,51 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Validate station selection when field requires station
-      if (requiresPlant(formData.role) && formData.plant === 'CS' && requiresStation(formData.field) && !formData.station) {
+      // Validate station selection when field requires station (for ops roles with CS plant)
+      if (requiresField(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && !formData.station) {
         toast({
           title: "Missing Station",
           description: `Please select a station for ${formData.field}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate station for Site Engr. role
+      if (roleRequiresStation(formData.role) && !formData.station) {
+        toast({
+          title: "Missing Station",
+          description: "Please select a station for Site Engineer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate commission for TA2 roles that require it
+      if (shouldShowTA2Commission(formData.role) && !formData.commission) {
+        toast({
+          title: "Missing Commission",
+          description: "Please select a commission for this TA2 role.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate commission for Engr. Manager and HSE Manager
+      if (['Engr. Manager', 'HSE Manager'].includes(formData.role) && !formData.commission) {
+        toast({
+          title: "Missing Commission",
+          description: "Please select a commission.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate hub for hub-based roles
+      if (requiresHub(formData.role) && !formData.hub) {
+        toast({
+          title: "Missing Hub",
+          description: "Please select a hub.",
           variant: "destructive",
         });
         return;
@@ -765,7 +856,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {requiresPlant(formData.role) && formData.plant === 'CS' && (
+          {requiresField(formData.role) && formData.plant === 'CS' && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
               <Select
@@ -784,7 +875,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {requiresPlant(formData.role) && formData.plant === 'CS' && requiresStation(formData.field) && (
+          {requiresField(formData.role) && formData.plant === 'CS' && fieldRequiresStation(formData.field || '') && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
               <Select
@@ -795,7 +886,27 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   <SelectValue placeholder={locationsLoading ? "Loading stations..." : "Select station"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getStationsForField(formData.field).map(station => (
+                  {getStationsForField(formData.field || '').map(station => (
+                    <SelectItem key={station.id} value={station.name}>{station.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Direct station selection for Site Engr. */}
+          {roleRequiresStation(formData.role) && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
+              <Select
+                value={formData.station}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, station: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={locationsLoading ? "Loading stations..." : "Select station"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {stations.map(station => (
                     <SelectItem key={station.id} value={station.name}>{station.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -885,24 +996,50 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               <p className="text-sm mt-1">{formData.company === 'Others' ? formData.customCompany : formData.company}</p>
             </div>
             <div>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Position</span>
+              <p className="text-sm mt-1 font-medium">{generatePosition() || formData.role}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mt-3">
+            <div>
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</span>
               <p className="text-sm mt-1">{formData.role === 'Others' ? formData.customRole : formData.role}</p>
-              {formData.role.includes('TA2') && formData.commission && (
-                <p className="text-xs text-gray-500">Commission: {formData.commission}</p>
+            </div>
+            <div>
+              {formData.commission && (
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission</span>
+                  <p className="text-sm mt-1">{formData.commission}</p>
+                </>
+              )}
+              {formData.hub && (
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hub</span>
+                  <p className="text-sm mt-1">{formData.hub}</p>
+                </>
               )}
               {formData.plant && (
-                <p className="text-xs text-gray-500">Plant: {formData.plant}</p>
-              )}
-              {formData.field && (
-                <p className="text-xs text-gray-500">Field: {formData.field}</p>
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant</span>
+                  <p className="text-sm mt-1">{formData.plant}</p>
+                </>
               )}
               {formData.station && (
-                <p className="text-xs text-gray-500">Station: {formData.station}</p>
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station</span>
+                  <p className="text-sm mt-1">{formData.station}</p>
+                </>
+              )}
+              {formData.field && (
+                <>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field</span>
+                  <p className="text-sm mt-1">{formData.field}</p>
+                </>
               )}
             </div>
           </div>
           {!isAdminCreated && (
-            <div>
+            <div className="mt-3">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Authenticator</span>
               <p className="text-sm mt-1">{formData.authenticator}</p>
             </div>
