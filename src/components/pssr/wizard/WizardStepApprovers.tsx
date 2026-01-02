@@ -117,61 +117,50 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
         {infoMessage}
       </p>
 
-      {/* Roles List */}
-      <ScrollArea className="h-[280px] border rounded-lg p-4">
-        <div className="space-y-2">
-          {filteredRoles.map((role) => {
-            const isSelected = selectedRoleIds.includes(role.id);
-            const isDisabled = disabledRoleIds.includes(role.id);
+      {/* Roles List - Only show unselected roles */}
+      {(() => {
+        const availableRoles = filteredRoles.filter(role => !selectedRoleIds.includes(role.id) && !disabledRoleIds.includes(role.id));
+        
+        if (availableRoles.length === 0 && selectedRoleIds.length > 0) {
+          return (
+            <div className="border rounded-lg p-4 text-center text-muted-foreground">
+              <p className="text-sm">All available roles have been selected.</p>
+            </div>
+          );
+        }
 
-            return (
-              <div
-                key={role.id}
-                className={`
-                  flex items-center gap-3 p-3 rounded-lg border transition-all
-                  ${isDisabled 
-                    ? 'opacity-50 cursor-not-allowed bg-muted/30 border-muted' 
-                    : 'cursor-pointer hover:bg-accent/50 hover:border-accent'
-                  }
-                  ${isSelected && !isDisabled 
-                    ? 'bg-primary/5 border-primary/30' 
-                    : 'border-border'
-                  }
-                `}
-                onClick={() => !isDisabled && onRoleToggle(role.id)}
-              >
-                <Checkbox
-                  checked={isSelected}
-                  disabled={isDisabled}
-                  className="pointer-events-none"
-                />
-                <div className="flex-1">
-                  <div className="font-medium flex items-center gap-2">
-                    {role.name}
-                    {isSelected && !isDisabled && (
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                </div>
-                {isDisabled && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Lock className="h-3 w-3" />
-                    <span>PSSR Approver</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {filteredRoles.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+        if (availableRoles.length === 0) {
+          return (
+            <div className="border rounded-lg p-4 text-center text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No roles available.</p>
               <p className="text-sm">Please create roles in the Admin Tools section.</p>
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          );
+        }
+
+        return (
+          <ScrollArea className="h-[280px] border rounded-lg p-4">
+            <div className="space-y-2">
+              {availableRoles.map((role) => (
+                <div
+                  key={role.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-accent/50 hover:border-accent transition-all"
+                  onClick={() => onRoleToggle(role.id)}
+                >
+                  <Checkbox
+                    checked={false}
+                    className="pointer-events-none"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{role.name}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        );
+      })()}
     </div>
   );
 };
