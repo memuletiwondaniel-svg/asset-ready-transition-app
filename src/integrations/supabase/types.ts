@@ -3660,7 +3660,65 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      pssr_checklist_items_ordered: {
+        Row: {
+          approvers: string | null
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          responsible: string | null
+          sequence_number: number | null
+          supporting_evidence: string | null
+          topic: string | null
+          updated_at: string | null
+          updated_by: string | null
+          version: number | null
+        }
+        Insert: {
+          approvers?: string | null
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          responsible?: string | null
+          sequence_number?: number | null
+          supporting_evidence?: string | null
+          topic?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          approvers?: string | null
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          responsible?: string | null
+          sequence_number?: number | null
+          supporting_evidence?: string | null
+          topic?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_checklist_items_category_id_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "pssr_checklist_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_user_account: {
