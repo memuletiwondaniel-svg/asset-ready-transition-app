@@ -127,11 +127,7 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
           onChange={(e) => onReasonNameChange(e.target.value)}
           placeholder="Enter the name for this PSSR reason..."
           maxLength={100}
-          className="text-base"
         />
-        <p className="text-sm text-muted-foreground">
-          {reasonName.length}/100 characters
-        </p>
       </div>
 
       {/* Additional Description */}
@@ -144,11 +140,7 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
           placeholder="Provide additional context or details about this PSSR reason..."
           maxLength={500}
           rows={4}
-          className="text-base resize-none"
         />
-        <p className="text-sm text-muted-foreground">
-          {description.length}/500 characters (optional)
-        </p>
       </div>
     </div>
   );
