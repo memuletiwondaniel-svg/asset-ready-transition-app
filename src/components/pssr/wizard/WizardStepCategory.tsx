@@ -13,12 +13,22 @@ interface WizardStepCategoryProps {
   onSubCategoryChange: (subCategory: SubCategoryType) => void;
 }
 
-const iconMap: Record<string, React.ReactNode> = {
-  'Building2': <Building2 className="h-5 w-5" />,
-  'AlertTriangle': <AlertTriangle className="h-5 w-5" />,
-  'Wrench': <Wrench className="h-5 w-5" />,
-  'FileText': <FileText className="h-5 w-5" />,
-  'PlusCircle': <PlusCircle className="h-5 w-5" />,
+const colorMap: Record<string, string> = {
+  'PROJECT_STARTUP': 'text-primary',
+  'BFM_PROJECTS': 'text-emerald-500',
+  'INCIDENCE': 'text-amber-500',
+  'OPS_MTCE': 'text-violet-500',
+};
+
+const getIcon = (iconName: string, colorClass: string): React.ReactNode => {
+  const icons: Record<string, React.ReactNode> = {
+    'Building2': <Building2 className={`h-5 w-5 ${colorClass}`} />,
+    'AlertTriangle': <AlertTriangle className={`h-5 w-5 ${colorClass}`} />,
+    'Wrench': <Wrench className={`h-5 w-5 ${colorClass}`} />,
+    'FileText': <FileText className={`h-5 w-5 ${colorClass}`} />,
+    'PlusCircle': <PlusCircle className={`h-5 w-5 ${colorClass}`} />,
+  };
+  return icons[iconName] || <FileText className={`h-5 w-5 ${colorClass}`} />;
 };
 
 const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
@@ -68,7 +78,7 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
                 className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all hover:bg-accent/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5"
               >
                 <div className="p-2 rounded-full bg-muted">
-                  {iconMap[category.icon || 'FileText'] || <FileText className="h-5 w-5" />}
+                  {getIcon(category.icon || 'FileText', colorMap[category.code] || 'text-muted-foreground')}
                 </div>
                 <div className="flex-1">
                   <div className="font-medium">{category.name}</div>
