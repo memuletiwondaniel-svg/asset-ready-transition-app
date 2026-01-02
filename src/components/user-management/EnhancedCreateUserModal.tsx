@@ -84,8 +84,18 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const { fields, isLoading: fieldsLoading } = useFields();
   const { stations, isLoading: stationsLoading } = useStations();
 
-  // Filter stations for West Qurna (WQ1) - only CS6, CS7, CS8
+  // Filter stations by field
   const westQurnaStations = stations.filter(s => ['CS6', 'CS7', 'CS8'].includes(s.name));
+  const northRumailaStations = stations.filter(s => ['CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'NCS2', 'NCS4', 'NCS5'].includes(s.name));
+
+  // Get stations based on selected field
+  const getStationsForField = (field: string) => {
+    if (field === 'West Qurna (WQ1)') return westQurnaStations;
+    if (field === 'North Rumaila') return northRumailaStations;
+    return [];
+  };
+
+  const requiresStation = (field: string) => ['West Qurna (WQ1)', 'North Rumaila'].includes(field);
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
   const { data: roleCategories } = useRoleCategories();
   const { addRole } = useAddRole();
@@ -288,11 +298,11 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Validate station selection when West Qurna (WQ1) field is selected
-      if (requiresPlant(formData.role) && formData.plant === 'CS' && formData.field === 'West Qurna (WQ1)' && !formData.station) {
+      // Validate station selection when field requires station
+      if (requiresPlant(formData.role) && formData.plant === 'CS' && requiresStation(formData.field) && !formData.station) {
         toast({
           title: "Missing Station",
-          description: "Please select a station for West Qurna (WQ1).",
+          description: `Please select a station for ${formData.field}.`,
           variant: "destructive",
         });
         return;
@@ -769,7 +779,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           )}
 
-          {requiresPlant(formData.role) && formData.plant === 'CS' && formData.field === 'West Qurna (WQ1)' && (
+          {requiresPlant(formData.role) && formData.plant === 'CS' && requiresStation(formData.field) && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
               <Select
@@ -780,7 +790,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                   <SelectValue placeholder={stationsLoading ? "Loading stations..." : "Select station"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {westQurnaStations.map(station => (
+                  {getStationsForField(formData.field).map(station => (
                     <SelectItem key={station.id} value={station.name}>{station.name}</SelectItem>
                   ))}
                 </SelectContent>
