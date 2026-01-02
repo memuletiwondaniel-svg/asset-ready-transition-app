@@ -605,10 +605,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl font-semibold">PSSR Reasons Configuration</CardTitle>
-              <CardDescription className="mt-1">
-                Manage categories, reasons, and approver assignments
-              </CardDescription>
+              <CardTitle className="text-2xl font-semibold">PSSR Reasons</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Button 
