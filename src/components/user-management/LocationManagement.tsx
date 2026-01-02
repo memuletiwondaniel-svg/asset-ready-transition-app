@@ -554,7 +554,7 @@ const LocationManagement: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Manage your location hierarchy: Plants → Fields → Stations</span>
+          <span>Manage your asset hierarchy: Plants → Fields → Stations</span>
         </div>
         
         {/* Search Input */}
@@ -610,7 +610,7 @@ const LocationManagement: React.FC = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
-                Location Hierarchy
+                Asset Hierarchy
                 {searchQuery && (
                   <Badge variant="secondary" className="ml-2">
                     Filtered
