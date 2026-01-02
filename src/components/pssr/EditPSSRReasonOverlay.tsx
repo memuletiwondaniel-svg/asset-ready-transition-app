@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save, Trash2, FileText, CheckCircle, AlertCircle, Clock, Send, Info, X, Users, Shield, Award } from 'lucide-react';
+import { Loader2, Save, Trash2, FileText, CheckCircle, AlertCircle, Clock, Send, Info, X, Users, Shield, Award, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -85,7 +85,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
   const { data: deliveryParties = [] } = usePSSRDeliveryParties();
 
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   
   // Form state
   const [reasonName, setReasonName] = useState(initialReasonName);
@@ -461,7 +461,7 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={!reasonName.trim() || isSaving}>
+              <Button onClick={() => setShowSaveConfirm(true)} disabled={!reasonName.trim() || isSaving}>
                 {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Save Changes
               </Button>
@@ -470,6 +470,31 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* Save Confirmation Dialog */}
+      <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Save Changes?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-2">
+              <strong>Note:</strong> Changes to this configuration will only apply to <strong>newly created PSSRs</strong>. Existing PSSRs will not be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowSaveConfirm(false);
+                handleSave();
+              }}
+            >
+              Save Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
