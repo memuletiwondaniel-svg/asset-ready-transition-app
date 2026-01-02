@@ -272,6 +272,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
+      // Validate field selection when CS plant is selected for operations roles
+      if (requiresPlant(formData.role) && formData.plant === 'CS' && !formData.field) {
+        toast({
+          title: "Missing Field",
+          description: "Please select a field for Compression Station.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setStep('review');
     } else {
       // Confirm and create user
