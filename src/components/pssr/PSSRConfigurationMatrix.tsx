@@ -608,16 +608,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
               <CardTitle className="text-2xl font-semibold">PSSR Reasons</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button 
-                variant="outline"
-                onClick={() => setShowDeliveryParties(!showDeliveryParties)}
-                className="fluent-button"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Delivery Parties
-                {showDeliveryParties ? <ChevronDown className="h-4 w-4 ml-1" /> : <ChevronRight className="h-4 w-4 ml-1" />}
-              </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setCategoryDialog({ open: true, mode: 'create', data: {} })}
                 className="fluent-button"
@@ -650,60 +641,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
           </div>
 
         </CardHeader>
-
-        {/* Delivery Parties Collapsible Section */}
-        <Collapsible open={showDeliveryParties} onOpenChange={setShowDeliveryParties}>
-          <CollapsibleContent className="border-b border-border/40">
-            <div className="p-4 bg-muted/20">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-sm">Delivery Parties</h3>
-                  <p className="text-xs text-muted-foreground">Manage delivery party options (P&E, BFM)</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPartyDialog({ open: true, mode: 'create', data: {} })}
-                  className="fluent-button"
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Party
-                </Button>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {deliveryParties.map((party) => (
-                  <div
-                    key={party.id}
-                    className="flex items-center justify-between p-3 border border-border/40 rounded-lg bg-card/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {party.code}
-                      </Badge>
-                      <span className="text-sm font-medium">{party.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Badge variant={party.is_active ? 'default' : 'secondary'} className="text-xs">
-                        {party.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setPartyDialog({ open: true, mode: 'edit', data: party })}
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {deliveryParties.length === 0 && (
-                  <p className="text-sm text-muted-foreground italic col-span-full py-2">No delivery parties configured</p>
-                )}
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
 
         <CardContent className="p-0">
           <ScrollArea className="w-full">
