@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
+import { useStations } from '@/hooks/useStations';
 import { useCategorizedRoles, useRoleCategories, useAddRole, useAddRoleCategory } from '@/hooks/useCategorizedRoles';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -43,6 +44,7 @@ interface UserFormData {
   hub: string;
   plant?: string;
   field?: string;
+  station?: string;
   authenticator: string;
 }
 
@@ -80,6 +82,10 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const { data: hubs } = useHubs();
   const { plants, isLoading: plantsLoading } = usePlants();
   const { fields, isLoading: fieldsLoading } = useFields();
+  const { stations, isLoading: stationsLoading } = useStations();
+
+  // Filter stations for West Qurna (WQ1) - only CS6, CS7, CS8
+  const westQurnaStations = stations.filter(s => ['CS6', 'CS7', 'CS8'].includes(s.name));
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
   const { data: roleCategories } = useRoleCategories();
   const { addRole } = useAddRole();
@@ -282,6 +288,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
+      // Validate station selection when West Qurna (WQ1) field is selected
+      if (requiresPlant(formData.role) && formData.plant === 'CS' && formData.field === 'West Qurna (WQ1)' && !formData.station) {
+        toast({
+          title: "Missing Station",
+          description: "Please select a station for West Qurna (WQ1).",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setStep('review');
     } else {
       // Confirm and create user
@@ -332,6 +348,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       hub: '',
       plant: '',
       field: '',
+      station: '',
       authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
@@ -738,7 +755,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
               <Select
                 value={formData.field}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, field: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, field: value, station: '' }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={fieldsLoading ? "Loading fields..." : "Select field"} />
@@ -746,6 +763,25 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 <SelectContent>
                   {fields.map(field => (
                     <SelectItem key={field.id} value={field.name}>{field.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {requiresPlant(formData.role) && formData.plant === 'CS' && formData.field === 'West Qurna (WQ1)' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Station *</Label>
+              <Select
+                value={formData.station}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, station: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={stationsLoading ? "Loading stations..." : "Select station"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {westQurnaStations.map(station => (
+                    <SelectItem key={station.id} value={station.name}>{station.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -844,6 +880,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               )}
               {formData.field && (
                 <p className="text-xs text-gray-500">Field: {formData.field}</p>
+              )}
+              {formData.station && (
+                <p className="text-xs text-gray-500">Station: {formData.station}</p>
               )}
             </div>
           </div>
