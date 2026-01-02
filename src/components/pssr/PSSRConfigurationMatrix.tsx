@@ -654,415 +654,206 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 items={sortedConfigs.map(c => c.reason_id)}
                 strategy={verticalListSortingStrategy}
               >
-                <Table className="table-fixed w-full">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[30%]">
-                        PSSR Reason
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-12">
+                        #
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Template Name
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">
+                        Category
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
                         PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
                         SoF Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[10%] text-right">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24 text-right">
                         Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {/* Render categories in order */}
-                    {[...categories].sort((a, b) => a.display_order - b.display_order).map((category) => {
-                      const categoryConfigs = groupedConfigs.get(category.id) || [];
-                      
+                    {sortedConfigs.map((config, index) => {
+                      const category = categories.find(c => c.id === config.category_id);
                       return (
-                        <React.Fragment key={category.id}>
-                          {/* Category Header Row - Clickable to expand/collapse */}
-                          <TableRow 
-                            className="bg-muted/50 hover:bg-muted/70 border-t-2 border-border/60 cursor-pointer transition-colors group"
-                            onClick={() => toggleCategory(category.id)}
-                          >
-                            <TableCell colSpan={5} className="py-3">
-                              <div className="flex items-center gap-2">
-                                {expandedCategories.has(category.id) ? (
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
-                                )}
-                                <CategoryIcon icon={category.icon} />
-                                <span className="font-semibold text-sm">{category.name}</span>
-                                <Badge variant="secondary" className="text-xs">
-                                  {categoryConfigs.length}
+                        <SortableRow 
+                          key={config.reason_id} 
+                          id={config.reason_id}
+                          isDirty={config.isDirty}
+                        >
+                          {/* Order Number */}
+                          <TableCell className="text-sm text-muted-foreground font-medium">
+                            {index + 1}
+                          </TableCell>
+
+                          {/* Template Name - Clickable to open details */}
+                          <TableCell className="font-medium">
+                            <div 
+                              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditOverlay({ open: true, config });
+                              }}
+                            >
+                              <span className="whitespace-normal break-words">
+                                {config.reason_name}
+                              </span>
+                              {config.isDirty && (
+                                <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
+                                  Modified
                                 </Badge>
-                                {!category.is_active && (
-                                  <Badge variant="outline" className="text-xs text-muted-foreground">Inactive</Badge>
-                                )}
-                                {category.requires_delivery_party && (
-                                  <Badge variant="outline" className="text-xs">
-                                    <Users className="h-3 w-3 mr-1" />
-                                    Delivery Party
-                                  </Badge>
-                                )}
-                                
-                                {/* Category action buttons */}
-                                <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => handleAddReasonToCategory(category.id)}
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Add reason to this category</TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => setCategoryDialog({ open: true, mode: 'edit', data: category })}
-                                      >
-                                        <Edit2 className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Edit category</TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => handleToggleCategoryActive(category)}
-                                      >
-                                        <Settings2 className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{category.is_active ? 'Deactivate' : 'Activate'}</TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7 text-destructive hover:text-destructive"
-                                        onClick={() => setCategoryDeleteDialog({ open: true, categoryId: category.id, categoryName: category.name })}
-                                        disabled={categoryConfigs.length > 0}
-                                      >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      {categoryConfigs.length > 0 ? 'Cannot delete category with reasons' : 'Delete category'}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Category */}
+                          <TableCell>
+                            {category ? (
+                              <div className="flex items-center gap-1.5">
+                                <CategoryIcon icon={category.icon} />
+                                <span className="text-sm">{category.name}</span>
                               </div>
-                            </TableCell>
-                          </TableRow>
-                          
-                          {/* Category's Reasons - Only show when expanded */}
-                          {expandedCategories.has(category.id) && (
-                            categoryConfigs.length > 0 ? (
-                              categoryConfigs.map((config, index) => (
-                                <SortableRow 
-                                  key={config.reason_id} 
-                                  id={config.reason_id}
-                                  isDirty={config.isDirty}
-                                >
-                                  {/* Reason Name with Order Number - Clickable to open details */}
-                                  <TableCell className="font-medium overflow-hidden pl-8">
-                                    <div 
-                                      className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditOverlay({ open: true, config });
-                                      }}
-                                    >
-                                      <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
-                                      <span className="flex-1 min-w-0 whitespace-normal break-words">
-                                        {config.reason_name}
-                                      </span>
-                                      {config.isDirty && (
-                                        <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
-                                          Modified
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </TableCell>
-
-                                  {/* Status Badge */}
-                                  <TableCell>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge 
-                                          className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
-                                        >
-                                          {STATUS_CONFIG[config.status]?.label || config.status}
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>
-                                          {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
-                                          {config.status === 'awaiting_approval' && 'This reason is pending approval'}
-                                          {config.status === 'approved' && 'This reason is approved and ready for use'}
-                                          {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TableCell>
-
-                                  {/* PSSR Approver Roles - Display only, click to edit */}
-                                  <TableCell>
-                                    <div 
-                                      className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditOverlay({ open: true, config });
-                                      }}
-                                    >
-                                      {config.pssr_approver_role_ids.length > 0 ? (
-                                        config.pssr_approver_role_ids.slice(0, 2).map((roleId) => {
-                                          const role = roles.find(r => r.id === roleId);
-                                          return role ? (
-                                            <Badge key={roleId} variant="secondary" className="text-xs">
-                                              {role.name}
-                                            </Badge>
-                                          ) : null;
-                                        })
-                                      ) : (
-                                        <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                                      )}
-                                      {config.pssr_approver_role_ids.length > 2 && (
-                                        <Badge variant="outline" className="text-xs">
-                                          +{config.pssr_approver_role_ids.length - 2} more
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </TableCell>
-
-                                  {/* SoF Approver Roles - Display only, click to edit */}
-                                  <TableCell>
-                                    <div 
-                                      className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditOverlay({ open: true, config });
-                                      }}
-                                    >
-                                      {config.sof_approver_role_ids.length > 0 ? (
-                                        config.sof_approver_role_ids.slice(0, 2).map((roleId) => {
-                                          const role = roles.find(r => r.id === roleId);
-                                          return role ? (
-                                            <Badge key={roleId} variant="secondary" className="text-xs">
-                                              {role.name}
-                                            </Badge>
-                                          ) : null;
-                                        })
-                                      ) : (
-                                        <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                                      )}
-                                      {config.sof_approver_role_ids.length > 2 && (
-                                        <Badge variant="outline" className="text-xs">
-                                          +{config.sof_approver_role_ids.length - 2} more
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </TableCell>
-
-                                  {/* Actions Column */}
-                                  <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() => setEditOverlay({ open: true, config })}
-                                          >
-                                            <Edit2 className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Edit reason</TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
-                                            disabled={config.status === 'in_use'}
-                                          >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          {config.status === 'in_use' ? 'Cannot delete reason in use' : 'Delete reason'}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                  </TableCell>
-                                </SortableRow>
-                              ))
                             ) : (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground pl-8">
-                                  <span className="text-sm italic">No reasons configured for this category</span>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          )}
-                        </React.Fragment>
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
+                          {/* Status Badge */}
+                          <TableCell>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
+                                >
+                                  {STATUS_CONFIG[config.status]?.label || config.status}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  {config.status === 'draft' && 'This template is in draft and not yet submitted for approval'}
+                                  {config.status === 'awaiting_approval' && 'This template is pending approval'}
+                                  {config.status === 'approved' && 'This template is approved and ready for use'}
+                                  {config.status === 'in_use' && 'This template is currently being used in PSSRs'}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TableCell>
+
+                          {/* PSSR Approver Roles - Display only, click to edit */}
+                          <TableCell>
+                            <div 
+                              className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditOverlay({ open: true, config });
+                              }}
+                            >
+                              {config.pssr_approver_role_ids.length > 0 ? (
+                                config.pssr_approver_role_ids.slice(0, 2).map((roleId) => {
+                                  const role = roles.find(r => r.id === roleId);
+                                  return role ? (
+                                    <Badge key={roleId} variant="secondary" className="text-xs">
+                                      {role.name}
+                                    </Badge>
+                                  ) : null;
+                                })
+                              ) : (
+                                <span className="text-sm text-muted-foreground italic">Click to add...</span>
+                              )}
+                              {config.pssr_approver_role_ids.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{config.pssr_approver_role_ids.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* SoF Approver Roles - Display only, click to edit */}
+                          <TableCell>
+                            <div 
+                              className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditOverlay({ open: true, config });
+                              }}
+                            >
+                              {config.sof_approver_role_ids.length > 0 ? (
+                                config.sof_approver_role_ids.slice(0, 2).map((roleId) => {
+                                  const role = roles.find(r => r.id === roleId);
+                                  return role ? (
+                                    <Badge key={roleId} variant="secondary" className="text-xs">
+                                      {role.name}
+                                    </Badge>
+                                  ) : null;
+                                })
+                              ) : (
+                                <span className="text-sm text-muted-foreground italic">Click to add...</span>
+                              )}
+                              {config.sof_approver_role_ids.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{config.sof_approver_role_ids.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Actions Column */}
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => setEditOverlay({ open: true, config })}
+                                  >
+                                    <Edit2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit template</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
+                                    disabled={config.status === 'in_use'}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {config.status === 'in_use' ? 'Cannot delete template in use' : 'Delete template'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
+                        </SortableRow>
                       );
                     })}
 
-                    {/* Render uncategorized reasons if any */}
-                    {(groupedConfigs.get(null) || []).length > 0 && (
-                      <React.Fragment>
-                        <TableRow 
-                          className="bg-muted/30 hover:bg-muted/50 border-t-2 border-border/60 cursor-pointer transition-colors"
-                          onClick={() => toggleCategory(null)}
-                        >
-                          <TableCell colSpan={5} className="py-3">
-                            <div className="flex items-center gap-2">
-                              {expandedCategories.has(null) ? (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
-                              )}
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-semibold text-sm text-muted-foreground">Uncategorized</span>
-                              <Badge variant="secondary" className="text-xs">
-                                {(groupedConfigs.get(null) || []).length}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {expandedCategories.has(null) && (groupedConfigs.get(null) || []).map((config, index) => (
-                          <SortableRow 
-                            key={config.reason_id} 
-                            id={config.reason_id}
-                            isDirty={config.isDirty}
-                          >
-                            <TableCell className="font-medium overflow-hidden pl-8">
-                              <div 
-                                className="flex items-center gap-2 min-w-0 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditOverlay({ open: true, config });
-                                }}
-                              >
-                                <span className="text-xs font-semibold text-muted-foreground shrink-0">{index + 1}.</span>
-                                <span className="flex-1 min-w-0 whitespace-normal break-words">
-                                  {config.reason_name}
-                                </span>
-                                {config.isDirty && (
-                                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
-                                    Modified
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    className={`${STATUS_CONFIG[config.status]?.className || ''} cursor-default font-medium text-xs`}
-                                  >
-                                    {STATUS_CONFIG[config.status]?.label || config.status}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>
-                                    {config.status === 'draft' && 'This reason is in draft and not yet submitted for approval'}
-                                    {config.status === 'awaiting_approval' && 'This reason is pending approval'}
-                                    {config.status === 'approved' && 'This reason is approved and ready for use'}
-                                    {config.status === 'in_use' && 'This reason is currently being used in PSSRs'}
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell>
-                              <RoleMultiSelect
-                                roles={roles}
-                                selectedRoleIds={config.pssr_approver_role_ids}
-                                onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
-                                placeholder="Select PSSR Approvers"
-                                disabledRoleIds={[]}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <RoleMultiSelect
-                                roles={roles}
-                                selectedRoleIds={config.sof_approver_role_ids}
-                                onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
-                                placeholder="Select SoF Approvers"
-                                disabledRoleIds={config.pssr_approver_role_ids}
-                                disabledTooltip="Already assigned as PSSR Approver"
-                              />
-                            </TableCell>
-
-                            {/* Actions Column */}
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={() => setEditOverlay({ open: true, config })}
-                                    >
-                                      <Edit2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Edit reason</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
-                                      disabled={config.status === 'in_use'}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {config.status === 'in_use' ? 'Cannot delete reason in use' : 'Delete reason'}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TableCell>
-                          </SortableRow>
-                        ))}
-                      </React.Fragment>
-                    )}
-
-                    {sortedConfigs.length === 0 && categories.length === 0 && (
+                    {sortedConfigs.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                          <p className="mb-4">No PSSR reasons configured yet.</p>
+                          <p className="mb-4">No PSSR templates configured yet.</p>
                           <Button 
                             onClick={() => setShowAddReasonWizard(true)}
                             className="fluent-button"
                           >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Your First PSSR Reason
+                            Add Your First PSSR Template
                           </Button>
                         </TableCell>
                       </TableRow>
