@@ -1,0 +1,2 @@
+INSERT INTO pssr_reason_categories (name, code, description, icon, display_order, is_active, requires_delivery_party, allows_free_text)
+VALUES ('BFM Projects', 'BFM_PROJECTS', 'Start-up related to project delivery by Asset BFM team', 'Building2', 2, true, true, false);
