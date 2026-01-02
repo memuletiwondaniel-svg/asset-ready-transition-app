@@ -49,9 +49,8 @@ interface LocalConfiguration {
   isDirty: boolean;
   is_active: boolean;
   display_order: number;
-  category: string | null;
-  sub_category: string | null;
   category_id: string | null;
+  delivery_party_id: string | null;
   status: PSSRReasonStatus;
   reason_approver_role_ids: string[];
 }
@@ -167,9 +166,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
         isDirty: false,
         is_active: config.reason?.is_active ?? true,
         display_order: config.reason?.display_order ?? 0,
-        category: (config.reason as any)?.category || null,
-        sub_category: (config.reason as any)?.sub_category || null,
         category_id: (config.reason as any)?.category_id || null,
+        delivery_party_id: (config.reason as any)?.delivery_party_id || null,
         status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
         reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
       })));
@@ -282,9 +280,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
       isDirty: false,
       is_active: config.reason?.is_active ?? true,
       display_order: config.reason?.display_order ?? 0,
-      category: (config.reason as any)?.category || null,
-      sub_category: (config.reason as any)?.sub_category || null,
       category_id: (config.reason as any)?.category_id || null,
+      delivery_party_id: (config.reason as any)?.delivery_party_id || null,
       status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
       reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
     })));
@@ -797,8 +794,8 @@ const PSSRConfigurationMatrix: React.FC = () => {
           }}
           reasonId={editOverlay.config.reason_id}
           reasonName={editOverlay.config.reason_name}
-          category={editOverlay.config.category}
-          subCategory={editOverlay.config.sub_category}
+          categoryId={editOverlay.config.category_id}
+          deliveryPartyId={editOverlay.config.delivery_party_id}
           status={editOverlay.config.status}
           reasonApproverRoleIds={editOverlay.config.reason_approver_role_ids}
           pssrApproverRoleIds={editOverlay.config.pssr_approver_role_ids}
