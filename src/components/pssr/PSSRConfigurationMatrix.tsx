@@ -729,17 +729,20 @@ const PSSRConfigurationMatrix: React.FC = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow className="border-b border-border/40 hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[34%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[30%]">
                         PSSR Reason
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[8%]">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
                         PSSR Approvers
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[20%]">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[18%]">
                         SoF Approvers
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[10%] text-right">
+                        Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -755,7 +758,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             className="bg-muted/50 hover:bg-muted/70 border-t-2 border-border/60 cursor-pointer transition-colors group"
                             onClick={() => toggleCategory(category.id)}
                           >
-                            <TableCell colSpan={4} className="py-3">
+                            <TableCell colSpan={5} className="py-3">
                               <div className="flex items-center gap-2">
                                 {expandedCategories.has(category.id) ? (
                                   <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
@@ -947,11 +950,46 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                       )}
                                     </div>
                                   </TableCell>
+
+                                  {/* Actions Column */}
+                                  <TableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => setEditOverlay({ open: true, config })}
+                                          >
+                                            <Edit2 className="h-3.5 w-3.5" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Edit reason</TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
+                                            disabled={config.status === 'in_use'}
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          {config.status === 'in_use' ? 'Cannot delete reason in use' : 'Delete reason'}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                  </TableCell>
                                 </SortableRow>
                               ))
                             ) : (
                               <TableRow>
-                                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground pl-8">
+                                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground pl-8">
                                   <span className="text-sm italic">No reasons configured for this category</span>
                                 </TableCell>
                               </TableRow>
@@ -968,7 +1006,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                           className="bg-muted/30 hover:bg-muted/50 border-t-2 border-border/60 cursor-pointer transition-colors"
                           onClick={() => toggleCategory(null)}
                         >
-                          <TableCell colSpan={4} className="py-3">
+                          <TableCell colSpan={5} className="py-3">
                             <div className="flex items-center gap-2">
                               {expandedCategories.has(null) ? (
                                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
@@ -1046,6 +1084,41 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 disabledTooltip="Already assigned as PSSR Approver"
                               />
                             </TableCell>
+
+                            {/* Actions Column */}
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => setEditOverlay({ open: true, config })}
+                                    >
+                                      <Edit2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Edit reason</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
+                                      disabled={config.status === 'in_use'}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {config.status === 'in_use' ? 'Cannot delete reason in use' : 'Delete reason'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </TableCell>
                           </SortableRow>
                         ))}
                       </React.Fragment>
@@ -1053,7 +1126,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
                     {sortedConfigs.length === 0 && categories.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
                           <p className="mb-4">No PSSR reasons configured yet.</p>
                           <Button 
