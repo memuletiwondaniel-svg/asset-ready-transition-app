@@ -6,8 +6,9 @@ import { ChevronLeft, ChevronRight, Check, Loader2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import WizardStepCategory, { CategoryType, SubCategoryType } from './wizard/WizardStepCategory';
+import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
+import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
 
 interface AddPSSRReasonWizardProps {
   open: boolean;
@@ -16,7 +17,7 @@ interface AddPSSRReasonWizardProps {
 
 interface WizardState {
   // Step 1
-  category: CategoryType | null;
+  categoryId: string | null;
   subCategory: SubCategoryType;
   reasonName: string;
   description: string;
@@ -42,9 +43,10 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: categories } = useActivePSSRReasonCategories();
   
   const [wizardState, setWizardState] = useState<WizardState>({
-    category: null,
+    categoryId: null,
     subCategory: null,
     reasonName: '',
     description: '',
@@ -53,10 +55,12 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     sofApproverRoleIds: [],
   });
 
+  const selectedCategory = categories?.find(c => c.id === wizardState.categoryId);
+
   const resetWizard = () => {
     setCurrentStep(1);
     setWizardState({
-      category: null,
+      categoryId: null,
       subCategory: null,
       reasonName: '',
       description: '',
@@ -74,11 +78,11 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        if (!wizardState.category) {
+        if (!wizardState.categoryId) {
           toast.error('Please select a category');
           return false;
         }
-        if (wizardState.category === 'Project' && !wizardState.subCategory) {
+        if (selectedCategory?.code === 'PROJECT_STARTUP' && !wizardState.subCategory) {
           toast.error('Please select a project type (P&E or BFM)');
           return false;
         }
@@ -147,7 +151,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         .insert({
           name: wizardState.reasonName.trim(),
           description: wizardState.description.trim() || null,
-          category: wizardState.category,
+          category_id: wizardState.categoryId,
           sub_category: wizardState.subCategory,
           is_active: true,
           display_order: nextDisplayOrder,
@@ -248,11 +252,11 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         <div className="flex-1 overflow-y-auto py-6 px-1">
           {currentStep === 1 && (
             <WizardStepCategory
-              category={wizardState.category}
+              categoryId={wizardState.categoryId}
               subCategory={wizardState.subCategory}
               reasonName={wizardState.reasonName}
               description={wizardState.description}
-              onCategoryChange={(category) => setWizardState(prev => ({ ...prev, category }))}
+              onCategoryChange={(categoryId) => setWizardState(prev => ({ ...prev, categoryId }))}
               onSubCategoryChange={(subCategory) => setWizardState(prev => ({ ...prev, subCategory }))}
               onReasonNameChange={(reasonName) => setWizardState(prev => ({ ...prev, reasonName }))}
               onDescriptionChange={(description) => setWizardState(prev => ({ ...prev, description }))}
