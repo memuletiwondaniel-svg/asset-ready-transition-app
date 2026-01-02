@@ -3041,10 +3041,11 @@ export type Database = {
         }
         Relationships: []
       }
-      roles: {
+      role_category: {
         Row: {
           created_at: string
           description: string | null
+          display_order: number
           id: string
           is_active: boolean
           name: string
@@ -3053,6 +3054,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          display_order?: number
           id?: string
           is_active?: boolean
           name: string
@@ -3061,12 +3063,51 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          display_order?: number
           id?: string
           is_active?: boolean
           name?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      roles: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "role_category"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sof_approvers: {
         Row: {
@@ -3798,6 +3839,17 @@ export type Database = {
           job_title: string
           last_name: string
           user_id: string
+        }[]
+      }
+      get_roles_by_category: {
+        Args: never
+        Returns: {
+          category_id: string
+          category_name: string
+          category_order: number
+          role_description: string
+          role_id: string
+          role_name: string
         }[]
       }
       get_team_member_info: {
