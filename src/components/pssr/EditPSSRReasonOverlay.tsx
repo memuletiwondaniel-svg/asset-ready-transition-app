@@ -475,9 +475,6 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                     </SelectContent>
                   </Select>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Roles already assigned as PSSR Approvers are excluded
-                </p>
               </div>
             </div>
           </ScrollArea>
