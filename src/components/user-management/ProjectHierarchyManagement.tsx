@@ -169,15 +169,10 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     <div className="space-y-6 p-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <MapPin className="h-6 w-6" />
-            Project Hierarchy
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Manage regional groupings of plants and station overrides
-          </p>
-        </div>
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <MapPin className="h-6 w-6" />
+          Project Hierarchy
+        </h2>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={refetch}>
             <RefreshCw className="h-4 w-4 mr-2" />
