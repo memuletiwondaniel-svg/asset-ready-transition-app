@@ -112,32 +112,6 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
         </RadioGroup>
       </div>
 
-      {/* Sub-Category (only for Project Startup) */}
-      {isProjectCategory && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          <Label className="text-base font-medium">Project Type *</Label>
-          <Select
-            value={subCategory || ''}
-            onValueChange={(value) => onSubCategoryChange(value as SubCategoryType)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select project type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="P&E">
-                <div className="flex flex-col">
-                  <span>P&E (Projects & Engineering)</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="BFM">
-                <div className="flex flex-col">
-                  <span>BFM (Brownfield Modification)</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       {/* Reason Name */}
       <div className="space-y-3">
