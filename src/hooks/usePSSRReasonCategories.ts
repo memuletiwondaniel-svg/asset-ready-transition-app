@@ -60,11 +60,12 @@ export const useActivePSSRReasonCategories = () => {
         .from('pssr_reason_categories')
         .select('*')
         .eq('is_active', true)
-        .order('display_order');
+        .order('display_order', { ascending: true });
       
       if (error) throw error;
       return data as PSSRReasonCategory[];
     },
+    staleTime: 0, // Always fetch fresh data
   });
 };
 
