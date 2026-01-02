@@ -61,18 +61,19 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
     );
   }
 
-  // Badge color schemes based on type
-  const badgeColors = {
-    pssr: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700',
-    sof: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700',
-    reason: 'bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 border-violet-300 dark:border-violet-700',
-  };
+  // Multicolor badge palette for variety
+  const badgeColorPalette = [
+    'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700',
+    'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700',
+    'bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 border-violet-300 dark:border-violet-700',
+    'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-700',
+    'bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-200 border-rose-300 dark:border-rose-700',
+    'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-200 border-cyan-300 dark:border-cyan-700',
+    'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-800 dark:text-fuchsia-200 border-fuchsia-300 dark:border-fuchsia-700',
+    'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200 border-teal-300 dark:border-teal-700',
+  ];
 
-  const summaryColors = {
-    pssr: 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
-    sof: 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800',
-    reason: 'bg-violet-50/50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800',
-  };
+  const getBadgeColor = (index: number) => badgeColorPalette[index % badgeColorPalette.length];
 
   return (
     <div className="space-y-4">
@@ -86,7 +87,7 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
       </div>
 
       {/* Selected Summary - Above info alert */}
-      <div className={`p-3 rounded-lg border ${summaryColors[type]}`}>
+      <div className="p-3 rounded-lg border bg-muted/30 border-border">
         <div className="flex items-center gap-2 mb-2">
           <CheckCircle2 className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium">Selected Roles</span>
@@ -96,13 +97,13 @@ const WizardStepApprovers: React.FC<WizardStepApproversProps> = ({
           {selectedRoleIds.length === 0 ? (
             <span className="text-sm text-muted-foreground italic">No roles selected yet</span>
           ) : (
-            selectedRoleIds.map((roleId) => {
+            selectedRoleIds.map((roleId, index) => {
               const role = filteredRoles.find(r => r.id === roleId) || roles.find(r => r.id === roleId);
               return (
                 <Badge 
                   key={roleId} 
                   variant="outline" 
-                  className={`text-xs border ${badgeColors[type]}`}
+                  className={`text-xs border ${getBadgeColor(index)}`}
                 >
                   {role?.name || 'Unknown'}
                 </Badge>
