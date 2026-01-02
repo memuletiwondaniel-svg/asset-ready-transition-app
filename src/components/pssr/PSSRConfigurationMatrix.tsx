@@ -661,7 +661,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                         #
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Template Name
+                        Reason for PSSR
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">
                         Category
