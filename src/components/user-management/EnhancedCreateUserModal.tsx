@@ -336,6 +336,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       return;
     }
     
+    // Check for duplicate role name
+    const normalizedNewRole = newRoleName.trim().toLowerCase();
+    const existingRoles = categorizedRoles?.flatMap(group => group.roles) || [];
+    const isDuplicate = existingRoles.some(role => role.name.toLowerCase() === normalizedNewRole);
+    
+    if (isDuplicate) {
+      toast({ title: 'Error', description: `A role named "${newRoleName.trim()}" already exists`, variant: 'destructive' });
+      return;
+    }
+    
     setIsAddingRole(true);
     try {
       let categoryId = newRoleFunctionId;
