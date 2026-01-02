@@ -22,21 +22,17 @@ interface WizardState {
   reasonName: string;
   description: string;
   
-  // Step 3 - Reason Approvers (who approves the reason for use)
-  reasonApproverRoleIds: string[];
-  
-  // Step 4
+  // Step 2
   pssrApproverRoleIds: string[];
   
-  // Step 5
+  // Step 3
   sofApproverRoleIds: string[];
 }
 
 const STEPS = [
   { id: 1, title: 'Category & Reason', description: 'Select category and enter reason name' },
-  { id: 2, title: 'Reason Approvers', description: 'Select who approves the PSSR reason for use' },
-  { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
-  { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 2, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
+  { id: 3, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
 ];
 
 const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenChange }) => {
@@ -50,7 +46,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     subCategory: null,
     reasonName: '',
     description: '',
-    reasonApproverRoleIds: [],
     pssrApproverRoleIds: [],
     sofApproverRoleIds: [],
   });
@@ -64,7 +59,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       subCategory: null,
       reasonName: '',
       description: '',
-      reasonApproverRoleIds: [],
       pssrApproverRoleIds: [],
       sofApproverRoleIds: [],
     });
@@ -96,22 +90,12 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
         }
         return true;
       case 2:
-        // Items configuration is optional but warn if empty
-        return true;
-      case 3:
-        // Reason approvers - who can approve this reason for use
-        if (wizardState.reasonApproverRoleIds.length === 0) {
-          toast.error('Please select at least one reason approver role');
-          return false;
-        }
-        return true;
-      case 4:
         if (wizardState.pssrApproverRoleIds.length === 0) {
           toast.error('Please select at least one PSSR approver role');
           return false;
         }
         return true;
-      case 5:
+      case 3:
         if (wizardState.sofApproverRoleIds.length === 0) {
           toast.error('Please select at least one SoF approver role');
           return false;
@@ -156,7 +140,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           is_active: true,
           display_order: nextDisplayOrder,
           status: 'draft',
-          reason_approver_role_ids: wizardState.reasonApproverRoleIds,
         })
         .select()
         .single();
@@ -265,22 +248,6 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
 
           {currentStep === 2 && (
             <WizardStepApprovers
-              type="reason"
-              selectedRoleIds={wizardState.reasonApproverRoleIds}
-              onRoleToggle={(roleId) => {
-                setWizardState(prev => {
-                  const current = prev.reasonApproverRoleIds;
-                  const newRoles = current.includes(roleId)
-                    ? current.filter(id => id !== roleId)
-                    : [...current, roleId];
-                  return { ...prev, reasonApproverRoleIds: newRoles };
-                });
-              }}
-            />
-          )}
-
-          {currentStep === 3 && (
-            <WizardStepApprovers
               type="pssr"
               selectedRoleIds={wizardState.pssrApproverRoleIds}
               onRoleToggle={(roleId) => {
@@ -296,7 +263,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
             />
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <WizardStepApprovers
               type="sof"
               selectedRoleIds={wizardState.sofApproverRoleIds}
