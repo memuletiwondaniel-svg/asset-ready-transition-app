@@ -27,6 +27,13 @@ export interface ChecklistItem {
   categoryData?: ChecklistCategory;
 }
 
+export interface ChecklistRole {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+}
+
 export const usePSSRChecklistCategories = () => {
   return useQuery({
     queryKey: ['pssr-checklist-categories'],
@@ -52,11 +59,28 @@ export const usePSSRChecklistItems = () => {
           *,
           categoryData:pssr_checklist_categories(*)
         `)
+        .eq('is_active', true)
         .order('category', { ascending: true })
         .order('sequence_number', { ascending: true });
 
       if (error) throw error;
       return data as ChecklistItem[];
+    },
+  });
+};
+
+export const usePSSRChecklistRoles = () => {
+  return useQuery({
+    queryKey: ['pssr-checklist-roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roles')
+        .select('id, name, description, is_active')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      return data as ChecklistRole[];
     },
   });
 };
