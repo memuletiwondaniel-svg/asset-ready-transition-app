@@ -18,6 +18,7 @@ import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
 import { usePlants } from '@/hooks/usePlants';
+import { useFields } from '@/hooks/useFields';
 import { useCategorizedRoles, useRoleCategories, useAddRole, useAddRoleCategory } from '@/hooks/useCategorizedRoles';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -41,6 +42,7 @@ interface UserFormData {
   commission?: string;
   hub: string;
   plant?: string;
+  field?: string;
   authenticator: string;
 }
 
@@ -77,6 +79,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   const { data: hubs } = useHubs();
   const { plants, isLoading: plantsLoading } = usePlants();
+  const { fields, isLoading: fieldsLoading } = useFields();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
   const { data: roleCategories } = useRoleCategories();
   const { addRole } = useAddRole();
@@ -318,6 +321,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       commission: '',
       hub: '',
       plant: '',
+      field: '',
       authenticator: 'Daniel Memuletiwon',
     });
     setEmailError('');
@@ -705,7 +709,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plant *</Label>
               <Select
                 value={formData.plant}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, plant: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, plant: value, field: '' }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={plantsLoading ? "Loading plants..." : "Select plant"} />
@@ -713,6 +717,25 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 <SelectContent>
                   {plants.map(plant => (
                     <SelectItem key={plant.id} value={plant.name}>{plant.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {requiresPlant(formData.role) && formData.plant === 'CS' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
+              <Select
+                value={formData.field}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, field: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={fieldsLoading ? "Loading fields..." : "Select field"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {fields.map(field => (
+                    <SelectItem key={field.id} value={field.name}>{field.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -808,6 +831,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               )}
               {formData.plant && (
                 <p className="text-xs text-gray-500">Plant: {formData.plant}</p>
+              )}
+              {formData.field && (
+                <p className="text-xs text-gray-500">Field: {formData.field}</p>
               )}
             </div>
           </div>
