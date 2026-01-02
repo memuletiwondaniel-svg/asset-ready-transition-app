@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { 
@@ -35,11 +36,13 @@ import {
   Clock,
   UserCheck,
   AlertTriangle,
-  Home
+  Home,
+  Layers
 } from "lucide-react";
 import EnhancedCreateUserModal from "@/components/user-management/EnhancedCreateUserModal";
 import UserDetailsModal from "@/components/user-management/UserDetailsModal";
 import AuthenticatorApprovalModal from "@/components/user-management/AuthenticatorApprovalModal";
+import DisciplinesManagement from "@/components/user-management/DisciplinesManagement";
 import { useUsers } from "@/hooks/useUsers";
 import { OrshSidebar } from "@/components/OrshSidebar";
 
@@ -50,6 +53,7 @@ interface UserManagementProps {
 const UserManagement = ({ onBack }: UserManagementProps) => {
   const { buildBreadcrumbsFromPath } = useBreadcrumb();
   const breadcrumbs = buildBreadcrumbsFromPath();
+  const [activeTab, setActiveTab] = useState("users");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("");
@@ -194,45 +198,59 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
         </header>
 
         <div className="max-w-7xl mx-auto px-6 py-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
-                </div>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="disciplines" className="flex items-center gap-2">
+                <Layers className="h-4 w-4" />
+                Disciplines
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="users" className="space-y-6">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Users</p>
+                      <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <UserCheck className="h-8 w-8 text-green-600" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Active Users</p>
+                      <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-8 w-8 text-yellow-600" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Pending Approval</p>
+                      <p className="text-2xl font-bold text-yellow-600">{pendingUsers}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-8 w-8 text-red-600" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Rejected</p>
+                      <p className="text-2xl font-bold text-red-600">{rejectedUsers}</p>
+                    </div>
+                  </div>
+                </Card>
               </div>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <UserCheck className="h-8 w-8 text-green-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Users</p>
-                  <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
-                </div>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Clock className="h-8 w-8 text-yellow-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Approval</p>
-                  <p className="text-2xl font-bold text-yellow-600">{pendingUsers}</p>
-                </div>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Rejected</p>
-                  <p className="text-2xl font-bold text-red-600">{rejectedUsers}</p>
-                </div>
-              </div>
-            </Card>
-          </div>
 
           {/* Add User Button */}
           <div className="flex items-center gap-4 mb-6">
@@ -462,7 +480,13 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
             </Table>
           </CardContent>
         </Card>
-      </div>
+            </TabsContent>
+
+            <TabsContent value="disciplines">
+              <DisciplinesManagement />
+            </TabsContent>
+          </Tabs>
+        </div>
 
       {/* Modals */}
       <EnhancedCreateUserModal
