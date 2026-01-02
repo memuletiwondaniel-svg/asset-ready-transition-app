@@ -388,13 +388,13 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 </div>
                 
                 {pssrApproverRoleIds.length > 0 && (
-                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <div className="flex flex-wrap gap-2 p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/30">
                     {pssrApproverRoleIds.map((roleId) => (
-                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 transition-colors hover:bg-accent">
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 bg-blue-100/50 dark:bg-blue-900/30 border-blue-200/50 dark:border-blue-700/30 transition-colors hover:bg-blue-200/50 dark:hover:bg-blue-800/40">
                         {getRoleName(roleId)}
                         <button
                           type="button"
-                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                          className="ml-1 rounded-full p-0.5 text-destructive hover:bg-destructive/20 transition-colors"
                           onClick={() => removeApprover(roleId, pssrApproverRoleIds, setPssrApproverRoleIds)}
                         >
                           <X className="h-3 w-3" />
@@ -440,13 +440,13 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
                 </div>
                 
                 {sofApproverRoleIds.length > 0 && (
-                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <div className="flex flex-wrap gap-2 p-3 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
                     {sofApproverRoleIds.map((roleId) => (
-                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 transition-colors hover:bg-accent">
+                      <Badge key={roleId} variant="secondary" className="flex items-center gap-1 px-3 py-1.5 bg-emerald-100/50 dark:bg-emerald-900/30 border-emerald-200/50 dark:border-emerald-700/30 transition-colors hover:bg-emerald-200/50 dark:hover:bg-emerald-800/40">
                         {getRoleName(roleId)}
                         <button
                           type="button"
-                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                          className="ml-1 rounded-full p-0.5 text-destructive hover:bg-destructive/20 transition-colors"
                           onClick={() => removeApprover(roleId, sofApproverRoleIds, setSofApproverRoleIds)}
                         >
                           <X className="h-3 w-3" />
