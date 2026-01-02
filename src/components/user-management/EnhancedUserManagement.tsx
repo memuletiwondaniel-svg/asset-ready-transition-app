@@ -53,7 +53,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import EnhancedUserDetailsModal from './EnhancedUserDetailsModal';
-import CreateUserModal from './CreateUserModal'; // Uses edge function to create users
+import EnhancedCreateUserModal from './EnhancedCreateUserModal';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 
 interface EnhancedUserManagementProps {
@@ -1000,13 +1000,14 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
         />
       )}
 
-      <CreateUserModal
+      <EnhancedCreateUserModal
         isOpen={showCreateUser}
         onClose={() => setShowCreateUser(false)}
-        onUserCreated={() => {
+        onCreateUser={() => {
           fetchUsers();
           setShowCreateUser(false);
         }}
+        isAdminCreated={true}
       />
 
       {/* Delete Confirmation Dialog */}
