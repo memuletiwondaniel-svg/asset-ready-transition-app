@@ -83,6 +83,17 @@ const categoryColors: Record<string, string> = {
   'HSE': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
 };
 
+// Shortened display names for long category names
+const categoryDisplayNames: Record<string, string> = {
+  'Technical Integrity': 'Tech Integrity',
+};
+
+// Helper function to get display name
+const getCategoryDisplayName = (name: string | undefined): string => {
+  if (!name) return '';
+  return categoryDisplayNames[name] || name;
+};
+
 
 // Generate display ID from category ref_id and sequence number
 const generateDisplayId = (categoryRefId: string | undefined, sequenceNumber: number): string => {
@@ -398,7 +409,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                   variant="outline" 
                   className={cn("px-3 py-1 font-medium", categoryColors[cat?.ref_id || ''])}
                 >
-                  {cat?.name}
+                  {getCategoryDisplayName(cat?.name)}
                 </Badge>
               );
             })()}
@@ -441,7 +452,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                           variant="outline" 
                           className={cn("font-medium", categoryColors[item.categoryData?.ref_id || ''])}
                         >
-                          {item.categoryData?.name}
+                          {getCategoryDisplayName(item.categoryData?.name)}
                         </Badge>
                       </TableCell>
                       {visibleColumns.topic && (
