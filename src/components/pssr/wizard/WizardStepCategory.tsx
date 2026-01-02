@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Building2, AlertTriangle, Wrench, FileText, Loader2 } from 'lucide-react';
+import { Building2, AlertTriangle, Wrench, FileText, Loader2, PlusCircle } from 'lucide-react';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
 
 export type SubCategoryType = 'P&E' | 'BFM' | null;
@@ -25,6 +25,7 @@ const iconMap: Record<string, React.ReactNode> = {
   'AlertTriangle': <AlertTriangle className="h-5 w-5" />,
   'Wrench': <Wrench className="h-5 w-5" />,
   'FileText': <FileText className="h-5 w-5" />,
+  'PlusCircle': <PlusCircle className="h-5 w-5" />,
 };
 
 const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
@@ -88,6 +89,26 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
               </Label>
             </div>
           ))}
+          {/* Add New Category Option */}
+          <div className="relative">
+            <RadioGroupItem
+              value="add_new_category"
+              id="add_new_category"
+              className="peer sr-only"
+            />
+            <Label
+              htmlFor="add_new_category"
+              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all hover:bg-accent/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 border-dashed"
+            >
+              <div className="p-2 rounded-full bg-muted">
+                <PlusCircle className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <div className="font-medium">Add New Category</div>
+                <div className="text-sm text-muted-foreground">Create a custom category for your PSSR template</div>
+              </div>
+            </Label>
+          </div>
         </RadioGroup>
       </div>
 
