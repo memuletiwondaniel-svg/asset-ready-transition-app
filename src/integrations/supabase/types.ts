@@ -3044,6 +3044,7 @@ export type Database = {
       pssr_reason_configuration: {
         Row: {
           checklist_item_ids: string[] | null
+          checklist_item_overrides: Json | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -3055,6 +3056,7 @@ export type Database = {
         }
         Insert: {
           checklist_item_ids?: string[] | null
+          checklist_item_overrides?: Json | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -3066,6 +3068,7 @@ export type Database = {
         }
         Update: {
           checklist_item_ids?: string[] | null
+          checklist_item_overrides?: Json | null
           created_at?: string | null
           created_by?: string | null
           id?: string

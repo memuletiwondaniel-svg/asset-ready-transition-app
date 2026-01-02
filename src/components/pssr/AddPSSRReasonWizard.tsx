@@ -8,9 +8,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
-import WizardStepChecklistItems from './wizard/WizardStepChecklistItems';
+import WizardStepChecklistItems, { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
+import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
 import { usePSSRChecklistItems } from '@/hooks/usePSSRChecklistLibrary';
+import type { Json } from '@/integrations/supabase/types';
 
 
 interface AddPSSRReasonWizardProps {
@@ -33,6 +35,7 @@ interface WizardState {
   
   // Step 4
   checklistItemIds: string[];
+  checklistItemOverrides: ChecklistItemOverrides;
 }
 
 const STEPS = [
@@ -57,6 +60,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     pssrApproverRoleIds: [],
     sofApproverRoleIds: [],
     checklistItemIds: [],
+    checklistItemOverrides: {},
   });
 
   const selectedCategory = categories?.find(c => c.id === wizardState.categoryId);
@@ -71,6 +75,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       pssrApproverRoleIds: [],
       sofApproverRoleIds: [],
       checklistItemIds: [],
+      checklistItemOverrides: {},
     });
   };
 
@@ -170,6 +175,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           pssr_approver_role_ids: wizardState.pssrApproverRoleIds,
           sof_approver_role_ids: wizardState.sofApproverRoleIds,
           checklist_item_ids: wizardState.checklistItemIds,
+          checklist_item_overrides: wizardState.checklistItemOverrides as Json,
         });
 
       if (configError) throw configError;
@@ -303,6 +309,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           {currentStep === 4 && (
             <WizardStepChecklistItems
               selectedItemIds={wizardState.checklistItemIds}
+              itemOverrides={wizardState.checklistItemOverrides}
               onItemToggle={(itemId) => {
                 setWizardState(prev => {
                   const current = prev.checklistItemIds;
@@ -317,6 +324,22 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
               }}
               onDeselectAll={() => {
                 setWizardState(prev => ({ ...prev, checklistItemIds: [] }));
+              }}
+              onItemOverrideChange={(itemId: string, override: ChecklistItemOverride) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  checklistItemOverrides: {
+                    ...prev.checklistItemOverrides,
+                    [itemId]: override,
+                  },
+                }));
+              }}
+              onItemOverrideReset={(itemId: string) => {
+                setWizardState(prev => {
+                  const newOverrides = { ...prev.checklistItemOverrides };
+                  delete newOverrides[itemId];
+                  return { ...prev, checklistItemOverrides: newOverrides };
+                });
               }}
             />
           )}

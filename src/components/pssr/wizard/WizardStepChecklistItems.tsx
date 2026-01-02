@@ -3,27 +3,41 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, FileCheck, ChevronDown, ChevronRight } from 'lucide-react';
-import { usePSSRChecklistItems, usePSSRChecklistCategories } from '@/hooks/usePSSRChecklistLibrary';
+import { Button } from '@/components/ui/button';
+import { Search, FileCheck, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
+import { usePSSRChecklistItems, usePSSRChecklistCategories, ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ChecklistItemEditDialog, { ChecklistItemOverride } from './ChecklistItemEditDialog';
+
+export interface ChecklistItemOverrides {
+  [itemId: string]: ChecklistItemOverride;
+}
 
 interface WizardStepChecklistItemsProps {
   selectedItemIds: string[];
+  itemOverrides: ChecklistItemOverrides;
   onItemToggle: (itemId: string) => void;
   onSelectAllItems: (itemIds: string[]) => void;
   onDeselectAll: () => void;
+  onItemOverrideChange: (itemId: string, override: ChecklistItemOverride) => void;
+  onItemOverrideReset: (itemId: string) => void;
 }
 
 const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   selectedItemIds,
+  itemOverrides,
   onItemToggle,
   onSelectAllItems,
   onDeselectAll,
+  onItemOverrideChange,
+  onItemOverrideReset,
 }) => {
   const { data: checklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: categories = [], isLoading: categoriesLoading } = usePSSRChecklistCategories();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedItemForEdit, setSelectedItemForEdit] = useState<ChecklistItem | null>(null);
 
   const isLoading = itemsLoading || categoriesLoading;
 
@@ -83,6 +97,17 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
     return category?.ref_id || '';
   };
 
+  const handleEditClick = (e: React.MouseEvent, item: ChecklistItem) => {
+    e.stopPropagation();
+    setSelectedItemForEdit(item);
+    setEditDialogOpen(true);
+  };
+
+  const handleCheckboxChange = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    onItemToggle(itemId);
+  };
+
   const totalItems = checklistItems.length;
   const selectedCount = selectedItemIds.length;
 
@@ -102,7 +127,8 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
           Select Applicable Checklist Items
         </h3>
         <p className="text-sm text-muted-foreground">
-          Choose the checklist items that should be included when this PSSR reason is used.
+          Choose the checklist items that should be included when this PSSR reason is used. 
+          Click the edit icon to customize item attributes for this reason only.
         </p>
       </div>
 
@@ -180,27 +206,56 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                   
                   <CollapsibleContent>
                     <div className="ml-6 mt-2 space-y-1">
-                      {items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => onItemToggle(item.id)}
-                        >
-                          <Checkbox
-                            checked={selectedItemIds.includes(item.id)}
-                            onCheckedChange={() => onItemToggle(item.id)}
-                            className="mt-0.5"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">
-                              {item.sequence_number}. {item.topic || 'No Topic'}
-                            </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {item.description}
-                            </p>
+                      {items.map((item) => {
+                        const hasOverride = itemOverrides[item.id] && Object.keys(itemOverrides[item.id]).length > 0;
+                        const isSelected = selectedItemIds.includes(item.id);
+                        
+                        // Use overridden values if available
+                        const displayTopic = itemOverrides[item.id]?.topic ?? item.topic;
+                        const displayDescription = itemOverrides[item.id]?.description ?? item.description;
+                        
+                        return (
+                          <div
+                            key={item.id}
+                            className={`flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors group ${
+                              hasOverride ? 'ring-1 ring-amber-300 dark:ring-amber-700 bg-amber-50/50 dark:bg-amber-900/10' : ''
+                            }`}
+                          >
+                            <div 
+                              className="flex items-center cursor-pointer mt-0.5"
+                              onClick={(e) => handleCheckboxChange(e, item.id)}
+                            >
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => onItemToggle(item.id)}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">
+                                  {item.sequence_number}. {displayTopic || 'No Topic'}
+                                </p>
+                                {hasOverride && (
+                                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                    Customized
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {displayDescription}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => handleEditClick(e, item)}
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -209,6 +264,16 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
           )}
         </div>
       </ScrollArea>
+
+      {/* Edit Dialog */}
+      <ChecklistItemEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        item={selectedItemForEdit}
+        currentOverride={selectedItemForEdit ? itemOverrides[selectedItemForEdit.id] : undefined}
+        onSave={onItemOverrideChange}
+        onReset={onItemOverrideReset}
+      />
     </div>
   );
 };
