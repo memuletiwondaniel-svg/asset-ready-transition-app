@@ -201,7 +201,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const { mutate: logActivity } = useLogActivity();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
@@ -443,7 +443,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(true);
 
     // Subscribe to profile changes for real-time updates
     const profileSubscription = supabase
@@ -456,8 +456,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
         }, 
         (payload) => {
           console.log('Profile changed:', payload);
-          // Refetch users when any profile is updated
-          fetchUsers();
+          // Skip refresh if any modal is open to prevent unmounting
+          if (!showCreateUser && !selectedUser && !editingUser) {
+            fetchUsers(false);
+          }
         }
       )
       .subscribe();
@@ -465,15 +467,17 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
     return () => {
       profileSubscription.unsubscribe();
     };
-  }, []);
+  }, [showCreateUser, selectedUser, editingUser]);
 
   useEffect(() => {
     filterAndSortUsers();
   }, [users, searchQuery, statusFilter, companyFilter, roleFilter, columnSort]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (isInitialLoad = false) => {
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setInitialLoading(true);
+      }
       const { data, error } = await supabase.rpc('get_enhanced_user_management_data');
       
       if (error) {
@@ -502,7 +506,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
       toast.error('An error occurred while fetching users');
       console.error('Error:', error);
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setInitialLoading(false);
+      }
     }
   };
 
@@ -675,7 +681,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack 
   const companies = Array.from(new Set(users.map(user => user.company).filter(Boolean)));
   const roles = Array.from(new Set(users.map(user => user.role).filter(Boolean)));
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg">Loading users...</div>
