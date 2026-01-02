@@ -893,27 +893,62 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                     </Tooltip>
                                   </TableCell>
 
-                                  {/* PSSR Approver Roles */}
+                                  {/* PSSR Approver Roles - Display only, click to edit */}
                                   <TableCell>
-                                    <RoleMultiSelect
-                                      roles={roles}
-                                      selectedRoleIds={config.pssr_approver_role_ids}
-                                      onToggle={(roleId) => handlePSSRApproverToggle(config.reason_id, roleId)}
-                                      placeholder="Select PSSR Approvers"
-                                      disabledRoleIds={[]}
-                                    />
+                                    <div 
+                                      className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditOverlay({ open: true, config });
+                                      }}
+                                    >
+                                      {config.pssr_approver_role_ids.length > 0 ? (
+                                        config.pssr_approver_role_ids.slice(0, 2).map((roleId) => {
+                                          const role = roles.find(r => r.id === roleId);
+                                          return role ? (
+                                            <Badge key={roleId} variant="secondary" className="text-xs">
+                                              {role.name}
+                                            </Badge>
+                                          ) : null;
+                                        })
+                                      ) : (
+                                        <span className="text-sm text-muted-foreground italic">Click to add...</span>
+                                      )}
+                                      {config.pssr_approver_role_ids.length > 2 && (
+                                        <Badge variant="outline" className="text-xs">
+                                          +{config.pssr_approver_role_ids.length - 2} more
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </TableCell>
 
-                                  {/* SoF Approver Roles */}
+                                  {/* SoF Approver Roles - Display only, click to edit */}
                                   <TableCell>
-                                    <RoleMultiSelect
-                                      roles={roles}
-                                      selectedRoleIds={config.sof_approver_role_ids}
-                                      onToggle={(roleId) => handleSoFApproverToggle(config.reason_id, roleId)}
-                                      placeholder="Select SoF Approvers"
-                                      disabledRoleIds={config.pssr_approver_role_ids}
-                                      disabledTooltip="Already assigned as PSSR Approver"
-                                    />
+                                    <div 
+                                      className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditOverlay({ open: true, config });
+                                      }}
+                                    >
+                                      {config.sof_approver_role_ids.length > 0 ? (
+                                        config.sof_approver_role_ids.slice(0, 2).map((roleId) => {
+                                          const role = roles.find(r => r.id === roleId);
+                                          return role ? (
+                                            <Badge key={roleId} variant="secondary" className="text-xs">
+                                              {role.name}
+                                            </Badge>
+                                          ) : null;
+                                        })
+                                      ) : (
+                                        <span className="text-sm text-muted-foreground italic">Click to add...</span>
+                                      )}
+                                      {config.sof_approver_role_ids.length > 2 && (
+                                        <Badge variant="outline" className="text-xs">
+                                          +{config.sof_approver_role_ids.length - 2} more
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </TableCell>
                                 </SortableRow>
                               ))
