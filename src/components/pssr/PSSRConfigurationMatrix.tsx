@@ -11,11 +11,25 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2 } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useRoles } from '@/hooks/useRoles';
-import { usePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
+import { 
+  usePSSRReasonCategories, 
+  usePSSRDeliveryParties,
+  useCreatePSSRReasonCategory,
+  useUpdatePSSRReasonCategory,
+  useDeletePSSRReasonCategory,
+  useCreatePSSRDeliveryParty,
+  useUpdatePSSRDeliveryParty,
+  PSSRReasonCategory,
+  PSSRDeliveryParty,
+} from '@/hooks/usePSSRReasonCategories';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -119,13 +133,22 @@ const PSSRConfigurationMatrix: React.FC = () => {
   const { data: configurations = [], isLoading: isLoadingConfigs } = usePSSRReasonConfigurations();
   const { roles = [], isLoading: isLoadingRoles } = useRoles();
   const { data: categories = [], isLoading: isLoadingCategories } = usePSSRReasonCategories();
+  const { data: deliveryParties = [], isLoading: isLoadingParties } = usePSSRDeliveryParties();
   const upsertMutation = useUpsertPSSRReasonConfiguration();
+  
+  // Category management mutations
+  const createCategory = useCreatePSSRReasonCategory();
+  const updateCategory = useUpdatePSSRReasonCategory();
+  const deleteCategory = useDeletePSSRReasonCategory();
+  const createDeliveryParty = useCreatePSSRDeliveryParty();
+  const updateDeliveryParty = useUpdatePSSRDeliveryParty();
 
   const [localConfigs, setLocalConfigs] = useState<LocalConfiguration[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Add Reason Wizard State
   const [showAddReasonWizard, setShowAddReasonWizard] = useState(false);
+  const [preselectedCategoryId, setPreselectedCategoryId] = useState<string | null>(null);
 
   // Delete Dialog State
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; reasonId: string | null; reasonName: string }>({
@@ -134,6 +157,30 @@ const PSSRConfigurationMatrix: React.FC = () => {
     reasonName: '',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Category Delete Dialog State
+  const [categoryDeleteDialog, setCategoryDeleteDialog] = useState<{ open: boolean; categoryId: string | null; categoryName: string }>({
+    open: false,
+    categoryId: null,
+    categoryName: '',
+  });
+
+  // Category Edit Dialog State
+  const [categoryDialog, setCategoryDialog] = useState<{
+    open: boolean;
+    mode: 'create' | 'edit';
+    data: Partial<PSSRReasonCategory>;
+  }>({ open: false, mode: 'create', data: {} });
+
+  // Delivery Party Dialog State
+  const [partyDialog, setPartyDialog] = useState<{
+    open: boolean;
+    mode: 'create' | 'edit';
+    data: Partial<PSSRDeliveryParty>;
+  }>({ open: false, mode: 'create', data: {} });
+
+  // Delivery Parties section expanded state
+  const [showDeliveryParties, setShowDeliveryParties] = useState(false);
 
   // Reason Details Overlay State
   const [editOverlay, setEditOverlay] = useState<{
@@ -443,7 +490,103 @@ const PSSRConfigurationMatrix: React.FC = () => {
     return { valid: true };
   };
 
-  const isLoading = isLoadingConfigs || isLoadingRoles || isLoadingCategories;
+  // Category handlers
+  const handleCategorySubmit = async () => {
+    const { mode, data } = categoryDialog;
+    
+    if (!data.name?.trim() || !data.code?.trim()) {
+      toast.error('Name and code are required');
+      return;
+    }
+
+    try {
+      if (mode === 'edit' && data.id) {
+        await updateCategory.mutateAsync({
+          id: data.id,
+          name: data.name.trim(),
+          code: data.code.trim(),
+          description: data.description?.trim() || null,
+          requires_delivery_party: data.requires_delivery_party || false,
+          allows_free_text: data.allows_free_text || false,
+          icon: data.icon || null,
+        });
+      } else {
+        const maxOrder = Math.max(...categories.map(c => c.display_order), 0);
+        await createCategory.mutateAsync({
+          name: data.name.trim(),
+          code: data.code.trim(),
+          description: data.description?.trim() || null,
+          display_order: maxOrder + 1,
+          is_active: true,
+          requires_delivery_party: data.requires_delivery_party || false,
+          allows_free_text: data.allows_free_text || false,
+          icon: data.icon || null,
+        });
+      }
+      setCategoryDialog({ open: false, mode: 'create', data: {} });
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!categoryDeleteDialog.categoryId) return;
+    
+    try {
+      await deleteCategory.mutateAsync(categoryDeleteDialog.categoryId);
+      setCategoryDeleteDialog({ open: false, categoryId: null, categoryName: '' });
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  const handleToggleCategoryActive = async (category: PSSRReasonCategory) => {
+    await updateCategory.mutateAsync({
+      id: category.id,
+      is_active: !category.is_active,
+    });
+  };
+
+  // Delivery Party handlers
+  const handlePartySubmit = async () => {
+    const { mode, data } = partyDialog;
+    
+    if (!data.name?.trim() || !data.code?.trim()) {
+      toast.error('Name and code are required');
+      return;
+    }
+
+    try {
+      if (mode === 'edit' && data.id) {
+        await updateDeliveryParty.mutateAsync({
+          id: data.id,
+          name: data.name.trim(),
+          code: data.code.trim(),
+          description: data.description?.trim() || null,
+        });
+      } else {
+        const maxOrder = Math.max(...deliveryParties.map(p => p.display_order), 0);
+        await createDeliveryParty.mutateAsync({
+          name: data.name.trim(),
+          code: data.code.trim(),
+          description: data.description?.trim() || null,
+          display_order: maxOrder + 1,
+          is_active: true,
+        });
+      }
+      setPartyDialog({ open: false, mode: 'create', data: {} });
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  // Open add reason with preselected category
+  const handleAddReasonToCategory = (categoryId: string) => {
+    setPreselectedCategoryId(categoryId);
+    setShowAddReasonWizard(true);
+  };
+
+  const isLoading = isLoadingConfigs || isLoadingRoles || isLoadingCategories || isLoadingParties;
 
   if (isLoading) {
     return (
@@ -462,12 +605,35 @@ const PSSRConfigurationMatrix: React.FC = () => {
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl font-semibold">PSSR Reason</CardTitle>
+              <CardTitle className="text-2xl font-semibold">PSSR Reasons Configuration</CardTitle>
+              <CardDescription className="mt-1">
+                Manage categories, reasons, and approver assignments
+              </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button 
                 variant="outline"
-                onClick={() => setShowAddReasonWizard(true)}
+                onClick={() => setShowDeliveryParties(!showDeliveryParties)}
+                className="fluent-button"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Delivery Parties
+                {showDeliveryParties ? <ChevronDown className="h-4 w-4 ml-1" /> : <ChevronRight className="h-4 w-4 ml-1" />}
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setCategoryDialog({ open: true, mode: 'create', data: {} })}
+                className="fluent-button"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setPreselectedCategoryId(null);
+                  setShowAddReasonWizard(true);
+                }}
                 className="fluent-button"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -496,6 +662,60 @@ const PSSRConfigurationMatrix: React.FC = () => {
             </Alert>
           )}
         </CardHeader>
+
+        {/* Delivery Parties Collapsible Section */}
+        <Collapsible open={showDeliveryParties} onOpenChange={setShowDeliveryParties}>
+          <CollapsibleContent className="border-b border-border/40">
+            <div className="p-4 bg-muted/20">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-sm">Delivery Parties</h3>
+                  <p className="text-xs text-muted-foreground">Manage delivery party options (P&E, BFM)</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPartyDialog({ open: true, mode: 'create', data: {} })}
+                  className="fluent-button"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Party
+                </Button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {deliveryParties.map((party) => (
+                  <div
+                    key={party.id}
+                    className="flex items-center justify-between p-3 border border-border/40 rounded-lg bg-card/50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {party.code}
+                      </Badge>
+                      <span className="text-sm font-medium">{party.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={party.is_active ? 'default' : 'secondary'} className="text-xs">
+                        {party.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setPartyDialog({ open: true, mode: 'edit', data: party })}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {deliveryParties.length === 0 && (
+                  <p className="text-sm text-muted-foreground italic col-span-full py-2">No delivery parties configured</p>
+                )}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         <CardContent className="p-0">
           <ScrollArea className="w-full">
@@ -535,7 +755,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                         <React.Fragment key={category.id}>
                           {/* Category Header Row - Clickable to expand/collapse */}
                           <TableRow 
-                            className="bg-muted/50 hover:bg-muted/70 border-t-2 border-border/60 cursor-pointer transition-colors"
+                            className="bg-muted/50 hover:bg-muted/70 border-t-2 border-border/60 cursor-pointer transition-colors group"
                             onClick={() => toggleCategory(category.id)}
                           >
                             <TableCell colSpan={4} className="py-3">
@@ -550,6 +770,74 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 <Badge variant="secondary" className="text-xs">
                                   {categoryConfigs.length}
                                 </Badge>
+                                {!category.is_active && (
+                                  <Badge variant="outline" className="text-xs text-muted-foreground">Inactive</Badge>
+                                )}
+                                {category.requires_delivery_party && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <Users className="h-3 w-3 mr-1" />
+                                    Delivery Party
+                                  </Badge>
+                                )}
+                                
+                                {/* Category action buttons */}
+                                <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => handleAddReasonToCategory(category.id)}
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Add reason to this category</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => setCategoryDialog({ open: true, mode: 'edit', data: category })}
+                                      >
+                                        <Edit2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Edit category</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => handleToggleCategoryActive(category)}
+                                      >
+                                        <Settings2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{category.is_active ? 'Deactivate' : 'Activate'}</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                        onClick={() => setCategoryDeleteDialog({ open: true, categoryId: category.id, categoryName: category.name })}
+                                        disabled={categoryConfigs.length > 0}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {categoryConfigs.length > 0 ? 'Cannot delete category with reasons' : 'Delete category'}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -852,6 +1140,232 @@ const PSSRConfigurationMatrix: React.FC = () => {
           }}
         />
       )}
+
+      {/* Category Dialog */}
+      <Dialog open={categoryDialog.open} onOpenChange={(open) => setCategoryDialog({ ...categoryDialog, open })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {categoryDialog.mode === 'edit' ? 'Edit Category' : 'Add Category'}
+            </DialogTitle>
+            <DialogDescription>
+              Configure the PSSR reason category settings
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-code">Code *</Label>
+              <Input
+                id="category-code"
+                value={categoryDialog.data.code || ''}
+                onChange={(e) => setCategoryDialog({
+                  ...categoryDialog,
+                  data: { ...categoryDialog.data, code: e.target.value.toUpperCase() }
+                })}
+                placeholder="e.g., PROJECT_STARTUP"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category-name">Name *</Label>
+              <Input
+                id="category-name"
+                value={categoryDialog.data.name || ''}
+                onChange={(e) => setCategoryDialog({
+                  ...categoryDialog,
+                  data: { ...categoryDialog.data, name: e.target.value }
+                })}
+                placeholder="e.g., Project Startup"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category-description">Description</Label>
+              <Textarea
+                id="category-description"
+                value={categoryDialog.data.description || ''}
+                onChange={(e) => setCategoryDialog({
+                  ...categoryDialog,
+                  data: { ...categoryDialog.data, description: e.target.value }
+                })}
+                placeholder="Brief description of this category"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category-icon">Icon</Label>
+              <Select
+                value={categoryDialog.data.icon || ''}
+                onValueChange={(value) => setCategoryDialog({
+                  ...categoryDialog,
+                  data: { ...categoryDialog.data, icon: value }
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an icon" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Building2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" /> Building
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="AlertTriangle">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" /> Alert
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Wrench">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4" /> Wrench
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="FileText">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Document
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <Label>Requires Delivery Party</Label>
+                <p className="text-xs text-muted-foreground">
+                  Users must select P&E or BFM
+                </p>
+              </div>
+              <Switch
+                checked={categoryDialog.data.requires_delivery_party || false}
+                onCheckedChange={(checked) => setCategoryDialog({
+                  ...categoryDialog,
+                  data: { ...categoryDialog.data, requires_delivery_party: checked }
+                })}
+              />
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <Label>Allows Free Text</Label>
+                <p className="text-xs text-muted-foreground">
+                  Users can enter custom text
+                </p>
+              </div>
+              <Switch
+                checked={categoryDialog.data.allows_free_text || false}
+                onCheckedChange={(checked) => setCategoryDialog({
+                  ...categoryDialog,
+                  data: { ...categoryDialog.data, allows_free_text: checked }
+                })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCategoryDialog({ open: false, mode: 'create', data: {} })}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCategorySubmit}
+              disabled={createCategory.isPending || updateCategory.isPending}
+            >
+              {(createCategory.isPending || updateCategory.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              {categoryDialog.mode === 'edit' ? 'Save Changes' : 'Create Category'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Delete Confirmation */}
+      <AlertDialog open={categoryDeleteDialog.open} onOpenChange={(open) => !open && setCategoryDeleteDialog({ open: false, categoryId: null, categoryName: '' })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete Category?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>"{categoryDeleteDialog.categoryName}"</strong>? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCategory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delivery Party Dialog */}
+      <Dialog open={partyDialog.open} onOpenChange={(open) => setPartyDialog({ ...partyDialog, open })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {partyDialog.mode === 'edit' ? 'Edit Delivery Party' : 'Add Delivery Party'}
+            </DialogTitle>
+            <DialogDescription>
+              Configure the delivery party options
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="party-code">Code *</Label>
+              <Input
+                id="party-code"
+                value={partyDialog.data.code || ''}
+                onChange={(e) => setPartyDialog({
+                  ...partyDialog,
+                  data: { ...partyDialog.data, code: e.target.value }
+                })}
+                placeholder="e.g., P&E"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="party-name">Name *</Label>
+              <Input
+                id="party-name"
+                value={partyDialog.data.name || ''}
+                onChange={(e) => setPartyDialog({
+                  ...partyDialog,
+                  data: { ...partyDialog.data, name: e.target.value }
+                })}
+                placeholder="e.g., P&E - Projects & Engineering"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="party-description">Description</Label>
+              <Textarea
+                id="party-description"
+                value={partyDialog.data.description || ''}
+                onChange={(e) => setPartyDialog({
+                  ...partyDialog,
+                  data: { ...partyDialog.data, description: e.target.value }
+                })}
+                placeholder="Brief description"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPartyDialog({ open: false, mode: 'create', data: {} })}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePartySubmit}
+              disabled={createDeliveryParty.isPending || updateDeliveryParty.isPending}
+            >
+              {(createDeliveryParty.isPending || updateDeliveryParty.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              {partyDialog.mode === 'edit' ? 'Save Changes' : 'Create Party'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 };
