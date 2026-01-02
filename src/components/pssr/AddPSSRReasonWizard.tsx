@@ -8,7 +8,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import WizardStepCategory, { SubCategoryType } from './wizard/WizardStepCategory';
 import WizardStepApprovers from './wizard/WizardStepApprovers';
+import WizardStepChecklistItems from './wizard/WizardStepChecklistItems';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
+import { usePSSRChecklistItems } from '@/hooks/usePSSRChecklistLibrary';
 
 
 interface AddPSSRReasonWizardProps {
@@ -28,12 +30,16 @@ interface WizardState {
   
   // Step 3
   sofApproverRoleIds: string[];
+  
+  // Step 4
+  checklistItemIds: string[];
 }
 
 const STEPS = [
   { id: 1, title: 'Category & Reason', description: 'Select category and enter reason name' },
   { id: 2, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
   { id: 3, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
+  { id: 4, title: 'Checklist Items', description: 'Select applicable checklist items' },
 ];
 
 const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenChange }) => {
@@ -50,6 +56,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     description: '',
     pssrApproverRoleIds: [],
     sofApproverRoleIds: [],
+    checklistItemIds: [],
   });
 
   const selectedCategory = categories?.find(c => c.id === wizardState.categoryId);
@@ -63,6 +70,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       description: '',
       pssrApproverRoleIds: [],
       sofApproverRoleIds: [],
+      checklistItemIds: [],
     });
   };
 
@@ -100,6 +108,12 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       case 3:
         if (wizardState.sofApproverRoleIds.length === 0) {
           toast.error('Please select at least one SoF approver role');
+          return false;
+        }
+        return true;
+      case 4:
+        if (wizardState.checklistItemIds.length === 0) {
+          toast.error('Please select at least one checklist item');
           return false;
         }
         return true;
@@ -155,6 +169,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           reason_id: newReason.id,
           pssr_approver_role_ids: wizardState.pssrApproverRoleIds,
           sof_approver_role_ids: wizardState.sofApproverRoleIds,
+          checklist_item_ids: wizardState.checklistItemIds,
         });
 
       if (configError) throw configError;
@@ -281,6 +296,27 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
                     : [...current, roleId];
                   return { ...prev, sofApproverRoleIds: newRoles };
                 });
+              }}
+            />
+          )}
+
+          {currentStep === 4 && (
+            <WizardStepChecklistItems
+              selectedItemIds={wizardState.checklistItemIds}
+              onItemToggle={(itemId) => {
+                setWizardState(prev => {
+                  const current = prev.checklistItemIds;
+                  const newItems = current.includes(itemId)
+                    ? current.filter(id => id !== itemId)
+                    : [...current, itemId];
+                  return { ...prev, checklistItemIds: newItems };
+                });
+              }}
+              onSelectAllItems={(allItemIds) => {
+                setWizardState(prev => ({ ...prev, checklistItemIds: allItemIds }));
+              }}
+              onDeselectAll={() => {
+                setWizardState(prev => ({ ...prev, checklistItemIds: [] }));
               }}
             />
           )}
