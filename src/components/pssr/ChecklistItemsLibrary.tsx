@@ -78,7 +78,7 @@ const categoryColors: Record<string, string> = {
   'TI': 'bg-blue-50 text-blue-700/80 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-300/80 dark:border-blue-800/40',
   'PS': 'bg-rose-50 text-rose-700/80 border-rose-200/60 dark:bg-rose-950/30 dark:text-rose-300/80 dark:border-rose-800/40',
   'ORG': 'bg-violet-50 text-violet-700/80 border-violet-200/60 dark:bg-violet-950/30 dark:text-violet-300/80 dark:border-violet-800/40',
-  'DOC': 'bg-cyan-50 text-cyan-700/80 border-cyan-200/60 dark:bg-cyan-950/30 dark:text-cyan-300/80 dark:border-cyan-800/40',
+  'DOC': 'bg-orange-50 text-orange-700/80 border-orange-200/60 dark:bg-orange-950/30 dark:text-orange-300/80 dark:border-orange-800/40',
   'ER': 'bg-amber-50 text-amber-700/80 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-300/80 dark:border-amber-800/40',
   'HSE': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
 };
