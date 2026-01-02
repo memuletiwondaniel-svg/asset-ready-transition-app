@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Users } from 'lucide-react';
+import { Blocks, Users } from 'lucide-react';
 import FunctionsManagement from './FunctionsManagement';
 import RolesManagement from './RolesManagement';
 
@@ -12,7 +12,7 @@ export const ConfigurationManagement: React.FC = () => {
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="functions" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+            <Blocks className="h-4 w-4" />
             Functions
           </TabsTrigger>
           <TabsTrigger value="roles" className="flex items-center gap-2">
