@@ -322,8 +322,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">First Name *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="firstName" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">First Name *</Label>
               <Input
                 id="firstName"
                 value={formData.firstName}
@@ -331,8 +331,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                 placeholder="Enter first name"
               />
             </div>
-            <div>
-              <Label htmlFor="lastName">Last Name *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="lastName" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Last Name *</Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
@@ -342,8 +342,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="email">Email Address *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address *</Label>
             <Input
               id="email"
               type="email"
@@ -373,8 +373,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </div>
 
           {formData.isFunctionalEmail && (
-            <div>
-              <Label htmlFor="personalEmail">Personal Email Address *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="personalEmail" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Personal Email Address *</Label>
               <Input
                 id="personalEmail"
                 type="email"
@@ -450,8 +450,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           <CardTitle className="text-lg">Company & Role Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>Company *</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company *</Label>
             <Select
               value={formData.company}
               onValueChange={(value) => setFormData(prev => ({ ...prev, company: value }))}
@@ -480,8 +480,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             )}
           </div>
 
-          <div>
-            <Label>Function *</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Function *</Label>
             <Select
               value={formData.function}
               onValueChange={(value) => setFormData(prev => ({ 
@@ -504,8 +504,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </Select>
           </div>
 
-          <div>
-            <Label>Role *</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role *</Label>
             <Select
               value={formData.role}
               onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
@@ -537,8 +537,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </div>
 
           {requiresHub(formData.role) && (
-            <div>
-              <Label>Hub *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hub *</Label>
               <Select
                 value={formData.hub}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
@@ -556,8 +556,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           )}
 
           {['Engr. Manager', 'HSE Manager'].includes(formData.role) && (
-            <div>
-              <Label>Commission *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission *</Label>
               <Select
                 value={formData.commission}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, commission: value }))}
@@ -575,8 +575,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           )}
 
           {shouldShowTA2Commission(formData.role) && (
-            <div>
-              <Label>Commission *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission *</Label>
               <Select
                 value={formData.commission}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, commission: value }))}
@@ -662,12 +662,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         <CardContent className="space-y-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-sm font-medium">Name:</span>
-              <p className="text-sm">{formData.firstName} {formData.lastName}</p>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</span>
+              <p className="text-sm mt-1">{formData.firstName} {formData.lastName}</p>
             </div>
             <div>
-              <span className="text-sm font-medium">Email:</span>
-              <p className="text-sm">{formData.email}</p>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</span>
+              <p className="text-sm mt-1">{formData.email}</p>
               {formData.isFunctionalEmail && (
                 <p className="text-xs text-gray-500">
                   Personal: {formData.personalEmail}
@@ -676,10 +676,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             </div>
           </div>
           <div>
-            <span className="text-sm font-medium">Phone Numbers:</span>
-            {formData.phoneNumbers.map((phone, index) => (
-              <p key={index} className="text-sm">{phone.countryCode} {phone.number}</p>
-            ))}
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone Numbers</span>
+            <div className="mt-1">
+              {formData.phoneNumbers.map((phone, index) => (
+                <p key={index} className="text-sm">{phone.countryCode} {phone.number}</p>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -691,12 +693,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         <CardContent className="space-y-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-sm font-medium">Company:</span>
-              <p className="text-sm">{formData.company === 'Others' ? formData.customCompany : formData.company}</p>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company</span>
+              <p className="text-sm mt-1">{formData.company === 'Others' ? formData.customCompany : formData.company}</p>
             </div>
             <div>
-              <span className="text-sm font-medium">Role:</span>
-              <p className="text-sm">{formData.role === 'Others' ? formData.customRole : formData.role}</p>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</span>
+              <p className="text-sm mt-1">{formData.role === 'Others' ? formData.customRole : formData.role}</p>
               {formData.role.includes('TA2') && formData.commission && (
                 <p className="text-xs text-gray-500">Commission: {formData.commission}</p>
               )}
@@ -704,8 +706,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           </div>
           {formData.associatedProjects.length > 0 && (
             <div>
-              <span className="text-sm font-medium">Associated Projects:</span>
-              <div className="flex flex-wrap gap-1 mt-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Associated Projects</span>
+              <div className="flex flex-wrap gap-1 mt-1.5">
                 {formData.associatedProjects.map(project => (
                   <Badge key={project} variant="secondary" className="text-xs">
                     {project}
@@ -716,8 +718,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           )}
           {!isAdminCreated && (
             <div>
-              <span className="text-sm font-medium">Authenticator:</span>
-              <p className="text-sm">{formData.authenticator}</p>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Authenticator</span>
+              <p className="text-sm mt-1">{formData.authenticator}</p>
             </div>
           )}
         </CardContent>
