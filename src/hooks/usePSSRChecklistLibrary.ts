@@ -113,7 +113,28 @@ export const useUpdateChecklistItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<ChecklistItem> & { id: string }) => {
+    mutationFn: async ({ 
+      id, 
+      oldCategory, 
+      ...updates 
+    }: Partial<ChecklistItem> & { id: string; oldCategory?: string }) => {
+      const categoryChanged = oldCategory && updates.category && oldCategory !== updates.category;
+
+      if (categoryChanged) {
+        // Get the next sequence number for the new category
+        const { data: newCategoryItems } = await supabase
+          .from('pssr_checklist_items')
+          .select('sequence_number')
+          .eq('category', updates.category)
+          .eq('is_active', true)
+          .order('sequence_number', { ascending: false })
+          .limit(1);
+
+        const newSequenceNumber = (newCategoryItems?.[0]?.sequence_number || 0) + 1;
+        updates.sequence_number = newSequenceNumber;
+      }
+
+      // Update the item
       const { data, error } = await supabase
         .from('pssr_checklist_items')
         .update(updates)
@@ -122,6 +143,29 @@ export const useUpdateChecklistItem = () => {
         .single();
 
       if (error) throw error;
+
+      // If category changed, resequence the old category to close the gap
+      if (categoryChanged && oldCategory) {
+        const { data: oldCategoryItems } = await supabase
+          .from('pssr_checklist_items')
+          .select('id, sequence_number')
+          .eq('category', oldCategory)
+          .eq('is_active', true)
+          .order('sequence_number', { ascending: true });
+
+        if (oldCategoryItems) {
+          // Resequence items starting from 1
+          for (let i = 0; i < oldCategoryItems.length; i++) {
+            if (oldCategoryItems[i].sequence_number !== i + 1) {
+              await supabase
+                .from('pssr_checklist_items')
+                .update({ sequence_number: i + 1 })
+                .eq('id', oldCategoryItems[i].id);
+            }
+          }
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -138,13 +182,33 @@ export const useDeleteChecklistItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, categoryId }: { id: string; categoryId: string }) => {
+      // Mark item as inactive
       const { error } = await supabase
         .from('pssr_checklist_items')
         .update({ is_active: false })
         .eq('id', id);
 
       if (error) throw error;
+
+      // Resequence the category to close the gap
+      const { data: categoryItems } = await supabase
+        .from('pssr_checklist_items')
+        .select('id, sequence_number')
+        .eq('category', categoryId)
+        .eq('is_active', true)
+        .order('sequence_number', { ascending: true });
+
+      if (categoryItems) {
+        for (let i = 0; i < categoryItems.length; i++) {
+          if (categoryItems[i].sequence_number !== i + 1) {
+            await supabase
+              .from('pssr_checklist_items')
+              .update({ sequence_number: i + 1 })
+              .eq('id', categoryItems[i].id);
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pssr-checklist-items'] });

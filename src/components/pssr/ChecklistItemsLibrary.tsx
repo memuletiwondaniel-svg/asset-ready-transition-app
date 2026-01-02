@@ -71,6 +71,12 @@ const ROLE_GROUPS = {
   ],
 };
 
+// Generate display ID from category ref_id and sequence number
+const generateDisplayId = (categoryRefId: string | undefined, sequenceNumber: number): string => {
+  if (!categoryRefId) return `??-${String(sequenceNumber).padStart(2, '0')}`;
+  return `${categoryRefId}-${String(sequenceNumber).padStart(2, '0')}`;
+};
+
 const ChecklistItemsLibrary: React.FC = () => {
   const { data: items, isLoading: itemsLoading } = usePSSRChecklistItems();
   const { data: categories, isLoading: categoriesLoading } = usePSSRChecklistCategories();
@@ -106,9 +112,10 @@ const ChecklistItemsLibrary: React.FC = () => {
     if (!items) return [];
     
     return items.filter(item => {
+      const displayId = generateDisplayId(item.categoryData?.ref_id, item.sequence_number);
       const matchesSearch = 
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.approvers?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.supporting_evidence?.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -215,6 +222,8 @@ const ChecklistItemsLibrary: React.FC = () => {
       return;
     }
 
+    const categoryChanged = editingItem && editingItem.category !== formData.category;
+
     const payload = {
       category: formData.category,
       topic: formData.topic.trim() || null,
@@ -224,11 +233,15 @@ const ChecklistItemsLibrary: React.FC = () => {
       responsible: formData.responsible.trim() || null,
       is_active: true,
       version: editingItem ? editingItem.version + 1 : 1,
-      sequence_number: editingItem?.sequence_number || getNextSequenceNumber(formData.category),
+      sequence_number: categoryChanged ? undefined : (editingItem?.sequence_number || getNextSequenceNumber(formData.category)),
     };
 
     if (editingItem) {
-      await updateItem.mutateAsync({ id: editingItem.id, ...payload });
+      await updateItem.mutateAsync({ 
+        id: editingItem.id, 
+        oldCategory: categoryChanged ? editingItem.category : undefined,
+        ...payload 
+      });
     } else {
       await createItem.mutateAsync(payload);
     }
@@ -238,7 +251,10 @@ const ChecklistItemsLibrary: React.FC = () => {
 
   const handleDelete = async () => {
     if (!deleteConfirmItem) return;
-    await deleteItem.mutateAsync(deleteConfirmItem.id);
+    await deleteItem.mutateAsync({ 
+      id: deleteConfirmItem.id, 
+      categoryId: deleteConfirmItem.category 
+    });
     setDeleteConfirmItem(null);
   };
 
@@ -351,7 +367,7 @@ const ChecklistItemsLibrary: React.FC = () => {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleOpenEdit(item)}
                     >
-                      <TableCell className="font-mono text-sm">{item.id.slice(0, 8)}</TableCell>
+                      <TableCell className="font-mono text-sm font-medium">{generateDisplayId(item.categoryData?.ref_id, item.sequence_number)}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{item.categoryData?.name}</Badge>
                       </TableCell>
