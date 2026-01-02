@@ -2835,6 +2835,39 @@ export type Database = {
         }
         Relationships: []
       }
+      pssr_delivery_parties: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pssr_links: {
         Row: {
           created_at: string
@@ -2897,6 +2930,87 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pssr_reason_ati_scopes: {
+        Row: {
+          ati_scope_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          reason_id: string
+        }
+        Insert: {
+          ati_scope_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reason_id: string
+        }
+        Update: {
+          ati_scope_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reason_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_reason_ati_scopes_ati_scope_id_fkey"
+            columns: ["ati_scope_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_tie_in_scopes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_reason_ati_scopes_reason_id_fkey"
+            columns: ["reason_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_reasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pssr_reason_categories: {
+        Row: {
+          allows_free_text: boolean
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          requires_delivery_party: boolean
+          updated_at: string
+        }
+        Insert: {
+          allows_free_text?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          requires_delivery_party?: boolean
+          updated_at?: string
+        }
+        Update: {
+          allows_free_text?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          requires_delivery_party?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -2983,44 +3097,68 @@ export type Database = {
       pssr_reasons: {
         Row: {
           category: string | null
+          category_id: string | null
           created_at: string
+          delivery_party_id: string | null
           description: string | null
           display_order: number
           id: string
           is_active: boolean
           name: string
           reason_approver_role_ids: string[] | null
+          requires_ati_scopes: boolean
           status: string | null
           sub_category: string | null
           updated_at: string
         }
         Insert: {
           category?: string | null
+          category_id?: string | null
           created_at?: string
+          delivery_party_id?: string | null
           description?: string | null
           display_order: number
           id?: string
           is_active?: boolean
           name: string
           reason_approver_role_ids?: string[] | null
+          requires_ati_scopes?: boolean
           status?: string | null
           sub_category?: string | null
           updated_at?: string
         }
         Update: {
           category?: string | null
+          category_id?: string | null
           created_at?: string
+          delivery_party_id?: string | null
           description?: string | null
           display_order?: number
           id?: string
           is_active?: boolean
           name?: string
           reason_approver_role_ids?: string[] | null
+          requires_ati_scopes?: boolean
           status?: string | null
           sub_category?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pssr_reasons_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_reason_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_reasons_delivery_party_id_fkey"
+            columns: ["delivery_party_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_delivery_parties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pssr_team_members: {
         Row: {
