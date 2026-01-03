@@ -759,7 +759,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 config.pssr_approver_role_ids.slice(0, 2).map((roleId) => {
                                   const role = roles.find(r => r.id === roleId);
                                   return role ? (
-                                    <Badge key={roleId} variant="secondary" className="text-xs">
+                                    <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
                                       {role.name}
                                     </Badge>
                                   ) : null;
@@ -788,7 +788,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 config.sof_approver_role_ids.slice(0, 2).map((roleId) => {
                                   const role = roles.find(r => r.id === roleId);
                                   return role ? (
-                                    <Badge key={roleId} variant="secondary" className="text-xs">
+                                    <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
                                       {role.name}
                                     </Badge>
                                   ) : null;
