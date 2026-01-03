@@ -87,26 +87,6 @@ const WizardStepCategory: React.FC<WizardStepCategoryProps> = ({
               </Label>
             </div>
           ))}
-          {/* Add New Category Option */}
-          <div className="relative">
-            <RadioGroupItem
-              value="add_new_category"
-              id="add_new_category"
-              className="peer sr-only"
-            />
-            <Label
-              htmlFor="add_new_category"
-              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all hover:bg-accent/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 border-dashed"
-            >
-              <div className="p-2 rounded-full bg-muted">
-                <PlusCircle className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium">Add New Category</div>
-                <div className="text-sm text-muted-foreground">Create a custom category for your PSSR template</div>
-              </div>
-            </Label>
-          </div>
         </RadioGroup>
       </div>
     </div>
