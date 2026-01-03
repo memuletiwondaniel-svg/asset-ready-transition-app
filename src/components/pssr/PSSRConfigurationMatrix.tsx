@@ -761,7 +761,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                               }}
                             >
                               {config.pssr_approver_role_ids.length > 0 ? (
-                                config.pssr_approver_role_ids.slice(0, 2).map((roleId) => {
+                                config.pssr_approver_role_ids.map((roleId) => {
                                   const role = roles.find(r => r.id === roleId);
                                   return role ? (
                                     <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
@@ -771,11 +771,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 })
                               ) : (
                                 <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                              )}
-                              {config.pssr_approver_role_ids.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{config.pssr_approver_role_ids.length - 2}
-                                </Badge>
                               )}
                             </div>
                           </TableCell>
@@ -790,7 +785,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                               }}
                             >
                               {config.sof_approver_role_ids.length > 0 ? (
-                                config.sof_approver_role_ids.slice(0, 2).map((roleId) => {
+                                config.sof_approver_role_ids.map((roleId) => {
                                   const role = roles.find(r => r.id === roleId);
                                   return role ? (
                                     <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
@@ -800,11 +795,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 })
                               ) : (
                                 <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                              )}
-                              {config.sof_approver_role_ids.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{config.sof_approver_role_ids.length - 2}
-                                </Badge>
                               )}
                             </div>
                           </TableCell>
