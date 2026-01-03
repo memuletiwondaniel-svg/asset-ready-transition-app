@@ -181,13 +181,8 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     }
   };
 
-  const getRegionIcon = (regionName: string) => {
-    switch (regionName.toLowerCase()) {
-      case 'north': return '🔵';
-      case 'central': return '🟡';
-      case 'south': return '🟢';
-      default: return '⚪';
-    }
+  const getRegionIcon = (_regionName: string) => {
+    return null;
   };
 
   // Get plants for selected region in columns view
@@ -270,8 +265,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                       </Button>
                     </CollapsibleTrigger>
                     <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
-                      <span className="text-lg">{getRegionIcon(region.name)}</span>
-                      <MapPin className={`h-4 w-4 shrink-0 ${getRegionColor(region.name)}`} />
+                      <span className="font-medium">{region.name}</span>
                       <span className="font-medium">{region.name}</span>
                       <Badge variant="secondary" className="ml-1 text-xs">{region.plants.length} plants</Badge>
                       {region.stationOverrides.length > 0 && (
@@ -534,7 +528,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span>{getRegionIcon(region.name)}</span>
                               <span className="font-medium truncate">{region.name}</span>
                               {isSelected && (
                                 <ChevronRight className="h-4 w-4 text-primary" />
