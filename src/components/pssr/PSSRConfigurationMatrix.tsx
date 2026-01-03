@@ -718,7 +718,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             {category ? (
                               <div className="flex items-center gap-1.5">
                                 <CategoryIcon icon={category.icon} />
-                                <span className="text-sm">{category.name}</span>
+                                <span className="text-sm whitespace-nowrap">{category.name}</span>
                               </div>
                             ) : (
                               <span className="text-sm text-muted-foreground">—</span>
