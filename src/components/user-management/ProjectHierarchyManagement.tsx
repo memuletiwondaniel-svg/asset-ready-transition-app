@@ -46,9 +46,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     isLoading,
     refetch,
     assignPlantToRegion,
-    removePlantFromRegion,
-    addStationOverride,
-    removeStationOverride,
     addRegion,
     deleteRegion
   } = useProjectHierarchy();
@@ -61,7 +58,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [newRegionDescription, setNewRegionDescription] = useState('');
   const [showAddRegionDialog, setShowAddRegionDialog] = useState(false);
   const [movePlantDialog, setMovePlantDialog] = useState<{ plant: PlantWithHierarchy; currentRegion: RegionWithPlants } | null>(null);
-  const [stationOverrideDialog, setStationOverrideDialog] = useState<{ stationId: string; stationName: string; currentRegionId?: string } | null>(null);
   const [selectedTargetRegion, setSelectedTargetRegion] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedPlant, setSelectedPlant] = useState<string | null>(null);
@@ -130,13 +126,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     if (!movePlantDialog || !selectedTargetRegion) return;
     await assignPlantToRegion(movePlantDialog.plant.id, selectedTargetRegion);
     setMovePlantDialog(null);
-    setSelectedTargetRegion('');
-  };
-
-  const handleStationOverride = async () => {
-    if (!stationOverrideDialog || !selectedTargetRegion) return;
-    await addStationOverride(stationOverrideDialog.stationId, selectedTargetRegion);
-    setStationOverrideDialog(null);
     setSelectedTargetRegion('');
   };
 
@@ -245,7 +234,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           {visibleRegions.map(region => {
             const isRegionExpanded = expandedRegions.has(region.id) || !!searchQuery;
             const filteredPlants = region.plants.filter(filterHierarchy);
-            const hasChildren = filteredPlants.length > 0 || region.stationOverrides.length > 0;
+            const hasChildren = filteredPlants.length > 0;
 
             return (
               <div key={region.id} className="select-none">
@@ -266,13 +255,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                     </CollapsibleTrigger>
                     <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
                       <span className="font-medium">{region.name}</span>
-                      <span className="font-medium">{region.name}</span>
                       <Badge variant="secondary" className="ml-1 text-xs">{region.plants.length} plants</Badge>
-                      {region.stationOverrides.length > 0 && (
-                        <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
-                          {region.stationOverrides.length} overrides
-                        </Badge>
-                      )}
                     </div>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
                       <Button 
@@ -368,36 +351,12 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                           <CollapsibleContent>
                                             <div className="ml-4 border-l border-border/30 pl-2 space-y-0.5">
                                               {field.stations.map(station => (
-                                                <div
+                                              <div
                                                   key={station.id}
-                                                  className={`flex items-center group rounded-md transition-colors py-1 px-2 ${
-                                                    station.hasOverride 
-                                                      ? 'bg-purple-500/10 border border-purple-500/20' 
-                                                      : 'hover:bg-accent/50'
-                                                  }`}
+                                                  className="flex items-center rounded-md transition-colors py-1 px-2 hover:bg-accent/50"
                                                 >
                                                   <Radio className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
                                                   <span className="text-sm text-muted-foreground flex-1">{station.name}</span>
-                                                  {station.hasOverride && (
-                                                    <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30 mr-2">
-                                                      → {station.overrideRegionName}
-                                                    </Badge>
-                                                  )}
-                                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="icon"
-                                                      className="h-5 w-5"
-                                                      onClick={() => setStationOverrideDialog({
-                                                        stationId: station.id,
-                                                        stationName: station.name,
-                                                        currentRegionId: station.overrideRegionId
-                                                      })}
-                                                      title="Override region"
-                                                    >
-                                                      <ArrowLeftRight className="h-2.5 w-2.5" />
-                                                    </Button>
-                                                  </div>
                                                 </div>
                                               ))}
                                             </div>
@@ -413,39 +372,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         );
                       })}
 
-                      {/* Station Overrides */}
-                      {region.stationOverrides.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-purple-500/20">
-                          <p className="text-xs font-medium text-purple-600 mb-1 px-2 flex items-center gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            Station Overrides
-                          </p>
-                          {region.stationOverrides.map(override => (
-                            <div
-                              key={override.id}
-                              className="flex items-center justify-between py-1 px-2 bg-purple-500/10 rounded text-sm mb-0.5"
-                            >
-                              <div className="flex items-center gap-2">
-                                <Radio className="h-3 w-3 text-purple-500" />
-                                <span className="font-medium">{override.station_name}</span>
-                                <span className="text-muted-foreground text-xs">
-                                  ({override.field_name} • {override.plant_name})
-                                </span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-5 p-0 hover:bg-destructive/20"
-                                onClick={() => removeStationOverride(override.station_id)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {filteredPlants.length === 0 && region.stationOverrides.length === 0 && (
+                      {filteredPlants.length === 0 && (
                         <p className="text-xs text-muted-foreground py-2 px-2">
                           No plants assigned to this region
                         </p>
@@ -533,16 +460,9 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                 <ChevronRight className="h-4 w-4 text-primary" />
                               )}
                             </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className="text-xs">
-                                {region.plants.length} plants
-                              </Badge>
-                              {region.stationOverrides.length > 0 && (
-                                <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
-                                  {region.stationOverrides.length} overrides
-                                </Badge>
-                              )}
-                            </div>
+                            <Badge variant="secondary" className="text-xs mt-1">
+                              {region.plants.length} plants
+                            </Badge>
                             {region.description && (
                               <p className="text-xs text-muted-foreground truncate mt-0.5">
                                 {region.description}
@@ -683,21 +603,10 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                           {field.stations.map(station => (
                             <div
                               key={station.id}
-                              className={`flex items-center justify-between py-1 px-2 rounded text-sm ${
-                                station.hasOverride 
-                                  ? 'bg-purple-500/10 border border-purple-500/20' 
-                                  : 'hover:bg-accent/50'
-                              }`}
+                              className="flex items-center py-1 px-2 rounded text-sm hover:bg-accent/50"
                             >
-                              <div className="flex items-center gap-2">
-                                <Radio className="h-3 w-3 text-amber-500" />
-                                <span className="text-muted-foreground">{station.name}</span>
-                              </div>
-                              {station.hasOverride && (
-                                <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
-                                  → {station.overrideRegionName}
-                                </Badge>
-                              )}
+                              <Radio className="h-3 w-3 text-amber-500 mr-2" />
+                              <span className="text-muted-foreground">{station.name}</span>
                             </div>
                           ))}
                         </div>
@@ -872,39 +781,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Station Override Dialog */}
-      <Dialog open={!!stationOverrideDialog} onOpenChange={(open) => !open && setStationOverrideDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Override Station Region</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Override region assignment for <span className="font-medium">{stationOverrideDialog?.stationName}</span>:
-            </p>
-            <Select value={selectedTargetRegion} onValueChange={setSelectedTargetRegion}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select override region" />
-              </SelectTrigger>
-              <SelectContent>
-                {regions.map(region => (
-                  <SelectItem key={region.id} value={region.id}>
-                    {getRegionIcon(region.name)} {region.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setStationOverrideDialog(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleStationOverride} disabled={!selectedTargetRegion}>
-              Set Override
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Region Confirmation */}
       <AlertDialog open={!!deleteRegionDialog} onOpenChange={(open) => !open && setDeleteRegionDialog(null)}>
