@@ -29,6 +29,7 @@ export interface ConfigurationWithDetails extends PSSRReasonConfiguration {
   } | null;
   pssr_approver_roles: Array<{ id: string; name: string }>;
   sof_approver_roles: Array<{ id: string; name: string }>;
+  checklist_item_ids: string[];
 }
 
 // Fetch all configurations with joined data
@@ -82,6 +83,7 @@ export const usePSSRReasonConfigurations = () => {
           reason: reason,
           pssr_approver_roles: (roles || []).filter(r => pssrApproverRoleIds.includes(r.id)),
           sof_approver_roles: (roles || []).filter(r => sofApproverRoleIds.includes(r.id)),
+          checklist_item_ids: config?.checklist_item_ids || [],
         };
       });
 
