@@ -14,7 +14,9 @@ interface ProjectTeamSectionProps {
 }
 
 const REQUIRED_ROLES = [
+  { role: 'P&E Director', required: true },
   { role: 'Project Manager', required: true },
+  { role: 'Project Hub Lead', required: true },
   { role: 'Project Engineer', required: true },
   { role: 'Commissioning Lead', required: true },
   { role: 'Construction Lead', required: true },
