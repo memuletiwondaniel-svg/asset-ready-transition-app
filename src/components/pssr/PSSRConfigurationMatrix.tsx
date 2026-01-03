@@ -67,6 +67,7 @@ interface LocalConfiguration {
   delivery_party_id: string | null;
   status: PSSRReasonStatus;
   reason_approver_role_ids: string[];
+  checklist_item_ids: string[];
 }
 
 // Category Icon Helper Component
@@ -241,6 +242,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
         delivery_party_id: (config.reason as any)?.delivery_party_id || null,
         status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
         reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
+        checklist_item_ids: config.checklist_item_ids || [],
       })));
     }
   }, [configurations]);
@@ -355,6 +357,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
       delivery_party_id: (config.reason as any)?.delivery_party_id || null,
       status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
       reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
+      checklist_item_ids: config.checklist_item_ids || [],
     })));
     toast.info('Changes discarded');
   };
@@ -660,6 +663,9 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
                         Status
                       </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20 text-center">
+                        Items
+                      </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
                         PSSR Approvers
                       </TableHead>
@@ -736,6 +742,13 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 </p>
                               </TooltipContent>
                             </Tooltip>
+                          </TableCell>
+
+                          {/* PSSR Items Count */}
+                          <TableCell className="text-center">
+                            <Badge variant="secondary" className="text-xs font-medium">
+                              {config.checklist_item_ids.length}
+                            </Badge>
                           </TableCell>
 
                           {/* PSSR Approver Roles - Display only, click to edit */}
@@ -836,7 +849,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
 
                     {sortedConfigs.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
                           <p className="mb-4">No PSSR templates configured yet.</p>
                           <Button 
