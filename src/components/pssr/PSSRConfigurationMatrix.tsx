@@ -608,14 +608,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
               <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                onClick={() => setCategoryDialog({ open: true, mode: 'create', data: {} })}
-                className="fluent-button"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Category
-              </Button>
               <Button 
                 onClick={() => {
                   setPreselectedCategoryId(null);
