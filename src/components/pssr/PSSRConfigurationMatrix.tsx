@@ -761,14 +761,33 @@ const PSSRConfigurationMatrix: React.FC = () => {
                               }}
                             >
                               {config.pssr_approver_role_ids.length > 0 ? (
-                                config.pssr_approver_role_ids.map((roleId) => {
-                                  const role = roles.find(r => r.id === roleId);
-                                  return role ? (
-                                    <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
-                                      {role.name}
-                                    </Badge>
-                                  ) : null;
-                                })
+                                (() => {
+                                  const approverOrder = [
+                                    'ORA Lead',
+                                    'Engr. Manager (Asset)',
+                                    'Engr. Manager (P&E)',
+                                    'HSE Manager',
+                                    'TSE Manager',
+                                    'Project Manager',
+                                    'Dep. Plant Director'
+                                  ];
+                                  return [...config.pssr_approver_role_ids]
+                                    .sort((a, b) => {
+                                      const roleA = roles.find(r => r.id === a);
+                                      const roleB = roles.find(r => r.id === b);
+                                      const indexA = approverOrder.indexOf(roleA?.name || '');
+                                      const indexB = approverOrder.indexOf(roleB?.name || '');
+                                      return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+                                    })
+                                    .map((roleId) => {
+                                      const role = roles.find(r => r.id === roleId);
+                                      return role ? (
+                                        <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
+                                          {role.name}
+                                        </Badge>
+                                      ) : null;
+                                    });
+                                })()
                               ) : (
                                 <span className="text-sm text-muted-foreground italic">Click to add...</span>
                               )}
