@@ -2311,6 +2311,45 @@ export type Database = {
           },
         ]
       }
+      project_hub_region: {
+        Row: {
+          created_at: string
+          display_order: number
+          hub_id: string
+          id: string
+          region_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          hub_id: string
+          id?: string
+          region_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          hub_id?: string
+          id?: string
+          region_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_hub_region_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: true
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_hub_region_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "project_region"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_milestone_types: {
         Row: {
           code: string

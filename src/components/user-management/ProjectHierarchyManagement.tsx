@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useProjectHierarchy, RegionWithPlants, PlantWithHierarchy } from '@/hooks/useProjectHierarchy';
+import React, { useState, useMemo } from 'react';
+import { useProjectHierarchy, RegionWithHubs, HubWithProjects, Project } from '@/hooks/useProjectHierarchy';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,18 +7,29 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
+  DndContext, 
+  DragEndEvent, 
+  DragOverlay,
+  DragStartEvent,
+  useSensor, 
+  useSensors, 
+  PointerSensor,
+  closestCenter
+} from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { 
   ChevronDown, 
   ChevronRight, 
   MapPin, 
   Building2, 
-  Layers, 
-  Radio,
+  FolderKanban,
   Plus,
   ArrowLeftRight,
   X,
@@ -27,8 +38,8 @@ import {
   Search,
   GitBranch,
   LayoutGrid,
-  Pencil,
-  Trash2
+  Trash2,
+  GripVertical
 } from 'lucide-react';
 
 interface ProjectHierarchyManagementProps {
@@ -36,32 +47,198 @@ interface ProjectHierarchyManagementProps {
   translations?: Record<string, string>;
 }
 
+// Draggable Hub Component
+const DraggableHub: React.FC<{
+  hub: HubWithProjects;
+  region: RegionWithHubs;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onMoveHub: (hub: HubWithProjects, region: RegionWithHubs) => void;
+  onMoveProject: (project: Project, hub: HubWithProjects) => void;
+}> = ({ hub, region, isExpanded, onToggle, onMoveHub, onMoveProject }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ 
+    id: `hub-${hub.id}`,
+    data: { type: 'hub', hub, region }
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Collapsible open={isExpanded} onOpenChange={onToggle}>
+        <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
+          <div 
+            className="cursor-grab active:cursor-grabbing p-1 opacity-50 hover:opacity-100"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </div>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+              {hub.projects.length > 0 ? (
+                isExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )
+              ) : (
+                <div className="w-3.5" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={onToggle}>
+            <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-sm font-medium">{hub.name} Hub</span>
+            <Badge variant="outline" className="ml-1 text-xs py-0">
+              {hub.projects.length} projects
+            </Badge>
+          </div>
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveHub(hub, region);
+              }}
+              title="Move to another region"
+            >
+              <ArrowLeftRight className="h-2.5 w-2.5" />
+            </Button>
+          </div>
+        </div>
+        <CollapsibleContent>
+          <div className="ml-8 border-l border-border/50 pl-2 space-y-0.5">
+            {hub.projects.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2 px-2">No projects in this hub</p>
+            ) : (
+              hub.projects.map(project => (
+                <DraggableProject 
+                  key={project.id} 
+                  project={project} 
+                  hub={hub}
+                  onMove={onMoveProject}
+                />
+              ))
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+};
+
+// Draggable Project Component
+const DraggableProject: React.FC<{
+  project: Project;
+  hub: HubWithProjects;
+  onMove: (project: Project, hub: HubWithProjects) => void;
+}> = ({ project, hub, onMove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ 
+    id: `project-${project.id}`,
+    data: { type: 'project', project, hub }
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  };
+
+  const projectId = `${project.projectIdPrefix}${project.projectIdNumber}`;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className="flex items-center rounded-md transition-colors py-1 px-2 hover:bg-accent/50 group"
+    >
+      <div 
+        className="cursor-grab active:cursor-grabbing p-0.5 opacity-50 hover:opacity-100 mr-1"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-3 w-3" />
+      </div>
+      <FolderKanban className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
+      <span className="text-xs font-mono text-primary mr-2">{projectId}</span>
+      <span className="text-sm text-muted-foreground flex-1 truncate">{project.projectTitle}</span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-5 w-5 opacity-0 group-hover:opacity-100"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMove(project, hub);
+        }}
+        title="Move to another hub"
+      >
+        <ArrowLeftRight className="h-2.5 w-2.5" />
+      </Button>
+    </div>
+  );
+};
+
 const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   selectedLanguage = 'en',
   translations = {}
 }) => {
   const {
     regions,
-    unassignedPlants,
+    unassignedHubs,
+    unassignedProjects,
+    allHubs,
     isLoading,
     refetch,
-    assignPlantToRegion,
+    assignHubToRegion,
+    moveProjectToHub,
     addRegion,
     deleteRegion
   } = useProjectHierarchy();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set(regions.map(r => r.id)));
-  const [expandedPlants, setExpandedPlants] = useState<Set<string>>(new Set());
-  const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
+  const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set());
+  const [expandedHubs, setExpandedHubs] = useState<Set<string>>(new Set());
   const [newRegionName, setNewRegionName] = useState('');
   const [newRegionDescription, setNewRegionDescription] = useState('');
   const [showAddRegionDialog, setShowAddRegionDialog] = useState(false);
-  const [movePlantDialog, setMovePlantDialog] = useState<{ plant: PlantWithHierarchy; currentRegion: RegionWithPlants } | null>(null);
+  const [moveHubDialog, setMoveHubDialog] = useState<{ hub: HubWithProjects; currentRegion: RegionWithHubs } | null>(null);
+  const [moveProjectDialog, setMoveProjectDialog] = useState<{ project: Project; currentHub: HubWithProjects } | null>(null);
   const [selectedTargetRegion, setSelectedTargetRegion] = useState<string>('');
+  const [selectedTargetHub, setSelectedTargetHub] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [selectedPlant, setSelectedPlant] = useState<string | null>(null);
-  const [deleteRegionDialog, setDeleteRegionDialog] = useState<RegionWithPlants | null>(null);
+  const [selectedHub, setSelectedHub] = useState<string | null>(null);
+  const [deleteRegionDialog, setDeleteRegionDialog] = useState<RegionWithHubs | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // Initialize expanded regions when data loads
   React.useEffect(() => {
@@ -80,38 +257,25 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     setExpandedRegions(newExpanded);
   };
 
-  const togglePlant = (plantId: string) => {
-    const newExpanded = new Set(expandedPlants);
-    if (newExpanded.has(plantId)) {
-      newExpanded.delete(plantId);
+  const toggleHub = (hubId: string) => {
+    const newExpanded = new Set(expandedHubs);
+    if (newExpanded.has(hubId)) {
+      newExpanded.delete(hubId);
     } else {
-      newExpanded.add(plantId);
+      newExpanded.add(hubId);
     }
-    setExpandedPlants(newExpanded);
-  };
-
-  const toggleField = (fieldId: string) => {
-    const newExpanded = new Set(expandedFields);
-    if (newExpanded.has(fieldId)) {
-      newExpanded.delete(fieldId);
-    } else {
-      newExpanded.add(fieldId);
-    }
-    setExpandedFields(newExpanded);
+    setExpandedHubs(newExpanded);
   };
 
   const expandAll = () => {
     setExpandedRegions(new Set(regions.map(r => r.id)));
-    const allPlants = regions.flatMap(r => r.plants.map(p => p.id));
-    const allFields = regions.flatMap(r => r.plants.flatMap(p => p.fields.map(f => f.id)));
-    setExpandedPlants(new Set(allPlants));
-    setExpandedFields(new Set(allFields));
+    const allHubIds = regions.flatMap(r => r.hubs.map(h => h.id));
+    setExpandedHubs(new Set(allHubIds));
   };
 
   const collapseAll = () => {
     setExpandedRegions(new Set());
-    setExpandedPlants(new Set());
-    setExpandedFields(new Set());
+    setExpandedHubs(new Set());
   };
 
   const handleAddRegion = async () => {
@@ -122,11 +286,18 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     setShowAddRegionDialog(false);
   };
 
-  const handleMovePlant = async () => {
-    if (!movePlantDialog || !selectedTargetRegion) return;
-    await assignPlantToRegion(movePlantDialog.plant.id, selectedTargetRegion);
-    setMovePlantDialog(null);
+  const handleMoveHub = async () => {
+    if (!moveHubDialog || !selectedTargetRegion) return;
+    await assignHubToRegion(moveHubDialog.hub.id, selectedTargetRegion);
+    setMoveHubDialog(null);
     setSelectedTargetRegion('');
+  };
+
+  const handleMoveProject = async () => {
+    if (!moveProjectDialog || !selectedTargetHub) return;
+    await moveProjectToHub(moveProjectDialog.project.id, selectedTargetHub);
+    setMoveProjectDialog(null);
+    setSelectedTargetHub('');
   };
 
   const handleDeleteRegion = async () => {
@@ -135,59 +306,69 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     setDeleteRegionDialog(null);
   };
 
-  const filterHierarchy = (plant: PlantWithHierarchy): boolean => {
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const activeData = active.data.current;
+    const overId = over.id as string;
+
+    if (activeData?.type === 'hub') {
+      // Dragging a hub
+      const hub = activeData.hub as HubWithProjects;
+      
+      // Check if dropped on a region
+      if (overId.startsWith('region-')) {
+        const targetRegionId = overId.replace('region-', '');
+        if (targetRegionId !== hub.regionId) {
+          await assignHubToRegion(hub.id, targetRegionId);
+        }
+      }
+    } else if (activeData?.type === 'project') {
+      // Dragging a project
+      const project = activeData.project as Project;
+      
+      // Check if dropped on a hub
+      if (overId.startsWith('hub-')) {
+        const targetHubId = overId.replace('hub-', '');
+        if (targetHubId !== project.hubId) {
+          await moveProjectToHub(project.id, targetHubId);
+        }
+      }
+    }
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  // Filter hierarchy based on search
+  const filterHub = (hub: HubWithProjects): boolean => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     
-    if (plant.name.toLowerCase().includes(query)) return true;
+    if (hub.name.toLowerCase().includes(query)) return true;
     
-    for (const field of plant.fields) {
-      if (field.name.toLowerCase().includes(query)) return true;
-      for (const station of field.stations) {
-        if (station.name.toLowerCase().includes(query)) return true;
-      }
-    }
-    
-    return false;
+    return hub.projects.some(p => 
+      p.projectTitle.toLowerCase().includes(query) ||
+      `${p.projectIdPrefix}${p.projectIdNumber}`.toLowerCase().includes(query)
+    );
   };
 
-  const filterRegion = (region: RegionWithPlants): boolean => {
+  const filterRegion = (region: RegionWithHubs): boolean => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     
     if (region.name.toLowerCase().includes(query)) return true;
     if (region.description?.toLowerCase().includes(query)) return true;
     
-    return region.plants.some(filterHierarchy);
+    return region.hubs.some(filterHub);
   };
 
-  const getRegionColor = (regionName: string) => {
-    switch (regionName.toLowerCase()) {
-      case 'north': return 'text-blue-600';
-      case 'central': return 'text-amber-600';
-      case 'south': return 'text-emerald-600';
-      default: return 'text-primary';
-    }
-  };
-
-  const getRegionIcon = (_regionName: string) => {
-    return null;
-  };
-
-  // Get plants for selected region in columns view
-  const getRegionPlants = (regionId: string | null) => {
-    if (!regionId) return [];
-    const region = regions.find(r => r.id === regionId);
-    return region?.plants || [];
-  };
-
-  // Get fields for selected plant in columns view
-  const getPlantFields = (regionId: string | null, plantId: string | null) => {
-    if (!regionId || !plantId) return [];
-    const region = regions.find(r => r.id === regionId);
-    const plant = region?.plants.find(p => p.id === plantId);
-    return plant?.fields || [];
-  };
+  const visibleRegions = useMemo(() => regions.filter(filterRegion), [regions, searchQuery]);
 
   if (isLoading) {
     return (
@@ -201,8 +382,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
       </div>
     );
   }
-
-  const visibleRegions = regions.filter(filterRegion);
 
   // Tree View Component
   const TreeView = () => {
@@ -229,210 +408,142 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     }
 
     return (
-      <ScrollArea className="h-[500px]">
-        <div className="space-y-1 p-2">
-          {visibleRegions.map(region => {
-            const isRegionExpanded = expandedRegions.has(region.id) || !!searchQuery;
-            const filteredPlants = region.plants.filter(filterHierarchy);
-            const hasChildren = filteredPlants.length > 0 || region.stationOverrides.length > 0;
+      <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <ScrollArea className="h-[500px]">
+          <div className="space-y-1 p-2">
+            {visibleRegions.map(region => {
+              const isRegionExpanded = expandedRegions.has(region.id) || !!searchQuery;
+              const filteredHubs = region.hubs.filter(filterHub);
+              const totalProjects = region.hubs.reduce((sum, h) => sum + h.projects.length, 0);
 
-            return (
-              <div key={region.id} className="select-none">
-                <Collapsible open={isRegionExpanded} onOpenChange={() => toggleRegion(region.id)}>
-                  <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-                        {hasChildren ? (
-                          isRegionExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
+              return (
+                <div key={region.id} className="select-none" id={`region-${region.id}`}>
+                  <Collapsible open={isRegionExpanded} onOpenChange={() => toggleRegion(region.id)}>
+                    <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                          {region.hubs.length > 0 ? (
+                            isRegionExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )
                           ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )
-                        ) : (
-                          <div className="w-4" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                    <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
-                      <span className="font-medium">{region.name}</span>
-                      <Badge variant="secondary" className="ml-1 text-xs">{region.plants.length} plants</Badge>
+                            <div className="w-4" />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{region.name}</span>
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {region.hubs.length} hubs
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {totalProjects} projects
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-destructive hover:text-destructive" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteRegionDialog(region);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 text-destructive hover:text-destructive" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteRegionDialog(region);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="ml-4 border-l border-border pl-2 space-y-1">
-                      {/* Plants */}
-                      {filteredPlants.map(plant => {
-                        const isPlantExpanded = expandedPlants.has(plant.id) || !!searchQuery;
-                        const hasFields = plant.fields.length > 0;
+                    <CollapsibleContent>
+                      <div className="ml-4 border-l border-border pl-2 space-y-1">
+                        {filteredHubs.map(hub => (
+                          <DraggableHub
+                            key={hub.id}
+                            hub={hub}
+                            region={region}
+                            isExpanded={expandedHubs.has(hub.id) || !!searchQuery}
+                            onToggle={() => toggleHub(hub.id)}
+                            onMoveHub={(h, r) => setMoveHubDialog({ hub: h, currentRegion: r })}
+                            onMoveProject={(p, h) => setMoveProjectDialog({ project: p, currentHub: h })}
+                          />
+                        ))}
 
-                        return (
-                          <div key={plant.id}>
-                            <Collapsible open={isPlantExpanded} onOpenChange={() => togglePlant(plant.id)}>
-                              <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
-                                <CollapsibleTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
-                                    {hasFields ? (
-                                      isPlantExpanded ? (
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                      ) : (
-                                        <ChevronRight className="h-3.5 w-3.5" />
-                                      )
-                                    ) : (
-                                      <div className="w-3.5" />
-                                    )}
-                                  </Button>
-                                </CollapsibleTrigger>
-                                <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={() => togglePlant(plant.id)}>
-                                  <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                                  <span className="text-sm font-medium">{plant.name}</span>
-                                  {plant.fields.length > 0 && (
-                                    <Badge variant="outline" className="ml-1 text-xs py-0">{plant.fields.length}</Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMovePlantDialog({ plant, currentRegion: region });
-                                    }}
-                                    title="Move to another region"
-                                  >
-                                    <ArrowLeftRight className="h-2.5 w-2.5" />
-                                  </Button>
-                                </div>
-                              </div>
-                              <CollapsibleContent>
-                                <div className="ml-4 border-l border-border/50 pl-2 space-y-0.5">
-                                  {plant.fields.map(field => {
-                                    const isFieldExpanded = expandedFields.has(field.id) || !!searchQuery;
-                                    const hasStations = field.stations.length > 0;
-
-                                    return (
-                                      <div key={field.id}>
-                                        <Collapsible open={isFieldExpanded} onOpenChange={() => toggleField(field.id)}>
-                                          <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
-                                            <CollapsibleTrigger asChild>
-                                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0">
-                                                {hasStations ? (
-                                                  isFieldExpanded ? (
-                                                    <ChevronDown className="h-3 w-3" />
-                                                  ) : (
-                                                    <ChevronRight className="h-3 w-3" />
-                                                  )
-                                                ) : (
-                                                  <div className="w-3" />
-                                                )}
-                                              </Button>
-                                            </CollapsibleTrigger>
-                                            <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={() => toggleField(field.id)}>
-                                              <Layers className="h-3 w-3 text-blue-500 shrink-0" />
-                                              <span className="text-sm">{field.name}</span>
-                                              {field.stations.length > 0 && (
-                                                <Badge variant="outline" className="text-xs py-0">{field.stations.length}</Badge>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <CollapsibleContent>
-                                            <div className="ml-4 border-l border-border/30 pl-2 space-y-0.5">
-                                              {field.stations.map(station => (
-                                              <div
-                                                  key={station.id}
-                                                  className="flex items-center rounded-md transition-colors py-1 px-2 hover:bg-accent/50"
-                                                >
-                                                  <Radio className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
-                                                  <span className="text-sm text-muted-foreground flex-1">{station.name}</span>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </CollapsibleContent>
-                                        </Collapsible>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </CollapsibleContent>
-                            </Collapsible>
-                          </div>
-                        );
-                      })}
-
-                      {/* Project Hubs (Stations assigned to this region) */}
-                      {region.stationOverrides.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-border/50">
-                          <p className="text-xs text-muted-foreground mb-1 px-2 flex items-center gap-1">
-                            <Radio className="h-3 w-3" />
-                            Project Hubs
+                        {filteredHubs.length === 0 && (
+                          <p className="text-xs text-muted-foreground py-2 px-2">
+                            No hubs assigned to this region
                           </p>
-                          {region.stationOverrides.map(station => (
-                            <div
-                              key={station.id}
-                              className="flex items-center rounded-md transition-colors py-1 px-2 hover:bg-accent/50 ml-2"
-                            >
-                              <Radio className="h-3 w-3 text-emerald-500 shrink-0 mr-2" />
-                              <span className="text-sm text-foreground">{station.station_name}</span>
-                              <span className="text-xs text-muted-foreground ml-2">
-                                (from {station.plant_name})
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {filteredPlants.length === 0 && region.stationOverrides.length === 0 && (
-                        <p className="text-xs text-muted-foreground py-2 px-2">
-                          No plants or hubs assigned to this region
-                        </p>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            );
-          })}
-
-          {/* Unassigned Plants */}
-          {unassignedPlants.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-2 px-2 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                Unassigned Plants
-              </p>
-              {unassignedPlants.map(plant => (
-                <div
-                  key={plant.id}
-                  className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent/50"
-                >
-                  <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-sm">{plant.name}</span>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
-              ))}
+              );
+            })}
+
+            {/* Unassigned Projects */}
+            {unassignedProjects.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-2 px-2 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Unassigned Projects ({unassignedProjects.length})
+                </p>
+                {unassignedProjects.map(project => (
+                  <div
+                    key={project.id}
+                    className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent/50 group"
+                  >
+                    <FolderKanban className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-mono text-primary">
+                      {project.projectIdPrefix}{project.projectIdNumber}
+                    </span>
+                    <span className="text-sm truncate">{project.projectTitle}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 ml-auto opacity-0 group-hover:opacity-100"
+                      onClick={() => setMoveProjectDialog({ 
+                        project, 
+                        currentHub: { id: '', name: 'Unassigned', projects: [], regionId: '', displayOrder: 0, description: null } 
+                      })}
+                    >
+                      <ArrowLeftRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+        <DragOverlay>
+          {activeId && activeId.startsWith('hub-') && (
+            <div className="bg-background border rounded-md p-2 shadow-lg">
+              <Building2 className="h-4 w-4 inline mr-2" />
+              Moving hub...
             </div>
           )}
-        </div>
-      </ScrollArea>
+          {activeId && activeId.startsWith('project-') && (
+            <div className="bg-background border rounded-md p-2 shadow-lg">
+              <FolderKanban className="h-4 w-4 inline mr-2" />
+              Moving project...
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
     );
   };
 
   // Columns View Component
   const ColumnsView = () => {
     const selectedRegionData = regions.find(r => r.id === selectedRegion);
-    const selectedPlantData = selectedRegionData?.plants.find(p => p.id === selectedPlant);
+    const selectedHubData = selectedRegionData?.hubs.find(h => h.id === selectedHub);
 
     return (
       <div className="flex flex-col lg:flex-row gap-4">
@@ -461,6 +572,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                 <div className="space-y-2">
                   {regions.map(region => {
                     const isSelected = selectedRegion === region.id;
+                    const totalProjects = region.hubs.reduce((sum, h) => sum + h.projects.length, 0);
                     return (
                       <div
                         key={region.id}
@@ -471,7 +583,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         }`}
                         onClick={() => {
                           setSelectedRegion(isSelected ? null : region.id);
-                          setSelectedPlant(null);
+                          setSelectedHub(null);
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -484,13 +596,11 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                             </div>
                             <div className="flex gap-1 mt-1">
                               <Badge variant="secondary" className="text-xs">
-                                {region.plants.length} plants
+                                {region.hubs.length} hubs
                               </Badge>
-                              {region.stationOverrides.length > 0 && (
-                                <Badge variant="outline" className="text-xs text-emerald-600">
-                                  {region.stationOverrides.length} hubs
-                                </Badge>
-                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {totalProjects} projects
+                              </Badge>
                             </div>
                             {region.description && (
                               <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -521,15 +631,15 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </CardContent>
         </Card>
 
-        {/* Plants Column */}
+        {/* Hubs Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Plants
+                Project Hubs
                 <Badge variant="secondary" className="ml-1">
-                  {selectedRegionData?.plants.length || 0}
+                  {selectedRegionData?.hubs.length || 0}
                 </Badge>
               </CardTitle>
             </div>
@@ -537,37 +647,37 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           <CardContent className="pt-0">
             {!selectedRegion ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Select a region to view plants
+                Select a region to view hubs
               </div>
-            ) : (selectedRegionData?.plants.length || 0) === 0 ? (
+            ) : (selectedRegionData?.hubs.length || 0) === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                No plants in this region
+                No hubs in this region
               </div>
             ) : (
               <ScrollArea className="h-[400px] pr-3">
                 <div className="space-y-2">
-                  {selectedRegionData?.plants.map(plant => {
-                    const isSelected = selectedPlant === plant.id;
+                  {selectedRegionData?.hubs.map(hub => {
+                    const isSelected = selectedHub === hub.id;
                     return (
                       <div
-                        key={plant.id}
+                        key={hub.id}
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                           isSelected 
                             ? 'bg-primary/10 border-primary' 
                             : 'hover:bg-accent border-border'
                         }`}
-                        onClick={() => setSelectedPlant(isSelected ? null : plant.id)}
+                        onClick={() => setSelectedHub(isSelected ? null : hub.id)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{plant.name}</span>
+                              <span className="font-medium truncate">{hub.name} Hub</span>
                               {isSelected && (
                                 <ChevronRight className="h-4 w-4 text-primary" />
                               )}
                             </div>
                             <Badge variant="outline" className="text-xs mt-1">
-                              {plant.fields.length} fields
+                              {hub.projects.length} projects
                             </Badge>
                           </div>
                           <div className="flex items-center gap-1 ml-2">
@@ -577,7 +687,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                               className="h-7 w-7"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setMovePlantDialog({ plant, currentRegion: selectedRegionData! });
+                                setMoveHubDialog({ hub, currentRegion: selectedRegionData! });
                               }}
                             >
                               <ArrowLeftRight className="h-3.5 w-3.5" />
@@ -587,83 +697,56 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                       </div>
                     );
                   })}
-                  
-                  {/* Project Hubs Section */}
-                  {selectedRegionData?.stationOverrides && selectedRegionData.stationOverrides.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                        <Radio className="h-3 w-3" />
-                        Project Hubs
-                      </p>
-                      {selectedRegionData.stationOverrides.map(station => (
-                        <div
-                          key={station.id}
-                          className="p-2 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800 mb-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Radio className="h-3.5 w-3.5 text-emerald-500" />
-                            <span className="font-medium text-sm">{station.station_name}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground ml-5">
-                            From {station.plant_name} → {station.field_name}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </ScrollArea>
             )}
           </CardContent>
         </Card>
 
-        {/* Fields & Stations Column */}
+        {/* Projects Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Layers className="h-4 w-4" />
-                Fields & Stations
+                <FolderKanban className="h-4 w-4" />
+                Projects
                 <Badge variant="secondary" className="ml-1">
-                  {selectedPlantData?.fields.length || 0}
+                  {selectedHubData?.projects.length || 0}
                 </Badge>
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            {!selectedPlant ? (
+            {!selectedHub ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Select a plant to view fields
+                Select a hub to view projects
               </div>
-            ) : (selectedPlantData?.fields.length || 0) === 0 ? (
+            ) : (selectedHubData?.projects.length || 0) === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                No fields in this plant
+                No projects in this hub
               </div>
             ) : (
               <ScrollArea className="h-[400px] pr-3">
                 <div className="space-y-2">
-                  {selectedPlantData?.fields.map(field => (
-                    <div key={field.id} className="p-3 rounded-lg border border-border">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Layers className="h-3.5 w-3.5 text-blue-500" />
-                        <span className="font-medium text-sm">{field.name}</span>
-                        <Badge variant="outline" className="text-xs ml-auto">
-                          {field.stations.length} stations
-                        </Badge>
+                  {selectedHubData?.projects.map(project => (
+                    <div key={project.id} className="p-3 rounded-lg border border-border group hover:bg-accent/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FolderKanban className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="font-mono text-sm text-primary">
+                          {project.projectIdPrefix}{project.projectIdNumber}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 ml-auto opacity-0 group-hover:opacity-100"
+                          onClick={() => setMoveProjectDialog({ project, currentHub: selectedHubData! })}
+                        >
+                          <ArrowLeftRight className="h-3 w-3" />
+                        </Button>
                       </div>
-                      {field.stations.length > 0 && (
-                        <div className="space-y-1 pl-5 border-l border-border/50">
-                          {field.stations.map(station => (
-                            <div
-                              key={station.id}
-                              className="flex items-center py-1 px-2 rounded text-sm hover:bg-accent/50"
-                            >
-                              <Radio className="h-3 w-3 text-amber-500 mr-2" />
-                              <span className="text-muted-foreground">{station.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <p className="text-sm text-muted-foreground truncate pl-5">
+                        {project.projectTitle}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -681,7 +764,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Manage your project hierarchy: Regions → Plants → Fields → Stations</span>
+          <span>Manage your project hierarchy: Regions → Hubs → Projects</span>
         </div>
         
         {/* Search Input */}
@@ -797,16 +880,16 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Move Plant Dialog */}
-      <Dialog open={!!movePlantDialog} onOpenChange={(open) => !open && setMovePlantDialog(null)}>
+      {/* Move Hub Dialog */}
+      <Dialog open={!!moveHubDialog} onOpenChange={(open) => !open && setMoveHubDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Move Plant to Another Region</DialogTitle>
+            <DialogTitle>Move Hub to Another Region</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Move <span className="font-medium">{movePlantDialog?.plant.name}</span> from{' '}
-              <span className="font-medium">{movePlantDialog?.currentRegion.name}</span> to:
+              Move <span className="font-medium">{moveHubDialog?.hub.name} Hub</span> from{' '}
+              <span className="font-medium">{moveHubDialog?.currentRegion.name}</span> to:
             </p>
             <Select value={selectedTargetRegion} onValueChange={setSelectedTargetRegion}>
               <SelectTrigger>
@@ -814,43 +897,81 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {regions
-                  .filter(r => r.id !== movePlantDialog?.currentRegion.id)
+                  .filter(r => r.id !== moveHubDialog?.currentRegion.id)
                   .map(region => (
                     <SelectItem key={region.id} value={region.id}>
-                      {getRegionIcon(region.name)} {region.name}
+                      {region.name}
                     </SelectItem>
                   ))}
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMovePlantDialog(null)}>
+            <Button variant="outline" onClick={() => setMoveHubDialog(null)}>
               Cancel
             </Button>
-            <Button onClick={handleMovePlant} disabled={!selectedTargetRegion}>
-              Move Plant
+            <Button onClick={handleMoveHub} disabled={!selectedTargetRegion}>
+              Move Hub
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Move Project Dialog */}
+      <Dialog open={!!moveProjectDialog} onOpenChange={(open) => !open && setMoveProjectDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move Project to Another Hub</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Move <span className="font-medium">
+                {moveProjectDialog?.project.projectIdPrefix}{moveProjectDialog?.project.projectIdNumber} - {moveProjectDialog?.project.projectTitle}
+              </span> to:
+            </p>
+            <Select value={selectedTargetHub} onValueChange={setSelectedTargetHub}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select target hub" />
+              </SelectTrigger>
+              <SelectContent>
+                {allHubs
+                  .filter(h => h.id !== moveProjectDialog?.currentHub.id)
+                  .map(hub => (
+                    <SelectItem key={hub.id} value={hub.id}>
+                      {hub.name} Hub
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMoveProjectDialog(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleMoveProject} disabled={!selectedTargetHub}>
+              Move Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Region Confirmation */}
       <AlertDialog open={!!deleteRegionDialog} onOpenChange={(open) => !open && setDeleteRegionDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Region?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Region</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteRegionDialog?.name}"? 
-              This will unassign all {deleteRegionDialog?.plants.length || 0} plants from this region.
+              Are you sure you want to delete the <span className="font-medium">{deleteRegionDialog?.name}</span> region?
+              {deleteRegionDialog && deleteRegionDialog.hubs.length > 0 && (
+                <span className="block mt-2 text-destructive">
+                  This region contains {deleteRegionDialog.hubs.length} hub(s). They will become unassigned.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteRegion} 
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDeleteRegion} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
