@@ -99,7 +99,7 @@ const DraggableHub: React.FC<{
             </Button>
           </CollapsibleTrigger>
           <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={onToggle}>
-            <span className="text-sm font-medium">{hub.name} Hub</span>
+            <span className="text-sm font-medium text-foreground/80">{hub.name}</span>
             <Badge variant="outline" className="ml-1 text-xs py-0">
               {hub.projects.length} projects
             </Badge>
@@ -180,8 +180,8 @@ const DraggableProject: React.FC<{
         <GripVertical className="h-3 w-3" />
       </div>
       <FolderKanban className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
-      <span className="text-xs font-mono text-primary mr-2">{projectId}</span>
-      <span className="text-sm text-muted-foreground flex-1 truncate">{project.projectTitle}</span>
+      <span className="text-xs font-mono font-semibold text-primary mr-2">{projectId}</span>
+      <span className="text-xs text-muted-foreground font-normal flex-1 truncate">{project.projectTitle}</span>
       <Button
         variant="ghost"
         size="icon"
@@ -535,8 +535,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         </Button>
                       </CollapsibleTrigger>
                       <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{region.name}</span>
+                        <span className="text-sm font-semibold uppercase tracking-wide text-foreground">{region.name}</span>
                         <Badge variant="secondary" className="ml-1 text-xs">
                           {region.hubs.length} hubs
                         </Badge>
