@@ -234,7 +234,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           {visibleRegions.map(region => {
             const isRegionExpanded = expandedRegions.has(region.id) || !!searchQuery;
             const filteredPlants = region.plants.filter(filterHierarchy);
-            const hasChildren = filteredPlants.length > 0;
+            const hasChildren = filteredPlants.length > 0 || region.stationOverrides.length > 0;
 
             return (
               <div key={region.id} className="select-none">
@@ -372,9 +372,31 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         );
                       })}
 
-                      {filteredPlants.length === 0 && (
+                      {/* Project Hubs (Stations assigned to this region) */}
+                      {region.stationOverrides.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground mb-1 px-2 flex items-center gap-1">
+                            <Radio className="h-3 w-3" />
+                            Project Hubs
+                          </p>
+                          {region.stationOverrides.map(station => (
+                            <div
+                              key={station.id}
+                              className="flex items-center rounded-md transition-colors py-1 px-2 hover:bg-accent/50 ml-2"
+                            >
+                              <Radio className="h-3 w-3 text-emerald-500 shrink-0 mr-2" />
+                              <span className="text-sm text-foreground">{station.station_name}</span>
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (from {station.plant_name})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {filteredPlants.length === 0 && region.stationOverrides.length === 0 && (
                         <p className="text-xs text-muted-foreground py-2 px-2">
-                          No plants assigned to this region
+                          No plants or hubs assigned to this region
                         </p>
                       )}
                     </div>
@@ -460,9 +482,16 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                 <ChevronRight className="h-4 w-4 text-primary" />
                               )}
                             </div>
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              {region.plants.length} plants
-                            </Badge>
+                            <div className="flex gap-1 mt-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {region.plants.length} plants
+                              </Badge>
+                              {region.stationOverrides.length > 0 && (
+                                <Badge variant="outline" className="text-xs text-emerald-600">
+                                  {region.stationOverrides.length} hubs
+                                </Badge>
+                              )}
+                            </div>
                             {region.description && (
                               <p className="text-xs text-muted-foreground truncate mt-0.5">
                                 {region.description}
@@ -558,6 +587,30 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                       </div>
                     );
                   })}
+                  
+                  {/* Project Hubs Section */}
+                  {selectedRegionData?.stationOverrides && selectedRegionData.stationOverrides.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <Radio className="h-3 w-3" />
+                        Project Hubs
+                      </p>
+                      {selectedRegionData.stationOverrides.map(station => (
+                        <div
+                          key={station.id}
+                          className="p-2 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800 mb-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Radio className="h-3.5 w-3.5 text-emerald-500" />
+                            <span className="font-medium text-sm">{station.station_name}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground ml-5">
+                            From {station.plant_name} → {station.field_name}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             )}
