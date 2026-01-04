@@ -235,6 +235,10 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [deleteRegionDialog, setDeleteRegionDialog] = useState<RegionWithHubs | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [showAddHubDialog, setShowAddHubDialog] = useState(false);
+  const [newHubName, setNewHubName] = useState('');
+  const [newHubDescription, setNewHubDescription] = useState('');
+  const [newHubRegionId, setNewHubRegionId] = useState<string>('');
   
   // Edit dialogs state
   const [editPortfolioDialog, setEditPortfolioDialog] = useState<RegionWithHubs | null>(null);
@@ -245,8 +249,8 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [editHubDescription, setEditHubDescription] = useState('');
   const [editProjectData, setEditProjectData] = useState<Project | null>(null);
   
-  // Hubs hook for updating
-  const { updateHub } = useHubs();
+  // Hubs hook for updating and creating
+  const { updateHub, createHub } = useHubs();
 
   // DnD sensors
   const sensors = useSensors(
@@ -301,6 +305,22 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     setNewRegionName('');
     setNewRegionDescription('');
     setShowAddRegionDialog(false);
+  };
+
+  const handleAddHub = async () => {
+    if (!newHubName.trim() || !newHubRegionId) return;
+    try {
+      const createdHub = await createHub(newHubName.trim());
+      if (createdHub) {
+        await assignHubToRegion(createdHub.id, newHubRegionId);
+      }
+      setNewHubName('');
+      setNewHubDescription('');
+      setNewHubRegionId('');
+      setShowAddHubDialog(false);
+    } catch (err) {
+      console.error('Error creating hub:', err);
+    }
   };
 
   const handleMoveHub = async () => {
@@ -820,7 +840,14 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                   }
                 </Badge>
               </CardTitle>
-              <Button size="sm" variant="outline" disabled title="Add hub functionality coming soon">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  setNewHubRegionId(selectedRegion || '');
+                  setShowAddHubDialog(true);
+                }}
+              >
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
@@ -1423,6 +1450,74 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         open={showAddProjectModal} 
         onClose={() => setShowAddProjectModal(false)} 
       />
+
+      {/* Add Hub Dialog */}
+      <Dialog open={showAddHubDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowAddHubDialog(false);
+          setNewHubName('');
+          setNewHubDescription('');
+          setNewHubRegionId('');
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Hub</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newHubName">Hub Name *</Label>
+              <Input
+                id="newHubName"
+                value={newHubName}
+                onChange={(e) => setNewHubName(e.target.value)}
+                placeholder="Enter hub name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="newHubDescription">Description (optional)</Label>
+              <Input
+                id="newHubDescription"
+                value={newHubDescription}
+                onChange={(e) => setNewHubDescription(e.target.value)}
+                placeholder="Description of the hub"
+              />
+            </div>
+            <div>
+              <Label htmlFor="newHubRegion">Assign to Portfolio *</Label>
+              <Select value={newHubRegionId} onValueChange={setNewHubRegionId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a portfolio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {regions.map(region => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowAddHubDialog(false);
+              setNewHubName('');
+              setNewHubDescription('');
+              setNewHubRegionId('');
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddHub}
+              disabled={!newHubName.trim() || !newHubRegionId}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Hub
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Portfolio Dialog */}
       <Dialog open={!!editPortfolioDialog} onOpenChange={(open) => !open && setEditPortfolioDialog(null)}>
