@@ -311,16 +311,6 @@ export const SidebarContent = memo<SidebarContentProps>(({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button 
-              variant="outline" 
-              size={isCollapsed ? "icon" : "sm"} 
-              onClick={onShowWidgets} 
-              className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
-              title="Widgets"
-            >
-              <LayoutGrid className="w-4 h-4 text-muted-foreground" />
-              {!isCollapsed && <span className="ml-2">Widgets</span>}
-            </Button>
 
             <Button 
               variant="outline" 
