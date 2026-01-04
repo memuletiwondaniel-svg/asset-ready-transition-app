@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search, Filter, Columns, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search, Filter, Columns, Eye, EyeOff, Rocket, Factory } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
@@ -827,20 +827,24 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 setEditOverlay({ open: true, config });
                               }}
                             >
-                              {/* P&E/BFM Visual Indicator - Always on same row */}
+                              {/* P&E/BFM Visual Indicator with Icon - Always on same row */}
                               {config.sub_category && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Badge 
-                                      variant="outline" 
-                                      className={`shrink-0 whitespace-nowrap text-[10px] font-semibold px-1.5 py-0 mt-0.5 ${
+                                    <div 
+                                      className={`shrink-0 flex items-center gap-1 whitespace-nowrap text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded-md border ${
                                         config.sub_category === 'P&E' 
                                           ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700' 
                                           : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700'
                                       }`}
                                     >
+                                      {config.sub_category === 'P&E' ? (
+                                        <Rocket className="h-3 w-3" />
+                                      ) : (
+                                        <Factory className="h-3 w-3" />
+                                      )}
                                       {config.sub_category}
-                                    </Badge>
+                                    </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     {config.sub_category === 'P&E' ? 'Projects & Engineering' : 'Brown Field Modifications'}
