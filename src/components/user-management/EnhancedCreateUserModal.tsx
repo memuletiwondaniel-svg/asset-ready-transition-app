@@ -19,6 +19,12 @@ import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
 import { useLocations } from '@/hooks/useLocations';
 import { useCategorizedRoles, useRoleCategories, useAddRole, useAddRoleCategory } from '@/hooks/useCategorizedRoles';
+import { 
+  requiresPortfolio as roleRequiresPortfolio, 
+  requiresHub as roleRequiresHubAssignment,
+  hasNoAssignment,
+  PORTFOLIO_REGIONS 
+} from '@/utils/roleAssignmentConfig';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface PhoneNumber {
@@ -39,6 +45,7 @@ interface UserFormData {
   role: string;
   customRole: string;
   commission?: string;
+  portfolio?: string; // Region: North, Central, South
   hub: string;
   plant?: string;
   field?: string;
@@ -73,6 +80,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     role: '',
     customRole: '',
     commission: '',
+    portfolio: '',
     hub: '',
     authenticator: 'Daniel Memuletiwon',
   });
@@ -164,12 +172,12 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return commissions;
   };
 
-  // Filter hubs for specific roles
-  const getFilteredHubs = () => {
-    if (['ORA Engr.', 'ORA Lead', 'Project Manager', 'Hub Lead'].includes(formData.role)) {
-      return hubs?.filter(h => ['North', 'Central', 'South'].includes(h.name)) || [];
-    }
-    return hubs || [];
+  // Get hubs filtered by selected portfolio (region)
+  const getHubsForPortfolio = () => {
+    if (!formData.portfolio) return [];
+    // Return hubs that belong to the selected portfolio/region
+    // For now, return all hubs except the portfolio regions themselves
+    return hubs?.filter(h => !PORTFOLIO_REGIONS.includes(h.name)) || [];
   };
 
   
@@ -224,9 +232,14 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   };
 
 
-  // Check if role requires hub selection
+  // Check if role requires hub selection (uses imported config)
   const requiresHub = (role: string) => {
-    return ['Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engr.', 'ORA Lead', 'Hub Lead'].includes(role);
+    return roleRequiresHubAssignment(role);
+  };
+
+  // Check if role requires portfolio selection (uses imported config)
+  const requiresPortfolioSelection = (role: string) => {
+    return roleRequiresPortfolio(role);
   };
 
   // Check if role requires plant selection (Plant Director, Dep. Plant Director only - they stop at plant)
@@ -257,12 +270,17 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Generate position based on role and contextual fields
   const generatePosition = () => {
-    const { role, hub, commission, plant, station, field } = formData;
+    const { role, hub, portfolio, commission, plant, station, field } = formData;
     if (!role) return '';
     
-    // Hub-based roles
-    if (requiresHub(role) && hub) {
-      return `${role} – ${hub}`;
+    // Roles that require portfolio + hub (e.g., Project Hub Lead, Project Engr)
+    if (requiresHub(role) && portfolio && hub) {
+      return `${role} – ${portfolio} – ${hub}`;
+    }
+    
+    // Roles that require only portfolio (e.g., Project Manager, ORA Engr)
+    if (requiresPortfolioSelection(role) && !requiresHub(role) && portfolio) {
+      return `${role} – ${portfolio}`;
     }
     
     // Engineering TA2 roles with commission (exclude Civil TA2 and Tech Safety TA2)
@@ -394,11 +412,21 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         return;
       }
 
-      // Validate hub for hub-based roles
+      // Validate portfolio for roles that require it
+      if (requiresPortfolioSelection(formData.role) && !formData.portfolio) {
+        toast({
+          title: "Missing Portfolio",
+          description: "Please select a portfolio (region).",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate hub for roles that require both portfolio and hub
       if (requiresHub(formData.role) && !formData.hub) {
         toast({
-          title: "Missing Hub",
-          description: "Please select a hub.",
+          title: "Missing Project Hub",
+          description: "Please select a project hub.",
           variant: "destructive",
         });
         return;
@@ -451,6 +479,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       role: '',
       customRole: '',
       commission: '',
+      portfolio: '',
       hub: '',
       plant: '',
       field: '',
@@ -780,18 +809,39 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
             )}
           </div>
 
-          {requiresHub(formData.role) && (
+          {/* Portfolio (Region) Selection - for roles that require it */}
+          {requiresPortfolioSelection(formData.role) && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hub *</Label>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio (Region) *</Label>
+              <Select
+                value={formData.portfolio}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, portfolio: value, hub: '' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select portfolio (North, Central, or South)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PORTFOLIO_REGIONS.map(region => (
+                    <SelectItem key={region} value={region}>{region}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Hub Selection - only for roles that require portfolio AND hub */}
+          {requiresHub(formData.role) && formData.portfolio && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project Hub *</Label>
               <Select
                 value={formData.hub}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={formData.role === 'ORA Engineer' ? "Select hub (North, Central, or South)" : "Select hub"} />
+                  <SelectValue placeholder="Select project hub" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getFilteredHubs().map(hub => (
+                  {getHubsForPortfolio().map(hub => (
                     <SelectItem key={hub.id} value={hub.name}>{hub.name}</SelectItem>
                   ))}
                 </SelectContent>

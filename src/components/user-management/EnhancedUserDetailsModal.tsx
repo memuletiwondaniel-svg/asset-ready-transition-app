@@ -39,6 +39,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useHubs } from '@/hooks/useHubs';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { 
+  requiresPortfolio as roleRequiresPortfolio, 
+  requiresHub as roleRequiresHubAssignment,
+  hasNoAssignment,
+  PORTFOLIO_REGIONS 
+} from '@/utils/roleAssignmentConfig';
 
 // Type definitions matching the database schema exactly
 interface DatabaseUser {
@@ -128,6 +134,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     role: '',
     discipline: '',
     commission: '',
+    portfolio: '', // Region: North, Central, South
     plant: '',
     station: '',
     field: '',
@@ -146,14 +153,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   // Function to generate dynamic title/position based on role and conditional fields
   const generateTitle = () => {
-    const { role, commission, plant, station, field, hub, discipline } = formData;
+    const { role, commission, plant, station, field, hub, portfolio, discipline } = formData;
     
     if (!role) return '';
     
-    // Hub-based roles
-    const hubRoles = ['Proj Manager', 'Proj Engr', 'Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer', 'ORA Engr.', 'ORA Lead'];
-    if (hubRoles.includes(role) && hub) {
-      return `${role} – ${hub}`;
+    // Roles that require portfolio + hub (e.g., Project Hub Lead, Project Engr)
+    if (requiresHub(role) && portfolio && hub) {
+      return `${role} – ${portfolio} – ${hub}`;
+    }
+    
+    // Roles that require only portfolio (e.g., Project Manager, ORA Engr)
+    if (requiresPortfolioSelection(role) && !requiresHub(role) && portfolio) {
+      return `${role} – ${portfolio}`;
     }
     
     // Engineering TA2 roles with commission (exclude Civil TA2 and Tech Safety TA2)
@@ -222,14 +233,18 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   // Check if all required fields for title generation are completed
   const isTitleReady = () => {
-    const { role, commission, plant, station, field, hub, discipline } = formData;
+    const { role, commission, plant, station, field, hub, portfolio, discipline } = formData;
     
     if (!role) return false;
     
-    // Hub-based roles
-    const hubRoles = ['Proj Manager', 'Proj Engr', 'Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer', 'ORA Engr.', 'ORA Lead'];
-    if (hubRoles.includes(role)) {
-      return !!hub;
+    // Roles that require portfolio + hub
+    if (requiresHub(role)) {
+      return !!portfolio && !!hub;
+    }
+    
+    // Roles that require only portfolio
+    if (requiresPortfolioSelection(role)) {
+      return !!portfolio;
     }
     
     // TA2 roles with commission requirement
@@ -276,9 +291,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     }
   };
 
-  // Check if role requires hub selection
+  // Check if role requires hub selection (uses imported config)
   const requiresHub = (role: string) => {
-    return ['Proj Manager', 'Proj Engr', 'Project Manager', 'Project Engr', 'Commissioning Lead', 'Construction Lead', 'ORA Engineer', 'ORA Engr.', 'ORA Lead'].includes(role);
+    return roleRequiresHubAssignment(role);
+  };
+
+  // Check if role requires portfolio selection (uses imported config)
+  const requiresPortfolioSelection = (role: string) => {
+    return roleRequiresPortfolio(role);
   };
 
   // Check if role requires direct station selection (Site Engr.)
@@ -419,6 +439,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         role: user.role || '',
         discipline: user.ta2_discipline || '',
         commission: user.ta2_commission || '',
+        portfolio: '',
         plant: '',
         station: '',
         field: '',
@@ -950,11 +971,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   };
 
   // Get filtered hubs for specific roles
-  const getFilteredHubOptions = () => {
-    if (formData.role === 'ORA Engineer') {
-      return hubs.filter(h => ['North', 'Central', 'South', 'Lead'].includes(h.name));
-    }
-    return hubs;
+  // Get hubs filtered by selected portfolio (region)
+  const getHubsForPortfolio = () => {
+    if (!formData.portfolio) return [];
+    // Return hubs that belong to the selected portfolio/region
+    // For now, return all hubs except the portfolio regions themselves
+    return hubs?.filter(h => !PORTFOLIO_REGIONS.includes(h.name)) || [];
   };
 
   const handlePlantChange = async (value: string) => {
@@ -1441,14 +1463,31 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
 
-                        {requiresHub(formData.role) && (
+                        {/* Portfolio (Region) Selection */}
+                        {requiresPortfolioSelection(formData.role) && (
                           <div>
-                            <Label>Hub *</Label>
+                            <Label>Portfolio (Region) *</Label>
+                            <Combobox
+                              value={formData.portfolio}
+                              onValueChange={(value) => setFormData(prev => ({ ...prev, portfolio: value, hub: '' }))}
+                              options={PORTFOLIO_REGIONS.map(r => ({ value: r, label: r }))}
+                              placeholder="Select Portfolio (North, Central, South)"
+                              searchPlaceholder="Search portfolios..."
+                              emptyText="No portfolios found"
+                              className={!editMode ? 'bg-muted pointer-events-none' : ''}
+                            />
+                          </div>
+                        )}
+
+                        {/* Hub Selection - only for roles that require portfolio AND hub */}
+                        {requiresHub(formData.role) && formData.portfolio && (
+                          <div>
+                            <Label>Project Hub *</Label>
                             <Combobox
                               value={formData.hub}
                               onValueChange={(value) => setFormData(prev => ({ ...prev, hub: value }))}
-                              options={getFilteredHubOptions().map(hub => ({ value: hub.name, label: hub.name }))}
-                              placeholder="Select Hub"
+                              options={getHubsForPortfolio().map(hub => ({ value: hub.name, label: hub.name }))}
+                              placeholder="Select Project Hub"
                               searchPlaceholder="Search hubs..."
                               emptyText="No hubs found"
                               allowCustom={editMode}
