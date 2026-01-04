@@ -1006,14 +1006,22 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                           <Info className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                          <p className="mb-4">No PSSR templates configured yet.</p>
-                          <Button 
-                            onClick={() => setShowAddReasonWizard(true)}
-                            className="fluent-button"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Your First PSSR Template
-                          </Button>
+                          {statusFilter !== 'all' ? (
+                            <p className="mb-4">
+                              There are no {statusFilter} PSSR Templates
+                            </p>
+                          ) : (
+                            <>
+                              <p className="mb-4">No PSSR templates configured yet.</p>
+                              <Button 
+                                onClick={() => setShowAddReasonWizard(true)}
+                                className="fluent-button"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Your First PSSR Template
+                              </Button>
+                            </>
+                          )}
                         </TableCell>
                       </TableRow>
                     )}
