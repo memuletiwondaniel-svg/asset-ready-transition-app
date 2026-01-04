@@ -697,84 +697,102 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            {regions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No portfolios found
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px] pr-3">
-                <div className="space-y-2">
-                  {regions.map(region => {
-                    const isSelected = selectedRegion === region.id;
-                    const totalProjects = region.hubs.reduce((sum, h) => sum + h.projects.length, 0);
-                    return (
-                      <div
-                        key={region.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
-                          isSelected 
-                            ? 'bg-primary/10 border-primary' 
-                            : 'hover:bg-accent border-border'
-                        }`}
-                        onClick={() => {
-                          setSelectedRegion(isSelected ? null : region.id);
-                          setSelectedHub(null);
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{region.name}</span>
-                              {isSelected && (
-                                <ChevronRight className="h-4 w-4 text-primary" />
+            {(() => {
+              // Filter portfolios - if a hub is selected, only show its parent portfolio
+              const filteredPortfolios = selectedHub 
+                ? regions.filter(r => r.hubs.some(h => h.id === selectedHub))
+                : regions;
+              
+              if (filteredPortfolios.length === 0) {
+                return (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    No portfolios found
+                  </div>
+                );
+              }
+              
+              return (
+                <ScrollArea className="h-[400px] pr-3">
+                  <div className="space-y-2">
+                    {filteredPortfolios.map(region => {
+                      const isSelected = selectedRegion === region.id;
+                      const totalProjects = region.hubs.reduce((sum, h) => sum + h.projects.length, 0);
+                      return (
+                        <div
+                          key={region.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
+                            isSelected 
+                              ? 'bg-primary/10 border-primary' 
+                              : 'hover:bg-accent border-border'
+                          }`}
+                          onClick={() => {
+                            if (isSelected) {
+                              // Deselect both portfolio and hub
+                              setSelectedRegion(null);
+                              setSelectedHub(null);
+                            } else {
+                              // Select this portfolio, clear hub selection
+                              setSelectedRegion(region.id);
+                              setSelectedHub(null);
+                            }
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium truncate">{region.name}</span>
+                                {isSelected && (
+                                  <ChevronRight className="h-4 w-4 text-primary" />
+                                )}
+                              </div>
+                              <div className="flex gap-1 mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  {region.hubs.length} hubs
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {totalProjects} projects
+                                </Badge>
+                              </div>
+                              {region.description && (
+                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                  {region.description}
+                                </p>
                               )}
                             </div>
-                            <div className="flex gap-1 mt-1">
-                              <Badge variant="secondary" className="text-xs">
-                                {region.hubs.length} hubs
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {totalProjects} projects
-                              </Badge>
+                            <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditPortfolioDialog(region);
+                                  setEditPortfolioName(region.name);
+                                  setEditPortfolioDescription(region.description || '');
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteRegionDialog(region);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
-                            {region.description && (
-                              <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                {region.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditPortfolioDialog(region);
-                                setEditPortfolioName(region.name);
-                                setEditPortfolioDescription(region.description || '');
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteRegionDialog(region);
-                              }}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            )}
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              );
+            })()}
           </CardContent>
         </Card>
 
