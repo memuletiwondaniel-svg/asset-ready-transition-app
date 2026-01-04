@@ -47,9 +47,8 @@ interface EditPSSRReasonOverlayProps {
 
 const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; icon: React.ElementType; className: string }> = {
   draft: { label: 'Draft', icon: FileText, className: 'bg-muted text-muted-foreground' },
-  awaiting_approval: { label: 'Awaiting Approval', icon: Clock, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-  approved: { label: 'Approved', icon: CheckCircle, className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  in_use: { label: 'In Use', icon: AlertCircle, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  active: { label: 'Active', icon: CheckCircle, className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  inactive: { label: 'Inactive', icon: AlertCircle, className: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
 };
 
 const STEPS = [
@@ -211,43 +210,45 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
     }
   };
 
-  const handleSubmitForApproval = async () => {
+  const handleActivateTemplate = async () => {
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('pssr_reasons')
-        .update({ status: 'awaiting_approval' })
+        .update({ status: 'active', is_active: true })
         .eq('id', reasonId);
 
       if (error) throw error;
 
-      setStatus('awaiting_approval');
+      setStatus('active');
       queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
-      toast.success('Submitted for approval');
+      queryClient.invalidateQueries({ queryKey: ['pssr-reasons'] });
+      toast.success('PSSR Template is now active and available for use');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to submit for approval');
+      toast.error(error.message || 'Failed to activate template');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleApprove = async () => {
+  const handleDeactivateTemplate = async () => {
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('pssr_reasons')
-        .update({ status: 'approved' })
+        .update({ status: 'inactive', is_active: false })
         .eq('id', reasonId);
 
       if (error) throw error;
 
-      setStatus('approved');
+      setStatus('inactive');
       queryClient.invalidateQueries({ queryKey: ['pssr-reason-configurations'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
-      toast.success('PSSR Template approved');
+      queryClient.invalidateQueries({ queryKey: ['pssr-reasons'] });
+      toast.success('PSSR Template has been deactivated');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to approve');
+      toast.error(error.message || 'Failed to deactivate template');
     } finally {
       setIsSaving(false);
     }
@@ -421,32 +422,51 @@ const EditPSSRReasonOverlay: React.FC<EditPSSRReasonOverlayProps> = ({
               {status === 'draft' && (
                 <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
                   <div className="flex items-start gap-3">
-                    <Send className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium mb-1">Ready to submit?</h4>
+                      <h4 className="text-sm font-medium mb-1">Ready to activate?</h4>
                       <p className="text-xs text-muted-foreground mb-3">
-                        This PSSR Template will be reviewed by designated approvers before use.
+                        Activating this template will make it available for creating new PSSRs.
                       </p>
-                      <Button size="sm" onClick={handleSubmitForApproval} disabled={isSaving}>
-                        Submit for Approval
+                      <Button size="sm" onClick={handleActivateTemplate} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Activate Template
                       </Button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {status === 'awaiting_approval' && (
-                <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+              {status === 'active' && (
+                <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                   <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">Awaiting Approval</h4>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                        This PSSR Template is pending approval.
+                      <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Template is Active</h4>
+                      <p className="text-xs text-green-700 dark:text-green-300 mb-3">
+                        This template is currently available for creating new PSSRs.
                       </p>
-                      <Button size="sm" onClick={handleApprove} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+                      <Button size="sm" variant="outline" onClick={handleDeactivateTemplate} disabled={isSaving} className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Deactivate Template
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {status === 'inactive' && (
+                <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Template is Inactive</h4>
+                      <p className="text-xs text-red-700 dark:text-red-300 mb-3">
+                        This template is deactivated and not available for creating new PSSRs.
+                      </p>
+                      <Button size="sm" onClick={handleActivateTemplate} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
+                        Reactivate Template
                       </Button>
                     </div>
                   </div>

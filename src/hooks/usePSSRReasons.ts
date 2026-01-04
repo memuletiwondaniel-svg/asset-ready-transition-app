@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type PSSRReasonStatus = 'draft' | 'awaiting_approval' | 'approved' | 'in_use';
+export type PSSRReasonStatus = 'draft' | 'active' | 'inactive';
 
 export interface PSSRReason {
   id: string;
