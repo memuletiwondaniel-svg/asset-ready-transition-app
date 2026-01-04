@@ -15,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search, Filter, Columns, Eye, EyeOff } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useRoles } from '@/hooks/useRoles';
@@ -68,6 +69,7 @@ interface LocalConfiguration {
   status: PSSRReasonStatus;
   reason_approver_role_ids: string[];
   checklist_item_ids: string[];
+  sub_category: 'P&E' | 'BFM' | null;
 }
 
 // Category Icon Helper Component
@@ -83,9 +85,8 @@ const CategoryIcon: React.FC<{ icon: string | null }> = ({ icon }) => {
 
 const STATUS_CONFIG: Record<PSSRReasonStatus, { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-  awaiting_approval: { label: 'Pending', className: 'bg-amber-100 text-amber-700 border-amber-300' },
-  approved: { label: 'Approved', className: 'bg-green-100 text-green-700' },
-  in_use: { label: 'In Use', className: 'bg-blue-100 text-blue-700' },
+  active: { label: 'Active', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  inactive: { label: 'Inactive', className: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
 };
 
 // Sortable Row Component
@@ -198,6 +199,22 @@ const PSSRConfigurationMatrix: React.FC = () => {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Status filter state
+  const [statusFilter, setStatusFilter] = useState<'all' | PSSRReasonStatus>('all');
+
+  // Column visibility state with localStorage persistence
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('pssr-template-columns');
+    return saved ? JSON.parse(saved) : { pssrApprovers: true, sofApprovers: true, items: true };
+  });
+
+  // Save column visibility to localStorage
+  const updateColumnVisibility = (column: string, visible: boolean) => {
+    const updated = { ...visibleColumns, [column]: visible };
+    setVisibleColumns(updated);
+    localStorage.setItem('pssr-template-columns', JSON.stringify(updated));
+  };
+
   // Initialize expanded categories when categories load
   useEffect(() => {
     if (categories.length > 0) {
@@ -246,6 +263,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
         status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
         reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
         checklist_item_ids: config.checklist_item_ids || [],
+        sub_category: (config.reason as any)?.sub_category || null,
       })));
     }
   }, [configurations]);
@@ -255,9 +273,14 @@ const PSSRConfigurationMatrix: React.FC = () => {
     [localConfigs]
   );
 
-  // Sort configs by display_order and filter by search query
+  // Sort configs by display_order and filter by search query and status
   const sortedConfigs = useMemo(() => {
     let filtered = [...localConfigs];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(config => config.status === statusFilter);
+    }
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -285,7 +308,18 @@ const PSSRConfigurationMatrix: React.FC = () => {
     }
     
     return filtered.sort((a, b) => a.display_order - b.display_order);
-  }, [localConfigs, searchQuery, categories, roles]);
+  }, [localConfigs, searchQuery, statusFilter, categories, roles]);
+
+  // Status counts for filter tabs
+  const statusCounts = useMemo(() => {
+    const counts = { all: localConfigs.length, draft: 0, active: 0, inactive: 0 };
+    localConfigs.forEach(config => {
+      if (config.status === 'draft') counts.draft++;
+      else if (config.status === 'active') counts.active++;
+      else if (config.status === 'inactive') counts.inactive++;
+    });
+    return counts;
+  }, [localConfigs]);
 
   // Group configs by category
   const groupedConfigs = useMemo(() => {
@@ -387,6 +421,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
       status: ((config.reason as any)?.status || 'draft') as PSSRReasonStatus,
       reason_approver_role_ids: (config.reason as any)?.reason_approver_role_ids || [],
       checklist_item_ids: config.checklist_item_ids || [],
+      sub_category: (config.reason as any)?.sub_category || null,
     })));
     toast.info('Changes discarded');
   };
@@ -634,12 +669,61 @@ const PSSRConfigurationMatrix: React.FC = () => {
   return (
     <TooltipProvider delayDuration={200}>
       <Card className="fluent-card border-border/40">
-        <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-6">
+        <CardHeader className="border-b border-border/40 bg-gradient-to-r from-muted/20 to-muted/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
+              {/* Quick Stats */}
+              <div className="flex items-center gap-3 mt-2 text-sm">
+                <span className="text-muted-foreground">{statusCounts.all} Templates:</span>
+                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
+                  {statusCounts.active} Active
+                </Badge>
+                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">
+                  {statusCounts.draft} Drafts
+                </Badge>
+                <Badge variant="outline" className="bg-red-100 text-red-600 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700">
+                  {statusCounts.inactive} Inactive
+                </Badge>
+              </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Column Visibility Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <Columns className="h-4 w-4 mr-2" />
+                    Columns
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.items}
+                    onCheckedChange={(checked) => updateColumnVisibility('items', checked)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Items
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.pssrApprovers}
+                    onCheckedChange={(checked) => updateColumnVisibility('pssrApprovers', checked)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    PSSR Approvers
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={visibleColumns.sofApprovers}
+                    onCheckedChange={(checked) => updateColumnVisibility('sofApprovers', checked)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    SoF Approvers
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <Button 
                 onClick={() => {
                   setPreselectedCategoryId(null);
@@ -663,8 +747,32 @@ const PSSRConfigurationMatrix: React.FC = () => {
             </div>
           </div>
           
+          {/* Status Filter Tabs */}
+          <div className="flex items-center gap-1 mt-4 border-b border-border/40 -mb-4 pb-0">
+            {(['all', 'active', 'draft', 'inactive'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[1px] ${
+                  statusFilter === status
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30'
+                }`}
+              >
+                {status === 'all' ? 'All' : STATUS_CONFIG[status]?.label || status}
+                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                  statusFilter === status 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {statusCounts[status]}
+                </span>
+              </button>
+            ))}
+          </div>
+          
           {/* Search Input */}
-          <div className="relative mt-4">
+          <div className="relative mt-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search templates by name, category, status, or approver role..."
@@ -717,15 +825,21 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20 text-center">
-                        Items
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
-                        PSSR Approvers
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
-                        SoF Approvers
-                      </TableHead>
+                      {visibleColumns.items && (
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20 text-center">
+                          Items
+                        </TableHead>
+                      )}
+                      {visibleColumns.pssrApprovers && (
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
+                          PSSR Approvers
+                        </TableHead>
+                      )}
+                      {visibleColumns.sofApprovers && (
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
+                          SoF Approvers
+                        </TableHead>
+                      )}
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24 text-right">
                         Actions
                       </TableHead>
@@ -757,7 +871,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             )}
                           </TableCell>
 
-                          {/* Template Name - Clickable to open details */}
+                          {/* Template Name - Clickable to open details with P&E/BFM indicator */}
                           <TableCell className="font-medium">
                             <div 
                               className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
@@ -766,6 +880,26 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 setEditOverlay({ open: true, config });
                               }}
                             >
+                              {/* P&E/BFM Visual Indicator */}
+                              {config.sub_category && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`shrink-0 text-[10px] font-semibold px-1.5 py-0 ${
+                                        config.sub_category === 'P&E' 
+                                          ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700' 
+                                          : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700'
+                                      }`}
+                                    >
+                                      {config.sub_category}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {config.sub_category === 'P&E' ? 'Projects & Engineering' : 'Brown Field Modifications'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               <span className="whitespace-normal break-words">
                                 {config.reason_name}
                               </span>
@@ -789,88 +923,93 @@ const PSSRConfigurationMatrix: React.FC = () => {
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>
-                                  {config.status === 'draft' && 'This template is in draft and not yet submitted for approval'}
-                                  {config.status === 'awaiting_approval' && 'This template is pending approval'}
-                                  {config.status === 'approved' && 'This template is approved and ready for use'}
-                                  {config.status === 'in_use' && 'This template is currently being used in PSSRs'}
+                                  {config.status === 'draft' && 'This template is in draft and not available for use'}
+                                  {config.status === 'active' && 'This template is active and available for creating PSSRs'}
+                                  {config.status === 'inactive' && 'This template is deactivated and not available for use'}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
                           </TableCell>
 
-                          {/* PSSR Items Count */}
-                          <TableCell className="text-center">
-                            <Badge variant="secondary" className="text-xs font-medium">
-                              {config.checklist_item_ids.length}
-                            </Badge>
-                          </TableCell>
+                          {/* PSSR Items Count - Conditional */}
+                          {visibleColumns.items && (
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="text-xs font-medium">
+                                {config.checklist_item_ids.length}
+                              </Badge>
+                            </TableCell>
+                          )}
 
-                          {/* PSSR Approver Roles - Display only, click to edit */}
-                          <TableCell>
-                            <div 
-                              className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditOverlay({ open: true, config });
-                              }}
-                            >
-                              {config.pssr_approver_role_ids.length > 0 ? (
-                                (() => {
-                                  const approverOrder = [
-                                    'ORA Lead',
-                                    'Engr. Manager (Asset)',
-                                    'Engr. Manager (P&E)',
-                                    'HSE Manager',
-                                    'TSE Manager',
-                                    'Project Manager',
-                                    'Dep. Plant Director'
-                                  ];
-                                  return [...config.pssr_approver_role_ids]
-                                    .sort((a, b) => {
-                                      const roleA = roles.find(r => r.id === a);
-                                      const roleB = roles.find(r => r.id === b);
-                                      const indexA = approverOrder.indexOf(roleA?.name || '');
-                                      const indexB = approverOrder.indexOf(roleB?.name || '');
-                                      return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
-                                    })
-                                    .map((roleId) => {
-                                      const role = roles.find(r => r.id === roleId);
-                                      return role ? (
-                                        <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
-                                          {role.name}
-                                        </Badge>
-                                      ) : null;
-                                    });
-                                })()
-                              ) : (
-                                <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                              )}
-                            </div>
-                          </TableCell>
+                          {/* PSSR Approver Roles - Conditional */}
+                          {visibleColumns.pssrApprovers && (
+                            <TableCell>
+                              <div 
+                                className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditOverlay({ open: true, config });
+                                }}
+                              >
+                                {config.pssr_approver_role_ids.length > 0 ? (
+                                  (() => {
+                                    const approverOrder = [
+                                      'ORA Lead',
+                                      'Engr. Manager (Asset)',
+                                      'Engr. Manager (P&E)',
+                                      'HSE Manager',
+                                      'TSE Manager',
+                                      'Project Manager',
+                                      'Dep. Plant Director'
+                                    ];
+                                    return [...config.pssr_approver_role_ids]
+                                      .sort((a, b) => {
+                                        const roleA = roles.find(r => r.id === a);
+                                        const roleB = roles.find(r => r.id === b);
+                                        const indexA = approverOrder.indexOf(roleA?.name || '');
+                                        const indexB = approverOrder.indexOf(roleB?.name || '');
+                                        return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+                                      })
+                                      .map((roleId) => {
+                                        const role = roles.find(r => r.id === roleId);
+                                        return role ? (
+                                          <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
+                                            {role.name}
+                                          </Badge>
+                                        ) : null;
+                                      });
+                                  })()
+                                ) : (
+                                  <span className="text-sm text-muted-foreground italic">Click to add...</span>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
 
-                          {/* SoF Approver Roles - Display only, click to edit */}
-                          <TableCell>
-                            <div 
-                              className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditOverlay({ open: true, config });
-                              }}
-                            >
-                              {config.sof_approver_role_ids.length > 0 ? (
-                                config.sof_approver_role_ids.map((roleId) => {
-                                  const role = roles.find(r => r.id === roleId);
-                                  return role ? (
-                                    <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
-                                      {role.name}
-                                    </Badge>
-                                  ) : null;
-                                })
-                              ) : (
-                                <span className="text-sm text-muted-foreground italic">Click to add...</span>
-                              )}
-                            </div>
-                          </TableCell>
+                          {/* SoF Approver Roles - Conditional */}
+                          {visibleColumns.sofApprovers && (
+                            <TableCell>
+                              <div 
+                                className="flex flex-wrap gap-1 cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded transition-colors min-h-[36px] items-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditOverlay({ open: true, config });
+                                }}
+                              >
+                                {config.sof_approver_role_ids.length > 0 ? (
+                                  config.sof_approver_role_ids.map((roleId) => {
+                                    const role = roles.find(r => r.id === roleId);
+                                    return role ? (
+                                      <Badge key={roleId} variant="secondary" className="text-xs whitespace-nowrap">
+                                        {role.name}
+                                      </Badge>
+                                    ) : null;
+                                  })
+                                ) : (
+                                  <span className="text-sm text-muted-foreground italic">Click to add...</span>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
 
                           {/* Actions Column */}
                           <TableCell className="text-right">
@@ -895,13 +1034,13 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                     size="icon"
                                     className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                     onClick={() => setDeleteDialog({ open: true, reasonId: config.reason_id, reasonName: config.reason_name })}
-                                    disabled={config.status === 'in_use'}
+                                    disabled={config.status === 'active'}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  {config.status === 'in_use' ? 'Cannot delete template in use' : 'Delete template'}
+                                  {config.status === 'active' ? 'Deactivate template before deleting' : 'Delete template'}
                                 </TooltipContent>
                               </Tooltip>
                             </div>

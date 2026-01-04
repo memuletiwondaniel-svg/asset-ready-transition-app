@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, X, Save } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, Save, Zap, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -14,6 +16,16 @@ import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
 import { useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
 import { usePSSRChecklistItems } from '@/hooks/usePSSRChecklistLibrary';
 import type { Json } from '@/integrations/supabase/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 interface AddPSSRReasonWizardProps {
@@ -45,14 +57,16 @@ const STEPS = [
   { id: 3, title: 'PSSR Approvers', description: 'Select PSSR approver roles' },
   { id: 4, title: 'SoF Approvers', description: 'Select Statement of Fitness approver roles' },
   { id: 5, title: 'Checklist Items', description: 'Select applicable checklist items' },
+  { id: 6, title: 'Finalize', description: 'Review and activate template' },
 ];
 
 const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenChange }) => {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activationChoice, setActivationChoice] = useState<'activate' | 'draft'>('draft');
+  const [showActivationConfirm, setShowActivationConfirm] = useState(false);
   const { data: categories } = useActivePSSRReasonCategories();
-  
   
   const [wizardState, setWizardState] = useState<WizardState>({
     categoryId: null,
@@ -69,6 +83,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
 
   const resetWizard = () => {
     setCurrentStep(1);
+    setActivationChoice('draft');
     setWizardState({
       categoryId: null,
       subCategory: null,
@@ -136,13 +151,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async (saveAsDraft: boolean = false) => {
-    // Only validate step if not saving as draft
-    if (!saveAsDraft && !validateStep(currentStep)) return;
-    
-    // For draft, only validate step 1 (category and reason name are required)
-    if (saveAsDraft && !validateStep(1)) return;
-
+  const handleSubmit = async (shouldActivate: boolean = false) => {
     setIsSubmitting(true);
     try {
       // Get the next display order
@@ -154,7 +163,7 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       
       const nextDisplayOrder = (existingReasons?.[0]?.display_order || 0) + 1;
 
-      // 1. Create the PSSR Reason with draft status
+      // 1. Create the PSSR Reason
       const { data: newReason, error: reasonError } = await supabase
         .from('pssr_reasons')
         .insert({
@@ -162,9 +171,9 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
           description: wizardState.description.trim() || null,
           category_id: wizardState.categoryId,
           sub_category: wizardState.subCategory,
-          is_active: saveAsDraft ? false : true,
+          is_active: shouldActivate,
           display_order: nextDisplayOrder,
-          status: 'draft',
+          status: shouldActivate ? 'active' : 'draft',
         })
         .select()
         .single();
@@ -189,7 +198,11 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons-all'] });
       queryClient.invalidateQueries({ queryKey: ['pssr-reasons'] });
 
-      toast.success(saveAsDraft ? 'PSSR Template saved as draft!' : 'PSSR Template created successfully!');
+      toast.success(
+        shouldActivate 
+          ? 'PSSR Template created and activated! It is now available for use.' 
+          : 'PSSR Template saved as draft!'
+      );
       handleClose();
     } catch (error: any) {
       console.error('Failed to create PSSR template:', error);
@@ -199,9 +212,18 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
     }
   };
 
+  const handleFinalSubmit = () => {
+    if (activationChoice === 'activate') {
+      setShowActivationConfirm(true);
+    } else {
+      handleSubmit(false);
+    }
+  };
+
   const progressPercentage = (currentStep / STEPS.length) * 100;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="border-b pb-4">
@@ -352,6 +374,95 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
               }}
             />
           )}
+
+          {/* Step 6: Finalize - Activation Choice */}
+          {currentStep === 6 && (
+            <div className="space-y-6 py-4">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">Template Configuration Complete</h3>
+                <p className="text-muted-foreground mt-1">
+                  Your PSSR template "<span className="font-medium text-foreground">{wizardState.reasonName}</span>" is ready.
+                </p>
+              </div>
+
+              <div className="bg-muted/30 rounded-lg p-6 border border-border/50">
+                <h4 className="text-sm font-semibold mb-4">What would you like to do?</h4>
+                <RadioGroup 
+                  value={activationChoice} 
+                  onValueChange={(value) => setActivationChoice(value as 'activate' | 'draft')}
+                  className="space-y-3"
+                >
+                  <div className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                    activationChoice === 'activate' 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950/20' 
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}>
+                    <RadioGroupItem value="activate" id="activate" className="mt-1" />
+                    <Label htmlFor="activate" className="cursor-pointer flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Zap className="h-4 w-4 text-green-600" />
+                        <span className="font-semibold">Activate immediately</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        This template will be available for creating new PSSRs right away.
+                      </p>
+                    </Label>
+                  </div>
+
+                  <div className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                    activationChoice === 'draft' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}>
+                    <RadioGroupItem value="draft" id="draft" className="mt-1" />
+                    <Label htmlFor="draft" className="cursor-pointer flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold">Save as draft</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Save for later. You can activate it from the template settings when ready.
+                      </p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-muted/20 rounded-lg p-4 border border-border/30">
+                <h4 className="text-sm font-semibold mb-3">Template Summary</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Category:</span>{' '}
+                    <span className="font-medium">{selectedCategory?.name || '—'}</span>
+                  </div>
+                  {wizardState.subCategory && (
+                    <div>
+                      <span className="text-muted-foreground">Type:</span>{' '}
+                      <span className={`font-medium ${wizardState.subCategory === 'P&E' ? 'text-blue-600' : 'text-emerald-600'}`}>
+                        {wizardState.subCategory === 'P&E' ? 'Projects & Engineering' : 'Brown Field Modifications'}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">PSSR Approvers:</span>{' '}
+                    <span className="font-medium">{wizardState.pssrApproverRoleIds.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">SoF Approvers:</span>{' '}
+                    <span className="font-medium">{wizardState.sofApproverRoleIds.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Checklist Items:</span>{' '}
+                    <span className="font-medium">{wizardState.checklistItemIds.length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer Navigation */}
@@ -376,43 +487,80 @@ const AddPSSRReasonWizard: React.FC<AddPSSRReasonWizardProps> = ({ open, onOpenC
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleSubmit(true)} 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save as Draft
-                    </>
-                  )}
-                </Button>
-                <Button onClick={() => handleSubmit(false)} disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Create PSSR Template
-                    </>
-                  )}
-                </Button>
-              </>
+              <Button onClick={handleFinalSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {activationChoice === 'activate' ? 'Activating...' : 'Saving...'}
+                  </>
+                ) : activationChoice === 'activate' ? (
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Activate Template
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save as Draft
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Activation Confirmation Dialog */}
+    <AlertDialog open={showActivationConfirm} onOpenChange={setShowActivationConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-green-600" />
+            Activate PSSR Template?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="pt-2 space-y-3">
+            <p>
+              You are about to activate the template "<strong>{wizardState.reasonName}</strong>".
+            </p>
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3 text-sm">
+              <p className="text-green-800 dark:text-green-200">
+                <strong>This means:</strong>
+              </p>
+              <ul className="list-disc list-inside mt-1 text-green-700 dark:text-green-300 space-y-1">
+                <li>The template will be immediately available for use</li>
+                <li>Users can select this template when initiating a new PSSR</li>
+                <li>You can deactivate it later from the template settings</li>
+              </ul>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              setShowActivationConfirm(false);
+              handleSubmit(true);
+            }}
+            disabled={isSubmitting}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Activating...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Activate Template
+              </>
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 };
 
