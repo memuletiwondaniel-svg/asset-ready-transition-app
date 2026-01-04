@@ -778,148 +778,183 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </CardContent>
         </Card>
 
-        {/* Hubs Column - Show ALL hubs grouped by portfolio */}
+        {/* Hubs Column - Filtered by selected portfolio */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Hubs
-                <Badge variant="secondary" className="ml-1">{totalHubs}</Badge>
+                Project Hubs
+                {selectedRegion && (
+                  <Badge variant="outline" className="ml-1 text-xs">
+                    {regions.find(r => r.id === selectedRegion)?.name}
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="ml-1">
+                  {selectedRegion 
+                    ? regions.find(r => r.id === selectedRegion)?.hubs.length || 0
+                    : totalHubs
+                  }
+                </Badge>
               </CardTitle>
               <Button size="sm" variant="outline" disabled title="Add hub functionality coming soon">
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
             </div>
+            {!selectedRegion && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Select a portfolio to filter hubs
+              </p>
+            )}
           </CardHeader>
           <CardContent className="pt-0">
-            {totalHubs === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No hubs found
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px] pr-3">
-                <div className="space-y-4">
-                  {regions.map(region => {
-                    if (region.hubs.length === 0) return null;
-                    return (
-                      <div key={region.id}>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
-                          {region.name}
-                        </p>
-                        <div className="space-y-2">
-                          {region.hubs.map(hub => {
-                            const isSelected = selectedHub === hub.id;
-                            return (
-                              <div
-                                key={hub.id}
-                                className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
-                                  isSelected 
-                                    ? 'bg-primary/10 border-primary' 
-                                    : 'hover:bg-accent border-border'
-                                }`}
-                                onClick={() => {
-                                  setSelectedHub(isSelected ? null : hub.id);
-                                  setSelectedRegion(region.id);
-                                }}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium truncate">{hub.name}</span>
-                                      {isSelected && (
-                                        <ChevronRight className="h-4 w-4 text-primary" />
-                                      )}
+            {(() => {
+              // Filter hubs based on selected portfolio
+              const filteredRegions = selectedRegion 
+                ? regions.filter(r => r.id === selectedRegion)
+                : regions;
+              const hubCount = filteredRegions.reduce((sum, r) => sum + r.hubs.length, 0);
+              
+              if (hubCount === 0) {
+                return (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    {selectedRegion ? 'No hubs in selected portfolio' : 'No hubs found'}
+                  </div>
+                );
+              }
+              
+              return (
+                <ScrollArea className="h-[400px] pr-3">
+                  <div className="space-y-4">
+                    {filteredRegions.map(region => {
+                      if (region.hubs.length === 0) return null;
+                      return (
+                        <div key={region.id}>
+                          {!selectedRegion && (
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
+                              {region.name}
+                            </p>
+                          )}
+                          <div className="space-y-2">
+                            {region.hubs.map(hub => {
+                              const isSelected = selectedHub === hub.id;
+                              return (
+                                <div
+                                  key={hub.id}
+                                  className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
+                                    isSelected 
+                                      ? 'bg-primary/10 border-primary' 
+                                      : 'hover:bg-accent border-border'
+                                  }`}
+                                  onClick={() => {
+                                    setSelectedHub(isSelected ? null : hub.id);
+                                    setSelectedRegion(region.id);
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium truncate">{hub.name}</span>
+                                        {isSelected && (
+                                          <ChevronRight className="h-4 w-4 text-primary" />
+                                        )}
+                                      </div>
+                                      <Badge variant="outline" className="text-xs mt-1">
+                                        {hub.projects.length} projects
+                                      </Badge>
                                     </div>
-                                    <Badge variant="outline" className="text-xs mt-1">
-                                      {hub.projects.length} projects
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditHubDialog(hub);
-                                        setEditHubName(hub.name);
-                                        setEditHubDescription(hub.description || '');
-                                      }}
-                                    >
-                                      <Pencil className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setMoveHubDialog({ hub, currentRegion: region });
-                                      }}
-                                    >
-                                      <ArrowLeftRight className="h-3.5 w-3.5" />
-                                    </Button>
+                                    <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditHubDialog(hub);
+                                          setEditHubName(hub.name);
+                                          setEditHubDescription(hub.description || '');
+                                        }}
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMoveHubDialog({ hub, currentRegion: region });
+                                        }}
+                                      >
+                                        <ArrowLeftRight className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* Unassigned hubs - only show if no portfolio selected */}
+                    {!selectedRegion && unassignedHubs.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Unassigned
+                        </p>
+                        <div className="space-y-2">
+                          {unassignedHubs.map(hub => (
+                            <div
+                              key={hub.id}
+                              className="p-3 rounded-lg border border-dashed hover:bg-accent cursor-pointer group"
+                              onClick={() => setSelectedHub(hub.id)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium truncate">{hub.name}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditHubDialog({ ...hub, projects: [] } as HubWithProjects);
+                                    setEditHubName(hub.name);
+                                    setEditHubDescription(hub.description || '');
+                                  }}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })}
-                  {/* Unassigned hubs */}
-                  {unassignedHubs.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Unassigned
-                      </p>
-                      <div className="space-y-2">
-                        {unassignedHubs.map(hub => (
-                          <div
-                            key={hub.id}
-                            className="p-3 rounded-lg border border-dashed hover:bg-accent cursor-pointer group"
-                            onClick={() => setSelectedHub(hub.id)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium truncate">{hub.name}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Cast to HubWithProjects for the dialog
-                                  setEditHubDialog({ ...hub, projects: [] } as HubWithProjects);
-                                  setEditHubName(hub.name);
-                                  setEditHubDescription(hub.description || '');
-                                }}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            )}
+                    )}
+                  </div>
+                </ScrollArea>
+              );
+            })()}
           </CardContent>
         </Card>
 
-        {/* Projects Column - Show ALL projects grouped by hub */}
+        {/* Projects Column - Filtered by selected portfolio and hub */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <FolderKanban className="h-4 w-4" />
                 Projects
-                <Badge variant="secondary" className="ml-1">{totalProjects}</Badge>
+                {(selectedRegion || selectedHub) && (
+                  <Badge variant="outline" className="ml-1 text-xs">
+                    {selectedHub 
+                      ? allHubs.find(h => h.id === selectedHub)?.name
+                      : regions.find(r => r.id === selectedRegion)?.name
+                    }
+                  </Badge>
+                )}
               </CardTitle>
               <Button 
                 size="sm" 
@@ -930,81 +965,54 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                 Add
               </Button>
             </div>
+            {!selectedRegion && !selectedHub && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Select a portfolio or hub to filter projects
+              </p>
+            )}
           </CardHeader>
           <CardContent className="pt-0">
-            {totalProjects === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No projects found
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px] pr-3">
-                <div className="space-y-4">
-                  {regions.map(region => {
-                    const hubsWithProjects = region.hubs.filter(h => h.projects.length > 0);
-                    if (hubsWithProjects.length === 0) return null;
-                    return (
-                      <div key={region.id}>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
-                          {region.name}
-                        </p>
-                        {hubsWithProjects.map(hub => (
-                          <div key={hub.id} className="mb-3">
-                            <p className="text-xs text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
-                              <Building2 className="h-3 w-3" />
-                              {hub.name}
-                            </p>
-                            <div className="space-y-2">
-                              {hub.projects.map(project => (
-                                <div 
-                                  key={project.id} 
-                                  className="p-3 rounded-lg border border-border group hover:bg-accent/50"
-                                >
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-mono text-sm text-primary">
-                                      {project.projectIdPrefix}{project.projectIdNumber}
-                                    </span>
-                                    <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-5 w-5"
-                                        onClick={() => setEditProjectData(project)}
-                                      >
-                                        <Pencil className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-5 w-5"
-                                        onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
-                                      >
-                                        <ArrowLeftRight className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground truncate">
-                                    {project.projectTitle}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                  {/* Unassigned projects */}
-                  {unassignedProjects.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Unassigned Projects
-                      </p>
+            {(() => {
+              // Filter based on selected portfolio and/or hub
+              const filteredRegions = selectedRegion 
+                ? regions.filter(r => r.id === selectedRegion)
+                : regions;
+              
+              // Get projects with their context
+              const filteredProjects: Array<{ project: Project; hub: HubWithProjects; region: RegionWithHubs }> = [];
+              filteredRegions.forEach(region => {
+                const hubsToShow = selectedHub 
+                  ? region.hubs.filter(h => h.id === selectedHub)
+                  : region.hubs;
+                hubsToShow.forEach(hub => {
+                  hub.projects.forEach(project => {
+                    filteredProjects.push({ project, hub, region });
+                  });
+                });
+              });
+              
+              // Also include unassigned projects if no filter
+              const showUnassigned = !selectedRegion && !selectedHub && unassignedProjects.length > 0;
+              
+              if (filteredProjects.length === 0 && !showUnassigned) {
+                return (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    {selectedRegion || selectedHub ? 'No projects in selection' : 'No projects found'}
+                  </div>
+                );
+              }
+              
+              return (
+                <ScrollArea className="h-[400px] pr-3">
+                  <div className="space-y-4">
+                    {/* Group by region if no specific selection, otherwise flat list */}
+                    {selectedHub ? (
+                      // Show only projects from the selected hub
                       <div className="space-y-2">
-                        {unassignedProjects.map(project => (
+                        {filteredProjects.map(({ project, hub }) => (
                           <div 
                             key={project.id} 
-                            className="p-3 rounded-lg border border-dashed group hover:bg-accent/50"
+                            className="p-3 rounded-lg border border-border group hover:bg-accent/50"
                           >
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-mono text-sm text-primary">
@@ -1023,10 +1031,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                   variant="ghost"
                                   size="icon"
                                   className="h-5 w-5"
-                                  onClick={() => setMoveProjectDialog({ 
-                                    project, 
-                                    currentHub: { id: '', name: 'Unassigned', projects: [], regionId: '', displayOrder: 0, description: null } 
-                                  })}
+                                  onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
                                 >
                                   <ArrowLeftRight className="h-3 w-3" />
                                 </Button>
@@ -1038,11 +1043,118 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            )}
+                    ) : (
+                      // Group by hub when portfolio is selected or show all
+                      <>
+                        {filteredRegions.map(region => {
+                          const hubsWithProjects = region.hubs.filter(h => h.projects.length > 0);
+                          if (hubsWithProjects.length === 0) return null;
+                          return (
+                            <div key={region.id}>
+                              {!selectedRegion && (
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
+                                  {region.name}
+                                </p>
+                              )}
+                              {hubsWithProjects.map(hub => (
+                                <div key={hub.id} className="mb-3">
+                                  <p className="text-xs text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
+                                    <Building2 className="h-3 w-3" />
+                                    {hub.name}
+                                  </p>
+                                  <div className="space-y-2">
+                                    {hub.projects.map(project => (
+                                      <div 
+                                        key={project.id} 
+                                        className="p-3 rounded-lg border border-border group hover:bg-accent/50"
+                                      >
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="font-mono text-sm text-primary">
+                                            {project.projectIdPrefix}{project.projectIdNumber}
+                                          </span>
+                                          <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-5 w-5"
+                                              onClick={() => setEditProjectData(project)}
+                                            >
+                                              <Pencil className="h-3 w-3" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-5 w-5"
+                                              onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
+                                            >
+                                              <ArrowLeftRight className="h-3 w-3" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground truncate">
+                                          {project.projectTitle}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                        {/* Unassigned projects - only when no filter */}
+                        {showUnassigned && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Unassigned Projects
+                            </p>
+                            <div className="space-y-2">
+                              {unassignedProjects.map(project => (
+                                <div 
+                                  key={project.id} 
+                                  className="p-3 rounded-lg border border-dashed group hover:bg-accent/50"
+                                >
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-mono text-sm text-primary">
+                                      {project.projectIdPrefix}{project.projectIdNumber}
+                                    </span>
+                                    <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => setEditProjectData(project)}
+                                      >
+                                        <Pencil className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => setMoveProjectDialog({ 
+                                          project, 
+                                          currentHub: { id: '', name: 'Unassigned', projects: [], regionId: '', displayOrder: 0, description: null } 
+                                        })}
+                                      >
+                                        <ArrowLeftRight className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground truncate">
+                                    {project.projectTitle}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
