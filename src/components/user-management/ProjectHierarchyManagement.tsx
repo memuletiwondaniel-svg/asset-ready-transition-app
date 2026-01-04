@@ -936,41 +936,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         </div>
                       );
                     })}
-                    {/* Unassigned hubs - only show if no portfolio selected */}
-                    {!selectedRegion && unassignedHubs.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          Unassigned
-                        </p>
-                        <div className="space-y-2">
-                          {unassignedHubs.map(hub => (
-                            <div
-                              key={hub.id}
-                              className="p-3 rounded-lg border border-dashed hover:bg-accent cursor-pointer group"
-                              onClick={() => setSelectedHub(hub.id)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium truncate">{hub.name}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditHubDialog({ ...hub, projects: [] } as HubWithProjects);
-                                    setEditHubName(hub.name);
-                                    setEditHubDescription(hub.description || '');
-                                  }}
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </ScrollArea>
               );
