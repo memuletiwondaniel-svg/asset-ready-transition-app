@@ -708,11 +708,11 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-12">
                         #
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Reason for PSSR
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
                         Category
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[300px]">
+                        Reason for PSSR
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
                         Status
@@ -745,6 +745,18 @@ const PSSRConfigurationMatrix: React.FC = () => {
                             {index + 1}
                           </TableCell>
 
+                          {/* Category */}
+                          <TableCell>
+                            {category ? (
+                              <div className="flex items-center gap-1.5">
+                                <CategoryIcon icon={category.icon} />
+                                <span className="text-sm whitespace-nowrap">{category.name}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
                           {/* Template Name - Clickable to open details */}
                           <TableCell className="font-medium">
                             <div 
@@ -763,18 +775,6 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                 </Badge>
                               )}
                             </div>
-                          </TableCell>
-
-                          {/* Category */}
-                          <TableCell>
-                            {category ? (
-                              <div className="flex items-center gap-1.5">
-                                <CategoryIcon icon={category.icon} />
-                                <span className="text-sm whitespace-nowrap">{category.name}</span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
-                            )}
                           </TableCell>
 
                           {/* Status Badge */}
