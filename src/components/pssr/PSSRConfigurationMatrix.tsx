@@ -673,102 +673,49 @@ const PSSRConfigurationMatrix: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-2xl font-semibold">PSSR Templates</CardTitle>
-              {/* Quick Stats */}
+              {/* Quick Stats - Clickable filters */}
               <div className="flex items-center gap-3 mt-2 text-sm">
-                <span className="text-muted-foreground">{statusCounts.all} Templates:</span>
-                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className={`transition-colors ${statusFilter === 'all' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  {statusCounts.all} Templates{statusFilter !== 'all' && ' (click to show all)'}:
+                </button>
+                <Badge 
+                  variant="outline" 
+                  className={`cursor-pointer transition-all ${
+                    statusFilter === 'active' 
+                      ? 'bg-green-200 text-green-800 border-green-500 ring-2 ring-green-500/30 dark:bg-green-800/50 dark:text-green-300 dark:border-green-500' 
+                      : 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/50'
+                  }`}
+                  onClick={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
+                >
                   {statusCounts.active} Active
                 </Badge>
-                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">
+                <Badge 
+                  variant="outline" 
+                  className={`cursor-pointer transition-all ${
+                    statusFilter === 'draft' 
+                      ? 'bg-slate-200 text-slate-800 border-slate-500 ring-2 ring-slate-500/30 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-500' 
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700'
+                  }`}
+                  onClick={() => setStatusFilter(statusFilter === 'draft' ? 'all' : 'draft')}
+                >
                   {statusCounts.draft} Drafts
                 </Badge>
-                <Badge variant="outline" className="bg-red-100 text-red-600 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700">
+                <Badge 
+                  variant="outline" 
+                  className={`cursor-pointer transition-all ${
+                    statusFilter === 'inactive' 
+                      ? 'bg-red-200 text-red-800 border-red-500 ring-2 ring-red-500/30 dark:bg-red-800/50 dark:text-red-300 dark:border-red-500' 
+                      : 'bg-red-100 text-red-600 border-red-300 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/50'
+                  }`}
+                  onClick={() => setStatusFilter(statusFilter === 'inactive' ? 'all' : 'inactive')}
+                >
                   {statusCounts.inactive} Inactive
                 </Badge>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Column Visibility Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9">
-                    <Columns className="h-4 w-4 mr-2" />
-                    Columns
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={visibleColumns.items}
-                    onCheckedChange={(checked) => updateColumnVisibility('items', checked)}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Items
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={visibleColumns.pssrApprovers}
-                    onCheckedChange={(checked) => updateColumnVisibility('pssrApprovers', checked)}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    PSSR Approvers
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={visibleColumns.sofApprovers}
-                    onCheckedChange={(checked) => updateColumnVisibility('sofApprovers', checked)}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    SoF Approvers
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <Button 
-                onClick={() => {
-                  setPreselectedCategoryId(null);
-                  setShowAddReasonWizard(true);
-                }}
-                className="fluent-button"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Template
-              </Button>
-              {hasUnsavedChanges && (
-                <Button 
-                  variant="outline"
-                  onClick={handleCancelChanges}
-                  className="fluent-button"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-1 mt-4 border-b border-border/40 -mb-4 pb-0">
-            {(['all', 'active', 'draft', 'inactive'] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[1px] ${
-                  statusFilter === status
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30'
-                }`}
-              >
-                {status === 'all' ? 'All' : STATUS_CONFIG[status]?.label || status}
-                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                  statusFilter === status 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                  {statusCounts[status]}
-                </span>
-              </button>
-            ))}
           </div>
           
           {/* Search Input */}
