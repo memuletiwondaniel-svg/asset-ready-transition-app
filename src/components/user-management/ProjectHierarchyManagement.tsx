@@ -79,7 +79,7 @@ const DraggableHub: React.FC<{
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
           <div 
-            className="cursor-grab active:cursor-grabbing p-1 opacity-50 hover:opacity-100"
+            className="cursor-grab active:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition-opacity"
             {...attributes}
             {...listeners}
           >
@@ -174,7 +174,7 @@ const DraggableProject: React.FC<{
       className="flex items-center rounded-md transition-colors py-1 px-2 hover:bg-accent/50 group"
     >
       <div 
-        className="cursor-grab active:cursor-grabbing p-0.5 opacity-50 hover:opacity-100 mr-1"
+        className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
         {...attributes}
         {...listeners}
       >
@@ -644,13 +644,13 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
 
     return (
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Regions Column */}
+        {/* Project Portfolios Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Regions
+                Project Portfolios
                 <Badge variant="secondary" className="ml-1">{regions.length}</Badge>
               </CardTitle>
               <Button size="sm" onClick={() => setShowAddRegionDialog(true)}>
@@ -662,7 +662,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           <CardContent className="pt-0">
             {regions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                No regions found
+                No portfolios found
               </div>
             ) : (
               <ScrollArea className="h-[400px] pr-3">
@@ -728,7 +728,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </CardContent>
         </Card>
 
-        {/* Hubs Column */}
+        {/* Project Hubs Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -739,16 +739,22 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                   {selectedRegionData?.hubs.length || 0}
                 </Badge>
               </CardTitle>
+              {selectedRegion && (
+                <Button size="sm" variant="outline" disabled title="Add hub functionality coming soon">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className="pt-0">
             {!selectedRegion ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Select a region to view hubs
+                Select a portfolio to view hubs
               </div>
             ) : (selectedRegionData?.hubs.length || 0) === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                No hubs in this region
+                No hubs in this portfolio
               </div>
             ) : (
               <ScrollArea className="h-[400px] pr-3">
@@ -811,6 +817,12 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                   {selectedHubData?.projects.length || 0}
                 </Badge>
               </CardTitle>
+              {selectedHub && (
+                <Button size="sm" variant="outline" disabled title="Add project functionality coming soon">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className="pt-0">
