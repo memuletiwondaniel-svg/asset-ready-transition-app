@@ -59,7 +59,7 @@ import EnhancedCreateUserModal from './EnhancedCreateUserModal';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import ConfigurationManagement from './ConfigurationManagement';
 import LocationManagement from './LocationManagement';
-import ProjectHierarchyManagement from './ProjectHierarchyManagement';
+
 
 interface EnhancedUserManagementProps {
   onBack: () => void;
@@ -733,7 +733,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto p-6 space-y-6">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
+              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Users
@@ -745,10 +745,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <TabsTrigger value="locations" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   Asset Hierarchy
-                </TabsTrigger>
-                <TabsTrigger value="projects" className="flex items-center gap-2">
-                  <Home className="h-4 w-4" />
-                  Project Hierarchy
                 </TabsTrigger>
               </TabsList>
 
@@ -955,12 +951,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <LocationManagement />
               </TabsContent>
 
-              <TabsContent value="projects" className="mt-0">
-                <ProjectHierarchyManagement 
-                  selectedLanguage={selectedLanguage}
-                  translations={translations}
-                />
-              </TabsContent>
 
               <TabsContent value="configuration" className="mt-0">
                 <ConfigurationManagement />
