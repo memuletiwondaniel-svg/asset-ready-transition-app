@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AddProjectModal } from '@/components/project/AddProjectModal';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -229,6 +230,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [selectedHub, setSelectedHub] = useState<string | null>(null);
   const [deleteRegionDialog, setDeleteRegionDialog] = useState<RegionWithHubs | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
 
   // DnD sensors
   const sensors = useSensors(
@@ -648,7 +650,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Project Portfolios
+                Portfolios
                 <Badge variant="secondary" className="ml-1">{regions.length}</Badge>
               </CardTitle>
               <Button size="sm" onClick={() => setShowAddRegionDialog(true)}>
@@ -732,17 +734,15 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Project Hubs
+                Hubs
                 <Badge variant="secondary" className="ml-1">
                   {selectedRegionData?.hubs.length || 0}
                 </Badge>
               </CardTitle>
-              {selectedRegion && (
-                <Button size="sm" variant="outline" disabled title="Add hub functionality coming soon">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              )}
+              <Button size="sm" variant="outline" disabled={!selectedRegion} title={selectedRegion ? "Add hub functionality coming soon" : "Select a portfolio first"}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
@@ -815,12 +815,16 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                   {selectedHubData?.projects.length || 0}
                 </Badge>
               </CardTitle>
-              {selectedHub && (
-                <Button size="sm" variant="outline" disabled title="Add project functionality coming soon">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              )}
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={!selectedHub}
+                title={selectedHub ? "Add new project" : "Select a hub first"}
+                onClick={() => setShowAddProjectModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
@@ -918,10 +922,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             </Button>
             <Button variant="outline" size="sm" onClick={collapseAll}>
               Collapse All
-            </Button>
-            <Button size="sm" onClick={() => setShowAddRegionDialog(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Region
             </Button>
           </div>
         </div>
@@ -1084,6 +1084,12 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Project Modal */}
+      <AddProjectModal 
+        open={showAddProjectModal} 
+        onClose={() => setShowAddProjectModal(false)} 
+      />
     </div>
   );
 };
