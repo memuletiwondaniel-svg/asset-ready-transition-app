@@ -40,8 +40,11 @@ import {
   GitBranch,
   LayoutGrid,
   Trash2,
-  GripVertical
+  GripVertical,
+  Pencil
 } from 'lucide-react';
+import { EditProjectModal } from '@/components/project/EditProjectModal';
+import { useHubs } from '@/hooks/useHubs';
 
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
@@ -180,7 +183,6 @@ const DraggableProject: React.FC<{
       >
         <GripVertical className="h-3 w-3" />
       </div>
-      <FolderKanban className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
       <span className="text-xs font-mono font-semibold text-primary mr-2">{projectId}</span>
       <span className="text-xs text-muted-foreground font-normal flex-1 truncate">{project.projectTitle}</span>
       <Button
@@ -213,6 +215,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     assignHubToRegion,
     moveProjectToHub,
     addRegion,
+    updateRegion,
     deleteRegion
   } = useProjectHierarchy();
 
@@ -231,6 +234,18 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [deleteRegionDialog, setDeleteRegionDialog] = useState<RegionWithHubs | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  
+  // Edit dialogs state
+  const [editPortfolioDialog, setEditPortfolioDialog] = useState<RegionWithHubs | null>(null);
+  const [editPortfolioName, setEditPortfolioName] = useState('');
+  const [editPortfolioDescription, setEditPortfolioDescription] = useState('');
+  const [editHubDialog, setEditHubDialog] = useState<HubWithProjects | null>(null);
+  const [editHubName, setEditHubName] = useState('');
+  const [editHubDescription, setEditHubDescription] = useState('');
+  const [editProjectData, setEditProjectData] = useState<Project | null>(null);
+  
+  // Hubs hook for updating
+  const { updateHub } = useHubs();
 
   // DnD sensors
   const sensors = useSensors(
@@ -639,12 +654,34 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
 
   // Columns View Component
   const ColumnsView = () => {
-    const selectedRegionData = regions.find(r => r.id === selectedRegion);
-    const selectedHubData = selectedRegionData?.hubs.find(h => h.id === selectedHub);
+    // Get all projects from all hubs
+    const allProjects = useMemo(() => {
+      const projects: Array<{ project: Project; hub: HubWithProjects; region: RegionWithHubs | null }> = [];
+      regions.forEach(region => {
+        region.hubs.forEach(hub => {
+          hub.projects.forEach(project => {
+            projects.push({ project, hub, region });
+          });
+        });
+      });
+      // Add unassigned projects
+      unassignedProjects.forEach(project => {
+        projects.push({ 
+          project, 
+          hub: { id: '', name: 'Unassigned', description: null, regionId: '', displayOrder: 0, projects: [] } as HubWithProjects,
+          region: null 
+        });
+      });
+      return projects;
+    }, [regions, unassignedProjects]);
+
+    // Calculate total counts
+    const totalHubs = allHubs.length;
+    const totalProjects = allProjects.length;
 
     return (
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Project Portfolios Column */}
+        {/* Portfolios Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -673,7 +710,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                     return (
                       <div
                         key={region.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
                           isSelected 
                             ? 'bg-primary/10 border-primary' 
                             : 'hover:bg-accent border-border'
@@ -705,7 +742,20 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 ml-2">
+                          <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditPortfolioDialog(region);
+                                setEditPortfolioName(region.name);
+                                setEditPortfolioDescription(region.description || '');
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -728,98 +778,152 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </CardContent>
         </Card>
 
-        {/* Project Hubs Column */}
+        {/* Hubs Column - Show ALL hubs grouped by portfolio */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
                 Hubs
-                <Badge variant="secondary" className="ml-1">
-                  {selectedRegionData?.hubs.length || 0}
-                </Badge>
+                <Badge variant="secondary" className="ml-1">{totalHubs}</Badge>
               </CardTitle>
-              <Button size="sm" variant="outline" disabled={!selectedRegion} title={selectedRegion ? "Add hub functionality coming soon" : "Select a portfolio first"}>
+              <Button size="sm" variant="outline" disabled title="Add hub functionality coming soon">
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            {!selectedRegion ? (
+            {totalHubs === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Select a portfolio to view hubs
-              </div>
-            ) : (selectedRegionData?.hubs.length || 0) === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No hubs in this portfolio
+                No hubs found
               </div>
             ) : (
               <ScrollArea className="h-[400px] pr-3">
-                <div className="space-y-2">
-                  {selectedRegionData?.hubs.map(hub => {
-                    const isSelected = selectedHub === hub.id;
+                <div className="space-y-4">
+                  {regions.map(region => {
+                    if (region.hubs.length === 0) return null;
                     return (
-                      <div
-                        key={hub.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                          isSelected 
-                            ? 'bg-primary/10 border-primary' 
-                            : 'hover:bg-accent border-border'
-                        }`}
-                        onClick={() => setSelectedHub(isSelected ? null : hub.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{hub.name} Hub</span>
-                              {isSelected && (
-                                <ChevronRight className="h-4 w-4 text-primary" />
-                              )}
-                            </div>
-                            <Badge variant="outline" className="text-xs mt-1">
-                              {hub.projects.length} projects
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-1 ml-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMoveHubDialog({ hub, currentRegion: selectedRegionData! });
-                              }}
-                            >
-                              <ArrowLeftRight className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                      <div key={region.id}>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
+                          {region.name}
+                        </p>
+                        <div className="space-y-2">
+                          {region.hubs.map(hub => {
+                            const isSelected = selectedHub === hub.id;
+                            return (
+                              <div
+                                key={hub.id}
+                                className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
+                                  isSelected 
+                                    ? 'bg-primary/10 border-primary' 
+                                    : 'hover:bg-accent border-border'
+                                }`}
+                                onClick={() => {
+                                  setSelectedHub(isSelected ? null : hub.id);
+                                  setSelectedRegion(region.id);
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium truncate">{hub.name}</span>
+                                      {isSelected && (
+                                        <ChevronRight className="h-4 w-4 text-primary" />
+                                      )}
+                                    </div>
+                                    <Badge variant="outline" className="text-xs mt-1">
+                                      {hub.projects.length} projects
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditHubDialog(hub);
+                                        setEditHubName(hub.name);
+                                        setEditHubDescription(hub.description || '');
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMoveHubDialog({ hub, currentRegion: region });
+                                      }}
+                                    >
+                                      <ArrowLeftRight className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
                   })}
+                  {/* Unassigned hubs */}
+                  {unassignedHubs.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Unassigned
+                      </p>
+                      <div className="space-y-2">
+                        {unassignedHubs.map(hub => (
+                          <div
+                            key={hub.id}
+                            className="p-3 rounded-lg border border-dashed hover:bg-accent cursor-pointer group"
+                            onClick={() => setSelectedHub(hub.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium truncate">{hub.name}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Cast to HubWithProjects for the dialog
+                                  setEditHubDialog({ ...hub, projects: [] } as HubWithProjects);
+                                  setEditHubName(hub.name);
+                                  setEditHubDescription(hub.description || '');
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             )}
           </CardContent>
         </Card>
 
-        {/* Projects Column */}
+        {/* Projects Column - Show ALL projects grouped by hub */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <FolderKanban className="h-4 w-4" />
                 Projects
-                <Badge variant="secondary" className="ml-1">
-                  {selectedHubData?.projects.length || 0}
-                </Badge>
+                <Badge variant="secondary" className="ml-1">{totalProjects}</Badge>
               </CardTitle>
               <Button 
                 size="sm" 
                 variant="outline" 
-                disabled={!selectedHub}
-                title={selectedHub ? "Add new project" : "Select a hub first"}
                 onClick={() => setShowAddProjectModal(true)}
               >
                 <Plus className="h-4 w-4 mr-1" />
@@ -828,38 +932,114 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            {!selectedHub ? (
+            {totalProjects === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Select a hub to view projects
-              </div>
-            ) : (selectedHubData?.projects.length || 0) === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No projects in this hub
+                No projects found
               </div>
             ) : (
               <ScrollArea className="h-[400px] pr-3">
-                <div className="space-y-2">
-                  {selectedHubData?.projects.map(project => (
-                    <div key={project.id} className="p-3 rounded-lg border border-border group hover:bg-accent/50">
-                      <div className="flex items-center gap-2 mb-1">
-                        <FolderKanban className="h-3.5 w-3.5 text-amber-500" />
-                        <span className="font-mono text-sm text-primary">
-                          {project.projectIdPrefix}{project.projectIdNumber}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 ml-auto opacity-0 group-hover:opacity-100"
-                          onClick={() => setMoveProjectDialog({ project, currentHub: selectedHubData! })}
-                        >
-                          <ArrowLeftRight className="h-3 w-3" />
-                        </Button>
+                <div className="space-y-4">
+                  {regions.map(region => {
+                    const hubsWithProjects = region.hubs.filter(h => h.projects.length > 0);
+                    if (hubsWithProjects.length === 0) return null;
+                    return (
+                      <div key={region.id}>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">
+                          {region.name}
+                        </p>
+                        {hubsWithProjects.map(hub => (
+                          <div key={hub.id} className="mb-3">
+                            <p className="text-xs text-muted-foreground mb-1.5 px-1 flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />
+                              {hub.name}
+                            </p>
+                            <div className="space-y-2">
+                              {hub.projects.map(project => (
+                                <div 
+                                  key={project.id} 
+                                  className="p-3 rounded-lg border border-border group hover:bg-accent/50"
+                                >
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-mono text-sm text-primary">
+                                      {project.projectIdPrefix}{project.projectIdNumber}
+                                    </span>
+                                    <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => setEditProjectData(project)}
+                                      >
+                                        <Pencil className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
+                                      >
+                                        <ArrowLeftRight className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground truncate">
+                                    {project.projectTitle}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <p className="text-sm text-muted-foreground truncate pl-5">
-                        {project.projectTitle}
+                    );
+                  })}
+                  {/* Unassigned projects */}
+                  {unassignedProjects.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Unassigned Projects
                       </p>
+                      <div className="space-y-2">
+                        {unassignedProjects.map(project => (
+                          <div 
+                            key={project.id} 
+                            className="p-3 rounded-lg border border-dashed group hover:bg-accent/50"
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-mono text-sm text-primary">
+                                {project.projectIdPrefix}{project.projectIdNumber}
+                              </span>
+                              <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  onClick={() => setEditProjectData(project)}
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  onClick={() => setMoveProjectDialog({ 
+                                    project, 
+                                    currentHub: { id: '', name: 'Unassigned', projects: [], regionId: '', displayOrder: 0, description: null } 
+                                  })}
+                                >
+                                  <ArrowLeftRight className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {project.projectTitle}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </ScrollArea>
             )}
@@ -1090,6 +1270,124 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         open={showAddProjectModal} 
         onClose={() => setShowAddProjectModal(false)} 
       />
+
+      {/* Edit Portfolio Dialog */}
+      <Dialog open={!!editPortfolioDialog} onOpenChange={(open) => !open && setEditPortfolioDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Portfolio</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editPortfolioName">Portfolio Name</Label>
+              <Input
+                id="editPortfolioName"
+                value={editPortfolioName}
+                onChange={(e) => setEditPortfolioName(e.target.value)}
+                placeholder="Portfolio name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editPortfolioDescription">Description (optional)</Label>
+              <Input
+                id="editPortfolioDescription"
+                value={editPortfolioDescription}
+                onChange={(e) => setEditPortfolioDescription(e.target.value)}
+                placeholder="Description of the portfolio"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPortfolioDialog(null)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={async () => {
+                if (editPortfolioDialog && editPortfolioName.trim()) {
+                  await updateRegion(editPortfolioDialog.id, {
+                    name: editPortfolioName.trim(),
+                    description: editPortfolioDescription.trim() || null
+                  });
+                  setEditPortfolioDialog(null);
+                }
+              }}
+              disabled={!editPortfolioName.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Hub Dialog */}
+      <Dialog open={!!editHubDialog} onOpenChange={(open) => !open && setEditHubDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Hub</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editHubName">Hub Name</Label>
+              <Input
+                id="editHubName"
+                value={editHubName}
+                onChange={(e) => setEditHubName(e.target.value)}
+                placeholder="Hub name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editHubDescription">Description (optional)</Label>
+              <Input
+                id="editHubDescription"
+                value={editHubDescription}
+                onChange={(e) => setEditHubDescription(e.target.value)}
+                placeholder="Description of the hub"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditHubDialog(null)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={async () => {
+                if (editHubDialog && editHubName.trim()) {
+                  await updateHub(editHubDialog.id, {
+                    name: editHubName.trim(),
+                    description: editHubDescription.trim() || undefined
+                  });
+                  setEditHubDialog(null);
+                  refetch();
+                }
+              }}
+              disabled={!editHubName.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Project Modal */}
+      {editProjectData && (
+        <EditProjectModal 
+          open={!!editProjectData}
+          onClose={() => setEditProjectData(null)}
+          onSave={() => {
+            setEditProjectData(null);
+            refetch();
+          }}
+          project={{
+            id: editProjectData.id,
+            project_id_prefix: editProjectData.projectIdPrefix,
+            project_id_number: editProjectData.projectIdNumber,
+            project_title: editProjectData.projectTitle,
+            hub_id: editProjectData.hubId,
+            plant_id: editProjectData.plantId,
+            station_id: editProjectData.stationId,
+          } as any}
+        />
+      )}
     </div>
   );
 };

@@ -66,8 +66,39 @@ export const useHubs = () => {
     }
   };
 
+  const updateHub = async (hubId: string, updates: { name?: string; description?: string }) => {
+    try {
+      const { error } = await supabase
+        .from('hubs')
+        .update(updates)
+        .eq('id', hubId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['hubs'] });
+      queryClient.invalidateQueries({ queryKey: ['project-hierarchy'] });
+      
+      toast({
+        title: "Hub Updated",
+        description: "Hub has been updated successfully.",
+      });
+    } catch (err) {
+      console.error('Error updating hub:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update hub. Please try again.",
+        variant: "destructive"
+      });
+      throw err;
+    }
+  };
+
   return {
     ...query,
-    createHub
+    createHub,
+    updateHub
   };
 };
