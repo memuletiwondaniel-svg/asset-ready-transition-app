@@ -345,6 +345,47 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     setActiveId(event.active.id as string);
   };
 
+  // Search results across all hubs
+  const searchResults = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    const query = searchQuery.toLowerCase();
+    
+    const results: Array<{
+      project: Project;
+      hub: HubWithProjects;
+      region: RegionWithHubs | null;
+    }> = [];
+    
+    regions.forEach(region => {
+      region.hubs.forEach(hub => {
+        hub.projects.forEach(project => {
+          const projectId = `${project.projectIdPrefix}${project.projectIdNumber}`.toLowerCase();
+          const title = project.projectTitle.toLowerCase();
+          
+          if (projectId.includes(query) || title.includes(query)) {
+            results.push({ project, hub, region });
+          }
+        });
+      });
+    });
+    
+    // Also check unassigned projects
+    unassignedProjects.forEach(project => {
+      const projectId = `${project.projectIdPrefix}${project.projectIdNumber}`.toLowerCase();
+      const title = project.projectTitle.toLowerCase();
+      
+      if (projectId.includes(query) || title.includes(query)) {
+        results.push({ 
+          project, 
+          hub: { id: '', name: 'Unassigned', description: null, regionId: '', displayOrder: 0, projects: [] } as HubWithProjects,
+          region: null
+        });
+      }
+    });
+    
+    return results;
+  }, [regions, unassignedProjects, searchQuery]);
+
   // Filter hierarchy based on search
   const filterHub = (hub: HubWithProjects): boolean => {
     if (!searchQuery) return true;
@@ -398,11 +439,67 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
       );
     }
 
-    if (searchQuery && visibleRegions.length === 0) {
+    // Show search results panel when there are matches
+    if (searchQuery && searchQuery.length >= 2 && searchResults.length > 0) {
+      return (
+        <ScrollArea className="h-[500px]">
+          <div className="p-2">
+            <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+              <Search className="h-4 w-4" />
+              <span>Found {searchResults.length} project{searchResults.length !== 1 ? 's' : ''} matching "{searchQuery}"</span>
+            </div>
+            <div className="space-y-2">
+              {searchResults.map(({ project, hub, region }) => {
+                const projectId = `${project.projectIdPrefix}${project.projectIdNumber}`;
+                return (
+                  <div 
+                    key={project.id}
+                    className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <FolderKanban className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span className="font-mono text-primary font-medium">{projectId}</span>
+                        </div>
+                        <p className="text-sm text-foreground mt-1 truncate">{project.projectTitle}</p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                          {region ? (
+                            <>
+                              <MapPin className="h-3 w-3" />
+                              <span>{region.name}</span>
+                              <ChevronRight className="h-3 w-3" />
+                            </>
+                          ) : null}
+                          <Building2 className="h-3 w-3" />
+                          <span>{hub.name} Hub</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                        onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
+                        title="Move to another hub"
+                      >
+                        <ArrowLeftRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </ScrollArea>
+      );
+    }
+
+    if (searchQuery && visibleRegions.length === 0 && searchResults.length === 0) {
       return (
         <div className="text-center py-12 text-muted-foreground">
           <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p>No locations match "{searchQuery}"</p>
+          <p>No projects match "{searchQuery}"</p>
+          <p className="text-xs mt-1">Try searching by project ID (e.g., DP385) or title</p>
         </div>
       );
     }
@@ -771,7 +868,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         <div className="relative w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search hierarchy..."
+            placeholder="Search projects by ID (DP385) or title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 pr-9"
