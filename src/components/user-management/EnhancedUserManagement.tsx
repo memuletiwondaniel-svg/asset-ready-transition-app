@@ -744,7 +744,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 </TabsTrigger>
                 <TabsTrigger value="locations" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Asset Hierarchy
+                  Locations
                 </TabsTrigger>
               </TabsList>
 
