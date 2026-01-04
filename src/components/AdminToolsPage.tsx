@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2 } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -218,6 +218,20 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('users')
+  }, {
+    id: 'projects',
+    title: 'Manage Projects',
+    description: 'Create, edit, and manage projects, portfolios, and hubs',
+    icon: Building2,
+    gradient: 'from-purple-500 to-purple-600',
+    tooltip: 'View and manage projects, assign teams, configure project hierarchy and settings',
+    stats: {
+      total: projectStats.total,
+      label: 'projects',
+      isAnimating: projectStatsAnimating
+    },
+    height: 'md:row-span-2',
+    onClick: () => navigate('/project-management')
   }, {
     id: 'pssr-settings',
     title: 'PSSR Configuration',
