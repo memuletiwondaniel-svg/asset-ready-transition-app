@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2 } from 'lucide-react';
+import { AlertTriangle, Save, X, Lock, CheckCircle2, Info, Loader2, Plus, Trash2, FileText, Clock, AlertCircle, Building2, Wrench, ChevronDown, ChevronRight, Edit2, Users, Settings2, Search } from 'lucide-react';
 import { InlineEditableCell } from '@/components/ui/InlineEditableCell';
 import { usePSSRReasonConfigurations, useUpsertPSSRReasonConfiguration, ConfigurationWithDetails } from '@/hooks/usePSSRReasonConfiguration';
 import { useRoles } from '@/hooks/useRoles';
@@ -195,6 +195,9 @@ const PSSRConfigurationMatrix: React.FC = () => {
   // Collapsible category state - all expanded by default
   const [expandedCategories, setExpandedCategories] = useState<Set<string | null>>(new Set());
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Initialize expanded categories when categories load
   useEffect(() => {
     if (categories.length > 0) {
@@ -252,11 +255,37 @@ const PSSRConfigurationMatrix: React.FC = () => {
     [localConfigs]
   );
 
-  // Sort configs by display_order
-  const sortedConfigs = useMemo(() => 
-    [...localConfigs].sort((a, b) => a.display_order - b.display_order),
-    [localConfigs]
-  );
+  // Sort configs by display_order and filter by search query
+  const sortedConfigs = useMemo(() => {
+    let filtered = [...localConfigs];
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(config => {
+        // Search in template name
+        if (config.reason_name.toLowerCase().includes(query)) return true;
+        
+        // Search in category name
+        const category = categories.find(c => c.id === config.category_id);
+        if (category?.name.toLowerCase().includes(query)) return true;
+        
+        // Search in status
+        const status = STATUS_CONFIG[config.status]?.label.toLowerCase() || '';
+        if (status.includes(query)) return true;
+        
+        // Search in approver role names
+        const pssrRoleNames = roles.filter(r => config.pssr_approver_role_ids.includes(r.id)).map(r => r.name.toLowerCase());
+        const sofRoleNames = roles.filter(r => config.sof_approver_role_ids.includes(r.id)).map(r => r.name.toLowerCase());
+        if (pssrRoleNames.some(name => name.includes(query))) return true;
+        if (sofRoleNames.some(name => name.includes(query))) return true;
+        
+        return false;
+      });
+    }
+    
+    return filtered.sort((a, b) => a.display_order - b.display_order);
+  }, [localConfigs, searchQuery, categories, roles]);
 
   // Group configs by category
   const groupedConfigs = useMemo(() => {
@@ -633,7 +662,32 @@ const PSSRConfigurationMatrix: React.FC = () => {
               )}
             </div>
           </div>
-
+          
+          {/* Search Input */}
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search templates by name, category, status, or approver role..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 max-w-md"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Found {sortedConfigs.length} template{sortedConfigs.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </p>
+          )}
         </CardHeader>
 
         <CardContent className="p-0">
