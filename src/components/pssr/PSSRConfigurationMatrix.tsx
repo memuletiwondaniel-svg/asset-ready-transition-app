@@ -708,7 +708,7 @@ const PSSRConfigurationMatrix: React.FC = () => {
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-12">
                         #
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-40">
+                      <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">
                         Category
                       </TableHead>
                       <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[300px]">
@@ -748,9 +748,9 @@ const PSSRConfigurationMatrix: React.FC = () => {
                           {/* Category */}
                           <TableCell>
                             {category ? (
-                              <div className="flex items-center gap-1.5">
-                                <CategoryIcon icon={category.icon} />
-                                <span className="text-sm whitespace-nowrap">{category.name}</span>
+                              <div className="flex items-start gap-1.5">
+                                <div className="shrink-0"><CategoryIcon icon={category.icon} /></div>
+                                <span className="text-sm">{category.name}</span>
                               </div>
                             ) : (
                               <span className="text-sm text-muted-foreground">—</span>
