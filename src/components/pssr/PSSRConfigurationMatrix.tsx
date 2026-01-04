@@ -821,19 +821,19 @@ const PSSRConfigurationMatrix: React.FC = () => {
                           {/* Template Name - Clickable to open details with P&E/BFM indicator */}
                           <TableCell className="font-medium">
                             <div 
-                              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
+                              className="flex items-start gap-2 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEditOverlay({ open: true, config });
                               }}
                             >
-                              {/* P&E/BFM Visual Indicator */}
+                              {/* P&E/BFM Visual Indicator - Always on same row */}
                               {config.sub_category && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Badge 
                                       variant="outline" 
-                                      className={`shrink-0 text-[10px] font-semibold px-1.5 py-0 ${
+                                      className={`shrink-0 whitespace-nowrap text-[10px] font-semibold px-1.5 py-0 mt-0.5 ${
                                         config.sub_category === 'P&E' 
                                           ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700' 
                                           : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700'
@@ -847,14 +847,16 @@ const PSSRConfigurationMatrix: React.FC = () => {
                                   </TooltipContent>
                                 </Tooltip>
                               )}
-                              <span className="whitespace-normal break-words">
-                                {config.reason_name}
-                              </span>
-                              {config.isDirty && (
-                                <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 shrink-0">
-                                  Modified
-                                </Badge>
-                              )}
+                              <div className="flex flex-col gap-1">
+                                <span className="whitespace-normal break-words">
+                                  {config.reason_name}
+                                </span>
+                                {config.isDirty && (
+                                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300 w-fit">
+                                    Modified
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
 
