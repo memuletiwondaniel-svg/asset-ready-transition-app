@@ -2350,6 +2350,42 @@ export type Database = {
           },
         ]
       }
+      project_locations: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          station_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          station_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          station_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_locations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_locations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_milestone_types: {
         Row: {
           code: string
@@ -2583,6 +2619,7 @@ export type Database = {
           project_scope: string | null
           project_scope_image_url: string | null
           project_title: string
+          region_id: string | null
           station_id: string | null
           updated_at: string
         }
@@ -2598,6 +2635,7 @@ export type Database = {
           project_scope?: string | null
           project_scope_image_url?: string | null
           project_title: string
+          region_id?: string | null
           station_id?: string | null
           updated_at?: string
         }
@@ -2613,6 +2651,7 @@ export type Database = {
           project_scope?: string | null
           project_scope_image_url?: string | null
           project_title?: string
+          region_id?: string | null
           station_id?: string | null
           updated_at?: string
         }
@@ -2629,6 +2668,13 @@ export type Database = {
             columns: ["plant_id"]
             isOneToOne: false
             referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "project_region"
             referencedColumns: ["id"]
           },
           {

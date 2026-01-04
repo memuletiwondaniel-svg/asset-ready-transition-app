@@ -1,10 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +14,9 @@ import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
+import { useProjectRegions } from '@/hooks/useProjectRegions';
+import { useProjectLocations } from '@/hooks/useProjectLocations';
+import { useProjectHierarchy } from '@/hooks/useProjectHierarchy';
 import { useToast } from '@/hooks/use-toast';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { ProjectTeamSection } from './ProjectTeamSection';
@@ -37,6 +41,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   const { plants, createPlant } = usePlants();
   const { stations, createStation } = useStations();
   const { data: hubs = [], createHub } = useHubs();
+  const { regions } = useProjectRegions();
+  const { regions: hierarchyRegions } = useProjectHierarchy();
+  const { locations, saveLocations } = useProjectLocations(project?.id);
   const { toast } = useToast();
   const { mutate: logActivity } = useLogActivity();
 
@@ -44,13 +51,15 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
     project_id_number: '',
     project_title: '',
+    region_id: '',
+    hub_id: '',
     plant_id: '',
     station_id: '',
     project_scope: '',
     project_scope_image_url: '',
-    hub_id: '',
   });
 
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
@@ -64,17 +73,25 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         project_id_prefix: project.project_id_prefix || '',
         project_id_number: project.project_id_number || '',
         project_title: project.project_title || '',
+        region_id: project.region_id || '',
+        hub_id: project.hub_id || '',
         plant_id: project.plant_id || '',
         station_id: project.station_id || '',
         project_scope: project.project_scope || '',
         project_scope_image_url: project.project_scope_image_url || '',
-        hub_id: project.hub_id || '',
       });
       
       // Fetch existing team members, milestones, and documents
       fetchProjectDetails();
     }
   }, [open, project]);
+
+  // Load existing locations
+  useEffect(() => {
+    if (locations.length > 0) {
+      setSelectedLocationIds(locations.map(l => l.station_id));
+    }
+  }, [locations]);
 
   const fetchProjectDetails = async () => {
     if (!project?.id) return;
@@ -210,12 +227,16 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         project_title: formData.project_title,
         project_scope: formData.project_scope,
         project_scope_image_url: formData.project_scope_image_url,
+        region_id: formData.region_id || undefined,
+        hub_id: formData.hub_id || undefined,
         plant_id: formData.plant_id || undefined,
         station_id: formData.station_id || undefined,
-        hub_id: formData.hub_id || undefined,
       };
 
       updateProject({ id: project.id, updates: projectData });
+
+      // 2. Save project locations (multiple stations)
+      await saveLocations({ projectId: project.id, stationIds: selectedLocationIds });
 
       // 2. Update team members - delete existing and insert new (filter invalid)
       await supabase.from('project_team_members').delete().eq('project_id', project.id);
@@ -374,6 +395,17 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     }
   };
 
+  // Get hubs filtered by selected region
+  const filteredHubs = useMemo(() => {
+    if (!formData.region_id) return hubs;
+    
+    const selectedRegion = hierarchyRegions.find(r => r.id === formData.region_id);
+    if (!selectedRegion) return hubs;
+    
+    const hubIdsInRegion = selectedRegion.hubs.map(h => h.id);
+    return hubs.filter(hub => hubIdsInRegion.includes(hub.id));
+  }, [formData.region_id, hierarchyRegions, hubs]);
+
   const showStationField = formData.plant_id && plants.find(p => p.id === formData.plant_id)?.name === 'CS';
 
   if (!project) return null;
@@ -441,10 +473,56 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   />
                 </div>
 
-                {/* Plant, Station, and Hub */}
-                <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+                {/* Portfolio, Hub, and Locations */}
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="plant">Plant</Label>
+                    <Label htmlFor="region">Portfolio (Region)</Label>
+                    <EnhancedCombobox
+                      options={regions.map(region => ({ value: region.id, label: region.name }))}
+                      value={formData.region_id}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, region_id: value, hub_id: '' }));
+                      }}
+                      placeholder="Select portfolio"
+                      emptyText="No portfolios found"
+                      allowCreate={false}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="hub">Project Hub</Label>
+                    <EnhancedCombobox
+                      options={filteredHubs.map(hub => ({ value: hub.id, label: hub.name }))}
+                      value={formData.hub_id}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
+                      onCreateNew={async (name) => {
+                        await createHub(name);
+                      }}
+                      placeholder="Select or create hub"
+                      emptyText="No hubs found"
+                      createText="Create hub"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="locations">Locations (Stations)</Label>
+                    <MultiSelectCombobox
+                      options={stations.map(station => ({ value: station.id, label: station.name }))}
+                      selectedValues={selectedLocationIds}
+                      onValueChange={setSelectedLocationIds}
+                      placeholder="Select locations"
+                      emptyText="No locations found"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Plant (Legacy - keep for backward compatibility) */}
+                <div className={`grid gap-4 ${showStationField ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                  <div className="space-y-2">
+                    <Label htmlFor="plant">Plant (Optional)</Label>
                     <EnhancedCombobox
                       options={plants.map(plant => ({ value: plant.id, label: plant.name }))}
                       value={formData.plant_id}
@@ -478,22 +556,6 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       />
                     </div>
                   )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="hub">Hub (Optional)</Label>
-                    <EnhancedCombobox
-                      options={hubs.map(hub => ({ value: hub.id, label: hub.name }))}
-                      value={formData.hub_id}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
-                      onCreateNew={async (name) => {
-                        await createHub(name);
-                      }}
-                      placeholder="Select or create hub"
-                      emptyText="No hubs found"
-                      createText="Create hub"
-                      className="w-full"
-                    />
-                  </div>
                 </div>
 
                 {/* Project Scope */}
