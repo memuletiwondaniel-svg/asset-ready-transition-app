@@ -231,6 +231,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [selectedTargetHub, setSelectedTargetHub] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedHub, setSelectedHub] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [deleteRegionDialog, setDeleteRegionDialog] = useState<RegionWithHubs | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
@@ -698,10 +699,12 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </CardHeader>
           <CardContent className="pt-0">
             {(() => {
-              // Filter portfolios - if a hub is selected, only show its parent portfolio
-              const filteredPortfolios = selectedHub 
-                ? regions.filter(r => r.hubs.some(h => h.id === selectedHub))
-                : regions;
+              // Filter portfolios - if a project or hub is selected, only show its parent portfolio
+              const filteredPortfolios = selectedProject
+                ? regions.filter(r => r.hubs.some(h => h.projects.some(p => p.id === selectedProject)))
+                : selectedHub 
+                  ? regions.filter(r => r.hubs.some(h => h.id === selectedHub))
+                  : regions;
               
               if (filteredPortfolios.length === 0) {
                 return (
@@ -727,13 +730,15 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                           }`}
                           onClick={() => {
                             if (isSelected) {
-                              // Deselect both portfolio and hub
+                              // Deselect all selections
                               setSelectedRegion(null);
                               setSelectedHub(null);
+                              setSelectedProject(null);
                             } else {
-                              // Select this portfolio, clear hub selection
+                              // Select this portfolio, clear hub and project selection
                               setSelectedRegion(region.id);
                               setSelectedHub(null);
+                              setSelectedProject(null);
                             }
                           }}
                         >
@@ -828,10 +833,19 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </CardHeader>
           <CardContent className="pt-0">
             {(() => {
-              // Filter hubs based on selected portfolio
-              const filteredRegions = selectedRegion 
+              // Filter hubs based on selected portfolio or project
+              let filteredRegions = selectedRegion 
                 ? regions.filter(r => r.id === selectedRegion)
                 : regions;
+              
+              // If a project is selected, filter to only show the hub containing that project
+              if (selectedProject) {
+                filteredRegions = filteredRegions.map(region => ({
+                  ...region,
+                  hubs: region.hubs.filter(hub => hub.projects.some(p => p.id === selectedProject))
+                })).filter(r => r.hubs.length > 0);
+              }
+              
               const hubCount = filteredRegions.reduce((sum, r) => sum + r.hubs.length, 0);
               
               if (hubCount === 0) {
@@ -866,8 +880,14 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                       : 'hover:bg-accent border-border'
                                   }`}
                                   onClick={() => {
-                                    setSelectedHub(isSelected ? null : hub.id);
-                                    setSelectedRegion(region.id);
+                                    if (isSelected) {
+                                      setSelectedHub(null);
+                                      setSelectedProject(null);
+                                    } else {
+                                      setSelectedHub(hub.id);
+                                      setSelectedRegion(region.id);
+                                      setSelectedProject(null);
+                                    }
                                   }}
                                 >
                                   <div className="flex items-center justify-between">
@@ -1027,39 +1047,58 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                     {selectedHub ? (
                       // Show only projects from the selected hub
                       <div className="space-y-2">
-                        {filteredProjects.map(({ project, hub }) => (
-                          <div 
-                            key={project.id} 
-                            className="p-3 rounded-lg border border-border group hover:bg-accent/50"
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-mono text-sm text-primary">
-                                {project.projectIdPrefix}{project.projectIdNumber}
-                              </span>
-                              <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-5 w-5"
-                                  onClick={() => setEditProjectData(project)}
-                                >
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-5 w-5"
-                                  onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
-                                >
-                                  <ArrowLeftRight className="h-3 w-3" />
-                                </Button>
+                        {filteredProjects.map(({ project, hub, region }) => {
+                          const isSelected = selectedProject === project.id;
+                          return (
+                            <div 
+                              key={project.id} 
+                              className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
+                                isSelected 
+                                  ? 'bg-primary/10 border-primary' 
+                                  : 'border-border hover:bg-accent/50'
+                              }`}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedProject(null);
+                                } else {
+                                  setSelectedProject(project.id);
+                                  setSelectedHub(hub.id);
+                                  setSelectedRegion(region.id);
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-mono text-sm text-primary">
+                                  {project.projectIdPrefix}{project.projectIdNumber}
+                                </span>
+                                {isSelected && (
+                                  <ChevronRight className="h-4 w-4 text-primary" />
+                                )}
+                                <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5"
+                                    onClick={(e) => { e.stopPropagation(); setEditProjectData(project); }}
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5"
+                                    onClick={(e) => { e.stopPropagation(); setMoveProjectDialog({ project, currentHub: hub }); }}
+                                  >
+                                    <ArrowLeftRight className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               </div>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {project.projectTitle}
+                              </p>
                             </div>
-                            <p className="text-sm text-muted-foreground truncate">
-                              {project.projectTitle}
-                            </p>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       // Group by hub when portfolio is selected or show all
@@ -1081,39 +1120,58 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                     {hub.name}
                                   </p>
                                   <div className="space-y-2">
-                                    {hub.projects.map(project => (
-                                      <div 
-                                        key={project.id} 
-                                        className="p-3 rounded-lg border border-border group hover:bg-accent/50"
-                                      >
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <span className="font-mono text-sm text-primary">
-                                            {project.projectIdPrefix}{project.projectIdNumber}
-                                          </span>
-                                          <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-5 w-5"
-                                              onClick={() => setEditProjectData(project)}
-                                            >
-                                              <Pencil className="h-3 w-3" />
-                                            </Button>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-5 w-5"
-                                              onClick={() => setMoveProjectDialog({ project, currentHub: hub })}
-                                            >
-                                              <ArrowLeftRight className="h-3 w-3" />
-                                            </Button>
+                                    {hub.projects.map(project => {
+                                      const isSelected = selectedProject === project.id;
+                                      return (
+                                        <div 
+                                          key={project.id} 
+                                          className={`p-3 rounded-lg border cursor-pointer transition-colors group ${
+                                            isSelected 
+                                              ? 'bg-primary/10 border-primary' 
+                                              : 'border-border hover:bg-accent/50'
+                                          }`}
+                                          onClick={() => {
+                                            if (isSelected) {
+                                              setSelectedProject(null);
+                                            } else {
+                                              setSelectedProject(project.id);
+                                              setSelectedHub(hub.id);
+                                              setSelectedRegion(region.id);
+                                            }
+                                          }}
+                                        >
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-mono text-sm text-primary">
+                                              {project.projectIdPrefix}{project.projectIdNumber}
+                                            </span>
+                                            {isSelected && (
+                                              <ChevronRight className="h-4 w-4 text-primary" />
+                                            )}
+                                            <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-5 w-5"
+                                                onClick={(e) => { e.stopPropagation(); setEditProjectData(project); }}
+                                              >
+                                                <Pencil className="h-3 w-3" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-5 w-5"
+                                                onClick={(e) => { e.stopPropagation(); setMoveProjectDialog({ project, currentHub: hub }); }}
+                                              >
+                                                <ArrowLeftRight className="h-3 w-3" />
+                                              </Button>
+                                            </div>
                                           </div>
+                                          <p className="text-sm text-muted-foreground truncate">
+                                            {project.projectTitle}
+                                          </p>
                                         </div>
-                                        <p className="text-sm text-muted-foreground truncate">
-                                          {project.projectTitle}
-                                        </p>
-                                      </div>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               ))}
