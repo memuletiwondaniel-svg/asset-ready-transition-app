@@ -60,22 +60,7 @@ export function useProjectHierarchy() {
 
       if (regionsError) throw regionsError;
 
-      // Fetch hub-region assignments
-      const { data: hubRegionData, error: hubRegionError } = await supabase
-        .from('project_hub_region')
-        .select(`
-          id,
-          hub_id,
-          region_id,
-          display_order,
-          created_at,
-          hub:hub_id (id, name, description)
-        `)
-        .order('display_order');
-
-      if (hubRegionError) throw hubRegionError;
-
-      // Fetch all hubs
+      // Fetch all hubs first
       const { data: hubsData, error: hubsError } = await supabase
         .from('hubs')
         .select('*')
@@ -83,6 +68,20 @@ export function useProjectHierarchy() {
         .order('name');
 
       if (hubsError) throw hubsError;
+
+      // Create a map of hub id to hub data for quick lookup
+      const hubsMap = new Map<string, any>();
+      (hubsData || []).forEach((h: any) => {
+        hubsMap.set(h.id, h);
+      });
+
+      // Fetch hub-region assignments
+      const { data: hubRegionData, error: hubRegionError } = await supabase
+        .from('project_hub_region')
+        .select('id, hub_id, region_id, display_order, created_at')
+        .order('display_order');
+
+      if (hubRegionError) throw hubRegionError;
 
       // Fetch all active projects
       const { data: projectsData, error: projectsError } = await supabase
@@ -142,19 +141,23 @@ export function useProjectHierarchy() {
         // Get hubs assigned to this region
         const regionHubAssignments = hubRegionData?.filter((hr: any) => hr.region_id === region.id) || [];
         
-        const hubs: HubWithProjects[] = regionHubAssignments.map((hr: any) => {
-          const hub = hr.hub;
-          const hubProjects = projects.filter(p => p.hubId === hr.hub_id);
-          
-          return {
-            id: hub.id,
-            name: hub.name,
-            description: hub.description,
-            regionId: region.id,
-            displayOrder: hr.display_order,
-            projects: hubProjects
-          };
-        });
+        const hubs: HubWithProjects[] = regionHubAssignments
+          .map((hr: any) => {
+            const hub = hubsMap.get(hr.hub_id);
+            if (!hub) return null; // Hub not found, skip
+            
+            const hubProjects = projects.filter(p => p.hubId === hr.hub_id);
+            
+            return {
+              id: hub.id,
+              name: hub.name,
+              description: hub.description,
+              regionId: region.id,
+              displayOrder: hr.display_order,
+              projects: hubProjects
+            };
+          })
+          .filter((h): h is HubWithProjects => h !== null);
 
         return {
           ...region,
