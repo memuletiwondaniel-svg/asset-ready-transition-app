@@ -257,6 +257,23 @@ export const SidebarContent = memo<SidebarContentProps>(({
             <Button 
               variant="outline" 
               size={isCollapsed ? "icon" : "sm"} 
+              onClick={() => onNavigate('admin-tools', isMobile)} 
+              className={cn(
+                `w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
+                currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+              )} 
+              title="Admin Tools"
+            >
+              <Settings className={cn(
+                "w-4 h-4 transition-colors",
+                currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
+              )} />
+              {!isCollapsed && <span className="ml-2">Admin Tools</span>}
+            </Button>
+
+            <Button 
+              variant="outline" 
+              size={isCollapsed ? "icon" : "sm"} 
               onClick={onThemeToggle} 
               className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
               title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
@@ -311,7 +328,6 @@ export const SidebarContent = memo<SidebarContentProps>(({
               </DropdownMenuContent>
             </DropdownMenu>
 
-
             <Button 
               variant="outline" 
               size={isCollapsed ? "icon" : "sm"} 
@@ -321,23 +337,6 @@ export const SidebarContent = memo<SidebarContentProps>(({
             >
               <Clock className="w-4 h-4 text-muted-foreground" />
               {!isCollapsed && <span className="ml-2">Take Tour</span>}
-            </Button>
-
-            <Button 
-              variant="outline" 
-              size={isCollapsed ? "icon" : "sm"} 
-              onClick={() => onNavigate('admin-tools', isMobile)} 
-              className={cn(
-                `w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
-                currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
-              )} 
-              title="Admin Tools"
-            >
-              <Settings className={cn(
-                "w-4 h-4 transition-colors",
-                currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
-              )} />
-              {!isCollapsed && <span className="ml-2">Admin Tools</span>}
             </Button>
           </div>
 
