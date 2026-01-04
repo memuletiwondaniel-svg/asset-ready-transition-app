@@ -221,15 +221,11 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
                               hasOverride ? 'ring-1 ring-amber-300 dark:ring-amber-700 bg-amber-50/50 dark:bg-amber-900/10' : ''
                             }`}
                           >
-                            <div 
-                              className="flex items-center cursor-pointer mt-0.5"
-                              onClick={(e) => handleCheckboxChange(e, item.id)}
-                            >
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => onItemToggle(item.id)}
-                              />
-                            </div>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => onItemToggle(item.id)}
+                              className="mt-0.5"
+                            />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <p className="text-sm font-medium">
