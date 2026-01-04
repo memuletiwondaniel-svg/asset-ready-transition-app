@@ -12,48 +12,37 @@ export interface ProjectRegion {
   updated_at: string;
 }
 
-export interface RegionPlant {
-  id: string;
-  region_id: string;
-  plant_id: string;
-  plant_name: string;
-  created_at: string;
-}
-
-export interface RegionStation {
-  id: string;
-  region_id: string;
-  station_id: string;
-  station_name: string;
-  field_name: string;
-  plant_name: string;
-  created_at: string;
-}
-
-export interface PlantWithHierarchy {
+export interface ProjectHub {
   id: string;
   name: string;
-  fields: {
-    id: string;
-    name: string;
-    stations: {
-      id: string;
-      name: string;
-      hasOverride: boolean;
-      overrideRegionId?: string;
-      overrideRegionName?: string;
-    }[];
-  }[];
+  description: string | null;
+  regionId: string;
+  displayOrder: number;
 }
 
-export interface RegionWithPlants extends ProjectRegion {
-  plants: PlantWithHierarchy[];
-  stationOverrides: RegionStation[];
+export interface Project {
+  id: string;
+  projectIdPrefix: string;
+  projectIdNumber: string;
+  projectTitle: string;
+  hubId: string | null;
+  plantId: string | null;
+  stationId: string | null;
+}
+
+export interface HubWithProjects extends ProjectHub {
+  projects: Project[];
+}
+
+export interface RegionWithHubs extends ProjectRegion {
+  hubs: HubWithProjects[];
 }
 
 export function useProjectHierarchy() {
-  const [regions, setRegions] = useState<RegionWithPlants[]>([]);
-  const [unassignedPlants, setUnassignedPlants] = useState<PlantWithHierarchy[]>([]);
+  const [regions, setRegions] = useState<RegionWithHubs[]>([]);
+  const [unassignedHubs, setUnassignedHubs] = useState<ProjectHub[]>([]);
+  const [unassignedProjects, setUnassignedProjects] = useState<Project[]>([]);
+  const [allHubs, setAllHubs] = useState<ProjectHub[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,151 +60,109 @@ export function useProjectHierarchy() {
 
       if (regionsError) throw regionsError;
 
-      // Fetch region-plant assignments
-      const { data: regionPlantsData, error: regionPlantsError } = await supabase
-        .from('project_region_plant')
+      // Fetch hub-region assignments
+      const { data: hubRegionData, error: hubRegionError } = await supabase
+        .from('project_hub_region')
         .select(`
           id,
+          hub_id,
           region_id,
-          plant_id,
+          display_order,
           created_at,
-          plant:plant_id (name)
-        `);
-
-      if (regionPlantsError) throw regionPlantsError;
-
-      // Fetch station overrides
-      const { data: stationOverridesData, error: stationOverridesError } = await supabase
-        .from('project_region_station')
-        .select(`
-          id,
-          region_id,
-          station_id,
-          created_at,
-          station:station_id (
-            name,
-            field:field_id (
-              name,
-              plant:plant_id (name)
-            )
-          )
-        `);
-
-      if (stationOverridesError) throw stationOverridesError;
-
-      // Fetch all plants with their hierarchy
-      const { data: plantsData, error: plantsError } = await supabase
-        .from('plant')
-        .select(`
-          id,
-          name,
-          display_order
+          hub:hub_id (id, name, description)
         `)
-        .eq('is_active', true)
         .order('display_order');
 
-      if (plantsError) throw plantsError;
+      if (hubRegionError) throw hubRegionError;
 
-      // Fetch all fields
-      const { data: fieldsData, error: fieldsError } = await supabase
-        .from('field')
-        .select('id, name, plant_id')
-        .eq('is_active', true);
+      // Fetch all hubs
+      const { data: hubsData, error: hubsError } = await supabase
+        .from('hubs')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
 
-      if (fieldsError) throw fieldsError;
+      if (hubsError) throw hubsError;
 
-      // Fetch all stations
-      const { data: stationsData, error: stationsError } = await supabase
-        .from('station')
-        .select('id, name, field_id')
-        .eq('is_active', true);
+      // Fetch all active projects
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('id, project_id_prefix, project_id_number, project_title, hub_id, plant_id, station_id')
+        .eq('is_active', true)
+        .order('project_id_prefix')
+        .order('project_id_number');
 
-      if (stationsError) throw stationsError;
+      if (projectsError) throw projectsError;
 
-      // Build station overrides map
-      const stationOverrideMap = new Map<string, { regionId: string; regionName: string }>();
-      stationOverridesData?.forEach((override: any) => {
-        const region = regionsData?.find(r => r.id === override.region_id);
-        if (region) {
-          stationOverrideMap.set(override.station_id, {
-            regionId: override.region_id,
-            regionName: region.name
-          });
-        }
+      // Build hub-region map
+      const hubRegionMap = new Map<string, { regionId: string; displayOrder: number }>();
+      hubRegionData?.forEach((hr: any) => {
+        hubRegionMap.set(hr.hub_id, {
+          regionId: hr.region_id,
+          displayOrder: hr.display_order
+        });
       });
 
-      // Build plants with hierarchy
-      const buildPlantHierarchy = (plant: any): PlantWithHierarchy => {
-        const plantFields = fieldsData?.filter(f => f.plant_id === plant.id) || [];
+      // Build project list
+      const projects: Project[] = (projectsData || []).map((p: any) => ({
+        id: p.id,
+        projectIdPrefix: p.project_id_prefix,
+        projectIdNumber: p.project_id_number,
+        projectTitle: p.project_title,
+        hubId: p.hub_id,
+        plantId: p.plant_id,
+        stationId: p.station_id
+      }));
+
+      // Build all hubs list with region info
+      const allHubsList: ProjectHub[] = (hubsData || []).map((h: any) => {
+        const assignment = hubRegionMap.get(h.id);
         return {
-          id: plant.id,
-          name: plant.name,
-          fields: plantFields.map(field => {
-            const fieldStations = stationsData?.filter(s => s.field_id === field.id) || [];
-            return {
-              id: field.id,
-              name: field.name,
-              stations: fieldStations.map(station => {
-                const override = stationOverrideMap.get(station.id);
-                return {
-                  id: station.id,
-                  name: station.name,
-                  hasOverride: !!override,
-                  overrideRegionId: override?.regionId,
-                  overrideRegionName: override?.regionName
-                };
-              })
-            };
-          })
+          id: h.id,
+          name: h.name,
+          description: h.description,
+          regionId: assignment?.regionId || '',
+          displayOrder: assignment?.displayOrder || 0
         };
-      };
-
-      // Build region plant map
-      const regionPlantMap = new Map<string, string[]>();
-      regionPlantsData?.forEach((rp: any) => {
-        const existing = regionPlantMap.get(rp.region_id) || [];
-        existing.push(rp.plant_id);
-        regionPlantMap.set(rp.region_id, existing);
       });
 
-      // Build assigned plant IDs set
-      const assignedPlantIds = new Set<string>();
-      regionPlantsData?.forEach((rp: any) => assignedPlantIds.add(rp.plant_id));
+      setAllHubs(allHubsList);
 
-      // Build regions with plants
-      const regionsWithPlants: RegionWithPlants[] = (regionsData || []).map(region => {
-        const plantIds = regionPlantMap.get(region.id) || [];
-        const plants = plantIds
-          .map(plantId => plantsData?.find(p => p.id === plantId))
-          .filter(Boolean)
-          .map(plant => buildPlantHierarchy(plant));
+      // Find unassigned hubs (not in any region)
+      const assignedHubIds = new Set(hubRegionData?.map((hr: any) => hr.hub_id) || []);
+      const unassigned = allHubsList.filter(h => !assignedHubIds.has(h.id));
+      setUnassignedHubs(unassigned);
 
-        const stationOverrides: RegionStation[] = (stationOverridesData || [])
-          .filter((so: any) => so.region_id === region.id)
-          .map((so: any) => ({
-            id: so.id,
-            region_id: so.region_id,
-            station_id: so.station_id,
-            station_name: so.station?.name || '',
-            field_name: so.station?.field?.name || '',
-            plant_name: so.station?.field?.plant?.name || '',
-            created_at: so.created_at
-          }));
+      // Find unassigned projects (no hub)
+      const unassignedProjs = projects.filter(p => !p.hubId);
+      setUnassignedProjects(unassignedProjs);
+
+      // Build regions with hubs
+      const regionsWithHubs: RegionWithHubs[] = (regionsData || []).map(region => {
+        // Get hubs assigned to this region
+        const regionHubAssignments = hubRegionData?.filter((hr: any) => hr.region_id === region.id) || [];
+        
+        const hubs: HubWithProjects[] = regionHubAssignments.map((hr: any) => {
+          const hub = hr.hub;
+          const hubProjects = projects.filter(p => p.hubId === hr.hub_id);
+          
+          return {
+            id: hub.id,
+            name: hub.name,
+            description: hub.description,
+            regionId: region.id,
+            displayOrder: hr.display_order,
+            projects: hubProjects
+          };
+        });
 
         return {
           ...region,
-          plants,
-          stationOverrides
+          hubs
         };
       });
 
-      // Build unassigned plants
-      const unassigned = (plantsData || [])
-        .filter(plant => !assignedPlantIds.has(plant.id))
-        .map(plant => buildPlantHierarchy(plant));
-
-      setRegions(regionsWithPlants);
-      setUnassignedPlants(unassigned);
+      setRegions(regionsWithHubs);
     } catch (err: any) {
       console.error('Error fetching project hierarchy:', err);
       setError(err.message);
@@ -229,86 +176,80 @@ export function useProjectHierarchy() {
     fetchHierarchy();
   }, [fetchHierarchy]);
 
-  const assignPlantToRegion = async (plantId: string, regionId: string) => {
+  // Assign a hub to a region
+  const assignHubToRegion = async (hubId: string, regionId: string) => {
     try {
       // Remove existing assignment if any
       await supabase
-        .from('project_region_plant')
+        .from('project_hub_region')
         .delete()
-        .eq('plant_id', plantId);
+        .eq('hub_id', hubId);
+
+      // Get max display order for the region
+      const { data: maxOrder } = await supabase
+        .from('project_hub_region')
+        .select('display_order')
+        .eq('region_id', regionId)
+        .order('display_order', { ascending: false })
+        .limit(1)
+        .single();
 
       // Create new assignment
       const { error } = await supabase
-        .from('project_region_plant')
-        .insert({ plant_id: plantId, region_id: regionId });
+        .from('project_hub_region')
+        .insert({
+          hub_id: hubId,
+          region_id: regionId,
+          display_order: (maxOrder?.display_order || 0) + 1
+        });
 
       if (error) throw error;
 
-      toast.success('Plant assigned to region');
+      toast.success('Hub assigned to region');
       await fetchHierarchy();
     } catch (err: any) {
-      console.error('Error assigning plant:', err);
-      toast.error('Failed to assign plant');
+      console.error('Error assigning hub:', err);
+      toast.error('Failed to assign hub');
     }
   };
 
-  const removePlantFromRegion = async (plantId: string) => {
+  // Remove hub from region
+  const removeHubFromRegion = async (hubId: string) => {
     try {
       const { error } = await supabase
-        .from('project_region_plant')
+        .from('project_hub_region')
         .delete()
-        .eq('plant_id', plantId);
+        .eq('hub_id', hubId);
 
       if (error) throw error;
 
-      toast.success('Plant removed from region');
+      toast.success('Hub removed from region');
       await fetchHierarchy();
     } catch (err: any) {
-      console.error('Error removing plant:', err);
-      toast.error('Failed to remove plant');
+      console.error('Error removing hub:', err);
+      toast.error('Failed to remove hub');
     }
   };
 
-  const addStationOverride = async (stationId: string, regionId: string) => {
-    try {
-      // Remove existing override if any
-      await supabase
-        .from('project_region_station')
-        .delete()
-        .eq('station_id', stationId);
-
-      // Create new override
-      const { error } = await supabase
-        .from('project_region_station')
-        .insert({ station_id: stationId, region_id: regionId });
-
-      if (error) throw error;
-
-      toast.success('Station override added');
-      await fetchHierarchy();
-    } catch (err: any) {
-      console.error('Error adding station override:', err);
-      toast.error('Failed to add station override');
-    }
-  };
-
-  const removeStationOverride = async (stationId: string) => {
+  // Move project to a different hub
+  const moveProjectToHub = async (projectId: string, newHubId: string | null) => {
     try {
       const { error } = await supabase
-        .from('project_region_station')
-        .delete()
-        .eq('station_id', stationId);
+        .from('projects')
+        .update({ hub_id: newHubId })
+        .eq('id', projectId);
 
       if (error) throw error;
 
-      toast.success('Station override removed');
+      toast.success('Project moved');
       await fetchHierarchy();
     } catch (err: any) {
-      console.error('Error removing station override:', err);
-      toast.error('Failed to remove station override');
+      console.error('Error moving project:', err);
+      toast.error('Failed to move project');
     }
   };
 
+  // Add a new region
   const addRegion = async (name: string, description?: string) => {
     try {
       const { data: maxOrder } = await supabase
@@ -336,6 +277,7 @@ export function useProjectHierarchy() {
     }
   };
 
+  // Update a region
   const updateRegion = async (regionId: string, updates: Partial<ProjectRegion>) => {
     try {
       const { error } = await supabase
@@ -353,6 +295,7 @@ export function useProjectHierarchy() {
     }
   };
 
+  // Delete a region
   const deleteRegion = async (regionId: string) => {
     try {
       const { error } = await supabase
@@ -372,14 +315,15 @@ export function useProjectHierarchy() {
 
   return {
     regions,
-    unassignedPlants,
+    unassignedHubs,
+    unassignedProjects,
+    allHubs,
     isLoading,
     error,
     refetch: fetchHierarchy,
-    assignPlantToRegion,
-    removePlantFromRegion,
-    addStationOverride,
-    removeStationOverride,
+    assignHubToRegion,
+    removeHubFromRegion,
+    moveProjectToHub,
     addRegion,
     updateRegion,
     deleteRegion
