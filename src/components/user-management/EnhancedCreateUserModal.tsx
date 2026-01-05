@@ -14,7 +14,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Phone, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, X, Phone, Mail, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useHubs } from '@/hooks/useHubs';
 import { useLocations } from '@/hooks/useLocations';
@@ -26,6 +26,18 @@ import {
   PORTFOLIO_REGIONS 
 } from '@/utils/roleAssignmentConfig';
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useLogActivity } from '@/hooks/useActivityLogs';
+
+// Generate a random password
+const generatePassword = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
 
 interface PhoneNumber {
   countryCode: string;
@@ -67,6 +79,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   isAdminCreated,
 }) => {
   const [step, setStep] = useState<'form' | 'review'>('form');
+  const [isCreating, setIsCreating] = useState(false);
+  const logActivityMutation = useLogActivity();
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '',
     lastName: '',
@@ -323,7 +337,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     return role;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (step === 'form') {
       // Validate required fields
       if (!formData.firstName || !formData.lastName || !formData.email) {
@@ -435,32 +449,92 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       setStep('review');
     } else {
       // Confirm and create user
-      const userData = {
-        ...formData,
-        company: formData.company === 'Others' ? formData.customCompany : formData.company,
-        role: formData.role === 'Others' ? formData.customRole : formData.role,
-        position: generatePosition(),
-        status: isAdminCreated ? 'new' : 'awaiting authentication',
-        createdBy: isAdminCreated ? 'admin' : 'self',
-        privileges: [], // Will be assigned by authenticator
-        pendingActions: 0,
-      };
-
-      onCreateUser(userData);
+      setIsCreating(true);
       
-      if (isAdminCreated) {
-        toast({
-          title: "User Created",
-          description: "New user has been created and login credentials will be sent.",
-        });
-      } else {
-        toast({
-          title: "Registration Submitted",
-          description: "Your request has been submitted for approval. You will receive an email once approved.",
-        });
-      }
+      try {
+        const generatedPassword = generatePassword();
+        const positionTitle = generatePosition();
+        const company = formData.company === 'Others' ? formData.customCompany : formData.company;
+        const role = formData.role === 'Others' ? formData.customRole : formData.role;
+        const phone = formData.phoneNumbers[0] ? 
+          `${formData.phoneNumbers[0].countryCode}${formData.phoneNumbers[0].number}` : null;
 
-      handleClose();
+        // Call the admin-create-user edge function
+        const { data: createResp, error: createErr } = await supabase.functions.invoke("admin-create-user", {
+          body: {
+            email: formData.email,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            password: generatedPassword,
+            company: company || null,
+            role: role,
+            position: positionTitle || null,
+            phone: phone,
+            personalEmail: formData.personalEmail || null,
+            functionalEmail: formData.isFunctionalEmail ? formData.email : null,
+            isFunctionalEmail: formData.isFunctionalEmail,
+            commission: formData.commission || null,
+            plant: formData.plant || null,
+            station: formData.station || null,
+            field: formData.field || null,
+          }
+        });
+
+        if (createErr) {
+          throw createErr;
+        }
+
+        // Log activity
+        logActivityMutation.mutate({
+          activityType: 'user_created',
+          description: `Created new user account for ${formData.firstName} ${formData.lastName} (${formData.email})`,
+          metadata: {
+            user_id: createResp?.user_id,
+            user_email: formData.email,
+            user_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            company: company,
+            role: role,
+            position: positionTitle
+          }
+        });
+
+        // Try to send welcome email (non-blocking)
+        try {
+          await supabase.functions.invoke("send-welcome-email", {
+            body: {
+              userEmail: formData.email,
+              userName: `${formData.firstName} ${formData.lastName}`,
+              temporaryPassword: generatedPassword,
+              loginUrl: `${window.location.origin}/auth`
+            }
+          });
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          toast({
+            title: "Email Warning",
+            description: `Welcome email could not be sent. Share credentials: ${formData.email} / ${generatedPassword}`,
+            variant: "destructive"
+          });
+        }
+
+        toast({
+          title: "User Created Successfully",
+          description: `${formData.firstName} ${formData.lastName} has been created.`,
+        });
+
+        // Notify parent to refresh list
+        onCreateUser({});
+        handleClose();
+      } catch (error: any) {
+        console.error("Error creating user:", error);
+        toast({
+          title: "Error Creating User",
+          description: error.message || "Failed to create user. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCreating(false);
+      }
     }
   };
 
@@ -1126,11 +1200,16 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               Back to Form
             </Button>
           )}
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={isCreating}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
-            {step === 'form' ? 'Review Request' : 'Confirm'}
+          <Button onClick={handleSubmit} disabled={isCreating}>
+            {isCreating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : step === 'form' ? 'Review Request' : 'Confirm'}
           </Button>
         </div>
       </DialogContent>
