@@ -1235,7 +1235,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Manage your project hierarchy: Regions → Hubs → Projects</span>
+          <span>Manage your project hierarchy</span>
         </div>
         
         {/* Search Input */}
