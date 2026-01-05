@@ -711,7 +711,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                 Portfolios
                 <Badge variant="secondary" className="ml-1">{regions.length}</Badge>
               </CardTitle>
-              <Button size="sm" onClick={() => setShowAddRegionDialog(true)}>
+              <Button size="sm" variant="outline" onClick={() => setShowAddRegionDialog(true)}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
