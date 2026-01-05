@@ -10,6 +10,7 @@ import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X } from 'lucide-
 import { useAuth } from './AuthProvider';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
+import BackgroundSlideshow from '@/components/BackgroundSlideshow';
 interface EnhancedAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -114,56 +115,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <DialogTitle>Authentication</DialogTitle>
           <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
         </DialogHeader>
-        <div className="w-screen h-screen flex items-center justify-center p-4 relative fixed inset-0 overflow-hidden" style={{
-        background: `
-              radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.15) 0%, transparent 40%),
-              radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.12) 0%, transparent 40%),
-              radial-gradient(circle at 50% 10%, hsl(var(--secondary) / 0.08) 0%, transparent 30%),
-              linear-gradient(135deg, 
-                hsl(var(--background)) 0%, 
-                hsl(var(--background) / 0.95) 25%,
-                hsl(var(--primary) / 0.03) 50%,
-                hsl(var(--accent) / 0.05) 75%,
-                hsl(var(--background) / 0.98) 100%
-              )
-            `
-      }}>
-          {/* Dynamic Background Elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            {/* Floating Orbs with Animation */}
-            <div className="absolute top-1/4 left-1/6 w-64 h-64 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/3 right-1/5 w-80 h-80 bg-gradient-to-tl from-accent/15 via-accent/8 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
-            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-to-r from-secondary/12 via-secondary/6 to-transparent rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse delay-500"></div>
-            
-            {/* Geometric Grid Pattern */}
-            <div className="absolute inset-0 opacity-[0.02]">
-              <div className="absolute inset-0" style={{
-              backgroundImage: `
-                  linear-gradient(hsl(var(--foreground) / 0.1) 1px, transparent 1px),
-                  linear-gradient(90deg, hsl(var(--foreground) / 0.1) 1px, transparent 1px)
-                `,
-              backgroundSize: '60px 60px'
-            }}></div>
-            </div>
-            
-            {/* Flowing Light Streaks */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent transform rotate-45 animate-pulse delay-2000"></div>
-            <div className="absolute bottom-0 right-0 w-full h-1 bg-gradient-to-l from-transparent via-accent/25 to-transparent transform -rotate-45 animate-pulse delay-3000"></div>
-            
-            {/* Floating Glass Elements */}
-            <div className="absolute top-1/6 right-1/4 w-32 h-32 bg-gradient-to-br from-background/20 to-background/5 backdrop-blur-sm rounded-2xl border border-border/10 rotate-12 animate-bounce"></div>
-            <div className="absolute bottom-1/4 left-1/6 w-24 h-24 bg-gradient-to-tl from-card/30 to-card/10 backdrop-blur-sm rounded-xl border border-border/15 -rotate-12 animate-bounce delay-1000"></div>
-            
-            {/* Subtle Particle Effect */}
-            <div className="absolute inset-0 opacity-[0.4]">
-              {[...Array(15)].map((_, i) => <div key={i} className="absolute w-1 h-1 bg-primary/20 rounded-full animate-pulse" style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`
-            }}></div>)}
-            </div>
-          </div>
+        
+        {/* ORSH Background Slideshow */}
+        <BackgroundSlideshow showFunFacts={false} />
+        
+        <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10">
           
           <div className="w-full max-w-sm relative z-10">
             {/* Modern Fluent Design Card */}
@@ -274,16 +230,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     <div className="space-y-1.5">
                       <Label htmlFor="signin-password" className="text-foreground font-medium">Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input id="signin-password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={signInData.password} onChange={e => setSignInData({
                         ...signInData,
                         password: e.target.value
                       })} className="pl-11 pr-11 h-10 text-sm border-border bg-input" required />
-                        {signInData.password.length > 0 && (
-                          <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                          </Button>
-                        )}
+                        <button 
+                          type="button" 
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
                       </div>
                     </div>
 
