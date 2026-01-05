@@ -138,13 +138,8 @@ serve(async (req) => {
           const normalizedCompany = normalizeCompany(company);
           const finalRole = computeFinalRole(role, discipline, commission);
 
-          // Map names to IDs where applicable
-          let disciplineId: string | null = null;
+          // Map commission name to ID
           let commissionId: string | null = null;
-          if (discipline) {
-            const { data: dRow } = await admin.from('discipline').select('id').eq('name', discipline).maybeSingle();
-            disciplineId = dRow?.id ?? null;
-          }
           if (commission) {
             const { data: cRow } = await admin.from('commission').select('id').eq('name', commission).maybeSingle();
             commissionId = cRow?.id ?? null;
@@ -165,7 +160,6 @@ serve(async (req) => {
               functional_email_address: functionalEmail ?? null,
               status: 'active',
               position: finalRole,
-              discipline: disciplineId,
               commission: commissionId,
               account_status: 'active',
             }, { onConflict: 'user_id' });
@@ -225,13 +219,8 @@ serve(async (req) => {
     const normalizedCompany = normalizeCompany(company);
     const finalRole = computeFinalRole(role, discipline, commission);
 
-    // Map names to IDs where applicable
-    let disciplineId: string | null = null;
+    // Map commission name to ID
     let commissionId: string | null = null;
-    if (discipline) {
-      const { data: dRow } = await admin.from('discipline').select('id').eq('name', discipline).maybeSingle();
-      disciplineId = dRow?.id ?? null;
-    }
     if (commission) {
       const { data: cRow } = await admin.from('commission').select('id').eq('name', commission).maybeSingle();
       commissionId = cRow?.id ?? null;
@@ -252,7 +241,6 @@ serve(async (req) => {
         functional_email: !!isFunctionalEmail,
         status: 'active',
         position: finalRole,
-        discipline: disciplineId,
         commission: commissionId,
         account_status: 'active',
       }, { onConflict: 'user_id' });
