@@ -288,8 +288,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     if (!role) return '';
     
     // Roles that require portfolio + hub (e.g., Project Hub Lead, Project Engr)
+    // Display only Role - Hub (without portfolio/region name)
     if (requiresHub(role) && portfolio && hub) {
-      return `${role} – ${portfolio} – ${hub}`;
+      return `${role} – ${hub}`;
     }
     
     // Roles that require only portfolio (e.g., Project Manager, ORA Engr)
