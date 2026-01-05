@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Languages, Phone } from "lucide-react";
-import { ArrowLeft } from "lucide-react";
+import { Languages, ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import PSSRSummaryPage from "@/components/PSSRSummaryPage";
@@ -263,13 +262,8 @@ const Index = () => {
                         
                         {/* Icon background layers */}
                         <div className="absolute inset-0 bg-gradient-to-br from-red-500/25 to-orange-500/25 rounded-2xl backdrop-blur-sm transform group-hover:rotate-3 transition-all duration-300"></div>
-                        <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-6 transition-all duration-500">
-                          {/* Inner icon element with animation */}
-                          <div className="w-8 h-8 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"></div>
-                          
-                          {/* Sparkle effects */}
-                          <div className="absolute top-1 right-1 w-2 h-2 bg-white/80 rounded-full animate-ping opacity-0 group-hover:opacity-100"></div>
-                          <div className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-yellow-300/80 rounded-full animate-pulse opacity-0 group-hover:opacity-100 animation-delay-300"></div>
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-6 transition-all duration-500">
+                          <ClipboardCheck className="w-8 h-8 text-white" />
                         </div>
                       </div>
                       
@@ -313,13 +307,8 @@ const Index = () => {
                         
                         {/* Icon background layers */}
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/25 to-cyan-500/25 rounded-2xl backdrop-blur-sm transform group-hover:-rotate-3 transition-all duration-300"></div>
-                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-fluent-xl transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:-rotate-6 transition-all duration-500">
-                          {/* Inner icon element with animation */}
-                          <div className="w-8 h-8 bg-gradient-to-br from-white/95 to-white/85 rounded-xl shadow-inner transform group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300"></div>
-                          
-                          {/* Sparkle effects */}
-                          <div className="absolute top-1 left-1 w-2 h-2 bg-white/80 rounded-full animate-ping opacity-0 group-hover:opacity-100"></div>
-                          <div className="absolute bottom-2 right-2 w-1.5 h-1.5 bg-cyan-300/80 rounded-full animate-pulse opacity-0 group-hover:opacity-100 animation-delay-300"></div>
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:-rotate-6 transition-all duration-500">
+                          <Key className="w-8 h-8 text-white" />
                         </div>
                       </div>
                       
@@ -348,34 +337,34 @@ const Index = () => {
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row gap-4 items-start">
                     {/* Enhanced Microsoft Fluent CTA Button */}
-                    <Button onClick={() => setShowAuth(true)} size="lg" className="relative group bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white px-12 py-6 text-lg font-semibold shadow-fluent-3xl hover:shadow-fluent-4xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-2xl border-0 overflow-hidden backdrop-blur-sm">
+                    <Button onClick={() => setShowAuth(true)} size="lg" className="relative group bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white px-12 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-2xl border-0 overflow-hidden">
                       {/* Microsoft Fluent Button Effects */}
                       <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
                       <div className="absolute inset-0 border border-white/10 rounded-2xl group-hover:border-white/20 transition-colors duration-300" />
                       
                       <span className="relative z-10 flex items-center font-medium tracking-wide">
                         {t.accessButton}
-                        <ArrowLeft className="h-5 w-5 ml-4 rotate-180 group-hover:translate-x-1 transition-transform duration-300" />
+                        <ArrowRight className="h-5 w-5 ml-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </span>
                     </Button>
                     
                   </div>
                   
                     {/* Trust Indicators */}
-                    <div className="flex items-center gap-6 text-white/70">
-                     <div className="flex items-center gap-3">
-                       <div className="w-4 h-4 rounded-full bg-success animate-pulse-subtle" />
-                        <span className="text-base font-medium">{t.enterpriseSecure}</span>
+                    <div className="flex flex-wrap items-center gap-6 text-white/80">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-green-400" />
+                        <span className="text-sm font-medium">{t.enterpriseSecure}</span>
                       </div>
-                     <div className="flex items-center gap-3">
-                       <div className="w-4 h-4 rounded-full bg-primary animate-pulse-subtle" />
-                        <span className="text-base font-medium">{t.isoCompliant}</span>
+                      <div className="flex items-center gap-2">
+                        <FileCheck className="w-5 h-5 text-blue-400" />
+                        <span className="text-sm font-medium">{t.isoCompliant}</span>
                       </div>
-                     <div className="flex items-center gap-3">
-                       <div className="w-4 h-4 rounded-full bg-warning animate-pulse-subtle" />
-                        <span className="text-base font-medium">{t.support24}</span>
+                      <div className="flex items-center gap-2">
+                        <Headphones className="w-5 h-5 text-amber-400" />
+                        <span className="text-sm font-medium">{t.support24}</span>
                       </div>
-                   </div>
+                    </div>
                 </div>
               </div>
               
