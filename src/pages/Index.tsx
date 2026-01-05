@@ -7,13 +7,12 @@ import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import PSSRSummaryPage from "@/components/PSSRSummaryPage";
 import LandingPage from "@/components/LandingPage";
-import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
-
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import OrshLogo from "@/components/ui/OrshLogo";
+
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { session, signOut } = useAuth();
@@ -30,7 +29,6 @@ const Index = () => {
   };
   
   const handleBack = () => {
-    // Sign out and return to welcome screen
     try { signOut(); } catch {}
     navigate('/');
   };
@@ -51,22 +49,15 @@ const Index = () => {
   const handleBackToLanding = () => {
     navigate('/');
   };
-  const languages = [{
-    code: "en",
-    name: "English"
-  }, {
-    code: "ar",
-    name: "العربية"
-  }, {
-    code: "fr",
-    name: "Français"
-  }, {
-    code: "ms",
-    name: "Bahasa Melayu"
-  }, {
-    code: "ru",
-    name: "Русский"
-  }];
+
+  const languages = [
+    { code: "en", name: "English" },
+    { code: "ar", name: "العربية" },
+    { code: "fr", name: "Français" },
+    { code: "ms", name: "Bahasa Melayu" },
+    { code: "ru", name: "Русский" }
+  ];
+
   const translations = {
     en: {
       title: "Operation Readiness",
@@ -134,13 +125,13 @@ const Index = () => {
       support24: "Поддержка 24/7"
     }
   };
+
   const getCurrentTranslation = () => {
     const langCode = languages.find(lang => lang.name === selectedLanguage)?.code || 'en';
     return translations[langCode as keyof typeof translations];
   };
   const t = getCurrentTranslation();
 
-  // Close auth modal when session is ready
   useEffect(() => {
     if (session && showAuth) {
       setShowAuth(false);
@@ -160,14 +151,15 @@ const Index = () => {
       case 'projects':
         return <ProjectManagementPage onBack={handleBackToLanding} />;
       case 'p2o':
-        // Placeholder for P2O Module - can be implemented later
-        return <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <div className="text-center">
               <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
               <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
               <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
             </div>
-          </div>;
+          </div>
+        );
       default:
         return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
     }
@@ -179,201 +171,136 @@ const Index = () => {
   }
 
   // Show welcome screen before authentication
-  return <div className="min-h-screen relative overflow-hidden">
+  return (
+    <div className="min-h-screen relative overflow-hidden">
       <BackgroundSlideshow showFunFacts={false} />
-      {/* Modern Navigation Header */}
-      <header className="relative z-20">
-        <div className="max-w-7xl mx-auto px-8 py-0 -my-8">
-          <div className="flex items-center justify-between my-[18px] mx-0 px-0 py-0">
-            {/* Language Selector - Top Left */}
-            <div className="flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 transition-all duration-300 rounded-xl px-4 py-2 border border-white/10 backdrop-blur-md font-medium shadow-sm hover:shadow-md group">
-                    <Languages className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-sm">{selectedLanguage}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
-                  {languages.map(language => <DropdownMenuItem key={language.code} onClick={() => setSelectedLanguage(language.name)} className="cursor-pointer hover:bg-accent/20 transition-all duration-200 rounded-lg py-2 px-3 text-sm font-medium text-foreground">
-                      {language.name}
-                    </DropdownMenuItem>)}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+      
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            {/* Language Selector - Left */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-white/10 rounded-xl px-4 py-2 border border-white/20 backdrop-blur-md font-medium shadow-lg"
+                >
+                  <Languages className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{selectedLanguage}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
+                {languages.map(language => (
+                  <DropdownMenuItem 
+                    key={language.code} 
+                    onClick={() => setSelectedLanguage(language.name)} 
+                    className="cursor-pointer hover:bg-accent/20 rounded-lg py-2 px-3 text-sm font-medium"
+                  >
+                    {language.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             
-            {/* ORSH Logo - Top Center */}
+            {/* ORSH Logo - Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <OrshLogo size="medium" />
             </div>
             
-            {/* Right side spacer for balance */}
-            <div className="w-32"></div>
+            {/* BGC Logo - Right */}
+            <div className="flex items-center">
+              <img 
+                src="/lovable-uploads/421778ce-4ffe-4e3b-b370-8d1bb24a3d51.png" 
+                alt="BGC Logo" 
+                className="h-12 w-auto drop-shadow-lg"
+              />
+            </div>
           </div>
         </div>
       </header>
       
-      {!showAuth && <main className="relative z-10 flex items-center min-h-[calc(100vh-100px)] py-4">
-          <div className="max-w-7xl mx-auto px-6 w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      {/* Main Content */}
+      {!showAuth && (
+        <main className="relative z-10 flex items-center justify-center min-h-screen pt-24 pb-12 px-6">
+          <div className="max-w-4xl mx-auto text-center space-y-10">
+            
+            {/* Hero Text */}
+            <div className="space-y-4 animate-fade-in">
+              <h1 className="font-light text-white leading-tight">
+                <span className="block text-5xl md:text-6xl lg:text-7xl font-extralight tracking-tight drop-shadow-2xl">
+                  {t.title}
+                </span>
+                <span className="block text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent mt-2 drop-shadow-xl">
+                  {t.subtitle}
+                </span>
+              </h1>
               
-              {/* Left Column - Hero Content */}
-              <div className="space-y-8 animate-fade-in-up">
-                {/* Hero Heading */}
-                <div className="space-y-4">
-                  
-                  {/* Enhanced Microsoft Fluent Typography */}
-                  <h1 className="font-light text-white leading-[0.9] tracking-tight">
-                    <span className="text-5xl lg:text-7xl font-extralight bg-gradient-to-r from-white via-white/95 to-white/85 bg-clip-text text-transparent drop-shadow-2xl">
-                      {t.title}
-                    </span>
-                    <span className="block text-4xl lg:text-6xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent mt-2 drop-shadow-xl">
-                      {t.subtitle}
-                    </span>
-                  </h1>
-                  
-                  {/* Two-line description with enhanced Microsoft typography */}
-                  <div className="space-y-2 text-2xl text-white/90 font-light leading-relaxed max-w-2xl">
-                    <div className="text-2xl text-white/90 font-light leading-relaxed">
-                      {t.description}
-                    </div>
+              <p className="text-xl md:text-2xl text-white/85 font-light leading-relaxed max-w-2xl mx-auto">
+                {t.description}
+              </p>
+            </div>
+            
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {/* PSSR Card */}
+              <div className="group relative p-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 hover:border-white/30 hover:scale-[1.02] transition-all duration-300 shadow-xl">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <ClipboardCheck className="w-7 h-7 text-white" />
                   </div>
-                </div>
-                
-                {/* Feature Highlights - Enhanced Microsoft Fluent Design */}
-                <div className="grid grid-cols-2 gap-6">
-                  {/* PSSR Card */}
-                  <div className="relative group transform hover:scale-[1.02] transition-all duration-500">
-                    {/* Animated background glow */}
-                    <div className="absolute -inset-4 bg-gradient-to-r from-red-600/30 via-orange-500/20 to-yellow-400/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse-subtle"></div>
-                    
-                    {/* Card Background with Enhanced Acrylic Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.18] via-white/[0.12] to-white/[0.06] rounded-3xl backdrop-blur-2xl border border-white/[0.25] shadow-fluent-2xl group-hover:shadow-fluent-3xl group-hover:border-white/[0.35] transition-all duration-500"></div>
-                    
-                    {/* Animated border effect */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-br from-red-500/20 via-orange-500/10 to-transparent bg-clip-border opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                    
-                    {/* Content */}
-                    <div className="relative p-8 space-y-4">
-                      {/* Enhanced Icon with Microsoft-style layering and animation */}
-                      <div className="relative w-16 h-16 mb-6">
-                        {/* Icon glow effect */}
-                        <div className="absolute -inset-2 bg-gradient-to-br from-red-500/40 to-orange-500/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                        
-                        {/* Icon background layers */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/25 to-orange-500/25 rounded-2xl backdrop-blur-sm transform group-hover:rotate-3 transition-all duration-300"></div>
-                        <div className="relative w-16 h-16 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-6 transition-all duration-500">
-                          <ClipboardCheck className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                      
-                      {/* Enhanced Title with Microsoft Typography and animations */}
-                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
-                        {t.safeStartup}
-                        <div className="w-0 h-0.5 bg-gradient-to-r from-red-400 to-orange-400 group-hover:w-full transition-all duration-500 mt-2"></div>
-                      </h3>
-                      
-                      {/* Enhanced Description */}
-                      <p className="text-white/80 text-sm leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
-                        {t.safeStartupDesc}
-                      </p>
-                      
-                      {/* Floating particles effect */}
-                      <div className="absolute top-4 right-4 w-1 h-1 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-200 transition-all duration-300"></div>
-                      <div className="absolute top-8 right-8 w-1.5 h-1.5 bg-red-300/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-500 transition-all duration-300"></div>
-                    </div>
-                    
-                    {/* Enhanced Hover Effect Border with ripple */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-gradient-to-br group-hover:from-red-400/30 group-hover:to-orange-400/30 transition-all duration-500"></div>
-                  </div>
-                  
-                  {/* P2O Handover Card */}
-                  <div className="relative group transform hover:scale-[1.02] transition-all duration-500">
-                    {/* Animated background glow */}
-                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/30 via-cyan-500/20 to-teal-400/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse-subtle"></div>
-                    
-                    {/* Card Background with Enhanced Acrylic Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.18] via-white/[0.12] to-white/[0.06] rounded-3xl backdrop-blur-2xl border border-white/[0.25] shadow-fluent-2xl group-hover:shadow-fluent-3xl group-hover:border-white/[0.35] transition-all duration-500"></div>
-                    
-                    {/* Animated border effect */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent bg-clip-border opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                    
-                    {/* Content */}
-                    <div className="relative p-8 space-y-4">
-                      {/* Enhanced Icon with Microsoft-style layering and animation */}
-                      <div className="relative w-16 h-16 mb-6">
-                        {/* Icon glow effect */}
-                        <div className="absolute -inset-2 bg-gradient-to-br from-blue-500/40 to-cyan-500/40 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                        
-                        {/* Icon background layers */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/25 to-cyan-500/25 rounded-2xl backdrop-blur-sm transform group-hover:-rotate-3 transition-all duration-300"></div>
-                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:-rotate-6 transition-all duration-500">
-                          <Key className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                      
-                      {/* Enhanced Title with Microsoft Typography and animations */}
-                      <h3 className="text-xl font-semibold text-white mb-3 tracking-tight group-hover:text-white/95 transform group-hover:-translate-y-1 transition-all duration-300">
-                        {t.p2oHandover}
-                        <div className="w-0 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 group-hover:w-full transition-all duration-500 mt-2"></div>
-                      </h3>
-                      
-                      {/* Enhanced Description */}
-                      <p className="text-white/80 text-sm leading-relaxed font-medium group-hover:text-white/90 transform group-hover:-translate-y-1 transition-all duration-400 delay-75">
-                        {t.p2oHandoverDesc}
-                      </p>
-                      
-                      {/* Floating particles effect */}
-                      <div className="absolute top-4 left-4 w-1 h-1 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-200 transition-all duration-300"></div>
-                      <div className="absolute top-8 left-8 w-1.5 h-1.5 bg-blue-300/60 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-bounce animation-delay-500 transition-all duration-300"></div>
-                    </div>
-                    
-                    {/* Enhanced Hover Effect Border with ripple */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-gradient-to-br group-hover:from-blue-400/30 group-hover:to-cyan-400/30 transition-all duration-500"></div>
-                  </div>
-                </div>
-                
-                {/* CTA Section */}
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row gap-4 items-start">
-                    {/* Enhanced Microsoft Fluent CTA Button */}
-                    <Button onClick={() => setShowAuth(true)} size="lg" className="relative group bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white px-12 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 rounded-2xl border-0 overflow-hidden">
-                      {/* Microsoft Fluent Button Effects */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
-                      <div className="absolute inset-0 border border-white/10 rounded-2xl group-hover:border-white/20 transition-colors duration-300" />
-                      
-                      <span className="relative z-10 flex items-center font-medium tracking-wide">
-                        {t.accessButton}
-                        <ArrowRight className="h-5 w-5 ml-4 group-hover:translate-x-1 transition-transform duration-300" />
-                      </span>
-                    </Button>
-                    
-                  </div>
-                  
-                    {/* Trust Indicators */}
-                    <div className="flex flex-wrap items-center gap-6 text-white/80">
-                      <div className="flex items-center gap-2">
-                        <Shield className="w-5 h-5 text-green-400" />
-                        <span className="text-sm font-medium">{t.enterpriseSecure}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FileCheck className="w-5 h-5 text-blue-400" />
-                        <span className="text-sm font-medium">{t.isoCompliant}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Headphones className="w-5 h-5 text-amber-400" />
-                        <span className="text-sm font-medium">{t.support24}</span>
-                      </div>
-                    </div>
+                  <h3 className="text-lg font-semibold text-white">{t.safeStartup}</h3>
+                  <p className="text-white/75 text-sm leading-relaxed">{t.safeStartupDesc}</p>
                 </div>
               </div>
               
+              {/* P2O Card */}
+              <div className="group relative p-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 hover:border-white/30 hover:scale-[1.02] transition-all duration-300 shadow-xl">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Key className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">{t.p2oHandover}</h3>
+                  <p className="text-white/75 text-sm leading-relaxed">{t.p2oHandoverDesc}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* CTA Button */}
+            <div className="space-y-6">
+              <Button 
+                onClick={() => setShowAuth(true)} 
+                size="lg" 
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-10 py-6 text-lg font-semibold shadow-2xl hover:shadow-blue-500/25 hover:scale-105 transition-all duration-300 rounded-xl"
+              >
+                {t.accessButton}
+                <ArrowRight className="h-5 w-5 ml-3" />
+              </Button>
               
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap items-center justify-center gap-6 text-white/75">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-medium">{t.enterpriseSecure}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-medium">{t.isoCompliant}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Headphones className="w-4 h-4 text-amber-400" />
+                  <span className="text-sm font-medium">{t.support24}</span>
+                </div>
+              </div>
             </div>
           </div>
-        </main>}
+        </main>
+      )}
 
       <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
-      </div>;
+    </div>
+  );
 };
+
 export default Index;
