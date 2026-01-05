@@ -118,16 +118,15 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
   const currentFacts = bgcFactsSets[currentImageIndex] || bgcFactsSets[0];
 
   return (
-    <div className="fixed inset-0 -z-10">
+    <div className="fixed inset-0 -z-10 overflow-hidden">
       {images.map((image, index) => (
-        <div
+        <img
           key={index}
-          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[3000ms] ease-in-out ${
+          src={image}
+          alt=""
+          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[3000ms] ease-in-out ${
             index === currentImageIndex ? 'opacity-100' : 'opacity-0'
           }`}
-          style={{
-            backgroundImage: `url(${image})`,
-          }}
         />
       ))}
       
