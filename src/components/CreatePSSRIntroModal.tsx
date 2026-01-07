@@ -34,8 +34,8 @@ const CreatePSSRIntroModal: React.FC<CreatePSSRIntroModalProps> = ({
                 <div>
                   <h3 className="font-semibold text-orange-900 mb-2">Critical Safety Notice</h3>
                   <p className="text-sm text-orange-800">
-                    <strong>Process Safety events are five times more likely to occur during start-ups than during normal operations</strong>, 
-                    so it is essential that a PSSR aims to provide the project and asset owner with assurance that the unit has been 
+                    <strong>Process Safety Incidents are five times more likely to occur during start-ups than during normal operations</strong>, 
+                    so it is essential that a PSSR provides the project and asset owner with assurance that the unit has been 
                     designed according to codes, standards and practices, that process risks are reduced to ALARP and measures are in 
                     place for the management of safety critical equipment.
                   </p>
