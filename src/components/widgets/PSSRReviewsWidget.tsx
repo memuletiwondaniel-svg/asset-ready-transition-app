@@ -44,14 +44,12 @@ interface PSSRReviewsWidgetProps {
   // Stats bar props
   stats?: {
     total: number;
-    approved: number;
     underReview: number;
     draft: number;
-    openActions: number;
     completed: number;
   };
-  activeStatFilter?: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed';
-  onStatFilterClick?: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
+  activeStatFilter?: 'all' | 'under-review' | 'draft' | 'completed';
+  onStatFilterClick?: (filter: 'all' | 'under-review' | 'draft' | 'completed') => void;
 }
 
 export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
