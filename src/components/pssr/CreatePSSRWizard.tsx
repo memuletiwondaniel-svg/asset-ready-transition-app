@@ -5,15 +5,17 @@ import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ChevronLeft, ChevronRight, Check, Loader2, X, FileText, Building2, MapPin, ClipboardList } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useProjects } from '@/hooks/useProjects';
-import { usePSSRReasons } from '@/hooks/usePSSRReasons';
+import { useActivePSSRReasonCategories, usePSSRReasonsByCategory } from '@/hooks/usePSSRReasonCategories';
 import { usePlants } from '@/hooks/usePlants';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useFields } from '@/hooks/useFields';
+import { useStations } from '@/hooks/useStations';
+import { Project } from '@/hooks/useProjects';
+import WizardStepReason from './wizard/WizardStepReason';
+import WizardStepLocation from './wizard/WizardStepLocation';
 
 interface CreatePSSRWizardProps {
   open: boolean;
@@ -21,23 +23,32 @@ interface CreatePSSRWizardProps {
   onSuccess?: (pssrId: string) => void;
 }
 
+type LocationMode = 'project' | 'asset';
+
 interface WizardState {
-  // Step 1: Project & Asset
-  projectId: string;
-  assetName: string;
-  plantId: string;
-  csLocation: string;
-  
-  // Step 2: PSSR Reason
+  // Step 1: PSSR Reason
+  categoryId: string;
   reasonId: string;
+  additionalDetails: string;
+  
+  // Step 2: Location/Context
+  locationMode: LocationMode;
+  // Project-based
+  projectId: string;
+  selectedProject: Project | null;
+  // Asset-based
+  plantId: string;
+  fieldId: string;
+  stationId: string;
   
   // Step 3: Scope
   scopeDescription: string;
+  equipmentName: string;
 }
 
 const STEPS = [
-  { id: 1, title: 'Project & Asset', description: 'Select project and asset details' },
-  { id: 2, title: 'PSSR Reason', description: 'Select the reason for this PSSR' },
+  { id: 1, title: 'PSSR Reason', description: 'Select category and reason' },
+  { id: 2, title: 'Location', description: 'Select project or asset location' },
   { id: 3, title: 'Scope & Details', description: 'Define the scope' },
   { id: 4, title: 'Review & Create', description: 'Review and create PSSR' },
 ];
@@ -47,32 +58,48 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { projects, isLoading: projectsLoading } = useProjects();
-  const { data: reasons, isLoading: reasonsLoading } = usePSSRReasons();
-  const { plants, isLoading: plantsLoading } = usePlants();
+  const { data: categories } = useActivePSSRReasonCategories();
+  const { plants } = usePlants();
+  const { fields } = useFields();
+  const { stations } = useStations();
   
   const [wizardState, setWizardState] = useState<WizardState>({
-    projectId: '',
-    assetName: '',
-    plantId: '',
-    csLocation: '',
+    categoryId: '',
     reasonId: '',
+    additionalDetails: '',
+    locationMode: 'project',
+    projectId: '',
+    selectedProject: null,
+    plantId: '',
+    fieldId: '',
+    stationId: '',
     scopeDescription: '',
+    equipmentName: '',
   });
 
-  const selectedProject = projects?.find(p => p.id === wizardState.projectId);
+  // Fetch reasons for selected category
+  const { data: reasons } = usePSSRReasonsByCategory(wizardState.categoryId || null);
+
+  const selectedCategory = categories?.find(c => c.id === wizardState.categoryId);
   const selectedReason = reasons?.find(r => r.id === wizardState.reasonId);
   const selectedPlant = plants?.find(p => p.id === wizardState.plantId);
+  const selectedField = fields?.find(f => f.id === wizardState.fieldId);
+  const selectedStation = stations?.find(s => s.id === wizardState.stationId);
 
   const resetWizard = () => {
     setCurrentStep(1);
     setWizardState({
-      projectId: '',
-      assetName: '',
-      plantId: '',
-      csLocation: '',
+      categoryId: '',
       reasonId: '',
+      additionalDetails: '',
+      locationMode: 'project',
+      projectId: '',
+      selectedProject: null,
+      plantId: '',
+      fieldId: '',
+      stationId: '',
       scopeDescription: '',
+      equipmentName: '',
     });
   };
 
@@ -84,18 +111,27 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        if (!wizardState.projectId) {
-          toast.error('Please select a project');
+        if (!wizardState.categoryId) {
+          toast.error('Please select a PSSR category');
           return false;
         }
-        if (!wizardState.assetName.trim()) {
-          toast.error('Please enter an asset name');
+        if (!wizardState.reasonId) {
+          toast.error('Please select a specific reason');
           return false;
         }
         return true;
       case 2:
-        if (!wizardState.reasonId) {
-          toast.error('Please select a PSSR reason');
+        // Determine required fields based on category and mode
+        const categoryCode = selectedCategory?.code;
+        const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
+        const isAssetMode = categoryCode === 'INCIDENCE' || wizardState.locationMode === 'asset';
+        
+        if (isProjectMode && !wizardState.projectId) {
+          toast.error('Please select a project');
+          return false;
+        }
+        if (isAssetMode && !wizardState.plantId) {
+          toast.error('Please select a plant');
           return false;
         }
         return true;
@@ -134,20 +170,40 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
       const pssrId = await generatePSSRId();
 
+      // Determine location mode
+      const categoryCode = selectedCategory?.code;
+      const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
+
+      // Determine plant and location values
+      let plantValue = '';
+      let csLocationValue = '';
+      let projectIdValue: string | null = null;
+      let projectNameValue = '';
+
+      if (isProjectMode && wizardState.selectedProject) {
+        projectIdValue = wizardState.projectId;
+        projectNameValue = wizardState.selectedProject.project_title;
+        plantValue = wizardState.selectedProject.plant_name || '';
+        csLocationValue = wizardState.selectedProject.station_name || '';
+      } else {
+        plantValue = selectedPlant?.name || '';
+        csLocationValue = selectedStation?.name || '';
+      }
+
       // Create the PSSR
       const { data: newPSSR, error: pssrError } = await supabase
         .from('pssrs')
         .insert({
           pssr_id: pssrId,
-          project_id: wizardState.projectId,
-          project_name: selectedProject?.project_title || '',
-          asset: wizardState.assetName.trim(),
-          plant: selectedPlant?.name || '',
-          cs_location: wizardState.csLocation.trim() || null,
           reason: selectedReason?.name || '',
-          scope_description: wizardState.scopeDescription.trim() || null,
+          scope: wizardState.scopeDescription.trim() || null,
+          asset: wizardState.equipmentName.trim() || 'N/A',
           status: 'DRAFT',
           user_id: user.id,
+          project_id: projectIdValue,
+          project_name: projectNameValue || null,
+          plant: plantValue || null,
+          cs_location: csLocationValue || null,
         })
         .select()
         .single();
@@ -187,7 +243,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         .maybeSingle();
 
       if (reasonConfig?.pssr_approver_role_ids && reasonConfig.pssr_approver_role_ids.length > 0) {
-        // Get role names
         const { data: roles } = await supabase
           .from('roles')
           .select('id, name')
@@ -227,6 +282,31 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   };
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
+
+  // Get display values for review step
+  const getLocationDisplay = () => {
+    const categoryCode = selectedCategory?.code;
+    const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
+    
+    if (isProjectMode && wizardState.selectedProject) {
+      return {
+        type: 'Project',
+        primary: `${wizardState.selectedProject.project_id_prefix}-${wizardState.selectedProject.project_id_number}`,
+        secondary: wizardState.selectedProject.project_title,
+        details: [
+          wizardState.selectedProject.hub_name && `Hub: ${wizardState.selectedProject.hub_name}`,
+          wizardState.selectedProject.plant_name && `Plant: ${wizardState.selectedProject.plant_name}`,
+        ].filter(Boolean),
+      };
+    }
+    
+    return {
+      type: 'Asset Location',
+      primary: selectedPlant?.name || '',
+      secondary: [selectedField?.name, selectedStation?.name].filter(Boolean).join(' → '),
+      details: [],
+    };
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
@@ -286,133 +366,56 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto py-6 px-1">
-          {/* Step 1: Project & Asset */}
+          {/* Step 1: PSSR Reason */}
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <Label htmlFor="project" className="text-base font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Project *
-                </Label>
-                <Select
-                  value={wizardState.projectId}
-                  onValueChange={(value) => setWizardState(prev => ({ ...prev, projectId: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Select a project"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects?.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.project_id_prefix}-{project.project_id_number} - {project.project_title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="asset" className="text-base font-medium">Asset Name *</Label>
-                <Input
-                  id="asset"
-                  value={wizardState.assetName}
-                  onChange={(e) => setWizardState(prev => ({ ...prev, assetName: e.target.value }))}
-                  placeholder="Enter asset name (e.g., Compressor K-101)"
-                  maxLength={100}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="plant" className="text-base font-medium flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Plant / Location
-                </Label>
-                <Select
-                  value={wizardState.plantId}
-                  onValueChange={(value) => setWizardState(prev => ({ ...prev, plantId: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={plantsLoading ? "Loading..." : "Select plant (optional)"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {plants?.map((plant) => (
-                      <SelectItem key={plant.id} value={plant.id}>
-                        {plant.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="csLocation" className="text-base font-medium">CS Location</Label>
-                <Input
-                  id="csLocation"
-                  value={wizardState.csLocation}
-                  onChange={(e) => setWizardState(prev => ({ ...prev, csLocation: e.target.value }))}
-                  placeholder="Enter CS location (optional)"
-                  maxLength={100}
-                />
-              </div>
-            </div>
+            <WizardStepReason
+              categoryId={wizardState.categoryId}
+              reasonId={wizardState.reasonId}
+              additionalDetails={wizardState.additionalDetails}
+              onCategoryChange={(id) => setWizardState(prev => ({ ...prev, categoryId: id }))}
+              onReasonChange={(id) => setWizardState(prev => ({ ...prev, reasonId: id }))}
+              onAdditionalDetailsChange={(details) => setWizardState(prev => ({ ...prev, additionalDetails: details }))}
+            />
           )}
 
-          {/* Step 2: PSSR Reason */}
+          {/* Step 2: Location */}
           {currentStep === 2 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-medium">Select PSSR Reason</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Choose the reason for this PSSR. This will determine the checklist items and approval workflow.
-              </p>
-              
-              {reasonsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <RadioGroup
-                  value={wizardState.reasonId}
-                  onValueChange={(value) => setWizardState(prev => ({ ...prev, reasonId: value }))}
-                  className="space-y-3"
-                >
-                  {reasons?.map((reason) => (
-                    <div
-                      key={reason.id}
-                      className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                        wizardState.reasonId === reason.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-muted-foreground/30'
-                      }`}
-                    >
-                      <RadioGroupItem value={reason.id} id={reason.id} className="mt-1" />
-                      <Label htmlFor={reason.id} className="cursor-pointer flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">{reason.name}</span>
-                          {reason.category && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                              {reason.category}
-                            </span>
-                          )}
-                        </div>
-                        {reason.sub_category && (
-                          <p className="text-sm text-muted-foreground">
-                            {reason.sub_category}
-                          </p>
-                        )}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              )}
-            </div>
+            <WizardStepLocation
+              categoryCode={selectedCategory?.code}
+              projectId={wizardState.projectId}
+              selectedProject={wizardState.selectedProject}
+              onProjectChange={(id, project) => setWizardState(prev => ({ 
+                ...prev, 
+                projectId: id, 
+                selectedProject: project 
+              }))}
+              plantId={wizardState.plantId}
+              fieldId={wizardState.fieldId}
+              stationId={wizardState.stationId}
+              onPlantChange={(id) => setWizardState(prev => ({ ...prev, plantId: id }))}
+              onFieldChange={(id) => setWizardState(prev => ({ ...prev, fieldId: id }))}
+              onStationChange={(id) => setWizardState(prev => ({ ...prev, stationId: id }))}
+              locationMode={wizardState.locationMode}
+              onLocationModeChange={(mode) => setWizardState(prev => ({ ...prev, locationMode: mode }))}
+            />
           )}
 
           {/* Step 3: Scope & Details */}
           {currentStep === 3 && (
             <div className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="equipment" className="text-base font-medium">
+                  Equipment / Asset Name
+                </Label>
+                <Input
+                  id="equipment"
+                  value={wizardState.equipmentName}
+                  onChange={(e) => setWizardState(prev => ({ ...prev, equipmentName: e.target.value }))}
+                  placeholder="Enter equipment or asset name (e.g., Compressor K-101)"
+                  maxLength={100}
+                />
+              </div>
+
               <div className="space-y-3">
                 <Label htmlFor="scope" className="text-base font-medium">Scope Description</Label>
                 <Textarea
@@ -444,58 +447,75 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               </div>
 
               <div className="bg-muted/20 rounded-lg p-6 border border-border/30 space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Project:</span>
-                    <p className="font-medium">
-                      {selectedProject 
-                        ? `${selectedProject.project_id_prefix}-${selectedProject.project_id_number} - ${selectedProject.project_title}`
-                        : '—'}
-                    </p>
+                    <span className="text-muted-foreground">Category:</span>
+                    <p className="font-medium">{selectedCategory?.name || '—'}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Asset:</span>
-                    <p className="font-medium">{wizardState.assetName || '—'}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Plant:</span>
-                    <p className="font-medium">{selectedPlant?.name || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">CS Location:</span>
-                    <p className="font-medium">{wizardState.csLocation || 'Not specified'}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">PSSR Reason:</span>
+                    <span className="text-muted-foreground">Reason:</span>
                     <p className="font-medium">{selectedReason?.name || '—'}</p>
                   </div>
-                  {wizardState.scopeDescription && (
+                  
+                  {wizardState.additionalDetails && (
                     <div className="col-span-2">
+                      <span className="text-muted-foreground">Additional Details:</span>
+                      <p className="font-medium">{wizardState.additionalDetails}</p>
+                    </div>
+                  )}
+                  
+                  <div className="col-span-2 pt-2 border-t">
+                    <span className="text-muted-foreground">Location ({getLocationDisplay().type}):</span>
+                    <p className="font-medium">{getLocationDisplay().primary}</p>
+                    {getLocationDisplay().secondary && (
+                      <p className="text-sm text-muted-foreground">{getLocationDisplay().secondary}</p>
+                    )}
+                    {getLocationDisplay().details.map((detail, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">{detail}</p>
+                    ))}
+                  </div>
+
+                  {wizardState.equipmentName && (
+                    <div>
+                      <span className="text-muted-foreground">Equipment:</span>
+                      <p className="font-medium">{wizardState.equipmentName}</p>
+                    </div>
+                  )}
+
+                  {wizardState.scopeDescription && (
+                    <div className="col-span-2 pt-2 border-t">
                       <span className="text-muted-foreground">Scope:</span>
-                      <p className="font-medium">{wizardState.scopeDescription}</p>
+                      <p className="font-medium whitespace-pre-wrap">{wizardState.scopeDescription}</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-900">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Note:</strong> The PSSR will be created as a Draft. You can edit the details and submit for review from the PSSR dashboard.
+              <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
+                <p className="text-sm">
+                  <strong>Note:</strong> The PSSR will be created as a <strong>Draft</strong>. 
+                  You can add checklist items and assign approvers after creation.
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer Navigation */}
+        {/* Navigation Buttons */}
         <div className="border-t pt-4 flex items-center justify-between">
           <Button
             variant="outline"
             onClick={currentStep === 1 ? handleClose : handleBack}
             disabled={isSubmitting}
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            {currentStep === 1 ? 'Cancel' : 'Back'}
+            {currentStep === 1 ? (
+              'Cancel'
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Back
+              </>
+            )}
           </Button>
 
           {currentStep < STEPS.length ? (
