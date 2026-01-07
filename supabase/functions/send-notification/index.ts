@@ -16,7 +16,7 @@ interface NotificationRequest {
   pssrId?: string;
   delegatedTo?: string;
   delegationReason?: string;
-  approverTier?: number;
+  approverLevel?: number;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
       pssrId, 
       delegatedTo, 
       delegationReason,
-      approverTier 
+      approverLevel 
     }: NotificationRequest = await req.json();
 
     let emailResponse;
@@ -88,28 +88,22 @@ const handler = async (req: Request): Promise<Response> => {
         emailResponse = await resend.emails.send({
           from: "PSSR System <noreply@company.com>",
           to: [recipientEmail],
-          subject: `PSSR Approval Request - Tier ${approverTier} - ${pssrId}`,
+          subject: `PSSR Approval Request - Level ${approverLevel} - ${pssrId}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #1f2937;">PSSR Approval Request - Tier ${approverTier}</h2>
+              <h2 style="color: #1f2937;">PSSR Approval Request</h2>
               <p>Dear ${approverName},</p>
-              <p>A PSSR is ready for your approval as a Tier ${approverTier} approver:</p>
+              <p>A PSSR is ready for your approval:</p>
               <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
                 <p><strong>PSSR ID:</strong> ${pssrId}</p>
-                <p><strong>Approval Tier:</strong> Tier ${approverTier}</p>
-                <p><strong>Status:</strong> All ${approverTier === 1 ? 'checklist items' : `Tier ${approverTier - 1} approvals`} have been completed</p>
+                <p><strong>Approval Sequence:</strong> Level ${approverLevel}</p>
+                <p><strong>Status:</strong> ${approverLevel === 1 ? 'All checklist items have been completed' : 'Previous approval levels have been completed'}</p>
               </div>
               <div style="background-color: #eff6ff; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #3b82f6;">
                 <p><strong>Action Required:</strong></p>
                 <p>Please review the PSSR documentation and provide your approval decision.</p>
                 <p>Log into the PSSR system to access the full details and approve or reject this PSSR.</p>
               </div>
-              <p>This approval is part of the sequential approval workflow:</p>
-              <ul>
-                <li><strong>Tier 1:</strong> Technical Authorities ${approverTier > 1 ? '✓ Complete' : '← Current'}</li>
-                <li><strong>Tier 2:</strong> Department Heads ${approverTier > 2 ? '✓ Complete' : approverTier === 2 ? '← Current' : 'Pending'}</li>
-                <li><strong>Tier 3:</strong> Senior Leadership ${approverTier === 3 ? '← Current' : 'Pending'}</li>
-              </ul>
               <p>Best regards,<br>PSSR System</p>
             </div>
           `

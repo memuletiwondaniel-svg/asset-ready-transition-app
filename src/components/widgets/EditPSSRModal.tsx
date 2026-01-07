@@ -19,7 +19,6 @@ interface EditPSSRModalProps {
     projectId: string;
     projectName: string;
     initiator: string;
-    tier: string;
     scope: string;
   };
   onSave: (data: any) => void;
@@ -37,7 +36,6 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
     asset: pssrData.asset,
     reason: pssrData.reason,
     pssrLead: pssrData.initiator,
-    tier: pssrData.tier,
     scope: pssrData.scope,
   });
 
@@ -133,21 +131,6 @@ export const EditPSSRModal: React.FC<EditPSSRModalProps> = ({
               onChange={(e) => handleChange('pssrLead', e.target.value)}
               placeholder="Enter PSSR lead name"
             />
-          </div>
-
-          {/* Tier */}
-          <div className="space-y-2">
-            <Label htmlFor="tier" className="text-sm font-medium">Tier</Label>
-            <Select value={formData.tier} onValueChange={(value) => handleChange('tier', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select tier" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border">
-                <SelectItem value="Tier 1">Tier 1</SelectItem>
-                <SelectItem value="Tier 2">Tier 2</SelectItem>
-                <SelectItem value="Tier 3">Tier 3</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Scope Description */}
