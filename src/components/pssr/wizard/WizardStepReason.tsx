@@ -2,8 +2,33 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ClipboardList, ChevronRight } from 'lucide-react';
+import { 
+  Loader2, 
+  ClipboardList, 
+  ChevronRight,
+  Building2,
+  AlertTriangle,
+  Wrench,
+  MoreHorizontal,
+  FolderKanban,
+  type LucideIcon
+} from 'lucide-react';
 import { useActivePSSRReasonCategories, usePSSRReasonsByCategory } from '@/hooks/usePSSRReasonCategories';
+
+// Map icon names from database to actual Lucide components
+const iconMap: Record<string, LucideIcon> = {
+  Building2,
+  AlertTriangle,
+  Wrench,
+  MoreHorizontal,
+  FolderKanban,
+  ClipboardList,
+};
+
+const getIconComponent = (iconName: string | null): LucideIcon | null => {
+  if (!iconName) return null;
+  return iconMap[iconName] || null;
+};
 
 interface WizardStepReasonProps {
   categoryId: string;
@@ -68,9 +93,10 @@ const WizardStepReason: React.FC<WizardStepReasonProps> = ({
               <Label htmlFor={category.id} className="cursor-pointer flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">{category.name}</span>
-                  {category.icon && (
-                    <span className="text-lg">{category.icon}</span>
-                  )}
+                  {category.icon && (() => {
+                    const IconComponent = getIconComponent(category.icon);
+                    return IconComponent ? <IconComponent className="h-5 w-5 text-muted-foreground" /> : null;
+                  })()}
                 </div>
                 {category.description && (
                   <p className="text-sm text-muted-foreground mt-1">
