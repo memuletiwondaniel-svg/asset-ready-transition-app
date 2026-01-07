@@ -888,7 +888,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 animate-smooth-in stagger-2">
                       {widgets.filter(w => w.isVisible).map(widget => <SortableWidgetWrapper key={widget.id} id={widget.id} isExpanded={widget.isExpanded}>
                           <WidgetCard title={widget.title} isExpanded={widget.isExpanded} isVisible={widget.isVisible} onToggleVisibility={() => handleToggleVisibility(widget.id)} onToggleExpand={() => handleToggleExpand(widget.id)}>
-                            {widget.id === 'quick-actions' && <QuickActionsWidget onActionClick={setUserInput} />}
+                            {widget.id === 'quick-actions' && <QuickActionsWidget onActionClick={(actionId) => {
+                              if (actionId === 'create-pssr') onNavigate('pssr');
+                              else if (actionId === 'approve-pssr') onNavigate('pssr');
+                              else if (actionId === 'develop-p2a') onNavigate('p2a');
+                            }} />}
                             {widget.id === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
                             {widget.id === 'recent-activity' && <RecentActivityWidget />}
                           </WidgetCard>
