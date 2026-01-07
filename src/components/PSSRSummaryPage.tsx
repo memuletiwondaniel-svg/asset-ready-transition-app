@@ -237,7 +237,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     lead: [] as string[],
     dateFrom: '',
     dateTo: '',
-    statFilter: 'all' as 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed'
+    statFilter: 'all' as 'all' | 'under-review' | 'draft' | 'completed'
   });
 
   // Mock PSSR data - starts empty but can be populated
@@ -365,17 +365,13 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   // Dashboard statistics
   const stats = useMemo(() => {
     const total = pssrList.length;
-    const approved = pssrList.filter(p => p.status === 'Approved').length;
     const underReview = pssrList.filter(p => p.status === 'Under Review').length;
     const draft = pssrList.filter(p => p.status === 'Draft').length;
-    const openActions = pssrList.filter(p => p.pendingApprovals > 0).length;
     const completed = pssrList.filter(p => p.completedDate !== null).length;
     return {
       total,
-      approved,
       underReview,
       draft,
-      openActions,
       completed
     };
   }, [pssrList]);
@@ -393,21 +389,13 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       let matchesStatFilter = true;
       if (filters.statFilter !== 'all') {
         switch (filters.statFilter) {
-          case 'approved':
-            matchesStatFilter = pssr.status === 'Approved';
-            break;
           case 'under-review':
             matchesStatFilter = pssr.status === 'Under Review';
             break;
           case 'draft':
             matchesStatFilter = pssr.status === 'Draft';
             break;
-          case 'open-actions':
-            // Mock logic: filter items with pending approvals
-            matchesStatFilter = pssr.pendingApprovals > 0;
-            break;
           case 'completed':
-            // Mock logic: filter items with completedDate
             matchesStatFilter = pssr.completedDate !== null;
             break;
         }
@@ -467,7 +455,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
       return 0;
     });
   }, [searchTerm, filters, pssrList, pssrOrder, pinnedPSSRs, dateRangeFilters]);
-  const handleStatClick = (filterKey: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => {
+  const handleStatClick = (filterKey: 'all' | 'under-review' | 'draft' | 'completed') => {
     setFilters(prev => ({
       ...prev,
       statFilter: filterKey
