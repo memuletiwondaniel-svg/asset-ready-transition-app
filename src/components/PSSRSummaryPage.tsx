@@ -797,8 +797,12 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                 </div>
               </div>
               
-              {/* Actions - Settings only */}
+              {/* Actions */}
               <div className="flex items-center gap-2">
+                <Button onClick={() => setShowCreateIntro(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create PSSR
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -854,7 +858,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
             stats={stats}
             activeStatFilter={filters.statFilter}
             onStatFilterClick={handleStatClick}
-            onCreatePSSR={() => setShowCreateIntro(true)}
           />
         )}
       </main>

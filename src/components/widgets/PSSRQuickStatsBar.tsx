@@ -53,14 +53,14 @@ export const PSSRQuickStatsBar: React.FC<PSSRQuickStatsBarProps> = ({
             key={stat.key}
             onClick={() => onFilterClick(stat.key)}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+              "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all duration-200",
               "border bg-background hover:shadow-sm",
               isActive ? stat.activeClass : stat.inactiveClass,
               isActive && "shadow-md"
             )}
           >
-            <Icon className="h-3.5 w-3.5" />
-            <span className="font-bold tabular-nums">{value}</span>
+            <Icon className="h-3 w-3" />
+            <span className="font-semibold tabular-nums">{value}</span>
             <span className="hidden sm:inline">{stat.label}</span>
           </button>
         );

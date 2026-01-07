@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { WidgetCard } from './WidgetCard';
-import { LayoutGrid, Table as TableIcon, Columns3, Plus } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Columns3 } from 'lucide-react';
 import PSSRAdvancedSearch from '../PSSRAdvancedSearch';
 import PSSRFilters from '../PSSRFilters';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
 import DraggablePSSRCard from '../DraggablePSSRCard';
 import { PSSRQuickStatsBar } from './PSSRQuickStatsBar';
-import { Button } from '@/components/ui/button';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
@@ -53,7 +52,6 @@ interface PSSRReviewsWidgetProps {
   };
   activeStatFilter?: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed';
   onStatFilterClick?: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
-  onCreatePSSR?: () => void;
 }
 
 export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
@@ -90,7 +88,6 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   stats,
   activeStatFilter,
   onStatFilterClick,
-  onCreatePSSR
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -157,83 +154,74 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       className="flex flex-col min-h-[400px] max-h-[70vh] lg:max-h-[600px]"
     >
       <div className="flex flex-col h-full overflow-hidden">
-        {/* Stats Bar + Create Button Row */}
-        {stats && onStatFilterClick && (
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <PSSRQuickStatsBar
-              stats={stats}
-              activeFilter={activeStatFilter || 'all'}
-              onFilterClick={onStatFilterClick}
-            />
-            {onCreatePSSR && (
-              <Button onClick={onCreatePSSR} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Create PSSR
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Search and View Controls - Sticky with scroll shadow */}
+        {/* Combined Controls Bar - Stats inline with Search */}
         <div className={`sticky top-0 z-10 bg-card pb-3 border-b border-border/40 transition-shadow duration-300 ${
           isScrolled ? 'shadow-md' : ''
         }`}>
-          <div className="flex flex-col lg:flex-row gap-6 items-center mb-3">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
+            {/* Stats Filter Chips - Left */}
+            {stats && onStatFilterClick && (
+              <PSSRQuickStatsBar
+                stats={stats}
+                activeFilter={activeStatFilter || 'all'}
+                onFilterClick={onStatFilterClick}
+              />
+            )}
+            
+            {/* Flexible Spacer */}
+            <div className="flex-1 min-w-0" />
+            
+            {/* Search */}
             <PSSRAdvancedSearch
               pssrs={pssrs}
               value={searchTerm}
               onChange={onSearchChange}
               onSelectPSSR={onSelectPSSR}
-              placeholder="Search by Project ID, Name, Asset..."
-              className="flex-1 max-w-md"
+              placeholder="Search..."
+              className="w-40 lg:w-56"
             />
 
-            <div className="flex items-center gap-4 w-full lg:w-auto">
-              {/* View Mode Selector */}
-              <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted border border-border/50">
-                <button
-                  onClick={() => onViewModeChange('card')}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'card' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5 inline mr-1" />
-                  Cards
-                </button>
-                <button
-                  onClick={() => onViewModeChange('kanban')}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'kanban' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Columns3 className="h-3.5 w-3.5 inline mr-1" />
-                  Kanban
-                </button>
-                <button
-                  onClick={() => onViewModeChange('table')}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <TableIcon className="h-3.5 w-3.5 inline mr-1" />
-                  Table
-                </button>
-              </div>
-
-              <PSSRFilters
-                filters={filters}
-                onToggleFilter={onToggleFilter}
-                onDateChange={onDateChange}
-                onClearFilters={onClearFilters}
-                uniquePlants={uniquePlants}
-                uniqueStatuses={uniqueStatuses}
-                uniqueLeads={uniqueLeads}
-              />
+            {/* View Mode Selector */}
+            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border/50">
+              <button
+                onClick={() => onViewModeChange('card')}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'card' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => onViewModeChange('kanban')}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'kanban' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Columns3 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => onViewModeChange('table')}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <TableIcon className="h-3.5 w-3.5" />
+              </button>
             </div>
+
+            <PSSRFilters
+              filters={filters}
+              onToggleFilter={onToggleFilter}
+              onDateChange={onDateChange}
+              onClearFilters={onClearFilters}
+              uniquePlants={uniquePlants}
+              uniqueStatuses={uniqueStatuses}
+              uniqueLeads={uniqueLeads}
+            />
           </div>
 
           {/* Results Count */}
-          <p className="text-sm text-muted-foreground ml-4">
+          <p className="text-xs text-muted-foreground">
             Showing {filteredPSSRs.length} of {pssrs.length} reviews
           </p>
         </div>
