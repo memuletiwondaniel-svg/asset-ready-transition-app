@@ -788,10 +788,10 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                   <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold text-foreground">
                     Pre-Start-Up Safety Review
                   </h1>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Manage and track all PSSR activities
                   </p>
                 </div>

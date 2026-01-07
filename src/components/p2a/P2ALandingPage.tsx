@@ -113,10 +113,10 @@ export const P2ALandingPage: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-foreground">
                 P2A Handover
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Project to Asset Transition Management
               </p>
             </div>
