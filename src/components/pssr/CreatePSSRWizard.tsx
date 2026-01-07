@@ -15,7 +15,8 @@ import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
 import { usePSSRTieInScopes } from '@/hooks/usePSSRAtiScopes';
 import { Project } from '@/hooks/useProjects';
-import WizardStepReason from './wizard/WizardStepReason';
+import WizardStepCategory from './wizard/WizardStepCategory';
+import WizardStepSpecificReason from './wizard/WizardStepSpecificReason';
 import WizardStepLocation from './wizard/WizardStepLocation';
 
 interface CreatePSSRWizardProps {
@@ -27,13 +28,14 @@ interface CreatePSSRWizardProps {
 type LocationMode = 'project' | 'asset';
 
 interface WizardState {
-  // Step 1: PSSR Reason
+  // Step 1: Category
   categoryId: string;
+  // Step 2: Specific Reason
   reasonId: string;
   additionalDetails: string;
   selectedAtiScopeIds: string[];
   
-  // Step 2: Location/Context
+  // Step 3: Location/Context
   locationMode: LocationMode;
   // Project-based
   projectId: string;
@@ -43,16 +45,17 @@ interface WizardState {
   fieldId: string;
   stationId: string;
   
-  // Step 3: Scope
+  // Step 4: Scope
   scopeDescription: string;
   equipmentName: string;
 }
 
 const STEPS = [
-  { id: 1, title: 'PSSR Reason', description: 'Select category and reason' },
-  { id: 2, title: 'Location', description: 'Select project or asset location' },
-  { id: 3, title: 'Scope & Details', description: 'Define the scope' },
-  { id: 4, title: 'Review & Create', description: 'Review and create PSSR' },
+  { id: 1, title: 'Category', description: 'Select PSSR category' },
+  { id: 2, title: 'Reason', description: 'Select specific reason' },
+  { id: 3, title: 'Location', description: 'Select project or asset location' },
+  { id: 4, title: 'Scope & Details', description: 'Define the scope' },
+  { id: 5, title: 'Review', description: 'Review and create PSSR' },
 ];
 
 const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess }) => {
@@ -115,11 +118,13 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 1:
+      case 1: // Category only
         if (!wizardState.categoryId) {
           toast.error('Please select a PSSR category');
           return false;
         }
+        return true;
+      case 2: // Specific Reason
         if (!wizardState.reasonId) {
           toast.error('Please select a specific reason');
           return false;
@@ -130,7 +135,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           return false;
         }
         return true;
-      case 2:
+      case 3: // Location
         // Determine required fields based on category and mode
         const categoryCode = selectedCategory?.code;
         const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
@@ -145,7 +150,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
           return false;
         }
         return true;
-      case 3:
+      case 4: // Scope & Details
         return true; // Scope is optional
       default:
         return true;
@@ -392,22 +397,34 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto py-6 px-1">
-          {/* Step 1: PSSR Reason */}
+          {/* Step 1: Category */}
           {currentStep === 1 && (
-            <WizardStepReason
+            <WizardStepCategory
+              categoryId={wizardState.categoryId}
+              onCategoryChange={(id) => setWizardState(prev => ({ 
+                ...prev, 
+                categoryId: id,
+                reasonId: '',
+                selectedAtiScopeIds: []
+              }))}
+            />
+          )}
+
+          {/* Step 2: Specific Reason */}
+          {currentStep === 2 && (
+            <WizardStepSpecificReason
               categoryId={wizardState.categoryId}
               reasonId={wizardState.reasonId}
               additionalDetails={wizardState.additionalDetails}
               selectedAtiScopeIds={wizardState.selectedAtiScopeIds}
-              onCategoryChange={(id) => setWizardState(prev => ({ ...prev, categoryId: id }))}
               onReasonChange={(id) => setWizardState(prev => ({ ...prev, reasonId: id }))}
               onAdditionalDetailsChange={(details) => setWizardState(prev => ({ ...prev, additionalDetails: details }))}
               onAtiScopeChange={(scopeIds) => setWizardState(prev => ({ ...prev, selectedAtiScopeIds: scopeIds }))}
             />
           )}
 
-          {/* Step 2: Location */}
-          {currentStep === 2 && (
+          {/* Step 3: Location */}
+          {currentStep === 3 && (
             <WizardStepLocation
               categoryCode={selectedCategory?.code}
               projectId={wizardState.projectId}
@@ -428,8 +445,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             />
           )}
 
-          {/* Step 3: Scope & Details */}
-          {currentStep === 3 && (
+          {/* Step 4: Scope & Details */}
+          {currentStep === 4 && (
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label htmlFor="equipment" className="text-base font-medium">
@@ -461,8 +478,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             </div>
           )}
 
-          {/* Step 4: Review & Create */}
-          {currentStep === 4 && (
+          {/* Step 5: Review & Create */}
+          {currentStep === 5 && (
             <div className="space-y-6">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
