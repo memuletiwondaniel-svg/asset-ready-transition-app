@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, Settings, BarChart3, Users, Calendar as CalendarIcon, TrendingUp, TrendingDown, Minus, LayoutGrid, Table as TableIcon, Home, FileText, FolderOpen, GripVertical, Columns3, CalendarDays, Bell } from 'lucide-react';
 import { WidgetCard } from './widgets/WidgetCard';
 import { PSSRStatisticsWidget } from './widgets/PSSRStatisticsWidget';
-import { PSSRQuickActionsWidget } from './widgets/PSSRQuickActionsWidget';
+
 import { PSSRReviewsWidget } from './widgets/PSSRReviewsWidget';
 import { SortableWidget } from './widgets/SortableWidget';
 import PSSRFilters from './PSSRFilters';
@@ -801,6 +801,27 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                   </p>
                 </div>
               </div>
+              
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setActiveView('manage-checklist')}>
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Manage Checklist
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button onClick={() => setShowCreateIntro(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create PSSR
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -816,10 +837,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                   listeners
                 }) => <>
                       {key === 'statistics' && widgetVisibility.statistics && <PSSRStatisticsWidget stats={stats} onStatClick={handleStatClick} isExpanded={widgetExpanded.statistics} isVisible={widgetVisibility.statistics} onToggleExpand={() => handleToggleWidgetExpanded('statistics')} onToggleVisibility={() => handleToggleWidgetVisibility('statistics')} dragAttributes={attributes} dragListeners={listeners} />}
-                      {key === 'quickActions' && widgetVisibility.quickActions && <PSSRQuickActionsWidget onCreatePSSR={() => setActiveView('create')} onManageChecklist={() => setActiveView('manage-checklist')} onChatWithORSH={() => {
-                    onBack();
-                  }} isExpanded={widgetExpanded.quickActions} isVisible={widgetVisibility.quickActions} onToggleExpand={() => handleToggleWidgetExpanded('quickActions')} onToggleVisibility={() => handleToggleWidgetVisibility('quickActions')} dragAttributes={attributes} dragListeners={listeners} />}
-                      {key === 'recentActivities' && widgetVisibility.recentActivities && <div className="p-4 text-muted-foreground">Recent Activities widget moved to PSSR Dashboard</div>}
                       {key === 'reviews' && widgetVisibility.reviews && <PSSRReviewsWidget pssrs={pssrList} filteredPSSRs={filteredPSSRs} searchTerm={searchTerm} onSearchChange={handleSearchChange} onSelectPSSR={handleViewDetails} viewMode={viewMode === 'timeline' ? 'card' : viewMode} onViewModeChange={mode => setViewMode(mode)} filters={filters} onToggleFilter={toggleFilter} onDateChange={handleDateChange} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} onViewDetails={handleViewDetails} getPriorityColor={getPriorityColor} getStatusIcon={getStatusIcon} getTeamStatusColor={getTeamStatusColor} getRiskLevelColor={getRiskLevelColor} pinnedPSSRs={pinnedPSSRs} onTogglePin={handleTogglePin} onStatusChange={(pssrId, newStatus) => {
                     toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
                   }} onPSSROrderChange={setPssrOrder} pssrOrder={pssrOrder} isExpanded={widgetExpanded.reviews} isVisible={widgetVisibility.reviews} onToggleExpand={() => handleToggleWidgetExpanded('reviews')} onToggleVisibility={() => handleToggleWidgetVisibility('reviews')} dragAttributes={attributes} dragListeners={listeners} />}
@@ -836,12 +853,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
             {activeWidgetId ? <div className="opacity-80 scale-105 shadow-2xl ring-2 ring-primary/50 rounded-xl">
                 {activeWidgetId === 'statistics' && <div className="pointer-events-none">
                     <PSSRStatisticsWidget stats={stats} onStatClick={() => {}} isExpanded={widgetExpanded.statistics} isVisible={widgetVisibility.statistics} />
-                  </div>}
-                {activeWidgetId === 'quickActions' && <div className="pointer-events-none">
-                    <PSSRQuickActionsWidget onCreatePSSR={() => {}} onManageChecklist={() => {}} onChatWithORSH={() => {}} isExpanded={widgetExpanded.quickActions} isVisible={widgetVisibility.quickActions} />
-                  </div>}
-                {activeWidgetId === 'recentActivities' && <div className="pointer-events-none">
-                    <div className="p-4 text-muted-foreground">Recent Activities</div>
                   </div>}
                 {activeWidgetId === 'reviews' && <div className="pointer-events-none h-[600px] w-full">
                     <div className="h-full w-full bg-card border border-primary/50 rounded-xl p-4 flex items-center justify-center">
