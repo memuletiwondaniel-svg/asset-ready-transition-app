@@ -41,10 +41,12 @@ import {
   LayoutGrid,
   Trash2,
   GripVertical,
-  Pencil
+  Pencil,
+  User
 } from 'lucide-react';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
+import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
 
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
@@ -251,6 +253,9 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   
   // Hubs hook for updating and creating
   const { updateHub, createHub } = useHubs();
+  
+  // Portfolio managers hook
+  const { getManagerForRegion } = usePortfolioManagers();
 
   // DnD sensors
   const sensors = useSensors(
@@ -740,6 +745,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                     {filteredPortfolios.map(region => {
                       const isSelected = selectedRegion === region.id;
                       const totalProjects = region.hubs.reduce((sum, h) => sum + h.projects.length, 0);
+                      const portfolioManager = getManagerForRegion(region.name);
                       return (
                         <div
                           key={region.id}
@@ -778,6 +784,14 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                   {totalProjects} projects
                                 </Badge>
                               </div>
+                              {portfolioManager && (
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                  <User className="h-3 w-3 text-primary" />
+                                  <span className="text-xs font-medium text-primary">
+                                    PM: {portfolioManager.full_name}
+                                  </span>
+                                </div>
+                              )}
                               {region.description && (
                                 <p className="text-xs text-muted-foreground truncate mt-0.5">
                                   {region.description}
