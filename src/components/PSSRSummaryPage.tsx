@@ -865,6 +865,16 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
 
       </main>
       </div>
+      
+      {/* Create PSSR Intro Modal */}
+      <CreatePSSRIntroModal 
+        isOpen={showCreateIntro} 
+        onClose={() => setShowCreateIntro(false)} 
+        onContinue={() => {
+          setShowCreateIntro(false);
+          setActiveView('create');
+        }} 
+      />
     </div>;
 };
 export default PSSRSummaryPage;
