@@ -15,7 +15,6 @@ interface PSSRInformationWidgetProps {
   reason: string;
   dateInitiated: string;
   pssrLead: string;
-  tier?: string;
   projectData?: any;
   plantName?: string;
   stationName?: string;
@@ -33,7 +32,6 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
   reason,
   dateInitiated,
   pssrLead,
-  tier = 'Tier 1',
   projectData,
   plantName,
   stationName,
@@ -94,23 +92,15 @@ export const PSSRInformationWidget: React.FC<PSSRInformationWidgetProps> = ({
         <p className="text-sm text-foreground">{reason}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Date Initiated</label>
-          <div className="flex items-center gap-2 text-sm text-foreground">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            {new Date(dateInitiated).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
-              day: 'numeric' 
-            })}
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tier</label>
-          <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-            {tier}
-          </Badge>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Date Initiated</label>
+        <div className="flex items-center gap-2 text-sm text-foreground">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          {new Date(dateInitiated).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          })}
         </div>
       </div>
 

@@ -23,7 +23,6 @@ interface PSSR {
   teamMembers: number;
   lastActivity: string;
   location: string;
-  tier: 1 | 2 | 3;
 }
 
 interface PSSRTimelineViewProps {
@@ -194,16 +193,6 @@ const PSSRTimelineView: React.FC<PSSRTimelineViewProps> = ({ pssrs, onViewDetail
                               </Badge>
                               <Badge variant="default" className="text-xs">
                                 {item.pssr.projectId}
-                              </Badge>
-                              <Badge 
-                                variant="outline"
-                                className={`text-xs ${
-                                  item.pssr.tier === 1 ? 'border-red-500/40 text-red-600 dark:text-red-400' :
-                                  item.pssr.tier === 2 ? 'border-orange-500/40 text-orange-600 dark:text-orange-400' :
-                                  'border-green-500/40 text-green-600 dark:text-green-400'
-                                }`}
-                              >
-                                Tier {item.pssr.tier}
                               </Badge>
                             </div>
                             <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1">

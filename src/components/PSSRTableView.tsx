@@ -44,7 +44,6 @@ interface PSSR {
   teamMembers: number;
   lastActivity: string;
   location: string;
-  tier: 1 | 2 | 3;
 }
 
 interface PSSRTableViewProps {
@@ -57,7 +56,6 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
     { id: 'projectId', label: 'Project ID', visible: true, width: 100 },
     { id: 'projectName', label: 'Project Name', visible: true, width: 250 },
     { id: 'asset', label: 'Plant/Asset', visible: true, width: 150 },
-    { id: 'tier', label: 'Tier', visible: true, width: 90 },
     { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 150 },
     { id: 'progress', label: 'Progress', visible: true, width: 100 },
     { id: 'status', label: 'Status', visible: true, width: 140 },
@@ -135,16 +133,6 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
 
   const visibleColumns = columns.filter(col => col.visible);
 
-  const getTierBadge = (tier: 1 | 2 | 3) => {
-    const classes = tier === 1 
-      ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/40'
-      : tier === 2 
-      ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/40'
-      : 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/40';
-    
-    return <Badge className={`border ${classes} whitespace-nowrap inline-flex`}>Tier {tier}</Badge>;
-  };
-
   const getStatusBadge = (status: string) => {
     const classes = status === 'Approved' 
       ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40'
@@ -169,8 +157,6 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
         return <div className="font-semibold text-foreground">{pssr.projectName}</div>;
       case 'asset':
         return <div className="font-semibold text-foreground">{pssr.asset}</div>;
-      case 'tier':
-        return getTierBadge(pssr.tier);
       case 'pssrLead':
         return (
           <div className="flex items-center gap-2">

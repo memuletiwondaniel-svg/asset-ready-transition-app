@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="background-color: white; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #10b981;">
               <p style="margin: 0 0 8px;"><strong>PSSR:</strong> ${pssrTitle}</p>
               <p style="margin: 0 0 8px;"><strong>Your Role:</strong> ${nextApprover.approver_role}</p>
-              <p style="margin: 0 0 8px;"><strong>Approval Level:</strong> Tier ${nextApprover.approver_level}</p>
+              <p style="margin: 0 0 8px;"><strong>Approval Sequence:</strong> Level ${nextApprover.approver_level}</p>
               ${completedBy ? `<p style="margin: 0 0 8px;"><strong>Completed By:</strong> ${completedBy}</p>` : ''}
               ${completionDate ? `<p style="margin: 0;"><strong>Completion Date:</strong> ${completionDate}</p>` : ''}
             </div>

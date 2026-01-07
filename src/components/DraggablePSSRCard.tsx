@@ -27,7 +27,6 @@ interface DraggablePSSRCardProps {
     teamMembers: number;
     lastActivity: string;
     location: string;
-    tier: 1 | 2 | 3;
   };
   index: number;
   onViewDetails: (pssrId: string) => void;
@@ -166,16 +165,6 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
                 <div className="flex items-center gap-3 mb-2">
                   <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-foreground group-hover/pssr-card:bg-primary group-hover/pssr-card:text-primary-foreground group-hover/pssr-card:border-primary font-extrabold text-xs px-2.5 py-0.5 transition-colors">
                     {pssr.projectId}
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className={`text-xs font-medium ${
-                      pssr.tier === 1 ? 'border-red-500/40 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20' :
-                      pssr.tier === 2 ? 'border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-50/50 dark:bg-orange-950/20' :
-                      'border-green-500/40 text-green-600 dark:text-green-400 bg-green-50/50 dark:bg-green-950/20'
-                    }`}
-                  >
-                    Tier {pssr.tier}
                   </Badge>
                 </div>
                 <h3 className="text-sm font-semibold text-foreground group-hover/pssr-card:text-primary transition-colors line-clamp-1">
