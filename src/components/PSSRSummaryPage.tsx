@@ -1,22 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Search, Filter, Settings, BarChart3, Users, Calendar as CalendarIcon, TrendingUp, TrendingDown, Minus, LayoutGrid, Table as TableIcon, Home, FileText, FolderOpen, GripVertical, Columns3, CalendarDays, Bell } from 'lucide-react';
-import { WidgetCard } from './widgets/WidgetCard';
-import { PSSRStatisticsWidget } from './widgets/PSSRStatisticsWidget';
+import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Settings, Home, FileText, FolderOpen } from 'lucide-react';
+import { PSSRQuickStatsBar } from './widgets/PSSRQuickStatsBar';
 
 import { PSSRReviewsWidget } from './widgets/PSSRReviewsWidget';
-import { SortableWidget } from './widgets/SortableWidget';
 import PSSRFilters from './PSSRFilters';
 import DraggablePSSRCard from './DraggablePSSRCard';
 import PSSRTableView from './PSSRTableView';
@@ -824,46 +818,54 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                 </Button>
               </div>
             </div>
+            
+            {/* Quick Stats Bar - Clickable filters */}
+            <div className="mt-4">
+              <PSSRQuickStatsBar
+                stats={stats}
+                activeFilter={filters.statFilter}
+                onFilterClick={handleStatClick}
+              />
+            </div>
           </div>
         </header>
 
       <main className="flex-1 overflow-y-auto max-w-[1400px] mx-auto px-6 py-8 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-        {/* All Sortable Widgets */}
-        <DndContext sensors={widgetSensors} collisionDetection={closestCenter} onDragStart={handleWidgetDragStart} onDragEnd={handleWidgetDragEnd}>
-          <SortableContext items={widgetOrderLocal} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {widgetOrderLocal.map(key => <SortableWidget id={key} key={key} className={key === 'reviews' ? 'col-span-1 lg:col-span-3' : 'col-span-1'}>
-                  {({
-                  attributes,
-                  listeners
-                }) => <>
-                      {key === 'statistics' && widgetVisibility.statistics && <PSSRStatisticsWidget stats={stats} onStatClick={handleStatClick} isExpanded={widgetExpanded.statistics} isVisible={widgetVisibility.statistics} onToggleExpand={() => handleToggleWidgetExpanded('statistics')} onToggleVisibility={() => handleToggleWidgetVisibility('statistics')} dragAttributes={attributes} dragListeners={listeners} />}
-                      {key === 'reviews' && widgetVisibility.reviews && <PSSRReviewsWidget pssrs={pssrList} filteredPSSRs={filteredPSSRs} searchTerm={searchTerm} onSearchChange={handleSearchChange} onSelectPSSR={handleViewDetails} viewMode={viewMode === 'timeline' ? 'card' : viewMode} onViewModeChange={mode => setViewMode(mode)} filters={filters} onToggleFilter={toggleFilter} onDateChange={handleDateChange} onClearFilters={clearAllFilters} uniquePlants={uniquePlants} uniqueStatuses={uniqueStatuses} uniqueLeads={uniqueLeads} onViewDetails={handleViewDetails} getPriorityColor={getPriorityColor} getStatusIcon={getStatusIcon} getTeamStatusColor={getTeamStatusColor} getRiskLevelColor={getRiskLevelColor} pinnedPSSRs={pinnedPSSRs} onTogglePin={handleTogglePin} onStatusChange={(pssrId, newStatus) => {
-                    toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
-                  }} onPSSROrderChange={setPssrOrder} pssrOrder={pssrOrder} isExpanded={widgetExpanded.reviews} isVisible={widgetVisibility.reviews} onToggleExpand={() => handleToggleWidgetExpanded('reviews')} onToggleVisibility={() => handleToggleWidgetVisibility('reviews')} dragAttributes={attributes} dragListeners={listeners} />}
-                    </>}
-                </SortableWidget>)}
-            </div>
-          </SortableContext>
-          
-          {/* Drag Overlay for visual feedback */}
-          <DragOverlay dropAnimation={{
-            duration: 300,
-            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)'
-          }}>
-            {activeWidgetId ? <div className="opacity-80 scale-105 shadow-2xl ring-2 ring-primary/50 rounded-xl">
-                {activeWidgetId === 'statistics' && <div className="pointer-events-none">
-                    <PSSRStatisticsWidget stats={stats} onStatClick={() => {}} isExpanded={widgetExpanded.statistics} isVisible={widgetVisibility.statistics} />
-                  </div>}
-                {activeWidgetId === 'reviews' && <div className="pointer-events-none h-[600px] w-full">
-                    <div className="h-full w-full bg-card border border-primary/50 rounded-xl p-4 flex items-center justify-center">
-                      <span className="text-lg font-semibold text-primary">Reviews Widget</span>
-                    </div>
-                  </div>}
-              </div> : null}
-          </DragOverlay>
-        </DndContext>
-
+        {/* PSSR Reviews Widget */}
+        {widgetVisibility.reviews && (
+          <PSSRReviewsWidget 
+            pssrs={pssrList} 
+            filteredPSSRs={filteredPSSRs} 
+            searchTerm={searchTerm} 
+            onSearchChange={handleSearchChange} 
+            onSelectPSSR={handleViewDetails} 
+            viewMode={viewMode === 'timeline' ? 'card' : viewMode} 
+            onViewModeChange={mode => setViewMode(mode)} 
+            filters={filters} 
+            onToggleFilter={toggleFilter} 
+            onDateChange={handleDateChange} 
+            onClearFilters={clearAllFilters} 
+            uniquePlants={uniquePlants} 
+            uniqueStatuses={uniqueStatuses} 
+            uniqueLeads={uniqueLeads} 
+            onViewDetails={handleViewDetails} 
+            getPriorityColor={getPriorityColor} 
+            getStatusIcon={getStatusIcon} 
+            getTeamStatusColor={getTeamStatusColor} 
+            getRiskLevelColor={getRiskLevelColor} 
+            pinnedPSSRs={pinnedPSSRs} 
+            onTogglePin={handleTogglePin} 
+            onStatusChange={(pssrId, newStatus) => {
+              toast.success(`PSSR ${pssrId} moved to ${newStatus}`);
+            }} 
+            onPSSROrderChange={setPssrOrder} 
+            pssrOrder={pssrOrder} 
+            isExpanded={widgetExpanded.reviews} 
+            isVisible={widgetVisibility.reviews} 
+            onToggleExpand={() => handleToggleWidgetExpanded('reviews')} 
+            onToggleVisibility={() => handleToggleWidgetVisibility('reviews')} 
+          />
+        )}
       </main>
       </div>
       
