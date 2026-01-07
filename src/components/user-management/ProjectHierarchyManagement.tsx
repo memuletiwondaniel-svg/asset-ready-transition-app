@@ -47,6 +47,7 @@ import {
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
+import { PortfolioDetailsModal } from './PortfolioDetailsModal';
 
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
@@ -250,6 +251,13 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   const [editHubName, setEditHubName] = useState('');
   const [editHubDescription, setEditHubDescription] = useState('');
   const [editProjectData, setEditProjectData] = useState<Project | null>(null);
+  
+  // Details modal state
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsModalType, setDetailsModalType] = useState<'portfolio' | 'hub'>('portfolio');
+  const [detailsPortfolio, setDetailsPortfolio] = useState<RegionWithHubs | null>(null);
+  const [detailsHub, setDetailsHub] = useState<HubWithProjects | null>(null);
+  const [detailsPortfolioName, setDetailsPortfolioName] = useState<string>('');
   
   // Hubs hook for updating and creating
   const { updateHub, createHub } = useHubs();
@@ -767,6 +775,14 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                               setSelectedProject(null);
                             }
                           }}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setDetailsModalType('portfolio');
+                            setDetailsPortfolio(region);
+                            setDetailsHub(null);
+                            setDetailsPortfolioName('');
+                            setDetailsModalOpen(true);
+                          }}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
@@ -929,6 +945,14 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                       setSelectedRegion(region.id);
                                       setSelectedProject(null);
                                     }
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    setDetailsModalType('hub');
+                                    setDetailsHub(hub);
+                                    setDetailsPortfolio(null);
+                                    setDetailsPortfolioName(region.name);
+                                    setDetailsModalOpen(true);
                                   }}
                                 >
                                   <div className="flex items-center justify-between">
@@ -1650,6 +1674,16 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           } as any}
         />
       )}
+
+      {/* Portfolio/Hub Details Modal */}
+      <PortfolioDetailsModal
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        type={detailsModalType}
+        portfolio={detailsPortfolio}
+        hub={detailsHub}
+        portfolioName={detailsPortfolioName}
+      />
     </div>
   );
 };
