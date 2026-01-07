@@ -1273,7 +1273,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Manage your project hierarchy</span>
+          <span>Manage your project organization</span>
         </div>
         
         {/* Search Input */}
@@ -1329,7 +1329,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
-                Project Hierarchy
+                Project Organization
                 {searchQuery && (
                   <Badge variant="secondary" className="ml-2">
                     Filtered
