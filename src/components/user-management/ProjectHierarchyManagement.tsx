@@ -1298,7 +1298,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         </div>
       </div>
 
-      <Tabs defaultValue="tree" className="w-full">
+      <Tabs defaultValue="columns" className="w-full">
         <div className="flex items-center justify-between mb-4">
           <TabsList>
             <TabsTrigger value="tree" className="gap-2">
