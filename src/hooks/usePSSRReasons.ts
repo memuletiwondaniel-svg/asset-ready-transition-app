@@ -81,21 +81,8 @@ export const usePSSRReasonSubOptions = (parentReasonId: string | null) => {
   });
 };
 
-export const usePSSRTieInScopes = () => {
-  return useQuery({
-    queryKey: ['pssr-tie-in-scopes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pssr_tie_in_scopes')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order');
-      
-      if (error) throw error;
-      return data as PSSRTieInScope[];
-    },
-  });
-};
+// Re-export from dedicated hook file for backwards compatibility
+export { usePSSRTieInScopes } from './usePSSRAtiScopes';
 
 export const usePSSRMOCScopes = () => {
   return useQuery({

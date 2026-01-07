@@ -11,9 +11,11 @@ import {
   Rocket,
   Factory,
   FileText,
+  Target,
   type LucideIcon
 } from 'lucide-react';
 import { useActivePSSRReasonCategories, usePSSRReasonsByCategory } from '@/hooks/usePSSRReasonCategories';
+import ATIScopeSelector from './ATIScopeSelector';
 
 // Category-specific icon and color configuration
 interface CategoryIconConfig {
@@ -62,23 +64,31 @@ interface WizardStepReasonProps {
   categoryId: string;
   reasonId: string;
   additionalDetails: string;
+  selectedAtiScopeIds: string[];
   onCategoryChange: (categoryId: string) => void;
   onReasonChange: (reasonId: string) => void;
   onAdditionalDetailsChange: (details: string) => void;
+  onAtiScopeChange: (scopeIds: string[]) => void;
 }
 
 const WizardStepReason: React.FC<WizardStepReasonProps> = ({
   categoryId,
   reasonId,
   additionalDetails,
+  selectedAtiScopeIds,
   onCategoryChange,
   onReasonChange,
   onAdditionalDetailsChange,
+  onAtiScopeChange,
 }) => {
   const { data: categories, isLoading: categoriesLoading } = useActivePSSRReasonCategories();
   const { data: reasons, isLoading: reasonsLoading } = usePSSRReasonsByCategory(categoryId || null);
 
   const selectedCategory = categories?.find(c => c.id === categoryId);
+  const selectedReason = reasons?.find(r => r.id === reasonId);
+  
+  // Check if selected reason requires ATI scope selection
+  const requiresAtiScopes = selectedReason?.requires_ati_scopes === true;
 
   if (categoriesLoading) {
     return (
@@ -105,6 +115,7 @@ const WizardStepReason: React.FC<WizardStepReasonProps> = ({
           onValueChange={(value) => {
             onCategoryChange(value);
             onReasonChange(''); // Reset reason when category changes
+            onAtiScopeChange([]); // Reset ATI scopes when category changes
           }}
           className="grid gap-3"
         >
@@ -157,7 +168,10 @@ const WizardStepReason: React.FC<WizardStepReasonProps> = ({
           ) : reasons && reasons.length > 0 ? (
             <RadioGroup
               value={reasonId}
-              onValueChange={onReasonChange}
+              onValueChange={(value) => {
+                onReasonChange(value);
+                onAtiScopeChange([]); // Reset ATI scopes when reason changes
+              }}
               className="space-y-2"
             >
               {reasons.map((reason) => (
@@ -171,7 +185,14 @@ const WizardStepReason: React.FC<WizardStepReasonProps> = ({
                 >
                   <RadioGroupItem value={reason.id} id={`reason-${reason.id}`} />
                   <Label htmlFor={`reason-${reason.id}`} className="cursor-pointer flex-1">
-                    <span className="font-medium">{reason.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{reason.name}</span>
+                      {reason.requires_ati_scopes && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-medium">
+                          ATI
+                        </span>
+                      )}
+                    </div>
                     {reason.description && (
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {reason.description}
@@ -185,6 +206,31 @@ const WizardStepReason: React.FC<WizardStepReasonProps> = ({
             <div className="text-sm text-muted-foreground py-4 text-center bg-muted/20 rounded-lg">
               No specific reasons configured for this category
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ATI Scope Selection - Only shown when reason requires it */}
+      {reasonId && requiresAtiScopes && (
+        <div className="space-y-3 pt-4 border-t">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" />
+            <Label className="text-base font-medium">ATI Scope Selection *</Label>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Select one or more scopes that apply to this Advanced Tie-in. This will determine 
+            which checklist items and approvers are required.
+          </p>
+          
+          <ATIScopeSelector
+            selectedScopeIds={selectedAtiScopeIds}
+            onScopeChange={onAtiScopeChange}
+          />
+          
+          {selectedAtiScopeIds.length === 0 && (
+            <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+              ⚠️ Please select at least one ATI scope to continue
+            </p>
           )}
         </div>
       )}

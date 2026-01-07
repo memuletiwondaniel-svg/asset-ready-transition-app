@@ -3277,6 +3277,42 @@ export type Database = {
           },
         ]
       }
+      pssr_selected_ati_scopes: {
+        Row: {
+          ati_scope_id: string
+          created_at: string | null
+          id: string
+          pssr_id: string
+        }
+        Insert: {
+          ati_scope_id: string
+          created_at?: string | null
+          id?: string
+          pssr_id: string
+        }
+        Update: {
+          ati_scope_id?: string
+          created_at?: string | null
+          id?: string
+          pssr_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_selected_ati_scopes_ati_scope_id_fkey"
+            columns: ["ati_scope_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_tie_in_scopes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_selected_ati_scopes_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_team_members: {
         Row: {
           created_at: string

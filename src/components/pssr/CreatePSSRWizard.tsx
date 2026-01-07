@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, ChevronRight, Check, Loader2, X, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, X, FileText, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import { useActivePSSRReasonCategories, usePSSRReasonsByCategory } from '@/hooks
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
+import { usePSSRTieInScopes } from '@/hooks/usePSSRAtiScopes';
 import { Project } from '@/hooks/useProjects';
 import WizardStepReason from './wizard/WizardStepReason';
 import WizardStepLocation from './wizard/WizardStepLocation';
@@ -30,6 +31,7 @@ interface WizardState {
   categoryId: string;
   reasonId: string;
   additionalDetails: string;
+  selectedAtiScopeIds: string[];
   
   // Step 2: Location/Context
   locationMode: LocationMode;
@@ -59,6 +61,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: categories } = useActivePSSRReasonCategories();
+  const { data: atiScopes } = usePSSRTieInScopes();
   const { plants } = usePlants();
   const { fields } = useFields();
   const { stations } = useStations();
@@ -67,6 +70,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     categoryId: '',
     reasonId: '',
     additionalDetails: '',
+    selectedAtiScopeIds: [],
     locationMode: 'project',
     projectId: '',
     selectedProject: null,
@@ -92,6 +96,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       categoryId: '',
       reasonId: '',
       additionalDetails: '',
+      selectedAtiScopeIds: [],
       locationMode: 'project',
       projectId: '',
       selectedProject: null,
@@ -117,6 +122,11 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         }
         if (!wizardState.reasonId) {
           toast.error('Please select a specific reason');
+          return false;
+        }
+        // Validate ATI scopes if required
+        if (selectedReason?.requires_ati_scopes && wizardState.selectedAtiScopeIds.length === 0) {
+          toast.error('Please select at least one ATI scope');
           return false;
         }
         return true;
@@ -267,6 +277,22 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         }
       }
 
+      // Save selected ATI scopes if any
+      if (wizardState.selectedAtiScopeIds.length > 0) {
+        const atiScopeRecords = wizardState.selectedAtiScopeIds.map(scopeId => ({
+          pssr_id: newPSSR.id,
+          ati_scope_id: scopeId,
+        }));
+
+        const { error: atiError } = await supabase
+          .from('pssr_selected_ati_scopes')
+          .insert(atiScopeRecords);
+
+        if (atiError) {
+          console.error('Error saving ATI scopes:', atiError);
+        }
+      }
+
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ['pssrs'] });
 
@@ -372,9 +398,11 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               categoryId={wizardState.categoryId}
               reasonId={wizardState.reasonId}
               additionalDetails={wizardState.additionalDetails}
+              selectedAtiScopeIds={wizardState.selectedAtiScopeIds}
               onCategoryChange={(id) => setWizardState(prev => ({ ...prev, categoryId: id }))}
               onReasonChange={(id) => setWizardState(prev => ({ ...prev, reasonId: id }))}
               onAdditionalDetailsChange={(details) => setWizardState(prev => ({ ...prev, additionalDetails: details }))}
+              onAtiScopeChange={(scopeIds) => setWizardState(prev => ({ ...prev, selectedAtiScopeIds: scopeIds }))}
             />
           )}
 
@@ -461,6 +489,24 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
                     <div className="col-span-2">
                       <span className="text-muted-foreground">Additional Details:</span>
                       <p className="font-medium">{wizardState.additionalDetails}</p>
+                    </div>
+                  )}
+
+                  {wizardState.selectedAtiScopeIds.length > 0 && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Target className="h-3 w-3" /> ATI Scopes:
+                      </span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {wizardState.selectedAtiScopeIds.map(scopeId => {
+                          const scope = atiScopes?.find(s => s.id === scopeId);
+                          return scope ? (
+                            <span key={scopeId} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary font-medium">
+                              {scope.code}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
                     </div>
                   )}
                   
