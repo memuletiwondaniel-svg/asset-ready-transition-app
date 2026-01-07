@@ -26,6 +26,7 @@ import PSSRActivityFeed from './PSSRActivityFeed';
 import PSSRDateRangeFilter, { DateRangeFilter } from './PSSRDateRangeFilter';
 import PSSRAdvancedSearch from './PSSRAdvancedSearch';
 import CreatePSSRIntroModal from './CreatePSSRIntroModal';
+import CreatePSSRWizard from './pssr/CreatePSSRWizard';
 import PSSRDashboard from './PSSRDashboard';
 import { OrshSidebar } from './OrshSidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
@@ -874,6 +875,19 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
           setShowCreateIntro(false);
           setActiveView('create');
         }} 
+      />
+      
+      {/* Create PSSR Wizard */}
+      <CreatePSSRWizard
+        open={activeView === 'create'}
+        onOpenChange={(open) => {
+          if (!open) setActiveView('list');
+        }}
+        onSuccess={(pssrId) => {
+          setSelectedPSSR(pssrId);
+          setActiveView('details');
+          toast.success('PSSR created successfully');
+        }}
       />
     </div>;
 };
