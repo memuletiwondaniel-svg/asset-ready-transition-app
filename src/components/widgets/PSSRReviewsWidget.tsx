@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { WidgetCard } from './WidgetCard';
-import { LayoutGrid, Table as TableIcon, Columns3 } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Columns3, Plus } from 'lucide-react';
 import PSSRAdvancedSearch from '../PSSRAdvancedSearch';
 import PSSRFilters from '../PSSRFilters';
 import PSSRTableView from '../PSSRTableView';
 import PSSRKanbanBoard from '../PSSRKanbanBoard';
 import DraggablePSSRCard from '../DraggablePSSRCard';
+import { PSSRQuickStatsBar } from './PSSRQuickStatsBar';
+import { Button } from '@/components/ui/button';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
@@ -40,6 +42,18 @@ interface PSSRReviewsWidgetProps {
   onToggleVisibility?: () => void;
   dragAttributes?: any;
   dragListeners?: any;
+  // Stats bar props
+  stats?: {
+    total: number;
+    approved: number;
+    underReview: number;
+    draft: number;
+    openActions: number;
+    completed: number;
+  };
+  activeStatFilter?: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed';
+  onStatFilterClick?: (filter: 'all' | 'approved' | 'under-review' | 'draft' | 'open-actions' | 'completed') => void;
+  onCreatePSSR?: () => void;
 }
 
 export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
@@ -72,7 +86,11 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
   onToggleExpand,
   onToggleVisibility,
   dragAttributes,
-  dragListeners
+  dragListeners,
+  stats,
+  activeStatFilter,
+  onStatFilterClick,
+  onCreatePSSR
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -139,6 +157,23 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
       className="flex flex-col min-h-[400px] max-h-[70vh] lg:max-h-[600px]"
     >
       <div className="flex flex-col h-full overflow-hidden">
+        {/* Stats Bar + Create Button Row */}
+        {stats && onStatFilterClick && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <PSSRQuickStatsBar
+              stats={stats}
+              activeFilter={activeStatFilter || 'all'}
+              onFilterClick={onStatFilterClick}
+            />
+            {onCreatePSSR && (
+              <Button onClick={onCreatePSSR} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create PSSR
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Search and View Controls - Sticky with scroll shadow */}
         <div className={`sticky top-0 z-10 bg-card pb-3 border-b border-border/40 transition-shadow duration-300 ${
           isScrolled ? 'shadow-md' : ''

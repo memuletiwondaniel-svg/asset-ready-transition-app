@@ -797,7 +797,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                 </div>
               </div>
               
-              {/* Actions */}
+              {/* Actions - Settings only */}
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -812,20 +812,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button onClick={() => setShowCreateIntro(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create PSSR
-                </Button>
               </div>
-            </div>
-            
-            {/* Quick Stats Bar - Clickable filters */}
-            <div className="mt-4">
-              <PSSRQuickStatsBar
-                stats={stats}
-                activeFilter={filters.statFilter}
-                onFilterClick={handleStatClick}
-              />
             </div>
           </div>
         </header>
@@ -863,7 +850,11 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
             isExpanded={widgetExpanded.reviews} 
             isVisible={widgetVisibility.reviews} 
             onToggleExpand={() => handleToggleWidgetExpanded('reviews')} 
-            onToggleVisibility={() => handleToggleWidgetVisibility('reviews')} 
+            onToggleVisibility={() => handleToggleWidgetVisibility('reviews')}
+            stats={stats}
+            activeStatFilter={filters.statFilter}
+            onStatFilterClick={handleStatClick}
+            onCreatePSSR={() => setShowCreateIntro(true)}
           />
         )}
       </main>
