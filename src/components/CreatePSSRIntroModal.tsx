@@ -57,9 +57,9 @@ const CreatePSSRIntroModal: React.FC<CreatePSSRIntroModalProps> = ({
                   <div className="flex items-start space-x-3">
                     <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h4 className="font-medium text-sm text-gray-900 mb-1">Equipment Compliance</h4>
+                      <h4 className="font-medium text-sm text-gray-900 mb-1">Technical Integrity</h4>
                       <p className="text-xs text-gray-600">
-                        Equipment is installed and commissioned in accordance with design specifications.
+                        Equipment has been designed, installed and tested in accordance with agreed design and engineering application.
                       </p>
                     </div>
                   </div>
