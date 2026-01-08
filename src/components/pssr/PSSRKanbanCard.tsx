@@ -4,7 +4,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pin, PinOff, Clock, CheckCircle2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 interface PSSRKanbanCardProps {
@@ -111,36 +110,17 @@ const PSSRKanbanCard: React.FC<PSSRKanbanCardProps> = ({
         </div>
 
         {/* Project Name */}
-        <h4 className="font-medium text-sm text-foreground line-clamp-2 mb-1 leading-snug">
+        <h4 className="font-medium text-sm text-foreground line-clamp-2 mb-2 leading-snug">
           {pssr.projectName}
         </h4>
 
-        {/* Asset */}
-        <p className="text-xs text-muted-foreground line-clamp-1 mb-3">
-          {pssr.asset}
-        </p>
-
-        {/* Lead Info */}
-        <div className="flex items-center gap-2 mb-3">
-          <Avatar className="w-6 h-6 border border-border">
-            <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
-            <AvatarFallback className="text-[10px] font-medium bg-primary/10 text-primary">
-              {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground truncate">{pssr.pssrLead}</p>
-            <p className="text-[10px] text-muted-foreground">Lead</p>
-          </div>
-        </div>
-
         {/* Progress Bar */}
-        <div className="mb-3">
-          <div className="flex justify-between items-center text-xs mb-1">
+        <div className="mb-2">
+          <div className="flex justify-between items-center text-[10px] mb-1">
             <span className="text-muted-foreground">Progress</span>
             <span className="font-medium text-foreground">{pssr.progress}%</span>
           </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-1 bg-muted rounded-full overflow-hidden">
             <div 
               className={cn('h-full rounded-full transition-all duration-300', getProgressColor(pssr.progress))}
               style={{ width: `${Math.min(pssr.progress, 100)}%` }}
