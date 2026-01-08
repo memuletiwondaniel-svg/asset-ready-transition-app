@@ -3,8 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, ChevronRight, Check, Loader2, X, FileText, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,6 +19,7 @@ import WizardStepLocation from './wizard/WizardStepLocation';
 import WizardStepReviewCustomize from './wizard/WizardStepReviewCustomize';
 import { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
 import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
+import RichTextEditor, { Attachment } from '@/components/ui/RichTextEditor';
 
 interface CreatePSSRWizardProps {
   open: boolean;
@@ -35,7 +34,6 @@ interface WizardState {
   categoryId: string;
   // Step 2: Specific Reason
   reasonId: string;
-  additionalDetails: string;
   selectedAtiScopeIds: string[];
   
   // Step 3: Location/Context
@@ -48,9 +46,9 @@ interface WizardState {
   fieldId: string;
   stationId: string;
   
-  // Step 4: Scope
+  // Step 4: Scope (rich text HTML content)
   scopeDescription: string;
-  equipmentName: string;
+  scopeAttachments: Attachment[];
   
   // Step 5: Review & Customize (auto-loaded + user modifications)
   selectedChecklistItemIds: string[];
@@ -87,7 +85,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
   const [wizardState, setWizardState] = useState<WizardState>({
     categoryId: '',
     reasonId: '',
-    additionalDetails: '',
     selectedAtiScopeIds: [],
     locationMode: 'project',
     projectId: '',
@@ -96,7 +93,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     fieldId: '',
     stationId: '',
     scopeDescription: '',
-    equipmentName: '',
+    scopeAttachments: [],
     // Step 5 fields
     selectedChecklistItemIds: [],
     checklistItemOverrides: {},
@@ -123,7 +120,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     setWizardState({
       categoryId: '',
       reasonId: '',
-      additionalDetails: '',
       selectedAtiScopeIds: [],
       locationMode: 'project',
       projectId: '',
@@ -132,7 +128,7 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       fieldId: '',
       stationId: '',
       scopeDescription: '',
-      equipmentName: '',
+      scopeAttachments: [],
       selectedChecklistItemIds: [],
       checklistItemOverrides: {},
       selectedPssrApproverRoleIds: [],
@@ -283,14 +279,14 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         csLocationValue = selectedStation?.name || '';
       }
 
-      // Create the PSSR
+      // Create the PSSR (scope contains HTML content)
       const { data: newPSSR, error: pssrError } = await supabase
         .from('pssrs')
         .insert({
           pssr_id: pssrId,
           reason: selectedReason?.name || '',
           scope: wizardState.scopeDescription.trim() || null,
-          asset: wizardState.equipmentName.trim() || 'N/A',
+          asset: 'N/A',
           status: 'DRAFT',
           user_id: user.id,
           project_id: projectIdValue,
@@ -531,10 +527,8 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             <WizardStepSpecificReason
               categoryId={wizardState.categoryId}
               reasonId={wizardState.reasonId}
-              additionalDetails={wizardState.additionalDetails}
               selectedAtiScopeIds={wizardState.selectedAtiScopeIds}
               onReasonChange={(id) => setWizardState(prev => ({ ...prev, reasonId: id }))}
-              onAdditionalDetailsChange={(details) => setWizardState(prev => ({ ...prev, additionalDetails: details }))}
               onAtiScopeChange={(scopeIds) => setWizardState(prev => ({ ...prev, selectedAtiScopeIds: scopeIds }))}
             />
           )}
@@ -563,33 +557,21 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
           {/* Step 4: Scope & Details */}
           {currentStep === 4 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="space-y-3">
-                <Label htmlFor="equipment" className="text-base font-medium">
-                  Equipment / Asset Name
-                </Label>
-                <Input
-                  id="equipment"
-                  value={wizardState.equipmentName}
-                  onChange={(e) => setWizardState(prev => ({ ...prev, equipmentName: e.target.value }))}
-                  placeholder="Enter equipment or asset name (e.g., Compressor K-101)"
-                  maxLength={100}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="scope" className="text-base font-medium">Scope Description</Label>
-                <Textarea
-                  id="scope"
-                  value={wizardState.scopeDescription}
-                  onChange={(e) => setWizardState(prev => ({ ...prev, scopeDescription: e.target.value }))}
-                  placeholder="Describe the scope of this PSSR (optional)..."
-                  maxLength={1000}
-                  rows={6}
-                />
+                <Label className="text-base font-medium">PSSR Scope Detailed Description</Label>
                 <p className="text-sm text-muted-foreground">
-                  {wizardState.scopeDescription.length}/1000 characters
+                  Provide a detailed description of the PSSR scope. You can paste or drag & drop images and attach supporting documents.
                 </p>
+                <RichTextEditor
+                  value={wizardState.scopeDescription}
+                  onChange={(html) => setWizardState(prev => ({ ...prev, scopeDescription: html }))}
+                  attachments={wizardState.scopeAttachments}
+                  onAttachmentsChange={(attachments) => setWizardState(prev => ({ ...prev, scopeAttachments: attachments }))}
+                  placeholder="Describe the scope of this PSSR including safety systems, process controls, emergency procedures, etc..."
+                  storageBucket="pssr-attachments"
+                  storagePath="scope"
+                />
               </div>
             </div>
           )}
@@ -600,7 +582,6 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
               categoryName={selectedCategory?.name || ''}
               reasonName={selectedReason?.name || ''}
               locationDisplay={getLocationDisplay()}
-              equipmentName={wizardState.equipmentName}
               scopeDescription={wizardState.scopeDescription}
               atiScopes={wizardState.selectedAtiScopeIds.map(id => {
                 const scope = atiScopes?.find(s => s.id === id);

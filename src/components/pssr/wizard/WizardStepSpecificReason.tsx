@@ -1,7 +1,6 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ChevronRight, Target } from 'lucide-react';
 import { usePSSRReasonsByCategory, useActivePSSRReasonCategories } from '@/hooks/usePSSRReasonCategories';
 import ATIScopeSelector from './ATIScopeSelector';
@@ -9,20 +8,16 @@ import ATIScopeSelector from './ATIScopeSelector';
 interface WizardStepSpecificReasonProps {
   categoryId: string;
   reasonId: string;
-  additionalDetails: string;
   selectedAtiScopeIds: string[];
   onReasonChange: (reasonId: string) => void;
-  onAdditionalDetailsChange: (details: string) => void;
   onAtiScopeChange: (scopeIds: string[]) => void;
 }
 
 const WizardStepSpecificReason: React.FC<WizardStepSpecificReasonProps> = ({
   categoryId,
   reasonId,
-  additionalDetails,
   selectedAtiScopeIds,
   onReasonChange,
-  onAdditionalDetailsChange,
   onAtiScopeChange,
 }) => {
   const { data: categories } = useActivePSSRReasonCategories();
@@ -129,24 +124,6 @@ const WizardStepSpecificReason: React.FC<WizardStepSpecificReasonProps> = ({
           )}
         </div>
       )}
-
-      {/* Additional Details */}
-      <div className="space-y-3 pt-4 border-t">
-        <Label htmlFor="additionalDetails" className="text-base font-medium">
-          Additional Details (Optional)
-        </Label>
-        <Textarea
-          id="additionalDetails"
-          value={additionalDetails}
-          onChange={(e) => onAdditionalDetailsChange(e.target.value)}
-          placeholder="Provide any additional context or details for this PSSR..."
-          rows={3}
-          maxLength={500}
-        />
-        <p className="text-xs text-muted-foreground text-right">
-          {additionalDetails.length}/500 characters
-        </p>
-      </div>
     </div>
   );
 };
