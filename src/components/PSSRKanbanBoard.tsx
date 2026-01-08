@@ -51,10 +51,9 @@ interface PSSRKanbanBoardProps {
 }
 
 const statusColumns = [
-  { id: 'Pending', title: 'Pending', color: 'border-orange-500/40 bg-orange-50/30 dark:bg-orange-950/10' },
-  { id: 'In Progress', title: 'In Progress', color: 'border-blue-500/40 bg-blue-50/30 dark:bg-blue-950/10' },
+  { id: 'Draft', title: 'Draft', color: 'border-slate-500/40 bg-slate-50/30 dark:bg-slate-950/10' },
   { id: 'Under Review', title: 'Under Review', color: 'border-amber-500/40 bg-amber-50/30 dark:bg-amber-950/10' },
-  { id: 'Approved', title: 'Approved', color: 'border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10' },
+  { id: 'Completed', title: 'Completed', color: 'border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10' },
 ];
 
 const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
@@ -153,7 +152,7 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-[calc(100vh-16rem)] min-h-[400px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-16rem)] min-h-[400px]">
         {statusColumns.map((column) => {
           const columnPSSRs = getPSSRsByStatus(column.id);
           
