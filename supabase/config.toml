@@ -117,3 +117,6 @@ verify_jwt = false
 
 [functions.send-pssr-approval-ready]
 verify_jwt = false
+
+[functions.send-pssr-item-review-notification]
+verify_jwt = false

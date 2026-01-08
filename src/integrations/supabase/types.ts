@@ -2979,6 +2979,116 @@ export type Database = {
         }
         Relationships: []
       }
+      pssr_discipline_reviews: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          discipline_comment: string | null
+          discipline_role: string
+          id: string
+          items_reviewed: number | null
+          items_total: number | null
+          pssr_id: string
+          reviewer_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          discipline_comment?: string | null
+          discipline_role: string
+          id?: string
+          items_reviewed?: number | null
+          items_total?: number | null
+          pssr_id: string
+          reviewer_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          discipline_comment?: string | null
+          discipline_role?: string
+          id?: string
+          items_reviewed?: number | null
+          items_total?: number | null
+          pssr_id?: string
+          reviewer_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_discipline_reviews_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pssr_item_approvals: {
+        Row: {
+          approver_role: string
+          approver_user_id: string | null
+          assigned_at: string | null
+          checklist_response_id: string
+          comments: string | null
+          created_at: string
+          id: string
+          notified_at: string | null
+          pssr_id: string
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["pssr_item_approval_status"]
+          updated_at: string
+        }
+        Insert: {
+          approver_role: string
+          approver_user_id?: string | null
+          assigned_at?: string | null
+          checklist_response_id: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          pssr_id: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["pssr_item_approval_status"]
+          updated_at?: string
+        }
+        Update: {
+          approver_role?: string
+          approver_user_id?: string | null
+          assigned_at?: string | null
+          checklist_response_id?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          pssr_id?: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["pssr_item_approval_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_item_approvals_checklist_response_id_fkey"
+            columns: ["checklist_response_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_checklist_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_item_approvals_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pssr_links: {
         Row: {
           created_at: string
@@ -3044,6 +3154,79 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pssr_priority_actions: {
+        Row: {
+          action_owner_id: string | null
+          action_owner_name: string | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          item_approval_id: string
+          priority: Database["public"]["Enums"]["pssr_priority_level"]
+          pssr_id: string
+          status: Database["public"]["Enums"]["pssr_action_status"]
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_owner_id?: string | null
+          action_owner_name?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          item_approval_id: string
+          priority: Database["public"]["Enums"]["pssr_priority_level"]
+          pssr_id: string
+          status?: Database["public"]["Enums"]["pssr_action_status"]
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_owner_id?: string | null
+          action_owner_name?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          item_approval_id?: string
+          priority?: Database["public"]["Enums"]["pssr_priority_level"]
+          pssr_id?: string
+          status?: Database["public"]["Enums"]["pssr_action_status"]
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pssr_priority_actions_action_owner_id_fkey"
+            columns: ["action_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pssr_priority_actions_item_approval_id_fkey"
+            columns: ["item_approval_id"]
+            isOneToOne: false
+            referencedRelation: "pssr_item_approvals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pssr_priority_actions_pssr_id_fkey"
+            columns: ["pssr_id"]
+            isOneToOne: false
+            referencedRelation: "pssrs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pssr_reason_ati_scopes: {
         Row: {
@@ -4421,6 +4604,14 @@ export type Database = {
         | "NOT_APPLICABLE"
       p2a_phase: "PAC" | "FAC"
       p2a_status: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+      pssr_action_status: "open" | "in_progress" | "closed"
+      pssr_item_approval_status:
+        | "pending"
+        | "ready_for_review"
+        | "approved"
+        | "rejected"
+        | "approved_with_action"
+      pssr_priority_level: "A" | "B"
       ta2_commission: "Asset" | "Project and Engineering"
       ta2_discipline:
         | "Civil"
@@ -4627,6 +4818,15 @@ export const Constants = {
       ],
       p2a_phase: ["PAC", "FAC"],
       p2a_status: ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+      pssr_action_status: ["open", "in_progress", "closed"],
+      pssr_item_approval_status: [
+        "pending",
+        "ready_for_review",
+        "approved",
+        "rejected",
+        "approved_with_action",
+      ],
+      pssr_priority_level: ["A", "B"],
       ta2_commission: ["Asset", "Project and Engineering"],
       ta2_discipline: [
         "Civil",

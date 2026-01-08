@@ -23,6 +23,7 @@ import { ORMResourceCapacityDashboard } from "@/components/orm/ORMResourceCapaci
 import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPreferences";
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
+import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -54,6 +55,8 @@ const App = () => (
                     <Route path="/projects" element={<Index />} />
                     <Route path="/project-management" element={<ProjectManagementPage />} />
                     <Route path="/project/:id" element={<ProjectDetailsPage />} />
+                    <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
+                    <Route path="/pssr/:id/review" element={<PSSRApproverDashboard />} />
         <Route path="/operation-readiness" element={<ORPLandingPage />} />
         <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
         <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />
