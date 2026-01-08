@@ -14,7 +14,7 @@ import {
   DropdownMenuContent, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Settings, GripVertical, Eye, MoreHorizontal, Clock, CheckCircle2 } from 'lucide-react';
+import { Settings, GripVertical, Eye, MoreHorizontal, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -57,11 +57,10 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
     { id: 'projectId', label: 'Project ID', visible: true, width: 120 },
     { id: 'projectName', label: 'Project Name', visible: true, width: 250 },
     { id: 'asset', label: 'Plant/Asset', visible: true, width: 150 },
-    { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 180 },
+    { id: 'pssrLead', label: 'PSSR Lead', visible: true, width: 160 },
     { id: 'progress', label: 'Progress', visible: true, width: 140 },
-    { id: 'status', label: 'Status', visible: true, width: 140 },
+    { id: 'status', label: 'Status', visible: true, width: 180 },
     { id: 'created', label: 'Created', visible: true, width: 120 },
-    { id: 'pendingApprovals', label: 'Pending', visible: true, width: 130 },
   ]);
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
@@ -195,18 +194,15 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
       case 'pssrLead':
         return (
           <div className="flex items-center gap-2.5">
-            <Avatar className="h-8 w-8 border-2 border-background shadow-sm">
+            <Avatar className="h-7 w-7 border border-border/50">
               <AvatarImage src={pssr.pssrLeadAvatar} alt={pssr.pssrLead} />
               <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
                 {pssr.pssrLead.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium text-foreground leading-tight truncate">
-                {pssr.pssrLead}
-              </span>
-              <span className="text-xs text-muted-foreground">Lead</span>
-            </div>
+            <span className="text-sm font-medium text-foreground truncate">
+              {pssr.pssrLead}
+            </span>
           </div>
         );
       case 'progress':
@@ -224,21 +220,19 @@ const PSSRTableView: React.FC<PSSRTableViewProps> = ({ pssrs, onViewDetails }) =
           </div>
         );
       case 'status':
-        return getStatusBadge(pssr.status);
+        return (
+          <div className="flex items-center gap-2">
+            {getStatusBadge(pssr.status)}
+            {pssr.pendingApprovals > 0 && (
+              <span className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {pssr.pendingApprovals}
+              </span>
+            )}
+          </div>
+        );
       case 'created':
         return <div className="text-sm text-muted-foreground">{new Date(pssr.created).toLocaleDateString()}</div>;
-      case 'pendingApprovals':
-        return pssr.pendingApprovals > 0 ? (
-          <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/60 font-medium">
-            <Clock className="w-3 h-3 mr-1" />
-            {pssr.pendingApprovals} pending
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60 font-medium">
-            <CheckCircle2 className="w-3 h-3 mr-1" />
-            Complete
-          </Badge>
-        );
       default:
         return null;
     }
