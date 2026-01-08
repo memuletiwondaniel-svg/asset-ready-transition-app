@@ -4,7 +4,7 @@ import { Building2, Layers, User } from 'lucide-react';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { useQueryClient } from '@tanstack/react-query';
 import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
-import { AddProjectModal } from '@/components/project/AddProjectModal';
+import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 
 interface ProjectHierarchySelectorProps {
   projectId: string;
@@ -115,8 +115,8 @@ const ProjectHierarchySelector: React.FC<ProjectHierarchySelectorProps> = ({
         </div>
       )}
 
-      {/* Add Project Modal */}
-      <AddProjectModal 
+      {/* Add Project Wizard */}
+      <CreateProjectWizard 
         open={showAddProjectModal} 
         onClose={handleProjectModalClose} 
       />
