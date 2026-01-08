@@ -177,19 +177,24 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
           onLogout={handleLogoutClick}
         />
         
-        {/* Collapse Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-border bg-background shadow-sm hover:bg-muted"
-        >
-          {isSidebarCollapsed ? (
-            <ChevronRight className="h-3 w-3" />
-          ) : (
-            <ChevronLeft className="h-3 w-3" />
-          )}
-        </Button>
+        {/* Collapse Button - Inside sidebar at bottom */}
+        <div className="border-t border-border/40 p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="w-full flex items-center justify-center gap-2 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
+            {isSidebarCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span className="text-xs">Collapse</span>
+              </>
+            )}
+          </Button>
+        </div>
       </aside>
 
       {/* Modals */}
