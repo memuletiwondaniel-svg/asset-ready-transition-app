@@ -47,8 +47,6 @@ const PSSRKanbanCard: React.FC<PSSRKanbanCardProps> = ({
 
   const getProgressColor = (progress: number) => {
     if (progress >= 100) return 'bg-emerald-500';
-    if (progress >= 75) return 'bg-blue-500';
-    if (progress >= 50) return 'bg-amber-500';
     return 'bg-slate-400';
   };
 
