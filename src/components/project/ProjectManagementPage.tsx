@@ -342,7 +342,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
-            <BreadcrumbNavigation currentPageLabel="Manage Projects" />
+            <BreadcrumbNavigation currentPageLabel="Projects" />
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
               <div className="min-w-0 flex items-center gap-3">
@@ -350,11 +350,11 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                   <Folder className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                    Manage Projects
+                  <h1 className="text-2xl font-bold text-foreground">
+                    Projects
                   </h1>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                    Create, edit, and manage projects, portfolios, and hubs
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Create and manage all projects
                   </p>
                 </div>
               </div>
@@ -369,11 +369,14 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                 </Button>
               )}
             </div>
+          </div>
 
-            {/* Tabs */}
-            <div className="mt-6">
+          {/* Main Content */}
+          <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
+            <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
+              {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
                   <TabsTrigger value="projects" className="flex items-center gap-2">
                     <Folder className="h-4 w-4" />
                     Projects
@@ -384,12 +387,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-            </div>
-          </div>
 
-          {/* Main Content */}
-          <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
-            <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
               {activeTab === 'projects' ? (
                 <>
                   {/* Filters */}
