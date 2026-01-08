@@ -97,6 +97,17 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
 
+  // Get region and hub names for auto-population
+  const getRegionName = () => {
+    const region = regions.find(r => r.id === formData.region_id);
+    return region?.name || null;
+  };
+
+  const getHubName = () => {
+    const hub = hubs.find(h => h.id === formData.hub_id);
+    return hub?.name || null;
+  };
+
   const resetWizard = () => {
     setCurrentStep(1);
     setFormData({
@@ -311,6 +322,8 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           <WizardStepProjectTeam
             teamMembers={teamMembers}
             setTeamMembers={setTeamMembers}
+            regionName={getRegionName()}
+            hubName={getHubName()}
           />
         );
       case 4:
