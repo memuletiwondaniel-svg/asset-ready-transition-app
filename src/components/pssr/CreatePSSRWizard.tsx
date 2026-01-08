@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -18,6 +18,9 @@ import { Project } from '@/hooks/useProjects';
 import WizardStepCategory from './wizard/WizardStepCategory';
 import WizardStepSpecificReason from './wizard/WizardStepSpecificReason';
 import WizardStepLocation from './wizard/WizardStepLocation';
+import WizardStepReviewCustomize from './wizard/WizardStepReviewCustomize';
+import { ChecklistItemOverrides } from './wizard/WizardStepChecklistItems';
+import { ChecklistItemOverride } from './wizard/ChecklistItemEditDialog';
 
 interface CreatePSSRWizardProps {
   open: boolean;
@@ -48,6 +51,18 @@ interface WizardState {
   // Step 4: Scope
   scopeDescription: string;
   equipmentName: string;
+  
+  // Step 5: Review & Customize (auto-loaded + user modifications)
+  selectedChecklistItemIds: string[];
+  checklistItemOverrides: ChecklistItemOverrides;
+  selectedPssrApproverRoleIds: string[];
+  selectedSofApproverRoleIds: string[];
+  // Template defaults for tracking modifications
+  templateChecklistItemIds: string[];
+  templatePssrApproverRoleIds: string[];
+  templateSofApproverRoleIds: string[];
+  configLoaded: boolean;
+  configLoading: boolean;
 }
 
 const STEPS = [
@@ -55,7 +70,7 @@ const STEPS = [
   { id: 2, title: 'Reason', description: 'Select specific reason' },
   { id: 3, title: 'Location', description: 'Select project or asset location' },
   { id: 4, title: 'Scope & Details', description: 'Define the scope' },
-  { id: 5, title: 'Review', description: 'Review and create PSSR' },
+  { id: 5, title: 'Review & Customize', description: 'Review checklist & approvers' },
 ];
 
 const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange, onSuccess }) => {
@@ -82,6 +97,16 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
     stationId: '',
     scopeDescription: '',
     equipmentName: '',
+    // Step 5 fields
+    selectedChecklistItemIds: [],
+    checklistItemOverrides: {},
+    selectedPssrApproverRoleIds: [],
+    selectedSofApproverRoleIds: [],
+    templateChecklistItemIds: [],
+    templatePssrApproverRoleIds: [],
+    templateSofApproverRoleIds: [],
+    configLoaded: false,
+    configLoading: false,
   });
 
   // Fetch reasons for selected category
@@ -108,8 +133,55 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       stationId: '',
       scopeDescription: '',
       equipmentName: '',
+      selectedChecklistItemIds: [],
+      checklistItemOverrides: {},
+      selectedPssrApproverRoleIds: [],
+      selectedSofApproverRoleIds: [],
+      templateChecklistItemIds: [],
+      templatePssrApproverRoleIds: [],
+      templateSofApproverRoleIds: [],
+      configLoaded: false,
+      configLoading: false,
     });
   };
+
+  // Load configuration when entering Step 5
+  useEffect(() => {
+    const loadConfiguration = async () => {
+      if (currentStep === 5 && wizardState.reasonId && !wizardState.configLoaded && !wizardState.configLoading) {
+        setWizardState(prev => ({ ...prev, configLoading: true }));
+        
+        try {
+          const { data: config } = await supabase
+            .from('pssr_reason_configuration')
+            .select('checklist_item_ids, pssr_approver_role_ids, sof_approver_role_ids')
+            .eq('reason_id', wizardState.reasonId)
+            .maybeSingle();
+          
+          const checklistIds = config?.checklist_item_ids || [];
+          const pssrApproverIds = config?.pssr_approver_role_ids || [];
+          const sofApproverIds = config?.sof_approver_role_ids || [];
+          
+          setWizardState(prev => ({
+            ...prev,
+            selectedChecklistItemIds: checklistIds,
+            selectedPssrApproverRoleIds: pssrApproverIds,
+            selectedSofApproverRoleIds: sofApproverIds,
+            templateChecklistItemIds: checklistIds,
+            templatePssrApproverRoleIds: pssrApproverIds,
+            templateSofApproverRoleIds: sofApproverIds,
+            configLoaded: true,
+            configLoading: false,
+          }));
+        } catch (error) {
+          console.error('Error loading configuration:', error);
+          setWizardState(prev => ({ ...prev, configLoading: false }));
+        }
+      }
+    };
+    
+    loadConfiguration();
+  }, [currentStep, wizardState.reasonId, wizardState.configLoaded, wizardState.configLoading]);
 
   const handleClose = () => {
     resetWizard();
@@ -231,16 +303,9 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
 
       if (pssrError) throw pssrError;
 
-      // Fetch checklist items for this reason from configuration
-      const { data: config } = await supabase
-        .from('pssr_reason_configuration')
-        .select('checklist_item_ids')
-        .eq('reason_id', wizardState.reasonId)
-        .maybeSingle();
-
-      // Create checklist responses if we have items
-      if (config?.checklist_item_ids && config.checklist_item_ids.length > 0) {
-        const checklistResponses = config.checklist_item_ids.map((itemId: string) => ({
+      // Create checklist responses using wizard state (user may have modified)
+      if (wizardState.selectedChecklistItemIds.length > 0) {
+        const checklistResponses = wizardState.selectedChecklistItemIds.map((itemId: string) => ({
           pssr_id: newPSSR.id,
           checklist_item_id: itemId,
           status: 'pending',
@@ -256,18 +321,12 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
         }
       }
 
-      // Fetch and create approvers based on reason configuration
-      const { data: reasonConfig } = await supabase
-        .from('pssr_reason_configuration')
-        .select('pssr_approver_role_ids')
-        .eq('reason_id', wizardState.reasonId)
-        .maybeSingle();
-
-      if (reasonConfig?.pssr_approver_role_ids && reasonConfig.pssr_approver_role_ids.length > 0) {
+      // Create PSSR approvers using wizard state (user may have modified)
+      if (wizardState.selectedPssrApproverRoleIds.length > 0) {
         const { data: roles } = await supabase
           .from('roles')
           .select('id, name')
-          .in('id', reasonConfig.pssr_approver_role_ids);
+          .in('id', wizardState.selectedPssrApproverRoleIds);
 
         if (roles && roles.length > 0) {
           const approvers = roles.map((role, index) => ({
@@ -283,7 +342,58 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             .insert(approvers);
 
           if (approverError) {
-            console.error('Error creating approvers:', approverError);
+            console.error('Error creating PSSR approvers:', approverError);
+          }
+        }
+      }
+
+      // Create SoF certificate with approvers using wizard state
+      if (wizardState.selectedSofApproverRoleIds.length > 0) {
+        // First create the SoF certificate
+        const year = new Date().getFullYear();
+        const sofNumber = `SOF-${year}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+        const certificateText = `This Statement of Fitness certifies that all pre-startup safety review requirements have been satisfactorily completed for the ${selectedReason?.name || 'PSSR'} scope of work.`;
+        
+        const { data: sofCert, error: sofCertError } = await supabase
+          .from('sof_certificates')
+          .insert({
+            pssr_id: newPSSR.id,
+            certificate_number: sofNumber,
+            pssr_reason: selectedReason?.name || '',
+            certificate_text: certificateText,
+            plant_name: plantValue || null,
+            project_name: projectNameValue || null,
+            status: 'DRAFT',
+          })
+          .select()
+          .single();
+
+        if (sofCertError) {
+          console.error('Error creating SoF certificate:', sofCertError);
+        } else if (sofCert) {
+          // Create SoF approvers
+          const { data: roles } = await supabase
+            .from('roles')
+            .select('id, name')
+            .in('id', wizardState.selectedSofApproverRoleIds);
+
+          if (roles && roles.length > 0) {
+            const sofApprovers = roles.map((role, index) => ({
+              sof_certificate_id: sofCert.id,
+              pssr_id: newPSSR.id,
+              approver_role: role.name,
+              approver_name: 'Pending Assignment',
+              approver_level: index + 1,
+              status: 'LOCKED',
+            }));
+
+            const { error: sofApproverError } = await supabase
+              .from('sof_approvers')
+              .insert(sofApprovers);
+
+            if (sofApproverError) {
+              console.error('Error creating SoF approvers:', sofApproverError);
+            }
           }
         }
       }
@@ -484,89 +594,105 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
             </div>
           )}
 
-          {/* Step 5: Review & Create */}
+          {/* Step 5: Review & Customize */}
           {currentStep === 5 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold">Review PSSR Details</h3>
-                <p className="text-muted-foreground mt-1">
-                  Please review the details before creating the PSSR
-                </p>
-              </div>
-
-              <div className="bg-muted/20 rounded-lg p-6 border border-border/30 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Category:</span>
-                    <p className="font-medium">{selectedCategory?.name || '—'}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Reason:</span>
-                    <p className="font-medium">{selectedReason?.name || '—'}</p>
-                  </div>
-                  
-                  {wizardState.additionalDetails && (
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Additional Details:</span>
-                      <p className="font-medium">{wizardState.additionalDetails}</p>
-                    </div>
-                  )}
-
-                  {wizardState.selectedAtiScopeIds.length > 0 && (
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <Target className="h-3 w-3" /> ATI Scopes:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {wizardState.selectedAtiScopeIds.map(scopeId => {
-                          const scope = atiScopes?.find(s => s.id === scopeId);
-                          return scope ? (
-                            <span key={scopeId} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary font-medium">
-                              {scope.code}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="col-span-2 pt-2 border-t">
-                    <span className="text-muted-foreground">Location ({getLocationDisplay().type}):</span>
-                    <p className="font-medium">{getLocationDisplay().primary}</p>
-                    {getLocationDisplay().secondary && (
-                      <p className="text-sm text-muted-foreground">{getLocationDisplay().secondary}</p>
-                    )}
-                    {getLocationDisplay().details.map((detail, i) => (
-                      <p key={i} className="text-xs text-muted-foreground">{detail}</p>
-                    ))}
-                  </div>
-
-                  {wizardState.equipmentName && (
-                    <div>
-                      <span className="text-muted-foreground">Equipment:</span>
-                      <p className="font-medium">{wizardState.equipmentName}</p>
-                    </div>
-                  )}
-
-                  {wizardState.scopeDescription && (
-                    <div className="col-span-2 pt-2 border-t">
-                      <span className="text-muted-foreground">Scope:</span>
-                      <p className="font-medium whitespace-pre-wrap">{wizardState.scopeDescription}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                <p className="text-sm">
-                  <strong>Note:</strong> The PSSR will be created as a <strong>Draft</strong>. 
-                  You can add checklist items and assign approvers after creation.
-                </p>
-              </div>
-            </div>
+            <WizardStepReviewCustomize
+              categoryName={selectedCategory?.name || ''}
+              reasonName={selectedReason?.name || ''}
+              locationDisplay={getLocationDisplay()}
+              equipmentName={wizardState.equipmentName}
+              scopeDescription={wizardState.scopeDescription}
+              atiScopes={wizardState.selectedAtiScopeIds.map(id => {
+                const scope = atiScopes?.find(s => s.id === id);
+                return scope ? { id: scope.id, code: scope.code } : null;
+              }).filter(Boolean) as Array<{ id: string; code: string }>}
+              
+              selectedChecklistItemIds={wizardState.selectedChecklistItemIds}
+              checklistItemOverrides={wizardState.checklistItemOverrides}
+              onChecklistItemToggle={(itemId) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedChecklistItemIds: prev.selectedChecklistItemIds.includes(itemId)
+                    ? prev.selectedChecklistItemIds.filter(id => id !== itemId)
+                    : [...prev.selectedChecklistItemIds, itemId]
+                }));
+              }}
+              onSelectAllChecklistItems={(itemIds) => {
+                setWizardState(prev => ({ ...prev, selectedChecklistItemIds: itemIds }));
+              }}
+              onDeselectAllChecklistItems={() => {
+                setWizardState(prev => ({ ...prev, selectedChecklistItemIds: [] }));
+              }}
+              onChecklistItemOverrideChange={(itemId, override) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  checklistItemOverrides: { ...prev.checklistItemOverrides, [itemId]: override }
+                }));
+              }}
+              onChecklistItemOverrideReset={(itemId) => {
+                setWizardState(prev => {
+                  const newOverrides = { ...prev.checklistItemOverrides };
+                  delete newOverrides[itemId];
+                  return { ...prev, checklistItemOverrides: newOverrides };
+                });
+              }}
+              
+              selectedPssrApproverRoleIds={wizardState.selectedPssrApproverRoleIds}
+              onPssrApproverToggle={(roleId) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedPssrApproverRoleIds: prev.selectedPssrApproverRoleIds.includes(roleId)
+                    ? prev.selectedPssrApproverRoleIds.filter(id => id !== roleId)
+                    : [...prev.selectedPssrApproverRoleIds, roleId]
+                }));
+              }}
+              
+              selectedSofApproverRoleIds={wizardState.selectedSofApproverRoleIds}
+              onSofApproverToggle={(roleId) => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedSofApproverRoleIds: prev.selectedSofApproverRoleIds.includes(roleId)
+                    ? prev.selectedSofApproverRoleIds.filter(id => id !== roleId)
+                    : [...prev.selectedSofApproverRoleIds, roleId]
+                }));
+              }}
+              
+              isChecklistModified={
+                JSON.stringify(wizardState.selectedChecklistItemIds.sort()) !== 
+                JSON.stringify(wizardState.templateChecklistItemIds.sort()) ||
+                Object.keys(wizardState.checklistItemOverrides).length > 0
+              }
+              isPssrApproversModified={
+                JSON.stringify(wizardState.selectedPssrApproverRoleIds.sort()) !== 
+                JSON.stringify(wizardState.templatePssrApproverRoleIds.sort())
+              }
+              isSofApproversModified={
+                JSON.stringify(wizardState.selectedSofApproverRoleIds.sort()) !== 
+                JSON.stringify(wizardState.templateSofApproverRoleIds.sort())
+              }
+              
+              onResetChecklist={() => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedChecklistItemIds: [...prev.templateChecklistItemIds],
+                  checklistItemOverrides: {}
+                }));
+              }}
+              onResetPssrApprovers={() => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedPssrApproverRoleIds: [...prev.templatePssrApproverRoleIds]
+                }));
+              }}
+              onResetSofApprovers={() => {
+                setWizardState(prev => ({
+                  ...prev,
+                  selectedSofApproverRoleIds: [...prev.templateSofApproverRoleIds]
+                }));
+              }}
+              
+              isLoading={wizardState.configLoading}
+            />
           )}
         </div>
 
