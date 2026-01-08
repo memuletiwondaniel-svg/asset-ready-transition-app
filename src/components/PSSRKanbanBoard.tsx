@@ -9,13 +9,12 @@ import {
   useSensors,
   closestCorners,
   DragOverEvent,
-  UniqueIdentifier,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import DraggablePSSRCard from './DraggablePSSRCard';
+import PSSRKanbanCard from './pssr/PSSRKanbanCard';
 
 interface PSSR {
   id: string;
@@ -61,10 +60,6 @@ const statusColumns = [
 const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
   pssrs,
   onViewDetails,
-  getPriorityColor,
-  getStatusIcon,
-  getTeamStatusColor,
-  getRiskLevelColor,
   pinnedPSSRs,
   onTogglePin,
   onStatusChange,
@@ -95,13 +90,11 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find the active and over items
     const activePSSR = items.find(p => p.id === activeId);
     const overPSSR = items.find(p => p.id === overId);
 
     if (!activePSSR || !overPSSR) return;
 
-    // If dragging to a different column
     if (activePSSR.status !== overPSSR.status) {
       setItems(items => {
         const updatedItems = items.map(item => 
@@ -122,7 +115,6 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
       const overPSSR = items.find(p => p.id === over.id);
 
       if (activePSSR && overPSSR && activePSSR.status === overPSSR.status) {
-        // Reordering within the same column
         const status = activePSSR.status;
         const statusItems = items.filter(p => p.status === status);
         const oldIndex = statusItems.findIndex(p => p.id === active.id);
@@ -134,7 +126,6 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
           setItems([...otherItems, ...reordered]);
         }
       } else if (activePSSR && overPSSR && onStatusChange) {
-        // Moving to a different column
         onStatusChange(active.id as string, overPSSR.status);
       }
     }
@@ -162,44 +153,43 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-[calc(100vh-20rem)]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-[calc(100vh-16rem)] min-h-[400px]">
         {statusColumns.map((column) => {
           const columnPSSRs = getPSSRsByStatus(column.id);
           
           return (
-            <Card key={column.id} className={`flex flex-col border-2 ${column.color}`}>
-              <CardHeader className="pb-3">
+            <Card key={column.id} className={`flex flex-col border-2 ${column.color} min-h-0`}>
+              <CardHeader className="flex-shrink-0 pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold">
+                  <CardTitle className="text-sm font-semibold">
                     {column.title}
                   </CardTitle>
-                  <Badge variant="secondary" className="font-semibold">
+                  <Badge variant="secondary" className="font-semibold text-xs">
                     {columnPSSRs.length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 pt-0 pb-2 px-2">
-                <ScrollArea className="h-full pr-2">
+              <CardContent className="flex-1 min-h-0 pt-0 pb-2 px-2">
+                <ScrollArea className="h-full">
                   <SortableContext
                     items={columnPSSRs.map(p => p.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-3 pb-2">
-                      {columnPSSRs.map((pssr, index) => (
-                        <div key={pssr.id} className="px-2">
-                          <DraggablePSSRCard
-                            pssr={pssr}
-                            index={index}
-                            onViewDetails={onViewDetails}
-                            getPriorityColor={getPriorityColor}
-                            getStatusIcon={getStatusIcon}
-                            getTeamStatusColor={getTeamStatusColor}
-                            getRiskLevelColor={getRiskLevelColor}
-                            isPinned={pinnedPSSRs.has(pssr.id)}
-                            onTogglePin={onTogglePin}
-                          />
-                        </div>
+                    <div className="space-y-3 pr-2 pb-2">
+                      {columnPSSRs.map((pssr) => (
+                        <PSSRKanbanCard
+                          key={pssr.id}
+                          pssr={pssr}
+                          onViewDetails={onViewDetails}
+                          isPinned={pinnedPSSRs.has(pssr.id)}
+                          onTogglePin={onTogglePin}
+                        />
                       ))}
+                      {columnPSSRs.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground text-xs">
+                          No items
+                        </div>
+                      )}
                     </div>
                   </SortableContext>
                 </ScrollArea>
@@ -211,15 +201,10 @@ const PSSRKanbanBoard: React.FC<PSSRKanbanBoardProps> = ({
 
       <DragOverlay>
         {activeId && activePSSR ? (
-          <div className="opacity-80 rotate-3 scale-105">
-            <DraggablePSSRCard
+          <div className="opacity-90 rotate-2 scale-105">
+            <PSSRKanbanCard
               pssr={activePSSR}
-              index={0}
               onViewDetails={onViewDetails}
-              getPriorityColor={getPriorityColor}
-              getStatusIcon={getStatusIcon}
-              getTeamStatusColor={getTeamStatusColor}
-              getRiskLevelColor={getRiskLevelColor}
               isPinned={pinnedPSSRs.has(activePSSR.id)}
               onTogglePin={onTogglePin}
             />
