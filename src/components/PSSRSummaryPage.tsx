@@ -284,7 +284,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     projectId: 'DP 083',
     projectName: 'UQ Jetty 2 Export Terminal',
     asset: 'UQ',
-    status: 'Approved',
+    status: 'Completed',
     priority: 'High',
     progress: 100,
     created: '2024-01-10',
