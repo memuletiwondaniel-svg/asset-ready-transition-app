@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
@@ -59,6 +59,7 @@ interface SidebarContentProps {
   onToggleSearchHistory?: () => void;
   onSearchHistoryClick?: (item: string) => void;
   onLogout: () => void;
+  onToggleCollapse?: () => void;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -95,6 +96,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
   onToggleSearchHistory,
   onSearchHistoryClick,
   onLogout,
+  onToggleCollapse,
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -387,6 +389,26 @@ export const SidebarContent = memo<SidebarContentProps>(({
           <LogOut className="w-4 h-4" />
           {!isCollapsed && <span className="ml-2">Log Out</span>}
         </Button>
+
+        {/* Collapse/Expand Button */}
+        {onToggleCollapse && !isMobile && (
+          <Button 
+            variant="ghost" 
+            size={isCollapsed ? "icon" : "sm"} 
+            onClick={onToggleCollapse}
+            className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <>
+                <ChevronLeft className="w-4 h-4" />
+                <span className="ml-2">Collapse</span>
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
