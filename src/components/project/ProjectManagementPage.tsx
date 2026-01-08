@@ -362,7 +362,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               {activeTab === 'projects' && (
                 <Button 
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {t.createProject || 'Create Project'}
