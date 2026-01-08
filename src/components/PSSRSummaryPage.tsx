@@ -69,7 +69,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
     reorderWidgets
   } = useWidgetConfigs();
   const [activeView, setActiveView] = useState<'list' | 'create' | 'details' | 'category-items' | 'manage-checklist'>('list');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline'>('table');
   const [showCreateIntro, setShowCreateIntro] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPSSR, setSelectedPSSR] = useState<string | null>(null);

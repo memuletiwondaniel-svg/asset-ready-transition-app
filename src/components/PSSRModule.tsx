@@ -38,7 +38,7 @@ const PSSRModule: React.FC = () => {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [pssrOrder, setPssrOrder] = useState<string[]>([]);
   const [pinnedPSSRs, setPinnedPSSRs] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'cards' | 'kanban' | 'table'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'kanban' | 'table'>('table');
   const [filters, setFilters] = useState({
     plant: [] as string[],
     status: [] as string[],
