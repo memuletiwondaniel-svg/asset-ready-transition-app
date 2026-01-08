@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FolderOpen, Building2, Layers } from 'lucide-react';
+import { Building2, Layers, User } from 'lucide-react';
 import { useProjects, Project } from '@/hooks/useProjects';
+import { useQueryClient } from '@tanstack/react-query';
+import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
+import { AddProjectModal } from '@/components/project/AddProjectModal';
 
 interface ProjectHierarchySelectorProps {
   projectId: string;
@@ -15,59 +17,58 @@ const ProjectHierarchySelector: React.FC<ProjectHierarchySelectorProps> = ({
   onProjectChange,
   selectedProject,
 }) => {
+  const queryClient = useQueryClient();
   const { projects, isLoading: projectsLoading } = useProjects();
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
 
-  const handleProjectChange = (value: string) => {
+  // Convert projects to combobox options with a "Create New Project" option
+  const projectOptions = [
+    ...(projects?.map(p => ({
+      value: p.id,
+      label: `${p.project_id_prefix}-${p.project_id_number} - ${p.project_title}`
+    })) || []),
+    { value: '__create_new__', label: '+ Create New Project' }
+  ];
+
+  const handleProjectSelect = (value: string) => {
+    if (value === '__create_new__') {
+      setShowAddProjectModal(true);
+      return;
+    }
     const project = projects?.find(p => p.id === value) || null;
     onProjectChange(value, project);
   };
 
+  const handleProjectModalClose = () => {
+    setShowAddProjectModal(false);
+    // Invalidate projects query to refetch and include any newly created project
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+  };
+
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 mb-2">
-        <FolderOpen className="h-5 w-5 text-primary" />
-        <h3 className="text-base font-medium">Project Selection</h3>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        Select the project for this PSSR. The portfolio and hub will be automatically populated.
-      </p>
-
       {/* Project Selection */}
       <div className="space-y-2">
         <Label htmlFor="project" className="flex items-center gap-2">
           <Building2 className="h-4 w-4" />
           Project *
         </Label>
-        <Select
+        <EnhancedSearchableCombobox
+          options={projectOptions}
           value={projectId}
-          onValueChange={handleProjectChange}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Search or select a project"} />
-          </SelectTrigger>
-          <SelectContent>
-            {projects?.map((project) => (
-              <SelectItem key={project.id} value={project.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">
-                    {project.project_id_prefix}-{project.project_id_number}
-                  </span>
-                  <span className="text-xs text-muted-foreground truncate max-w-[250px]">
-                    {project.project_title}
-                  </span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder={projectsLoading ? "Loading projects..." : "Search or select a project..."}
+          searchPlaceholder="Type to search by project ID or title..."
+          onValueChange={handleProjectSelect}
+          disabled={projectsLoading}
+        />
       </div>
 
-      {/* Auto-populated Hierarchy Info */}
+      {/* Enhanced Project Details Panel */}
       {selectedProject && (
         <div className="bg-muted/30 rounded-lg p-4 space-y-3 border border-border/50">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Layers className="h-4 w-4" />
-            <span className="font-medium">Project Hierarchy</span>
+            <span className="font-medium">Project Details</span>
           </div>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -89,6 +90,15 @@ const ProjectHierarchySelector: React.FC<ProjectHierarchySelectorProps> = ({
                 <p className="font-medium">{selectedProject.hub_name}</p>
               </div>
             )}
+            {selectedProject.team_lead_name && (
+              <div className="flex items-start gap-1">
+                <span className="text-muted-foreground">Hub Lead:</span>
+                <p className="font-medium flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {selectedProject.team_lead_name}
+                </p>
+              </div>
+            )}
             {selectedProject.plant_name && (
               <div>
                 <span className="text-muted-foreground">Plant:</span>
@@ -104,6 +114,12 @@ const ProjectHierarchySelector: React.FC<ProjectHierarchySelectorProps> = ({
           </div>
         </div>
       )}
+
+      {/* Add Project Modal */}
+      <AddProjectModal 
+        open={showAddProjectModal} 
+        onClose={handleProjectModalClose} 
+      />
     </div>
   );
 };
