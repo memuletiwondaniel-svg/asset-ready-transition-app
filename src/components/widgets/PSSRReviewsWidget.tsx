@@ -176,7 +176,7 @@ export const PSSRReviewsWidget: React.FC<PSSRReviewsWidgetProps> = ({
               onChange={onSearchChange}
               onSelectPSSR={onSelectPSSR}
               placeholder="Search by ID, project, asset, lead..."
-              className="w-56 lg:w-72 xl:w-80"
+              className="w-72 lg:w-80 xl:w-96"
             />
 
             {/* View Mode Selector */}
