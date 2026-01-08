@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, X } from 'lucide-react';
+import { Users, Plus, X, Sparkles } from 'lucide-react';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ProjectTeamSectionProps {
   teamMembers: any[];
   setTeamMembers: React.Dispatch<React.SetStateAction<any[]>>;
+  regionName?: string | null;
+  hubName?: string | null;
 }
 
 const REQUIRED_ROLES = [
@@ -20,12 +20,15 @@ const REQUIRED_ROLES = [
   { role: 'Project Engineer', required: true },
   { role: 'Commissioning Lead', required: true },
   { role: 'Construction Lead', required: true },
-  { role: 'ORA Lead', required: true }
+  { role: 'ORA Lead', required: true },
+  { role: 'ORA Engineer', required: false }
 ];
 
 export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({ 
   teamMembers, 
-  setTeamMembers 
+  setTeamMembers,
+  regionName = null,
+  hubName = null
 }) => {
   const { data: allUsers = [], isLoading } = useProfileUsers();
 
@@ -36,7 +39,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
     const updatedMembers = teamMembers.filter(member => member.role !== role);
     
     if (selectedUser) {
-      // Add new member for this role
+      // Add new member for this role (mark as manual, not auto-populated)
       const newMember = {
         id: `${role}-${Date.now()}`,
         role: role,
@@ -44,7 +47,8 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
         user_name: selectedUser.full_name,
         is_lead: ['Project Manager', 'Project Engineer'].includes(role),
         avatar_url: selectedUser.avatar_url || '',
-        position: selectedUser.position || ''
+        position: selectedUser.position || '',
+        is_auto_populated: false
       };
       setTeamMembers([...updatedMembers, newMember]);
     } else {
@@ -135,11 +139,19 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
           <h4 className="font-medium text-gray-900">Assign Team Members</h4>
           {REQUIRED_ROLES.map(({ role, required }) => {
             const assignedMember = getRoleMember(role);
+            const isAutoPopulated = assignedMember?.is_auto_populated;
             return (
-              <div key={role} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-gray-50/50">
+              <div key={role} className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg ${
+                isAutoPopulated ? 'bg-amber-50/50 border-amber-200' : 'bg-gray-50/50'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 flex items-center gap-2">
                     <h5 className="font-medium text-gray-900">{role}</h5>
+                    {isAutoPopulated && (
+                      <span title="Auto-populated">
+                        <Sparkles className="h-4 w-4 text-amber-500" />
+                      </span>
+                    )}
                   </div>
                 </div>
                 
@@ -172,6 +184,7 @@ export const ProjectTeamSection: React.FC<ProjectTeamSectionProps> = ({
                                    userRole.includes('construction') ||
                                    userPos.includes('construction');
                           case 'ORA Lead':
+                          case 'ORA Engineer':
                             return userRole.includes('ora') ||
                                    userPos.includes('ora');
                           default:
