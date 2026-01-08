@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useProjects } from '@/hooks/useProjects';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useORPPlans, useORPDeliverables } from '@/hooks/useORPPlans';
-import { AddProjectModal } from '@/components/project/AddProjectModal';
+import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Search, FileText } from 'lucide-react';
 import { ORPTemplateSelector } from './ORPTemplateSelector';
@@ -311,7 +311,7 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      <AddProjectModal
+      <CreateProjectWizard
         open={showAddProject}
         onClose={() => setShowAddProject(false)}
       />

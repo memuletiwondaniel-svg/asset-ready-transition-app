@@ -15,7 +15,7 @@ import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { supabase } from '@/integrations/supabase/client';
-import { AddProjectModal } from './AddProjectModal';
+import { CreateProjectWizard } from './CreateProjectWizard';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
 import { ProjectCard } from './ProjectCard';
@@ -603,8 +603,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         </div>
       </div>
 
-      {/* Add Project Modal */}
-      <AddProjectModal 
+      {/* Add Project Wizard */}
+      <CreateProjectWizard 
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />

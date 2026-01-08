@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AddProjectModal } from '@/components/project/AddProjectModal';
+import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -1483,8 +1483,8 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add Project Modal */}
-      <AddProjectModal 
+      {/* Add Project Wizard */}
+      <CreateProjectWizard 
         open={showAddProjectModal} 
         onClose={() => setShowAddProjectModal(false)} 
       />
