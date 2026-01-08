@@ -138,16 +138,22 @@ const CreatePSSRWizard: React.FC<CreatePSSRWizardProps> = ({ open, onOpenChange,
       case 3: // Location
         // Determine required fields based on category and mode
         const categoryCode = selectedCategory?.code;
-        const isProjectMode = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS' || wizardState.locationMode === 'project';
-        const isAssetMode = categoryCode === 'INCIDENCE' || wizardState.locationMode === 'asset';
+        const isProjectOnlyCategory = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS';
+        const isAssetOnlyCategory = categoryCode === 'INCIDENCE' || categoryCode === 'OPS_MTCE';
         
-        if (isProjectMode && !wizardState.projectId) {
-          toast.error('Please select a project');
-          return false;
+        // For project-only categories or project mode selection
+        if (isProjectOnlyCategory || (!isAssetOnlyCategory && wizardState.locationMode === 'project')) {
+          if (!wizardState.projectId) {
+            toast.error('Please select a project');
+            return false;
+          }
         }
-        if (isAssetMode && !wizardState.plantId) {
-          toast.error('Please select a plant');
-          return false;
+        // For asset-only categories or asset mode selection
+        if (isAssetOnlyCategory || (!isProjectOnlyCategory && wizardState.locationMode === 'asset')) {
+          if (!wizardState.plantId) {
+            toast.error('Please select a plant');
+            return false;
+          }
         }
         return true;
       case 4: // Scope & Details

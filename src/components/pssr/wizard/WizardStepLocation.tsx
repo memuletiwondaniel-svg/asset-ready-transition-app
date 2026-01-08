@@ -42,7 +42,7 @@ const WizardStepLocation: React.FC<WizardStepLocationProps> = ({
 }) => {
   // Determine which mode to show based on category
   const isProjectOnly = categoryCode === 'PROJECT_STARTUP' || categoryCode === 'BFM_PROJECTS' || categoryCode === 'PE_PROJECTS';
-  const isAssetOnly = categoryCode === 'INCIDENCE';
+  const isAssetOnly = categoryCode === 'INCIDENCE' || categoryCode === 'OPS_MTCE';
   const isFlexible = !isProjectOnly && !isAssetOnly;
 
   // If category forces a mode, use that mode
@@ -51,24 +51,40 @@ const WizardStepLocation: React.FC<WizardStepLocationProps> = ({
   // For project-only or asset-only categories, render directly
   if (isProjectOnly) {
     return (
-      <ProjectHierarchySelector
-        projectId={projectId}
-        onProjectChange={onProjectChange}
-        selectedProject={selectedProject}
-      />
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-base font-medium mb-1">Project Selection</h3>
+          <p className="text-sm text-muted-foreground">
+            Select the project for this PSSR. You can search by project ID or title.
+          </p>
+        </div>
+        <ProjectHierarchySelector
+          projectId={projectId}
+          onProjectChange={onProjectChange}
+          selectedProject={selectedProject}
+        />
+      </div>
     );
   }
 
   if (isAssetOnly) {
     return (
-      <AssetHierarchySelector
-        plantId={plantId}
-        fieldId={fieldId}
-        stationId={stationId}
-        onPlantChange={onPlantChange}
-        onFieldChange={onFieldChange}
-        onStationChange={onStationChange}
-      />
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-base font-medium mb-1">Asset Location</h3>
+          <p className="text-sm text-muted-foreground">
+            Select the asset location (Plant, Field, Station) for this PSSR.
+          </p>
+        </div>
+        <AssetHierarchySelector
+          plantId={plantId}
+          fieldId={fieldId}
+          stationId={stationId}
+          onPlantChange={onPlantChange}
+          onFieldChange={onFieldChange}
+          onStationChange={onStationChange}
+        />
+      </div>
     );
   }
 
