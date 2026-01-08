@@ -32,7 +32,6 @@ interface WizardStepReviewCustomizeProps {
   categoryName: string;
   reasonName: string;
   locationDisplay: LocationDisplay;
-  equipmentName?: string;
   scopeDescription?: string;
   atiScopes?: Array<{ id: string; code: string }>;
   
@@ -70,7 +69,6 @@ const WizardStepReviewCustomize: React.FC<WizardStepReviewCustomizeProps> = ({
   categoryName,
   reasonName,
   locationDisplay,
-  equipmentName,
   scopeDescription,
   atiScopes,
   selectedChecklistItemIds,
@@ -183,12 +181,6 @@ const WizardStepReviewCustomize: React.FC<WizardStepReviewCustomizeProps> = ({
               <p className="text-xs text-muted-foreground">{locationDisplay.secondary}</p>
             )}
           </div>
-          {equipmentName && (
-            <div>
-              <span className="text-muted-foreground">Equipment:</span>
-              <p className="font-medium">{equipmentName}</p>
-            </div>
-          )}
           {atiScopes && atiScopes.length > 0 && (
             <div className="col-span-2">
               <span className="text-muted-foreground flex items-center gap-1">

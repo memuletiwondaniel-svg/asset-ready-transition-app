@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Clock, CheckCircle2, AlertCircle, Users, FileText, MessageSquare } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import DOMPurify from 'dompurify';
 
 interface PSSRDetailsProps {
   pssrId: string;
@@ -214,7 +215,12 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
                 </div>
                 <div className="mt-4">
                   <label className="text-xs font-medium text-gray-600">Scope Description</label>
-                  <p className="text-sm text-gray-900 mt-1">{pssrData.scope}</p>
+                  <div 
+                    className="text-sm text-gray-900 mt-1 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ 
+                      __html: DOMPurify.sanitize(pssrData.scope) 
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
