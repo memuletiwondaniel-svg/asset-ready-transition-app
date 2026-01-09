@@ -173,27 +173,27 @@ export const ORPDetailsPage: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <div className="border-b px-6 flex items-center justify-between">
               <TabsList className="flex-wrap h-auto gap-1 p-1">
-                <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
                   <LayoutGrid className="w-4 h-4" />
                   Kanban
                 </TabsTrigger>
-                <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
                   <GanttChart className="w-4 h-4" />
                   Gantt Chart
                 </TabsTrigger>
-                <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
                   <GraduationCap className="w-4 h-4" />
                   Training
                 </TabsTrigger>
-                <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
                   <Wrench className="w-4 h-4" />
                   OR Maintenance
                 </TabsTrigger>
-                <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
                   <ArrowLeftRight className="w-4 h-4" />
                   Handover
                 </TabsTrigger>
-                <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
                   Approvals
                 </TabsTrigger>
               </TabsList>
