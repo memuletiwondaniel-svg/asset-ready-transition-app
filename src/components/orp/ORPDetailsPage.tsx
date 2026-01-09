@@ -132,10 +132,10 @@ export const ORPDetailsPage: React.FC = () => {
         <div className="flex-1 overflow-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <div className="border-b px-6">
-              <TabsList>
+              <TabsList className="flex-wrap h-auto gap-1 p-1">
                 <TabsTrigger value="kanban" className="gap-2">
                   <LayoutGrid className="w-4 h-4" />
-                  Kanban Board
+                  Kanban
                 </TabsTrigger>
                 <TabsTrigger value="gantt" className="gap-2">
                   <GanttChart className="w-4 h-4" />
@@ -148,9 +148,17 @@ export const ORPDetailsPage: React.FC = () => {
                   <UsersIcon className="w-4 h-4" />
                   Resources
                 </TabsTrigger>
-                <TabsTrigger value="resource-dashboard" className="gap-2">
-                  <UsersIcon className="w-4 h-4" />
-                  Dashboard
+                <TabsTrigger value="training" className="gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  Training
+                </TabsTrigger>
+                <TabsTrigger value="maintenance" className="gap-2">
+                  <Wrench className="w-4 h-4" />
+                  Maintenance
+                </TabsTrigger>
+                <TabsTrigger value="handover" className="gap-2">
+                  <ArrowLeftRight className="w-4 h-4" />
+                  Handover
                 </TabsTrigger>
                 <TabsTrigger value="approvals" className="gap-2">
                   Approvals
@@ -185,8 +193,16 @@ export const ORPDetailsPage: React.FC = () => {
                 <ORPResourcesPanel planId={plan.id} resources={plan.resources || []} />
               </TabsContent>
 
-              <TabsContent value="resource-dashboard" className="h-full m-0 p-6">
-                <ORPResourceDashboard />
+              <TabsContent value="training" className="h-full m-0 p-6">
+                <ORATrainingPlanTab oraPlanId={plan.id} />
+              </TabsContent>
+
+              <TabsContent value="maintenance" className="h-full m-0 p-6">
+                <ORAMaintenanceReadinessTab oraPlanId={plan.id} />
+              </TabsContent>
+
+              <TabsContent value="handover" className="h-full m-0 p-6">
+                <ORAHandoverTab oraPlanId={plan.id} />
               </TabsContent>
 
               <TabsContent value="approvals" className="h-full m-0 p-6">
