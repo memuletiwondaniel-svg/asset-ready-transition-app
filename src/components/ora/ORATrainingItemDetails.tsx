@@ -17,8 +17,9 @@ import {
   GraduationCap, Building, Clock, DollarSign, Calendar, Users,
   FileText, CheckCircle2, AlertCircle, Upload, X, Plus,
   ClipboardCheck, Package, Play, ClipboardPaste, Trash2, Edit2,
-  Image, FileCheck, Download, Eye
+  Image, FileCheck, Download, Eye, Filter
 } from 'lucide-react';
+import { EvidenceUploadModal } from './EvidenceUploadModal';
 import {
   Table,
   TableBody,
@@ -116,9 +117,9 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
   }, [item]);
 
   // Evidence state
-  const [evidenceType, setEvidenceType] = useState<string>('attendance_sheet');
-  const [evidenceDescription, setEvidenceDescription] = useState('');
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+  const [showEvidenceUploadModal, setShowEvidenceUploadModal] = useState(false);
+  const [evidenceFilter, setEvidenceFilter] = useState<string | null>(null);
 
   // Fetch training evidence
   const { data: evidenceData, refetch: refetchEvidence } = useQuery({
@@ -141,6 +142,11 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     { value: 'certificate', label: 'Certificate', icon: FileText },
     { value: 'other', label: 'Other Document', icon: FileText }
   ];
+
+  // Filtered evidence based on selected type
+  const filteredEvidence = evidenceFilter 
+    ? evidenceData?.filter((e: any) => e.evidence_type === evidenceFilter)
+    : evidenceData;
 
   // Filter users who can be TAs (those with TA-related positions/roles)
   const taUsers = allUsers?.filter(u => 
@@ -346,11 +352,8 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     }
   };
 
-  // Handle evidence upload
-  const handleEvidenceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // Handle evidence upload from modal
+  const handleEvidenceUpload = async (file: File, evidenceType: string, description: string) => {
     setIsUploadingEvidence(true);
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -373,7 +376,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
           file_type: file.type,
           file_size: file.size,
           evidence_type: evidenceType,
-          description: evidenceDescription || null,
+          description: description || null,
           uploaded_by: user.user.id
         });
 
@@ -381,7 +384,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
 
       toast({ title: 'Success', description: 'Evidence uploaded successfully' });
       refetchEvidence();
-      setEvidenceDescription('');
+      setShowEvidenceUploadModal(false);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
@@ -1049,73 +1052,78 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
             {/* Evidence Tab - Only for completed trainings */}
             {item.execution_stage === 'COMPLETED' && (
               <TabsContent value="evidence" className="m-0 space-y-4" forceMount={activeTab === 'evidence' ? true : undefined} hidden={activeTab !== 'evidence'}>
+                {/* Filter and Upload Header */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">Upload Training Evidence</CardTitle>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Filter className="w-4 h-4" />
+                        Filter Evidence
+                      </CardTitle>
+                      <Button 
+                        className="gap-2"
+                        onClick={() => setShowEvidenceUploadModal(true)}
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Evidence
+                      </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Upload attendance sheets, training photos, certificates, and other evidence
-                    </p>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Evidence Type Selection */}
-                    <div className="grid grid-cols-4 gap-2">
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {/* All filter */}
+                      <Button
+                        variant={evidenceFilter === null ? 'default' : 'outline'}
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setEvidenceFilter(null)}
+                      >
+                        All
+                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                          {evidenceData?.length || 0}
+                        </Badge>
+                      </Button>
+                      {/* Type filters */}
                       {EVIDENCE_TYPES.map((type) => {
                         const Icon = type.icon;
+                        const count = evidenceData?.filter((e: any) => e.evidence_type === type.value).length || 0;
                         return (
                           <Button
                             key={type.value}
-                            variant={evidenceType === type.value ? 'default' : 'outline'}
+                            variant={evidenceFilter === type.value ? 'default' : 'outline'}
                             size="sm"
-                            className="gap-2 h-auto py-3 flex-col"
-                            onClick={() => setEvidenceType(type.value)}
+                            className="gap-2"
+                            onClick={() => setEvidenceFilter(type.value)}
                           >
-                            <Icon className="w-5 h-5" />
-                            <span className="text-xs">{type.label}</span>
+                            <Icon className="w-4 h-4" />
+                            {type.label}
+                            <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                              {count}
+                            </Badge>
                           </Button>
                         );
                       })}
                     </div>
-
-                    {/* Description input */}
-                    <Input
-                      placeholder="Add a description (optional)"
-                      value={evidenceDescription}
-                      onChange={(e) => setEvidenceDescription(e.target.value)}
-                    />
-
-                    {/* Upload button */}
-                    <Label className="cursor-pointer">
-                      <Input
-                        type="file"
-                        className="hidden"
-                        onChange={handleEvidenceUpload}
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                        disabled={isUploadingEvidence}
-                      />
-                      <Button variant="outline" className="w-full gap-2" asChild disabled={isUploadingEvidence}>
-                        <span>
-                          <Upload className="w-4 h-4" />
-                          {isUploadingEvidence ? 'Uploading...' : 'Upload Evidence File'}
-                        </span>
-                      </Button>
-                    </Label>
                   </CardContent>
                 </Card>
 
                 {/* Evidence List */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Uploaded Evidence</CardTitle>
+                    <CardTitle className="text-base">
+                      {evidenceFilter 
+                        ? `${EVIDENCE_TYPES.find(t => t.value === evidenceFilter)?.label || 'Evidence'} (${filteredEvidence?.length || 0})`
+                        : `All Evidence (${evidenceData?.length || 0})`
+                      }
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {evidenceData && evidenceData.length > 0 ? (
+                    {filteredEvidence && filteredEvidence.length > 0 ? (
                       <div className="space-y-3">
-                        {evidenceData.map((evidence: any) => {
+                        {filteredEvidence.map((evidence: any) => {
                           const typeInfo = EVIDENCE_TYPES.find(t => t.value === evidence.evidence_type) || EVIDENCE_TYPES[3];
                           const Icon = typeInfo.icon;
-                          const isImage = evidence.file_type?.startsWith('image/');
+                          const isImage = evidence.file_type?.startsWith('image/') || evidence.file_path?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
                           
                           return (
                             <div key={evidence.id} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
@@ -1174,12 +1182,25 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         <FileCheck className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>No evidence uploaded yet</p>
-                        <p className="text-sm">Upload attendance sheets, photos, or certificates</p>
+                        <p>{evidenceFilter ? 'No evidence of this type' : 'No evidence uploaded yet'}</p>
+                        <p className="text-sm">
+                          {evidenceFilter 
+                            ? 'Try selecting a different filter or upload new evidence'
+                            : 'Click "Upload Evidence" to add attendance sheets, photos, or certificates'
+                          }
+                        </p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Evidence Upload Modal */}
+                <EvidenceUploadModal
+                  open={showEvidenceUploadModal}
+                  onOpenChange={setShowEvidenceUploadModal}
+                  onUpload={handleEvidenceUpload}
+                  isUploading={isUploadingEvidence}
+                />
               </TabsContent>
             )}
               </div>
