@@ -93,7 +93,7 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
   const getStatusBadge = (status: string) => {
     const statusInfo = STATUSES.find(s => s.value === status) || STATUSES[0];
     return (
-      <Badge className={statusInfo.color}>
+      <Badge className={`${statusInfo.color} whitespace-nowrap`}>
         {statusInfo.label}
       </Badge>
     );
