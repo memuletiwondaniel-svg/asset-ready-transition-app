@@ -159,7 +159,7 @@ export const ORPDetailsPage: React.FC = () => {
                 ) : (
                   <Badge variant="outline">{getPhaseLabel(plan.phase)}</Badge>
                 )}
-                <Badge>{plan.status.replace('_', ' ')}</Badge>
+                <Badge variant="secondary" className="font-normal">{plan.status.replace('_', ' ')}</Badge>
               </div>
             </div>
           </div>
