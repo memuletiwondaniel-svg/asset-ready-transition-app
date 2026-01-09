@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, ArrowRightLeft, Trash2, Edit, CheckCircle2, Clock, FileCheck } from 'lucide-react';
+import { Plus, KeyRound, Trash2, Edit, CheckCircle2, Clock, FileCheck } from 'lucide-react';
 import { useORAHandoverItems } from '@/hooks/useORATrainingPlan';
 import { format } from 'date-fns';
 
@@ -128,7 +128,7 @@ export const ORAHandoverTab: React.FC<ORAHandoverTabProps> = ({ oraPlanId }) => 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <ArrowRightLeft className="w-5 h-5" />
+            <KeyRound className="w-5 h-5" />
             Handover Tracker
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -173,7 +173,7 @@ export const ORAHandoverTab: React.FC<ORAHandoverTabProps> = ({ oraPlanId }) => 
       {Object.keys(groupedItems).length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <ArrowRightLeft className="w-12 h-12 text-muted-foreground mb-4" />
+            <KeyRound className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="font-medium text-lg">No Handover Items Yet</h3>
             <p className="text-sm text-muted-foreground text-center max-w-md mt-1">
               Add handover items to track the transfer of documentation, systems, equipment, and knowledge from project to operations.
