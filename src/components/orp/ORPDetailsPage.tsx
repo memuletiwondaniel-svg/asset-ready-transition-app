@@ -173,28 +173,28 @@ export const ORPDetailsPage: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <div className="border-b px-6 flex items-center justify-between">
               <TabsList className="flex-wrap h-auto gap-1 p-1">
-                <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <LayoutGrid className="w-4 h-4 text-blue-500" />
+                <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <LayoutGrid className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
                   Kanban
                 </TabsTrigger>
-                <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <GanttChart className="w-4 h-4 text-purple-500" />
+                <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <GanttChart className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-purple-500" />
                   Gantt Chart
                 </TabsTrigger>
-                <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <GraduationCap className="w-4 h-4 text-emerald-500" />
+                <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
                   Training
                 </TabsTrigger>
-                <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <Wrench className="w-4 h-4 text-orange-500" />
+                <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <Wrench className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-orange-500" />
                   OR Maintenance
                 </TabsTrigger>
-                <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <ArrowLeftRight className="w-4 h-4 text-cyan-500" />
+                <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
                   Handover
                 </TabsTrigger>
-                <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <CheckCircle className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-green-500" />
                   Approvals
                 </TabsTrigger>
               </TabsList>
