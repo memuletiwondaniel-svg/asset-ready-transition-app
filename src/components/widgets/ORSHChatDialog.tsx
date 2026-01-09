@@ -3,19 +3,51 @@ import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Send, Bot, User, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Search, Edit2, Check, X, Mic, MicOff, Paperclip, FileText, Image as ImageIcon, Loader2 as LoaderIcon, XCircle } from 'lucide-react';
+import { 
+  Send, 
+  Bot, 
+  User, 
+  Plus, 
+  MessageSquare, 
+  Trash2, 
+  Search, 
+  Edit2, 
+  Check, 
+  X, 
+  Mic, 
+  MicOff, 
+  Paperclip, 
+  FileText, 
+  Image as ImageIcon, 
+  Loader2, 
+  XCircle,
+  Sparkles,
+  ArrowUp,
+  PanelLeftClose,
+  PanelLeft,
+  MoreHorizontal,
+  Zap
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Separator } from '@/components/ui/separator';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -40,27 +72,25 @@ interface ORSHChatDialogProps {
 }
 
 const SUGGESTED_PROMPTS = [
-  "What are the 6 phases of ORA?",
-  "Show me my tasks",
-  "What is a Priority A action in PSSR?",
-  "Explain the PSSR approval workflow",
-  "What's the difference between ORM, FEO, and CSU?",
-  "Take me to the PSSR module",
+  { icon: Zap, text: "What are the 6 phases of ORA?", category: "Learn" },
+  { icon: MessageSquare, text: "Show me my tasks", category: "Navigate" },
+  { icon: Sparkles, text: "What is a Priority A action?", category: "Learn" },
+  { icon: MessageSquare, text: "Take me to PSSR module", category: "Navigate" },
 ];
 
-export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChange, onUnreadCountChange, initialMessage }) => {
+export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ 
+  open, 
+  onOpenChange, 
+  onUnreadCountChange, 
+  initialMessage 
+}) => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Hello! I\'m Bob, your intelligent ORSH assistant. I can help you with PSSR reviews, ORA planning, operational readiness, and navigate you anywhere in the app. What would you like to know?'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -68,9 +98,17 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
 
-  // Handle initial message when dialog opens
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+    }
+  }, [input]);
+
   useEffect(() => {
     if (open && initialMessage) {
       setInput(initialMessage);
@@ -83,7 +121,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     }
   }, [messages]);
 
-  // Set up realtime subscription for conversation updates
   useEffect(() => {
     const channel = supabase
       .channel('chat-conversations-changes')
@@ -94,10 +131,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
           schema: 'public',
           table: 'chat_conversations'
         },
-        (payload) => {
-          console.log('Conversation change received:', payload);
-          loadConversations();
-        }
+        () => loadConversations()
       )
       .subscribe();
 
@@ -125,7 +159,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       if (error) throw error;
       setConversations(data || []);
       
-      // Count unread conversations
       const unreadCount = (data || []).filter(conv => !conv.is_read).length;
       onUnreadCountChange?.(unreadCount);
     } catch (error) {
@@ -151,7 +184,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       setMessages(loadedMessages);
       setCurrentConversationId(conversationId);
       
-      // Mark conversation as read when loaded
       await supabase
         .from('chat_conversations')
         .update({ is_read: true })
@@ -171,15 +203,11 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
       let conversationId = currentConversationId;
 
-      // Create new conversation if needed
       if (!conversationId) {
         const firstMessage = content.substring(0, 50);
         const { data: conv, error: convError } = await supabase
           .from('chat_conversations')
-          .insert({
-            user_id: user.id,
-            title: firstMessage
-          })
+          .insert({ user_id: user.id, title: firstMessage })
           .select()
           .single();
 
@@ -189,23 +217,16 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
         loadConversations();
       }
 
-      // Save message
       const { error } = await supabase
         .from('chat_messages')
-        .insert({
-          conversation_id: conversationId,
-          role,
-          content
-        });
+        .insert({ conversation_id: conversationId, role, content });
 
       if (error) throw error;
 
-      // Update conversation timestamp
       await supabase
         .from('chat_conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', conversationId);
-
     } catch (error) {
       console.error('Error saving message:', error);
     }
@@ -226,10 +247,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
         .from('chat_attachments')
         .upload(filePath, file);
 
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('chat_attachments')
@@ -238,7 +256,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       if (file.type.startsWith('image/')) {
         imageUrls.push(publicUrl);
       } else {
-        // Parse document to extract text
         try {
           const { data: parseResult, error: parseError } = await supabase.functions.invoke('parse-document', {
             body: { filePath: filePath }
@@ -247,11 +264,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
           if (!parseError && parseResult?.text) {
             documentTexts.push(`[Document: ${file.name}]\n${parseResult.text}\n`);
           } else {
-            documentTexts.push(`[Document: ${file.name}] - Unable to extract text automatically. File available at: ${publicUrl}`);
+            documentTexts.push(`[Document: ${file.name}] - File available at: ${publicUrl}`);
           }
-        } catch (parseError) {
-          console.error('Error parsing document:', parseError);
-          documentTexts.push(`[Document: ${file.name}] - Unable to extract text automatically. File available at: ${publicUrl}`);
+        } catch {
+          documentTexts.push(`[Document: ${file.name}] - File available at: ${publicUrl}`);
         }
         
         fileUrls.push(publicUrl);
@@ -266,10 +282,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     const textToSend = messageText || input.trim();
     if ((!textToSend && attachedFiles.length === 0) || isLoading) return;
 
-    if (!messageText) {
-      setInput('');
-    }
-
+    if (!messageText) setInput('');
     setUploadingFiles(true);
     
     let imageUrls: string[] = [];
@@ -294,14 +307,11 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
     setUploadingFiles(false);
     
-    // Combine text content with document texts
     let finalContent = textToSend || '';
     if (documentTexts.length > 0) {
       finalContent = finalContent + (finalContent ? '\n\n' : '') + documentTexts.join('\n\n');
     }
-    if (!finalContent) {
-      finalContent = 'Please analyze these files.';
-    }
+    if (!finalContent) finalContent = 'Please analyze these files.';
     
     const userMessage: Message = { 
       role: 'user', 
@@ -334,15 +344,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
         })
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error('Failed to get response');
-      }
+      if (!response.ok || !response.body) throw new Error('Failed to get response');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let assistantMessage = '';
 
-      // Add empty assistant message that we'll update
       setMessages([...newMessages, { role: 'assistant', content: '' }]);
 
       while (true) {
@@ -364,33 +371,26 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                 assistantMessage += content;
                 setMessages([...newMessages, { role: 'assistant', content: assistantMessage }]);
               }
-            } catch (e) {
-              // Skip invalid JSON
-            }
+            } catch {}
           }
         }
       }
 
-      // Save the complete assistant message
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
         
-        // Check for navigation action in response
         const navigationMatch = assistantMessage.match(/\{"action":\s*"navigate",\s*"path":\s*"([^"]+)"\}/);
         if (navigationMatch) {
           const path = navigationMatch[1];
-          // Remove the JSON from the displayed message
           const cleanMessage = assistantMessage.replace(/\{"action":\s*"navigate",\s*"path":\s*"[^"]+"\}/, '').trim();
           setMessages([...newMessages, { role: 'assistant', content: cleanMessage }]);
           
-          // Close dialog and navigate after a brief delay
           setTimeout(() => {
             onOpenChange(false);
             navigate(path);
           }, 1000);
         }
         
-        // Mark conversation as unread
         if (currentConversationId) {
           await supabase
             .from('chat_conversations')
@@ -442,14 +442,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       });
       
       if (validFiles.length < files.length) {
-        toast.error('Some files were skipped. Only images and documents (PDF, DOC, DOCX, XLS, XLSX) are supported.');
+        toast.error('Some files were skipped. Only images and documents are supported.');
       }
       
       setAttachedFiles(prev => [...prev, ...validFiles]);
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleRemoveFile = (index: number) => {
@@ -457,12 +455,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
   };
 
   const handleNewChat = () => {
-    setMessages([
-      {
-        role: 'assistant',
-        content: 'Hello! I\'m Bob, your intelligent ORSH assistant. I can help you with PSSR reviews, ORA planning, operational readiness, and navigate you anywhere in the app. What would you like to know?'
-      }
-    ]);
+    setMessages([]);
     setCurrentConversationId(null);
   };
 
@@ -476,9 +469,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
 
       if (error) throw error;
 
-      if (conversationId === currentConversationId) {
-        handleNewChat();
-      }
+      if (conversationId === currentConversationId) handleNewChat();
       loadConversations();
       toast.success('Conversation deleted');
     } catch (error) {
@@ -504,7 +495,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       setEditingConvId(null);
       setEditingTitle('');
       loadConversations();
-      toast.success('Conversation renamed');
     } catch (error) {
       console.error('Error renaming conversation:', error);
       toast.error('Failed to rename conversation');
@@ -517,285 +507,275 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     setEditingTitle(conv.title);
   };
 
-  const cancelEditing = () => {
-    setEditingConvId(null);
-    setEditingTitle('');
-  };
+  const filteredConversations = conversations.filter(conv => 
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Filter conversations based on search query
-  const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDate = searchQuery && new Date(conv.updated_at).toLocaleDateString().includes(searchQuery);
-    return matchesSearch || matchesDate;
-  });
+  const isEmptyChat = messages.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 bg-background/95 backdrop-blur-xl border-2 border-border/50 shadow-2xl animate-scale-in">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                <Bot className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Ask Bob
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  Your intelligent ORSH assistant for operational readiness
-                </DialogDescription>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleNewChat} className="hover:bg-primary/10 transition-all">
-                <Plus className="h-4 w-4 mr-1" />
-                New Chat
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="hover:bg-primary/10 transition-all"
-              >
-                {showSidebar ? (
-                  <>
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Hide History
-                  </>
-                ) : (
-                  <>
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Show History
-                  </>
-                )}
-              </Button>
+      <DialogContent className="max-w-5xl h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+        {/* Sidebar */}
+        <div className={cn(
+          "flex flex-col border-r border-border/50 bg-muted/30 transition-all duration-300",
+          showSidebar ? "w-64" : "w-0 overflow-hidden"
+        )}>
+          {/* Sidebar Header */}
+          <div className="p-3 border-b border-border/50">
+            <Button 
+              onClick={handleNewChat}
+              variant="outline" 
+              className="w-full justify-start gap-2 h-10 bg-background hover:bg-muted"
+            >
+              <Plus className="h-4 w-4" />
+              New chat
+            </Button>
+          </div>
+          
+          {/* Search */}
+          <div className="p-3 border-b border-border/50">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search chats..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 bg-background/50 border-border/50"
+              />
             </div>
           </div>
-        </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex">
-          {/* Conversation History Sidebar */}
-          {showSidebar && (
-            <div className="w-64 border-r flex flex-col">
-              <div className="px-4 py-3 border-b space-y-2">
-                <h3 className="font-semibold text-sm">Recent Conversations</h3>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search conversations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 h-9 text-sm"
-                  />
+          {/* Conversations List */}
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {filteredConversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  onClick={() => editingConvId !== conv.id && loadConversation(conv.id)}
+                  className={cn(
+                    "group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors",
+                    conv.id === currentConversationId 
+                      ? "bg-muted" 
+                      : "hover:bg-muted/50"
+                  )}
+                >
+                  <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    {editingConvId === conv.id ? (
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          className="h-6 text-xs"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleRenameConversation(conv.id, editingTitle);
+                            if (e.key === 'Escape') { setEditingConvId(null); setEditingTitle(''); }
+                          }}
+                        />
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRenameConversation(conv.id, editingTitle)}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingConvId(null); setEditingTitle(''); }}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-sm truncate block">{conv.title}</span>
+                    )}
+                  </div>
+                  {!conv.is_read && (
+                    <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                  )}
+                  {editingConvId !== conv.id && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => startEditing(conv, e as any)}>
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => handleDeleteConversation(conv.id, e as any)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              ))}
+              {filteredConversations.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-8">
+                  {searchQuery ? 'No chats found' : 'No chat history'}
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="h-8 w-8"
+              >
+                {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+              </Button>
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-sm">Bob</h2>
+                  <p className="text-xs text-muted-foreground">ORSH Assistant</p>
                 </div>
               </div>
-              <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1">
-                  {filteredConversations.map((conv) => (
-                    <div
-                      key={conv.id}
-                      className={`p-3 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors relative group ${
-                        conv.id === currentConversationId ? 'bg-accent border border-primary' : 'border border-transparent'
-                      }`}
-                      onClick={() => editingConvId !== conv.id && loadConversation(conv.id)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          {editingConvId === conv.id ? (
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <Input
-                                value={editingTitle}
-                                onChange={(e) => setEditingTitle(e.target.value)}
-                                className="h-7 text-xs"
-                                autoFocus
-                                onKeyPress={(e) => {
-                                  if (e.key === 'Enter') {
-                                    handleRenameConversation(conv.id, editingTitle);
-                                  } else if (e.key === 'Escape') {
-                                    cancelEditing();
-                                  }
-                                }}
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0"
-                                onClick={() => handleRenameConversation(conv.id, editingTitle)}
-                              >
-                                <Check className="h-3 w-3 text-primary" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0"
-                                onClick={cancelEditing}
-                              >
-                                <X className="h-3 w-3 text-destructive" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                              <p className="text-xs font-medium truncate">{conv.title}</p>
-                              {!conv.is_read && (
-                                <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-                              )}
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(conv.updated_at).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                        {editingConvId !== conv.id && (
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => startEditing(conv, e)}
-                            >
-                              <Edit2 className="h-3 w-3 text-muted-foreground" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => handleDeleteConversation(conv.id, e)}
-                            >
-                              <Trash2 className="h-3 w-3 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {filteredConversations.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">
-                      {searchQuery ? 'No conversations found' : 'No conversation history yet'}
-                    </p>
-                  )}
-                </div>
-              </ScrollArea>
             </div>
-          )}
+            <Button variant="ghost" size="sm" onClick={handleNewChat} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New chat
+            </Button>
+          </div>
 
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-hidden px-6">
-              <ScrollArea className="h-full pr-4" ref={scrollRef}>
-                <div className="space-y-4 py-4">
-                  {messages.length === 1 && (
-                    <div className="mb-6">
-                      <p className="text-sm text-muted-foreground mb-3">Quick questions:</p>
-                      <div className="grid grid-cols-1 gap-2">
-                        {SUGGESTED_PROMPTS.map((prompt, index) => (
-                          <Button
-                            key={index}
-                            variant="outline"
-                            className="justify-start text-left h-auto py-2 px-3"
-                            onClick={() => handleSend(prompt)}
-                            disabled={isLoading}
-                          >
-                            <MessageSquare className="h-3 w-3 mr-2 flex-shrink-0" />
-                            <span className="text-sm">{prompt}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
+          {/* Messages Area */}
+          <ScrollArea className="flex-1" ref={scrollRef}>
+            <div className="max-w-3xl mx-auto px-4 py-6">
+              {isEmptyChat ? (
+                /* Welcome Screen */
+                <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mb-6 shadow-lg">
+                    <Sparkles className="h-8 w-8 text-primary-foreground" />
+                  </div>
+                  <h1 className="text-2xl font-bold mb-2">Hi, I'm Bob</h1>
+                  <p className="text-muted-foreground mb-8 max-w-md">
+                    Your intelligent ORSH assistant. Ask me about PSSR reviews, ORA planning, 
+                    or let me navigate you anywhere in the app.
+                  </p>
+                  
+                  {/* Suggestion Cards */}
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                    {SUGGESTED_PROMPTS.map((prompt, index) => {
+                      const Icon = prompt.icon;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleSend(prompt.text)}
+                          disabled={isLoading}
+                          className="flex items-start gap-3 p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 text-left transition-all hover:border-border group"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10">
+                            <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-0.5">{prompt.category}</p>
+                            <p className="text-sm font-medium">{prompt.text}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* Messages */
+                <div className="space-y-6">
                   {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex gap-3 ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
+                    <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
-                          <Bot className="h-4 w-4 text-primary" />
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
+                          <Bot className="h-4 w-4 text-primary-foreground" />
                         </div>
                       )}
-                      <div
-                        className={`rounded-lg px-4 py-2 max-w-[80%] ${
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-foreground'
-                        }`}
-                      >
-                        {message.content && <p className="text-sm whitespace-pre-wrap">{message.content}</p>}
+                      <div className={cn(
+                        "max-w-[80%] rounded-2xl px-4 py-3",
+                        message.role === 'user' 
+                          ? 'bg-primary text-primary-foreground rounded-br-md' 
+                          : 'bg-muted rounded-bl-md'
+                      )}>
+                        {message.content && (
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                        )}
                         
-                        {/* Display attached images */}
                         {message.imageUrls && message.imageUrls.length > 0 && (
-                          <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div className="mt-3 grid grid-cols-2 gap-2">
                             {message.imageUrls.map((url, idx) => (
                               <img 
                                 key={idx} 
                                 src={url} 
                                 alt={`Attachment ${idx + 1}`}
-                                className="rounded border max-h-48 w-full object-cover"
+                                className="rounded-lg border max-h-48 w-full object-cover"
                               />
                             ))}
                           </div>
                         )}
                         
-                        {/* Display attached files */}
                         {message.fileUrls && message.fileUrls.length > 0 && (
-                          <div className="mt-2 space-y-1">
+                          <div className="mt-3 space-y-2">
                             {message.fileUrls.map((url, idx) => (
                               <a 
                                 key={idx}
                                 href={url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-2 p-2 rounded border ${
-                                  message.role === 'user' 
-                                    ? 'bg-primary-foreground/10 hover:bg-primary-foreground/20' 
-                                    : 'bg-background/50 hover:bg-background/70'
-                                }`}
+                                className="flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-background/70 transition-colors"
                               >
                                 <FileText className="h-4 w-4" />
-                                <span className="text-xs">{message.fileNames?.[idx] || 'Document'}</span>
+                                <span className="text-xs truncate">{message.fileNames?.[idx] || 'Document'}</span>
                               </a>
                             ))}
                           </div>
                         )}
                       </div>
                       {message.role === 'user' && (
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
-                          <User className="h-4 w-4 text-primary" />
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-muted-foreground" />
                         </div>
                       )}
                     </div>
                   ))}
+                  
                   {isLoading && (
-                    <div className="flex gap-3 justify-start">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 flex-shrink-0">
-                        <Bot className="h-4 w-4 text-primary" />
+                    <div className="flex gap-4">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-primary-foreground" />
                       </div>
-                      <div className="rounded-lg px-4 py-2 bg-muted">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <div className="w-2 h-2 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                        <div className="flex gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
+              )}
             </div>
+          </ScrollArea>
 
-            <div className="p-6 pt-4 border-t space-y-3">
-              {/* File attachments preview */}
+          {/* Input Area */}
+          <div className="p-4 border-t border-border/50">
+            <div className="max-w-3xl mx-auto">
+              {/* File Attachments Preview */}
               {attachedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {attachedFiles.map((file, index) => (
                     <div 
                       key={index}
@@ -809,8 +789,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                       <span className="text-sm max-w-[150px] truncate">{file.name}</span>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        size="icon"
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleRemoveFile(index)}
                       >
                         <XCircle className="h-4 w-4 text-destructive" />
@@ -819,8 +799,9 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                   ))}
                 </div>
               )}
-              
-              <div className="flex gap-2">
+
+              {/* Input Container */}
+              <div className="relative flex items-end gap-2 bg-muted/50 rounded-2xl border border-border/50 p-2 focus-within:border-primary/50 transition-colors">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -829,48 +810,78 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <Textarea
-                  placeholder="Ask Bob about PSSR, ORA, navigation, or anything ORSH..."
+                
+                {/* Attachment Button */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading || uploadingFiles}
+                        className="h-9 w-9 rounded-xl hover:bg-background"
+                      >
+                        <Paperclip className="h-5 w-5 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Attach files</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Text Input */}
+                <textarea
+                  ref={textareaRef}
+                  placeholder="Message Bob..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="min-h-[60px] max-h-[120px] resize-none"
+                  onKeyDown={handleKeyPress}
+                  rows={1}
                   disabled={isLoading || uploadingFiles}
+                  className="flex-1 bg-transparent border-none outline-none resize-none py-2 px-1 text-sm placeholder:text-muted-foreground max-h-[200px] min-h-[40px]"
                 />
-                <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isLoading || uploadingFiles}
-                    variant="outline"
-                    className="self-end"
-                    title="Attach files"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  {isSupported && (
-                    <Button
-                      onClick={handleVoiceInput}
-                      disabled={isLoading || uploadingFiles}
-                      variant={isListening ? "destructive" : "outline"}
-                      className={`self-end ${isListening ? 'animate-pulse' : ''}`}
-                      title={isListening ? "Stop listening" : "Voice input"}
-                    >
-                      {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    </Button>
+
+                {/* Voice Button */}
+                {isSupported && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleVoiceInput}
+                          disabled={isLoading || uploadingFiles}
+                          className={cn(
+                            "h-9 w-9 rounded-xl hover:bg-background",
+                            isListening && "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                          )}
+                        >
+                          {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5 text-muted-foreground" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{isListening ? 'Stop recording' : 'Voice input'}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
+                {/* Send Button */}
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={(!input.trim() && attachedFiles.length === 0) || isLoading || uploadingFiles}
+                  size="icon"
+                  className="h-9 w-9 rounded-xl"
+                >
+                  {uploadingFiles ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowUp className="h-4 w-4" />
                   )}
-                  <Button
-                    onClick={() => handleSend()}
-                    disabled={(!input.trim() && attachedFiles.length === 0) || isLoading || uploadingFiles}
-                    className="self-end"
-                  >
-                    {uploadingFiles ? (
-                      <LoaderIcon className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                </Button>
               </div>
+
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                Bob can make mistakes. Verify important information.
+              </p>
             </div>
           </div>
         </div>
