@@ -36,15 +36,23 @@ const EXECUTION_STAGES = [
 export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanId }) => {
   const [showWizard, setShowWizard] = useState(false);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<ORATrainingPlan | null>(null);
   const [selectedItem, setSelectedItem] = useState<ORATrainingItem | null>(null);
   const [showItemDetails, setShowItemDetails] = useState(false);
-  const [activeView, setActiveView] = useState<'list' | 'details'>('list');
+  const [activeTab, setActiveTab] = useState('all');
   
   const { trainingPlans, isLoading, submitForApproval, updateApproval, updateTrainingItem, addTrainingItem } = useORATrainingPlans(oraPlanId);
 
-  const handleItemClick = (item: ORATrainingItem, e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Aggregate all training items from all plans
+  const allTrainingItems = trainingPlans?.flatMap(plan => 
+    plan.items?.map(item => ({ ...item, planTitle: plan.title, planId: plan.id })) || []
+  ) || [];
+
+  const completedItems = allTrainingItems.filter(i => i.execution_stage === 'COMPLETED').length;
+  const totalItems = allTrainingItems.length;
+  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+  const totalCost = trainingPlans?.reduce((sum, plan) => sum + (plan.total_estimated_cost || 0), 0) || 0;
+
+  const handleItemClick = (item: ORATrainingItem) => {
     setSelectedItem(item);
     setShowItemDetails(true);
   };
@@ -90,247 +98,7 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
     );
   }
 
-  // Training Plan Details View
-  if (activeView === 'details' && selectedPlan) {
-    const completedItems = selectedPlan.items?.filter(i => i.execution_stage === 'COMPLETED').length || 0;
-    const totalItems = selectedPlan.items?.length || 0;
-    const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
-
-    return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setActiveView('list')}>
-              ← Back to Plans
-            </Button>
-            <div>
-              <h2 className="text-xl font-bold">{selectedPlan.title}</h2>
-              <p className="text-sm text-muted-foreground">{selectedPlan.description}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(selectedPlan.status)}
-            {selectedPlan.status === 'DRAFT' && (
-              <Button size="sm" className="gap-2" onClick={() => submitForApproval(selectedPlan.id)}>
-                <Send className="w-4 h-4" />
-                Submit for Approval
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Progress Overview */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Total Items</div>
-              <div className="text-2xl font-bold">{totalItems}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Completed</div>
-              <div className="text-2xl font-bold text-green-600">{completedItems}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Progress</div>
-              <div className="mt-2">
-                <Progress value={progress} className="h-2" />
-                <span className="text-sm font-medium">{Math.round(progress)}%</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Total Cost</div>
-              <div className="text-2xl font-bold">${selectedPlan.total_estimated_cost?.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Approval Status */}
-        {selectedPlan.status === 'PENDING_APPROVAL' && selectedPlan.approvals && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Approval Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                {selectedPlan.approvals.map((approval, idx) => (
-                  <div key={approval.id} className="flex items-center">
-                    <div className={`flex flex-col items-center ${
-                      approval.status === 'APPROVED' ? 'text-green-600' : 
-                      approval.status === 'REJECTED' ? 'text-red-600' : 'text-muted-foreground'
-                    }`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                        approval.status === 'APPROVED' ? 'bg-green-100 border-green-500' :
-                        approval.status === 'REJECTED' ? 'bg-red-100 border-red-500' :
-                        'bg-muted border-muted-foreground/30'
-                      }`}>
-                        {approval.status === 'APPROVED' ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
-                      </div>
-                      <span className="text-xs mt-1 text-center max-w-20">{approval.approver_role.replace(/_/g, ' ')}</span>
-                    </div>
-                    {idx < selectedPlan.approvals!.length - 1 && (
-                      <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Training Items */}
-        <Tabs defaultValue="all">
-          <TabsList>
-            <TabsTrigger value="all">All Items ({totalItems})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({totalItems - completedItems})</TabsTrigger>
-            <TabsTrigger value="completed">Completed ({completedItems})</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-4">
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3 pr-4">
-                {selectedPlan.items?.map((item) => {
-                  const stageInfo = getExecutionStageInfo(item.execution_stage);
-                  return (
-                    <Card 
-                      key={item.id} 
-                      className="overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={(e) => handleItemClick(item, e)}
-                    >
-                      <div className={`h-1 ${stageInfo.color}`} />
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <GraduationCap className="w-4 h-4 text-primary" />
-                              <h4 className="font-medium">{item.title}</h4>
-                              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">{item.overview}</p>
-                            
-                            <div className="flex flex-wrap gap-4 mt-3 text-sm">
-                              {item.training_provider && (
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Building className="w-3 h-3" />
-                                  {item.training_provider}
-                                </span>
-                              )}
-                              {item.duration_hours && (
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="w-3 h-3" />
-                                  {item.duration_hours}h
-                                </span>
-                              )}
-                              {item.estimated_cost && (
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <DollarSign className="w-3 h-3" />
-                                  ${item.estimated_cost.toLocaleString()}
-                                </span>
-                              )}
-                              {item.tentative_date && (
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Calendar className="w-3 h-3" />
-                                  {format(new Date(item.tentative_date), 'MMM d, yyyy')}
-                                </span>
-                              )}
-                              {item.trainees?.length > 0 && (
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Users className="w-3 h-3" />
-                                  {item.trainees.length} trainees
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Execution Stage Badge */}
-                            <div className="mt-3 pt-3 border-t">
-                              <Badge variant="outline" className={`${stageInfo.color} text-white border-none`}>
-                                {stageInfo.label}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="pending" className="mt-4">
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3 pr-4">
-                {selectedPlan.items?.filter(i => i.execution_stage !== 'COMPLETED').map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="cursor-pointer hover:border-primary/50 transition-colors"
-                    onClick={(e) => handleItemClick(item, e)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">{item.title}</div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <Badge variant="outline" className="mt-2">
-                        {getExecutionStageInfo(item.execution_stage).label}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="completed" className="mt-4">
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3 pr-4">
-                {selectedPlan.items?.filter(i => i.execution_stage === 'COMPLETED').map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="cursor-pointer hover:border-primary/50 transition-colors"
-                    onClick={(e) => handleItemClick(item, e)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          <span className="font-medium">{item.title}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      {item.completion_date && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Completed on {format(new Date(item.completion_date), 'MMM d, yyyy')}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-
-        {/* Training Item Details Dialog */}
-        {selectedItem && (
-          <ORATrainingItemDetails
-            item={selectedItem}
-            open={showItemDetails}
-            onOpenChange={setShowItemDetails}
-            onUpdateItem={updateTrainingItem}
-            planStatus={selectedPlan.status}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // Training Plans List View
+  // Direct Items View - show all training items without intermediate plan card
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -343,7 +111,7 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
             Manage training requirements for operations readiness
           </p>
         </div>
-        {trainingPlans && trainingPlans.length > 0 ? (
+        {totalItems > 0 ? (
           <Button onClick={() => setShowAddItemDialog(true)} className="gap-2">
             <Plus className="w-4 h-4" />
             Add Item
@@ -356,11 +124,11 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
         )}
       </div>
 
-      {trainingPlans?.length === 0 ? (
+      {totalItems === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <GraduationCap className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="font-medium text-lg">No Training Plans Yet</h3>
+            <h3 className="font-medium text-lg">No Training Items Yet</h3>
             <p className="text-sm text-muted-foreground text-center max-w-md mt-1">
               Create a training plan to track required trainings, approvals, and execution progress.
             </p>
@@ -371,49 +139,182 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {trainingPlans?.map((plan) => {
-            const completedItems = plan.items?.filter(i => i.execution_stage === 'COMPLETED').length || 0;
-            const totalItems = plan.items?.length || 0;
-            const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+        <>
+          {/* Progress Overview */}
+          <div className="grid grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Total Items</div>
+                <div className="text-2xl font-bold">{totalItems}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Completed</div>
+                <div className="text-2xl font-bold text-green-600">{completedItems}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Progress</div>
+                <div className="mt-2">
+                  <Progress value={progress} className="h-2" />
+                  <span className="text-sm font-medium">{Math.round(progress)}%</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Total Cost</div>
+                <div className="text-2xl font-bold">${totalCost.toLocaleString()}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-            return (
-              <Card 
-                key={plan.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => { setSelectedPlan(plan); setActiveView('details'); }}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{plan.title}</h3>
-                        {getStatusBadge(plan.status)}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                      
-                      <div className="flex items-center gap-6 mt-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm">{totalItems} items</span>
+          {/* Training Items */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="all">All Items ({totalItems})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({totalItems - completedItems})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({completedItems})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all" className="mt-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3 pr-4">
+                  {allTrainingItems.map((item) => {
+                    const stageInfo = getExecutionStageInfo(item.execution_stage);
+                    return (
+                      <Card 
+                        key={item.id} 
+                        className="overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                        onClick={() => handleItemClick(item)}
+                      >
+                        <div className={`h-1 ${stageInfo.color}`} />
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <GraduationCap className="w-4 h-4 text-primary" />
+                                <h4 className="font-medium">{item.title}</h4>
+                                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">{item.overview}</p>
+                              
+                              <div className="flex flex-wrap gap-4 mt-3 text-sm">
+                                {item.training_provider && (
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <Building className="w-3 h-3" />
+                                    {item.training_provider}
+                                  </span>
+                                )}
+                                {item.duration_hours && (
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <Clock className="w-3 h-3" />
+                                    {item.duration_hours}h
+                                  </span>
+                                )}
+                                {item.estimated_cost && (
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <DollarSign className="w-3 h-3" />
+                                    ${item.estimated_cost.toLocaleString()}
+                                  </span>
+                                )}
+                                {item.tentative_date && (
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <Calendar className="w-3 h-3" />
+                                    {format(new Date(item.tentative_date), 'MMM d, yyyy')}
+                                  </span>
+                                )}
+                                {item.trainees?.length > 0 && (
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <Users className="w-3 h-3" />
+                                    {item.trainees.length} trainees
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Execution Stage Badge */}
+                              <div className="mt-3 pt-3 border-t">
+                                <Badge variant="outline" className={`${stageInfo.color} text-white border-none`}>
+                                  {stageInfo.label}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="pending" className="mt-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3 pr-4">
+                  {allTrainingItems.filter(i => i.execution_stage !== 'COMPLETED').map((item) => (
+                    <Card 
+                      key={item.id} 
+                      className="cursor-pointer hover:border-primary/50 transition-colors"
+                      onClick={() => handleItemClick(item)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium">{item.title}</div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm">${plan.total_estimated_cost?.toLocaleString()}</span>
+                        <Badge variant="outline" className="mt-2">
+                          {getExecutionStageInfo(item.execution_stage).label}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="completed" className="mt-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3 pr-4">
+                  {allTrainingItems.filter(i => i.execution_stage === 'COMPLETED').map((item) => (
+                    <Card 
+                      key={item.id} 
+                      className="cursor-pointer hover:border-primary/50 transition-colors"
+                      onClick={() => handleItemClick(item)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <span className="font-medium">{item.title}</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </div>
-                        <div className="flex-1 max-w-32">
-                          <Progress value={progress} className="h-2" />
-                        </div>
-                        <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                        {item.completion_date && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Completed on {format(new Date(item.completion_date), 'MMM d, yyyy')}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
+
+      {/* Training Item Details Dialog */}
+      {selectedItem && trainingPlans && trainingPlans.length > 0 && (
+        <ORATrainingItemDetails
+          item={selectedItem}
+          open={showItemDetails}
+          onOpenChange={setShowItemDetails}
+          onUpdateItem={updateTrainingItem}
+          planStatus={trainingPlans[0].status}
+        />
       )}
 
       <ORATrainingPlanWizard
