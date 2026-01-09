@@ -14,6 +14,7 @@ import {
 import { useORATrainingPlans, ORATrainingPlan, ORATrainingItem } from '@/hooks/useORATrainingPlan';
 import { ORATrainingPlanWizard } from './ORATrainingPlanWizard';
 import { ORATrainingItemDetails } from './ORATrainingItemDetails';
+import { ORAAddTrainingItemDialog } from './ORAAddTrainingItemDialog';
 import { format } from 'date-fns';
 
 interface ORATrainingPlanTabProps {
@@ -34,12 +35,13 @@ const EXECUTION_STAGES = [
 
 export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanId }) => {
   const [showWizard, setShowWizard] = useState(false);
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<ORATrainingPlan | null>(null);
   const [selectedItem, setSelectedItem] = useState<ORATrainingItem | null>(null);
   const [showItemDetails, setShowItemDetails] = useState(false);
   const [activeView, setActiveView] = useState<'list' | 'details'>('list');
   
-  const { trainingPlans, isLoading, submitForApproval, updateApproval, updateTrainingItem } = useORATrainingPlans(oraPlanId);
+  const { trainingPlans, isLoading, submitForApproval, updateApproval, updateTrainingItem, addTrainingItem } = useORATrainingPlans(oraPlanId);
 
   const handleItemClick = (item: ORATrainingItem, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -341,10 +343,17 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
             Manage training requirements for operations readiness
           </p>
         </div>
-        <Button onClick={() => setShowWizard(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Create Training Plan
-        </Button>
+        {trainingPlans && trainingPlans.length > 0 ? (
+          <Button onClick={() => setShowAddItemDialog(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Item
+          </Button>
+        ) : (
+          <Button onClick={() => setShowWizard(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create Training Plan
+          </Button>
+        )}
       </div>
 
       {trainingPlans?.length === 0 ? (
@@ -411,6 +420,13 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
         open={showWizard}
         onOpenChange={setShowWizard}
         oraPlanId={oraPlanId}
+      />
+
+      <ORAAddTrainingItemDialog
+        open={showAddItemDialog}
+        onOpenChange={setShowAddItemDialog}
+        trainingPlans={trainingPlans || []}
+        onAddItem={(planId, item) => addTrainingItem({ planId, item })}
       />
     </div>
   );
