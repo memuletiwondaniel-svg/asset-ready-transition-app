@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ORAApprovalsPanelProps {
   planId: string;
@@ -21,68 +23,49 @@ interface ApprovalRecord {
   role: string;
   name: string;
   position: string;
-  email: string;
   avatarUrl: string | null;
   status: 'APPROVED' | 'PENDING' | 'REJECTED';
   approvalDate: Date | null;
   comments: string | null;
-  signatureData: string | null;
 }
 
-const getMockApprovals = (): ApprovalRecord[] => [
-  {
-    id: '1',
-    sequenceOrder: 1,
-    role: 'ORA Lead',
-    name: 'Roaa Abdullah',
-    position: 'Operations Readiness Lead',
-    email: '',
-    avatarUrl: null,
-    status: 'APPROVED',
-    approvalDate: new Date('2026-01-05T09:30:00'),
-    comments: 'All ORA activities have been reviewed and verified. Training plan is comprehensive and maintenance readiness checklist is complete.',
-    signatureData: 'R. Abdullah'
-  },
-  {
-    id: '2',
-    sequenceOrder: 2,
-    role: 'Project Manager',
-    name: 'Wim Moelker',
-    position: 'Senior Project Manager',
-    email: '',
-    avatarUrl: null,
-    status: 'APPROVED',
-    approvalDate: new Date('2026-01-06T14:15:00'),
-    comments: 'Project deliverables align with operational requirements. Resource allocation is adequate.',
-    signatureData: 'W. Moelker'
-  },
-  {
-    id: '3',
-    sequenceOrder: 3,
-    role: 'Deputy Plant Director',
-    name: 'Ewan McConnachie',
-    position: 'Deputy Plant Director',
-    email: '',
-    avatarUrl: null,
-    status: 'APPROVED',
-    approvalDate: new Date('2026-01-07T11:45:00'),
-    comments: 'Reviewed handover documentation and maintenance readiness. All safety protocols have been addressed.',
-    signatureData: 'E. McConnachie'
-  },
-  {
-    id: '4',
-    sequenceOrder: 4,
-    role: 'Plant Director',
-    name: 'Yesr Tamoul',
-    position: 'Plant Director',
-    email: '',
-    avatarUrl: null,
-    status: 'APPROVED',
-    approvalDate: new Date('2026-01-08T16:30:00'),
-    comments: 'Final approval granted. ORA Plan meets all operational readiness criteria.',
-    signatureData: 'Y. Tamoul'
-  }
+// Role to user mapping - maps approval roles to user emails
+const ROLE_USER_MAPPING: Record<string, string> = {
+  'ORA Lead': 'roaa.abdullah@basrahgas.iq',
+  'Project Manager': 'willem.Moelker@basrahgas.iq',
+  'Deputy Plant Director': 'ewan.mcconnachie2@basrahgas.iq',
+  'Plant Director': 'yesr.tamoul@basrahgas.iq'
+};
+
+const APPROVAL_SEQUENCE = [
+  { role: 'ORA Lead', defaultPosition: 'Operations Readiness Lead' },
+  { role: 'Project Manager', defaultPosition: 'Senior Project Manager' },
+  { role: 'Deputy Plant Director', defaultPosition: 'Deputy Plant Director' },
+  { role: 'Plant Director', defaultPosition: 'Plant Director' }
 ];
+
+const getFullAvatarUrl = (avatarUrl: string | null) => {
+  if (!avatarUrl) return null;
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  const { data } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
+  return data.publicUrl;
+};
+
+const useApproverProfiles = () => {
+  return useQuery({
+    queryKey: ['ora-approver-profiles'],
+    queryFn: async () => {
+      const emails = Object.values(ROLE_USER_MAPPING);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, full_name, first_name, last_name, position, avatar_url')
+        .in('email', emails);
+
+      if (error) throw error;
+      return data || [];
+    }
+  });
+};
 
 const getInitials = (name: string) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -95,32 +78,28 @@ const getStatusConfig = (status: string) => {
         icon: CheckCircle2,
         label: 'Approved',
         badgeClass: 'bg-green-500/10 text-green-600 border-green-200 dark:border-green-800',
-        accentClass: 'border-l-green-500/60',
-        numberClass: 'bg-green-500/10 text-green-600'
+        accentClass: 'border-l-green-500/60'
       };
     case 'PENDING':
       return {
         icon: Clock,
         label: 'Pending',
         badgeClass: 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-800',
-        accentClass: 'border-l-amber-500/60',
-        numberClass: 'bg-amber-500/10 text-amber-600'
+        accentClass: 'border-l-amber-500/60'
       };
     case 'REJECTED':
       return {
         icon: XCircle,
         label: 'Rejected',
         badgeClass: 'bg-red-500/10 text-red-600 border-red-200 dark:border-red-800',
-        accentClass: 'border-l-red-500/60',
-        numberClass: 'bg-red-500/10 text-red-600'
+        accentClass: 'border-l-red-500/60'
       };
     default:
       return {
         icon: Clock,
         label: 'Unknown',
         badgeClass: '',
-        accentClass: 'border-l-border',
-        numberClass: 'bg-muted text-muted-foreground'
+        accentClass: 'border-l-border'
       };
   }
 };
@@ -142,11 +121,10 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
       )}
       
       <div className="flex gap-2.5">
-
         {/* Card content */}
         <Card className={cn("flex-1 border-l-2", config.accentClass)}>
           <CardContent className="p-4">
-      {/* Header row */}
+            {/* Header row */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Avatar className="h-9 w-9 flex-shrink-0">
@@ -177,7 +155,7 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
               </div>
             </div>
 
-            {/* Signature & Comments */}
+            {/* Comments */}
             {approval.comments && (
               <div className="mt-2 ml-12 text-sm">
                 <p className="text-muted-foreground">"{approval.comments}"</p>
@@ -191,11 +169,65 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
 };
 
 export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) => {
-  const approvals = getMockApprovals();
+  const { data: profiles, isLoading } = useApproverProfiles();
+
+  // Build approvals list with real user data
+  const approvals = useMemo((): ApprovalRecord[] => {
+    const profileMap = new Map(
+      profiles?.map(p => [p.email?.toLowerCase(), p]) || []
+    );
+
+    // Mock approval data - in production this would come from the database
+    const mockApprovalData = [
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-05T09:30:00'), comments: 'All ORA activities have been reviewed and verified. Training plan is comprehensive and maintenance readiness checklist is complete.' },
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-06T14:15:00'), comments: 'Project deliverables align with operational requirements. Resource allocation is adequate.' },
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-07T11:45:00'), comments: 'Reviewed handover documentation and maintenance readiness. All safety protocols have been addressed.' },
+      { status: 'APPROVED' as const, approvalDate: new Date('2026-01-08T16:30:00'), comments: 'Final approval granted. ORA Plan meets all operational readiness criteria.' }
+    ];
+
+    return APPROVAL_SEQUENCE.map((seq, index) => {
+      const email = ROLE_USER_MAPPING[seq.role]?.toLowerCase();
+      const profile = profileMap.get(email);
+      const approvalData = mockApprovalData[index];
+      
+      const fullName = profile?.full_name || 
+        (profile?.first_name && profile?.last_name 
+          ? `${profile.first_name} ${profile.last_name}` 
+          : seq.role);
+
+      return {
+        id: `${index + 1}`,
+        sequenceOrder: index + 1,
+        role: seq.role,
+        name: fullName,
+        position: profile?.position || seq.defaultPosition,
+        avatarUrl: getFullAvatarUrl(profile?.avatar_url || null),
+        status: approvalData.status,
+        approvalDate: approvalData.approvalDate,
+        comments: approvalData.comments
+      };
+    });
+  }, [profiles]);
+
   const approvedCount = approvals.filter(a => a.status === 'APPROVED').length;
   const totalCount = approvals.length;
   const progress = (approvedCount / totalCount) * 100;
   const allApproved = approvedCount === totalCount;
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-5 max-w-3xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/3" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-24 bg-muted rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-5 max-w-3xl mx-auto">
