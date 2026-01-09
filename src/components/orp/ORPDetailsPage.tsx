@@ -5,21 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, Users as UsersIcon, GraduationCap, Wrench, ChevronDown, History } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History } from 'lucide-react';
 import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
 import { ORPGanttChart } from './ORPGanttChart';
 import { ORPApprovalPanel } from './ORPApprovalPanel';
-import { ORPResourcesPanel } from './ORPResourcesPanel';
 import { ORPExportPDF } from './ORPExportPDF';
-import { ORPActivityTimeline } from './ORPActivityTimeline';
 import { ORPComparisonView } from './ORPComparisonView';
-import { ORPResourceDashboard } from './ORPResourceDashboard';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { ORATrainingPlanTab } from '@/components/ora/ORATrainingPlanTab';
 import { ORAMaintenanceReadinessTab } from '@/components/ora/ORAMaintenanceReadinessTab';
 import { ORAHandoverTab } from '@/components/ora/ORAHandoverTab';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,6 +115,16 @@ export const ORPDetailsPage: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-border bg-card px-6 py-4">
+          {/* Breadcrumb Navigation */}
+          <BreadcrumbNavigation 
+            currentPageLabel={plan.project?.project_title || 'ORA Plan'}
+            customBreadcrumbs={[
+              { label: 'Home', path: '/', onClick: () => navigate('/') },
+              { label: 'Operation Readiness', path: '/operation-readiness', onClick: () => navigate('/operation-readiness') }
+            ]}
+            className="mb-3"
+          />
+          
           <div className="flex items-center gap-4 mb-2">
             <Button
               variant="ghost"
@@ -192,16 +200,13 @@ export const ORPDetailsPage: React.FC = () => {
                   <GanttChart className="w-4 h-4" />
                   Gantt Chart
                 </TabsTrigger>
-                <TabsTrigger value="activity" className="gap-2">
-                  Activity
-                </TabsTrigger>
                 <TabsTrigger value="training" className="gap-2">
                   <GraduationCap className="w-4 h-4" />
                   Training
                 </TabsTrigger>
                 <TabsTrigger value="maintenance" className="gap-2">
                   <Wrench className="w-4 h-4" />
-                  Maintenance
+                  OR Maintenance
                 </TabsTrigger>
                 <TabsTrigger value="handover" className="gap-2">
                   <ArrowLeftRight className="w-4 h-4" />
@@ -222,18 +227,7 @@ export const ORPDetailsPage: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="gantt" className="h-full m-0 p-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Gantt Chart</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ORPGanttChart deliverables={plan.deliverables || []} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="activity" className="h-full m-0 p-6">
-                <ORPActivityTimeline planId={plan.id} />
+                <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} />
               </TabsContent>
 
               <TabsContent value="training" className="h-full m-0 p-6">

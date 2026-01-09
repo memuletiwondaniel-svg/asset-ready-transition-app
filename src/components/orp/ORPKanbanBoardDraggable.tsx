@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar, Clock, Plus, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
 import { ORPBulkActionsToolbar } from './ORPBulkActionsToolbar';
@@ -14,6 +16,7 @@ import { useORPPlans } from '@/hooks/useORPPlans';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CreateORPModal } from './CreateORPModal';
 
 interface ORPKanbanBoardProps {
   planId: string;
@@ -110,7 +113,10 @@ const DeliverableCard: React.FC<DeliverableCardProps> = ({ item, onClick, isSele
               </div>
               <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary transition-all"
+                  className={cn(
+                    "h-full transition-all",
+                    item.status === 'COMPLETED' ? "bg-green-500" : "bg-primary"
+                  )}
                   style={{ width: `${item.completion_percentage}%` }}
                 />
               </div>
@@ -126,6 +132,8 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
   const [selectedDeliverables, setSelectedDeliverables] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddItem, setShowAddItem] = useState(false);
   const { updateDeliverable } = useORPPlans();
   const { toast } = useToast();
   
@@ -144,8 +152,17 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
     { id: 'ON_HOLD', label: 'On Hold', color: 'amber' }
   ];
 
+  // Filter deliverables based on search query
+  const filteredDeliverables = useMemo(() => {
+    if (!searchQuery.trim()) return deliverables;
+    const query = searchQuery.toLowerCase();
+    return deliverables.filter(d => 
+      d.deliverable?.name?.toLowerCase().includes(query)
+    );
+  }, [deliverables, searchQuery]);
+
   const getColumnDeliverables = (status: string) => {
-    return deliverables.filter(d => d.status === status);
+    return filteredDeliverables.filter(d => d.status === status);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -298,6 +315,23 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
       onDragEnd={handleDragEnd}
     >
       <div className="h-full p-3 sm:p-4 md:p-6">
+        {/* Search and Add Item Toolbar */}
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search deliverables..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={() => setShowAddItem(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add ORA Item
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 h-full">
           {columns.map((column) => {
             const items = getColumnDeliverables(column.id);
@@ -333,6 +367,14 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
           deliverable={selectedDeliverable}
           allDeliverables={deliverables}
           planId={planId}
+        />
+      )}
+
+      {showAddItem && (
+        <CreateORPModal
+          open={showAddItem}
+          onOpenChange={setShowAddItem}
+          onSuccess={() => setShowAddItem(false)}
         />
       )}
 

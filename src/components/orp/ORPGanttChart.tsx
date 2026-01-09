@@ -1,26 +1,73 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus, Search } from 'lucide-react';
+import { CreateORPModal } from './CreateORPModal';
 
 interface ORPGanttChartProps {
+  planId: string;
   deliverables: any[];
 }
 
-export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ deliverables }) => {
+export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddItem, setShowAddItem] = useState(false);
+
+  // Filter deliverables based on search query
+  const filteredDeliverables = useMemo(() => {
+    if (!searchQuery.trim()) return deliverables;
+    const query = searchQuery.toLowerCase();
+    return deliverables.filter(d => 
+      d.deliverable?.name?.toLowerCase().includes(query)
+    );
+  }, [deliverables, searchQuery]);
   // Calculate date range
-  const dates = deliverables
+  const dates = filteredDeliverables
     .filter(d => d.start_date && d.end_date)
     .flatMap(d => [parseISO(d.start_date), parseISO(d.end_date)]);
 
   if (!dates.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground">
-        <div className="text-center">
-          <p>No timeline data available</p>
-          <p className="text-sm mt-2">Add start and end dates to deliverables to see the Gantt chart</p>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Gantt Chart</CardTitle>
+            <div className="flex items-center gap-4">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search deliverables..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button onClick={() => setShowAddItem(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add ORA Item
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <div className="text-center">
+              <p>No timeline data available</p>
+              <p className="text-sm mt-2">Add start and end dates to deliverables to see the Gantt chart</p>
+            </div>
+          </div>
+        </CardContent>
+        {showAddItem && (
+          <CreateORPModal
+            open={showAddItem}
+            onOpenChange={setShowAddItem}
+            onSuccess={() => setShowAddItem(false)}
+          />
+        )}
+      </Card>
     );
   }
 
@@ -58,9 +105,31 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ deliverables }) =>
   }
 
   return (
-    <div className="space-y-4">
-      {/* Timeline header */}
-      <div className="sticky top-0 bg-background z-10 border-b pb-2">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Gantt Chart</CardTitle>
+          <div className="flex items-center gap-4">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search deliverables..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button onClick={() => setShowAddItem(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add ORA Item
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Timeline header */}
+          <div className="sticky top-0 bg-background z-10 border-b pb-2">
         <div className="flex">
           <div className="w-64 flex-shrink-0 font-semibold px-4">Activity</div>
           <div className="flex-1 relative h-12">
@@ -82,10 +151,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ deliverables }) =>
         </div>
       </div>
 
-      {/* Gantt rows */}
-      <div className="space-y-2">
-        {deliverables
-          .filter(d => d.start_date && d.end_date)
+          {/* Gantt rows */}
+          <div className="space-y-2">
+            {filteredDeliverables
+              .filter(d => d.start_date && d.end_date)
           .map((deliverable) => {
             const position = getBarPosition(deliverable.start_date, deliverable.end_date);
             return (
@@ -145,28 +214,38 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ deliverables }) =>
                 </div>
               </div>
             );
-          })}
-      </div>
+              })}
+          </div>
 
-      {/* Legend */}
-      <div className="flex gap-4 pt-4 border-t">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-slate-300 rounded" />
-          <span className="text-xs">Not Started</span>
+          {/* Legend */}
+          <div className="flex gap-4 pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-slate-300 rounded" />
+              <span className="text-xs">Not Started</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-500 rounded" />
+              <span className="text-xs">In Progress</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-500 rounded" />
+              <span className="text-xs">Completed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-amber-500 rounded" />
+              <span className="text-xs">On Hold</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded" />
-          <span className="text-xs">In Progress</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded" />
-          <span className="text-xs">Completed</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-amber-500 rounded" />
-          <span className="text-xs">On Hold</span>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+
+      {showAddItem && (
+        <CreateORPModal
+          open={showAddItem}
+          onOpenChange={setShowAddItem}
+          onSuccess={() => setShowAddItem(false)}
+        />
+      )}
+    </Card>
   );
 };
