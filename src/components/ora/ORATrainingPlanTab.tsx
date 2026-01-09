@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useORATrainingPlans, ORATrainingPlan, ORATrainingItem } from '@/hooks/useORATrainingPlan';
 import { ORATrainingPlanWizard } from './ORATrainingPlanWizard';
+import { ORATrainingItemDetails } from './ORATrainingItemDetails';
 import { format } from 'date-fns';
 
 interface ORATrainingPlanTabProps {
@@ -34,9 +35,17 @@ const EXECUTION_STAGES = [
 export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanId }) => {
   const [showWizard, setShowWizard] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<ORATrainingPlan | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ORATrainingItem | null>(null);
+  const [showItemDetails, setShowItemDetails] = useState(false);
   const [activeView, setActiveView] = useState<'list' | 'details'>('list');
   
   const { trainingPlans, isLoading, submitForApproval, updateApproval, updateTrainingItem } = useORATrainingPlans(oraPlanId);
+
+  const handleItemClick = (item: ORATrainingItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedItem(item);
+    setShowItemDetails(true);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -186,7 +195,11 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                 {selectedPlan.items?.map((item) => {
                   const stageInfo = getExecutionStageInfo(item.execution_stage);
                   return (
-                    <Card key={item.id} className="overflow-hidden">
+                    <Card 
+                      key={item.id} 
+                      className="overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                      onClick={(e) => handleItemClick(item, e)}
+                    >
                       <div className={`h-1 ${stageInfo.color}`} />
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -194,6 +207,7 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                             <div className="flex items-center gap-2">
                               <GraduationCap className="w-4 h-4 text-primary" />
                               <h4 className="font-medium">{item.title}</h4>
+                              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
                             </div>
                             <p className="text-sm text-muted-foreground mt-1">{item.overview}</p>
                             
@@ -222,69 +236,19 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                                   {format(new Date(item.tentative_date), 'MMM d, yyyy')}
                                 </span>
                               )}
+                              {item.trainees?.length > 0 && (
+                                <span className="flex items-center gap-1 text-muted-foreground">
+                                  <Users className="w-3 h-3" />
+                                  {item.trainees.length} trainees
+                                </span>
+                              )}
                             </div>
 
-                            {/* Execution Pipeline */}
-                            <div className="mt-4 pt-3 border-t">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-medium text-muted-foreground">Execution Stage:</span>
-                                <Badge variant="outline" className={`${stageInfo.color} text-white border-none`}>
-                                  {stageInfo.label}
-                                </Badge>
-                              </div>
-                              
-                              {selectedPlan.status === 'APPROVED' && item.execution_stage !== 'COMPLETED' && (
-                                <div className="flex gap-2 mt-2">
-                                  {item.execution_stage === 'NOT_STARTED' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <Package className="w-3 h-3" />
-                                      Request Materials
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'MATERIALS_REQUESTED' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <ClipboardCheck className="w-3 h-3" />
-                                      Submit for TA Review
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'MATERIALS_UNDER_REVIEW' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <CheckCircle2 className="w-3 h-3" />
-                                      Approve Materials
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'MATERIALS_APPROVED' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <FileText className="w-3 h-3" />
-                                      Issue PO
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'PO_ISSUED' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <Users className="w-3 h-3" />
-                                      Identify Trainees
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'TRAINEES_IDENTIFIED' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <Calendar className="w-3 h-3" />
-                                      Schedule Training
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'SCHEDULED' && (
-                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => handleAdvanceStage(item)}>
-                                      <Play className="w-3 h-3" />
-                                      Start Training
-                                    </Button>
-                                  )}
-                                  {item.execution_stage === 'IN_PROGRESS' && (
-                                    <Button size="sm" className="gap-1 bg-green-600 hover:bg-green-700" onClick={() => handleAdvanceStage(item)}>
-                                      <CheckCircle2 className="w-3 h-3" />
-                                      Mark Completed
-                                    </Button>
-                                  )}
-                                </div>
-                              )}
+                            {/* Execution Stage Badge */}
+                            <div className="mt-3 pt-3 border-t">
+                              <Badge variant="outline" className={`${stageInfo.color} text-white border-none`}>
+                                {stageInfo.label}
+                              </Badge>
                             </div>
                           </div>
                         </div>
@@ -300,9 +264,16 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
             <ScrollArea className="h-[400px]">
               <div className="space-y-3 pr-4">
                 {selectedPlan.items?.filter(i => i.execution_stage !== 'COMPLETED').map((item) => (
-                  <Card key={item.id}>
+                  <Card 
+                    key={item.id} 
+                    className="cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={(e) => handleItemClick(item, e)}
+                  >
                     <CardContent className="p-4">
-                      <div className="font-medium">{item.title}</div>
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">{item.title}</div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </div>
                       <Badge variant="outline" className="mt-2">
                         {getExecutionStageInfo(item.execution_stage).label}
                       </Badge>
@@ -317,11 +288,18 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
             <ScrollArea className="h-[400px]">
               <div className="space-y-3 pr-4">
                 {selectedPlan.items?.filter(i => i.execution_stage === 'COMPLETED').map((item) => (
-                  <Card key={item.id}>
+                  <Card 
+                    key={item.id} 
+                    className="cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={(e) => handleItemClick(item, e)}
+                  >
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                        <span className="font-medium">{item.title}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{item.title}</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </div>
                       {item.completion_date && (
                         <p className="text-sm text-muted-foreground mt-1">
@@ -335,6 +313,17 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
             </ScrollArea>
           </TabsContent>
         </Tabs>
+
+        {/* Training Item Details Dialog */}
+        {selectedItem && (
+          <ORATrainingItemDetails
+            item={selectedItem}
+            open={showItemDetails}
+            onOpenChange={setShowItemDetails}
+            onUpdateItem={updateTrainingItem}
+            planStatus={selectedPlan.status}
+          />
+        )}
       </div>
     );
   }
