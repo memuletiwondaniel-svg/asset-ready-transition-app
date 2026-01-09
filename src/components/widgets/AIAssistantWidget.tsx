@@ -43,9 +43,9 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
-          AI Assistant
+          Ask Bob
         </CardTitle>
-        <CardDescription className="text-xs">Quick AI-powered shortcuts</CardDescription>
+        <CardDescription className="text-xs">Your intelligent ORSH assistant</CardDescription>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {quickPrompts.map((prompt, idx) => {

@@ -64,7 +64,7 @@ interface SidebarContentProps {
 
 const navigationItems: NavigationItem[] = [
   { label: 'Home', icon: Home, path: '/', section: 'home' },
-  { label: 'Ask ORSH AI', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
+  { label: 'Ask Bob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
   { label: 'PSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { label: 'My Tasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
   { label: 'ORA Plans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
