@@ -79,7 +79,84 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
   const { data: allUsers } = useProfileUsers();
   const [activeTab, setActiveTab] = useState('details');
   const [isEditing, setIsEditing] = useState(false);
-  const [materials, setMaterials] = useState<ORATrainingMaterial[]>(item.materials || []);
+  
+  // Mock training materials data with TA review info
+  const mockMaterials: ORATrainingMaterial[] = [
+    {
+      id: 'mat-001',
+      training_item_id: item.id,
+      file_name: 'BGC_Compressor_Operations_Module1_Introduction.pptx',
+      file_path: 'mock/compressor-intro.pptx',
+      file_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      file_size: 2458624,
+      material_type: 'PRESENTATION',
+      uploaded_by: 'user-001',
+      is_approved: true,
+      approved_by: 'Ahmed Al-Rashid',
+      approved_at: '2026-01-05T10:30:00Z',
+      created_at: '2026-01-03T09:00:00Z'
+    },
+    {
+      id: 'mat-002',
+      training_item_id: item.id,
+      file_name: 'BGC_Compressor_Safety_Procedures.pptx',
+      file_path: 'mock/compressor-safety.pptx',
+      file_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      file_size: 3145728,
+      material_type: 'PRESENTATION',
+      uploaded_by: 'user-001',
+      is_approved: true,
+      approved_by: 'Ahmed Al-Rashid',
+      approved_at: '2026-01-05T11:15:00Z',
+      created_at: '2026-01-03T10:00:00Z'
+    },
+    {
+      id: 'mat-003',
+      training_item_id: item.id,
+      file_name: 'BGC_Compressor_Startup_Shutdown_Procedures.pptx',
+      file_path: 'mock/compressor-ops.pptx',
+      file_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      file_size: 4194304,
+      material_type: 'PRESENTATION',
+      uploaded_by: 'user-001',
+      is_approved: true,
+      approved_by: 'Mohammed Hassan',
+      approved_at: '2026-01-06T09:00:00Z',
+      created_at: '2026-01-04T08:00:00Z'
+    },
+    {
+      id: 'mat-004',
+      training_item_id: item.id,
+      file_name: 'Compressor_Technical_Manual_Rev3.pdf',
+      file_path: 'mock/compressor-manual.pdf',
+      file_type: 'application/pdf',
+      file_size: 8388608,
+      material_type: 'DOCUMENT',
+      uploaded_by: 'user-001',
+      is_approved: true,
+      approved_by: 'Ali Abdullah',
+      approved_at: '2026-01-06T14:30:00Z',
+      created_at: '2026-01-04T11:00:00Z'
+    },
+    {
+      id: 'mat-005',
+      training_item_id: item.id,
+      file_name: 'BGC_Compressor_Troubleshooting_Guide.pptx',
+      file_path: 'mock/compressor-troubleshoot.pptx',
+      file_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      file_size: 2097152,
+      material_type: 'PRESENTATION',
+      uploaded_by: 'user-001',
+      is_approved: false,
+      approved_by: undefined,
+      approved_at: undefined,
+      created_at: '2026-01-07T10:00:00Z'
+    }
+  ];
+  
+  const [materials, setMaterials] = useState<ORATrainingMaterial[]>(
+    item.materials?.length ? item.materials : mockMaterials
+  );
   const [showPasteInput, setShowPasteInput] = useState(false);
   const [pasteContent, setPasteContent] = useState('');
   const [selectedTAIds, setSelectedTAIds] = useState<string[]>([]);
@@ -790,7 +867,12 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Training Materials</CardTitle>
+                    <div>
+                      <CardTitle className="text-base">Training Materials</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {materials.filter(m => m.is_approved).length} of {materials.length} materials approved by TA
+                      </p>
+                    </div>
                     <Label className="cursor-pointer">
                       <Input
                         type="file"
@@ -809,33 +891,80 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                 </CardHeader>
                 <CardContent>
                   {materials?.length > 0 ? (
-                    <div className="space-y-2">
-                      {materials.map((material) => (
-                        <div key={material.id} className="flex items-center justify-between p-3 rounded-lg border">
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium text-sm">{material.file_name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {material.file_size ? `${(material.file_size / 1024).toFixed(1)} KB` : 'Unknown size'}
-                              </p>
+                    <div className="space-y-3">
+                      {materials.map((material) => {
+                        const isPPT = material.file_type?.includes('presentation') || material.file_name.endsWith('.pptx') || material.file_name.endsWith('.ppt');
+                        const isPDF = material.file_type?.includes('pdf') || material.file_name.endsWith('.pdf');
+                        
+                        return (
+                          <div key={material.id} className="p-4 rounded-lg border bg-card">
+                            <div className="flex items-start gap-4">
+                              {/* File Icon */}
+                              <div className={`p-3 rounded-lg ${isPPT ? 'bg-orange-100 dark:bg-orange-950/30' : isPDF ? 'bg-red-100 dark:bg-red-950/30' : 'bg-blue-100 dark:bg-blue-950/30'}`}>
+                                {isPPT ? (
+                                  <FileText className={`w-6 h-6 ${isPPT ? 'text-orange-600' : 'text-blue-600'}`} />
+                                ) : (
+                                  <FileText className={`w-6 h-6 ${isPDF ? 'text-red-600' : 'text-blue-600'}`} />
+                                )}
+                              </div>
+                              
+                              {/* File Details */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{material.file_name}</p>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  <span>{material.file_size ? `${(material.file_size / (1024 * 1024)).toFixed(1)} MB` : 'Unknown size'}</span>
+                                  <span>•</span>
+                                  <span>{isPPT ? 'PowerPoint Presentation' : isPDF ? 'PDF Document' : 'Document'}</span>
+                                </div>
+                                
+                                {/* TA Review Status */}
+                                <div className="mt-3 pt-3 border-t">
+                                  {material.is_approved ? (
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
+                                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-medium text-green-700 dark:text-green-400">Approved by TA</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {material.approved_by} • {material.approved_at ? format(new Date(material.approved_at), 'MMM d, yyyy') : ''}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
+                                        <Clock className="w-4 h-4 text-amber-600" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Pending TA Review</p>
+                                        <p className="text-xs text-muted-foreground">Awaiting Technical Authority approval</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Status Badge */}
+                              <div className="flex-shrink-0">
+                                {material.is_approved ? (
+                                  <Badge className="bg-green-500 text-white">
+                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                    Approved
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Pending
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {material.is_approved ? (
-                              <Badge className="bg-green-500">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Approved
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Pending Review
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
