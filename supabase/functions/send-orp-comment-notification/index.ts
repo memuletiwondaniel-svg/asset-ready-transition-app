@@ -70,7 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error fetching plan:", planError);
     }
 
-    const projectName = plan?.project?.project_title || "ORP Project";
+    const projectName = plan?.project?.project_title || "ORA Project";
     const commenterName = comment.user?.full_name || "A team member";
 
     // Send emails to mentioned users

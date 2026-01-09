@@ -39,7 +39,7 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarCheck className="w-5 h-5" />
-            OR Plans
+            ORA Plans
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -58,15 +58,15 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarCheck className="w-5 h-5" />
-          OR Plans
+          ORA Plans
         </CardTitle>
       </CardHeader>
       <CardContent>
         {!plans || plans.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <CalendarCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No ORP plans created yet</p>
-            <p className="text-sm mt-2">Click "Create New ORP" to get started</p>
+            <p>No ORA plans created yet</p>
+            <p className="text-sm mt-2">Click "Create New ORA" to get started</p>
           </div>
         ) : (
           <div className="space-y-3">

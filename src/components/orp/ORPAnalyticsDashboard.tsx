@@ -66,7 +66,7 @@ export const ORPAnalyticsDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total ORPs</CardTitle>
+            <CardTitle className="text-sm font-medium">Total ORA Plans</CardTitle>
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -140,7 +140,7 @@ export const ORPAnalyticsDashboard: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>ORPs by Phase</CardTitle>
+            <CardTitle>ORA Plans by Phase</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -159,7 +159,7 @@ export const ORPAnalyticsDashboard: React.FC = () => {
       {/* ORP List */}
       <Card>
         <CardHeader>
-          <CardTitle>ORP Overview</CardTitle>
+          <CardTitle>ORA Overview</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

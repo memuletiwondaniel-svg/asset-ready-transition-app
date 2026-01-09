@@ -67,7 +67,7 @@ const navigationItems: NavigationItem[] = [
   { label: 'Ask ORSH AI', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
   { label: 'PSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
   { label: 'My Reviews', icon: ClipboardCheck, path: '/pssr/approver-dashboard', section: 'pssr-reviews' },
-  { label: 'OR Plans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
+  { label: 'ORA Plans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
   { label: 'OR Maintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
   { label: 'P2A Handover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },
   { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },

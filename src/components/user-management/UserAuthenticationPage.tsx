@@ -66,7 +66,7 @@ const UserAuthenticationPage: React.FC<UserAuthenticationPageProps> = ({ token, 
     { value: 'manage_users', label: 'Edit, Create or Authenticate New User', description: 'Full user management capabilities' },
     { value: 'manage_projects', label: 'Edit or Create New Project', description: 'Can create and modify project information' },
     
-    { value: 'manage_operation_readiness_plan', label: 'Create or Approve Operation Readiness Plan', description: 'Can create and approve operational readiness plans' },
+    { value: 'manage_operation_readiness_plan', label: 'Create or Approve ORA Plan', description: 'Can create and approve ORA (Operation Readiness Assessment) plans' },
     { value: 'manage_training_plan', label: 'Create or Approve Training Plan', description: 'Can create and approve training plans' },
     { value: 'manage_pac', label: 'Create or Approve PAC or PAC line Item', description: 'Can manage Project Acceptance Certificates' },
     { value: 'manage_fac', label: 'Create or Approve FAC or FAC line Item', description: 'Can manage Facility Acceptance Certificates' }

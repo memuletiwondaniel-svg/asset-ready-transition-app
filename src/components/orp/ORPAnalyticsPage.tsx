@@ -35,9 +35,9 @@ export const ORPAnalyticsPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">ORP Analytics Dashboard</h1>
+              <h1 className="text-2xl font-bold text-foreground">ORA Analytics Dashboard</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Track performance and metrics across all OR Plans
+                Track performance and metrics across all ORA Plans
               </p>
             </div>
           </div>

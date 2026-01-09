@@ -18,7 +18,7 @@ export const ORPLandingPage: React.FC = () => {
   useEffect(() => {
     setBreadcrumbs([
       { label: 'Home', path: '/' },
-      { label: 'OR Plans', path: '/operation-readiness' }
+      { label: 'ORA Plans', path: '/operation-readiness' }
     ]);
   }, [setBreadcrumbs]);
 
@@ -45,11 +45,11 @@ export const ORPLandingPage: React.FC = () => {
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent">
               <CalendarCheck className="w-5 h-5 text-white" />
             </div>
-            <BreadcrumbNavigation currentPageLabel="OR Plans" />
+            <BreadcrumbNavigation currentPageLabel="ORA Plans" />
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">OR Plans</h1>
+              <h1 className="text-2xl font-bold text-foreground">ORA Plans</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Manage and track operation readiness activities
               </p>
@@ -61,7 +61,7 @@ export const ORPLandingPage: React.FC = () => {
               </Button>
               <Button onClick={() => setShowCreateModal(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
-                Create New ORP
+                Create New ORA
               </Button>
             </div>
           </div>

@@ -56,7 +56,7 @@ export const ORPDetailsPage: React.FC = () => {
           }
         }} onLogout={() => navigate('/')} />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">ORP not found</p>
+          <p className="text-muted-foreground">ORA Plan not found</p>
         </div>
       </div>
     );
