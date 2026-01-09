@@ -92,7 +92,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'PRESENTATION',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Ahmed Al-Rashid',
+      approved_by: 'Bart Den Hond, TA2 - PACO - Asset',
       approved_at: '2026-01-05T10:30:00Z',
       created_at: '2026-01-03T09:00:00Z'
     },
@@ -106,7 +106,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'DOCUMENT',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Ahmed Al-Rashid',
+      approved_by: 'Ahmed Al-Rashid, TA2 - Rotating - Asset',
       approved_at: '2026-01-05T11:15:00Z',
       created_at: '2026-01-03T10:00:00Z'
     },
@@ -120,7 +120,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'PRESENTATION',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Mohammed Hassan',
+      approved_by: 'Mohammed Hassan, TA2 - Process - Asset',
       approved_at: '2026-01-06T09:00:00Z',
       created_at: '2026-01-04T08:00:00Z'
     },
@@ -134,7 +134,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'DOCUMENT',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Ali Abdullah',
+      approved_by: 'Ali Abdullah, TA2 - Static - Asset',
       approved_at: '2026-01-06T14:30:00Z',
       created_at: '2026-01-04T11:00:00Z'
     },
@@ -148,7 +148,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'DOCUMENT',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Mohammed Hassan',
+      approved_by: 'Bart Den Hond, TA2 - PACO - Asset',
       approved_at: '2026-01-07T08:45:00Z',
       created_at: '2026-01-05T14:00:00Z'
     },
@@ -939,29 +939,13 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                                 {/* TA Review Status */}
                                 <div className="mt-3 pt-3 border-t">
                                   {material.is_approved ? (
-                                    <div className="flex items-center gap-3">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
-                                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                        </div>
-                                        <div>
-                                          <p className="text-sm font-medium text-green-700 dark:text-green-400">Approved by TA</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {material.approved_by} • {material.approved_at ? format(new Date(material.approved_at), 'MMM d, yyyy') : ''}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      Approved by {material.approved_by}{material.approved_at ? `, ${format(new Date(material.approved_at), 'MMM d, yyyy')}` : ''}
+                                    </p>
                                   ) : (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
-                                        <Clock className="w-4 h-4 text-amber-600" />
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Pending TA Review</p>
-                                        <p className="text-xs text-muted-foreground">Awaiting Technical Authority approval</p>
-                                      </div>
-                                    </div>
+                                    <p className="text-sm text-amber-600 dark:text-amber-400">
+                                      Pending TA Review
+                                    </p>
                                   )}
                                 </div>
                               </div>
@@ -970,12 +954,10 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                               <div className="flex-shrink-0">
                                 {material.is_approved ? (
                                   <Badge className="bg-green-500 text-white">
-                                    <CheckCircle2 className="w-3 h-3 mr-1" />
                                     Approved
                                   </Badge>
                                 ) : (
                                   <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
-                                    <Clock className="w-3 h-3 mr-1" />
                                     Pending
                                   </Badge>
                                 )}
