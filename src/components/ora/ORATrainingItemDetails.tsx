@@ -16,8 +16,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   GraduationCap, Building, Clock, DollarSign, Calendar, Users,
   FileText, CheckCircle2, AlertCircle, Upload, X, Plus,
-  ClipboardCheck, Package, Play
+  ClipboardCheck, Package, Play, ClipboardPaste, Trash2
 } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import * as XLSX from 'xlsx';
 import { ORATrainingItem, ORATrainingMaterial } from '@/hooks/useORATrainingPlan';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,22 +64,92 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('details');
   const [isEditing, setIsEditing] = useState(false);
-  const [newTrainee, setNewTrainee] = useState('');
   const [materials, setMaterials] = useState<ORATrainingMaterial[]>(item.materials || []);
+  const [showPasteInput, setShowPasteInput] = useState(false);
+  const [pasteContent, setPasteContent] = useState('');
+  
+  // New trainee form state
+  const [newTraineeName, setNewTraineeName] = useState('');
+  const [newTraineeRole, setNewTraineeRole] = useState('');
+  const [newTraineeStaffId, setNewTraineeStaffId] = useState('');
 
   const stageInfo = EXECUTION_STAGES.find(s => s.value === item.execution_stage) || EXECUTION_STAGES[0];
   const currentStageIndex = EXECUTION_STAGES.findIndex(s => s.value === item.execution_stage);
 
-  const handleAddTrainee = () => {
-    if (!newTrainee.trim()) return;
-    const updatedTrainees = [...(item.trainees || []), newTrainee.trim()];
-    onUpdateItem({ itemId: item.id, updates: { trainees: updatedTrainees } });
-    setNewTrainee('');
+  // Parse trainees - they're stored as "Name|Role|StaffId" strings for backward compatibility
+  const parseTrainee = (trainee: string) => {
+    const parts = trainee.split('|');
+    return {
+      name: parts[0] || '',
+      role: parts[1] || '',
+      staffId: parts[2] || ''
+    };
   };
 
-  const handleRemoveTrainee = (trainee: string) => {
-    const updatedTrainees = (item.trainees || []).filter(t => t !== trainee);
+  const formatTrainee = (name: string, role: string, staffId: string) => {
+    return `${name}|${role}|${staffId}`;
+  };
+
+  const handleAddTrainee = () => {
+    if (!newTraineeName.trim()) return;
+    const traineeString = formatTrainee(newTraineeName.trim(), newTraineeRole.trim(), newTraineeStaffId.trim());
+    const updatedTrainees = [...(item.trainees || []), traineeString];
     onUpdateItem({ itemId: item.id, updates: { trainees: updatedTrainees } });
+    setNewTraineeName('');
+    setNewTraineeRole('');
+    setNewTraineeStaffId('');
+  };
+
+  const handleRemoveTrainee = (index: number) => {
+    const updatedTrainees = (item.trainees || []).filter((_, i) => i !== index);
+    onUpdateItem({ itemId: item.id, updates: { trainees: updatedTrainees } });
+  };
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet);
+
+      const newTrainees = jsonData.map(row => {
+        const name = row['Name'] || row['name'] || row['NAME'] || '';
+        const role = row['Role'] || row['role'] || row['ROLE'] || row['Position'] || row['position'] || '';
+        const staffId = row['Staff ID'] || row['StaffID'] || row['staff_id'] || row['ID'] || row['id'] || '';
+        return formatTrainee(name, role, staffId);
+      }).filter(t => parseTrainee(t).name);
+
+      const updatedTrainees = [...(item.trainees || []), ...newTrainees];
+      onUpdateItem({ itemId: item.id, updates: { trainees: updatedTrainees } });
+      toast({ title: 'Success', description: `Added ${newTrainees.length} trainees from Excel` });
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to parse Excel file', variant: 'destructive' });
+    }
+    e.target.value = '';
+  };
+
+  const handlePasteImport = () => {
+    if (!pasteContent.trim()) return;
+
+    const lines = pasteContent.trim().split('\n');
+    const newTrainees = lines.map(line => {
+      const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(',');
+      const name = parts[0]?.trim() || '';
+      const role = parts[1]?.trim() || '';
+      const staffId = parts[2]?.trim() || '';
+      return formatTrainee(name, role, staffId);
+    }).filter(t => parseTrainee(t).name);
+
+    if (newTrainees.length > 0) {
+      const updatedTrainees = [...(item.trainees || []), ...newTrainees];
+      onUpdateItem({ itemId: item.id, updates: { trainees: updatedTrainees } });
+      toast({ title: 'Success', description: `Added ${newTrainees.length} trainees` });
+      setPasteContent('');
+      setShowPasteInput(false);
+    }
   };
 
   const handleAdvanceStage = () => {
@@ -267,15 +346,71 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
             <TabsContent value="attendees" className="m-0 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Training Attendees</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Training Attendees</CardTitle>
+                    <div className="flex gap-2">
+                      <Label className="cursor-pointer">
+                        <Input
+                          type="file"
+                          className="hidden"
+                          onChange={handleExcelUpload}
+                          accept=".xlsx,.xls,.csv"
+                        />
+                        <Button variant="outline" size="sm" className="gap-2" asChild>
+                          <span>
+                            <Upload className="w-4 h-4" />
+                            Import Excel
+                          </span>
+                        </Button>
+                      </Label>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => setShowPasteInput(!showPasteInput)}
+                      >
+                        <ClipboardPaste className="w-4 h-4" />
+                        Paste Data
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Add Trainee */}
-                  <div className="flex gap-2">
+                  {/* Paste Input Area */}
+                  {showPasteInput && (
+                    <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                      <p className="text-sm text-muted-foreground">
+                        Paste data with columns: Name, Role, Staff ID (tab or comma separated)
+                      </p>
+                      <Textarea
+                        placeholder="John Doe&#9;Engineer&#9;EMP001&#10;Jane Smith&#9;Operator&#9;EMP002"
+                        value={pasteContent}
+                        onChange={(e) => setPasteContent(e.target.value)}
+                        rows={4}
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handlePasteImport}>Import</Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setShowPasteInput(false); setPasteContent(''); }}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add Trainee Form */}
+                  <div className="grid grid-cols-4 gap-2">
                     <Input
-                      placeholder="Enter trainee name..."
-                      value={newTrainee}
-                      onChange={(e) => setNewTrainee(e.target.value)}
+                      placeholder="Name"
+                      value={newTraineeName}
+                      onChange={(e) => setNewTraineeName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Role"
+                      value={newTraineeRole}
+                      onChange={(e) => setNewTraineeRole(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Staff ID"
+                      value={newTraineeStaffId}
+                      onChange={(e) => setNewTraineeStaffId(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTrainee()}
                     />
                     <Button onClick={handleAddTrainee} className="gap-2">
@@ -284,34 +419,51 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                     </Button>
                   </div>
 
-                  {/* Trainees List */}
-                  <div className="space-y-2">
-                    {item.trainees?.length > 0 ? (
-                      item.trainees.map((trainee, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Users className="w-4 h-4 text-primary" />
-                            </div>
-                            <span className="font-medium">{trainee}</span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveTrainee(trainee)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>No trainees added yet</p>
-                        <p className="text-sm">Add trainees who will attend this training</p>
-                      </div>
-                    )}
-                  </div>
+                  {/* Trainees Table */}
+                  {item.trainees?.length > 0 ? (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">S/N</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Staff ID</TableHead>
+                            <TableHead className="w-12"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {item.trainees.map((trainee, idx) => {
+                            const parsed = parseTrainee(trainee);
+                            return (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium">{idx + 1}</TableCell>
+                                <TableCell>{parsed.name}</TableCell>
+                                <TableCell>{parsed.role || '-'}</TableCell>
+                                <TableCell>{parsed.staffId || '-'}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleRemoveTrainee(idx)}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No trainees added yet</p>
+                      <p className="text-sm">Add trainees manually, import from Excel, or paste data</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
