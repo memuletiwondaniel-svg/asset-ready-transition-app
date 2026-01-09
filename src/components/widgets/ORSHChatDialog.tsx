@@ -639,8 +639,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
               </Button>
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-primary-foreground" />
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div>
                   <h2 className="font-semibold text-sm">Bob</h2>
@@ -660,8 +660,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
               {isEmptyChat ? (
                 /* Welcome Screen */
                 <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mb-6 shadow-lg">
-                    <Sparkles className="h-8 w-8 text-primary-foreground" />
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-6 shadow-lg">
+                    <Sparkles className="h-8 w-8 text-white" />
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Hi, I'm Bob</h1>
                   <p className="text-muted-foreground mb-8 max-w-md">
@@ -688,8 +688,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                   {messages.map((message, index) => (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
-                          <Bot className="h-4 w-4 text-primary-foreground" />
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                          <Bot className="h-4 w-4 text-white" />
                         </div>
                       )}
                       <div className={cn(
@@ -742,8 +742,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                   
                   {isLoading && (
                     <div className="flex gap-4">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
-                        <Bot className="h-4 w-4 text-primary-foreground" />
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-white" />
                       </div>
                       <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                         <div className="flex gap-1.5">
