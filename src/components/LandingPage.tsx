@@ -665,42 +665,42 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('pssr')}
-                  className="rounded-xl px-5 py-3 h-auto hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
+                  className="rounded-xl px-5 py-3 h-auto bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
                 >
                   <Zap className="w-5 h-5 mr-2 text-primary" /> 
-                  <span className="text-primary/80">Create PSSR</span>
+                  Create PSSR
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('pssr')}
-                  className="rounded-xl px-5 py-3 h-auto hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
+                  className="rounded-xl px-5 py-3 h-auto bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
                 >
                   <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
-                  <span className="text-green-600/70 dark:text-green-400/70">Approve PSSR</span>
+                  Approve PSSR
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('p2a')}
-                  className="rounded-xl px-5 py-3 h-auto hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
+                  className="rounded-xl px-5 py-3 h-auto bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
                 >
                   <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
-                  <span className="text-blue-600/70 dark:text-blue-400/70">Develop P2A</span>
+                  Develop P2A
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('projects')}
-                  className="rounded-xl px-5 py-3 h-auto hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
+                  className="rounded-xl px-5 py-3 h-auto bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
                 >
                   <Zap className="w-5 h-5 mr-2 text-purple-500" /> 
-                  <span className="text-purple-600/70 dark:text-purple-400/70">Add Project</span>
+                  Add Project
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => onNavigate('pssr')}
-                  className="rounded-xl px-5 py-3 h-auto hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
+                  className="rounded-xl px-5 py-3 h-auto bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
                 >
                   <ClipboardList className="w-5 h-5 mr-2 text-amber-500" /> 
-                  <span className="text-amber-600/70 dark:text-amber-400/70">My Tasks</span>
+                  My Tasks
                 </Button>
               </div>
             </div>
