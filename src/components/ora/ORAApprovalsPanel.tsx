@@ -145,33 +145,33 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
 
         {/* Card content */}
         <Card className={cn("flex-1 border-l-2", config.accentClass)}>
-          <CardContent className="p-2.5">
-            {/* Header row */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Avatar className="h-7 w-7 flex-shrink-0">
+          <CardContent className="p-4">
+      {/* Header row */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <Avatar className="h-9 w-9 flex-shrink-0">
                   <AvatarImage src={approval.avatarUrl || undefined} alt={approval.name} />
-                  <AvatarFallback className="text-[10px] bg-muted">
+                  <AvatarFallback className="text-xs bg-muted">
                     {getInitials(approval.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-medium text-sm">{approval.name}</span>
-                    <span className="text-muted-foreground text-xs">·</span>
-                    <span className="text-xs text-muted-foreground">{approval.position}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">{approval.name}</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-sm text-muted-foreground">{approval.position}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-3 flex-shrink-0">
                 {approval.approvalDate && (
-                  <span className="text-[11px] text-muted-foreground hidden sm:block">
+                  <span className="text-sm text-muted-foreground hidden sm:block">
                     {format(approval.approvalDate, 'MMM d, h:mm a')}
                   </span>
                 )}
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-1.5 font-medium", config.badgeClass)}>
-                  <StatusIcon className="h-3 w-3 mr-0.5" />
+                <Badge variant="outline" className={cn("font-medium", config.badgeClass)}>
+                  <StatusIcon className="h-3.5 w-3.5 mr-1" />
                   {config.label}
                 </Badge>
               </div>
@@ -179,7 +179,7 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
 
             {/* Signature & Comments */}
             {approval.comments && (
-              <div className="mt-1.5 ml-9 text-xs">
+              <div className="mt-2 ml-12 text-sm">
                 <p className="text-muted-foreground">"{approval.comments}"</p>
               </div>
             )}
@@ -198,25 +198,22 @@ export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) 
   const allApproved = approvedCount === totalCount;
 
   return (
-    <div className="p-4 space-y-4 max-w-2xl mx-auto">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between gap-3 pb-3 border-b">
+    <div className="p-6 space-y-5 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 pb-4 border-b">
         <div className="flex items-center gap-2">
           <CheckCircle2 className={cn(
-            "h-4 w-4",
+            "h-5 w-5",
             allApproved ? "text-green-500" : "text-muted-foreground"
           )} />
-          <h3 className="font-medium text-sm">ORA Plan Approvals</h3>
+          <h3 className="text-lg font-semibold">ORA Plan Approvals</h3>
         </div>
-        <div className="flex items-center gap-2.5">
-          <Progress value={progress} className="w-16 h-1.5" />
-          <span className="text-xs text-muted-foreground font-medium">
+        <div className="flex items-center gap-3">
+          <Progress value={progress} className="w-20 h-2" />
+          <span className="text-sm text-muted-foreground font-medium">
             {approvedCount}/{totalCount}
           </span>
-          <Badge 
-            variant={allApproved ? "default" : "secondary"} 
-            className="text-[10px] h-5 px-1.5"
-          >
+          <Badge variant={allApproved ? "default" : "secondary"}>
             {allApproved ? "Complete" : "In Progress"}
           </Badge>
         </div>
