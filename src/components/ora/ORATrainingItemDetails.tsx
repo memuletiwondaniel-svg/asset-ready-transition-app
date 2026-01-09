@@ -17,7 +17,7 @@ import {
   GraduationCap, Building, Clock, DollarSign, Calendar, Users,
   FileText, CheckCircle2, AlertCircle, Upload, X, Plus,
   ClipboardCheck, Package, Play, ClipboardPaste, Trash2, Edit2,
-  Image, FileCheck, Download, Eye, Filter
+  Image, FileCheck, Download, Eye, Filter, Presentation, FileType2
 } from 'lucide-react';
 import { EvidenceUploadModal } from './EvidenceUploadModal';
 import {
@@ -919,12 +919,13 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                         };
                         
                         const fileStyle = getFileIcon();
+                        const FileIcon = isPPT ? Presentation : isPDF ? FileType2 : isWord ? FileText : FileText;
                         return (
                           <div key={material.id} className="p-4 rounded-lg border bg-card">
                             <div className="flex items-start gap-4">
                               {/* File Icon */}
                               <div className={`p-3 rounded-lg ${fileStyle.bg}`}>
-                                <FileText className={`w-6 h-6 ${fileStyle.color}`} />
+                                <FileIcon className={`w-6 h-6 ${fileStyle.color}`} />
                               </div>
                               
                               {/* File Details */}
