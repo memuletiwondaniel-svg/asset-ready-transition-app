@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import ItemApprovalCard from '@/components/pssr/ItemApprovalCard';
 import PriorityActionModal from '@/components/pssr/PriorityActionModal';
 import DisciplineCompletionPanel from '@/components/pssr/DisciplineCompletionPanel';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 interface ChecklistItemWithResponse {
   id: string;
@@ -225,7 +226,11 @@ const PSSRItemReview: React.FC = () => {
   if (isLoading) {
     return (
       <SidebarProvider>
-        <OrshSidebar />
+        <OrshSidebar 
+          currentPage="pssr" 
+          onNavigate={createSidebarNavigator(navigate)}
+          onLogout={() => navigate('/')}
+        />
         <SidebarInset>
           <div className="flex items-center justify-center h-screen">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -237,7 +242,11 @@ const PSSRItemReview: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <OrshSidebar />
+      <OrshSidebar 
+        currentPage="pssr" 
+        onNavigate={createSidebarNavigator(navigate)}
+        onLogout={() => navigate('/')}
+      />
       <SidebarInset>
         <div className="flex flex-col h-screen bg-background">
           {/* Header */}
