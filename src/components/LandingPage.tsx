@@ -7,7 +7,7 @@ import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileTex
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { useRotatingText } from '@/hooks/useRotatingText';
+import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
@@ -105,9 +105,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     "List all projects awaiting commissioning...",
   ];
 
-  const { currentText: placeholderText, isVisible: placeholderVisible } = useRotatingText({
+  const { displayText: placeholderText, isTyping } = useTypingEffect({
     texts: sampleQuestions,
-    interval: 4000,
+    typingSpeed: 40,
+    pauseBeforeNext: 2500,
+    pauseBeforeType: 300,
   });
 
   // Widget grid configuration
@@ -609,7 +611,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             setUserInput('');
                           }
                         }}
-                        className={`flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm placeholder:text-muted-foreground transition-opacity duration-300 ${placeholderVisible ? 'placeholder:opacity-100' : 'placeholder:opacity-0'}`}
+                        className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm placeholder:text-muted-foreground"
                       />
                       <Button
                         variant="ghost"
