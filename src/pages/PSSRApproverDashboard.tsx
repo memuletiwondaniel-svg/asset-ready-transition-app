@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUserTasks } from '@/hooks/useUserTasks';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { 
@@ -15,25 +15,43 @@ import {
   CheckCircle2, 
   Search,
   MapPin,
-  Calendar,
   ArrowRight,
   FileText,
   Filter,
-  ListChecks
+  ListChecks,
+  Zap,
+  ThumbsUp
 } from 'lucide-react';
-import { format, formatDistanceToNow, differenceInDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MyTasksPanel } from '@/components/MyTasksPanel';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import { NotificationCenter } from '@/components/NotificationCenter';
 
 const PSSRApproverDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: pendingPSSRs, isLoading } = usePSSRsAwaitingReview(user?.id);
+  const { data: pendingPSSRs, isLoading: isLoadingPSSRs } = usePSSRsAwaitingReview(user?.id);
+  const { tasks, loading: isLoadingTasks } = useUserTasks();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'overdue'>('all');
   const [activeTab, setActiveTab] = useState<'tasks' | 'pssr-reviews'>('tasks');
+
+  // Calculate task counts by category
+  const taskCounts = useMemo(() => {
+    const now = new Date();
+    const pendingTasks = tasks.filter(t => t.status !== 'completed');
+    
+    return {
+      total: pendingTasks.length,
+      approval: pendingTasks.filter(t => t.type === 'approval').length,
+      review: pendingTasks.filter(t => t.type === 'review').length,
+      action: pendingTasks.filter(t => t.type === 'action').length,
+      overdue: pendingTasks.filter(t => t.due_date && new Date(t.due_date) < now).length
+    };
+  }, [tasks]);
 
   // Filter PSSRs
   const filteredPSSRs = pendingPSSRs?.filter(item => {
@@ -51,12 +69,16 @@ const PSSRApproverDashboard: React.FC = () => {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  // Calculate summary stats
-  const stats = {
+  // Calculate PSSR stats
+  const pssrStats = {
     total: pendingPSSRs?.length || 0,
     new: pendingPSSRs?.filter(p => differenceInDays(new Date(), new Date(p.pendingSince)) < 3).length || 0,
     overdue: pendingPSSRs?.filter(p => differenceInDays(new Date(), new Date(p.pendingSince)) >= 7).length || 0,
   };
+
+  // Combined stats
+  const totalTasks = taskCounts.total + pssrStats.total;
+  const totalOverdue = taskCounts.overdue + pssrStats.overdue;
 
   const getPendingBadgeColor = (pendingSince: string) => {
     const days = differenceInDays(new Date(), new Date(pendingSince));
@@ -81,7 +103,8 @@ const PSSRApproverDashboard: React.FC = () => {
       'operation-readiness': '/operation-readiness',
       'p2a-handover': '/p2a-handover',
       'or-maintenance': '/or-maintenance',
-      'pssr-reviews': '/pssr-reviews',
+      'my-tasks': '/my-tasks',
+      'pssr-reviews': '/my-tasks',
     };
     const route = routes[section] || `/${section}`;
     navigate(route);
@@ -92,22 +115,122 @@ const PSSRApproverDashboard: React.FC = () => {
       <div className="min-h-screen flex w-full bg-background">
         <OrshSidebar 
           onNavigate={handleSidebarNavigate}
-          currentPage="pssr-reviews"
+          currentPage="my-tasks"
         />
         <SidebarInset className="flex-1">
-          <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">My Reviews</h1>
-                <p className="text-muted-foreground mt-1">
-                  Manage your tasks and pending approvals
-                </p>
+          {/* Standard Header */}
+          <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+            <BreadcrumbNavigation currentPageLabel="My Tasks" />
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+                  <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    View and manage all tasks assigned to you
+                  </p>
+                </div>
               </div>
-              <Badge variant="outline" className="w-fit px-4 py-2 text-sm">
-                <ClipboardCheck className="h-4 w-4 mr-2" />
-                Review Dashboard
-              </Badge>
+              
+              <NotificationCenter />
+            </div>
+          </div>
+
+          <div className="p-4 md:p-6 space-y-6">
+            {/* Task Category Statistics */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+              {/* Total Tasks */}
+              <Card className="border-l-4 border-l-primary">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total Tasks</p>
+                      <p className="text-2xl font-bold">{totalTasks}</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <ListChecks className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* PSSR Reviews */}
+              <Card className="border-l-4 border-l-amber-500">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">PSSR Reviews</p>
+                      <p className="text-2xl font-bold text-amber-600">{pssrStats.total}</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <ClipboardCheck className="h-5 w-5 text-amber-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Approvals */}
+              <Card className="border-l-4 border-l-blue-500">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Approvals</p>
+                      <p className="text-2xl font-bold text-blue-600">{taskCounts.approval}</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <ThumbsUp className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Reviews */}
+              <Card className="border-l-4 border-l-purple-500">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Reviews</p>
+                      <p className="text-2xl font-bold text-purple-600">{taskCounts.review}</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Action Items */}
+              <Card className="border-l-4 border-l-green-500">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Action Items</p>
+                      <p className="text-2xl font-bold text-green-600">{taskCounts.action}</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Overdue */}
+              <Card className="border-l-4 border-l-red-500">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Overdue</p>
+                      <p className="text-2xl font-bold text-red-600">{totalOverdue}</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Main Tabs */}
@@ -116,13 +239,18 @@ const PSSRApproverDashboard: React.FC = () => {
                 <TabsTrigger value="tasks" className="flex items-center gap-2">
                   <ListChecks className="h-4 w-4" />
                   My Tasks
+                  {taskCounts.total > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {taskCounts.total}
+                    </Badge>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="pssr-reviews" className="flex items-center gap-2">
                   <ClipboardCheck className="h-4 w-4" />
                   PSSR Reviews
-                  {stats.total > 0 && (
+                  {pssrStats.total > 0 && (
                     <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                      {stats.total}
+                      {pssrStats.total}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -135,51 +263,6 @@ const PSSRApproverDashboard: React.FC = () => {
 
               {/* PSSR Reviews Tab */}
               <TabsContent value="pssr-reviews" className="mt-6 space-y-6">
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="border-l-4 border-l-primary">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total Pending</p>
-                          <p className="text-3xl font-bold">{stats.total}</p>
-                        </div>
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <FileText className="h-6 w-6 text-primary" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-l-4 border-l-green-500">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">New ({"<"} 3 days)</p>
-                          <p className="text-3xl font-bold text-green-600">{stats.new}</p>
-                        </div>
-                        <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                          <CheckCircle2 className="h-6 w-6 text-green-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-l-4 border-l-red-500">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Overdue ({">"} 7 days)</p>
-                          <p className="text-3xl font-bold text-red-600">{stats.overdue}</p>
-                        </div>
-                        <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-                          <AlertTriangle className="h-6 w-6 text-red-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Filters */}
                 <Card>
                   <CardContent className="pt-6">
@@ -215,7 +298,7 @@ const PSSRApproverDashboard: React.FC = () => {
 
                 {/* PSSR List */}
                 <div className="space-y-4">
-                  {isLoading ? (
+                  {isLoadingPSSRs ? (
                     <Card>
                       <CardContent className="py-12 text-center">
                         <div className="animate-pulse">Loading your pending reviews...</div>
