@@ -31,6 +31,7 @@ export interface ORATrainingItem {
   duration_hours?: number;
   tentative_date?: string;
   scheduled_date?: string;
+  scheduled_end_date?: string;
   estimated_cost: number;
   actual_cost?: number;
   execution_stage: 'NOT_STARTED' | 'MATERIALS_REQUESTED' | 'MATERIALS_UNDER_REVIEW' | 'MATERIALS_APPROVED' | 'PO_ISSUED' | 'TRAINEES_IDENTIFIED' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -38,6 +39,7 @@ export interface ORATrainingItem {
   ta_approval_date?: string;
   po_number?: string;
   po_issued_date?: string;
+  po_status?: 'PENDING' | 'ISSUED';
   trainees: string[];
   completion_date?: string;
   notes?: string;

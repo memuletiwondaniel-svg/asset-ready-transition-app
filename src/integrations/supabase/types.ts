@@ -706,7 +706,9 @@ export type Database = {
           overview: string | null
           po_issued_date: string | null
           po_number: string | null
+          po_status: string | null
           scheduled_date: string | null
+          scheduled_end_date: string | null
           ta_approval_date: string | null
           ta_reviewer_id: string | null
           target_audience: string[] | null
@@ -734,7 +736,9 @@ export type Database = {
           overview?: string | null
           po_issued_date?: string | null
           po_number?: string | null
+          po_status?: string | null
           scheduled_date?: string | null
+          scheduled_end_date?: string | null
           ta_approval_date?: string | null
           ta_reviewer_id?: string | null
           target_audience?: string[] | null
@@ -762,7 +766,9 @@ export type Database = {
           overview?: string | null
           po_issued_date?: string | null
           po_number?: string | null
+          po_status?: string | null
           scheduled_date?: string | null
+          scheduled_end_date?: string | null
           ta_approval_date?: string | null
           ta_reviewer_id?: string | null
           target_audience?: string[] | null

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   GraduationCap, Building, Clock, DollarSign, Calendar, Users,
   FileText, CheckCircle2, AlertCircle, Upload, X, Plus,
-  ClipboardCheck, Package, Play, ClipboardPaste, Trash2
+  ClipboardCheck, Package, Play, ClipboardPaste, Trash2, Edit2
 } from 'lucide-react';
 import {
   Table,
@@ -26,6 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import * as XLSX from 'xlsx';
 import { ORATrainingItem, ORATrainingMaterial } from '@/hooks/useORATrainingPlan';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
@@ -80,6 +87,32 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
   const [newTraineeRole, setNewTraineeRole] = useState('');
   const [newTraineeStaffId, setNewTraineeStaffId] = useState('');
 
+  // Date picker state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    item.scheduled_date ? new Date(item.scheduled_date) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    item.scheduled_end_date ? new Date(item.scheduled_end_date) : undefined
+  );
+
+  // Cost/PO editor state
+  const [showCostEditor, setShowCostEditor] = useState(false);
+  const [editedCost, setEditedCost] = useState<number>(item.estimated_cost || 0);
+  const [editedPOStatus, setEditedPOStatus] = useState<'PENDING' | 'ISSUED'>(
+    (item.po_status as 'PENDING' | 'ISSUED') || 'PENDING'
+  );
+  const [editedPONumber, setEditedPONumber] = useState(item.po_number || '');
+
+  // Sync state when item changes
+  useEffect(() => {
+    setStartDate(item.scheduled_date ? new Date(item.scheduled_date) : undefined);
+    setEndDate(item.scheduled_end_date ? new Date(item.scheduled_end_date) : undefined);
+    setEditedCost(item.estimated_cost || 0);
+    setEditedPOStatus((item.po_status as 'PENDING' | 'ISSUED') || 'PENDING');
+    setEditedPONumber(item.po_number || '');
+  }, [item]);
+
   // Filter users who can be TAs (those with TA-related positions/roles)
   const taUsers = allUsers?.filter(u => 
     u.position?.toLowerCase().includes('ta') || 
@@ -126,6 +159,39 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     } finally {
       setIsRequestingApproval(false);
     }
+  };
+
+  // Handle saving dates
+  const handleSaveDates = () => {
+    onUpdateItem({
+      itemId: item.id,
+      updates: {
+        scheduled_date: startDate?.toISOString().split('T')[0],
+        scheduled_end_date: endDate?.toISOString().split('T')[0]
+      }
+    });
+    setShowDatePicker(false);
+    toast({ title: 'Dates Updated', description: 'Training dates have been saved' });
+  };
+
+  // Handle saving cost and PO status
+  const handleSaveCostAndPO = () => {
+    const updates: Partial<ORATrainingItem> = {
+      estimated_cost: editedCost,
+      po_status: editedPOStatus
+    };
+    
+    if (editedPOStatus === 'ISSUED') {
+      updates.po_number = editedPONumber;
+      updates.po_issued_date = new Date().toISOString().split('T')[0];
+    } else {
+      updates.po_number = undefined;
+      updates.po_issued_date = undefined;
+    }
+    
+    onUpdateItem({ itemId: item.id, updates });
+    setShowCostEditor(false);
+    toast({ title: 'Cost Updated', description: 'Cost and PO status have been saved' });
   };
 
   const stageInfo = EXECUTION_STAGES.find(s => s.value === item.execution_stage) || EXECUTION_STAGES[0];
@@ -349,34 +415,128 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <DollarSign className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Estimated Cost</p>
-                        <p className="font-medium">${item.estimated_cost?.toLocaleString() || '0'}</p>
+                {/* Estimated Cost Card - Interactive */}
+                <Popover open={showCostEditor} onOpenChange={setShowCostEditor}>
+                  <PopoverTrigger asChild>
+                    <Card className="cursor-pointer hover:bg-muted/50 transition-colors group">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <DollarSign className="w-5 h-5 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground">Estimated Cost</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">${item.estimated_cost?.toLocaleString() || '0'}</p>
+                              <Badge variant={item.po_status === 'ISSUED' ? 'default' : 'secondary'} className="text-xs">
+                                {item.po_status === 'ISSUED' ? 'PO Issued' : 'PO Pending'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Edit2 className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="start">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Estimated Cost ($)</Label>
+                        <Input
+                          type="number"
+                          value={editedCost}
+                          onChange={(e) => setEditedCost(parseFloat(e.target.value) || 0)}
+                          placeholder="Enter cost"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>PO Status</Label>
+                        <RadioGroup 
+                          value={editedPOStatus} 
+                          onValueChange={(v) => setEditedPOStatus(v as 'PENDING' | 'ISSUED')}
+                          className="flex gap-4"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="PENDING" id="po-pending" />
+                            <Label htmlFor="po-pending" className="cursor-pointer">PO Pending</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="ISSUED" id="po-issued" />
+                            <Label htmlFor="po-issued" className="cursor-pointer">PO Issued</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      {editedPOStatus === 'ISSUED' && (
+                        <div className="space-y-2">
+                          <Label>PO Number (optional)</Label>
+                          <Input
+                            value={editedPONumber}
+                            onChange={(e) => setEditedPONumber(e.target.value)}
+                            placeholder="e.g., PO-2026-0001"
+                          />
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setShowCostEditor(false)}>Cancel</Button>
+                        <Button size="sm" onClick={handleSaveCostAndPO}>Save Changes</Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Scheduled Date</p>
-                        <p className="font-medium">
-                          {item.scheduled_date 
-                            ? format(new Date(item.scheduled_date), 'MMM d, yyyy')
-                            : item.tentative_date 
-                              ? `${format(new Date(item.tentative_date), 'MMM d, yyyy')} (Tentative)`
-                              : 'Not scheduled'}
-                        </p>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Scheduled Date Card - Interactive */}
+                <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+                  <PopoverTrigger asChild>
+                    <Card className="cursor-pointer hover:bg-muted/50 transition-colors group">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-5 h-5 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground">Scheduled Date</p>
+                            <p className="font-medium">
+                              {item.scheduled_date && item.scheduled_end_date
+                                ? `${format(new Date(item.scheduled_date), 'MMM d')} - ${format(new Date(item.scheduled_end_date), 'MMM d, yyyy')}`
+                                : item.scheduled_date 
+                                  ? format(new Date(item.scheduled_date), 'MMM d, yyyy')
+                                  : item.tentative_date 
+                                    ? `${format(new Date(item.tentative_date), 'MMM d, yyyy')} (Tentative)`
+                                    : 'Click to schedule'}
+                            </p>
+                          </div>
+                          <Edit2 className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="p-4 space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Start Date</Label>
+                          <CalendarComponent
+                            mode="single"
+                            selected={startDate}
+                            onSelect={setStartDate}
+                            initialFocus
+                            className="rounded-md border"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">End Date</Label>
+                          <CalendarComponent
+                            mode="single"
+                            selected={endDate}
+                            onSelect={setEndDate}
+                            disabled={(date) => startDate ? date < startDate : false}
+                            className="rounded-md border"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2 border-t">
+                        <Button variant="ghost" size="sm" onClick={() => setShowDatePicker(false)}>Cancel</Button>
+                        <Button size="sm" onClick={handleSaveDates}>Save Dates</Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Target Audience */}
