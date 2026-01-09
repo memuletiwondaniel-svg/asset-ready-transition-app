@@ -137,8 +137,8 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
           </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="w-full justify-start">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+          <TabsList className="w-full justify-start flex-shrink-0">
             <TabsTrigger value="details" className="gap-2">
               <FileText className="w-4 h-4" />
               Details
@@ -157,8 +157,9 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 mt-4">
-            <TabsContent value="details" className="m-0 space-y-4">
+          <div className="flex-1 min-h-0 mt-4">
+            <ScrollArea className="h-full max-h-[calc(90vh-200px)]">
+              <TabsContent value="details" className="m-0 space-y-4 pr-4">
               {/* Overview */}
               <Card>
                 <CardHeader className="pb-3">
@@ -491,7 +492,8 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                 </CardContent>
               </Card>
             </TabsContent>
-          </ScrollArea>
+            </ScrollArea>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
