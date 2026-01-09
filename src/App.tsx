@@ -58,6 +58,7 @@ const App = () => (
                     <Route path="/project-management" element={<ProjectManagementPage />} />
                     <Route path="/project/:id" element={<ProjectDetailsPage />} />
                     <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
+                    <Route path="/pssr-reviews" element={<PSSRApproverDashboard />} />
                     <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                     <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
         <Route path="/operation-readiness" element={<ORPLandingPage />} />
