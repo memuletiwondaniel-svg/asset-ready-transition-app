@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   GraduationCap, Building, Clock, DollarSign, Calendar, Users,
   FileText, CheckCircle2, AlertCircle, Upload, X, Plus,
-  ClipboardCheck, Package, Play, ClipboardPaste, Trash2, Edit2
+  ClipboardCheck, Package, Play, ClipboardPaste, Trash2, Edit2,
+  Image, FileCheck, Download, Eye
 } from 'lucide-react';
 import {
   Table,
@@ -36,6 +37,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import * as XLSX from 'xlsx';
 import { ORATrainingItem, ORATrainingMaterial } from '@/hooks/useORATrainingPlan';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -112,6 +114,33 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     setEditedPOStatus((item.po_status as 'PENDING' | 'ISSUED') || 'PENDING');
     setEditedPONumber(item.po_number || '');
   }, [item]);
+
+  // Evidence state
+  const [evidenceType, setEvidenceType] = useState<string>('attendance_sheet');
+  const [evidenceDescription, setEvidenceDescription] = useState('');
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+
+  // Fetch training evidence
+  const { data: evidenceData, refetch: refetchEvidence } = useQuery({
+    queryKey: ['training-evidence', item.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ora_training_evidence')
+        .select('*')
+        .eq('training_item_id', item.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!item.id
+  });
+
+  const EVIDENCE_TYPES = [
+    { value: 'attendance_sheet', label: 'Attendance Sheet', icon: FileCheck },
+    { value: 'photo', label: 'Training Photo', icon: Image },
+    { value: 'certificate', label: 'Certificate', icon: FileText },
+    { value: 'other', label: 'Other Document', icon: FileText }
+  ];
 
   // Filter users who can be TAs (those with TA-related positions/roles)
   const taUsers = allUsers?.filter(u => 
@@ -317,6 +346,67 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     }
   };
 
+  // Handle evidence upload
+  const handleEvidenceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingEvidence(true);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
+
+      const filePath = `${item.id}/${Date.now()}_${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('training-evidence')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase
+        .from('ora_training_evidence')
+        .insert({
+          training_item_id: item.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_type: file.type,
+          file_size: file.size,
+          evidence_type: evidenceType,
+          description: evidenceDescription || null,
+          uploaded_by: user.user.id
+        });
+
+      if (dbError) throw dbError;
+
+      toast({ title: 'Success', description: 'Evidence uploaded successfully' });
+      refetchEvidence();
+      setEvidenceDescription('');
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsUploadingEvidence(false);
+    }
+  };
+
+  // Handle evidence deletion
+  const handleDeleteEvidence = async (evidenceId: string, filePath: string) => {
+    try {
+      await supabase.storage.from('training-evidence').remove([filePath]);
+      await supabase.from('ora_training_evidence').delete().eq('id', evidenceId);
+      toast({ title: 'Success', description: 'Evidence deleted' });
+      refetchEvidence();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  // Get public URL for evidence file
+  const getEvidenceUrl = (filePath: string) => {
+    const { data } = supabase.storage.from('training-evidence').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
@@ -351,6 +441,12 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
               <Package className="w-4 h-4" />
               Materials
             </TabsTrigger>
+            {item.execution_stage === 'COMPLETED' && (
+              <TabsTrigger value="evidence" className="gap-2">
+                <FileCheck className="w-4 h-4" />
+                Evidence ({evidenceData?.length || 0})
+              </TabsTrigger>
+            )}
             <TabsTrigger value="status" className="gap-2">
               <ClipboardCheck className="w-4 h-4" />
               Status & Approvals
@@ -945,6 +1041,143 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Evidence Tab - Only for completed trainings */}
+            {item.execution_stage === 'COMPLETED' && (
+              <TabsContent value="evidence" className="m-0 space-y-4" forceMount={activeTab === 'evidence' ? true : undefined} hidden={activeTab !== 'evidence'}>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">Upload Training Evidence</CardTitle>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Upload attendance sheets, training photos, certificates, and other evidence
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Evidence Type Selection */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {EVIDENCE_TYPES.map((type) => {
+                        const Icon = type.icon;
+                        return (
+                          <Button
+                            key={type.value}
+                            variant={evidenceType === type.value ? 'default' : 'outline'}
+                            size="sm"
+                            className="gap-2 h-auto py-3 flex-col"
+                            onClick={() => setEvidenceType(type.value)}
+                          >
+                            <Icon className="w-5 h-5" />
+                            <span className="text-xs">{type.label}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Description input */}
+                    <Input
+                      placeholder="Add a description (optional)"
+                      value={evidenceDescription}
+                      onChange={(e) => setEvidenceDescription(e.target.value)}
+                    />
+
+                    {/* Upload button */}
+                    <Label className="cursor-pointer">
+                      <Input
+                        type="file"
+                        className="hidden"
+                        onChange={handleEvidenceUpload}
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                        disabled={isUploadingEvidence}
+                      />
+                      <Button variant="outline" className="w-full gap-2" asChild disabled={isUploadingEvidence}>
+                        <span>
+                          <Upload className="w-4 h-4" />
+                          {isUploadingEvidence ? 'Uploading...' : 'Upload Evidence File'}
+                        </span>
+                      </Button>
+                    </Label>
+                  </CardContent>
+                </Card>
+
+                {/* Evidence List */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Uploaded Evidence</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {evidenceData && evidenceData.length > 0 ? (
+                      <div className="space-y-3">
+                        {evidenceData.map((evidence: any) => {
+                          const typeInfo = EVIDENCE_TYPES.find(t => t.value === evidence.evidence_type) || EVIDENCE_TYPES[3];
+                          const Icon = typeInfo.icon;
+                          const isImage = evidence.file_type?.startsWith('image/');
+                          
+                          return (
+                            <div key={evidence.id} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                              <div className="p-2 rounded-md bg-primary/10">
+                                <Icon className="w-5 h-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{evidence.file_name}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="secondary" className="text-xs">{typeInfo.label}</Badge>
+                                  {evidence.description && (
+                                    <span className="text-xs text-muted-foreground truncate">{evidence.description}</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(evidence.created_at), 'MMM d, yyyy h:mm a')}
+                                </p>
+                              </div>
+                              <div className="flex gap-1">
+                                {isImage && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8"
+                                    onClick={() => window.open(getEvidenceUrl(evidence.file_path), '_blank')}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = getEvidenceUrl(evidence.file_path);
+                                    link.download = evidence.file_name;
+                                    link.click();
+                                  }}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteEvidence(evidence.id, evidence.file_path)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileCheck className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No evidence uploaded yet</p>
+                        <p className="text-sm">Upload attendance sheets, photos, or certificates</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
               </div>
             </ScrollArea>
           </div>
