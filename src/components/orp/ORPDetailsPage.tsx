@@ -195,10 +195,6 @@ export const ORPDetailsPage: React.FC = () => {
                 <TabsTrigger value="activity" className="gap-2">
                   Activity
                 </TabsTrigger>
-                <TabsTrigger value="resources" className="gap-2">
-                  <UsersIcon className="w-4 h-4" />
-                  Resources
-                </TabsTrigger>
                 <TabsTrigger value="training" className="gap-2">
                   <GraduationCap className="w-4 h-4" />
                   Training
@@ -238,10 +234,6 @@ export const ORPDetailsPage: React.FC = () => {
 
               <TabsContent value="activity" className="h-full m-0 p-6">
                 <ORPActivityTimeline planId={plan.id} />
-              </TabsContent>
-
-              <TabsContent value="resources" className="h-full m-0 p-6">
-                <ORPResourcesPanel planId={plan.id} resources={plan.resources || []} />
               </TabsContent>
 
               <TabsContent value="training" className="h-full m-0 p-6">
