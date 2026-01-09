@@ -15,7 +15,9 @@ import {
   ChevronRight,
   Wrench,
   Target,
-  TrendingUp
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useORAMaintenanceBatches, ORAMaintenanceBatch } from '@/hooks/useORATrainingPlan';
 import { format } from 'date-fns';
@@ -24,7 +26,7 @@ interface ORAMaintenanceReadinessTabProps {
   oraPlanId: string;
 }
 
-// Component configuration with icons
+// Component configuration with icons - REORDERED: ARB, PMs, IMS, BOM, 2Y Operating Spares
 const MAINTENANCE_COMPONENTS = [
   {
     key: 'ARB' as const,
@@ -39,16 +41,16 @@ const MAINTENANCE_COMPONENTS = [
     description: 'PM schedules and task creation'
   },
   {
-    key: 'BOM' as const,
-    label: 'BOM - Bill of Materials',
-    icon: Package,
-    description: 'Spare parts and materials setup'
-  },
-  {
     key: 'IMS' as const,
     label: 'IMS - Integrity Management System',
     icon: Shield,
     description: 'Integrity workflows and inspections'
+  },
+  {
+    key: 'BOM' as const,
+    label: 'BOM - Bill of Materials',
+    icon: Package,
+    description: 'Spare parts and materials setup'
   },
   {
     key: '2Y_SPARES' as const,
@@ -69,8 +71,8 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
   const [expandedComponents, setExpandedComponents] = useState<Record<string, boolean>>({
     ARB: true, // Default expand first one
     PMS: false,
-    BOM: false,
     IMS: false,
+    BOM: false,
     '2Y_SPARES': false
   });
 
@@ -94,6 +96,25 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
     if (progress >= 50) return 'bg-blue-500';
     if (progress >= 25) return 'bg-amber-500';
     return 'bg-muted';
+  };
+
+  // Generate progress narrative based on completion
+  const getProgressNarrative = (summary: { progress: number; completedBatches: number; batchCount: number }) => {
+    const { progress, completedBatches, batchCount } = summary;
+    
+    if (progress === 100) {
+      return 'All batches have been completed successfully. Ready for operational handover.';
+    } else if (progress >= 80) {
+      return `Excellent progress. ${completedBatches} of ${batchCount} batches completed. Final batches are in progress and on track for completion.`;
+    } else if (progress >= 50) {
+      return `Good progress being made. ${completedBatches} of ${batchCount} batches completed. Work is progressing well with remaining items under active development.`;
+    } else if (progress >= 25) {
+      return `Work is underway. ${completedBatches} of ${batchCount} batches completed. Additional focus may be required to meet target dates.`;
+    } else if (progress > 0) {
+      return `Early stages of execution. ${completedBatches} of ${batchCount} batches completed. Monitoring required to ensure timely completion.`;
+    } else {
+      return 'Work has not yet commenced on this component. Awaiting resource allocation or prerequisite activities.';
+    }
   };
 
   // Calculate overall stats
@@ -129,6 +150,33 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
           Track CMMS data readiness progress (Read-only view managed by CMMS Lead)
         </p>
       </div>
+
+      {/* Overall Progress Banner */}
+      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <TrendingUp className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Overall OR Maintenance Progress</h3>
+                <p className="text-sm text-muted-foreground">
+                  {completedBatches} of {totalBatches} batches completed across all components
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="w-48">
+                <Progress value={overallProgress} className="h-3" />
+              </div>
+              <div className="text-right">
+                <span className="text-3xl font-bold text-primary">{overallProgress}%</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4">
@@ -251,16 +299,39 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
               </CollapsibleTrigger>
               
               <CollapsibleContent>
+                {/* Progress Narrative */}
+                <div className="ml-8 mt-2 mb-2 p-4 bg-muted/30 rounded-lg border-l-4 border-primary">
+                  <div className="flex items-start gap-3">
+                    {summary.progress >= 80 ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                    ) : summary.progress >= 25 ? (
+                      <TrendingUp className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-1">
+                        {summary.progress}% Complete
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {getProgressNarrative(summary)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Batch Table */}
                 <div className="ml-8 mt-2 border rounded-lg overflow-hidden bg-card">
                   {componentBatches.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
-                          <TableHead className="w-[120px]">Batch</TableHead>
+                          <TableHead className="w-[100px]">Batch</TableHead>
                           <TableHead>Description</TableHead>
-                          <TableHead className="w-[180px]">Progress</TableHead>
-                          <TableHead className="w-[130px]">Target Date</TableHead>
-                          <TableHead className="w-[110px]">Status</TableHead>
+                          <TableHead className="w-[150px]">Responsible</TableHead>
+                          <TableHead className="w-[160px]">Progress</TableHead>
+                          <TableHead className="w-[120px]">Target Date</TableHead>
+                          <TableHead className="w-[100px]">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -271,6 +342,9 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                             </TableCell>
                             <TableCell className="text-muted-foreground">
                               {batch.description}
+                            </TableCell>
+                            <TableCell>
+                              {batch.responsible_person || '—'}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
