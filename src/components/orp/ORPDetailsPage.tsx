@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck } from 'lucide-react';
+import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck, CheckCircle } from 'lucide-react';
 import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
@@ -174,26 +174,27 @@ export const ORPDetailsPage: React.FC = () => {
             <div className="border-b px-6 flex items-center justify-between">
               <TabsList className="flex-wrap h-auto gap-1 p-1">
                 <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <LayoutGrid className="w-4 h-4" />
+                  <LayoutGrid className="w-4 h-4 text-blue-500" />
                   Kanban
                 </TabsTrigger>
                 <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <GanttChart className="w-4 h-4" />
+                  <GanttChart className="w-4 h-4 text-purple-500" />
                   Gantt Chart
                 </TabsTrigger>
                 <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <GraduationCap className="w-4 h-4" />
+                  <GraduationCap className="w-4 h-4 text-emerald-500" />
                   Training
                 </TabsTrigger>
                 <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <Wrench className="w-4 h-4" />
+                  <Wrench className="w-4 h-4 text-orange-500" />
                   OR Maintenance
                 </TabsTrigger>
                 <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
-                  <ArrowLeftRight className="w-4 h-4" />
+                  <ArrowLeftRight className="w-4 h-4 text-cyan-500" />
                   Handover
                 </TabsTrigger>
                 <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
                   Approvals
                 </TabsTrigger>
               </TabsList>
