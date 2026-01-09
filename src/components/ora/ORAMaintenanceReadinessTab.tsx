@@ -109,6 +109,21 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
   }
 };
 
+// Mock responsible engineers by component
+const MOCK_RESPONSIBLE_ENGINEERS: Record<string, string[]> = {
+  ARB: ['Mushtaq Nawaz', 'Ben Chiong'],
+  PMS: ['Ben Chiong', 'Mushtaq Nawaz'],
+  IMS: ['Mushtaq Nawaz', 'Ben Chiong'],
+  BOM: ['Poojan Joshi', 'Maharsh Seth'],
+  '2Y_SPARES': ['Maharsh Seth', 'Poojan Joshi']
+};
+
+// Helper to get responsible engineer for a batch
+const getResponsibleEngineer = (componentKey: string, batchIndex: number): string => {
+  const engineers = MOCK_RESPONSIBLE_ENGINEERS[componentKey] || ['Unassigned'];
+  return engineers[batchIndex % engineers.length];
+};
+
 export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProps> = ({ oraPlanId }) => {
   const [expandedComponents, setExpandedComponents] = useState<Record<string, boolean>>({
     ARB: true, // Default expand first one
@@ -328,19 +343,23 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                         <TableRow className="bg-muted/30">
                           <TableHead className="w-[120px]">Batch</TableHead>
                           <TableHead>Description</TableHead>
+                          <TableHead className="w-[150px]">Responsible</TableHead>
                           <TableHead className="w-[180px]">Progress</TableHead>
                           <TableHead className="w-[130px]">Target Date</TableHead>
                           <TableHead className="w-[110px]">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {componentBatches.map((batch) => (
+                        {componentBatches.map((batch, batchIndex) => (
                           <TableRow key={batch.id}>
                             <TableCell className="font-medium">
                               {batch.batch_name}
                             </TableCell>
                             <TableCell className="text-muted-foreground">
                               {batch.description}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {getResponsibleEngineer(component.key, batchIndex)}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
