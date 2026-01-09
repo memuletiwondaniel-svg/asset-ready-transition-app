@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Folder, Star, GitBranch } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Folder, Star, GitBranch, Milestone, Layers } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
@@ -20,6 +20,8 @@ import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
 import { ProjectCard } from './ProjectCard';
 import ProjectHierarchyManagement from '@/components/user-management/ProjectHierarchyManagement';
+import { ORPPhaseDeliverablesTab } from './ORPPhaseDeliverablesTab';
+import { ProjectMilestonesManagementTab } from './ProjectMilestonesManagementTab';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -376,14 +378,22 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
+                <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
                   <TabsTrigger value="projects" className="flex items-center gap-2">
                     <Folder className="h-4 w-4" />
                     Projects
                   </TabsTrigger>
                   <TabsTrigger value="hierarchy" className="flex items-center gap-2">
                     <GitBranch className="h-4 w-4" />
-                    Project Hierarchy
+                    Hierarchy
+                  </TabsTrigger>
+                  <TabsTrigger value="orp-phases" className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    ORP Phases
+                  </TabsTrigger>
+                  <TabsTrigger value="milestones" className="flex items-center gap-2">
+                    <Milestone className="h-4 w-4" />
+                    Milestones
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
