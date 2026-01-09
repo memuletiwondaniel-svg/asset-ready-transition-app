@@ -30,39 +30,49 @@ const MAINTENANCE_COMPONENTS = [
     key: 'ARB' as const,
     label: 'ARB - Asset Register Build',
     icon: Database,
-    description: 'Asset data population and validation'
+    description: 'Asset data population and validation',
+    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-100'
   },
   {
     key: 'PMS' as const,
     label: 'PMs - Preventive Maintenance Routines',
     icon: Calendar,
-    description: 'PM schedules and task creation'
+    description: 'PM schedules and task creation',
+    iconColor: 'text-purple-600',
+    iconBg: 'bg-purple-100'
   },
   {
     key: 'BOM' as const,
     label: 'BOM - Bill of Materials',
     icon: Package,
-    description: 'Spare parts and materials setup'
+    description: 'Spare parts and materials setup',
+    iconColor: 'text-amber-600',
+    iconBg: 'bg-amber-100'
   },
   {
     key: 'IMS' as const,
     label: 'IMS - Integrity Management System',
     icon: Shield,
-    description: 'Integrity workflows and inspections'
+    description: 'Integrity workflows and inspections',
+    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-100'
   },
   {
     key: '2Y_SPARES' as const,
     label: '2Y Operating Spares',
     icon: Boxes,
-    description: 'Two-year operating spares procurement'
+    description: 'Two-year operating spares procurement',
+    iconColor: 'text-rose-600',
+    iconBg: 'bg-rose-100'
   }
 ];
 
 const STATUSES = [
   { value: 'NOT_STARTED', label: 'Not Started', color: 'bg-muted text-muted-foreground' },
-  { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-blue-500 text-white' },
+  { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-slate-100 text-slate-600 border border-slate-300' },
   { value: 'COMPLETED', label: 'Completed', color: 'bg-green-500 text-white' },
-  { value: 'ON_HOLD', label: 'On Hold', color: 'bg-amber-500 text-white' }
+  { value: 'ON_HOLD', label: 'On Hold', color: 'bg-amber-100 text-amber-700 border border-amber-300' }
 ];
 
 export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProps> = ({ oraPlanId }) => {
@@ -205,8 +215,8 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                             <ChevronRight className="w-5 h-5" />
                           )}
                         </div>
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <Icon className="w-5 h-5 text-primary" />
+                        <div className={`p-2 rounded-lg ${component.iconBg}`}>
+                          <Icon className={`w-5 h-5 ${component.iconColor}`} />
                         </div>
                         <div>
                           <span className="font-semibold">{component.label}</span>
@@ -227,9 +237,11 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                         <div className="text-right min-w-[100px]">
                           <div className="text-xs text-muted-foreground">Target</div>
                           <div className="font-medium">
-                            {summary.targetDate 
-                              ? format(new Date(summary.targetDate), 'MMM d, yyyy')
-                              : '—'
+                            {summary.progress === 100 
+                              ? '—'
+                              : summary.targetDate 
+                                ? format(new Date(summary.targetDate), 'MMM d, yyyy')
+                                : '—'
                             }
                           </div>
                         </div>
@@ -284,9 +296,11 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                               </div>
                             </TableCell>
                             <TableCell>
-                              {batch.target_date 
-                                ? format(new Date(batch.target_date), 'MMM d, yyyy')
-                                : '—'
+                              {batch.status === 'COMPLETED'
+                                ? '—'
+                                : batch.target_date 
+                                  ? format(new Date(batch.target_date), 'MMM d, yyyy')
+                                  : '—'
                               }
                             </TableCell>
                             <TableCell>
