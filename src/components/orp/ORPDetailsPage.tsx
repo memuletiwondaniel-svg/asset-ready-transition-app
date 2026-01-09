@@ -170,118 +170,114 @@ export const ORPDetailsPage: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="border-b px-6 flex items-center justify-between">
-              <TabsList className="flex-wrap h-auto gap-1 p-1">
-                <TabsTrigger value="activity-plan" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <CalendarCheck className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
-                  Activity Plan
-                </TabsTrigger>
-                <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
-                  Training
-                </TabsTrigger>
-                <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <Wrench className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-orange-500" />
-                  OR Maintenance
-                </TabsTrigger>
-                <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
-                  Handover
-                </TabsTrigger>
-                <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <CheckCircle className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-green-500" />
-                  Approvals
-                </TabsTrigger>
-              </TabsList>
-              
-              {/* Export Options */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    Export
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => {
-                    const exportBtn = document.getElementById('ora-export-pdf-trigger');
-                    if (exportBtn) exportBtn.click();
-                  }}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export ORA Plan (PDF)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Hidden export trigger */}
-              <div className="hidden">
-                <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <div className="border-b px-6 flex items-center justify-between flex-shrink-0">
+            <TabsList className="flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="activity-plan" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <CalendarCheck className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
+                Activity Plan
+              </TabsTrigger>
+              <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
+                Training
+              </TabsTrigger>
+              <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <Wrench className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-orange-500" />
+                OR Maintenance
+              </TabsTrigger>
+              <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
+                Handover
+              </TabsTrigger>
+              <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <CheckCircle className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-green-500" />
+                Approvals
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Export Options */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Export
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  const exportBtn = document.getElementById('ora-export-pdf-trigger');
+                  if (exportBtn) exportBtn.click();
+                }}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export ORA Plan (PDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Hidden export trigger */}
+            <div className="hidden">
+              <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
+            </div>
+          </div>
+
+          <TabsContent value="activity-plan" className="flex-1 m-0 mt-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
+            {/* View Toggle Header */}
+            <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between flex-shrink-0">
+              <span className="text-sm font-medium text-muted-foreground">View:</span>
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <Button
+                  variant={activityView === 'gantt' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActivityView('gantt')}
+                  className="gap-2"
+                >
+                  <GanttChart className="w-4 h-4" />
+                  Gantt Chart
+                </Button>
+                <Button
+                  variant={activityView === 'kanban' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActivityView('kanban')}
+                  className="gap-2"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  Kanban
+                </Button>
               </div>
             </div>
-
+            
+            {/* Conditional Content */}
             <div className="flex-1 overflow-auto">
-              <TabsContent value="activity-plan" className="h-full m-0 flex flex-col">
-                {/* View Toggle Header */}
-                <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">View:</span>
-                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                    <Button
-                      variant={activityView === 'gantt' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setActivityView('gantt')}
-                      className="gap-2"
-                    >
-                      <GanttChart className="w-4 h-4" />
-                      Gantt Chart
-                    </Button>
-                    <Button
-                      variant={activityView === 'kanban' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setActivityView('kanban')}
-                      className="gap-2"
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                      Kanban
-                    </Button>
-                  </div>
+              {activityView === 'gantt' ? (
+                <div className="p-6">
+                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} />
                 </div>
-                
-                {/* Conditional Content */}
-                <div className="flex-1 overflow-auto">
-                  {activityView === 'gantt' ? (
-                    <div className="p-6">
-                      <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} />
-                    </div>
-                  ) : (
-                    <ORPKanbanBoardDraggable 
-                      planId={plan.id} 
-                      deliverables={plan.deliverables || []} 
-                    />
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="training" className="h-full m-0 p-6 data-[state=inactive]:hidden">
-                <ORATrainingPlanTab oraPlanId={plan.id} />
-              </TabsContent>
-
-              <TabsContent value="maintenance" className="h-full m-0 p-6 data-[state=inactive]:hidden">
-                <ORAMaintenanceReadinessTab oraPlanId={plan.id} />
-              </TabsContent>
-
-              <TabsContent value="handover" className="h-full m-0 p-6 data-[state=inactive]:hidden">
-                <ORAHandoverTab oraPlanId={plan.id} />
-              </TabsContent>
-
-              <TabsContent value="approvals" className="h-full m-0 overflow-auto data-[state=inactive]:hidden">
-                <ORAApprovalsPanel planId={plan.id} />
-              </TabsContent>
+              ) : (
+                <ORPKanbanBoardDraggable 
+                  planId={plan.id} 
+                  deliverables={plan.deliverables || []} 
+                />
+              )}
             </div>
-          </Tabs>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="training" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
+            <ORATrainingPlanTab oraPlanId={plan.id} />
+          </TabsContent>
+
+          <TabsContent value="maintenance" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
+            <ORAMaintenanceReadinessTab oraPlanId={plan.id} />
+          </TabsContent>
+
+          <TabsContent value="handover" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
+            <ORAHandoverTab oraPlanId={plan.id} />
+          </TabsContent>
+
+          <TabsContent value="approvals" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
+            <ORAApprovalsPanel planId={plan.id} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <ORPComparisonView
