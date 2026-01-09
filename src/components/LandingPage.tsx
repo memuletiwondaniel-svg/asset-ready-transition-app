@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -95,10 +95,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
-  const [welcomeBannerCollapsed, setWelcomeBannerCollapsed] = useState(() => {
-    const saved = localStorage.getItem('welcomeBannerCollapsed');
-    return saved ? JSON.parse(saved) : false;
-  });
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
@@ -141,9 +137,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   React.useEffect(() => {
     localStorage.setItem('aiPanelExpanded', JSON.stringify(aiPanelExpanded));
   }, [aiPanelExpanded]);
-  React.useEffect(() => {
-    localStorage.setItem('welcomeBannerCollapsed', JSON.stringify(welcomeBannerCollapsed));
-  }, [welcomeBannerCollapsed]);
 
   // Get time-based greeting
   const getGreeting = () => {
@@ -561,146 +554,100 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto">
           <div className="flex-1 flex flex-col gap-6 transition-all duration-500">
-            {/* Welcome User Banner - Ask ORSH AI */}
-            <Card className="glass-card overflow-hidden animate-fade-in border-2 border-primary/20 shadow-lg transition-all duration-300">
-              <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
-                <div className={`${welcomeBannerCollapsed ? 'p-3' : 'p-6'} transition-all duration-300`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <h2 className={`font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ${welcomeBannerCollapsed ? 'text-lg' : 'text-2xl'} transition-all duration-300`}>
-                            {getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!
-                          </h2>
-                          {!welcomeBannerCollapsed && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              How can ORSH AI assist you today?
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setWelcomeBannerCollapsed(!welcomeBannerCollapsed)} 
-                      className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
-                    >
-                      {welcomeBannerCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                    </Button>
+            {/* Bob AI Hero Section - Centered */}
+            <Card className="glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
+                  {/* Bob Avatar */}
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 shadow-lg animate-fade-in">
+                    <Bot className="h-8 w-8 text-white" />
                   </div>
                   
-                  {!welcomeBannerCollapsed && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 mt-3 md:mt-4 animate-fade-in">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setInitialPrompt('How can I help you today?');
-                          setChatOpen(true);
-                        }} 
-                        className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                          <MessageSquare className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm font-semibold">Ask AI</p>
-                          <p className="text-xs text-muted-foreground">Get instant answers</p>
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setInitialPrompt('Summarize my recent PSSR');
-                          setChatOpen(true);
-                        }} 
-                        className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm font-semibold">Summarize PSSR</p>
-                          <p className="text-xs text-muted-foreground">Quick overview</p>
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setInitialPrompt('Review my checklist items');
-                          setChatOpen(true);
-                        }} 
-                        className="w-full justify-start gap-3 h-auto py-4 bg-background/80 backdrop-blur-sm hover:bg-primary/10 border-border/40 transition-all hover:scale-105"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                          <CheckCircle className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm font-semibold">Review Checklist</p>
-                          <p className="text-xs text-muted-foreground">Check progress</p>
-                        </div>
-                      </Button>
-                    </div>
-                  )}
+                  {/* Greeting */}
+                  <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    {getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!
+                  </h1>
+                  <p className="text-muted-foreground mb-6">
+                    Ask Bob anything about ORSH
+                  </p>
+                  
+                  {/* Quick Prompt Pills */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setInitialPrompt('How can I help you today?');
+                        setChatOpen(true);
+                      }}
+                      className="rounded-full px-4 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2 text-amber-500" /> 
+                      Ask Bob
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setInitialPrompt('Summarize my recent PSSR');
+                        setChatOpen(true);
+                      }}
+                      className="rounded-full px-4 hover:bg-primary/10 hover:border-primary/30 transition-all"
+                    >
+                      <FileText className="w-4 h-4 mr-2 text-primary" /> 
+                      Summarize PSSR
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setInitialPrompt('Review my checklist items');
+                        setChatOpen(true);
+                      }}
+                      className="rounded-full px-4 hover:bg-green-500/10 hover:border-green-500/30 transition-all"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" /> 
+                      My Tasks
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
 
-            {/* Widgets Section with Drag and Drop */}
-            {!aiPanelExpanded && (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-lg font-semibold">Dashboard Widgets</h2>
-                  <div className="flex gap-2">
-                    {!aiPanelVisible && (
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => {
-                          setAiPanelVisible(true);
-                          toast({ title: 'AI Assistant shown' });
-                        }} 
-                        className="text-xs"
-                      >
-                        Show AI Assistant
-                      </Button>
-                    )}
-                    {hasHiddenWidgets && (
-                      <Button size="sm" variant="outline" onClick={handleShowAllWidgets} className="text-xs">
-                        Show All Widgets
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 animate-smooth-in stagger-2">
-                      {widgets.filter(w => w.isVisible).map(widget => (
-                        <SortableWidgetWrapper key={widget.id} id={widget.id} isExpanded={widget.isExpanded}>
-                          <WidgetCard 
-                            title={widget.title} 
-                            isExpanded={widget.isExpanded} 
-                            isVisible={widget.isVisible} 
-                            onToggleVisibility={() => handleToggleVisibility(widget.id)} 
-                            onToggleExpand={() => handleToggleExpand(widget.id)}
-                          >
-                            {widget.id === 'quick-actions' && (
-                              <QuickActionsWidget onActionClick={(actionId) => {
-                                if (actionId === 'create-pssr') onNavigate('pssr');
-                                else if (actionId === 'approve-pssr') onNavigate('pssr');
-                                else if (actionId === 'develop-p2a') onNavigate('p2a');
-                              }} />
-                            )}
-                          </WidgetCard>
-                        </SortableWidgetWrapper>
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </>
-            )}
+            {/* Quick Actions - Horizontal Row */}
+            <div className="flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
+              <Button 
+                onClick={() => onNavigate('pssr')}
+                className="rounded-xl px-5 py-3 h-auto bg-gradient-to-br from-primary to-accent hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <Zap className="w-5 h-5 mr-2" /> 
+                Create PSSR
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => onNavigate('pssr')}
+                className="rounded-xl px-5 py-3 h-auto hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
+              >
+                <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
+                Approve PSSR
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => onNavigate('p2a')}
+                className="rounded-xl px-5 py-3 h-auto hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
+              >
+                <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
+                Develop P2A
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => onNavigate('pssr')}
+                className="rounded-xl px-5 py-3 h-auto hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
+              >
+                <BarChart3 className="w-5 h-5 mr-2 text-purple-500" /> 
+                Analytics
+              </Button>
+            </div>
           </div>
         </div>
       </div>

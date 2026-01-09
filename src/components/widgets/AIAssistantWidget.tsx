@@ -45,7 +45,7 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }
           <Sparkles className="w-5 h-5 text-primary" />
           Ask Bob
         </CardTitle>
-        <CardDescription className="text-xs">Your intelligent ORSH assistant</CardDescription>
+        <CardDescription className="text-xs">Your intelligent assistant</CardDescription>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {quickPrompts.map((prompt, idx) => {
