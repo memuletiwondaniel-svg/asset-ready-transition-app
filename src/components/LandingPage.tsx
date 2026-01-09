@@ -7,8 +7,7 @@ import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileTex
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
-import { AnimatedParticles } from '@/components/ui/AnimatedParticles';
+import { useRotatingText } from '@/hooks/useRotatingText';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
@@ -95,6 +94,21 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
+
+  // Sample questions for rotating placeholder
+  const sampleQuestions = [
+    "What is the status of my PSSR checklist?",
+    "Show me all pending punch list items...",
+    "How do I approve a safety review?",
+    "Generate an ORM maintenance report...",
+    "What are the P2A handover requirements?",
+    "List all projects awaiting commissioning...",
+  ];
+
+  const { currentText: placeholderText, isVisible: placeholderVisible } = useRotatingText({
+    texts: sampleQuestions,
+    interval: 4000,
+  });
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
@@ -549,9 +563,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto">
           <div className="flex-1 flex flex-col gap-6 transition-all duration-500">
+            {/* Spacer for vertical centering */}
+            <div className="h-8 md:h-16" />
+            
             {/* Bob AI Hero Section - Centered */}
             <Card className="glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
-              <div className="p-6 md:p-8">
+              <div className="p-8 md:p-12">
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                   {/* Greeting */}
                   <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -566,7 +583,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <div className="relative flex items-center gap-2 bg-background/50 border border-border/50 rounded-2xl p-2 shadow-inner">
                       <input
                         type="text"
-                        placeholder="Type your question to Bob..."
+                        placeholder={placeholderText}
                         value={userInput}
                         onChange={(e) => setUserInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -576,7 +593,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                             setUserInput('');
                           }
                         }}
-                        className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm placeholder:text-muted-foreground"
+                        className={`flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm placeholder:text-muted-foreground transition-opacity duration-300 ${placeholderVisible ? 'placeholder:opacity-100' : 'placeholder:opacity-0'}`}
                       />
                       <Button
                         variant="ghost"
