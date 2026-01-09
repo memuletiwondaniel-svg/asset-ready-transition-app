@@ -187,10 +187,9 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                     return (
                       <Card 
                         key={item.id} 
-                        className="overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                        className="cursor-pointer hover:border-primary/50 transition-colors"
                         onClick={() => handleItemClick(item)}
                       >
-                        <div className={`h-1 ${stageInfo.color}`} />
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
@@ -210,7 +209,7 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                                 {item.duration_hours && (
                                   <span className="flex items-center gap-1 text-muted-foreground">
                                     <Clock className="w-3 h-3" />
-                                    {item.duration_hours}h
+                                    {Math.ceil(item.duration_hours / 8)} {Math.ceil(item.duration_hours / 8) === 1 ? 'day' : 'days'}
                                   </span>
                                 )}
                                 {item.estimated_cost && (
