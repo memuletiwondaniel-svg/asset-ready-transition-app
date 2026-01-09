@@ -28,10 +28,14 @@ import {
 } from '@/components/ui/table';
 import * as XLSX from 'xlsx';
 import { ORATrainingItem, ORATrainingMaterial } from '@/hooks/useORATrainingPlan';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Send, Mail } from 'lucide-react';
 
 interface ORATrainingItemDetailsProps {
   item: ORATrainingItem;
@@ -62,16 +66,67 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: allUsers } = useProfileUsers();
   const [activeTab, setActiveTab] = useState('details');
   const [isEditing, setIsEditing] = useState(false);
   const [materials, setMaterials] = useState<ORATrainingMaterial[]>(item.materials || []);
   const [showPasteInput, setShowPasteInput] = useState(false);
   const [pasteContent, setPasteContent] = useState('');
+  const [selectedTAIds, setSelectedTAIds] = useState<string[]>([]);
+  const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   
   // New trainee form state
   const [newTraineeName, setNewTraineeName] = useState('');
   const [newTraineeRole, setNewTraineeRole] = useState('');
   const [newTraineeStaffId, setNewTraineeStaffId] = useState('');
+
+  // Filter users who can be TAs (those with TA-related positions/roles)
+  const taUsers = allUsers?.filter(u => 
+    u.position?.toLowerCase().includes('ta') || 
+    u.position?.toLowerCase().includes('technical') ||
+    u.role?.toLowerCase().includes('ta') ||
+    u.role?.toLowerCase().includes('technical') ||
+    u.role?.toLowerCase().includes('approver')
+  ) || allUsers || [];
+
+  const selectedTAs = taUsers.filter(u => selectedTAIds.includes(u.user_id));
+
+  const handleTAToggle = (userId: string) => {
+    setSelectedTAIds(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleRequestApproval = async () => {
+    if (selectedTAIds.length === 0) {
+      toast({ title: 'Error', description: 'Please select at least one TA reviewer', variant: 'destructive' });
+      return;
+    }
+
+    setIsRequestingApproval(true);
+    try {
+      // Update the training item with the TA reviewer
+      onUpdateItem({ 
+        itemId: item.id, 
+        updates: { 
+          execution_stage: 'MATERIALS_UNDER_REVIEW',
+          ta_reviewer_id: selectedTAIds[0] // Primary reviewer
+        } 
+      });
+
+      toast({ 
+        title: 'Approval Requested', 
+        description: `Approval request sent to ${selectedTAs.length} TA reviewer(s)` 
+      });
+      setSelectedTAIds([]);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsRequestingApproval(false);
+    }
+  };
 
   const stageInfo = EXECUTION_STAGES.find(s => s.value === item.execution_stage) || EXECUTION_STAGES[0];
   const currentStageIndex = EXECUTION_STAGES.findIndex(s => s.value === item.execution_stage);
@@ -528,6 +583,91 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                   )}
                 </CardContent>
               </Card>
+
+              {/* TA Reviewer Selection */}
+              {materials?.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Select Asset TA Reviewer(s)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* TA Selection List */}
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {taUsers.length > 0 ? (
+                        taUsers.map((user) => (
+                          <div 
+                            key={user.user_id} 
+                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              selectedTAIds.includes(user.user_id) 
+                                ? 'border-primary bg-primary/5' 
+                                : 'hover:bg-muted/50'
+                            }`}
+                            onClick={() => handleTAToggle(user.user_id)}
+                          >
+                            <Checkbox 
+                              checked={selectedTAIds.includes(user.user_id)}
+                              onCheckedChange={() => handleTAToggle(user.user_id)}
+                            />
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                              <AvatarFallback>{user.full_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm">{user.full_name}</p>
+                              <p className="text-xs text-muted-foreground">{user.position || user.role}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No TA users found</p>
+                      )}
+                    </div>
+
+                    {/* Selected TAs Display */}
+                    {selectedTAs.length > 0 && (
+                      <div className="space-y-3 pt-3 border-t">
+                        <p className="text-sm font-medium">Selected Reviewers ({selectedTAs.length})</p>
+                        <div className="space-y-2">
+                          {selectedTAs.map((ta) => (
+                            <div key={ta.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage src={ta.avatar_url} alt={ta.full_name} />
+                                <AvatarFallback>{ta.full_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="font-medium">{ta.full_name}</p>
+                                <p className="text-sm text-muted-foreground">{ta.position || ta.role}</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Mail className="w-3 h-3" />
+                                  {ta.user_id.substring(0, 8)}...@company.com
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => { e.stopPropagation(); handleTAToggle(ta.user_id); }}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Request Approval Button */}
+                        <Button 
+                          className="w-full gap-2" 
+                          onClick={handleRequestApproval}
+                          disabled={isRequestingApproval}
+                        >
+                          <Send className="w-4 h-4" />
+                          {isRequestingApproval ? 'Sending...' : `Request Approval from ${selectedTAs.length} TA(s)`}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="status" className="m-0 space-y-4">
