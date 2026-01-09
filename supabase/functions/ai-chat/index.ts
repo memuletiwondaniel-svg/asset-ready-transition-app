@@ -1,6 +1,41 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Smart region inference from project titles
+function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
+  const titleLower = title.toLowerCase();
+  
+  // North: BNGL, NRNGL, CS, Pipelines, HM (Halfaya/Majnoon area)
+  if (titleLower.includes('nrngl') || 
+      titleLower.includes('bngl') || 
+      titleLower.includes(' cs') || 
+      titleLower.includes('cs6') || 
+      titleLower.includes('cs7') ||
+      titleLower.includes('pipeline') ||
+      titleLower.includes('majnoon') ||
+      titleLower.includes('halfaya') ||
+      titleLower.includes(' hm ') ||
+      titleLower.startsWith('hm ')) {
+    return 'North';
+  }
+  
+  // Central: KAZ, Zubair, Mishrif
+  if (titleLower.includes('kaz') || 
+      titleLower.includes('zubair') || 
+      titleLower.includes('mishrif')) {
+    return 'Central';
+  }
+  
+  // South: UQ, West Qurna
+  if (titleLower.includes('uq') || 
+      titleLower.includes('west qurna') ||
+      titleLower.includes('wq')) {
+    return 'South';
+  }
+  
+  return null;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -533,16 +568,25 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
         }
         
-        // Get projects in this region
-        const { data: projects, error: projectsError } = await supabaseClient
+        // Get ALL active projects and filter by region (using region_id OR smart inference)
+        const { data: allProjects, error: projectsError } = await supabaseClient
           .from('projects')
-          .select('project_id_prefix, project_id_number, project_title')
-          .eq('region_id', region.id)
+          .select('project_id_prefix, project_id_number, project_title, region_id')
           .eq('is_active', true);
         
         if (projectsError) {
           console.error('Projects lookup error:', projectsError);
         }
+        
+        // Filter projects by region - check region_id first, then infer from title
+        const projects = (allProjects || []).filter((p: any) => {
+          // If project has explicit region_id, check if it matches
+          if (p.region_id === region.id) return true;
+          
+          // Otherwise, infer region from title
+          const inferredRegion = inferRegionFromTitle(p.project_title);
+          return inferredRegion?.toLowerCase() === regionName.toLowerCase();
+        });
         
         return {
           region: {
