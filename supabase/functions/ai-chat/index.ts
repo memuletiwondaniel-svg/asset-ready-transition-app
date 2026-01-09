@@ -507,15 +507,30 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        // Find the Project Manager for this region
-        const { data: managers, error: managerError } = await supabaseClient
+        // Find the Project Manager for this region - try multiple patterns
+        // First try: "Project Manager – North" or "Project Manager - North"
+        let { data: managers, error: managerError } = await supabaseClient
           .from('profiles')
           .select('full_name, position, email')
           .eq('is_active', true)
-          .ilike('position', `%Project Manager%${regionName}%`);
+          .or(`position.ilike.%Project Manager%${regionName}%,position.ilike.%PM%${regionName}%`);
         
         if (managerError) {
           console.error('Manager lookup error:', managerError);
+        }
+        
+        // If no specific region PM found and it's North, look for generic "Project Manager" 
+        // (since Central and South have specific PMs, a generic PM likely covers North)
+        if ((!managers || managers.length === 0) && regionName.toLowerCase() === 'north') {
+          const { data: genericManagers } = await supabaseClient
+            .from('profiles')
+            .select('full_name, position, email')
+            .eq('is_active', true)
+            .eq('position', 'Project Manager');
+          
+          if (genericManagers && genericManagers.length > 0) {
+            managers = genericManagers;
+          }
         }
         
         // Get projects in this region
