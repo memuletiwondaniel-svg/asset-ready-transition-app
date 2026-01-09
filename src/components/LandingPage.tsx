@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3 } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -571,82 +571,113 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     Ask Bob anything about ORSH
                   </p>
                   
-                  {/* Quick Prompt Pills */}
-                  <div className="flex flex-wrap justify-center gap-2 mb-6">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        setInitialPrompt('How can I help you today?');
-                        setChatOpen(true);
-                      }}
-                      className="rounded-full px-4 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all"
-                    >
-                      <MessageSquare className="w-4 h-4 mr-2 text-amber-500" /> 
-                      Ask Bob
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setInitialPrompt('Summarize my recent PSSR');
-                        setChatOpen(true);
-                      }}
-                      className="rounded-full px-4 hover:bg-primary/10 hover:border-primary/30 transition-all"
-                    >
-                      <FileText className="w-4 h-4 mr-2 text-primary" /> 
-                      Summarize PSSR
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setInitialPrompt('Review my checklist items');
-                        setChatOpen(true);
-                      }}
-                      className="rounded-full px-4 hover:bg-green-500/10 hover:border-green-500/30 transition-all"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" /> 
-                      My Tasks
-                    </Button>
+                  {/* Bob Input Field */}
+                  <div className="w-full max-w-xl">
+                    <div className="relative flex items-center gap-2 bg-background/50 border border-border/50 rounded-2xl p-2 shadow-inner">
+                      <input
+                        type="text"
+                        placeholder="Type your question to Bob..."
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && userInput.trim()) {
+                            setInitialPrompt(userInput);
+                            setChatOpen(true);
+                            setUserInput('');
+                          }
+                        }}
+                        className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm placeholder:text-muted-foreground"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-muted/50"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-muted/50"
+                        onClick={() => {
+                          if (isListening) {
+                            stopListening();
+                          } else {
+                            startListening((transcript) => {
+                              setUserInput(transcript);
+                            });
+                          }
+                        }}
+                      >
+                        <Mic className={`h-4 w-4 ${isListening ? 'text-red-500 animate-pulse' : 'text-muted-foreground'}`} />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 hover:opacity-90"
+                        onClick={() => {
+                          if (userInput.trim()) {
+                            setInitialPrompt(userInput);
+                            setChatOpen(true);
+                            setUserInput('');
+                          } else {
+                            setChatOpen(true);
+                          }
+                        }}
+                      >
+                        <Send className="h-4 w-4 text-white" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            {/* Quick Actions - Horizontal Row */}
-            <div className="flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <Button 
-                onClick={() => onNavigate('pssr')}
-                className="rounded-xl px-5 py-3 h-auto bg-gradient-to-br from-primary to-accent hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                <Zap className="w-5 h-5 mr-2" /> 
-                Create PSSR
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => onNavigate('pssr')}
-                className="rounded-xl px-5 py-3 h-auto hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
-              >
-                <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
-                Approve PSSR
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => onNavigate('p2a')}
-                className="rounded-xl px-5 py-3 h-auto hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
-              >
-                <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
-                Develop P2A
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => onNavigate('pssr')}
-                className="rounded-xl px-5 py-3 h-auto hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
-              >
-                <BarChart3 className="w-5 h-5 mr-2 text-purple-500" /> 
-                Analytics
-              </Button>
+            {/* Quick Actions Section */}
+            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+              <h2 className="text-lg font-semibold text-muted-foreground text-center mb-4">Quick Actions</h2>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={() => onNavigate('pssr')}
+                  className="rounded-xl px-5 py-3 h-auto hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
+                >
+                  <Zap className="w-5 h-5 mr-2 text-primary" /> 
+                  Create PSSR
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => onNavigate('pssr')}
+                  className="rounded-xl px-5 py-3 h-auto hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
+                  Approve PSSR
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => onNavigate('p2a')}
+                  className="rounded-xl px-5 py-3 h-auto hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
+                >
+                  <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
+                  Develop P2A
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => onNavigate('pssr')}
+                  className="rounded-xl px-5 py-3 h-auto hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
+                >
+                  <BarChart3 className="w-5 h-5 mr-2 text-purple-500" /> 
+                  Analytics
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => onNavigate('pssr')}
+                  className="rounded-xl px-5 py-3 h-auto hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
+                >
+                  <ClipboardList className="w-5 h-5 mr-2 text-amber-500" /> 
+                  My Tasks
+                </Button>
+              </div>
             </div>
           </div>
         </div>
