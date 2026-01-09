@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Wrench,
   Target,
-  TrendingUp
+  TrendingUp,
+  FileText
 } from 'lucide-react';
 import { useORAMaintenanceBatches, ORAMaintenanceBatch } from '@/hooks/useORATrainingPlan';
 import { format } from 'date-fns';
@@ -74,6 +75,39 @@ const STATUSES = [
   { value: 'COMPLETED', label: 'Completed', color: 'bg-green-500 text-white' },
   { value: 'ON_HOLD', label: 'On Hold', color: 'bg-amber-100 text-amber-700 border border-amber-300' }
 ];
+
+// Mock progress narratives entered by CMMS Lead
+const MOCK_COMPONENT_NARRATIVES: Record<string, {
+  lastUpdated: string;
+  updatedBy: string;
+  narrative: string;
+}> = {
+  ARB: {
+    lastUpdated: '2024-01-08',
+    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    narrative: 'Asset Register Build is progressing well. Batch 1 (Critical Equipment) has been completed with all 847 assets validated. Batch 2 is currently in progress with 65% of rotating equipment entered. We are on track to complete ARB by end of Q1. Key risk: awaiting final P&ID revisions for static equipment classification.'
+  },
+  PMS: {
+    lastUpdated: '2024-01-07',
+    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    narrative: 'Preventive Maintenance routines setup is underway. We have completed PM strategies for all critical rotating equipment. Currently working on developing task lists for electrical systems. Vendor maintenance manuals for new compressor packages have been received and are being reviewed.'
+  },
+  BOM: {
+    lastUpdated: '2024-01-05',
+    updatedBy: 'Fatima Al-Rashid (Materials Lead)',
+    narrative: 'Bill of Materials population is approximately 40% complete. Initial spare parts lists have been uploaded for major equipment. Currently coordinating with vendors to obtain recommended spare parts lists for specialized equipment. Long-lead items have been identified and procurement process initiated.'
+  },
+  IMS: {
+    lastUpdated: '2024-01-06',
+    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    narrative: 'Integrity Management System setup has commenced. RBI study results are being integrated into CMMS. Inspection points for pressure vessels and piping have been defined. Awaiting final corrosion loop definitions from the Integrity team.'
+  },
+  '2Y_SPARES': {
+    lastUpdated: '2024-01-04',
+    updatedBy: 'Fatima Al-Rashid (Materials Lead)',
+    narrative: 'Two-year operating spares procurement is in planning phase. Initial spares list has been compiled based on equipment criticality analysis. Working with Operations to validate consumption estimates. Budget allocation confirmed for Phase 1 items.'
+  }
+};
 
 export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProps> = ({ oraPlanId }) => {
   const [expandedComponents, setExpandedComponents] = useState<Record<string, boolean>>({
@@ -263,7 +297,31 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
               </CollapsibleTrigger>
               
               <CollapsibleContent>
-                <div className="ml-8 mt-2 border rounded-lg overflow-hidden bg-card">
+                <div className="ml-8 mt-2 space-y-3">
+                  {/* Progress Narrative */}
+                  {MOCK_COMPONENT_NARRATIVES[component.key] && (
+                    <Card className="bg-muted/20 border-dashed">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <FileText className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Progress Narrative</span>
+                              <span className="text-xs text-muted-foreground">
+                                Updated {format(new Date(MOCK_COMPONENT_NARRATIVES[component.key].lastUpdated), 'MMM d, yyyy')} by {MOCK_COMPONENT_NARRATIVES[component.key].updatedBy}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {MOCK_COMPONENT_NARRATIVES[component.key].narrative}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Batches Table */}
+                  <div className="border rounded-lg overflow-hidden bg-card">
                   {componentBatches.length > 0 ? (
                     <Table>
                       <TableHeader>
@@ -317,6 +375,7 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                       <p className="text-xs mt-1">Batches are managed by the CMMS Lead</p>
                     </div>
                   )}
+                  </div>
                 </div>
               </CollapsibleContent>
             </Collapsible>
