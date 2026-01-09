@@ -522,12 +522,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   }];
 
   return (
-    <AnimatedBackground>
-      {/* Particle Effects */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <AnimatedParticles />
-      </div>
-
+    <div className="min-h-screen bg-background">
       <div className="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
         {/* ORSH Sidebar Component */}
         <OrshSidebar 
@@ -704,7 +699,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       {/* ORSH Chat Dialog */}
       <ORSHChatDialog open={chatOpen} onOpenChange={setChatOpen} initialMessage={initialPrompt} />
-    </AnimatedBackground>
+    </div>
   );
 };
 
