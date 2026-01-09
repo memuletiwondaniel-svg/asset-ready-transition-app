@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, Users as UsersIcon } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, Users as UsersIcon, GraduationCap, Wrench } from 'lucide-react';
 import { useORPPlanDetails } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
@@ -17,6 +17,9 @@ import { ORPActivityTimeline } from './ORPActivityTimeline';
 import { ORPComparisonView } from './ORPComparisonView';
 import { ORPResourceDashboard } from './ORPResourceDashboard';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
+import { ORATrainingPlanTab } from '@/components/ora/ORATrainingPlanTab';
+import { ORAMaintenanceReadinessTab } from '@/components/ora/ORAMaintenanceReadinessTab';
+import { ORAHandoverTab } from '@/components/ora/ORAHandoverTab';
 
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

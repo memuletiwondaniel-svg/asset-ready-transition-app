@@ -371,6 +371,124 @@ export type Database = {
         }
         Relationships: []
       }
+      ora_handover_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          from_party: string | null
+          handover_date: string | null
+          id: string
+          item_name: string
+          notes: string | null
+          ora_plan_id: string
+          signed_off_at: string | null
+          signed_off_by: string | null
+          status: string | null
+          to_party: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          from_party?: string | null
+          handover_date?: string | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          ora_plan_id: string
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          status?: string | null
+          to_party?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          from_party?: string | null
+          handover_date?: string | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          ora_plan_id?: string
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          status?: string | null
+          to_party?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_handover_items_ora_plan_id_fkey"
+            columns: ["ora_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ora_maintenance_readiness: {
+        Row: {
+          category: string
+          completion_date: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          item_name: string
+          notes: string | null
+          ora_plan_id: string
+          responsible_person: string | null
+          status: string | null
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          ora_plan_id: string
+          responsible_person?: string | null
+          status?: string | null
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          ora_plan_id?: string
+          responsible_person?: string | null
+          status?: string | null
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_maintenance_readiness_ora_plan_id_fkey"
+            columns: ["ora_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ora_plan_templates: {
         Row: {
           applicable_phases: string[]
@@ -457,6 +575,251 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "ora_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ora_training_approvals: {
+        Row: {
+          approved_at: string | null
+          approver_role: string
+          approver_user_id: string | null
+          comments: string | null
+          created_at: string
+          id: string
+          sequence_order: number
+          status: Database["public"]["Enums"]["ora_training_approval_status"]
+          training_plan_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_role: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          sequence_order?: number
+          status?: Database["public"]["Enums"]["ora_training_approval_status"]
+          training_plan_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_role?: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          sequence_order?: number
+          status?: Database["public"]["Enums"]["ora_training_approval_status"]
+          training_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_training_approvals_training_plan_id_fkey"
+            columns: ["training_plan_id"]
+            isOneToOne: false
+            referencedRelation: "ora_training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ora_training_items: {
+        Row: {
+          actual_cost: number | null
+          completion_date: string | null
+          created_at: string
+          detailed_description: string | null
+          display_order: number | null
+          duration_hours: number | null
+          estimated_cost: number | null
+          execution_stage:
+            | Database["public"]["Enums"]["ora_training_execution_stage"]
+            | null
+          id: string
+          justification: string | null
+          notes: string | null
+          overview: string | null
+          po_issued_date: string | null
+          po_number: string | null
+          scheduled_date: string | null
+          ta_approval_date: string | null
+          ta_reviewer_id: string | null
+          target_audience: string[] | null
+          tentative_date: string | null
+          title: string
+          trainees: string[] | null
+          training_plan_id: string
+          training_provider: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          completion_date?: string | null
+          created_at?: string
+          detailed_description?: string | null
+          display_order?: number | null
+          duration_hours?: number | null
+          estimated_cost?: number | null
+          execution_stage?:
+            | Database["public"]["Enums"]["ora_training_execution_stage"]
+            | null
+          id?: string
+          justification?: string | null
+          notes?: string | null
+          overview?: string | null
+          po_issued_date?: string | null
+          po_number?: string | null
+          scheduled_date?: string | null
+          ta_approval_date?: string | null
+          ta_reviewer_id?: string | null
+          target_audience?: string[] | null
+          tentative_date?: string | null
+          title: string
+          trainees?: string[] | null
+          training_plan_id: string
+          training_provider?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          completion_date?: string | null
+          created_at?: string
+          detailed_description?: string | null
+          display_order?: number | null
+          duration_hours?: number | null
+          estimated_cost?: number | null
+          execution_stage?:
+            | Database["public"]["Enums"]["ora_training_execution_stage"]
+            | null
+          id?: string
+          justification?: string | null
+          notes?: string | null
+          overview?: string | null
+          po_issued_date?: string | null
+          po_number?: string | null
+          scheduled_date?: string | null
+          ta_approval_date?: string | null
+          ta_reviewer_id?: string | null
+          target_audience?: string[] | null
+          tentative_date?: string | null
+          title?: string
+          trainees?: string[] | null
+          training_plan_id?: string
+          training_provider?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_training_items_training_plan_id_fkey"
+            columns: ["training_plan_id"]
+            isOneToOne: false
+            referencedRelation: "ora_training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ora_training_materials: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_approved: boolean | null
+          material_type: string | null
+          training_item_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_approved?: boolean | null
+          material_type?: string | null
+          training_item_id: string
+          uploaded_by: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_approved?: boolean | null
+          material_type?: string | null
+          training_item_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_training_materials_training_item_id_fkey"
+            columns: ["training_item_id"]
+            isOneToOne: false
+            referencedRelation: "ora_training_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ora_training_plans: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          ora_plan_id: string
+          overall_progress: number | null
+          status: Database["public"]["Enums"]["ora_training_status"]
+          submitted_at: string | null
+          title: string
+          total_estimated_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          ora_plan_id: string
+          overall_progress?: number | null
+          status?: Database["public"]["Enums"]["ora_training_status"]
+          submitted_at?: string | null
+          title: string
+          total_estimated_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          ora_plan_id?: string
+          overall_progress?: number | null
+          status?: Database["public"]["Enums"]["ora_training_status"]
+          submitted_at?: string | null
+          title?: string
+          total_estimated_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_training_plans_ora_plan_id_fkey"
+            columns: ["ora_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -4737,6 +5100,24 @@ export type Database = {
       }
     }
     Enums: {
+      ora_training_approval_status: "PENDING" | "APPROVED" | "REJECTED"
+      ora_training_execution_stage:
+        | "NOT_STARTED"
+        | "MATERIALS_REQUESTED"
+        | "MATERIALS_UNDER_REVIEW"
+        | "MATERIALS_APPROVED"
+        | "PO_ISSUED"
+        | "TRAINEES_IDENTIFIED"
+        | "SCHEDULED"
+        | "IN_PROGRESS"
+        | "COMPLETED"
+      ora_training_status:
+        | "DRAFT"
+        | "PENDING_APPROVAL"
+        | "APPROVED"
+        | "IN_EXECUTION"
+        | "COMPLETED"
+        | "CANCELLED"
       orm_deliverable_type:
         | "ASSET_REGISTER"
         | "PREVENTIVE_MAINTENANCE"
@@ -4945,6 +5326,26 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ora_training_approval_status: ["PENDING", "APPROVED", "REJECTED"],
+      ora_training_execution_stage: [
+        "NOT_STARTED",
+        "MATERIALS_REQUESTED",
+        "MATERIALS_UNDER_REVIEW",
+        "MATERIALS_APPROVED",
+        "PO_ISSUED",
+        "TRAINEES_IDENTIFIED",
+        "SCHEDULED",
+        "IN_PROGRESS",
+        "COMPLETED",
+      ],
+      ora_training_status: [
+        "DRAFT",
+        "PENDING_APPROVAL",
+        "APPROVED",
+        "IN_EXECUTION",
+        "COMPLETED",
+        "CANCELLED",
+      ],
       orm_deliverable_type: [
         "ASSET_REGISTER",
         "PREVENTIVE_MAINTENANCE",
