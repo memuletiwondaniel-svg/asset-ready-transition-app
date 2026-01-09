@@ -382,7 +382,7 @@ export const useORPPlanDetails = (planId: string) => {
             *,
             deliverable:orp_deliverables_catalog(*),
             collaborators:orp_collaborators(*),
-            dependencies:orp_deliverable_dependencies(*)
+            dependencies:orp_deliverable_dependencies!orp_deliverable_dependencies_deliverable_id_fkey(*)
           ),
           resources:orp_resources(*),
           approvals:orp_approvals(*)
