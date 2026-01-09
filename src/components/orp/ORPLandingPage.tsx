@@ -32,13 +32,16 @@ export const ORPLandingPage: React.FC = () => {
     ]);
   }, [setBreadcrumbs]);
 
-  // Group ORA plans by project
+  // Phase order for sorting (higher = more recent)
+  const phaseOrder: Record<string, number> = {
+    'ASSESS_SELECT': 1,
+    'DEFINE': 2,
+    'EXECUTE': 3
+  };
+
+  // Group ORA plans by project and get the most recent phase
   const projectsWithORAPlans = projects?.filter(project => 
     plans?.some(plan => plan.project_id === project.id)
-  ) || [];
-
-  const projectsWithoutORAPlans = projects?.filter(project => 
-    !plans?.some(plan => plan.project_id === project.id)
   ) || [];
 
   const filteredProjectsWithPlans = projectsWithORAPlans.filter(project =>
@@ -48,6 +51,19 @@ export const ORPLandingPage: React.FC = () => {
 
   const getProjectORAPlans = (projectId: string) => {
     return plans?.filter(plan => plan.project_id === projectId) || [];
+  };
+
+  // Get the most recent phase ORA plan for a project
+  const getMostRecentPlan = (projectId: string) => {
+    const projectPlans = getProjectORAPlans(projectId);
+    if (projectPlans.length === 0) return null;
+    
+    // Sort by phase order (descending) then by created_at (descending)
+    return projectPlans.sort((a, b) => {
+      const phaseCompare = (phaseOrder[b.phase] || 0) - (phaseOrder[a.phase] || 0);
+      if (phaseCompare !== 0) return phaseCompare;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })[0];
   };
 
   const getStatusColor = (status: string) => {
@@ -67,6 +83,13 @@ export const ORPLandingPage: React.FC = () => {
       case 'DEFINE': return 'Define';
       case 'EXECUTE': return 'Execute';
       default: return phase;
+    }
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    const mostRecentPlan = getMostRecentPlan(projectId);
+    if (mostRecentPlan) {
+      navigate(`/operation-readiness/${mostRecentPlan.id}`);
     }
   };
 
@@ -162,50 +185,59 @@ export const ORPLandingPage: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid gap-4">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredProjectsWithPlans.map((project) => {
-                      const projectPlans = getProjectORAPlans(project.id);
+                      const mostRecentPlan = getMostRecentPlan(project.id);
+                      const allPlans = getProjectORAPlans(project.id);
+                      if (!mostRecentPlan) return null;
+                      
                       return (
-                        <Card key={project.id} className="hover:border-primary/50 transition-colors">
+                        <Card 
+                          key={project.id} 
+                          className="hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+                          onClick={() => handleProjectClick(project.id)}
+                        >
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
-                              <div>
-                                <CardTitle className="text-lg flex items-center gap-2">
+                              <div className="flex-1">
+                                <CardTitle className="text-lg flex items-center gap-2 group-hover:text-primary transition-colors">
                                   <Building2 className="w-5 h-5 text-primary" />
-                                  {project.project_title}
-                                </CardTitle>
-                                <p className="text-sm text-muted-foreground mt-1">
                                   {project.project_id_prefix}-{project.project_id_number}
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                  {project.project_title}
                                 </p>
                               </div>
-                              <Badge variant="outline">{projectPlans.length} ORA Plan(s)</Badge>
                             </div>
                           </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="space-y-2">
-                              {projectPlans.map((plan) => (
-                                <button
-                                  key={plan.id}
-                                  onClick={() => navigate(`/operation-readiness/${plan.id}`)}
-                                  className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <Badge variant="secondary">{getPhaseLabel(plan.phase)}</Badge>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <User className="w-3 h-3" />
-                                      <span>{plan.ora_engineer?.full_name || 'Unassigned'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Calendar className="w-3 h-3" />
-                                      <span>{format(new Date(plan.created_at), 'MMM dd, yyyy')}</span>
-                                    </div>
-                                  </div>
-                                  <Badge className={getStatusColor(plan.status)}>
-                                    {plan.status.replace('_', ' ')}
-                                  </Badge>
-                                </button>
-                              ))}
+                          <CardContent className="pt-0 space-y-3">
+                            {/* Current Phase Status */}
+                            <div className="flex items-center justify-between">
+                              <Badge variant="secondary" className="gap-1">
+                                <CalendarCheck className="w-3 h-3" />
+                                {getPhaseLabel(mostRecentPlan.phase)}
+                              </Badge>
+                              <Badge className={getStatusColor(mostRecentPlan.status)}>
+                                {mostRecentPlan.status.replace('_', ' ')}
+                              </Badge>
                             </div>
+                            
+                            {/* Engineer & Date */}
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                <span className="truncate">{mostRecentPlan.ora_engineer?.full_name || 'Unassigned'}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Phase History Indicator */}
+                            {allPlans.length > 1 && (
+                              <div className="pt-2 border-t border-border">
+                                <p className="text-xs text-muted-foreground">
+                                  {allPlans.length} phase(s) available
+                                </p>
+                              </div>
+                            )}
                           </CardContent>
                         </Card>
                       );
