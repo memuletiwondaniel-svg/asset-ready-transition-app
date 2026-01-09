@@ -378,7 +378,6 @@ export const useORPPlanDetails = (planId: string) => {
         .select(`
           *,
           project:projects(*),
-          ora_engineer:profiles!orp_plans_ora_engineer_id_fkey(full_name, position, avatar_url),
           deliverables:orp_plan_deliverables(
             *,
             deliverable:orp_deliverables_catalog(*),
@@ -392,7 +391,19 @@ export const useORPPlanDetails = (planId: string) => {
         .single();
 
       if (error) throw error;
-      return data;
+
+      // Fetch ora_engineer separately since there's no FK
+      let ora_engineer = null;
+      if (data?.ora_engineer_id) {
+        const { data: engineer } = await supabase
+          .from('profiles')
+          .select('full_name, position, avatar_url')
+          .eq('user_id', data.ora_engineer_id)
+          .single();
+        ora_engineer = engineer;
+      }
+
+      return { ...data, ora_engineer };
     },
     enabled: !!planId
   });
