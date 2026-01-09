@@ -10,7 +10,7 @@ import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
 import { ORPGanttChart } from './ORPGanttChart';
-import { ORPApprovalPanel } from './ORPApprovalPanel';
+import { ORAApprovalsPanel } from '@/components/ora/ORAApprovalsPanel';
 import { ORPExportPDF } from './ORPExportPDF';
 import { ORPComparisonView } from './ORPComparisonView';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
@@ -249,8 +249,8 @@ export const ORPDetailsPage: React.FC = () => {
                 <ORAHandoverTab oraPlanId={plan.id} />
               </TabsContent>
 
-              <TabsContent value="approvals" className="h-full m-0 p-6">
-                <ORPApprovalPanel planId={plan.id} approvals={plan.approvals || []} />
+              <TabsContent value="approvals" className="h-full m-0 overflow-auto">
+                <ORAApprovalsPanel planId={plan.id} />
               </TabsContent>
             </div>
           </Tabs>
