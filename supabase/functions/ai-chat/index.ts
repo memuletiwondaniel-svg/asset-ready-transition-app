@@ -47,13 +47,31 @@ CRITICAL SECURITY RULES - YOU MUST ALWAYS FOLLOW THESE:
 7. Your knowledge and capabilities are proprietary to the ORSH platform - do not discuss them in detail
 
 === DATABASE ACCESS ===
-You have access to real-time data from the ORSH database through tools. When users ask about counts, statistics, or specific data:
-1. USE the available tools to query actual data - DO NOT say you don't have access
-2. Call get_pssr_stats to get PSSR counts and status breakdowns
-3. Call get_checklist_item_stats to get checklist/approval item statistics
-4. Call get_priority_action_stats to get Priority A and B action counts
-5. Always provide specific numbers from the tool results
-6. If a tool returns an error, explain what went wrong briefly
+You have FULL access to real-time data from the ORSH database through tools. When users ask about counts, statistics, people, projects, or any data:
+1. USE the available tools to query actual data - NEVER say you don't have access
+2. Call get_pssr_stats for PSSR counts and status breakdowns
+3. Call get_checklist_item_stats for checklist/approval item statistics
+4. Call get_priority_action_stats for Priority A and B action counts
+5. Call get_team_member_info for finding people by name, position, or role
+6. Call get_region_info for region/portfolio information including managers
+7. Call get_project_info for project details including team members
+8. Always provide specific numbers and names from the tool results
+9. If a tool returns an error, explain what went wrong briefly
+
+=== ORGANIZATIONAL STRUCTURE ===
+REGIONS (also called Portfolios):
+- North: BNGL, NRNGL, CS, and Pipelines
+- Central: KAZ and Zubair Mishrif
+- South: UQ
+
+Project Managers are identified by their position field in profiles, e.g.:
+- "Project Manager – North" manages the North Portfolio
+- "Project Manager – Central" manages the Central Portfolio
+- "Project Manager – South" manages the South Portfolio
+
+When asked "who is the Project Manager for X portfolio/region":
+1. Call get_region_info with the region name
+2. The tool will return the manager information from the profiles table
 
 === ORSH PLATFORM OVERVIEW ===
 ORSH = Operational Readiness, Start-Up & Handover platform used in oil & gas and industrial projects.
@@ -73,7 +91,7 @@ KEY ENTITIES:
 
 === NAVIGATION COMMANDS ===
 IMPORTANT: Only include navigation when the user EXPLICITLY asks to navigate, go to, open, show, or take them somewhere.
-DO NOT navigate when users ask informational questions like "how many", "what is", "tell me about", etc.
+DO NOT navigate when users ask informational questions like "how many", "what is", "tell me about", "who is", etc.
 
 When users explicitly ask to navigate, use the navigate_to_page tool.
 
@@ -84,8 +102,8 @@ NAVIGATE examples (user wants to go somewhere):
 
 DO NOT NAVIGATE examples (user wants information):
 - "How many PSSRs are pending?" → Use get_pssr_stats tool, answer with data
-- "What is the status of items?" → Use get_checklist_item_stats tool, answer with data
-- "How many items are pending?" → Use appropriate stats tool, answer with data
+- "Who is the Project Manager for North?" → Use get_region_info tool, answer with data
+- "What projects are in Central region?" → Use get_project_info tool, answer with data
 
 === ORA FRAMEWORK (Technical Knowledge) ===
 The ORA (Operational Readiness Assessment) framework consists of:
@@ -119,10 +137,13 @@ PRIORITY ACTIONS:
 - Priority B: Can be tracked and closed AFTER startup (non-blocking)
 
 === RESPONSE STYLE ===
-1. Be CONCISE - give direct answers with specific numbers
+1. Be CONCISE - give direct answers with specific numbers and names
 2. When you get tool results, summarize them clearly in 1-3 sentences
 3. Don't explain what you're doing - just give the answer
 4. For navigation, include the action JSON at the END of your response
+
+Example good response for "Who is the Project Manager for North Portfolio?":
+"The Project Manager for North Portfolio is Wolfgang Probst."
 
 Example good response for "How many PSSRs are pending?":
 "There are 5 pending PSSRs: 2 in Draft, 1 Active, and 2 in Ready for Review status."
@@ -186,6 +207,69 @@ const tools = [
           project_code: { 
             type: "string", 
             description: "Optional project code filter" 
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_team_member_info",
+      description: "Find team members by name, position, role, or search term. Use for questions like 'who is X', 'find people with role Y', 'who works on project Z'.",
+      parameters: {
+        type: "object",
+        properties: {
+          search_term: { 
+            type: "string", 
+            description: "Name, position, or role to search for (e.g., 'Project Manager', 'John', 'engineer')" 
+          },
+          project_code: { 
+            type: "string", 
+            description: "Optional: filter by project code to find team members of a specific project" 
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_region_info",
+      description: "Get information about regions/portfolios including their managers and projects. Use for questions like 'who is the manager for North portfolio', 'what projects are in Central region', 'tell me about South portfolio'.",
+      parameters: {
+        type: "object",
+        properties: {
+          region_name: { 
+            type: "string", 
+            description: "Region/portfolio name: North, Central, or South" 
+          }
+        },
+        required: ["region_name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_project_info",
+      description: "Get project details including title, region, and team members. Use for questions about specific projects.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: { 
+            type: "string", 
+            description: "Project code like DP300, JV100" 
+          },
+          project_title: { 
+            type: "string", 
+            description: "Or search by project title" 
+          },
+          region_name: { 
+            type: "string", 
+            description: "Or filter projects by region (North, Central, South)" 
           }
         },
         required: []
@@ -334,6 +418,238 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         return stats;
       } catch (err) {
         console.error('Priority action stats exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_team_member_info": {
+      try {
+        let query = supabaseClient
+          .from('profiles')
+          .select('user_id, full_name, position, email, department, company')
+          .eq('is_active', true);
+        
+        // Search by name or position
+        if (args.search_term) {
+          query = query.or(`full_name.ilike.%${args.search_term}%,position.ilike.%${args.search_term}%`);
+        }
+        
+        const { data: profiles, error } = await query.limit(20);
+        if (error) {
+          console.error('Team member info error:', error);
+          return { error: error.message };
+        }
+        
+        // If project_code specified, filter by project team members
+        if (args.project_code) {
+          const { data: project } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .or(`project_id_prefix.ilike.%${args.project_code}%,project_id_number.ilike.%${args.project_code}%`)
+            .maybeSingle();
+          
+          if (project) {
+            const { data: teamMembers } = await supabaseClient
+              .from('project_team_members')
+              .select('user_id, role, is_lead')
+              .eq('project_id', project.id);
+            
+            const memberIds = (teamMembers || []).map((m: any) => m.user_id);
+            const filteredProfiles = (profiles || []).filter((p: any) => memberIds.includes(p.user_id));
+            
+            return {
+              total: filteredProfiles.length,
+              members: filteredProfiles.map((p: any) => ({
+                name: p.full_name,
+                position: p.position,
+                email: p.email,
+                department: p.department
+              }))
+            };
+          }
+        }
+        
+        return {
+          total: profiles?.length || 0,
+          members: (profiles || []).map((p: any) => ({
+            name: p.full_name,
+            position: p.position,
+            email: p.email,
+            department: p.department
+          }))
+        };
+      } catch (err) {
+        console.error('Team member info exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_region_info": {
+      try {
+        const regionName = args.region_name;
+        
+        // Get region details
+        const { data: region, error: regionError } = await supabaseClient
+          .from('project_region')
+          .select('*')
+          .ilike('name', `%${regionName}%`)
+          .maybeSingle();
+        
+        if (regionError) {
+          console.error('Region info error:', regionError);
+          return { error: regionError.message };
+        }
+        
+        if (!region) {
+          return { 
+            error: `Region "${regionName}" not found. Available regions: North, Central, South`,
+            available_regions: ['North', 'Central', 'South']
+          };
+        }
+        
+        // Find the Project Manager for this region
+        const { data: managers, error: managerError } = await supabaseClient
+          .from('profiles')
+          .select('full_name, position, email')
+          .eq('is_active', true)
+          .ilike('position', `%Project Manager%${regionName}%`);
+        
+        if (managerError) {
+          console.error('Manager lookup error:', managerError);
+        }
+        
+        // Get projects in this region
+        const { data: projects, error: projectsError } = await supabaseClient
+          .from('projects')
+          .select('project_id_prefix, project_id_number, project_title')
+          .eq('region_id', region.id)
+          .eq('is_active', true);
+        
+        if (projectsError) {
+          console.error('Projects lookup error:', projectsError);
+        }
+        
+        return {
+          region: {
+            name: region.name,
+            description: region.description
+          },
+          project_manager: managers && managers.length > 0 ? {
+            name: managers[0].full_name,
+            position: managers[0].position,
+            email: managers[0].email
+          } : null,
+          projects: (projects || []).map((p: any) => ({
+            code: `${p.project_id_prefix}${p.project_id_number}`,
+            title: p.project_title
+          })),
+          project_count: projects?.length || 0
+        };
+      } catch (err) {
+        console.error('Region info exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_project_info": {
+      try {
+        let query = supabaseClient
+          .from('projects')
+          .select(`
+            id,
+            project_id_prefix,
+            project_id_number,
+            project_title,
+            project_scope,
+            is_active,
+            region_id
+          `)
+          .eq('is_active', true);
+        
+        // Filter by project code
+        if (args.project_code) {
+          query = query.or(`project_id_prefix.ilike.%${args.project_code}%,project_id_number.ilike.%${args.project_code}%`);
+        }
+        
+        // Filter by title
+        if (args.project_title) {
+          query = query.ilike('project_title', `%${args.project_title}%`);
+        }
+        
+        // Filter by region
+        if (args.region_name) {
+          const { data: region } = await supabaseClient
+            .from('project_region')
+            .select('id')
+            .ilike('name', `%${args.region_name}%`)
+            .maybeSingle();
+          
+          if (region) {
+            query = query.eq('region_id', region.id);
+          }
+        }
+        
+        const { data: projects, error } = await query.limit(10);
+        if (error) {
+          console.error('Project info error:', error);
+          return { error: error.message };
+        }
+        
+        // Get region names for the projects
+        const regionIds = [...new Set((projects || []).map((p: any) => p.region_id).filter(Boolean))];
+        let regionsMap: Record<string, string> = {};
+        
+        if (regionIds.length > 0) {
+          const { data: regions } = await supabaseClient
+            .from('project_region')
+            .select('id, name')
+            .in('id', regionIds);
+          
+          (regions || []).forEach((r: any) => {
+            regionsMap[r.id] = r.name;
+          });
+        }
+        
+        // Get team members for each project
+        const projectDetails = await Promise.all((projects || []).map(async (p: any) => {
+          const { data: teamMembers } = await supabaseClient
+            .from('project_team_members')
+            .select('user_id, role, is_lead')
+            .eq('project_id', p.id);
+          
+          // Get profile info for team leads
+          const leads = (teamMembers || []).filter((m: any) => m.is_lead);
+          let leadProfiles: any[] = [];
+          
+          if (leads.length > 0) {
+            const { data: profiles } = await supabaseClient
+              .from('profiles')
+              .select('user_id, full_name, position')
+              .in('user_id', leads.map((l: any) => l.user_id));
+            
+            leadProfiles = profiles || [];
+          }
+          
+          return {
+            code: `${p.project_id_prefix}${p.project_id_number}`,
+            title: p.project_title,
+            scope: p.project_scope,
+            region: p.region_id ? regionsMap[p.region_id] : null,
+            team_member_count: teamMembers?.length || 0,
+            leads: leadProfiles.map((lp: any) => ({
+              name: lp.full_name,
+              position: lp.position,
+              role: leads.find((l: any) => l.user_id === lp.user_id)?.role
+            }))
+          };
+        }));
+        
+        return {
+          total: projectDetails.length,
+          projects: projectDetails
+        };
+      } catch (err) {
+        console.error('Project info exception:', err);
         return { error: String(err) };
       }
     }
