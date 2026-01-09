@@ -119,8 +119,8 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -137,7 +137,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
           </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="w-full justify-start flex-shrink-0">
             <TabsTrigger value="details" className="gap-2">
               <FileText className="w-4 h-4" />
@@ -157,9 +157,10 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 min-h-0 mt-4">
-            <ScrollArea className="h-full max-h-[calc(90vh-200px)]">
-              <TabsContent value="details" className="m-0 space-y-4 pr-4">
+          <div className="flex-1 overflow-hidden mt-4">
+            <ScrollArea className="h-[calc(85vh-180px)]">
+              <div className="pr-4">
+              <TabsContent value="details" className="m-0 space-y-4" forceMount={activeTab === 'details' ? true : undefined} hidden={activeTab !== 'details'}>
               {/* Overview */}
               <Card>
                 <CardHeader className="pb-3">
@@ -492,6 +493,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                 </CardContent>
               </Card>
             </TabsContent>
+              </div>
             </ScrollArea>
           </div>
         </Tabs>
