@@ -44,20 +44,20 @@ const MAINTENANCE_COMPONENTS = [
     iconBg: 'bg-purple-100'
   },
   {
-    key: 'BOM' as const,
-    label: 'BOM - Bill of Materials',
-    icon: Package,
-    description: 'Spare parts and materials setup',
-    iconColor: 'text-amber-600',
-    iconBg: 'bg-amber-100'
-  },
-  {
     key: 'IMS' as const,
     label: 'IMS - Integrity Management System',
     icon: Shield,
     description: 'Integrity workflows and inspections',
     iconColor: 'text-emerald-600',
     iconBg: 'bg-emerald-100'
+  },
+  {
+    key: 'BOM' as const,
+    label: 'BOMs - Bill of Materials',
+    icon: Package,
+    description: 'Spare parts and materials setup',
+    iconColor: 'text-amber-600',
+    iconBg: 'bg-amber-100'
   },
   {
     key: '2Y_SPARES' as const,
