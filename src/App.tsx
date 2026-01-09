@@ -25,6 +25,7 @@ import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
 import PSSRItemReview from "@/pages/PSSRItemReview";
+import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ const App = () => (
                     <Route path="/project/:id" element={<ProjectDetailsPage />} />
                     <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
                     <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
+                    <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
         <Route path="/operation-readiness" element={<ORPLandingPage />} />
         <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
         <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />

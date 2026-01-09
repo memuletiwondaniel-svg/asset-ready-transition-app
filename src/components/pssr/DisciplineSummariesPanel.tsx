@@ -61,7 +61,10 @@ export const DisciplineSummariesPanel: React.FC<DisciplineSummariesPanelProps> =
       // Check if there's a dedicated interdisciplinary review
       const { data } = await supabase
         .from('pssr_discipline_reviews')
-        .select('*')
+        .select(`
+          *,
+          profiles:reviewer_user_id(full_name)
+        `)
         .eq('pssr_id', pssrId)
         .eq('discipline_role', 'Interdisciplinary')
         .single();

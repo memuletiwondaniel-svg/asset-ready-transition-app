@@ -12,12 +12,10 @@ import {
   XCircle, 
   AlertTriangle, 
   Lock, 
-  Plus,
   Shield,
   Users
 } from 'lucide-react';
 import { ApprovalConfirmationDialog } from './ApprovalConfirmationDialog';
-import PriorityActionModal from './PriorityActionModal';
 import { PSSRApprover } from '@/hooks/usePSSRApprovers';
 
 interface ApproverDecisionPanelProps {
@@ -41,8 +39,6 @@ export const ApproverDecisionPanel: React.FC<ApproverDecisionPanelProps> = ({
   const [comments, setComments] = useState('');
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [showPriorityActionModal, setShowPriorityActionModal] = useState(false);
-  const [newPriorityACreated, setNewPriorityACreated] = useState(false);
 
   // Fetch SoF approvers (directors) for the confirmation dialog
   const { data: sofApprovers } = useQuery({
@@ -161,15 +157,8 @@ export const ApproverDecisionPanel: React.FC<ApproverDecisionPanelProps> = ({
     },
   });
 
-  const handlePriorityActionCreated = (priority: 'A' | 'B') => {
-    if (priority === 'A') {
-      setNewPriorityACreated(true);
-    }
-    setShowPriorityActionModal(false);
-  };
-
   const isApprover = !!currentApprover && currentApprover.status === 'PENDING';
-  const canApprove = isApprover && canSignOff && !newPriorityACreated;
+  const canApprove = isApprover && canSignOff;
 
   // Already approved/rejected
   if (currentApprover && currentApprover.status !== 'PENDING') {
@@ -240,17 +229,14 @@ export const ApproverDecisionPanel: React.FC<ApproverDecisionPanelProps> = ({
             </Badge>
           </div>
 
-          {/* Warning if Priority A open or new Priority A created */}
-          {(!canSignOff || newPriorityACreated) && (
+          {/* Warning if Priority A open */}
+          {!canSignOff && (
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
               <div className="text-sm">
                 <p className="font-medium text-amber-700">Cannot Approve</p>
                 <p className="text-amber-600 text-xs">
-                  {newPriorityACreated 
-                    ? 'You created a Priority A action. It must be closed before you can approve.'
-                    : 'There are open Priority A actions that must be closed before approval.'
-                  }
+                  There are open Priority A actions that must be closed before approval.
                 </p>
               </div>
             </div>
@@ -266,16 +252,6 @@ export const ApproverDecisionPanel: React.FC<ApproverDecisionPanelProps> = ({
               rows={3}
             />
           </div>
-
-          {/* Add Priority Action Button */}
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowPriorityActionModal(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Priority A/B Action
-          </Button>
 
           <Separator />
 
@@ -359,14 +335,6 @@ export const ApproverDecisionPanel: React.FC<ApproverDecisionPanelProps> = ({
         comments={comments}
         isLoading={rejectMutation.isPending}
         type="reject"
-      />
-
-      {/* Priority Action Modal */}
-      <PriorityActionModal
-        isOpen={showPriorityActionModal}
-        onClose={() => setShowPriorityActionModal(false)}
-        pssrId={pssrId}
-        onActionCreated={handlePriorityActionCreated}
       />
     </>
   );
