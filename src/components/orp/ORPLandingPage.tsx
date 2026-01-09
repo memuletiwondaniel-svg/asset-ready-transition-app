@@ -14,6 +14,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 export const ORPLandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -97,15 +98,9 @@ export const ORPLandingPage: React.FC = () => {
     <div className="h-screen flex w-full overflow-hidden">
       <OrshSidebar
         currentPage="operation-readiness"
-        onNavigate={(section) => {
-          if (section === 'home') {
-            navigate('/');
-          } else if (section === 'operation-readiness') {
-            // Already here
-          } else {
-            navigate(`/${section}`);
-          }
-        }}
+        onNavigate={createSidebarNavigator(navigate, {
+          'operation-readiness': () => {} // Already here, do nothing
+        })}
         onLogout={() => navigate('/')}
       />
 

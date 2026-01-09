@@ -47,6 +47,8 @@ import ConfigurationManagement from "@/components/user-management/ConfigurationM
 import LocationManagement from "@/components/user-management/LocationManagement";
 import { useUsers } from "@/hooks/useUsers";
 import { OrshSidebar } from "@/components/OrshSidebar";
+import { useNavigate } from 'react-router-dom';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 interface UserManagementProps {
   onBack: () => void;
@@ -55,6 +57,7 @@ interface UserManagementProps {
 const UserManagement = ({ onBack }: UserManagementProps) => {
   const { buildBreadcrumbsFromPath } = useBreadcrumb();
   const breadcrumbs = buildBreadcrumbsFromPath();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,6 +176,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
         userTitle="ORA Engr."
         language="en"
         currentPage="user-management"
+        onNavigate={createSidebarNavigator(navigate)}
+        onLogout={() => navigate('/')}
       />
       
       <div className="flex-1 overflow-auto">

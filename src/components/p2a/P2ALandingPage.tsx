@@ -10,6 +10,7 @@ import { useP2AHandovers } from '@/hooks/useP2AHandovers';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 export const P2ALandingPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -95,14 +96,7 @@ export const P2ALandingPage: React.FC = () => {
         userTitle={userProfile?.position || 'Team Member'} 
         userAvatar={userProfile?.avatar_url || ''} 
         currentPage="p2a-handover"
-        onNavigate={(section) => {
-          if (section === 'home') navigate('/');
-          else if (section === 'pssr') navigate('/pssr');
-          else if (section === 'operation-readiness') navigate('/operation-readiness');
-          else if (section === 'user-management') navigate('/users');
-          else if (section === 'admin-tools') navigate('/admin-tools');
-          else if (section === 'projects') navigate('/projects');
-        }}
+        onNavigate={createSidebarNavigator(navigate)}
         onLogout={() => navigate('/')}
       />
       

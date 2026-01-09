@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { supabase } from '@/integrations/supabase/client';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 export const ORMLandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -207,10 +208,10 @@ export const ORMLandingPage: React.FC = () => {
           userTitle={userProfile?.position || 'Team Member'} 
           userAvatar={userProfile?.avatar_url || ''} 
           currentPage="or-maintenance" 
-          onNavigate={(section) => {
-          if (section === 'home') navigate('/');
-          else navigate(`/${section}`);
-        }} onLogout={() => navigate('/')} />
+          onNavigate={createSidebarNavigator(navigate, {
+            'or-maintenance': () => {} // Already here
+          })}
+          onLogout={() => navigate('/')} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="border-b border-border bg-card px-6 py-4">
             <Skeleton className="h-4 w-48 mb-2" />
@@ -240,10 +241,9 @@ export const ORMLandingPage: React.FC = () => {
         userTitle={userProfile?.position || 'Team Member'} 
         userAvatar={userProfile?.avatar_url || ''} 
         currentPage="or-maintenance"
-        onNavigate={(section) => {
-          if (section === 'home') navigate('/');
-          else navigate(`/${section}`);
-        }}
+        onNavigate={createSidebarNavigator(navigate, {
+          'or-maintenance': () => {} // Already here
+        })}
         onLogout={() => navigate('/')}
       />
 

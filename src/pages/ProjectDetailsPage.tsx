@@ -28,6 +28,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '@/hooks/use-toast';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 
 interface SortableWidgetProps {
   id: string;
@@ -159,11 +160,17 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  const handleSidebarNavigate = createSidebarNavigator(navigate);
+
   if (isLoading) {
     return (
       <AnimatedBackground>
         <div className="flex h-screen">
-          <OrshSidebar />
+          <OrshSidebar 
+            currentPage="projects" 
+            onNavigate={handleSidebarNavigate}
+            onLogout={() => navigate('/')}
+          />
           <div className="flex-1 overflow-auto">
             <div className="container mx-auto p-6 space-y-6">
               <Skeleton className="h-8 w-64" />
@@ -179,7 +186,11 @@ export default function ProjectDetailsPage() {
     return (
       <AnimatedBackground>
         <div className="flex h-screen">
-          <OrshSidebar />
+          <OrshSidebar 
+            currentPage="projects" 
+            onNavigate={handleSidebarNavigate}
+            onLogout={() => navigate('/')}
+          />
           <div className="flex-1 overflow-auto">
             <div className="container mx-auto p-6">
               <Card>
@@ -207,7 +218,11 @@ export default function ProjectDetailsPage() {
   return (
     <AnimatedBackground>
       <div className="flex h-screen">
-        <OrshSidebar />
+        <OrshSidebar 
+          currentPage="projects" 
+          onNavigate={handleSidebarNavigate}
+          onLogout={() => navigate('/')}
+        />
         <div className="flex-1 overflow-auto">
           <div className="container mx-auto p-6 space-y-6">
             <BreadcrumbNavigation currentPageLabel={project ? `${getProjectId()}` : 'Project'} />

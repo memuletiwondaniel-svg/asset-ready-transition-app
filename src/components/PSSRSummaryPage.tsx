@@ -26,6 +26,7 @@ import { OrshSidebar } from './OrshSidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 import { parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
 interface PSSRSummaryPageProps {
   onBack: () => void;
 }
@@ -657,17 +658,14 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
         userAvatar={userProfile?.avatar_url || ''} 
         language="en" 
         currentPage="pssr" 
-        onNavigate={section => {
-      console.log('PSSR page navigation:', section);
-      if (section === 'home') {
-        onBack();
-      } else if (section === 'pssr') {
-        setActiveView('list');
-      } else {
-        // Navigate to other sections via router
-        navigate(`/${section}`);
-      }
-    }} onLogout={onBack} onShowWidgets={() => setShowWidgetManagement(true)} onShowOnboarding={() => setShowOnboarding(true)} showWidgets={showWidgetManagement} />
+        onNavigate={createSidebarNavigator(navigate, {
+          'pssr': () => setActiveView('list'),
+        })} 
+        onLogout={() => navigate('/')} 
+        onShowWidgets={() => setShowWidgetManagement(true)} 
+        onShowOnboarding={() => setShowOnboarding(true)} 
+        showWidgets={showWidgetManagement} 
+      />
       
       <div className="flex-1 flex flex-col overflow-hidden">
 

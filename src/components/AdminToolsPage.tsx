@@ -22,6 +22,8 @@ import { ThemeToggle } from './admin/ThemeToggle';
 import LanguageSelector from './admin/LanguageSelector';
 import UserProfileDropdown from './admin/UserProfileDropdown';
 import { NotificationCenter } from './NotificationCenter';
+import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+
 interface AdminToolsPageProps {
   onBack: () => void;
 }
@@ -63,23 +65,11 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     };
     fetchUserProfile();
   }, []);
-  const handleSidebarNavigate = (section: string) => {
-    // Map sidebar sections to internal views or routes
-    switch (section) {
-      case 'admin-tools':
-        setActiveView('dashboard');
-        break;
-      case 'user-management':
-      case 'users':
-        setActiveView('users');
-        break;
-      case 'pssr':
-        navigate('/pssr');
-        break;
-      default:
-        navigate(`/${section}`);
-    }
-  };
+  const handleSidebarNavigate = createSidebarNavigator(navigate, {
+    'admin-tools': () => setActiveView('dashboard'),
+    'user-management': () => setActiveView('users'),
+    'users': () => setActiveView('users'),
+  });
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
