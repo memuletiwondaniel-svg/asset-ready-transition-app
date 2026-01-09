@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2 } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import PSSRSettingsManagement from "./PSSRSettingsManagement";
+import { ORAConfigurationManagement } from "./ora/ORAConfigurationManagement";
 import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
@@ -79,7 +80,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         navigate(`/${section}`);
     }
   };
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [userStatsAnimating, setUserStatsAnimating] = useState(false);
@@ -252,6 +253,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('activity-log')
+  }, {
+    id: 'ora-configuration',
+    title: 'Manage ORA Plans',
+    description: 'Configure ORA activities, deliverables, templates and milestone types',
+    icon: LayoutTemplate,
+    gradient: 'from-amber-500 to-amber-600',
+    tooltip: 'Manage the ORA activity catalog, create reusable templates, and configure project milestones',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('ora-configuration')
   }];
 
   // Filter admin tools based on search query
@@ -347,6 +358,12 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         <div className="flex-1 overflow-y-auto">
           <AdminActivityLog onBack={() => setActiveView('dashboard')} selectedLanguage={language} />
         </div>
+      </div>;
+  }
+  if (activeView === 'ora-configuration') {
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
+        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
+        <ORAConfigurationManagement onBack={() => setActiveView('dashboard')} />
       </div>;
   }
   return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
