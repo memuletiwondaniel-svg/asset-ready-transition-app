@@ -29,8 +29,7 @@ import {
   ArrowUp,
   PanelLeftClose,
   PanelLeft,
-  MoreHorizontal,
-  Zap
+  MoreHorizontal
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,10 +71,10 @@ interface ORSHChatDialogProps {
 }
 
 const SUGGESTED_PROMPTS = [
-  { icon: Zap, text: "What are the 6 phases of ORA?", category: "Learn" },
-  { icon: MessageSquare, text: "Show me my tasks", category: "Navigate" },
-  { icon: Sparkles, text: "What is a Priority A action?", category: "Learn" },
-  { icon: MessageSquare, text: "Take me to PSSR module", category: "Navigate" },
+  "Show me my tasks",
+  "What are the 6 phases of ORA?",
+  "What is a Priority A action?",
+  "Take me to PSSR module",
 ];
 
 export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ 
@@ -670,27 +669,18 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                     or let me navigate you anywhere in the app.
                   </p>
                   
-                  {/* Suggestion Cards */}
-                  <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
-                    {SUGGESTED_PROMPTS.map((prompt, index) => {
-                      const Icon = prompt.icon;
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => handleSend(prompt.text)}
-                          disabled={isLoading}
-                          className="flex items-start gap-3 p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 text-left transition-all hover:border-border group"
-                        >
-                          <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10">
-                            <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-0.5">{prompt.category}</p>
-                            <p className="text-sm font-medium">{prompt.text}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
+                  {/* Simple prompt suggestions */}
+                  <div className="flex flex-wrap justify-center gap-2 w-full max-w-lg">
+                    {SUGGESTED_PROMPTS.map((prompt, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSend(prompt)}
+                        disabled={isLoading}
+                        className="px-4 py-2 text-sm rounded-full border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-border transition-all text-muted-foreground hover:text-foreground"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : (
