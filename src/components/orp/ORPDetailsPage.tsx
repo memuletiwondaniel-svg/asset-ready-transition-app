@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical } from 'lucide-react';
+import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck } from 'lucide-react';
 import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
@@ -126,6 +126,9 @@ export const ORPDetailsPage: React.FC = () => {
           />
           
           <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex-shrink-0">
+              <CalendarCheck className="w-5 h-5 text-white" />
+            </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">
                 {plan.project?.project_id_prefix}-{plan.project?.project_id_number}: {plan.project?.project_title}
