@@ -250,9 +250,9 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                         <div className="w-40 flex items-center gap-3">
                           <Progress 
                             value={summary.progress} 
-                            className="h-2 flex-1"
+                            className={`h-2 flex-1 ${summary.progress === 100 ? '[&>div]:bg-green-500' : '[&>div]:bg-slate-300'}`}
                           />
-                          <span className="text-sm font-medium min-w-[36px] text-right">
+                          <span className={`text-sm font-medium min-w-[36px] text-right ${summary.progress === 100 ? 'text-green-600' : ''}`}>
                             {summary.progress}%
                           </span>
                         </div>
@@ -288,9 +288,9 @@ export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProp
                               <div className="flex items-center gap-2">
                                 <Progress 
                                   value={batch.progress_percent} 
-                                  className="h-2 flex-1"
+                                  className={`h-2 flex-1 ${batch.progress_percent === 100 ? '[&>div]:bg-green-500' : '[&>div]:bg-slate-300'}`}
                                 />
-                                <span className="text-sm min-w-[36px] text-right">
+                                <span className={`text-sm min-w-[36px] text-right ${batch.progress_percent === 100 ? 'text-green-600' : ''}`}>
                                   {batch.progress_percent}%
                                 </span>
                               </div>
