@@ -99,10 +99,29 @@ REGIONS (also called Portfolios):
 - Central: KAZ and Zubair Mishrif
 - South: UQ
 
-Project Managers are identified by their position field in profiles, e.g.:
-- "Project Manager – North" manages the North Portfolio
-- "Project Manager – Central" manages the Central Portfolio
-- "Project Manager – South" manages the South Portfolio
+HUBS (Project Hubs under Regions):
+- Zubair Hub (Central region)
+- KAZ Hub (Central region)
+- UQ Hub (South region)
+- West Qurna Hub (South region)
+- NRNGL, BNGL & NR/SR Hub (North region)
+- Pipelines Hub (North region)
+
+POSITION NAMING CONVENTIONS:
+- Project Managers: "Project Manager – [Region]" (e.g., "Project Manager – North")
+- Hub Leads: "Project Hub Lead – [Hub Name]" (e.g., "Project Hub Lead – Zubair")
+- Project Engineers: "Project Engr – [Region] – [Hub]" (e.g., "Project Engr – North – West Qurna")
+
+=== SMART QUERY BEHAVIOR ===
+CRITICAL: When a user asks about something and you can't find an exact match:
+1. ALWAYS search for similar/related matches using get_hub_info or get_team_member_info
+2. If you find related hubs, projects, or positions, suggest them to the user
+3. Example: "Who is the Hub Lead for West Qurna?" → If no exact match, respond: "I couldn't find a Hub Lead specifically for West Qurna. The West Qurna Hub exists - would you like me to search for team members associated with West Qurna projects instead?"
+4. NEVER just say "not found" - always provide alternatives or suggestions
+
+When asked "who is the Hub Lead for X" or "who is the Project Hub Lead for X":
+1. Call get_hub_info with the hub name
+2. The tool will search for Hub Leads and return matches or suggestions
 
 When asked "who is the Project Manager for X portfolio/region":
 1. Call get_region_info with the region name
@@ -308,6 +327,23 @@ const tools = [
           }
         },
         required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_hub_info",
+      description: "Get information about project hubs including their leads and team members. Use for questions like 'who is the hub lead for Zubair', 'who works in West Qurna hub', 'tell me about KAZ hub'.",
+      parameters: {
+        type: "object",
+        properties: {
+          hub_name: { 
+            type: "string", 
+            description: "Hub name to search for (e.g., Zubair, West Qurna, KAZ, UQ, NRNGL)" 
+          }
+        },
+        required: ["hub_name"]
       }
     }
   },
@@ -709,6 +745,131 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         };
       } catch (err) {
         console.error('Project info exception:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_hub_info": {
+      try {
+        const hubName = args.hub_name;
+        console.log(`Searching for hub: ${hubName}`);
+        
+        // First, get all available hubs
+        const { data: allHubs, error: hubsError } = await supabaseClient
+          .from('hubs')
+          .select('id, name, description')
+          .eq('is_active', true);
+        
+        if (hubsError) {
+          console.error('Hubs fetch error:', hubsError);
+          return { error: hubsError.message };
+        }
+        
+        // Find matching hub (fuzzy match)
+        const matchedHub = (allHubs || []).find((h: any) => 
+          h.name.toLowerCase().includes(hubName.toLowerCase()) ||
+          hubName.toLowerCase().includes(h.name.toLowerCase())
+        );
+        
+        // Search for Hub Leads with various patterns
+        const { data: hubLeads, error: leadsError } = await supabaseClient
+          .from('profiles')
+          .select('full_name, position, email')
+          .eq('is_active', true)
+          .or(`position.ilike.%Hub Lead%${hubName}%,position.ilike.%${hubName}%Hub%,position.ilike.%Hub Lead%`);
+        
+        if (leadsError) {
+          console.error('Hub leads lookup error:', leadsError);
+        }
+        
+        // Filter hub leads that actually match the hub name
+        const matchingLeads = (hubLeads || []).filter((l: any) => {
+          const posLower = l.position.toLowerCase();
+          return posLower.includes(hubName.toLowerCase());
+        });
+        
+        // Also search for anyone with this hub in their position (engineers, etc.)
+        const { data: hubMembers, error: membersError } = await supabaseClient
+          .from('profiles')
+          .select('full_name, position, email')
+          .eq('is_active', true)
+          .ilike('position', `%${hubName}%`);
+        
+        if (membersError) {
+          console.error('Hub members lookup error:', membersError);
+        }
+        
+        // Search for projects related to this hub
+        const { data: relatedProjects, error: projectsError } = await supabaseClient
+          .from('projects')
+          .select('project_id_prefix, project_id_number, project_title')
+          .eq('is_active', true)
+          .ilike('project_title', `%${hubName}%`);
+        
+        if (projectsError) {
+          console.error('Projects lookup error:', projectsError);
+        }
+        
+        // Get all hub lead positions for suggestions
+        const { data: allHubLeads } = await supabaseClient
+          .from('profiles')
+          .select('full_name, position')
+          .eq('is_active', true)
+          .ilike('position', '%Hub Lead%');
+        
+        // Build response with suggestions
+        const availableHubLeads = (allHubLeads || []).map((l: any) => ({
+          name: l.full_name,
+          position: l.position
+        }));
+        
+        // If no exact hub lead found, provide helpful suggestions
+        if (matchingLeads.length === 0) {
+          return {
+            hub: matchedHub ? { name: matchedHub.name, description: matchedHub.description } : null,
+            hub_lead: null,
+            hub_lead_not_found: true,
+            suggestion: matchedHub 
+              ? `The "${matchedHub.name}" hub exists, but no Hub Lead position is currently assigned. Consider searching for team members working on ${hubName} projects.`
+              : `No hub named "${hubName}" was found.`,
+            team_members: (hubMembers || []).map((m: any) => ({
+              name: m.full_name,
+              position: m.position,
+              email: m.email
+            })),
+            related_projects: (relatedProjects || []).map((p: any) => ({
+              code: `${p.project_id_prefix}${p.project_id_number}`,
+              title: p.project_title
+            })),
+            available_hubs: (allHubs || []).map((h: any) => h.name),
+            available_hub_leads: availableHubLeads,
+            did_you_mean: matchedHub ? null : (allHubs || []).filter((h: any) => 
+              h.name.toLowerCase().includes(hubName.substring(0, 3).toLowerCase()) ||
+              hubName.toLowerCase().includes(h.name.substring(0, 3).toLowerCase())
+            ).map((h: any) => h.name)
+          };
+        }
+        
+        return {
+          hub: matchedHub ? { name: matchedHub.name, description: matchedHub.description } : null,
+          hub_lead: matchingLeads.length > 0 ? {
+            name: matchingLeads[0].full_name,
+            position: matchingLeads[0].position,
+            email: matchingLeads[0].email
+          } : null,
+          team_members: (hubMembers || []).map((m: any) => ({
+            name: m.full_name,
+            position: m.position,
+            email: m.email
+          })),
+          related_projects: (relatedProjects || []).map((p: any) => ({
+            code: `${p.project_id_prefix}${p.project_id_number}`,
+            title: p.project_title
+          })),
+          available_hubs: (allHubs || []).map((h: any) => h.name)
+        };
+      } catch (err) {
+        console.error('Hub info exception:', err);
         return { error: String(err) };
       }
     }
