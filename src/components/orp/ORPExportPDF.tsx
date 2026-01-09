@@ -165,7 +165,7 @@ export const ORPExportPDF: React.FC<ORPExportPDFProps> = ({ plan, deliverables }
   };
 
   return (
-    <Button onClick={exportToPDF} variant="outline" className="gap-2">
+    <Button id="ora-export-pdf-trigger" onClick={exportToPDF} variant="outline" className="gap-2">
       <Download className="w-4 h-4" />
       Export PDF
     </Button>

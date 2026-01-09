@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History } from 'lucide-react';
+import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical } from 'lucide-react';
 import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
@@ -117,25 +117,18 @@ export const ORPDetailsPage: React.FC = () => {
         <div className="border-b border-border bg-card px-6 py-4">
           {/* Breadcrumb Navigation */}
           <BreadcrumbNavigation 
-            currentPageLabel={plan.project?.project_title || 'ORA Plan'}
+            currentPageLabel={`${plan.project?.project_id_prefix} ${plan.project?.project_id_number}` || 'ORA Plan'}
             customBreadcrumbs={[
               { label: 'Home', path: '/', onClick: () => navigate('/') },
-              { label: 'Operation Readiness', path: '/operation-readiness', onClick: () => navigate('/operation-readiness') }
+              { label: 'ORA Plans', path: '/operation-readiness', onClick: () => navigate('/operation-readiness') }
             ]}
             className="mb-3"
           />
           
           <div className="flex items-center gap-4 mb-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/operation-readiness')}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">
-                {plan.project?.project_title}
+                {plan.project?.project_id_prefix}-{plan.project?.project_id_number}: {plan.project?.project_title}
               </h1>
               <div className="flex items-center gap-2 mt-1">
                 {/* Phase Navigation Dropdown */}
@@ -167,22 +160,7 @@ export const ORPDetailsPage: React.FC = () => {
                   <Badge variant="outline">{getPhaseLabel(plan.phase)}</Badge>
                 )}
                 <Badge>{plan.status.replace('_', ' ')}</Badge>
-                <span className="text-sm text-muted-foreground">
-                  {plan.project?.project_id_prefix}-{plan.project?.project_id_number}
-                </span>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowComparison(true)}
-                className="gap-2"
-              >
-                <ArrowLeftRight className="w-4 h-4" />
-                Compare ORPs
-              </Button>
-              <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
             </div>
           </div>
         </div>
@@ -190,7 +168,7 @@ export const ORPDetailsPage: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="border-b px-6">
+            <div className="border-b px-6 flex items-center justify-between">
               <TabsList className="flex-wrap h-auto gap-1 p-1">
                 <TabsTrigger value="kanban" className="gap-2">
                   <LayoutGrid className="w-4 h-4" />
@@ -216,6 +194,31 @@ export const ORPDetailsPage: React.FC = () => {
                   Approvals
                 </TabsTrigger>
               </TabsList>
+              
+              {/* Export Options */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    Export
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => {
+                    const exportBtn = document.getElementById('ora-export-pdf-trigger');
+                    if (exportBtn) exportBtn.click();
+                  }}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export ORA Plan (PDF)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Hidden export trigger */}
+              <div className="hidden">
+                <ORPExportPDF plan={plan} deliverables={plan.deliverables || []} />
+              </div>
             </div>
 
             <div className="flex-1 overflow-auto">
