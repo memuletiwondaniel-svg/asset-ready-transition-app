@@ -403,6 +403,10 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
 
   // Get public URL for evidence file
   const getEvidenceUrl = (filePath: string) => {
+    // Handle mock files from public folder
+    if (filePath.startsWith('mock/')) {
+      return `/mock-evidence/${filePath.replace('mock/', '')}`;
+    }
     const { data } = supabase.storage.from('training-evidence').getPublicUrl(filePath);
     return data.publicUrl;
   };
