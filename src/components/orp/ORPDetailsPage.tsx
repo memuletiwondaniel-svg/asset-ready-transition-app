@@ -264,19 +264,19 @@ export const ORPDetailsPage: React.FC = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="training" className="h-full m-0 p-6">
+              <TabsContent value="training" className="h-full m-0 p-6 data-[state=inactive]:hidden">
                 <ORATrainingPlanTab oraPlanId={plan.id} />
               </TabsContent>
 
-              <TabsContent value="maintenance" className="h-full m-0 p-6">
+              <TabsContent value="maintenance" className="h-full m-0 p-6 data-[state=inactive]:hidden">
                 <ORAMaintenanceReadinessTab oraPlanId={plan.id} />
               </TabsContent>
 
-              <TabsContent value="handover" className="h-full m-0 p-6">
+              <TabsContent value="handover" className="h-full m-0 p-6 data-[state=inactive]:hidden">
                 <ORAHandoverTab oraPlanId={plan.id} />
               </TabsContent>
 
-              <TabsContent value="approvals" className="h-full m-0 overflow-auto">
+              <TabsContent value="approvals" className="h-full m-0 overflow-auto data-[state=inactive]:hidden">
                 <ORAApprovalsPanel planId={plan.id} />
               </TabsContent>
             </div>
