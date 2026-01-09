@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -39,19 +40,20 @@ interface ORSHChatDialogProps {
 }
 
 const SUGGESTED_PROMPTS = [
-  "What are the key steps in a PSSR process?",
-  "How do I create a safety checklist?",
-  "What should I include in a pre-startup review?",
-  "Explain the approval workflow for PSSRs",
-  "What are common safety review compliance requirements?",
-  "How do I assign tasks in a PSSR?",
+  "What are the 6 phases of ORA?",
+  "Show me my tasks",
+  "What is a Priority A action in PSSR?",
+  "Explain the PSSR approval workflow",
+  "What's the difference between ORM, FEO, and CSU?",
+  "Take me to the PSSR module",
 ];
 
 export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChange, onUnreadCountChange, initialMessage }) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Hello! I\'m ORSH, your AI assistant for PSSRs and safety reviews. How can I help you today?'
+      content: 'Hello! I\'m Bob, your intelligent ORSH assistant. I can help you with PSSR reviews, ORA planning, operational readiness, and navigate you anywhere in the app. What would you like to know?'
     }
   ]);
   const [input, setInput] = useState('');
@@ -373,6 +375,21 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
         
+        // Check for navigation action in response
+        const navigationMatch = assistantMessage.match(/\{"action":\s*"navigate",\s*"path":\s*"([^"]+)"\}/);
+        if (navigationMatch) {
+          const path = navigationMatch[1];
+          // Remove the JSON from the displayed message
+          const cleanMessage = assistantMessage.replace(/\{"action":\s*"navigate",\s*"path":\s*"[^"]+"\}/, '').trim();
+          setMessages([...newMessages, { role: 'assistant', content: cleanMessage }]);
+          
+          // Close dialog and navigate after a brief delay
+          setTimeout(() => {
+            onOpenChange(false);
+            navigate(path);
+          }, 1000);
+        }
+        
         // Mark conversation as unread
         if (currentConversationId) {
           await supabase
@@ -384,8 +401,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
         loadConversations();
       }
     } catch (error) {
-      console.error('Error calling AI chat:', error);
-      toast.error('Failed to get response from ORSH. Please try again.');
+      console.error('Error calling Bob:', error);
+      toast.error('Failed to get response from Bob. Please try again.');
       setMessages(newMessages);
     } finally {
       setIsLoading(false);
@@ -443,7 +460,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
     setMessages([
       {
         role: 'assistant',
-        content: 'Hello! I\'m ORSH, your AI assistant for PSSRs and safety reviews. How can I help you today?'
+        content: 'Hello! I\'m Bob, your intelligent ORSH assistant. I can help you with PSSR reviews, ORA planning, operational readiness, and navigate you anywhere in the app. What would you like to know?'
       }
     ]);
     setCurrentConversationId(null);
@@ -523,10 +540,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
               </div>
               <div>
                 <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Ask ORSH AI
+                  Ask Bob
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Your intelligent assistant for PSSRs and safety reviews
+                  Your intelligent ORSH assistant for operational readiness
                 </DialogDescription>
               </div>
             </div>
@@ -813,7 +830,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ open, onOpenChan
                   className="hidden"
                 />
                 <Textarea
-                  placeholder="Ask ORSH about PSSRs, safety reviews, checklists..."
+                  placeholder="Ask Bob about PSSR, ORA, navigation, or anything ORSH..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
