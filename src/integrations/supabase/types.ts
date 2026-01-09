@@ -433,6 +433,65 @@ export type Database = {
           },
         ]
       }
+      ora_maintenance_batches: {
+        Row: {
+          batch_name: string
+          batch_number: number
+          completion_date: string | null
+          component_type: string
+          created_at: string | null
+          description: string
+          id: string
+          notes: string | null
+          ora_plan_id: string
+          progress_percent: number | null
+          responsible_person: string | null
+          status: string | null
+          target_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          batch_name: string
+          batch_number: number
+          completion_date?: string | null
+          component_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          notes?: string | null
+          ora_plan_id: string
+          progress_percent?: number | null
+          responsible_person?: string | null
+          status?: string | null
+          target_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          batch_name?: string
+          batch_number?: number
+          completion_date?: string | null
+          component_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          notes?: string | null
+          ora_plan_id?: string
+          progress_percent?: number | null
+          responsible_person?: string | null
+          status?: string | null
+          target_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_maintenance_batches_ora_plan_id_fkey"
+            columns: ["ora_plan_id"]
+            isOneToOne: false
+            referencedRelation: "orp_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ora_maintenance_readiness: {
         Row: {
           category: string
@@ -444,8 +503,10 @@ export type Database = {
           item_name: string
           notes: string | null
           ora_plan_id: string
+          overall_progress: number | null
           responsible_person: string | null
           status: string | null
+          target_completion_date: string | null
           target_date: string | null
           updated_at: string
         }
@@ -459,8 +520,10 @@ export type Database = {
           item_name: string
           notes?: string | null
           ora_plan_id: string
+          overall_progress?: number | null
           responsible_person?: string | null
           status?: string | null
+          target_completion_date?: string | null
           target_date?: string | null
           updated_at?: string
         }
@@ -474,8 +537,10 @@ export type Database = {
           item_name?: string
           notes?: string | null
           ora_plan_id?: string
+          overall_progress?: number | null
           responsible_person?: string | null
           status?: string | null
+          target_completion_date?: string | null
           target_date?: string | null
           updated_at?: string
         }
