@@ -599,13 +599,16 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                     </Card>
                   )}
                 </>
-              ) : (
-                // Project Hierarchy Tab
+              ) : activeTab === 'hierarchy' ? (
                 <ProjectHierarchyManagement 
                   selectedLanguage={selectedLanguage}
                   translations={translations}
                 />
-              )}
+              ) : activeTab === 'orp-phases' ? (
+                <ORPPhaseDeliverablesTab />
+              ) : activeTab === 'milestones' ? (
+                <ProjectMilestonesManagementTab />
+              ) : null}
             </div>
           </div>
         </div>

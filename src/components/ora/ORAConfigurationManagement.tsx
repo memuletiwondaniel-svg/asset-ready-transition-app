@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, Milestone, Settings2 } from 'lucide-react';
+import { ArrowLeft, FileText, Milestone, Settings2, LayoutTemplate } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { ORAActivityCatalog } from './ORAActivityCatalog';
+import { ORATemplateManagement } from './ORATemplateManagement';
 import { ProjectMilestonesManagementTab } from '@/components/project/ProjectMilestonesManagementTab';
 
 interface ORAConfigurationManagementProps {
@@ -31,7 +32,7 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
                 Manage ORA Plans
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Configure ORA activities, deliverables, and milestone types
+                Configure ORA activities, templates, and milestone types
               </p>
             </div>
           </div>
@@ -42,19 +43,27 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
+            <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
               <TabsTrigger value="activity-catalog" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Activity Catalog
               </TabsTrigger>
+              <TabsTrigger value="templates" className="flex items-center gap-2">
+                <LayoutTemplate className="h-4 w-4" />
+                Templates
+              </TabsTrigger>
               <TabsTrigger value="milestones" className="flex items-center gap-2">
                 <Milestone className="h-4 w-4" />
-                Milestone Types
+                Milestones
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="activity-catalog" className="mt-0">
               <ORAActivityCatalog />
+            </TabsContent>
+
+            <TabsContent value="templates" className="mt-0">
+              <ORATemplateManagement />
             </TabsContent>
 
             <TabsContent value="milestones" className="mt-0">

@@ -371,6 +371,96 @@ export type Database = {
         }
         Relationships: []
       }
+      ora_plan_templates: {
+        Row: {
+          applicable_phases: string[]
+          complexity: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          project_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          applicable_phases?: string[]
+          complexity?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          project_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          applicable_phases?: string[]
+          complexity?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          project_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ora_template_activities: {
+        Row: {
+          activity_id: string
+          created_at: string | null
+          custom_estimated_hours: number | null
+          display_order: number | null
+          id: string
+          is_required: boolean | null
+          notes: string | null
+          template_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string | null
+          custom_estimated_hours?: number | null
+          display_order?: number | null
+          id?: string
+          is_required?: boolean | null
+          notes?: string | null
+          template_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string | null
+          custom_estimated_hours?: number | null
+          display_order?: number | null
+          id?: string
+          is_required?: boolean | null
+          notes?: string | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_template_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "ora_activity_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ora_template_activities_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "ora_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orm_attachments: {
         Row: {
           attachment_type: string
