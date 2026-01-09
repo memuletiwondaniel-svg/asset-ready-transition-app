@@ -132,8 +132,11 @@ export const ORPDetailsPage: React.FC = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">
-                {plan.project?.project_id_prefix}-{plan.project?.project_id_number}: {plan.project?.project_title}
+                {plan.project?.project_id_prefix}-{plan.project?.project_id_number}: ORA Plan
               </h1>
+              <p className="text-sm text-muted-foreground">
+                {plan.project?.project_title}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 {/* Phase Navigation Dropdown */}
                 {sortedProjectPlans.length > 1 ? (
