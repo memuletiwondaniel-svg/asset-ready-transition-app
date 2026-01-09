@@ -13,8 +13,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
-import { WorkspacesWidget } from '@/components/widgets/WorkspacesWidget';
-import { RecentActivityWidget } from '@/components/widgets/RecentActivityWidget';
 import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
 import { OrshSidebar } from '@/components/OrshSidebar';
@@ -105,19 +103,14 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem('dashboardWidgetConfig');
-    return saved ? JSON.parse(saved) : [{
+    if (saved) {
+      // Filter out removed widgets from saved config
+      const parsed = JSON.parse(saved);
+      return parsed.filter((w: WidgetConfig) => w.id === 'quick-actions');
+    }
+    return [{
       id: 'quick-actions',
       title: 'Quick Actions',
-      isVisible: true,
-      isExpanded: false
-    }, {
-      id: 'workspaces',
-      title: 'Workspaces',
-      isVisible: true,
-      isExpanded: false
-    }, {
-      id: 'recent-activity',
-      title: 'Recent Activity',
       isVisible: true,
       isExpanded: false
     }];
@@ -207,16 +200,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     const defaultWidgets = [{
       id: 'quick-actions',
       title: 'Quick Actions',
-      isVisible: true,
-      isExpanded: false
-    }, {
-      id: 'workspaces',
-      title: 'Workspaces',
-      isVisible: true,
-      isExpanded: false
-    }, {
-      id: 'recent-activity',
-      title: 'Recent Activity',
       isVisible: true,
       isExpanded: false
     }];
@@ -710,8 +693,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                                 else if (actionId === 'develop-p2a') onNavigate('p2a');
                               }} />
                             )}
-                            {widget.id === 'workspaces' && <WorkspacesWidget onNavigate={onNavigate} />}
-                            {widget.id === 'recent-activity' && <RecentActivityWidget />}
                           </WidgetCard>
                         </SortableWidgetWrapper>
                       ))}

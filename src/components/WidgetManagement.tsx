@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Eye, EyeOff, Plus, RotateCcw, Sparkles, ListTodo, Activity, Calendar, Users, FileText } from 'lucide-react';
+import { Eye, EyeOff, Plus, RotateCcw, Sparkles, ListTodo } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WidgetConfig {
@@ -42,8 +42,6 @@ export const WidgetManagement: React.FC<WidgetManagementProps> = ({
 
   const availableWidgetTypes = [
     { id: 'quick-actions', title: 'Quick Actions', icon: Sparkles, description: 'Quick access to common actions' },
-    { id: 'workspaces', title: 'Workspaces', icon: FileText, description: 'Navigate to different workspaces' },
-    { id: 'recent-activity', title: 'Recent Activity', icon: Activity, description: 'View your recent actions' },
   ];
 
   const panelWidgets = [
