@@ -99,11 +99,11 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     {
       id: 'mat-002',
       training_item_id: item.id,
-      file_name: 'BGC_Compressor_Safety_Procedures.pptx',
-      file_path: 'mock/compressor-safety.pptx',
-      file_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      file_size: 3145728,
-      material_type: 'PRESENTATION',
+      file_name: 'BGC_Compressor_Safety_Procedures.pdf',
+      file_path: 'mock/compressor-safety.pdf',
+      file_type: 'application/pdf',
+      file_size: 1845632,
+      material_type: 'DOCUMENT',
       uploaded_by: 'user-001',
       is_approved: true,
       approved_by: 'Ahmed Al-Rashid',
@@ -141,11 +141,25 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
     {
       id: 'mat-005',
       training_item_id: item.id,
-      file_name: 'BGC_Compressor_Troubleshooting_Guide.pptx',
-      file_path: 'mock/compressor-troubleshoot.pptx',
-      file_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      file_size: 2097152,
-      material_type: 'PRESENTATION',
+      file_name: 'Trainee_Assessment_Form_Template.docx',
+      file_path: 'mock/assessment-form.docx',
+      file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      file_size: 524288,
+      material_type: 'DOCUMENT',
+      uploaded_by: 'user-001',
+      is_approved: true,
+      approved_by: 'Mohammed Hassan',
+      approved_at: '2026-01-07T08:45:00Z',
+      created_at: '2026-01-05T14:00:00Z'
+    },
+    {
+      id: 'mat-006',
+      training_item_id: item.id,
+      file_name: 'BGC_Compressor_Troubleshooting_Guide.docx',
+      file_path: 'mock/compressor-troubleshoot.docx',
+      file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      file_size: 1048576,
+      material_type: 'DOCUMENT',
       uploaded_by: 'user-001',
       is_approved: false,
       approved_by: undefined,
@@ -895,17 +909,22 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                       {materials.map((material) => {
                         const isPPT = material.file_type?.includes('presentation') || material.file_name.endsWith('.pptx') || material.file_name.endsWith('.ppt');
                         const isPDF = material.file_type?.includes('pdf') || material.file_name.endsWith('.pdf');
+                        const isWord = material.file_type?.includes('wordprocessing') || material.file_name.endsWith('.docx') || material.file_name.endsWith('.doc');
                         
+                        const getFileIcon = () => {
+                          if (isPPT) return { bg: 'bg-orange-100 dark:bg-orange-950/30', color: 'text-orange-600', label: 'PowerPoint Presentation' };
+                          if (isPDF) return { bg: 'bg-red-100 dark:bg-red-950/30', color: 'text-red-600', label: 'PDF Document' };
+                          if (isWord) return { bg: 'bg-blue-100 dark:bg-blue-950/30', color: 'text-blue-600', label: 'Word Document' };
+                          return { bg: 'bg-gray-100 dark:bg-gray-950/30', color: 'text-gray-600', label: 'Document' };
+                        };
+                        
+                        const fileStyle = getFileIcon();
                         return (
                           <div key={material.id} className="p-4 rounded-lg border bg-card">
                             <div className="flex items-start gap-4">
                               {/* File Icon */}
-                              <div className={`p-3 rounded-lg ${isPPT ? 'bg-orange-100 dark:bg-orange-950/30' : isPDF ? 'bg-red-100 dark:bg-red-950/30' : 'bg-blue-100 dark:bg-blue-950/30'}`}>
-                                {isPPT ? (
-                                  <FileText className={`w-6 h-6 ${isPPT ? 'text-orange-600' : 'text-blue-600'}`} />
-                                ) : (
-                                  <FileText className={`w-6 h-6 ${isPDF ? 'text-red-600' : 'text-blue-600'}`} />
-                                )}
+                              <div className={`p-3 rounded-lg ${fileStyle.bg}`}>
+                                <FileText className={`w-6 h-6 ${fileStyle.color}`} />
                               </div>
                               
                               {/* File Details */}
@@ -914,7 +933,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
                                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                   <span>{material.file_size ? `${(material.file_size / (1024 * 1024)).toFixed(1)} MB` : 'Unknown size'}</span>
                                   <span>•</span>
-                                  <span>{isPPT ? 'PowerPoint Presentation' : isPDF ? 'PDF Document' : 'Document'}</span>
+                                  <span>{fileStyle.label}</span>
                                 </div>
                                 
                                 {/* TA Review Status */}
