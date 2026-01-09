@@ -688,6 +688,53 @@ export type Database = {
           },
         ]
       }
+      ora_training_evidence: {
+        Row: {
+          created_at: string
+          description: string | null
+          evidence_type: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          training_item_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          evidence_type?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          training_item_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          evidence_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          training_item_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ora_training_evidence_training_item_id_fkey"
+            columns: ["training_item_id"]
+            isOneToOne: false
+            referencedRelation: "ora_training_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ora_training_items: {
         Row: {
           actual_cost: number | null
