@@ -558,11 +558,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
             <Card className="glass-card overflow-hidden animate-fade-in border border-border/40 shadow-xl">
               <div className="p-6 md:p-8">
                 <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
-                  {/* Bob Avatar */}
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 shadow-lg animate-fade-in">
-                    <Bot className="h-8 w-8 text-white" />
-                  </div>
-                  
                   {/* Greeting */}
                   <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     {getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!
