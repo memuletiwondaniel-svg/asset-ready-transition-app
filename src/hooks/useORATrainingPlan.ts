@@ -422,6 +422,75 @@ export const useORAMaintenanceReadiness = (oraPlanId?: string) => {
   };
 };
 
+// Hook for maintenance batches (read-only)
+export interface ORAMaintenanceBatch {
+  id: string;
+  ora_plan_id: string;
+  component_type: 'ARB' | 'PMS' | 'BOM' | 'IMS' | '2Y_SPARES';
+  batch_number: number;
+  batch_name: string;
+  description: string;
+  progress_percent: number;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
+  target_date: string | null;
+  completion_date: string | null;
+  responsible_person: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useORAMaintenanceBatches = (oraPlanId?: string) => {
+  const { data: batches, isLoading } = useQuery({
+    queryKey: ['ora-maintenance-batches', oraPlanId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ora_maintenance_batches')
+        .select('*')
+        .eq('ora_plan_id', oraPlanId)
+        .order('component_type')
+        .order('batch_number');
+
+      if (error) throw error;
+      return data as ORAMaintenanceBatch[];
+    },
+    enabled: !!oraPlanId
+  });
+
+  // Group batches by component type
+  const batchesByComponent = batches?.reduce((acc, batch) => {
+    if (!acc[batch.component_type]) acc[batch.component_type] = [];
+    acc[batch.component_type].push(batch);
+    return acc;
+  }, {} as Record<string, ORAMaintenanceBatch[]>) || {};
+
+  // Calculate component summaries
+  const componentSummaries = Object.entries(batchesByComponent).reduce((acc, [key, componentBatches]) => {
+    const avgProgress = componentBatches.length > 0
+      ? Math.round(componentBatches.reduce((sum, b) => sum + b.progress_percent, 0) / componentBatches.length)
+      : 0;
+    
+    const latestTargetDate = componentBatches
+      .filter(b => b.target_date)
+      .sort((a, b) => new Date(b.target_date!).getTime() - new Date(a.target_date!).getTime())[0]?.target_date;
+
+    acc[key] = {
+      progress: avgProgress,
+      targetDate: latestTargetDate,
+      batchCount: componentBatches.length,
+      completedBatches: componentBatches.filter(b => b.status === 'COMPLETED').length
+    };
+    return acc;
+  }, {} as Record<string, { progress: number; targetDate: string | null; batchCount: number; completedBatches: number }>);
+
+  return {
+    batches,
+    batchesByComponent,
+    componentSummaries,
+    isLoading
+  };
+};
+
 // Hook for handover items
 export const useORAHandoverItems = (oraPlanId?: string) => {
   const { toast } = useToast();
