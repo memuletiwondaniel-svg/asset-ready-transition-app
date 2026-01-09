@@ -199,55 +199,69 @@ const PSSRApproverDashboard: React.FC = () => {
           </div>
 
           <div className="p-4 md:p-6 space-y-4">
-            {/* Stats Row */}
-            <div className="flex items-center gap-6 text-sm">
-              <span className="font-medium">
-                Total: <span className="text-foreground">{totalTasks}</span>
-              </span>
-              <span className="text-muted-foreground">
-                PSSR Reviews: {pssrCount}
-              </span>
-              <span className="text-muted-foreground">
-                Handover Reviews: {taskCounts.review}
-              </span>
-              <span className="text-muted-foreground">
-                Others: {taskCounts.others}
-              </span>
+            {/* Filter Labels */}
+            <div className="flex items-center gap-1 text-sm">
+              <button
+                onClick={() => setFilterType('all')}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  filterType === 'all' 
+                    ? 'bg-primary text-primary-foreground font-medium' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                All ({totalTasks})
+              </button>
+              <button
+                onClick={() => setFilterType('pssr')}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  filterType === 'pssr' 
+                    ? 'bg-primary text-primary-foreground font-medium' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                PSSR Reviews ({pssrCount})
+              </button>
+              <button
+                onClick={() => setFilterType('handover')}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  filterType === 'handover' 
+                    ? 'bg-primary text-primary-foreground font-medium' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                Handover Reviews ({taskCounts.review})
+              </button>
+              <button
+                onClick={() => setFilterType('others')}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  filterType === 'others' 
+                    ? 'bg-primary text-primary-foreground font-medium' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                Others ({taskCounts.others})
+              </button>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search tasks..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-                {searchQuery && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" 
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
-              
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tasks</SelectItem>
-                  <SelectItem value="pssr">PSSR Reviews</SelectItem>
-                  <SelectItem value="handover">Handover Reviews</SelectItem>
-                  <SelectItem value="others">Others</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Search */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+              {searchQuery && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" 
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              )}
             </div>
 
             {/* Bulk Actions */}
