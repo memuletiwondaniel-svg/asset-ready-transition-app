@@ -103,7 +103,7 @@ export const CreateORPModal: React.FC<CreateORPModalProps> = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Create New OR Plan</DialogTitle>
+            <DialogTitle>Create New ORA Plan</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-auto px-1">

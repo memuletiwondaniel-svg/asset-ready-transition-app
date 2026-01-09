@@ -146,7 +146,7 @@ export const useORPPlans = () => {
       queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
       toast({
         title: 'Success',
-        description: 'ORP created successfully'
+        description: 'ORA Plan created successfully'
       });
     },
     onError: (error: Error) => {

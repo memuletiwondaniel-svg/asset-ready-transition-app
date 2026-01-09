@@ -25,7 +25,7 @@ export const ORPExportPDF: React.FC<ORPExportPDFProps> = ({ plan, deliverables }
       // Title
       pdf.setFontSize(20);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('OR Plan Report', pageWidth / 2, yPosition, { align: 'center' });
+      pdf.text('ORA Plan Report', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
 
       // Project Info
@@ -154,7 +154,7 @@ export const ORPExportPDF: React.FC<ORPExportPDFProps> = ({ plan, deliverables }
       }
 
       // Save PDF
-      const fileName = `ORP_${plan.project?.project_title || 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `ORA_${plan.project?.project_title || 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
 
       toast({ title: 'Success', description: 'PDF exported successfully' });

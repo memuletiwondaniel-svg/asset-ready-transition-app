@@ -8,7 +8,7 @@ export const useORPRealtime = (planId?: string) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    console.log('🔄 Setting up ORP realtime subscriptions...', planId ? `for plan ${planId}` : 'for all plans');
+    console.log('🔄 Setting up ORA realtime subscriptions...', planId ? `for plan ${planId}` : 'for all plans');
 
     const channel = supabase
       .channel('orp-changes')
@@ -83,13 +83,13 @@ export const useORPRealtime = (planId?: string) => {
           if (status === 'APPROVED') {
             toast({
               title: '✅ Approval Granted',
-              description: `${role} has approved the ORP plan`,
+              description: `${role} has approved the ORA plan`,
               duration: 5000,
             });
           } else if (status === 'REJECTED') {
             toast({
               title: '❌ Approval Rejected',
-              description: `${role} has rejected the ORP plan`,
+              description: `${role} has rejected the ORA plan`,
               variant: 'destructive',
               duration: 5000,
             });
@@ -133,7 +133,7 @@ export const useORPRealtime = (planId?: string) => {
           const resourceName = payload.new.name;
           toast({
             title: '👥 Team Member Added',
-            description: `${resourceName} has been assigned to the ORP`,
+            description: `${resourceName} has been assigned to the ORA`,
             duration: 4000,
           });
         }
@@ -148,7 +148,7 @@ export const useORPRealtime = (planId?: string) => {
           filter: planId ? `id=eq.${planId}` : undefined
         },
         (payload: any) => {
-          console.log('📊 ORP Plan updated:', payload);
+          console.log('📊 ORA Plan updated:', payload);
           const oldData = payload.old;
           const newData = payload.new;
 
@@ -165,7 +165,7 @@ export const useORPRealtime = (planId?: string) => {
             };
 
             toast({
-              title: '📋 ORP Status Updated',
+              title: '📋 ORA Status Updated',
               description: `Plan moved to ${statusLabels[newData.status]}`,
               duration: 5000,
             });
@@ -193,11 +193,11 @@ export const useORPRealtime = (planId?: string) => {
         }
       )
       .subscribe((status) => {
-        console.log('🔌 ORP Realtime channel status:', status);
+        console.log('🔌 ORA Realtime channel status:', status);
       });
 
     return () => {
-      console.log('🔌 Cleaning up ORP realtime subscriptions...');
+      console.log('🔌 Cleaning up ORA realtime subscriptions...');
       supabase.removeChannel(channel);
     };
   }, [planId, toast, queryClient]);

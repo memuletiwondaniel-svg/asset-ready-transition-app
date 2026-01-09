@@ -34,7 +34,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ pr
               glowFrom="from-purple-500/40"
               glowTo="to-violet-500/40"
             />
-            <span>OR Activity Plan</span>
+            <span>ORA Activity Plan</span>
           </div>
           {onHide && (
             <Button
@@ -57,7 +57,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({ pr
           <div className="text-center py-8 text-muted-foreground">
             <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p className="mb-3">No activity plans yet</p>
-            <Button size="sm" onClick={() => navigate('/orp')}>
+            <Button size="sm" onClick={() => navigate('/operation-readiness')}>
               Create First Plan
             </Button>
           </div>
