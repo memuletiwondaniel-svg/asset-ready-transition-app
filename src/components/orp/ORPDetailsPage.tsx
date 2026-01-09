@@ -28,7 +28,8 @@ import {
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('kanban');
+  const [activeTab, setActiveTab] = useState('activity-plan');
+  const [activityView, setActivityView] = useState<'gantt' | 'kanban'>('gantt');
   const [showComparison, setShowComparison] = useState(false);
 
   const { data: plan, isLoading } = useORPPlanDetails(id || '');
@@ -173,13 +174,9 @@ export const ORPDetailsPage: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <div className="border-b px-6 flex items-center justify-between">
               <TabsList className="flex-wrap h-auto gap-1 p-1">
-                <TabsTrigger value="kanban" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <LayoutGrid className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
-                  Kanban
-                </TabsTrigger>
-                <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
-                  <GanttChart className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-purple-500" />
-                  Gantt Chart
+                <TabsTrigger value="activity-plan" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                  <CalendarCheck className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
+                  Activity Plan
                 </TabsTrigger>
                 <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                   <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
@@ -226,15 +223,45 @@ export const ORPDetailsPage: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-auto">
-              <TabsContent value="kanban" className="h-full m-0">
-                <ORPKanbanBoardDraggable 
-                  planId={plan.id} 
-                  deliverables={plan.deliverables || []} 
-                />
-              </TabsContent>
-
-              <TabsContent value="gantt" className="h-full m-0 p-6">
-                <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} />
+              <TabsContent value="activity-plan" className="h-full m-0 flex flex-col">
+                {/* View Toggle Header */}
+                <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">View:</span>
+                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                    <Button
+                      variant={activityView === 'gantt' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setActivityView('gantt')}
+                      className="gap-2"
+                    >
+                      <GanttChart className="w-4 h-4" />
+                      Gantt Chart
+                    </Button>
+                    <Button
+                      variant={activityView === 'kanban' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setActivityView('kanban')}
+                      className="gap-2"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      Kanban
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Conditional Content */}
+                <div className="flex-1 overflow-auto">
+                  {activityView === 'gantt' ? (
+                    <div className="p-6">
+                      <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} />
+                    </div>
+                  ) : (
+                    <ORPKanbanBoardDraggable 
+                      planId={plan.id} 
+                      deliverables={plan.deliverables || []} 
+                    />
+                  )}
+                </div>
               </TabsContent>
 
               <TabsContent value="training" className="h-full m-0 p-6">
