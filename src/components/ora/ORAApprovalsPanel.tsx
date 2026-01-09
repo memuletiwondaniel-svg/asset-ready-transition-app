@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,9 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { 
   CheckCircle2, 
   Clock, 
-  XCircle,
-  ChevronDown,
-  ChevronUp
+  XCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -36,53 +34,53 @@ const getMockApprovals = (): ApprovalRecord[] => [
     id: '1',
     sequenceOrder: 1,
     role: 'ORA Lead',
-    name: 'Daniel Memuletiwon',
+    name: 'Roaa Abdullah',
     position: 'Operations Readiness Lead',
-    email: 'd.memuletiwon@basrahgas.iq',
-    avatarUrl: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/05b44255-4358-450c-8aa4-0558b31df70b/1764593060327.jpg',
+    email: '',
+    avatarUrl: null,
     status: 'APPROVED',
     approvalDate: new Date('2026-01-05T09:30:00'),
     comments: 'All ORA activities have been reviewed and verified. Training plan is comprehensive and maintenance readiness checklist is complete.',
-    signatureData: 'D. Memuletiwon'
+    signatureData: 'R. Abdullah'
   },
   {
     id: '2',
     sequenceOrder: 2,
     role: 'Project Manager',
-    name: 'Wolfgang Probst',
+    name: 'Wim Moelker',
     position: 'Senior Project Manager',
-    email: 'wolfgang.probst@basrahgas.iq',
-    avatarUrl: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/fbb630cc-de25-4f9e-9e8e-7c956928bb05/1767654993368.jpeg',
+    email: '',
+    avatarUrl: null,
     status: 'APPROVED',
     approvalDate: new Date('2026-01-06T14:15:00'),
     comments: 'Project deliverables align with operational requirements. Resource allocation is adequate.',
-    signatureData: 'W. Probst'
+    signatureData: 'W. Moelker'
   },
   {
     id: '3',
     sequenceOrder: 3,
     role: 'Deputy Plant Director',
-    name: 'Nathan Stephenson',
-    position: 'Project Manager – South',
-    email: 'nathan.stephenson@basrahgas.iq',
-    avatarUrl: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/d58774a0-725e-4f0e-b18f-5ca6c2d7fbf6/1767655392833.jpg',
+    name: 'Ewan McConnachie',
+    position: 'Deputy Plant Director',
+    email: '',
+    avatarUrl: null,
     status: 'APPROVED',
     approvalDate: new Date('2026-01-07T11:45:00'),
     comments: 'Reviewed handover documentation and maintenance readiness. All safety protocols have been addressed.',
-    signatureData: 'N. Stephenson'
+    signatureData: 'E. McConnachie'
   },
   {
     id: '4',
     sequenceOrder: 4,
     role: 'Plant Director',
-    name: 'Victor Liew',
-    position: 'Project Hub Lead – Central – Zubair',
-    email: 'victor.V.Liew@basrahgas.iq',
-    avatarUrl: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/73734adc-61dd-4557-b613-84fe0ed2f49f/1757605348385.png',
+    name: 'Yesr Tamoul',
+    position: 'Plant Director',
+    email: '',
+    avatarUrl: null,
     status: 'APPROVED',
     approvalDate: new Date('2026-01-08T16:30:00'),
     comments: 'Final approval granted. ORA Plan meets all operational readiness criteria.',
-    signatureData: 'V. Liew'
+    signatureData: 'Y. Tamoul'
   }
 ];
 
@@ -133,30 +131,17 @@ interface ApprovalCardProps {
 }
 
 const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
-  const [expanded, setExpanded] = useState(false);
   const config = getStatusConfig(approval.status);
   const StatusIcon = config.icon;
-  
-  const hasLongComment = approval.comments && approval.comments.length > 70;
-  const displayComment = hasLongComment && !expanded 
-    ? approval.comments?.substring(0, 70) + '...' 
-    : approval.comments;
 
   return (
     <div className="relative">
       {/* Timeline connector */}
       {!isLast && (
-        <div className="absolute left-[15px] top-[44px] bottom-[-8px] w-px bg-border" />
+        <div className="absolute left-[3px] top-[36px] bottom-[-8px] w-px bg-border" />
       )}
       
       <div className="flex gap-2.5">
-        {/* Sequence indicator */}
-        <div className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold",
-          config.numberClass
-        )}>
-          {approval.sequenceOrder}
-        </div>
 
         {/* Card content */}
         <Card className={cn("flex-1 border-l-2", config.accentClass)}>
@@ -174,7 +159,7 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-sm">{approval.name}</span>
                     <span className="text-muted-foreground text-xs">·</span>
-                    <span className="text-xs text-muted-foreground">{approval.role}</span>
+                    <span className="text-xs text-muted-foreground">{approval.position}</span>
                   </div>
                 </div>
               </div>
@@ -193,32 +178,9 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
             </div>
 
             {/* Signature & Comments */}
-            {(approval.signatureData || approval.comments) && (
-              <div className="flex items-start gap-3 mt-1.5 ml-9 text-xs">
-                {approval.signatureData && approval.status === 'APPROVED' && (
-                  <span className="flex items-center gap-1 text-green-600 flex-shrink-0">
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span className="italic">{approval.signatureData}</span>
-                  </span>
-                )}
-                
-                {approval.comments && (
-                  <p className="text-muted-foreground flex-1 min-w-0">
-                    "{displayComment}"
-                    {hasLongComment && (
-                      <button 
-                        onClick={() => setExpanded(!expanded)}
-                        className="ml-1 text-primary hover:underline inline-flex items-center gap-0.5"
-                      >
-                        {expanded ? (
-                          <>less<ChevronUp className="h-3 w-3" /></>
-                        ) : (
-                          <>more<ChevronDown className="h-3 w-3" /></>
-                        )}
-                      </button>
-                    )}
-                  </p>
-                )}
+            {approval.comments && (
+              <div className="mt-1.5 ml-9 text-xs">
+                <p className="text-muted-foreground">"{approval.comments}"</p>
               </div>
             )}
           </CardContent>
