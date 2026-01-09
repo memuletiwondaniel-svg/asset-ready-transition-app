@@ -561,8 +561,24 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto">
-          <div className="flex-1 flex flex-col gap-6 transition-all duration-500">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto relative">
+          {/* Subtle Animated Background */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div 
+              className="absolute top-1/4 -left-20 w-72 h-72 bg-gradient-to-r from-primary/5 to-blue-500/5 rounded-full filter blur-3xl animate-pulse"
+              style={{ animationDuration: '8s' }}
+            />
+            <div 
+              className="absolute top-1/2 -right-20 w-80 h-80 bg-gradient-to-l from-purple-500/5 to-pink-500/5 rounded-full filter blur-3xl animate-pulse"
+              style={{ animationDuration: '10s', animationDelay: '2s' }}
+            />
+            <div 
+              className="absolute -bottom-10 left-1/3 w-64 h-64 bg-gradient-to-t from-amber-500/5 to-orange-500/5 rounded-full filter blur-3xl animate-pulse"
+              style={{ animationDuration: '12s', animationDelay: '4s' }}
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col gap-6 transition-all duration-500 relative z-10">
             {/* Spacer for vertical centering */}
             <div className="h-8 md:h-16" />
             
@@ -650,7 +666,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
                 >
                   <Zap className="w-5 h-5 mr-2 text-primary" /> 
-                  Create PSSR
+                  <span className="text-primary/80">Create PSSR</span>
                 </Button>
                 <Button 
                   variant="outline"
@@ -658,7 +674,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
                 >
                   <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
-                  Approve PSSR
+                  <span className="text-green-600/70 dark:text-green-400/70">Approve PSSR</span>
                 </Button>
                 <Button 
                   variant="outline"
@@ -666,7 +682,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
                 >
                   <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
-                  Develop P2A
+                  <span className="text-blue-600/70 dark:text-blue-400/70">Develop P2A</span>
                 </Button>
                 <Button 
                   variant="outline"
@@ -674,7 +690,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
                 >
                   <Zap className="w-5 h-5 mr-2 text-purple-500" /> 
-                  Add Project
+                  <span className="text-purple-600/70 dark:text-purple-400/70">Add Project</span>
                 </Button>
                 <Button 
                   variant="outline"
@@ -682,7 +698,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
                 >
                   <ClipboardList className="w-5 h-5 mr-2 text-amber-500" /> 
-                  My Tasks
+                  <span className="text-amber-600/70 dark:text-amber-400/70">My Tasks</span>
                 </Button>
               </div>
             </div>
