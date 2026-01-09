@@ -287,6 +287,90 @@ export type Database = {
           },
         ]
       }
+      ora_activity_catalog: {
+        Row: {
+          activity_id: string
+          ams_processes: string[] | null
+          applicable_business: string | null
+          area: string
+          created_at: string | null
+          created_by: string | null
+          dcaf_control_point: string | null
+          description: string | null
+          discipline: string | null
+          display_order: number | null
+          entry_type: string
+          estimated_manhours: number | null
+          id: string
+          is_active: boolean | null
+          level: string
+          name: string
+          or_toolbox_section: string | null
+          outcome_evidence: string | null
+          phase: string
+          pmf_controls: string[] | null
+          precursors: string[] | null
+          requirement_level: string
+          rolled_up_in_document: string | null
+          tools_templates: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_id: string
+          ams_processes?: string[] | null
+          applicable_business?: string | null
+          area?: string
+          created_at?: string | null
+          created_by?: string | null
+          dcaf_control_point?: string | null
+          description?: string | null
+          discipline?: string | null
+          display_order?: number | null
+          entry_type?: string
+          estimated_manhours?: number | null
+          id?: string
+          is_active?: boolean | null
+          level?: string
+          name: string
+          or_toolbox_section?: string | null
+          outcome_evidence?: string | null
+          phase: string
+          pmf_controls?: string[] | null
+          precursors?: string[] | null
+          requirement_level?: string
+          rolled_up_in_document?: string | null
+          tools_templates?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_id?: string
+          ams_processes?: string[] | null
+          applicable_business?: string | null
+          area?: string
+          created_at?: string | null
+          created_by?: string | null
+          dcaf_control_point?: string | null
+          description?: string | null
+          discipline?: string | null
+          display_order?: number | null
+          entry_type?: string
+          estimated_manhours?: number | null
+          id?: string
+          is_active?: boolean | null
+          level?: string
+          name?: string
+          or_toolbox_section?: string | null
+          outcome_evidence?: string | null
+          phase?: string
+          pmf_controls?: string[] | null
+          precursors?: string[] | null
+          requirement_level?: string
+          rolled_up_in_document?: string | null
+          tools_templates?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       orm_attachments: {
         Row: {
           attachment_type: string
