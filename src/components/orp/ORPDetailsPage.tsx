@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, Users as UsersIcon, GraduationCap, Wrench } from 'lucide-react';
-import { useORPPlanDetails } from '@/hooks/useORPPlans';
+import { ArrowLeft, LayoutGrid, GanttChart, ArrowLeftRight, Users as UsersIcon, GraduationCap, Wrench, ChevronDown, History } from 'lucide-react';
+import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
 import { ORPGanttChart } from './ORPGanttChart';
@@ -20,6 +20,12 @@ import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { ORATrainingPlanTab } from '@/components/ora/ORATrainingPlanTab';
 import { ORAMaintenanceReadinessTab } from '@/components/ora/ORAMaintenanceReadinessTab';
 import { ORAHandoverTab } from '@/components/ora/ORAHandoverTab';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +34,25 @@ export const ORPDetailsPage: React.FC = () => {
   const [showComparison, setShowComparison] = useState(false);
 
   const { data: plan, isLoading } = useORPPlanDetails(id || '');
+  const { plans: allPlans } = useORPPlans();
   useORPRealtime(id);
+
+  // Get all ORA plans for the same project
+  const projectPlans = plan?.project_id 
+    ? allPlans?.filter(p => p.project_id === plan.project_id) || []
+    : [];
+
+  // Phase order for display
+  const phaseOrder: Record<string, number> = {
+    'ASSESS_SELECT': 1,
+    'DEFINE': 2,
+    'EXECUTE': 3
+  };
+
+  // Sort project plans by phase order
+  const sortedProjectPlans = [...projectPlans].sort(
+    (a, b) => (phaseOrder[b.phase] || 0) - (phaseOrder[a.phase] || 0)
+  );
 
   if (isLoading) {
     return (
@@ -106,7 +130,34 @@ export const ORPDetailsPage: React.FC = () => {
                 {plan.project?.project_title}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline">{getPhaseLabel(plan.phase)}</Badge>
+                {/* Phase Navigation Dropdown */}
+                {sortedProjectPlans.length > 1 ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        {getPhaseLabel(plan.phase)}
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {sortedProjectPlans.map((p) => (
+                        <DropdownMenuItem
+                          key={p.id}
+                          onClick={() => navigate(`/operation-readiness/${p.id}`)}
+                          className={p.id === plan.id ? 'bg-accent' : ''}
+                        >
+                          <div className="flex items-center gap-2">
+                            {p.id !== plan.id && <History className="w-3 h-3 text-muted-foreground" />}
+                            <span>{getPhaseLabel(p.phase)}</span>
+                            {p.id === plan.id && <Badge variant="secondary" className="ml-2 text-xs">Current</Badge>}
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Badge variant="outline">{getPhaseLabel(plan.phase)}</Badge>
+                )}
                 <Badge>{plan.status.replace('_', ' ')}</Badge>
                 <span className="text-sm text-muted-foreground">
                   {plan.project?.project_id_prefix}-{plan.project?.project_id_number}
