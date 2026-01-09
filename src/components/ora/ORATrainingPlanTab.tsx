@@ -192,16 +192,15 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                       >
                         <div className={`h-1 ${stageInfo.color}`} />
                         <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <GraduationCap className="w-4 h-4 text-primary" />
-                                <h4 className="font-medium">{item.title}</h4>
-                                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                                <GraduationCap className="w-4 h-4 text-primary flex-shrink-0" />
+                                <h4 className="font-medium truncate">{item.title}</h4>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">{item.overview}</p>
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{item.overview}</p>
                               
-                              <div className="flex flex-wrap gap-4 mt-3 text-sm">
+                              <div className="flex flex-wrap gap-4 mt-2 text-sm">
                                 {item.training_provider && (
                                   <span className="flex items-center gap-1 text-muted-foreground">
                                     <Building className="w-3 h-3" />
@@ -233,13 +232,13 @@ export const ORATrainingPlanTab: React.FC<ORATrainingPlanTabProps> = ({ oraPlanI
                                   </span>
                                 )}
                               </div>
-
-                              {/* Execution Stage Badge */}
-                              <div className="mt-3 pt-3 border-t">
-                                <Badge variant="outline" className={`${stageInfo.color} text-white border-none`}>
-                                  {stageInfo.label}
-                                </Badge>
-                              </div>
+                            </div>
+                            {/* Execution Stage Badge - Right side */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Badge variant="outline" className={`${stageInfo.color} text-white border-none`}>
+                                {stageInfo.label}
+                              </Badge>
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
                             </div>
                           </div>
                         </CardContent>
