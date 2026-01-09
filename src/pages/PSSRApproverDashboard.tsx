@@ -69,10 +69,31 @@ const PSSRApproverDashboard: React.FC = () => {
     navigate(`/pssr/${pssrId}/review?role=${encodeURIComponent(approverRole)}`);
   };
 
+  const handleSidebarNavigate = (section: string) => {
+    const routes: Record<string, string> = {
+      'home': '/',
+      'pssr': '/pssr',
+      'users': '/users',
+      'manage-checklist': '/manage-checklist',
+      'admin-tools': '/admin-tools',
+      'projects': '/projects',
+      'project-management': '/project-management',
+      'operation-readiness': '/operation-readiness',
+      'p2a-handover': '/p2a-handover',
+      'or-maintenance': '/or-maintenance',
+      'pssr-reviews': '/pssr-reviews',
+    };
+    const route = routes[section] || `/${section}`;
+    navigate(route);
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <OrshSidebar />
+        <OrshSidebar 
+          onNavigate={handleSidebarNavigate}
+          currentPage="pssr-reviews"
+        />
         <SidebarInset className="flex-1">
           <div className="p-6 space-y-6">
             {/* Header */}
