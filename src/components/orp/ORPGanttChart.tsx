@@ -125,17 +125,18 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     setZoomLevel(1);
   };
 
-  // Handle mouse wheel zoom (Ctrl/Cmd + scroll)
+  // Handle mouse wheel zoom (scroll to zoom)
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      if (e.deltaY < 0) {
-        handleZoomIn();
-      } else {
-        handleZoomOut();
-      }
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
     }
   };
+
+  // Dynamic cursor based on zoom capability
+  const zoomCursor = zoomLevel >= ZOOM_LEVELS.length - 1 ? 'cursor-zoom-out' : zoomLevel <= 0 ? 'cursor-zoom-in' : 'cursor-zoom-in';
 
   // Generate time markers based on zoom level
   const timeMarkers = useMemo(() => {
@@ -230,7 +231,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           {/* Timeline container with horizontal scroll */}
           <div 
             ref={timelineRef}
-            className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+            className={`overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent ${zoomCursor}`}
             onWheel={handleWheel}
           >
             <div style={{ minWidth: `${100 * zoomLevel}%` }}>
