@@ -204,30 +204,33 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             </div>
 
             <div>
-              <Label>Progress: {progress}%</Label>
-              <div className="flex items-center gap-4 mt-2">
-                <Input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={progress}
-                  onChange={(e) => setProgress(parseInt(e.target.value))}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={progress}
-                  onChange={(e) => setProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                  className="w-20"
-                />
-              </div>
-              <div className="h-2 bg-muted rounded-full mt-2 overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
+              <Label>Progress</Label>
+              <div className="relative mt-2">
+                {/* Visual progress bar with integrated slider */}
+                <div className="relative h-8 bg-muted rounded-lg overflow-hidden">
+                  {/* Progress fill */}
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-primary/80 transition-all duration-150"
+                    style={{ width: `${progress}%` }}
+                  />
+                  {/* Slider overlay - invisible but functional */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={progress}
+                    onChange={(e) => setProgress(parseInt(e.target.value))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  {/* Percentage label */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-medium text-foreground drop-shadow-sm">
+                      {progress}%
+                    </span>
+                  </div>
+                </div>
+                {/* Drag hint */}
+                <p className="text-xs text-muted-foreground mt-1">Click or drag to adjust progress</p>
               </div>
             </div>
 
