@@ -565,12 +565,12 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
           <AdminHeader 
             icon={<Settings className="w-6 h-6" />} 
             iconGradient="from-emerald-500 to-emerald-600"
-            title="PSSR Configuration" 
-            description="Manage PSSR reasons and checklist items"
+            title={t.pssrConfigTitle || "PSSR Configuration"}
+            description={t.pssrConfigSubtitle || "Manage PSSR reasons and checklist items"}
             customBreadcrumbs={[
-              { label: 'Home', path: '/', onClick: onBack },
-              { label: 'Administration', path: '/admin-tools', onClick: onBack },
-              { label: 'PSSR Configuration', path: '/admin-tools', onClick: () => {} }
+              { label: t.home || 'Home', path: '/', onClick: onBack },
+              { label: t.administration || 'Administration', path: '/admin-tools', onClick: onBack },
+              { label: t.pssrConfiguration || 'PSSR Configuration', path: '/admin-tools', onClick: () => {} }
             ]}
           />
 
@@ -583,26 +583,26 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                 value="configuration"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
-                PSSR Templates
+                {t.pssrTemplates || 'PSSR Templates'}
               </TabsTrigger>
               <TabsTrigger 
                 value="checklist-items"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
-                Checklist Items
+                {t.checklistItems || 'Checklist Items'}
               </TabsTrigger>
               <TabsTrigger 
                 value="item-categories"
                 className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
               >
-                Item Categories
+                {t.itemCategories || 'Item Categories'}
               </TabsTrigger>
               {showTieInTab && (
                 <TabsTrigger 
                   value="tie-in"
                   className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
                 >
-                  Tie-in Scopes
+                  {t.tieInScopes || 'Tie-in Scopes'}
                 </TabsTrigger>
               )}
               {showMOCTab && (
@@ -610,7 +610,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
                   value="moc"
                   className="flex-shrink-0 whitespace-nowrap px-4 text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-fluent-sm transition-all duration-200"
                 >
-                  MOC Scopes
+                  {t.mocScopes || 'MOC Scopes'}
                 </TabsTrigger>
               )}
             </TabsList>

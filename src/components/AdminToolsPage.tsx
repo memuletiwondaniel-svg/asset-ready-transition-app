@@ -201,55 +201,55 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     description: t.manageUserDesc,
     icon: Users,
     gradient: 'from-blue-500 to-blue-600',
-    tooltip: 'View and manage user accounts, permissions, and access levels',
+    tooltip: t.manageUserDesc,
     stats: {
       total: userStats.total,
-      label: 'users',
+      label: t.users,
       isAnimating: userStatsAnimating
     },
     height: 'md:row-span-2',
     onClick: () => setActiveView('users')
   }, {
     id: 'projects',
-    title: 'Manage Projects',
-    description: 'Create, edit, and manage projects, portfolios, and hubs',
+    title: t.manageProjects,
+    description: t.manageProjectsDesc,
     icon: Building2,
     gradient: 'from-purple-500 to-purple-600',
-    tooltip: 'View and manage projects, assign teams, configure project hierarchy and settings',
+    tooltip: t.manageProjectsDesc,
     stats: {
       total: projectStats.total,
-      label: 'projects',
+      label: t.projects,
       isAnimating: projectStatsAnimating
     },
     height: 'md:row-span-2',
     onClick: () => navigate('/project-management')
   }, {
     id: 'pssr-settings',
-    title: 'PSSR Configuration',
-    description: 'Manage PSSR reasons, configuration matrix, checklists, categories, and topics',
+    title: t.pssrConfiguration,
+    description: t.pssrConfigDesc,
     icon: Settings,
     gradient: 'from-emerald-500 to-emerald-600',
-    tooltip: 'Configure PSSR reasons, tie-in scopes, MOC settings, checklists, and approver matrix',
+    tooltip: t.pssrConfigDesc,
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('pssr-settings')
   }, {
     id: 'activity-log',
-    title: 'Activity Log',
-    description: 'Monitor and audit all administrative actions across the platform',
+    title: t.activityLogTitle,
+    description: t.activityLogDesc,
     icon: Activity,
     gradient: 'from-cyan-500 to-cyan-600',
-    tooltip: 'View detailed audit logs of all administrative activities and user actions',
+    tooltip: t.activityLogDesc,
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('activity-log')
   }, {
     id: 'ora-configuration',
-    title: 'Manage ORA Plans',
-    description: 'Configure ORA activities, deliverables, templates and milestone types',
+    title: t.manageORAPlans,
+    description: t.manageORAPlansDesc,
     icon: LayoutTemplate,
     gradient: 'from-amber-500 to-amber-600',
-    tooltip: 'Manage the ORA activity catalog, create reusable templates, and configure project milestones',
+    tooltip: t.manageORAPlansDesc,
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ora-configuration')
@@ -390,7 +390,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg blur-xl" />
               <div className="relative bg-background border-2 border-border/50 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="text" placeholder="Search admin tools..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 pr-10 h-10 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
+                <Input type="text" placeholder={t.searchAdminTools} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 pr-10 h-10 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
                 {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted" onClick={() => setSearchQuery('')}>
                     <X className="h-3 w-3" />
                   </Button>}
@@ -399,7 +399,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           </div>
           
           {searchQuery && <p className="text-sm text-muted-foreground mb-6">
-              Found {filteredAdminTools.length} {filteredAdminTools.length === 1 ? 'result' : 'results'}
+              {t.foundResults} {filteredAdminTools.length} {filteredAdminTools.length === 1 ? t.result : t.results}
             </p>}
 
           {/* Favorites Section */}
@@ -407,7 +407,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           {favoriteToolsList.length > 0 && <div className="mb-12">
               <h2 className="text-sm font-medium text-foreground/70 mb-5 flex items-center gap-2">
                 <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                Favorite Tools
+                {t.favoriteTools}
               </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {favoriteToolsList.map((tool, index) => {
@@ -469,7 +469,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         {/* All Tools Section */}
         {nonFavoriteToolsList.length > 0 && <>
             {favoriteToolsList.length > 0 && <h2 className="text-sm font-medium text-foreground/70 mb-5">
-                All Tools
+                {t.allTools}
               </h2>}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {nonFavoriteToolsList.map((tool, index) => {
@@ -502,7 +502,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                                 {tool.stats.total}
                               </span>
                               <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                                {tool.stats.label || 'Total'}
+                                {tool.stats.label || t.total}
                               </span>
                             </div>}
                           
@@ -525,7 +525,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                     
                     {/* Hover Indicator */}
                     <div className="flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2">
-                      <span>Manage</span>
+                      <span>{t.manage}</span>
                       <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
                     </div>
                   </CardHeader>
@@ -537,12 +537,12 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         {/* No Results */}
         {filteredAdminTools.length === 0 && <div className="text-center py-12">
             <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No results found</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">{t.noResultsFound}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Try adjusting your search terms
+              {t.tryAdjustingSearch}
             </p>
             <Button variant="outline" onClick={() => setSearchQuery('')}>
-              Clear search
+              {t.clearSearch}
             </Button>
             </div>}
         </TooltipProvider>
