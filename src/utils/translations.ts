@@ -367,6 +367,42 @@ export const translations = {
     french: 'French',
     malay: 'Malay',
     kazakh: 'Kazakh',
+    
+    // Greetings
+    goodMorning: 'Good morning',
+    goodAfternoon: 'Good afternoon',
+    goodEvening: 'Good evening',
+    
+    // Landing Page
+    askBobAnything: 'Ask Bob anything about ORSH',
+    quickActions: 'Quick Actions',
+    createAPSSR: 'Create PSSR',
+    approveAPSSR: 'Approve PSSR',
+    developP2A: 'Develop P2A',
+    addNewProject: 'Add Project',
+    
+    // PSSR Summary Page
+    pssrSummary: 'PSSR Summary',
+    pssrSubtitle: 'Manage Pre-Startup Safety Reviews',
+    totalPSSRs: 'Total PSSRs',
+    underReview: 'Under Review',
+    searchPSSR: 'Search PSSRs...',
+    createNewPSSR: 'Create New PSSR',
+    noMatchSearch: 'No projects match your search',
+    noORAPlansYet: 'No ORA plans created yet',
+    createORAPlan: 'Create ORA Plan',
+    
+    // ORA Plans Page
+    oraPlansTitle: 'ORA Plans',
+    oraPlansSubtitle: 'Manage and track operation readiness activities',
+    createNewORA: 'Create New ORA',
+    analytics: 'Analytics',
+    searchProjects: 'Search projects...',
+    projectsWithORAPlans: 'projects with ORA plans',
+    phasesAvailable: 'phases available',
+    assessAndSelect: 'Assess & Select',
+    phaseDefine: 'Define',
+    phaseExecute: 'Execute',
   },
   
   ar: {
@@ -733,6 +769,42 @@ export const translations = {
     french: 'الفرنسية',
     malay: 'الملايو',
     kazakh: 'الكازاخية',
+    
+    // Greetings
+    goodMorning: 'صباح الخير',
+    goodAfternoon: 'مساء الخير',
+    goodEvening: 'مساء الخير',
+    
+    // Landing Page
+    askBobAnything: 'اسأل بوب عن أي شيء يتعلق بـ ORSH',
+    quickActions: 'إجراءات سريعة',
+    createAPSSR: 'إنشاء PSSR',
+    approveAPSSR: 'الموافقة على PSSR',
+    developP2A: 'تطوير P2A',
+    addNewProject: 'إضافة مشروع',
+    
+    // PSSR Summary Page
+    pssrSummary: 'ملخص PSSR',
+    pssrSubtitle: 'إدارة مراجعات السلامة قبل التشغيل',
+    totalPSSRs: 'إجمالي PSSRs',
+    underReview: 'قيد المراجعة',
+    searchPSSR: 'البحث في PSSRs...',
+    createNewPSSR: 'إنشاء PSSR جديد',
+    noMatchSearch: 'لا توجد مشاريع تطابق بحثك',
+    noORAPlansYet: 'لم يتم إنشاء خطط ORA بعد',
+    createORAPlan: 'إنشاء خطة ORA',
+    
+    // ORA Plans Page
+    oraPlansTitle: 'خطط ORA',
+    oraPlansSubtitle: 'إدارة وتتبع أنشطة الجاهزية التشغيلية',
+    createNewORA: 'إنشاء ORA جديد',
+    analytics: 'التحليلات',
+    searchProjects: 'البحث في المشاريع...',
+    projectsWithORAPlans: 'مشاريع مع خطط ORA',
+    phasesAvailable: 'مراحل متاحة',
+    assessAndSelect: 'التقييم والاختيار',
+    phaseDefine: 'التعريف',
+    phaseExecute: 'التنفيذ',
   },
   
   fr: {
@@ -1099,6 +1171,42 @@ export const translations = {
     french: 'Français',
     malay: 'Malais',
     kazakh: 'Kazakh',
+    
+    // Greetings
+    goodMorning: 'Bonjour',
+    goodAfternoon: 'Bon après-midi',
+    goodEvening: 'Bonsoir',
+    
+    // Landing Page
+    askBobAnything: 'Demandez à Bob n\'importe quoi sur ORSH',
+    quickActions: 'Actions Rapides',
+    createAPSSR: 'Créer PSSR',
+    approveAPSSR: 'Approuver PSSR',
+    developP2A: 'Développer P2A',
+    addNewProject: 'Ajouter Projet',
+    
+    // PSSR Summary Page
+    pssrSummary: 'Résumé PSSR',
+    pssrSubtitle: 'Gérer les Revues de Sécurité Pré-Démarrage',
+    totalPSSRs: 'Total PSSRs',
+    underReview: 'En Revue',
+    searchPSSR: 'Rechercher PSSRs...',
+    createNewPSSR: 'Créer Nouveau PSSR',
+    noMatchSearch: 'Aucun projet ne correspond à votre recherche',
+    noORAPlansYet: 'Aucun plan ORA créé encore',
+    createORAPlan: 'Créer Plan ORA',
+    
+    // ORA Plans Page
+    oraPlansTitle: 'Plans ORA',
+    oraPlansSubtitle: 'Gérer et suivre les activités de préparation opérationnelle',
+    createNewORA: 'Créer Nouveau ORA',
+    analytics: 'Analytique',
+    searchProjects: 'Rechercher projets...',
+    projectsWithORAPlans: 'projets avec plans ORA',
+    phasesAvailable: 'phases disponibles',
+    assessAndSelect: 'Évaluer et Sélectionner',
+    phaseDefine: 'Définir',
+    phaseExecute: 'Exécuter',
   },
   
   ms: {
@@ -1465,6 +1573,42 @@ export const translations = {
     french: 'Perancis',
     malay: 'Melayu',
     kazakh: 'Kazakh',
+    
+    // Greetings
+    goodMorning: 'Selamat pagi',
+    goodAfternoon: 'Selamat petang',
+    goodEvening: 'Selamat malam',
+    
+    // Landing Page
+    askBobAnything: 'Tanya Bob apa sahaja tentang ORSH',
+    quickActions: 'Tindakan Pantas',
+    createAPSSR: 'Cipta PSSR',
+    approveAPSSR: 'Luluskan PSSR',
+    developP2A: 'Bangunkan P2A',
+    addNewProject: 'Tambah Projek',
+    
+    // PSSR Summary Page
+    pssrSummary: 'Ringkasan PSSR',
+    pssrSubtitle: 'Urus Semakan Keselamatan Pra-Mula',
+    totalPSSRs: 'Jumlah PSSRs',
+    underReview: 'Dalam Semakan',
+    searchPSSR: 'Cari PSSRs...',
+    createNewPSSR: 'Cipta PSSR Baharu',
+    noMatchSearch: 'Tiada projek sepadan dengan carian anda',
+    noORAPlansYet: 'Tiada pelan ORA dicipta lagi',
+    createORAPlan: 'Cipta Pelan ORA',
+    
+    // ORA Plans Page
+    oraPlansTitle: 'Pelan ORA',
+    oraPlansSubtitle: 'Urus dan jejak aktiviti kesediaan operasi',
+    createNewORA: 'Cipta ORA Baharu',
+    analytics: 'Analitik',
+    searchProjects: 'Cari projek...',
+    projectsWithORAPlans: 'projek dengan pelan ORA',
+    phasesAvailable: 'fasa tersedia',
+    assessAndSelect: 'Nilai dan Pilih',
+    phaseDefine: 'Tentukan',
+    phaseExecute: 'Laksana',
   },
   
   kk: {
@@ -1831,6 +1975,42 @@ export const translations = {
     french: 'Француз',
     malay: 'Малай',
     kazakh: 'Қазақ',
+    
+    // Greetings
+    goodMorning: 'Қайырлы таң',
+    goodAfternoon: 'Қайырлы күн',
+    goodEvening: 'Қайырлы кеш',
+    
+    // Landing Page
+    askBobAnything: 'ORSH туралы кез келген нәрсені Бобтан сұраңыз',
+    quickActions: 'Жылдам әрекеттер',
+    createAPSSR: 'PSSR құру',
+    approveAPSSR: 'PSSR бекіту',
+    developP2A: 'P2A дамыту',
+    addNewProject: 'Жоба қосу',
+    
+    // PSSR Summary Page
+    pssrSummary: 'PSSR түйіндемесі',
+    pssrSubtitle: 'Іске қосу алдындағы қауіпсіздік шолуларын басқару',
+    totalPSSRs: 'Барлық PSSRs',
+    underReview: 'Қарастырылуда',
+    searchPSSR: 'PSSRs іздеу...',
+    createNewPSSR: 'Жаңа PSSR құру',
+    noMatchSearch: 'Іздеуге сәйкес жобалар табылмады',
+    noORAPlansYet: 'ORA жоспарлары әлі жасалмаған',
+    createORAPlan: 'ORA жоспары құру',
+    
+    // ORA Plans Page
+    oraPlansTitle: 'ORA жоспарлары',
+    oraPlansSubtitle: 'Операциялық дайындық әрекеттерін басқару және бақылау',
+    createNewORA: 'Жаңа ORA құру',
+    analytics: 'Аналитика',
+    searchProjects: 'Жобаларды іздеу...',
+    projectsWithORAPlans: 'ORA жоспарлары бар жобалар',
+    phasesAvailable: 'қол жетімді кезеңдер',
+    assessAndSelect: 'Бағалау және таңдау',
+    phaseDefine: 'Анықтау',
+    phaseExecute: 'Орындау',
   }
 };
 
