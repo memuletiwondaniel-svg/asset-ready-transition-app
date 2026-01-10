@@ -238,7 +238,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               {/* Timeline header */}
               <div className="sticky top-0 bg-background z-10 border-b pb-2">
                 <div className="flex">
-                  <div className="w-64 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
+                  <div className="w-80 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
                   <div className="flex-1 relative h-10">
                     {timeMarkers.map((marker, idx) => {
                       const pos = (differenceInDays(marker.date, minDate) / totalDays) * 100;
@@ -270,8 +270,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         className="flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer"
                         onClick={() => setSelectedDeliverable(deliverable)}
                   >
-                        <div className="w-64 flex-shrink-0 px-4 sticky left-0 bg-background z-10">
-                          <div className="text-sm font-medium line-clamp-2">
+                        <div className="w-80 flex-shrink-0 px-4 sticky left-0 bg-background z-10">
+                          <div className="text-sm font-medium truncate" title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
