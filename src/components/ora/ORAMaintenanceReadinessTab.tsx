@@ -126,7 +126,7 @@ const getResponsibleEngineer = (componentKey: string, batchIndex: number): strin
 
 export const ORAMaintenanceReadinessTab: React.FC<ORAMaintenanceReadinessTabProps> = ({ oraPlanId }) => {
   const [expandedComponents, setExpandedComponents] = useState<Record<string, boolean>>({
-    ARB: true, // Default expand first one
+    ARB: false,
     PMS: false,
     BOM: false,
     IMS: false,
