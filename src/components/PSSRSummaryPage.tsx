@@ -4,6 +4,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useWidgetConfigs } from '@/hooks/useWidgetConfigs';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -54,6 +55,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
   onBack
 }) => {
   const navigate = useNavigate();
+  const { translations: t } = useLanguage();
   
   // Mock user role - in a real app, this would come from authentication context
   const userRole = 'admin'; // Change to 'user' to test role-based access
@@ -770,10 +772,10 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">
-                    Pre-Start-Up Safety Review
+                    {t.pssrTitle || 'Pre-Startup Safety Review'}
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Manage and track all PSSR activities
+                    {t.pssrSubtitle || 'Manage and track all PSSR activities'}
                   </p>
                 </div>
               </div>
@@ -782,7 +784,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
               <div className="flex items-center gap-2">
                 <Button onClick={() => setShowCreateIntro(true)} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Create PSSR
+                  {t.createNewPSSR || 'Create PSSR'}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -793,7 +795,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setActiveView('manage-checklist')}>
                       <ClipboardList className="mr-2 h-4 w-4" />
-                      Manage Checklist
+                      {t.manageChecklists || 'Manage Checklist'}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

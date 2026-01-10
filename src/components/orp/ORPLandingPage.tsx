@@ -12,6 +12,7 @@ import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useProjects } from '@/hooks/useProjects';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
@@ -21,6 +22,7 @@ export const ORPLandingPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { setBreadcrumbs } = useBreadcrumb();
+  const { translations: t } = useLanguage();
   const { plans, isLoading: plansLoading } = useORPPlans();
   const { projects, isLoading: projectsLoading } = useProjects();
   useORPRealtime();
@@ -80,9 +82,9 @@ export const ORPLandingPage: React.FC = () => {
 
   const getPhaseLabel = (phase: string) => {
     switch (phase) {
-      case 'ASSESS_SELECT': return 'Assess & Select';
-      case 'DEFINE': return 'Define';
-      case 'EXECUTE': return 'Execute';
+      case 'ASSESS_SELECT': return t.assessAndSelect || 'Assess & Select';
+      case 'DEFINE': return t.phaseDefine || 'Define';
+      case 'EXECUTE': return t.phaseExecute || 'Execute';
       default: return phase;
     }
   };
@@ -127,20 +129,20 @@ export const ORPLandingPage: React.FC = () => {
                 <CalendarCheck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">ORA Plans</h1>
+                <h1 className="text-2xl font-bold text-foreground">{t.oraPlansTitle || 'ORA Plans'}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Manage and track operation readiness activities
+                  {t.oraPlansSubtitle || 'Manage and track operation readiness activities'}
                 </p>
               </div>
             </div>
             <div className="flex gap-2">
               <Button onClick={() => navigate('/operation-readiness/analytics')} variant="outline" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
-                Analytics
+                {t.analytics || 'Analytics'}
               </Button>
               <Button onClick={() => setShowCreateModal(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
-                Create New ORA
+                {t.createNewORA || 'Create New ORA'}
               </Button>
             </div>
           </div>
@@ -154,14 +156,14 @@ export const ORPLandingPage: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search projects..."
+                  placeholder={t.searchProjects || 'Search projects...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-80"
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} with ORA plans
+                {filteredProjects.length} {t.projectsWithORAPlans || 'projects with ORA plans'}
               </p>
             </div>
 
@@ -179,11 +181,11 @@ export const ORPLandingPage: React.FC = () => {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <CalendarCheck className="w-12 h-12 text-muted-foreground/50 mb-4" />
                   <p className="text-muted-foreground">
-                    {searchQuery ? 'No projects match your search' : 'No ORA plans created yet'}
+                    {searchQuery ? (t.noMatchSearch || 'No projects match your search') : (t.noORAPlansYet || 'No ORA plans created yet')}
                   </p>
                   <Button onClick={() => setShowCreateModal(true)} className="mt-4 gap-2">
                     <Plus className="w-4 h-4" />
-                    Create ORA Plan
+                    {t.createORAPlan || 'Create ORA Plan'}
                   </Button>
                 </CardContent>
               </Card>
@@ -230,7 +232,7 @@ export const ORPLandingPage: React.FC = () => {
                         {/* Progress Bar */}
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Progress</span>
+                            <span className="text-muted-foreground">{t.progress || 'Progress'}</span>
                             <span className="font-medium">{mostRecentPlan.overall_progress || 0}%</span>
                           </div>
                           <Progress value={mostRecentPlan.overall_progress || 0} className="h-2" />
@@ -239,7 +241,7 @@ export const ORPLandingPage: React.FC = () => {
                         {/* Phase count & Date */}
                         <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t border-border">
                           <span>
-                            {phaseCount} phase{phaseCount !== 1 ? 's' : ''} available
+                            {phaseCount} {t.phasesAvailable || 'phases available'}
                           </span>
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5" />

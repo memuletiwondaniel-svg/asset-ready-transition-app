@@ -158,9 +158,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   // Get time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return t.goodMorning || 'Good morning';
+    if (hour < 18) return t.goodAfternoon || 'Good afternoon';
+    return t.goodEvening || 'Good evening';
   };
 
   // Drag and drop sensors for widgets
@@ -618,7 +618,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     {getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!
                   </h1>
                   <p className="text-muted-foreground mb-6">
-                    Ask Bob anything about ORSH
+                    {t.askBobAnything || 'Ask Bob anything about ORSH'}
                   </p>
                   
                   {/* Bob Input Field */}
@@ -685,7 +685,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
             {/* Quick Actions Section */}
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <h2 className="text-lg font-semibold text-muted-foreground text-center mb-4">Quick Actions</h2>
+              <h2 className="text-lg font-semibold text-muted-foreground text-center mb-4">{t.quickActions || 'Quick Actions'}</h2>
               <div className="flex flex-wrap justify-center gap-3">
                 <Button 
                   variant="outline"
@@ -693,7 +693,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all hover:scale-105"
                 >
                   <Zap className="w-5 h-5 mr-2 text-primary" /> 
-                  Create PSSR
+                  {t.createAPSSR || 'Create PSSR'}
                 </Button>
                 <Button 
                   variant="outline"
@@ -701,7 +701,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/30 transition-all hover:scale-105"
                 >
                   <CheckCircle className="w-5 h-5 mr-2 text-green-500" /> 
-                  Approve PSSR
+                  {t.approveAPSSR || 'Approve PSSR'}
                 </Button>
                 <Button 
                   variant="outline"
@@ -709,7 +709,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all hover:scale-105"
                 >
                   <FileText className="w-5 h-5 mr-2 text-blue-500" /> 
-                  Develop P2A
+                  {t.developP2A || 'Develop P2A'}
                 </Button>
                 <Button 
                   variant="outline"
@@ -717,7 +717,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-105"
                 >
                   <Zap className="w-5 h-5 mr-2 text-purple-500" /> 
-                  Add Project
+                  {t.addNewProject || 'Add Project'}
                 </Button>
                 <Button 
                   variant="outline"
@@ -725,7 +725,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                   className="rounded-xl px-5 py-3 h-auto bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all hover:scale-105"
                 >
                   <ClipboardList className="w-5 h-5 mr-2 text-amber-500" /> 
-                  My Tasks
+                  {t.myTasks || 'My Tasks'}
                 </Button>
               </div>
             </div>
