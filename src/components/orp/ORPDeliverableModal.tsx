@@ -162,7 +162,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="mt-4">
+        <Tabs defaultValue="details" className="mt-4 flex-1 flex flex-col min-h-0">
           <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
@@ -210,7 +210,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             <TabsTrigger value="attachments">Files</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="space-y-4 mt-4">
+          <TabsContent value="details" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Status</Label>
@@ -304,7 +304,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             <Button onClick={handleSave} className="w-full">Save Changes</Button>
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-4 mt-4">
+          <TabsContent value="schedule" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="flex items-center gap-2">
@@ -355,7 +355,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             <Button onClick={handleSave} className="w-full">Save Schedule</Button>
           </TabsContent>
 
-          <TabsContent value="dependencies" className="space-y-6 mt-4">
+          <TabsContent value="dependencies" className="space-y-6 mt-4 flex-1 overflow-y-auto">
             {/* Predecessors Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
@@ -437,7 +437,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="collaborators" className="space-y-4 mt-4">
+          <TabsContent value="collaborators" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div>
               <Label>Add Team Member</Label>
               <div className="flex gap-2 mt-2">
@@ -479,7 +479,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="attachments" className="space-y-4 mt-4">
+          <TabsContent value="attachments" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <ORPAttachmentsPanel deliverableId={deliverable.id} />
           </TabsContent>
         </Tabs>
