@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
 import { WidgetSizeProvider } from "@/contexts/WidgetSizeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -40,14 +41,15 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="light" storageKey="orsh-theme">
-      <AuthProvider>
-        <WidgetSizeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <BreadcrumbProvider>
-                <Routes>
+      <LanguageProvider>
+        <AuthProvider>
+          <WidgetSizeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <BreadcrumbProvider>
+                  <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/pssr" element={<Index />} />
@@ -75,12 +77,13 @@ const App = () => (
             <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BreadcrumbProvider>
-            </BrowserRouter>
-          </TooltipProvider>
-        </WidgetSizeProvider>
-      </AuthProvider>
+                  </Routes>
+                </BreadcrumbProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </WidgetSizeProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
