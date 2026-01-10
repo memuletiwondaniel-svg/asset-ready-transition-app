@@ -3,6 +3,7 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from '@/component
 import { Sparkles, MessageSquare, FileText, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AIAssistantWidgetProps {
   settings: Record<string, any>;
@@ -11,24 +12,25 @@ interface AIAssistantWidgetProps {
 export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }) => {
   const [chatOpen, setChatOpen] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
+  const { translations: t } = useLanguage();
 
   const quickPrompts = [
     {
       id: 1,
       icon: MessageSquare,
-      label: 'Ask AI',
+      label: t.askAI || 'Ask AI',
       prompt: 'How can I help you today?'
     },
     {
       id: 2,
       icon: FileText,
-      label: 'Summarize PSSR',
+      label: t.summarizePSSR || 'Summarize PSSR',
       prompt: 'Summarize my recent PSSR'
     },
     {
       id: 3,
       icon: CheckSquare,
-      label: 'Review Checklist',
+      label: t.reviewChecklist || 'Review Checklist',
       prompt: 'Review my checklist items'
     }
   ];
@@ -43,9 +45,9 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({ settings }
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
-          Ask Bob
+          {t.askBobTitle || 'Ask Bob'}
         </CardTitle>
-        <CardDescription className="text-xs">Your intelligent assistant</CardDescription>
+        <CardDescription className="text-xs">{t.yourIntelligentAssistant || 'Your intelligent assistant'}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {quickPrompts.map((prompt, idx) => {
