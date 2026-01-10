@@ -125,9 +125,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     setZoomLevel(1);
   };
 
-  // Handle mouse wheel zoom (scroll to zoom)
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+  // Handle mouse wheel zoom on header only
+  const handleHeaderWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     if (e.deltaY < 0) {
       handleZoomIn();
     } else {
@@ -136,7 +137,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   };
 
   // Dynamic cursor based on zoom capability
-  const zoomCursor = zoomLevel >= ZOOM_LEVELS.length - 1 ? 'cursor-zoom-out' : zoomLevel <= 0 ? 'cursor-zoom-in' : 'cursor-zoom-in';
+  const currentZoomIndex = ZOOM_LEVELS.indexOf(zoomLevel);
+  const canZoomIn = currentZoomIndex < ZOOM_LEVELS.length - 1;
+  const canZoomOut = currentZoomIndex > 0;
+  const zoomCursor = canZoomIn ? 'cursor-zoom-in' : canZoomOut ? 'cursor-zoom-out' : 'cursor-default';
 
   // Generate time markers based on zoom level
   const timeMarkers = useMemo(() => {
@@ -228,35 +232,39 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Timeline container with horizontal scroll */}
-          <div 
-            ref={timelineRef}
-            className={`overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent ${zoomCursor}`}
-            onWheel={handleWheel}
-          >
-            <div style={{ minWidth: `${100 * zoomLevel}%` }}>
-              {/* Timeline header */}
-              <div className="sticky top-0 bg-background z-10 border-b pb-2">
-                <div className="flex">
-                  <div className="w-80 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
-                  <div className="flex-1 relative h-10">
-                    {timeMarkers.map((marker, idx) => {
-                      const pos = (differenceInDays(marker.date, minDate) / totalDays) * 100;
-                      return (
-                        <div
-                          key={idx}
-                          className="absolute top-0 bottom-0 border-l border-border flex items-center"
-                          style={{ left: `${pos}%` }}
-                        >
-                          <span className="ml-2 text-xs font-medium whitespace-nowrap">
-                            {marker.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+          {/* Vertical scroll container for activities */}
+          <div className="max-h-[60vh] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+            {/* Timeline container with horizontal scroll */}
+            <div 
+              ref={timelineRef}
+              className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+            >
+              <div style={{ minWidth: `${100 * zoomLevel}%` }}>
+                {/* Timeline header - wheel zoom only here */}
+                <div className="sticky top-0 bg-background z-10 border-b pb-2">
+                  <div className="flex">
+                    <div className="w-80 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
+                    <div 
+                      className={`flex-1 relative h-10 ${zoomCursor}`}
+                      onWheel={handleHeaderWheel}
+                    >
+                      {timeMarkers.map((marker, idx) => {
+                        const pos = (differenceInDays(marker.date, minDate) / totalDays) * 100;
+                        return (
+                          <div
+                            key={idx}
+                            className="absolute top-0 bottom-0 border-l border-border flex items-center"
+                            style={{ left: `${pos}%` }}
+                          >
+                            <span className="ml-2 text-xs font-medium whitespace-nowrap">
+                              {marker.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {/* Gantt rows */}
               <div className="space-y-2">
@@ -325,6 +333,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       </div>
                     );
                   })}
+              </div>
               </div>
             </div>
           </div>
