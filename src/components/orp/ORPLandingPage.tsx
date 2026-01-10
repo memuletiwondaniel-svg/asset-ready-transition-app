@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Plus, BarChart3, CalendarCheck, Search, Building2, Calendar } from 'lucide-react';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
@@ -224,6 +225,15 @@ export const ORPLandingPage: React.FC = () => {
                           <Badge className={getStatusColor(mostRecentPlan.status)}>
                             {mostRecentPlan.status.replace('_', ' ')}
                           </Badge>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Progress</span>
+                            <span className="font-medium">{mostRecentPlan.overall_progress || 0}%</span>
+                          </div>
+                          <Progress value={mostRecentPlan.overall_progress || 0} className="h-2" />
                         </div>
                         
                         {/* Phase count & Date */}

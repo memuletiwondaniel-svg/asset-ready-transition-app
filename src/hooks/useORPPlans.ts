@@ -12,6 +12,7 @@ export interface ORPPlan {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  overall_progress?: number;
   project?: {
     project_title: string;
     project_id_prefix: string;
@@ -56,15 +57,16 @@ export const useORPPlans = () => {
         .from('orp_plans')
         .select(`
           *,
-          project:projects(project_title, project_id_prefix, project_id_number)
+          project:projects(project_title, project_id_prefix, project_id_number),
+          deliverables:orp_plan_deliverables(completion_percentage)
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Fetch ora engineer details separately
-      const plansWithEngineers = await Promise.all(
+      // Fetch ora engineer details and calculate progress
+      const plansWithDetails = await Promise.all(
         (data || []).map(async (plan) => {
           const { data: engineer } = await supabase
             .from('profiles')
@@ -72,14 +74,21 @@ export const useORPPlans = () => {
             .eq('user_id', plan.ora_engineer_id)
             .single();
 
+          // Calculate overall progress from deliverables
+          const deliverables = plan.deliverables || [];
+          const overallProgress = deliverables.length > 0
+            ? Math.round(deliverables.reduce((sum: number, d: any) => sum + (d.completion_percentage || 0), 0) / deliverables.length)
+            : 0;
+
           return {
             ...plan,
-            ora_engineer: engineer || undefined
+            ora_engineer: engineer || undefined,
+            overall_progress: overallProgress
           };
         })
       );
 
-      return plansWithEngineers as ORPPlan[];
+      return plansWithDetails as ORPPlan[];
     }
   });
 
