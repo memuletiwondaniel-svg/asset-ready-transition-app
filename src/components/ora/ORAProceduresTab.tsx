@@ -28,19 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-
-type ProcedureStatus = 'not_started' | 'draft' | 'site_validation' | 'final_review' | 'translated' | 'approved';
-
-interface Procedure {
-  id: string;
-  procedureNumber: string;
-  title: string;
-  type: 'startup' | 'normal';
-  status: ProcedureStatus;
-  version: string;
-  owner: string;
-  lastUpdated: string;
-}
+import { ProcedureDetailModal, ProcedureStatus, Procedure } from './ProcedureDetailModal';
 
 const mockProcedures: Procedure[] = [
   // Initial Start-up Procedures
@@ -66,10 +54,16 @@ interface ORAProceduresTabProps {
   oraPlanId: string;
 }
 
+type StatusFilter = ProcedureStatus | 'all' | 'in_progress';
+
 export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startupOpen, setStartupOpen] = useState(true);
   const [normalOpen, setNormalOpen] = useState(true);
+  const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [procedures, setProcedures] = useState<Procedure[]>(mockProcedures);
 
   const getStatusBadge = (status: ProcedureStatus) => {
     const statusConfig: Record<ProcedureStatus, { label: string; className: string }> = {
@@ -84,23 +78,76 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
     return <Badge variant="outline" className={`${config.className} whitespace-nowrap text-xs`}>{config.label}</Badge>;
   };
 
-  const filteredProcedures = mockProcedures.filter(proc => {
+  const handleRowClick = (procedure: Procedure) => {
+    setSelectedProcedure(procedure);
+    setModalOpen(true);
+  };
+
+  const handleStatusChange = (procedureId: string, newStatus: ProcedureStatus) => {
+    setProcedures(prev => prev.map(p => 
+      p.id === procedureId ? { ...p, status: newStatus } : p
+    ));
+    setSelectedProcedure(prev => prev ? { ...prev, status: newStatus } : null);
+  };
+
+  const filteredProcedures = procedures.filter(proc => {
     const matchesSearch = 
       proc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       proc.procedureNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       proc.owner.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    
+    let matchesStatus = true;
+    if (statusFilter === 'approved') {
+      matchesStatus = proc.status === 'approved';
+    } else if (statusFilter === 'not_started') {
+      matchesStatus = proc.status === 'not_started';
+    } else if (statusFilter === 'in_progress') {
+      matchesStatus = !['not_started', 'approved'].includes(proc.status);
+    } else if (statusFilter !== 'all') {
+      matchesStatus = proc.status === statusFilter;
+    }
+    
+    return matchesSearch && matchesStatus;
   });
 
   const startupProcedures = filteredProcedures.filter(p => p.type === 'startup');
   const normalProcedures = filteredProcedures.filter(p => p.type === 'normal');
 
   const stats = {
-    total: mockProcedures.length,
-    approved: mockProcedures.filter(p => p.status === 'approved').length,
-    inProgress: mockProcedures.filter(p => !['not_started', 'approved'].includes(p.status)).length,
-    notStarted: mockProcedures.filter(p => p.status === 'not_started').length,
+    total: procedures.length,
+    approved: procedures.filter(p => p.status === 'approved').length,
+    inProgress: procedures.filter(p => !['not_started', 'approved'].includes(p.status)).length,
+    notStarted: procedures.filter(p => p.status === 'not_started').length,
   };
+
+  const StatCard = ({ 
+    count, 
+    label, 
+    filter, 
+    bgColor, 
+    iconColor 
+  }: { 
+    count: number; 
+    label: string; 
+    filter: StatusFilter; 
+    bgColor: string; 
+    iconColor: string;
+  }) => (
+    <Card 
+      className={`cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 ${statusFilter === filter ? 'ring-2 ring-primary' : ''}`}
+      onClick={() => setStatusFilter(statusFilter === filter ? 'all' : filter)}
+    >
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${bgColor}`}>
+          <FileText className={`w-5 h-5 ${iconColor}`} />
+        </div>
+        <div>
+          <p className="text-2xl font-bold">{count}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const ProcedureTable = ({ procedures, title, icon: Icon, iconColor, open, onOpenChange }: { 
     procedures: Procedure[]; 
@@ -131,8 +178,9 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="w-[120px]">Procedure #</TableHead>
+                  <TableHead className="w-[60px]">S/N</TableHead>
                   <TableHead>Title</TableHead>
+                  <TableHead className="w-[120px]">Document #</TableHead>
                   <TableHead className="w-[150px]">Status</TableHead>
                   <TableHead className="w-[80px]">Version</TableHead>
                   <TableHead className="w-[140px]">Owner</TableHead>
@@ -141,15 +189,20 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {procedures.map((proc) => (
-                  <TableRow key={proc.id} className="hover:bg-muted/30">
-                    <TableCell className="font-mono text-sm">{proc.procedureNumber}</TableCell>
+                {procedures.map((proc, index) => (
+                  <TableRow 
+                    key={proc.id} 
+                    className="hover:bg-muted/30 cursor-pointer"
+                    onClick={() => handleRowClick(proc)}
+                  >
+                    <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                     <TableCell className="font-medium">{proc.title}</TableCell>
+                    <TableCell className="font-mono text-sm">{proc.procedureNumber}</TableCell>
                     <TableCell>{getStatusBadge(proc.status)}</TableCell>
                     <TableCell className="text-muted-foreground">{proc.version}</TableCell>
                     <TableCell className="text-muted-foreground">{proc.owner}</TableCell>
                     <TableCell className="text-muted-foreground">{proc.lastUpdated}</TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -157,7 +210,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleRowClick(proc)}>View Details</DropdownMenuItem>
                           <DropdownMenuItem>Edit</DropdownMenuItem>
                           <DropdownMenuItem>Download</DropdownMenuItem>
                           <DropdownMenuItem>Update Status</DropdownMenuItem>
@@ -176,53 +229,48 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
 
   return (
     <div className="space-y-6">
-      {/* Summary Stats */}
+      {/* Summary Stats - Clickable Filters */}
       <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
-              <FileText className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-              <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.approved}</p>
-              <p className="text-sm text-muted-foreground">Approved</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-              <FileText className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.inProgress}</p>
-              <p className="text-sm text-muted-foreground">In Progress</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
-              <FileText className="w-5 h-5 text-slate-500 dark:text-slate-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.notStarted}</p>
-              <p className="text-sm text-muted-foreground">Not Started</p>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard 
+          count={stats.total} 
+          label="Total" 
+          filter="all"
+          bgColor="bg-slate-100 dark:bg-slate-800"
+          iconColor="text-slate-600 dark:text-slate-400"
+        />
+        <StatCard 
+          count={stats.approved} 
+          label="Approved" 
+          filter="approved"
+          bgColor="bg-green-100 dark:bg-green-900/30"
+          iconColor="text-green-600 dark:text-green-400"
+        />
+        <StatCard 
+          count={stats.inProgress} 
+          label="In Progress" 
+          filter="in_progress"
+          bgColor="bg-amber-100 dark:bg-amber-900/30"
+          iconColor="text-amber-600 dark:text-amber-400"
+        />
+        <StatCard 
+          count={stats.notStarted} 
+          label="Not Started" 
+          filter="not_started"
+          bgColor="bg-slate-100 dark:bg-slate-800"
+          iconColor="text-slate-500 dark:text-slate-500"
+        />
       </div>
+
+      {/* Active Filter Indicator */}
+      {statusFilter !== 'all' && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Filtering by:</span>
+          <Badge variant="secondary" className="gap-1">
+            {statusFilter === 'in_progress' ? 'In Progress' : statusFilter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            <button onClick={() => setStatusFilter('all')} className="ml-1 hover:text-destructive">×</button>
+          </Badge>
+        </div>
+      )}
 
       {/* Search and Actions */}
       <div className="flex items-center gap-4">
@@ -271,10 +319,18 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
           <CardContent className="p-12 text-center">
             <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-medium text-lg mb-2">No procedures found</h3>
-            <p className="text-muted-foreground">Try adjusting your search criteria</p>
+            <p className="text-muted-foreground">Try adjusting your search criteria or filter</p>
           </CardContent>
         </Card>
       )}
+
+      {/* Procedure Detail Modal */}
+      <ProcedureDetailModal
+        procedure={selectedProcedure}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 };
