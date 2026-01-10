@@ -177,8 +177,8 @@ export const ORPDetailsPage: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b px-6 flex items-center justify-between flex-shrink-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-6">
+          <div className="border-b px-6 pb-4 flex items-center justify-between flex-shrink-0">
             <TabsList className="flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="activity-plan" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <CalendarCheck className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
@@ -229,8 +229,8 @@ export const ORPDetailsPage: React.FC = () => {
           </div>
 
           <TabsContent value="activity-plan" className="flex-1 m-0 mt-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
-            {/* Unified Toolbar: Search, View Toggle, Add ORA Item */}
-            <div className="px-6 py-3 border-b bg-muted/30 flex items-center gap-4 flex-shrink-0">
+            {/* Unified Toolbar: Search, View Toggle, Add Item */}
+            <div className="px-6 py-4 border-b bg-muted/30 flex items-center gap-4 flex-shrink-0 mt-4">
               {/* Search - flexible width */}
               <div className="relative flex-1 max-w-lg">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
