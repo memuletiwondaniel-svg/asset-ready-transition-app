@@ -162,7 +162,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-3xl h-[65vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
