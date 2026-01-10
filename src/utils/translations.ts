@@ -213,6 +213,44 @@ export const translations = {
     maintenance: 'Maintenance',
     handover: 'Handover',
     
+    // ORA Procedures
+    procedures: 'Procedures',
+    initialStartupProcedures: 'Initial Start-up Procedures',
+    normalOperatingProcedures: 'Normal Operating Procedures',
+    serialNumber: 'S/N',
+    title: 'Title',
+    documentNumber: 'Document #',
+    version: 'Version',
+    lastUpdated: 'Last Updated',
+    addProcedure: 'Add Procedure',
+    searchProcedures: 'Search procedures...',
+    noProceduresFound: 'No procedures found',
+    adjustSearchCriteria: 'Try adjusting your search criteria or filter',
+    filteringBy: 'Filtering by:',
+    total: 'Total',
+    
+    // Procedure Status
+    statusNotStarted: 'Not Started',
+    statusDraft: 'Draft',
+    statusSiteValidation: 'Site Validation',
+    statusFinalReview: 'Final Review',
+    statusTranslated: 'Translated',
+    statusApprovedForUse: 'Approved for Use',
+    
+    // Procedure Modal
+    updateWorkflowStatus: 'Update Workflow Status',
+    updateStatus: 'Update Status',
+    versionHistory: 'Version History',
+    uploadNewVersion: 'Upload New Version',
+    setApprovers: 'Set Approvers',
+    enterApproverEmail: 'Enter approver email...',
+    addApprover: 'Add Approver',
+    commentsOptional: 'Comments (Optional)',
+    addCommentsForApprovers: 'Add any comments for the approvers...',
+    sendForApproval: 'Send for Approval',
+    current: 'current',
+    uploadedBy: 'Uploaded By',
+    
     // P2A Handover
     p2aHandover: 'P2A Handover',
     projectToAsset: 'Project to Asset',
@@ -500,6 +538,44 @@ export const translations = {
     training: 'التدريب',
     maintenance: 'الصيانة',
     handover: 'التسليم',
+    
+    // ORA Procedures
+    procedures: 'الإجراءات',
+    initialStartupProcedures: 'إجراءات بدء التشغيل الأولي',
+    normalOperatingProcedures: 'إجراءات التشغيل العادي',
+    serialNumber: 'م',
+    title: 'العنوان',
+    documentNumber: 'رقم الوثيقة',
+    version: 'الإصدار',
+    lastUpdated: 'آخر تحديث',
+    addProcedure: 'إضافة إجراء',
+    searchProcedures: 'البحث في الإجراءات...',
+    noProceduresFound: 'لم يتم العثور على إجراءات',
+    adjustSearchCriteria: 'حاول تعديل معايير البحث أو الفلتر',
+    filteringBy: 'التصفية حسب:',
+    total: 'المجموع',
+    
+    // Procedure Status
+    statusNotStarted: 'لم يبدأ',
+    statusDraft: 'مسودة',
+    statusSiteValidation: 'التحقق الميداني',
+    statusFinalReview: 'المراجعة النهائية',
+    statusTranslated: 'مترجم',
+    statusApprovedForUse: 'معتمد للاستخدام',
+    
+    // Procedure Modal
+    updateWorkflowStatus: 'تحديث حالة سير العمل',
+    updateStatus: 'تحديث الحالة',
+    versionHistory: 'سجل الإصدارات',
+    uploadNewVersion: 'رفع إصدار جديد',
+    setApprovers: 'تعيين الموافقين',
+    enterApproverEmail: 'أدخل البريد الإلكتروني للموافق...',
+    addApprover: 'إضافة موافق',
+    commentsOptional: 'التعليقات (اختياري)',
+    addCommentsForApprovers: 'أضف أي تعليقات للموافقين...',
+    sendForApproval: 'إرسال للموافقة',
+    current: 'حالي',
+    uploadedBy: 'رفع بواسطة',
     
     // P2A Handover
     p2aHandover: 'تسليم المشروع للأصول',
@@ -789,6 +865,44 @@ export const translations = {
     maintenance: 'Maintenance',
     handover: 'Transfert',
     
+    // ORA Procedures
+    procedures: 'Procédures',
+    initialStartupProcedures: 'Procédures de démarrage initial',
+    normalOperatingProcedures: 'Procédures d\'exploitation normale',
+    serialNumber: 'N°',
+    title: 'Titre',
+    documentNumber: 'N° de document',
+    version: 'Version',
+    lastUpdated: 'Dernière mise à jour',
+    addProcedure: 'Ajouter une procédure',
+    searchProcedures: 'Rechercher des procédures...',
+    noProceduresFound: 'Aucune procédure trouvée',
+    adjustSearchCriteria: 'Essayez d\'ajuster vos critères de recherche ou de filtre',
+    filteringBy: 'Filtrage par:',
+    total: 'Total',
+    
+    // Procedure Status
+    statusNotStarted: 'Non démarré',
+    statusDraft: 'Brouillon',
+    statusSiteValidation: 'Validation sur site',
+    statusFinalReview: 'Revue finale',
+    statusTranslated: 'Traduit',
+    statusApprovedForUse: 'Approuvé pour utilisation',
+    
+    // Procedure Modal
+    updateWorkflowStatus: 'Mettre à jour le statut du flux',
+    updateStatus: 'Mettre à jour le statut',
+    versionHistory: 'Historique des versions',
+    uploadNewVersion: 'Télécharger une nouvelle version',
+    setApprovers: 'Définir les approbateurs',
+    enterApproverEmail: 'Entrez l\'email de l\'approbateur...',
+    addApprover: 'Ajouter un approbateur',
+    commentsOptional: 'Commentaires (optionnel)',
+    addCommentsForApprovers: 'Ajoutez des commentaires pour les approbateurs...',
+    sendForApproval: 'Envoyer pour approbation',
+    current: 'actuel',
+    uploadedBy: 'Téléchargé par',
+    
     // P2A Handover
     p2aHandover: 'Transfert P2A',
     projectToAsset: 'Projet vers Actif',
@@ -1077,6 +1191,44 @@ export const translations = {
     maintenance: 'Penyelenggaraan',
     handover: 'Serah Terima',
     
+    // ORA Procedures
+    procedures: 'Prosedur',
+    initialStartupProcedures: 'Prosedur Permulaan Awal',
+    normalOperatingProcedures: 'Prosedur Operasi Normal',
+    serialNumber: 'No.',
+    title: 'Tajuk',
+    documentNumber: 'No. Dokumen',
+    version: 'Versi',
+    lastUpdated: 'Kemas Kini Terakhir',
+    addProcedure: 'Tambah Prosedur',
+    searchProcedures: 'Cari prosedur...',
+    noProceduresFound: 'Tiada prosedur dijumpai',
+    adjustSearchCriteria: 'Cuba laraskan kriteria carian atau penapis anda',
+    filteringBy: 'Menapis mengikut:',
+    total: 'Jumlah',
+    
+    // Procedure Status
+    statusNotStarted: 'Belum Dimulakan',
+    statusDraft: 'Draf',
+    statusSiteValidation: 'Pengesahan Tapak',
+    statusFinalReview: 'Semakan Akhir',
+    statusTranslated: 'Diterjemah',
+    statusApprovedForUse: 'Diluluskan untuk Kegunaan',
+    
+    // Procedure Modal
+    updateWorkflowStatus: 'Kemas Kini Status Aliran Kerja',
+    updateStatus: 'Kemas Kini Status',
+    versionHistory: 'Sejarah Versi',
+    uploadNewVersion: 'Muat Naik Versi Baharu',
+    setApprovers: 'Tetapkan Pelulus',
+    enterApproverEmail: 'Masukkan e-mel pelulus...',
+    addApprover: 'Tambah Pelulus',
+    commentsOptional: 'Ulasan (Pilihan)',
+    addCommentsForApprovers: 'Tambah ulasan untuk pelulus...',
+    sendForApproval: 'Hantar untuk Kelulusan',
+    current: 'semasa',
+    uploadedBy: 'Dimuat naik oleh',
+    
     // P2A Handover
     p2aHandover: 'Serah Terima P2A',
     projectToAsset: 'Projek ke Aset',
@@ -1364,6 +1516,44 @@ export const translations = {
     training: 'Оқыту',
     maintenance: 'Техникалық қызмет көрсету',
     handover: 'Тапсыру',
+    
+    // ORA Procedures
+    procedures: 'Рәсімдер',
+    initialStartupProcedures: 'Бастапқы іске қосу рәсімдері',
+    normalOperatingProcedures: 'Қалыпты жұмыс істеу рәсімдері',
+    serialNumber: '№',
+    title: 'Атауы',
+    documentNumber: 'Құжат №',
+    version: 'Нұсқа',
+    lastUpdated: 'Соңғы жаңарту',
+    addProcedure: 'Рәсім қосу',
+    searchProcedures: 'Рәсімдерді іздеу...',
+    noProceduresFound: 'Рәсімдер табылмады',
+    adjustSearchCriteria: 'Іздеу критерийлерін немесе сүзгіні реттеп көріңіз',
+    filteringBy: 'Сүзгілеу:',
+    total: 'Барлығы',
+    
+    // Procedure Status
+    statusNotStarted: 'Басталмаған',
+    statusDraft: 'Жоба',
+    statusSiteValidation: 'Нысанда тексеру',
+    statusFinalReview: 'Соңғы шолу',
+    statusTranslated: 'Аударылған',
+    statusApprovedForUse: 'Қолдануға мақұлданған',
+    
+    // Procedure Modal
+    updateWorkflowStatus: 'Жұмыс ағыны күйін жаңарту',
+    updateStatus: 'Күйді жаңарту',
+    versionHistory: 'Нұсқа тарихы',
+    uploadNewVersion: 'Жаңа нұсқа жүктеу',
+    setApprovers: 'Мақұлдаушыларды орнату',
+    enterApproverEmail: 'Мақұлдаушы электрондық поштасын енгізіңіз...',
+    addApprover: 'Мақұлдаушы қосу',
+    commentsOptional: 'Пікірлер (міндетті емес)',
+    addCommentsForApprovers: 'Мақұлдаушылар үшін пікір қосыңыз...',
+    sendForApproval: 'Мақұлдауға жіберу',
+    current: 'ағымдағы',
+    uploadedBy: 'Жүктеген',
     
     // P2A Handover
     p2aHandover: 'P2A тапсыру',
