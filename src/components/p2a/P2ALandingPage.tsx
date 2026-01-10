@@ -11,16 +11,18 @@ import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const P2ALandingPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const { handovers, isLoading } = useP2AHandovers();
   const { updateMetadata } = useBreadcrumb();
   const navigate = useNavigate();
+  const { translations: t } = useLanguage();
 
   React.useEffect(() => {
-    updateMetadata('title', 'P2A Handover');
-  }, [updateMetadata]);
+    updateMetadata('title', t.p2aTitle);
+  }, [updateMetadata, t.p2aTitle]);
 
   // Fetch current user profile
   const [userProfile, setUserProfile] = useState<{
@@ -60,28 +62,28 @@ export const P2ALandingPage: React.FC = () => {
 
   const stats = [
     {
-      title: 'Total Handovers',
+      title: t.totalHandovers,
       value: handovers?.length || 0,
       icon: Key,
       gradient: 'from-blue-500 to-cyan-500',
       bgGradient: 'from-blue-500/20 to-cyan-500/20'
     },
     {
-      title: 'In Progress',
+      title: t.inProgress,
       value: handovers?.filter(h => h.status === 'IN_PROGRESS').length || 0,
       icon: TrendingUp,
       gradient: 'from-amber-500 to-orange-500',
       bgGradient: 'from-amber-500/20 to-orange-500/20'
     },
     {
-      title: 'Behind Schedule',
-      value: 0, // This would come from deliverables analysis
+      title: t.behindSchedule,
+      value: 0,
       icon: AlertCircle,
       gradient: 'from-red-500 to-pink-500',
       bgGradient: 'from-red-500/20 to-pink-500/20'
     },
     {
-      title: 'Completed',
+      title: t.completed,
       value: handovers?.filter(h => h.status === 'COMPLETED').length || 0,
       icon: CheckCircle,
       gradient: 'from-green-500 to-emerald-500',
@@ -103,15 +105,15 @@ export const P2ALandingPage: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
-          <BreadcrumbNavigation currentPageLabel="P2A Handover" />
+          <BreadcrumbNavigation currentPageLabel={t.p2aTitle} />
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-foreground">
-                P2A Handover
+                {t.p2aTitle}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Project to Asset Transition Management
+                {t.p2aSubtitle}
               </p>
             </div>
             
@@ -123,7 +125,7 @@ export const P2ALandingPage: React.FC = () => {
                 className="flex-1 sm:flex-none text-xs sm:text-sm"
               >
                 <BarChart3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Analytics
+                {t.analytics}
               </Button>
               <Button
                 size="sm"
@@ -131,7 +133,7 @@ export const P2ALandingPage: React.FC = () => {
                 className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity text-xs sm:text-sm"
               >
                 <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Initiate Handover
+                {t.initiateHandover}
               </Button>
             </div>
           </div>
