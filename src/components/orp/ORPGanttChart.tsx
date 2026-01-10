@@ -125,6 +125,18 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     setZoomLevel(1);
   };
 
+  // Handle mouse wheel zoom (Ctrl/Cmd + scroll)
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        handleZoomIn();
+      } else {
+        handleZoomOut();
+      }
+    }
+  };
+
   // Generate time markers based on zoom level
   const timeMarkers = useMemo(() => {
     const markers: { date: Date; label: string }[] = [];
@@ -219,22 +231,23 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           <div 
             ref={timelineRef}
             className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+            onWheel={handleWheel}
           >
             <div style={{ minWidth: `${100 * zoomLevel}%` }}>
               {/* Timeline header */}
               <div className="sticky top-0 bg-background z-10 border-b pb-2">
                 <div className="flex">
                   <div className="w-64 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
-                  <div className="flex-1 relative h-12">
+                  <div className="flex-1 relative h-10">
                     {timeMarkers.map((marker, idx) => {
                       const pos = (differenceInDays(marker.date, minDate) / totalDays) * 100;
                       return (
                         <div
                           key={idx}
-                          className="absolute top-0 bottom-0 border-l border-border"
+                          className="absolute top-0 bottom-0 border-l border-border flex items-center"
                           style={{ left: `${pos}%` }}
                         >
-                          <span className="absolute -top-1 left-2 text-xs font-medium whitespace-nowrap">
+                          <span className="ml-2 text-xs font-medium whitespace-nowrap">
                             {marker.label}
                           </span>
                         </div>
