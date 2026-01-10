@@ -65,6 +65,7 @@ export const translations = {
     optional: 'Optional',
     
     // Navigation
+    navigation: 'Navigation',
     home: 'Home',
     dashboard: 'Dashboard',
     backToAdminTools: 'Back to Admin & Tools',
@@ -73,6 +74,38 @@ export const translations = {
     myTasks: 'My Tasks',
     projects: 'Projects',
     reports: 'Reports',
+    
+    // Sidebar Navigation Keys
+    navHome: 'Home',
+    navAskBob: 'Ask Bob',
+    navPSSR: 'PSSR',
+    navMyTasks: 'My Tasks',
+    navORAPlans: 'ORA Plans',
+    navORMaintenance: 'OR Maintenance',
+    navP2AHandover: 'P2A Handover',
+    navProjects: 'Projects',
+    
+    // Sidebar UI
+    lightMode: 'Light Mode',
+    darkMode: 'Dark Mode',
+    takeTour: 'Take Tour',
+    recent: 'Recent',
+    collapse: 'Collapse',
+    expandSidebar: 'Expand Sidebar',
+    collapseSidebar: 'Collapse Sidebar',
+    
+    // Welcome Screen
+    welcomeTitle: 'Operation Readiness',
+    welcomeSubtitle: 'Start-Up & Handover',
+    welcomeDescription: 'Transform your project start-up and handover experience with the ORSH platform.',
+    safeStartup: 'PSSR',
+    safeStartupDesc: 'Pre-Start Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists',
+    p2oHandover: 'P2O Handover',
+    p2oHandoverDesc: 'Seamless transition and handover from construction and commissioning to Asset Operation',
+    accessButton: 'Access ORSH Platform',
+    enterpriseSecure: 'Enterprise Secure',
+    isoCompliant: 'ISO Compliant',
+    support24: '24/7 Support',
     help: 'Help',
     
     // User Profile
@@ -399,6 +432,7 @@ export const translations = {
     optional: 'اختياري',
     
     // Navigation
+    navigation: 'التنقل',
     home: 'الرئيسية',
     dashboard: 'لوحة التحكم',
     backToAdminTools: 'العودة إلى الإدارة والأدوات',
@@ -408,6 +442,38 @@ export const translations = {
     projects: 'المشاريع',
     reports: 'التقارير',
     help: 'المساعدة',
+    
+    // Sidebar Navigation Keys
+    navHome: 'الرئيسية',
+    navAskBob: 'اسأل بوب',
+    navPSSR: 'PSSR',
+    navMyTasks: 'مهامي',
+    navORAPlans: 'خطط ORA',
+    navORMaintenance: 'صيانة OR',
+    navP2AHandover: 'تسليم P2A',
+    navProjects: 'المشاريع',
+    
+    // Sidebar UI
+    lightMode: 'الوضع الفاتح',
+    darkMode: 'الوضع الداكن',
+    takeTour: 'جولة تعريفية',
+    recent: 'الأخيرة',
+    collapse: 'طي',
+    expandSidebar: 'توسيع الشريط الجانبي',
+    collapseSidebar: 'طي الشريط الجانبي',
+    
+    // Welcome Screen
+    welcomeTitle: 'جاهزية العمليات',
+    welcomeSubtitle: 'البدء والتسليم',
+    welcomeDescription: 'حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH.',
+    safeStartup: 'PSSR',
+    safeStartupDesc: 'مراجعة السلامة قبل البدء - إدارة الإدخال الآمن للهيدروكربونات في المنشآت الجديدة',
+    p2oHandover: 'تسليم P2O',
+    p2oHandoverDesc: 'انتقال وتسليم سلس من البناء والتشغيل إلى تشغيل الأصول',
+    accessButton: 'الوصول إلى منصة ORSH',
+    enterpriseSecure: 'أمان المؤسسة',
+    isoCompliant: 'متوافق مع ISO',
+    support24: 'دعم 24/7',
     
     // User Profile
     profile: 'الملف الشخصي',
@@ -732,6 +798,7 @@ export const translations = {
     optional: 'Optionnel',
     
     // Navigation
+    navigation: 'Navigation',
     home: 'Accueil',
     dashboard: 'Tableau de bord',
     backToAdminTools: 'Retour aux Outils Admin',
@@ -741,6 +808,38 @@ export const translations = {
     projects: 'Projets',
     reports: 'Rapports',
     help: 'Aide',
+    
+    // Sidebar Navigation Keys
+    navHome: 'Accueil',
+    navAskBob: 'Demander à Bob',
+    navPSSR: 'PSSR',
+    navMyTasks: 'Mes Tâches',
+    navORAPlans: 'Plans ORA',
+    navORMaintenance: 'Maintenance OR',
+    navP2AHandover: 'Transfert P2A',
+    navProjects: 'Projets',
+    
+    // Sidebar UI
+    lightMode: 'Mode Clair',
+    darkMode: 'Mode Sombre',
+    takeTour: 'Faire le Tour',
+    recent: 'Récent',
+    collapse: 'Réduire',
+    expandSidebar: 'Développer la barre latérale',
+    collapseSidebar: 'Réduire la barre latérale',
+    
+    // Welcome Screen
+    welcomeTitle: 'Préparation Opérationnelle',
+    welcomeSubtitle: 'Démarrage et Remise',
+    welcomeDescription: 'Transformez votre expérience de démarrage et de remise de projet avec la plateforme ORSH.',
+    safeStartup: 'PSSR',
+    safeStartupDesc: 'Revue de Sécurité Pré-Démarrage - Gérer l\'introduction sécurisée des hydrocarbures',
+    p2oHandover: 'Remise P2O',
+    p2oHandoverDesc: 'Transition et remise transparentes de la construction à l\'exploitation des actifs',
+    accessButton: 'Accéder à la Plateforme ORSH',
+    enterpriseSecure: 'Sécurité Entreprise',
+    isoCompliant: 'Conforme ISO',
+    support24: 'Support 24/7',
     
     // User Profile
     profile: 'Profil',
@@ -1065,6 +1164,7 @@ export const translations = {
     optional: 'Pilihan',
     
     // Navigation
+    navigation: 'Navigasi',
     home: 'Utama',
     dashboard: 'Papan Pemuka',
     backToAdminTools: 'Kembali ke Admin & Alatan',
@@ -1074,6 +1174,38 @@ export const translations = {
     projects: 'Projek',
     reports: 'Laporan',
     help: 'Bantuan',
+    
+    // Sidebar Navigation Keys
+    navHome: 'Utama',
+    navAskBob: 'Tanya Bob',
+    navPSSR: 'PSSR',
+    navMyTasks: 'Tugas Saya',
+    navORAPlans: 'Pelan ORA',
+    navORMaintenance: 'Penyelenggaraan OR',
+    navP2AHandover: 'Penyerahan P2A',
+    navProjects: 'Projek',
+    
+    // Sidebar UI
+    lightMode: 'Mod Cerah',
+    darkMode: 'Mod Gelap',
+    takeTour: 'Ambil Lawatan',
+    recent: 'Terkini',
+    collapse: 'Kuncup',
+    expandSidebar: 'Kembangkan Bar Sisi',
+    collapseSidebar: 'Kuncupkan Bar Sisi',
+    
+    // Welcome Screen
+    welcomeTitle: 'Kesediaan Operasi',
+    welcomeSubtitle: 'Permulaan & Penyerahan',
+    welcomeDescription: 'Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform ORSH.',
+    safeStartup: 'PSSR',
+    safeStartupDesc: 'Kajian Keselamatan Pra-Permulaan - Menguruskan pengenalan hidrokarbon yang selamat',
+    p2oHandover: 'Penyerahan P2O',
+    p2oHandoverDesc: 'Peralihan dan penyerahan yang lancar dari pembinaan kepada Operasi Aset',
+    accessButton: 'Akses Platform ORSH',
+    enterpriseSecure: 'Keselamatan Perusahaan',
+    isoCompliant: 'Patuh ISO',
+    support24: 'Sokongan 24/7',
     
     // User Profile
     profile: 'Profil',
@@ -1398,6 +1530,7 @@ export const translations = {
     optional: 'Қосымша',
     
     // Navigation
+    navigation: 'Навигация',
     home: 'Басты бет',
     dashboard: 'Басқару тақтасы',
     backToAdminTools: 'Әкімшілік құралдарға қайту',
@@ -1407,6 +1540,38 @@ export const translations = {
     projects: 'Жобалар',
     reports: 'Есептер',
     help: 'Көмек',
+    
+    // Sidebar Navigation Keys
+    navHome: 'Басты бет',
+    navAskBob: 'Бобтан сұра',
+    navPSSR: 'PSSR',
+    navMyTasks: 'Менің тапсырмаларым',
+    navORAPlans: 'ORA жоспарлары',
+    navORMaintenance: 'OR қызмет көрсету',
+    navP2AHandover: 'P2A тапсыру',
+    navProjects: 'Жобалар',
+    
+    // Sidebar UI
+    lightMode: 'Жарық режим',
+    darkMode: 'Қараңғы режим',
+    takeTour: 'Турға шығу',
+    recent: 'Соңғы',
+    collapse: 'Жию',
+    expandSidebar: 'Бүйір тақтаны кеңейту',
+    collapseSidebar: 'Бүйір тақтаны жию',
+    
+    // Welcome Screen
+    welcomeTitle: 'Операциялық дайындық',
+    welcomeSubtitle: 'Іске қосу және тапсыру',
+    welcomeDescription: 'ORSH платформасымен жобаны іске қосу тәжірибесін өзгертіңіз.',
+    safeStartup: 'PSSR',
+    safeStartupDesc: 'Іске қосу алдындағы қауіпсіздік шолуы',
+    p2oHandover: 'P2O тапсыру',
+    p2oHandoverDesc: 'Құрылыстан актив операциясына біркелкі ауысу',
+    accessButton: 'ORSH платформасына кіру',
+    enterpriseSecure: 'Кәсіпорын қауіпсіздігі',
+    isoCompliant: 'ISO сәйкестігі',
+    support24: '24/7 қолдау',
     
     // User Profile
     profile: 'Профиль',

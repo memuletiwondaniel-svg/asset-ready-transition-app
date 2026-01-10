@@ -10,9 +10,10 @@ import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Chec
 import { cn } from '@/lib/utils';
 import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NavigationItem {
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   path: string;
   section?: string;
@@ -63,14 +64,14 @@ interface SidebarContentProps {
 }
 
 const navigationItems: NavigationItem[] = [
-  { label: 'Home', icon: Home, path: '/', section: 'home' },
-  { label: 'Ask Bob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
-  { label: 'PSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
-  { label: 'My Tasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
-  { label: 'ORA Plans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
-  { label: 'OR Maintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
-  { label: 'P2A Handover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },
-  { label: 'Projects', icon: FolderKanban, path: '/projects', section: 'projects' },
+  { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
+  { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
+  { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
+  { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
+  { labelKey: 'navORAPlans', icon: CalendarCheck, path: '/operation-readiness', section: 'operation-readiness' },
+  { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance' },
+  { labelKey: 'navP2AHandover', icon: Key, path: '/p2a-handover', section: 'p2a-handover' },
+  { labelKey: 'navProjects', icon: FolderKanban, path: '/projects', section: 'projects' },
 ];
 
 export const SidebarContent = memo<SidebarContentProps>(({
@@ -99,6 +100,13 @@ export const SidebarContent = memo<SidebarContentProps>(({
   onLogout,
   onToggleCollapse,
 }) => {
+  const { translations: t } = useLanguage();
+  
+  // Helper function to get translated label
+  const getLabel = (labelKey: string): string => {
+    return (t as any)[labelKey] || labelKey;
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -177,7 +185,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
           {!isCollapsed && (
             <div className="mb-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
-                Navigation
+                {t.navigation || 'Navigation'}
               </p>
               <div className="space-y-1">
                 {navigationItems.map((item) => {
@@ -199,7 +207,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate">{getLabel(item.labelKey)}</span>
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}
@@ -228,7 +236,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                       "w-full h-9 relative",
                       isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                     )}
-                    title={item.label}
+                    title={getLabel(item.labelKey)}
                   >
                     <Icon className={cn(
                       "h-4 w-4 transition-colors",
@@ -250,7 +258,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
           {!isCollapsed && (
             <div className="mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
-                Settings
+                {t.settings || 'Settings'}
               </p>
             </div>
           )}
@@ -265,13 +273,13 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 `w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
                 currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
               )} 
-              title="Admin Tools"
+              title={t.adminTools || 'Admin Tools'}
             >
               <Settings className={cn(
                 "w-4 h-4 transition-colors",
                 currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
               )} />
-              {!isCollapsed && <span className="ml-2">Admin Tools</span>}
+              {!isCollapsed && <span className="ml-2">{t.adminTools || 'Admin Tools'}</span>}
             </Button>
 
             <Button 
@@ -279,17 +287,17 @@ export const SidebarContent = memo<SidebarContentProps>(({
               size={isCollapsed ? "icon" : "sm"} 
               onClick={onThemeToggle} 
               className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
-              title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              title={theme === 'dark' ? (t.lightMode || 'Light Mode') : (t.darkMode || 'Dark Mode')}
             >
               {theme === 'dark' ? (
                 <>
                   <Sun className="w-4 h-4 text-muted-foreground" />
-                  {!isCollapsed && <span className="ml-2">Light Mode</span>}
+                  {!isCollapsed && <span className="ml-2">{t.lightMode || 'Light Mode'}</span>}
                 </>
               ) : (
                 <>
                   <Moon className="w-4 h-4 text-muted-foreground" />
-                  {!isCollapsed && <span className="ml-2">Dark Mode</span>}
+                  {!isCollapsed && <span className="ml-2">{t.darkMode || 'Dark Mode'}</span>}
                 </>
               )}
             </Button>
@@ -298,10 +306,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
               variant="outline" 
               size={isCollapsed ? "icon" : "sm"} 
               className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
-              title="Notifications"
+              title={t.notifications || 'Notifications'}
             >
               <Bell className="w-4 h-4 text-muted-foreground" />
-              {!isCollapsed && <span className="ml-2">Notifications</span>}
+              {!isCollapsed && <span className="ml-2">{t.notifications || 'Notifications'}</span>}
             </Button>
 
             <DropdownMenu>
@@ -310,14 +318,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   variant="outline" 
                   size={isCollapsed ? "icon" : "sm"} 
                   className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
-                  title="Language"
+                  title={t.language || 'Language'}
                 >
                   <Languages className="w-4 h-4 text-muted-foreground" />
-                  {!isCollapsed && <span className="ml-2">Language</span>}
+                  {!isCollapsed && <span className="ml-2">{t.language || 'Language'}</span>}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-background z-50">
-                <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                <DropdownMenuLabel>{t.selectLanguage || 'Select Language'}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onLanguageChange?.('English')}>
                   English {language === 'English' && <Check className="ml-auto h-4 w-4" />}
@@ -342,10 +350,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
               size={isCollapsed ? "icon" : "sm"} 
               onClick={onShowOnboarding} 
               className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
-              title="Take Tour"
+              title={t.takeTour || 'Take Tour'}
             >
               <Clock className="w-4 h-4 text-muted-foreground" />
-              {!isCollapsed && <span className="ml-2">Take Tour</span>}
+              {!isCollapsed && <span className="ml-2">{t.takeTour || 'Take Tour'}</span>}
             </Button>
           </div>
 
@@ -353,7 +361,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
           {searchHistory.length > 0 && !isCollapsed && (
             <div className="mt-6 pt-6 border-t border-border/40">
               <div className="flex items-center justify-between px-4 mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.recent || 'Recent'}</p>
                 <Button variant="ghost" size="icon" onClick={onToggleSearchHistory} className="h-6 w-6">
                   <ChevronDown className={`w-3 h-3 transition-transform ${showSearchHistory ? 'rotate-180' : ''}`} />
                 </Button>
@@ -391,10 +399,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
           size={isCollapsed ? "icon" : "sm"} 
           onClick={onLogout}
           className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive`} 
-          title="Log Out"
+          title={t.logout || 'Log Out'}
         >
           <LogOut className="w-4 h-4" />
-          {!isCollapsed && <span className="ml-2">Log Out</span>}
+          {!isCollapsed && <span className="ml-2">{t.logout || 'Log Out'}</span>}
         </Button>
 
         {/* Collapse/Expand Button */}
@@ -404,14 +412,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
             size={isCollapsed ? "icon" : "sm"} 
             onClick={onToggleCollapse}
             className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            title={isCollapsed ? (t.expandSidebar || 'Expand Sidebar') : (t.collapseSidebar || 'Collapse Sidebar')}
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
             ) : (
               <>
                 <ChevronLeft className="w-4 h-4" />
-                <span className="ml-2">Collapse</span>
+                <span className="ml-2">{t.collapse || 'Collapse'}</span>
               </>
             )}
           </Button>
