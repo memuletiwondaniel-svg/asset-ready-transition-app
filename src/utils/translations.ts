@@ -250,7 +250,10 @@ export const translations = {
     sendForApproval: 'Send for Approval',
     current: 'current',
     uploadedBy: 'Uploaded By',
+    currentStatus: 'Current Status',
+    owner: 'Owner',
     
+
     // P2A Handover
     p2aHandover: 'P2A Handover',
     projectToAsset: 'Project to Asset',
@@ -576,6 +579,8 @@ export const translations = {
     sendForApproval: 'إرسال للموافقة',
     current: 'حالي',
     uploadedBy: 'رفع بواسطة',
+    currentStatus: 'الحالة الحالية',
+    owner: 'المالك',
     
     // P2A Handover
     p2aHandover: 'تسليم المشروع للأصول',
@@ -902,6 +907,8 @@ export const translations = {
     sendForApproval: 'Envoyer pour approbation',
     current: 'actuel',
     uploadedBy: 'Téléchargé par',
+    currentStatus: 'Statut actuel',
+    owner: 'Propriétaire',
     
     // P2A Handover
     p2aHandover: 'Transfert P2A',
@@ -1228,6 +1235,8 @@ export const translations = {
     sendForApproval: 'Hantar untuk Kelulusan',
     current: 'semasa',
     uploadedBy: 'Dimuat naik oleh',
+    currentStatus: 'Status Semasa',
+    owner: 'Pemilik',
     
     // P2A Handover
     p2aHandover: 'Serah Terima P2A',
@@ -1554,6 +1563,8 @@ export const translations = {
     sendForApproval: 'Мақұлдауға жіберу',
     current: 'ағымдағы',
     uploadedBy: 'Жүктеген',
+    currentStatus: 'Ағымдағы күй',
+    owner: 'Иесі',
     
     // P2A Handover
     p2aHandover: 'P2A тапсыру',

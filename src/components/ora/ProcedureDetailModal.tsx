@@ -30,6 +30,7 @@ import {
   History
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type ProcedureStatus = 'not_started' | 'draft' | 'site_validation' | 'final_review' | 'translated' | 'approved';
 
@@ -51,14 +52,6 @@ interface ProcedureDetailModalProps {
   onStatusChange?: (procedureId: string, newStatus: ProcedureStatus) => void;
 }
 
-const statusOptions: { value: ProcedureStatus; label: string }[] = [
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'site_validation', label: 'Site Validation' },
-  { value: 'final_review', label: 'Final Review' },
-  { value: 'translated', label: 'Translated' },
-  { value: 'approved', label: 'Approved for Use' },
-];
 
 const mockVersions = [
   { version: '2.1', uploadedBy: 'John Smith', date: '2024-01-15', status: 'current' },
@@ -72,9 +65,19 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
   onOpenChange,
   onStatusChange,
 }) => {
+  const { translations: t } = useLanguage();
   const [selectedStatus, setSelectedStatus] = useState<ProcedureStatus>(procedure?.status || 'not_started');
   const [approvers, setApprovers] = useState<string[]>(['']);
   const [comments, setComments] = useState('');
+
+  const statusOptions: { value: ProcedureStatus; label: string }[] = [
+    { value: 'not_started', label: t.statusNotStarted || 'Not Started' },
+    { value: 'draft', label: t.statusDraft || 'Draft' },
+    { value: 'site_validation', label: t.statusSiteValidation || 'Site Validation' },
+    { value: 'final_review', label: t.statusFinalReview || 'Final Review' },
+    { value: 'translated', label: t.statusTranslated || 'Translated' },
+    { value: 'approved', label: t.statusApprovedForUse || 'Approved for Use' },
+  ];
 
   React.useEffect(() => {
     if (procedure) {
@@ -86,12 +89,12 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
 
   const getStatusBadge = (status: ProcedureStatus) => {
     const statusConfig: Record<ProcedureStatus, { label: string; className: string }> = {
-      'not_started': { label: 'Not Started', className: 'bg-slate-100 text-slate-600 border-slate-300' },
-      'draft': { label: 'Draft', className: 'bg-amber-50 text-amber-600 border-amber-300' },
-      'site_validation': { label: 'Site Validation', className: 'bg-purple-50 text-purple-600 border-purple-300' },
-      'final_review': { label: 'Final Review', className: 'bg-blue-50 text-blue-600 border-blue-300' },
-      'translated': { label: 'Translated', className: 'bg-cyan-50 text-cyan-600 border-cyan-300' },
-      'approved': { label: 'Approved for Use', className: 'bg-green-50 text-green-600 border-green-300' },
+      'not_started': { label: t.statusNotStarted || 'Not Started', className: 'bg-slate-100 text-slate-600 border-slate-300' },
+      'draft': { label: t.statusDraft || 'Draft', className: 'bg-amber-50 text-amber-600 border-amber-300' },
+      'site_validation': { label: t.statusSiteValidation || 'Site Validation', className: 'bg-purple-50 text-purple-600 border-purple-300' },
+      'final_review': { label: t.statusFinalReview || 'Final Review', className: 'bg-blue-50 text-blue-600 border-blue-300' },
+      'translated': { label: t.statusTranslated || 'Translated', className: 'bg-cyan-50 text-cyan-600 border-cyan-300' },
+      'approved': { label: t.statusApprovedForUse || 'Approved for Use', className: 'bg-green-50 text-green-600 border-green-300' },
     };
     const config = statusConfig[status];
     return <Badge variant="outline" className={`${config.className} whitespace-nowrap text-xs`}>{config.label}</Badge>;
@@ -164,19 +167,19 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
           {/* Current Status & Details */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Current Status</p>
+              <p className="text-xs text-muted-foreground">{t.currentStatus || "Current Status"}</p>
               {getStatusBadge(procedure.status)}
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Version</p>
+              <p className="text-xs text-muted-foreground">{t.version || "Version"}</p>
               <p className="text-sm font-medium">{procedure.version}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Owner</p>
+              <p className="text-xs text-muted-foreground">{t.owner || "Owner"}</p>
               <p className="text-sm font-medium">{procedure.owner}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Last Updated</p>
+              <p className="text-xs text-muted-foreground">{t.lastUpdated || "Last Updated"}</p>
               <p className="text-sm font-medium">{procedure.lastUpdated}</p>
             </div>
           </div>
@@ -187,7 +190,7 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
-              <Label className="font-medium">Update Workflow Status</Label>
+              <Label className="font-medium">{t.updateWorkflowStatus || "Update Workflow Status"}</Label>
             </div>
             <div className="flex gap-3">
               <Select value={selectedStatus} onValueChange={(value: ProcedureStatus) => setSelectedStatus(value)}>
@@ -203,7 +206,7 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
                 </SelectContent>
               </Select>
               <Button onClick={handleStatusUpdate} disabled={selectedStatus === procedure.status}>
-                Update Status
+                {t.updateStatus || "Update Status"}
               </Button>
             </div>
           </div>
@@ -215,21 +218,21 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-muted-foreground" />
-                <Label className="font-medium">Version History</Label>
+                <Label className="font-medium">{t.versionHistory || "Version History"}</Label>
               </div>
               <Button variant="outline" size="sm" onClick={handleUploadVersion}>
                 <Upload className="w-4 h-4 mr-2" />
-                Upload New Version
+                {t.uploadNewVersion || "Upload New Version"}
               </Button>
             </div>
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-2 font-medium">Version</th>
-                    <th className="text-left p-2 font-medium">Uploaded By</th>
-                    <th className="text-left p-2 font-medium">Date</th>
-                    <th className="text-left p-2 font-medium">Status</th>
+                    <th className="text-left p-2 font-medium">{t.version || "Version"}</th>
+                    <th className="text-left p-2 font-medium">{t.uploadedBy || "Uploaded By"}</th>
+                    <th className="text-left p-2 font-medium">{t.date || "Date"}</th>
+                    <th className="text-left p-2 font-medium">{t.status || "Status"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -240,7 +243,7 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
                       <td className="p-2">{v.date}</td>
                       <td className="p-2">
                         <Badge variant={v.status === 'current' ? 'default' : 'secondary'} className="text-xs">
-                          {v.status}
+                          {v.status === 'current' ? (t.current || 'current') : (t.archived || 'archived')}
                         </Badge>
                       </td>
                     </tr>
@@ -256,13 +259,13 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-muted-foreground" />
-              <Label className="font-medium">Set Approvers</Label>
+              <Label className="font-medium">{t.setApprovers || "Set Approvers"}</Label>
             </div>
             <div className="space-y-2">
               {approvers.map((approver, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
-                    placeholder="Enter approver email..."
+                    placeholder={t.enterApproverEmail || "Enter approver email..."}
                     value={approver}
                     onChange={(e) => handleApproverChange(index, e.target.value)}
                   />
@@ -275,16 +278,16 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
               ))}
               <Button variant="outline" size="sm" onClick={handleAddApprover}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Approver
+                {t.addApprover || "Add Approver"}
               </Button>
             </div>
           </div>
 
           {/* Comments */}
           <div className="space-y-3">
-            <Label className="font-medium">Comments (Optional)</Label>
+            <Label className="font-medium">{t.commentsOptional || "Comments (Optional)"}</Label>
             <Textarea
-              placeholder="Add any comments for the approvers..."
+              placeholder={t.addCommentsForApprovers || "Add any comments for the approvers..."}
               value={comments}
               onChange={(e) => setComments(e.target.value)}
               rows={3}
@@ -294,11 +297,11 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t.cancel || "Cancel"}
             </Button>
             <Button onClick={handleSendForApproval} className="gap-2">
               <Send className="w-4 h-4" />
-              Send for Approval
+              {t.sendForApproval || "Send for Approval"}
             </Button>
           </div>
         </div>
