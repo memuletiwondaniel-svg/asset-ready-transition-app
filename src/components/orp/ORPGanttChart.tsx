@@ -11,6 +11,8 @@ import { ORPDeliverableModal } from './ORPDeliverableModal';
 interface ORPGanttChartProps {
   planId: string;
   deliverables: any[];
+  searchQuery?: string;
+  hideToolbar?: boolean;
 }
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -24,12 +26,16 @@ const ZOOM_LABELS: Record<number, string> = {
   4: '400%',
 };
 
-export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const timelineRef = useRef<HTMLDivElement>(null);
+  
+  // Use external search query if provided, otherwise use internal
+  const searchQuery = externalSearchQuery ?? internalSearchQuery;
+  
   // Filter deliverables based on search query
   const filteredDeliverables = useMemo(() => {
     if (!searchQuery.trim()) return deliverables;
@@ -49,21 +55,23 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Gantt Chart</CardTitle>
-            <div className="flex items-center gap-4">
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search deliverables..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+            {!hideToolbar && (
+              <div className="flex items-center gap-4">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search deliverables..."
+                    value={internalSearchQuery}
+                    onChange={(e) => setInternalSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Button onClick={() => setShowAddItem(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add ORA Item
+                </Button>
               </div>
-              <Button onClick={() => setShowAddItem(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add ORA Item
-              </Button>
-            </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -214,19 +222,23 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               </Button>
             </div>
             
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search deliverables..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Button onClick={() => setShowAddItem(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add ORA Item
-            </Button>
+            {!hideToolbar && (
+              <>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search deliverables..."
+                    value={internalSearchQuery}
+                    onChange={(e) => setInternalSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Button onClick={() => setShowAddItem(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add ORA Item
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </CardHeader>
