@@ -289,14 +289,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 {/* Timeline header - wheel zoom only here */}
                 <div className={cn("sticky top-0 bg-background z-10 border-b", isResizing && "select-none")}>
                   <div className="flex items-center h-10">
-                    <div className="flex-shrink-0 w-10 font-semibold px-2 text-center sticky left-0 bg-background z-20 border-r h-full flex items-center justify-center">
-                      S/N
-                    </div>
                     <div 
-                      className="flex-shrink-0 font-semibold px-4 sticky bg-background z-20 flex items-center justify-between h-full border-r"
-                      style={{ width: activityColumnWidth, left: '40px' }}
+                      className="flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20 flex items-center justify-between h-full border-r"
+                      style={{ width: `calc(40px + ${activityColumnWidth}px)` }}
                     >
-                      <span>Activity</span>
+                      <span className="pl-1">Activity</span>
                       <div
                         className="w-4 h-full flex items-center justify-center cursor-col-resize hover:bg-muted rounded group"
                         onMouseDown={handleResizeStart}
