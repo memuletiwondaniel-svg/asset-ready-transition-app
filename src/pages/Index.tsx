@@ -11,6 +11,7 @@ import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import OrshLogo from "@/components/ui/OrshLogo";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -18,7 +19,7 @@ const Index = () => {
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const { translations: t } = useLanguage();
   
   // Get current section from URL path
   const currentSection = location.pathname === '/' ? null : location.pathname.slice(1);
@@ -48,88 +49,6 @@ const Index = () => {
   const handleBackToLanding = () => {
     navigate('/');
   };
-
-
-  const translations = {
-    en: {
-      title: "Operation Readiness",
-      subtitle: "Start-Up & Handover",
-      description: "Transform your project start-up and handover experience with the ORSH platform.",
-      safeStartup: "PSSR",
-      safeStartupDesc: "Pre-Start Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists",
-      p2oHandover: "P2O Handover",
-      p2oHandoverDesc: "Seamless transition and handover from construction and commissioning to Asset Operation",
-      accessButton: "Access ORSH Platform",
-      enterpriseSecure: "Enterprise Secure",
-      isoCompliant: "ISO Compliant",
-      support24: "24/7 Support"
-    },
-    ar: {
-      title: "جاهزية العمليات",
-      subtitle: "البدء والتسليم",
-      description: "حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH.",
-      safeStartup: "PSSR",
-      safeStartupDesc: "مراجعة السلامة قبل البدء - إدارة الإدخال الآمن للهيدروكربونات في المنشآت الجديدة باستخدام قوائم PSSR",
-      p2oHandover: "تسليم P2O",
-      p2oHandoverDesc: "انتقال وتسليم سلس من البناء والتشغيل إلى تشغيل الأصول",
-      accessButton: "الوصول إلى منصة ORSH",
-      enterpriseSecure: "أمان المؤسسة",
-      isoCompliant: "متوافق مع ISO",
-      support24: "دعم 24/7"
-    },
-    fr: {
-      title: "Préparation Opérationnelle",
-      subtitle: "Démarrage et Remise",
-      description: "Transformez votre expérience de démarrage et de remise de projet avec la plateforme ORSH.",
-      safeStartup: "PSSR",
-      safeStartupDesc: "Revue de Sécurité Pré-Démarrage - Gérer l'introduction sécurisée des hydrocarbures dans de nouvelles installations avec des listes PSSR",
-      p2oHandover: "Remise P2O",
-      p2oHandoverDesc: "Transition et remise transparentes de la construction et de la mise en service à l'exploitation des actifs",
-      accessButton: "Accéder à la Plateforme ORSH",
-      enterpriseSecure: "Sécurité Entreprise",
-      isoCompliant: "Conforme ISO",
-      support24: "Support 24/7"
-    },
-    ms: {
-      title: "Kesediaan Operasi",
-      subtitle: "Permulaan & Penyerahan",
-      description: "Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform ORSH.",
-      safeStartup: "PSSR",
-      safeStartupDesc: "Kajian Keselamatan Pra-Permulaan - Menguruskan pengenalan hidrokarbon yang selamat ke dalam kemudahan baru menggunakan senarai semak PSSR",
-      p2oHandover: "Penyerahan P2O",
-      p2oHandoverDesc: "Peralihan dan penyerahan yang lancar dari pembinaan dan komisioning kepada Operasi Aset",
-      accessButton: "Akses Platform ORSH",
-      enterpriseSecure: "Keselamatan Perusahaan",
-      isoCompliant: "Patuh ISO",
-      support24: "Sokongan 24/7"
-    },
-    ru: {
-      title: "Операционная Готовность",
-      subtitle: "Запуск и Передача",
-      description: "Преобразуйте опыт запуска и передачи проекта с помощью платформы ORSH.",
-      safeStartup: "PSSR",
-      safeStartupDesc: "Предпусковой обзор безопасности - Управление безопасным введением углеводородов в новые объекты с использованием контрольных списков PSSR",
-      p2oHandover: "Передача P2O",
-      p2oHandoverDesc: "Бесшовный переход и передача от строительства и ввода в эксплуатацию к эксплуатации активов",
-      accessButton: "Доступ к Платформе ORSH",
-      enterpriseSecure: "Корпоративная Безопасность",
-      isoCompliant: "Соответствие ISO",
-      support24: "Поддержка 24/7"
-    }
-  };
-
-  const getCurrentTranslation = () => {
-    const langCodeMap: Record<string, string> = {
-      'English': 'en',
-      'العربية': 'ar',
-      'Français': 'fr',
-      'Bahasa Melayu': 'ms',
-      'Қазақша': 'kk'
-    };
-    const langCode = langCodeMap[selectedLanguage] || 'en';
-    return translations[langCode as keyof typeof translations];
-  };
-  const t = getCurrentTranslation();
 
   useEffect(() => {
     if (session && showAuth) {
@@ -207,15 +126,15 @@ const Index = () => {
             <div className="space-y-4 animate-fade-in">
               <h1 className="font-light text-white leading-tight">
                 <span className="block text-5xl md:text-6xl lg:text-7xl font-extralight tracking-tight drop-shadow-2xl">
-                  {t.title}
+                  {t.welcomeTitle}
                 </span>
                 <span className="block text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent mt-2 drop-shadow-xl">
-                  {t.subtitle}
+                  {t.welcomeSubtitle}
                 </span>
               </h1>
               
               <p className="text-xl md:text-2xl text-white/85 font-light leading-relaxed max-w-2xl mx-auto">
-                {t.description}
+                {t.welcomeDescription}
               </p>
             </div>
             
