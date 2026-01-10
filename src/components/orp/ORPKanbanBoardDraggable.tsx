@@ -255,6 +255,36 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
     });
   };
 
+  const getColumnHeaderStyle = (columnId: string) => {
+    switch (columnId) {
+      case 'NOT_STARTED':
+        return 'bg-slate-100/60 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300';
+      case 'IN_PROGRESS':
+        return 'bg-blue-100/60 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
+      case 'COMPLETED':
+        return 'bg-green-100/60 dark:bg-green-900/30 text-green-700 dark:text-green-300';
+      case 'ON_HOLD':
+        return 'bg-amber-100/60 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
+      default:
+        return 'bg-muted';
+    }
+  };
+
+  const getColumnBadgeStyle = (columnId: string) => {
+    switch (columnId) {
+      case 'NOT_STARTED':
+        return 'bg-slate-200/80 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300';
+      case 'IN_PROGRESS':
+        return 'bg-blue-200/80 dark:bg-blue-800/50 text-blue-600 dark:text-blue-300';
+      case 'COMPLETED':
+        return 'bg-green-200/80 dark:bg-green-800/50 text-green-600 dark:text-green-300';
+      case 'ON_HOLD':
+        return 'bg-amber-200/80 dark:bg-amber-800/50 text-amber-600 dark:text-amber-300';
+      default:
+        return '';
+    }
+  };
+
   const DroppableColumn = ({ column, items }: { column: any; items: any[] }) => {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -266,10 +296,10 @@ export const ORPKanbanBoardDraggable: React.FC<ORPKanbanBoardProps> = ({ planId,
           isOver && "ring-2 ring-primary bg-primary/5"
         )}
       >
-        <CardHeader className="pb-3 p-3 md:p-6">
+        <CardHeader className={cn("pb-3 p-3 md:p-6 rounded-t-lg", getColumnHeaderStyle(column.id))}>
           <CardTitle className="text-xs sm:text-sm font-medium flex items-center justify-between">
             <span>{column.label}</span>
-            <Badge variant="secondary" className="ml-2 text-xs">
+            <Badge className={cn("ml-2 text-xs border-0", getColumnBadgeStyle(column.id))}>
               {items.length}
             </Badge>
           </CardTitle>
