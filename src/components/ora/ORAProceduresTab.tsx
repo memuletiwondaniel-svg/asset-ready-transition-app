@@ -180,7 +180,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                 <TableRow className="bg-muted/30">
                   <TableHead className="w-[60px]">S/N</TableHead>
                   <TableHead>Title</TableHead>
-                  <TableHead className="w-[120px]">Document #</TableHead>
+                  <TableHead className="w-[160px]">Document #</TableHead>
                   <TableHead className="w-[150px]">Status</TableHead>
                   <TableHead className="w-[80px]">Version</TableHead>
                   <TableHead className="w-[110px]">Last Updated</TableHead>
