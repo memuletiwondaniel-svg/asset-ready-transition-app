@@ -1,14 +1,15 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, differenceInDays, parseISO, addDays, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, Maximize2, GripVertical } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
 import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
 import { cn } from '@/lib/utils';
+
 interface ORPGanttChartProps {
   planId: string;
   deliverables: any[];
@@ -27,12 +28,44 @@ const ZOOM_LABELS: Record<number, string> = {
   4: '400%',
 };
 
+const MIN_ACTIVITY_WIDTH = 200;
+const MAX_ACTIVITY_WIDTH = 600;
+const DEFAULT_ACTIVITY_WIDTH = 320;
+
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar }) => {
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [activityColumnWidth, setActivityColumnWidth] = useState(DEFAULT_ACTIVITY_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(0);
+
+  // Handle column resize
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = activityColumnWidth;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - resizeStartX.current;
+      const newWidth = Math.min(MAX_ACTIVITY_WIDTH, Math.max(MIN_ACTIVITY_WIDTH, resizeStartWidth.current + delta));
+      setActivityColumnWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [activityColumnWidth]);
   
   // Use external search query if provided, otherwise use internal
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
@@ -254,9 +287,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             >
               <div style={{ minWidth: `${100 * zoomLevel}%` }}>
                 {/* Timeline header - wheel zoom only here */}
-                <div className="sticky top-0 bg-background z-10 border-b pb-2">
+                <div className={cn("sticky top-0 bg-background z-10 border-b pb-2", isResizing && "select-none")}>
                   <div className="flex">
-                    <div className="w-80 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
+                    <div 
+                      className="flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20 flex items-center justify-between"
+                      style={{ width: activityColumnWidth }}
+                    >
+                      <span>Activity</span>
+                      <div
+                        className="w-4 h-full flex items-center justify-center cursor-col-resize hover:bg-muted rounded group"
+                        onMouseDown={handleResizeStart}
+                        title="Drag to resize"
+                      >
+                        <GripVertical className="w-3 h-3 text-muted-foreground group-hover:text-foreground" />
+                      </div>
+                    </div>
                     <div 
                       className={`flex-1 relative h-10 ${zoomCursor}`}
                       onWheel={handleHeaderWheel}
@@ -288,10 +333,13 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                     return (
                       <div 
                         key={deliverable.id} 
-                        className="flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer"
+                        className={cn("flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer", isResizing && "select-none")}
                         onClick={() => setSelectedDeliverable(deliverable)}
                   >
-                        <div className="w-80 flex-shrink-0 px-4 sticky left-0 bg-background z-10">
+                        <div 
+                          className="flex-shrink-0 px-4 sticky left-0 bg-background z-10"
+                          style={{ width: activityColumnWidth }}
+                        >
                           <div className="text-sm font-medium truncate" title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
                           </div>
