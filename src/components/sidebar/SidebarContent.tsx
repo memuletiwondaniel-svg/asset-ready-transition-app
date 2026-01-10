@@ -319,14 +319,20 @@ export const SidebarContent = memo<SidebarContentProps>(({
               <DropdownMenuContent align="start" className="w-48 bg-background z-50">
                 <DropdownMenuLabel>Select Language</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onLanguageChange?.('en')}>
-                  English {language === 'en' && <Check className="ml-auto h-4 w-4" />}
+                <DropdownMenuItem onClick={() => onLanguageChange?.('English')}>
+                  English {language === 'English' && <Check className="ml-auto h-4 w-4" />}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onLanguageChange?.('es')}>
-                  Español {language === 'es' && <Check className="ml-auto h-4 w-4" />}
+                <DropdownMenuItem onClick={() => onLanguageChange?.('العربية')}>
+                  العربية {language === 'العربية' && <Check className="ml-auto h-4 w-4" />}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onLanguageChange?.('fr')}>
-                  Français {language === 'fr' && <Check className="ml-auto h-4 w-4" />}
+                <DropdownMenuItem onClick={() => onLanguageChange?.('Français')}>
+                  Français {language === 'Français' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onLanguageChange?.('Bahasa Melayu')}>
+                  Bahasa Melayu {language === 'Bahasa Melayu' && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onLanguageChange?.('Қазақша')}>
+                  Қазақша {language === 'Қазақша' && <Check className="ml-auto h-4 w-4" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Languages, ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
+import { ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
 import PSSRSummaryPage from "@/components/PSSRSummaryPage";
@@ -50,13 +49,6 @@ const Index = () => {
     navigate('/');
   };
 
-  const languages = [
-    { code: "en", name: "English" },
-    { code: "ar", name: "العربية" },
-    { code: "fr", name: "Français" },
-    { code: "ms", name: "Bahasa Melayu" },
-    { code: "kk", name: "Қазақша" }
-  ];
 
   const translations = {
     en: {
@@ -127,7 +119,14 @@ const Index = () => {
   };
 
   const getCurrentTranslation = () => {
-    const langCode = languages.find(lang => lang.name === selectedLanguage)?.code || 'en';
+    const langCodeMap: Record<string, string> = {
+      'English': 'en',
+      'العربية': 'ar',
+      'Français': 'fr',
+      'Bahasa Melayu': 'ms',
+      'Қазақша': 'kk'
+    };
+    const langCode = langCodeMap[selectedLanguage] || 'en';
     return translations[langCode as keyof typeof translations];
   };
   const t = getCurrentTranslation();
@@ -179,30 +178,8 @@ const Index = () => {
       <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
-            {/* Language Selector - Left */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-white hover:bg-white/10 rounded-xl px-4 py-2 border border-white/20 backdrop-blur-md font-medium shadow-lg"
-                >
-                  <Languages className="h-4 w-4 mr-2" />
-                  <span className="text-sm">{selectedLanguage}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card/95 border border-border/30 shadow-2xl rounded-xl p-1 backdrop-blur-xl min-w-[180px] z-50">
-                {languages.map(language => (
-                  <DropdownMenuItem 
-                    key={language.code} 
-                    onClick={() => setSelectedLanguage(language.name)} 
-                    className="cursor-pointer hover:bg-accent/20 rounded-lg py-2 px-3 text-sm font-medium"
-                  >
-                    {language.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Empty spacer for layout balance */}
+            <div className="w-24" />
             
             {/* ORSH Logo - Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
