@@ -206,30 +206,49 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
             <div>
               <Label>Progress</Label>
               <div className="relative mt-2">
-                {/* Visual progress bar with integrated slider */}
-                <div className="relative h-8 bg-muted rounded-lg overflow-hidden">
-                  {/* Progress fill */}
+                {/* Progress bar with visible draggable slider */}
+                <div className="relative h-8 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden">
+                  {/* Progress fill - emerald to avoid conflict with blue CTA */}
                   <div 
-                    className="absolute inset-y-0 left-0 bg-primary/80 transition-all duration-150"
+                    className="absolute inset-y-0 left-0 bg-emerald-500 dark:bg-emerald-400 transition-all duration-150 pointer-events-none"
                     style={{ width: `${progress}%` }}
                   />
-                  {/* Slider overlay - invisible but functional */}
+                  {/* Visible styled range slider */}
                   <input
                     type="range"
                     min="0"
                     max="100"
                     value={progress}
                     onChange={(e) => setProgress(parseInt(e.target.value))}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    className="absolute inset-0 w-full h-full cursor-pointer appearance-none bg-transparent
+                      [&::-webkit-slider-thumb]:appearance-none
+                      [&::-webkit-slider-thumb]:w-4
+                      [&::-webkit-slider-thumb]:h-8
+                      [&::-webkit-slider-thumb]:bg-white
+                      [&::-webkit-slider-thumb]:border-2
+                      [&::-webkit-slider-thumb]:border-slate-400
+                      [&::-webkit-slider-thumb]:rounded
+                      [&::-webkit-slider-thumb]:shadow-md
+                      [&::-webkit-slider-thumb]:cursor-grab
+                      [&::-webkit-slider-thumb]:active:cursor-grabbing
+                      [&::-moz-range-thumb]:w-4
+                      [&::-moz-range-thumb]:h-8
+                      [&::-moz-range-thumb]:bg-white
+                      [&::-moz-range-thumb]:border-2
+                      [&::-moz-range-thumb]:border-slate-400
+                      [&::-moz-range-thumb]:rounded
+                      [&::-moz-range-thumb]:shadow-md
+                      [&::-moz-range-thumb]:cursor-grab
+                      [&::-webkit-slider-runnable-track]:bg-transparent
+                      [&::-moz-range-track]:bg-transparent"
                   />
                   {/* Percentage label */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-medium text-foreground drop-shadow-sm">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-sm font-medium text-white drop-shadow-md">
                       {progress}%
                     </span>
                   </div>
                 </div>
-                {/* Drag hint */}
                 <p className="text-xs text-muted-foreground mt-1">Click or drag to adjust progress</p>
               </div>
             </div>
