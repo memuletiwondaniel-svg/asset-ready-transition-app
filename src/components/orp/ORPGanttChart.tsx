@@ -84,18 +84,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     return { left: `${left}%`, width: `${width}%` };
   };
 
-  const getStatusDotColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-600';
-      case 'IN_PROGRESS':
-        return 'bg-blue-500';
-      case 'ON_HOLD':
-        return 'bg-amber-500';
-      default:
-        return 'bg-slate-400';
-    }
-  };
 
   // Generate month markers
   const monthMarkers: Date[] = [];
@@ -181,14 +169,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                     </div>
 
                     <div className="flex-1 relative h-10 px-2">
-                      {/* Status indicator dot */}
-                      <div
-                        className={`absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${getStatusDotColor(deliverable.status)} z-10`}
-                        style={{ left: `calc(${position.left} - 12px)` }}
-                      />
                       {/* Progress bar */}
                       <div
-                        className="absolute h-6 rounded bg-slate-600 overflow-hidden hover:shadow-md transition-all cursor-pointer group-hover:scale-y-110"
+                        className="absolute h-6 rounded bg-slate-300 dark:bg-slate-500 overflow-hidden hover:shadow-md transition-all cursor-pointer group-hover:scale-y-110"
                         style={position}
                       >
                         {/* Green progress fill */}
@@ -227,35 +210,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap gap-6 pt-4 border-t">
-            {/* Progress indicator */}
-            <div className="flex items-center gap-2">
-              <div className="w-12 h-4 bg-slate-600 rounded overflow-hidden">
-                <div className="w-1/2 h-full bg-green-500" />
-              </div>
-              <span className="text-xs text-muted-foreground">Progress</span>
+          <div className="flex items-center gap-3 pt-4 border-t">
+            <div className="w-16 h-4 bg-slate-300 dark:bg-slate-500 rounded overflow-hidden">
+              <div className="w-1/2 h-full bg-green-500" />
             </div>
-            
-            {/* Status indicators */}
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-muted-foreground font-medium">Status:</span>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-slate-400 rounded-full" />
-                <span className="text-xs">Not Started</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                <span className="text-xs">In Progress</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-600 rounded-full" />
-                <span className="text-xs">Completed</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                <span className="text-xs">On Hold</span>
-              </div>
-            </div>
+            <span className="text-xs text-muted-foreground">Progress (completed / remaining)</span>
           </div>
         </div>
       </CardContent>
