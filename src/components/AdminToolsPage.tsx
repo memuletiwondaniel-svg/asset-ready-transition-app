@@ -15,7 +15,7 @@ import { ORAConfigurationManagement } from "./ora/ORAConfigurationManagement";
 import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
-import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { OrshSidebar } from './OrshSidebar';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
@@ -552,8 +552,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     </div>;
 };
 const AdminToolsPage: React.FC<AdminToolsPageProps> = props => {
-  return <LanguageProvider>
-      <AdminToolsPageContent {...props} />
-    </LanguageProvider>;
+  return <AdminToolsPageContent {...props} />;
 };
 export default AdminToolsPage;

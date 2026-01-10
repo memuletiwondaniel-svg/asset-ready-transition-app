@@ -16,7 +16,7 @@ import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { ORSHChatDialog } from '@/components/widgets/ORSHChatDialog';
-import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useToast } from '@/components/ui/use-toast';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -764,11 +764,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 };
 
 const LandingPage: React.FC<LandingPageProps> = props => {
-  return (
-    <LanguageProvider>
-      <LandingPageContent {...props} />
-    </LanguageProvider>
-  );
+  return <LandingPageContent {...props} />;
 };
 
 export default LandingPage;
