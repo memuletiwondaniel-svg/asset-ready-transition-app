@@ -81,7 +81,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
       'approved': { label: 'Approved for Use', className: 'bg-green-50 text-green-600 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' },
     };
     const config = statusConfig[status];
-    return <Badge variant="outline" className={config.className}>{config.label}</Badge>;
+    return <Badge variant="outline" className={`${config.className} whitespace-nowrap text-xs`}>{config.label}</Badge>;
   };
 
   const filteredProcedures = mockProcedures.filter(proc => {
@@ -133,7 +133,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                 <TableRow className="bg-muted/30">
                   <TableHead className="w-[120px]">Procedure #</TableHead>
                   <TableHead>Title</TableHead>
-                  <TableHead className="w-[140px]">Status</TableHead>
+                  <TableHead className="w-[150px]">Status</TableHead>
                   <TableHead className="w-[80px]">Version</TableHead>
                   <TableHead className="w-[140px]">Owner</TableHead>
                   <TableHead className="w-[110px]">Last Updated</TableHead>
