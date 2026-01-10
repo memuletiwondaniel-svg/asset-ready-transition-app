@@ -221,7 +221,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
               <div>
                 <Label>Status</Label>
                 <Select value={status} onValueChange={(value) => setStatus(value as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD')}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-border hover:border-primary/50 transition-colors">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -237,12 +237,13 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
                   <Clock className="w-4 h-4" />
                   Estimated Hours
                 </Label>
-                <Input
-                  type="number"
-                  value={estimatedManhours}
-                  onChange={(e) => setEstimatedManhours(e.target.value)}
-                  placeholder="Enter hours..."
-                />
+            <Input
+              type="number"
+              value={estimatedManhours}
+              onChange={(e) => setEstimatedManhours(e.target.value)}
+              placeholder="Enter hours..."
+              className="border-border hover:border-primary/50 transition-colors"
+            />
               </div>
             </div>
 
@@ -298,13 +299,13 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
 
             <div>
               <Label>Comments & Notes</Label>
-              <Textarea
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                rows={4}
-                placeholder="Add comments, notes, or updates..."
-                className="mt-2"
-              />
+            <Textarea
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              rows={4}
+              placeholder="Add comments, notes, or updates..."
+              className="mt-2 border-border hover:border-primary/50 transition-colors"
+            />
             </div>
 
             
@@ -321,6 +322,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
                   type="date" 
                   value={startDate} 
                   onChange={(e) => setStartDate(e.target.value)}
+                  className="border-border hover:border-primary/50 transition-colors"
                 />
               </div>
               <div>
@@ -332,6 +334,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
                   type="date" 
                   value={endDate} 
                   onChange={(e) => setEndDate(e.target.value)}
+                  className="border-border hover:border-primary/50 transition-colors"
                 />
               </div>
             </div>
@@ -346,7 +349,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
                 value={estimatedManhours}
                 onChange={(e) => setEstimatedManhours(e.target.value)}
                 placeholder="Enter estimated hours..."
-                className="mt-2"
+                className="mt-2 border-border hover:border-primary/50 transition-colors"
               />
             </div>
 
