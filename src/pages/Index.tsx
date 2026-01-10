@@ -55,7 +55,7 @@ const Index = () => {
     { code: "ar", name: "العربية" },
     { code: "fr", name: "Français" },
     { code: "ms", name: "Bahasa Melayu" },
-    { code: "ru", name: "Русский" }
+    { code: "kk", name: "Қазақша" }
   ];
 
   const translations = {
