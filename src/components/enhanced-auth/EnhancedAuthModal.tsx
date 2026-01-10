@@ -110,7 +110,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     setLoading(false);
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden" aria-describedby="enhanced-auth-description">
+      <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden [&>button]:hidden" aria-describedby="enhanced-auth-description">
         <DialogHeader className="sr-only">
           <DialogTitle>Authentication</DialogTitle>
           <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
@@ -119,15 +119,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         {/* ORSH Background Slideshow */}
         <BackgroundSlideshow showFunFacts={false} />
         
-        <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10">
+        {/* Clickable backdrop to close modal */}
+        <div 
+          className="absolute inset-0 z-[5]" 
+          onClick={onClose}
+          aria-hidden="true"
+        />
+        
+        <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
           
-          <div className="w-full max-w-xs relative z-10">
+          <div className="w-full max-w-xs relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             {/* Modern Fluent Design Card */}
             <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-5 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
-              {/* Close Button */}
-              <Button onClick={onClose} variant="ghost" size="sm" className="absolute top-3 right-3 z-20 w-7 h-7 p-0 hover:bg-muted/20 text-muted-foreground hover:text-foreground transition-colors duration-200">
-                <X className="h-3.5 w-3.5" />
-              </Button>
               
               {/* Fluent Design Acrylic Effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-2xl"></div>
