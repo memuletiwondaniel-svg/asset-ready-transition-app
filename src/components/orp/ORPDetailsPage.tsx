@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck, CheckCircle, Search, Plus, FileText } from 'lucide-react';
+import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck, CheckCircle, Search, Plus, FileText, FolderOpen } from 'lucide-react';
 import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
@@ -20,6 +20,7 @@ import { ORATrainingPlanTab } from '@/components/ora/ORATrainingPlanTab';
 import { ORAMaintenanceReadinessTab } from '@/components/ora/ORAMaintenanceReadinessTab';
 import { ORAHandoverTab } from '@/components/ora/ORAHandoverTab';
 import { ORAProceduresTab } from '@/components/ora/ORAProceduresTab';
+import { ORADocumentationTab } from '@/components/ora/ORADocumentationTab';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import {
   DropdownMenu,
@@ -189,6 +190,10 @@ export const ORPDetailsPage: React.FC = () => {
                 <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
                 Training
               </TabsTrigger>
+              <TabsTrigger value="documentation" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
+                <FolderOpen className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-rose-500" />
+                Documentation
+              </TabsTrigger>
               <TabsTrigger value="procedures" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <FileText className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-purple-500" />
                 Procedures
@@ -307,6 +312,10 @@ export const ORPDetailsPage: React.FC = () => {
 
           <TabsContent value="training" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
             <ORATrainingPlanTab oraPlanId={plan.id} />
+          </TabsContent>
+
+          <TabsContent value="documentation" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
+            <ORADocumentationTab oraPlanId={plan.id} />
           </TabsContent>
 
           <TabsContent value="procedures" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
