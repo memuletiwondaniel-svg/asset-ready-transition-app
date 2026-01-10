@@ -22,6 +22,7 @@ import { ORAHandoverTab } from '@/components/ora/ORAHandoverTab';
 import { ORAProceduresTab } from '@/components/ora/ORAProceduresTab';
 import { ORADocumentationTab } from '@/components/ora/ORADocumentationTab';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,7 @@ import {
 export const ORPDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { translations: t } = useLanguage();
   const [activeTab, setActiveTab] = useState('activity-plan');
   const [activityView, setActivityView] = useState<'gantt' | 'kanban'>('gantt');
   const [showComparison, setShowComparison] = useState(false);
@@ -58,6 +60,15 @@ export const ORPDetailsPage: React.FC = () => {
   const sortedProjectPlans = [...projectPlans].sort(
     (a, b) => (phaseOrder[b.phase] || 0) - (phaseOrder[a.phase] || 0)
   );
+
+  const getPhaseLabel = (phase: string) => {
+    switch (phase) {
+      case 'ASSESS_SELECT': return t.assessAndSelect;
+      case 'DEFINE': return t.phaseDefine;
+      case 'EXECUTE': return t.phaseExecute;
+      default: return phase;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -88,20 +99,11 @@ export const ORPDetailsPage: React.FC = () => {
           }
         }} onLogout={() => navigate('/')} />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">ORA Plan not found</p>
+          <p className="text-muted-foreground">{t.oraPlanNotFound}</p>
         </div>
       </div>
     );
   }
-
-  const getPhaseLabel = (phase: string) => {
-    switch (phase) {
-      case 'ASSESS_SELECT': return 'Assess & Select';
-      case 'DEFINE': return 'Define';
-      case 'EXECUTE': return 'Execute';
-      default: return phase;
-    }
-  };
 
   return (
     <div className="h-screen flex w-full overflow-hidden">
@@ -124,10 +126,10 @@ export const ORPDetailsPage: React.FC = () => {
         <div className="border-b border-border bg-card px-6 py-4">
           {/* Breadcrumb Navigation */}
           <BreadcrumbNavigation 
-            currentPageLabel={`${plan.project?.project_id_prefix} ${plan.project?.project_id_number}` || 'ORA Plan'}
+            currentPageLabel={`${plan.project?.project_id_prefix} ${plan.project?.project_id_number}` || t.oraPlan}
             customBreadcrumbs={[
-              { label: 'Home', path: '/', onClick: () => navigate('/') },
-              { label: 'ORA Plans', path: '/operation-readiness', onClick: () => navigate('/operation-readiness') }
+              { label: t.home, path: '/', onClick: () => navigate('/') },
+              { label: t.oraPlansTitle, path: '/operation-readiness', onClick: () => navigate('/operation-readiness') }
             ]}
             className="mb-3"
           />
@@ -163,7 +165,7 @@ export const ORPDetailsPage: React.FC = () => {
                           <div className="flex items-center gap-2">
                             {p.id !== plan.id && <History className="w-3 h-3 text-muted-foreground" />}
                             <span>{getPhaseLabel(p.phase)}</span>
-                            {p.id === plan.id && <Badge variant="secondary" className="ml-2 text-xs">Current</Badge>}
+                            {p.id === plan.id && <Badge variant="secondary" className="ml-2 text-xs">{t.currentPhase}</Badge>}
                           </div>
                         </DropdownMenuItem>
                       ))}
@@ -184,31 +186,31 @@ export const ORPDetailsPage: React.FC = () => {
             <TabsList className="flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="activity-plan" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <CalendarCheck className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-blue-500" />
-                Activity Plan
+                {t.activityPlan}
               </TabsTrigger>
               <TabsTrigger value="training" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <GraduationCap className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-500" />
-                Training
+                {t.training}
               </TabsTrigger>
               <TabsTrigger value="documentation" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <FolderOpen className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-rose-500" />
-                Documentation
+                {t.documentation}
               </TabsTrigger>
               <TabsTrigger value="procedures" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <FileText className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-purple-500" />
-                Procedures
+                {t.procedures}
               </TabsTrigger>
               <TabsTrigger value="maintenance" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <Wrench className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-orange-500" />
-                OR Maintenance
+                {t.orMaintenance}
               </TabsTrigger>
               <TabsTrigger value="handover" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <ArrowLeftRight className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-cyan-500" />
-                Handover
+                {t.handover}
               </TabsTrigger>
               <TabsTrigger value="approvals" className="gap-2 data-[state=active]:bg-muted data-[state=active]:shadow-sm group">
                 <CheckCircle className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-green-500" />
-                Approvals
+                {t.approvals}
               </TabsTrigger>
             </TabsList>
             
@@ -217,7 +219,7 @@ export const ORPDetailsPage: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Download className="w-4 h-4" />
-                  Export
+                  {t.export}
                   <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -227,7 +229,7 @@ export const ORPDetailsPage: React.FC = () => {
                   if (exportBtn) exportBtn.click();
                 }}>
                   <Download className="w-4 h-4 mr-2" />
-                  Export ORA Plan (PDF)
+                  {t.exportOraPlan}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -245,7 +247,7 @@ export const ORPDetailsPage: React.FC = () => {
               <div className="relative flex-1 max-w-lg">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search deliverables..."
+                  placeholder={t.searchDeliverables}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -264,7 +266,7 @@ export const ORPDetailsPage: React.FC = () => {
                   className="gap-2"
                 >
                   <GanttChart className="w-4 h-4" />
-                  Gantt
+                  {t.gantt}
                 </Button>
                 <Button
                   variant={activityView === 'kanban' ? 'secondary' : 'ghost'}
@@ -273,14 +275,14 @@ export const ORPDetailsPage: React.FC = () => {
                   className="gap-2"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                  Kanban
+                  {t.kanban}
                 </Button>
               </div>
               
               {/* Add Item - right-most */}
               <Button onClick={() => setShowAddItem(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Item
+                {t.addItem}
               </Button>
             </div>
             
