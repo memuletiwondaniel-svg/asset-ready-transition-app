@@ -244,12 +244,18 @@ export const useORPPlans = () => {
       status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'; 
       progress?: number; 
       comments?: string;
+      start_date?: string;
+      end_date?: string;
+      estimated_manhours?: number;
       id?: string;
     }) => {
       const updateData: any = {};
       if (data.status) updateData.status = data.status;
       if (data.progress !== undefined) updateData.completion_percentage = data.progress;
-      if (data.comments) updateData.comments = data.comments;
+      if (data.comments !== undefined) updateData.comments = data.comments;
+      if (data.start_date !== undefined) updateData.start_date = data.start_date || null;
+      if (data.end_date !== undefined) updateData.end_date = data.end_date || null;
+      if (data.estimated_manhours !== undefined) updateData.estimated_manhours = data.estimated_manhours || null;
 
       const { error } = await supabase
         .from('orp_plan_deliverables')
@@ -260,6 +266,7 @@ export const useORPPlans = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
       toast({ title: 'Success', description: 'Deliverable updated' });
     },
     onError: (error: Error) => {
