@@ -172,32 +172,38 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
               </Badge>
             </div>
             
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete "{deliverable?.deliverable?.name}"? 
-                    This will also remove all associated dependencies, collaborators, and attachments. 
-                    This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex items-center gap-2">
+              <Button onClick={handleSave} size="sm">
+                Save Changes
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{deliverable?.deliverable?.name}"? 
+                      This will also remove all associated dependencies, collaborators, and attachments. 
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
@@ -301,7 +307,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
               />
             </div>
 
-            <Button onClick={handleSave} className="w-full">Save Changes</Button>
+            
           </TabsContent>
 
           <TabsContent value="schedule" className="space-y-4 mt-4 flex-1 overflow-y-auto">
@@ -352,7 +358,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
               </div>
             )}
 
-            <Button onClick={handleSave} className="w-full">Save Schedule</Button>
+            
           </TabsContent>
 
           <TabsContent value="dependencies" className="space-y-6 mt-4 flex-1 overflow-y-auto">
