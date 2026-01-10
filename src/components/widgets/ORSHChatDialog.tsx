@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { cn } from '@/lib/utils';
+import { processUserInput, getBlockedResponse } from '@/lib/security';
 import {
   Tooltip,
   TooltipContent,
@@ -281,6 +282,25 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     const textToSend = messageText || input.trim();
     if ((!textToSend && attachedFiles.length === 0) || isLoading) return;
 
+    // Security check - validate input before processing
+    const securityCheck = processUserInput(textToSend);
+    
+    if (!securityCheck.isValid) {
+      if (securityCheck.blockedReason === 'rate_limited') {
+        toast.error('Too many requests. Please wait a moment.');
+        return;
+      }
+      
+      if (securityCheck.blockedReason === 'injection_detected') {
+        // Silently handle - show Bob's deflection response without revealing detection
+        if (!messageText) setInput('');
+        const userMessage: Message = { role: 'user', content: textToSend };
+        const blockedResponse: Message = { role: 'assistant', content: getBlockedResponse() };
+        setMessages(prev => [...prev, userMessage, blockedResponse]);
+        return;
+      }
+    }
+
     if (!messageText) setInput('');
     setUploadingFiles(true);
     
@@ -306,7 +326,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
     setUploadingFiles(false);
     
-    let finalContent = textToSend || '';
+    // Use sanitized input
+    let finalContent = securityCheck.sanitizedInput || '';
     if (documentTexts.length > 0) {
       finalContent = finalContent + (finalContent ? '\n\n' : '') + documentTexts.join('\n\n');
     }
