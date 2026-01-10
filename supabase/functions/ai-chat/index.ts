@@ -660,7 +660,305 @@ You can discuss intelligently:
 - React/TypeScript development patterns
 - Supabase and PostgreSQL
 
-When users ask technical questions about ORSH implementation, you can explain the architecture, suggest improvements, and troubleshoot issues with the same depth as the developers who built it.`;
+When users ask technical questions about ORSH implementation, you can explain the architecture, suggest improvements, and troubleshoot issues with the same depth as the developers who built it.
+
+=== OR/CSU TECHNICAL COMPETENCY FRAMEWORK ===
+
+This is the complete Job Competency Profile (JCP) framework for Operations Readiness & Commissioning, Start-Up (OR/CSU) roles:
+
+ROLE HIERARCHY & JOB TITLES:
+- ORCSU TA2 (Technical Authority Level 2) - JG1-3
+- OR Manager/Lead - JG1-3  
+- Front-End OR Engineer - JG1-3
+- CSU Manager/Lead - JG A-2
+- CSU Superintendent/Supervisor - JG1-4
+- CSU Engineer/Technicians - JG4-6
+- MRF Coordinator - JG3-4
+- Start-up Manager - JG1-3
+- OR Engineer/Lead Ops - JG1-4
+- OR Engineer/Lead MRTA - JG1-4
+- OPEX Estimator - JG3-4
+- Reliability Modeler - JG3-4
+
+COMPETENCY LEVELS:
+- K = Knowledge level (foundational understanding)
+- S = Skill level (demonstrated capability)
+- A/K/S/M/D = HSSE proficiency levels (Awareness/Knowledge/Skill/Mastery/Developer)
+
+COMPETENCY GAP INDICATORS:
+- Red: Gap is two levels below required
+- Orange: Gap is one level below required
+- Green: No gap (meets requirement)
+- Light Blue: Proficiency one level higher than required
+- Dark Blue: Proficiency two levels higher than required
+
+TO ACHIEVE COMPETENCY LEVEL:
+- Need 75% of requirements at target level PLUS 90% of requirements at previous level
+- TA-3: JG4 meeting JCP + at least 2 S levels in prime responsibility area, OR JG3 meeting all JCP criteria
+- TA-2: JG3 meeting JCP + all HSSE criteria, OR JG2 meeting JCP + all HSSE criteria
+
+=== CORE COMPETENCY AREAS ===
+
+**1. MANAGE OPERATIONS READINESS (OR)**
+Operations Readiness Management (ORM) ensures an experienced and competent OR Organisation that delivers credible OR planning and effective execution. It maintains line of sight of all OR stakeholders and manages the interface between OR, Project, and Asset.
+
+Knowledge Requirements:
+- Describe different OR&CSU organisations for different project set-ups and phases
+- Describe OR planning tools (OR Management Plan, Discipline Delivery Plan), including risk management
+- Describe main OR stakeholders, roles, and responsibilities
+- Describe OR assurance tools (internal & external)
+- Describe Learning from Experience process to capture OR lessons learned
+
+Skill Requirements:
+- Demonstrate how to set-up and manage OR teams for different project phases
+- Demonstrate authentic coaching and mentoring of HSSE behaviors
+- Demonstrate credible OR planning implementation (ORMP, DDP, risk management)
+- Demonstrate how OR Assurance is planned and implemented
+- Demonstrate influence of internal & external stakeholders to achieve OR outcomes
+
+Key OR Planning Tools:
+- DDP (Discipline Delivery Plan): Structured template listing all OR&CSU activities by phase, including descriptions, expected outcomes, estimated hours/costs, and delivery responsibilities
+- ORMP (OR Management Plan): Developed for each phase, outlines OR&CSU risks, status of prior phase activities, organisation structure, CTR-based activity plans, and assurance requirements
+- PCAP (Project Controls Assurance Plan): Lists selected DCAF control points and assigned Technical Authorities
+- OAP (Opportunity Assurance Plan): Captures mandatory assurance events per phase, including VARs, PERs, ITRs, PSUA, PSUR
+
+OR Stakeholders:
+- PM/FEDM: Ensure ORCSU requirements are embedded in project scope and contracts
+- Asset Manager: Future asset owner, focuses on aligning operational requirements within design
+- ORCSU Manager: Coordinates and integrates all OR&CSU activities
+
+Assurance Tools:
+Internal:
+- Self-Assurance Reviews (SARs): Internal health checks against DDP and ORMP
+- Pre-Start-up Reviews (PSUR): LOD1 review to confirm readiness before PSUA
+- Integrated Technical Reviews (ITRs): Validate technical integrity during FEED and Detailed Design
+
+External:
+- Operation Readiness Reviews (ORR): Independent LOD1 discipline assurance event
+- Pre-Start-Up Audit (PSUA): Independent LOD2 Business Assurance event, 6 weeks before RFSU
+
+**2. DELIVER FRONT END OPERATIONS (FEO)**
+Front End Operations (FEO) drives Operations influence throughout FEO studies and ensures Operations and Maintenance-related functional requirements are captured in the project scope. It covers:
+- TECOP opportunity and risk identification
+- Operations and Maintenance philosophy development
+- Optimized scope definition (equipment selection, layout)
+- Process Safety inputs and operability influence
+- Production promise and OPEX estimation
+
+Knowledge Requirements:
+- Describe OR involvement in TECOP risk/opportunity identification
+- Describe development of Operations and Maintenance philosophies
+- Describe key OR inputs to Preliminary and Concept Engineering deliverables
+- Describe use of decision analysis to evaluate scenarios (RAM modeling, OPEX)
+- Describe CSU influence on studies and BDEP
+
+Skill Requirements:
+- Demonstrate TECOP risk identification & opportunity framing
+- Demonstrate facilitation of Operations and Maintenance philosophies
+- Develop requirements and inputs to engineering deliverables (PES, BfD, BDEP)
+- Demonstrate use of decision analysis to evaluate scenarios
+- Demonstrate CSU influence during FEO
+
+Key FEO Deliverables:
+- Operations & Maintenance Philosophy
+- Initial Operations Assessment (IOA)
+- Workflow schemes and operational concepts
+- PES (Project Execution Strategy) inputs
+- BfD (Basis for Design) contributions
+- BDEP (Basic Design Engineering Package) review
+- RAM (Reliability, Availability, Maintainability) modeling
+- OPEX estimation and benchmarking
+
+**3. MANAGE COMMISSIONING, STARTUP & HANDOVER (CSU)**
+CSU Management ensures delivery of CSU plans, effective execution, and smooth Asset transition through:
+- CSU organisation establishment and competence management
+- CSU philosophy and planning development
+- CSU scope definition and integration with OR and AOR
+- Start-up and ramp-up planning
+- P2A (Project to Asset) handover delivery
+
+Knowledge Requirements:
+- Describe CSU organisation for different project complexities and phases
+- Explain how to manage CSU team competences
+- Describe development of integrated CSU planning (CSUP, CHOP, schedule)
+- Describe best practices/learnings for CSU
+- Explain requirements for spares, chemicals, first fills, SCM
+
+Skill Requirements:
+- Demonstrate set-up and management of CSU organisation
+- Implement effective communication and interface management
+- Demonstrate CSU planning with integration into project schedule
+- Explain and implement process for managing interfaces with Construction, Asset Owner
+- Deliver CSU and Handover Assurance plan
+
+**4. EXECUTE COMMISSIONING, STARTUP & HANDOVER (CSU)**
+Supports seamless transition from Execute phase to Operate phase through:
+- Execute completions
+- Execute pre-commissioning and commissioning
+- Execute start-up
+- Execute P2A
+
+Knowledge Requirements:
+- Describe completions process (CMS, ITP, ITR, punch listing, system dossiers)
+- Describe core CSU execution activities (cleaning, testing, inerting)
+- Describe HSE in Transition controls and assurance activities
+- Describe Start-up & Ramp-Up activities
+- Describe P2A handover process
+
+Skill Requirements:
+- Demonstrate set-up and roll-out of completions process
+- Develop pre-commissioning and commissioning procedures with HEMP
+- Implement effective HSE in Transition controls (SIMOPS management)
+- Implement effective P2A Transition handover process (VCR tracking)
+- Plan and lead Start-up & Ramp Up activities
+
+**5. DELIVER ASSET OWNER READINESS (AOR)**
+Delivers a ready and fully engaged Asset at start-up through:
+- Defining Operations and Maintenance Philosophies and functional requirements
+- Setting up competent and capable Asset organisation
+- Planning and executing operations, maintenance, and supply chain readiness
+
+Knowledge Requirements:
+- Explain O&M Philosophy influence on Asset performance
+- Explain organizational capability development (resourcing, competence, assurance)
+- Explain Equipment Care strategies and Asset Care Plan
+- Explain CMMS build requirements
+- Explain Initial Set Up (ISU) for ESP, EQP, PHEA processes
+
+Skill Requirements:
+- Deliver O&M Philosophy and operations functional requirements
+- Deliver organizational development activities
+- Deliver CMMS including CIMS
+- Deliver Asset Supply chain readiness (contracts, spare parts)
+- Implement Safety Case to achieve ALARP
+
+**6. CONTRIBUTE TO MANAGEMENT OF REPEATED FAILURES (MRF)**
+Formerly "Flawless Project Delivery" - supports successful OR&CSU delivery through risk mitigation for right-first-time start-up:
+
+Knowledge Requirements:
+- Describe MRF key concepts and link to PMF
+- Describe main stakeholders in implementing MRF
+- Describe Key Risk Areas for MRF
+- Describe where data on previous Flaws can be obtained
+- Describe how to mitigate key Flaws within Risk Areas
+
+Skill Requirements:
+- Explain MRF organization in Select and Define phases
+- Explain Contractor involvement in MRF
+- Demonstrate how to compile project-specific Risk Areas and Flaw list
+- Explain Novelty management on a project
+- Demonstrate how Flaws are captured centrally (SQI, CSI process)
+
+**7. PROJECT MANAGEMENT FOUNDATION (PMF)**
+Key project management competencies for OR&CSU practitioners:
+
+Knowledge Requirements:
+- Describe Project Standard ORS, PMF, and PS5
+- Describe DCAF and Technical Authorities
+- Describe Process Hazard Analysis (PHA) and HEMP
+- Describe 16 Global Project Function Job Competencies
+
+The 16 PMF Competencies:
+1. Provide Leadership in HSSE
+2. Manage HSSE Risk
+3. Manage Quality
+4. Deliver Commercial Value
+5. Manage Project Risks
+6. Drive Project Performance
+7. Deliver Engineering in Front End
+8. Manage Detailed Design
+9. Manage Fabrication & Construction
+10. Select & optimize Capital Efficient Project Concepts
+11. Manage Schedule & Resources
+12. Control the Baseline
+13. Tender & Award Contracts
+14. Implement Procurement, Material Management & Logistics
+15. Hand Over & Close Out
+16. Deliver Successful SU & Operations
+
+Skill Requirements:
+- Skill level in at least 8 out of 16 competencies
+- Explain PMF key concepts including "Intent based approach"
+- Demonstrate use of PMF IPMS tool
+- Explain Systems Engineering and Polarion Tool requirements management
+
+**8. PRODUCTION OPERATIONS FOUNDATION**
+Key competencies from Global Production Operations Competency Framework:
+
+Knowledge/Skill in at least 7 of 10:
+1. Apply Technical Knowledge in Decision Making
+2. Deliver Results through Work Processes
+3. Ensure Safe Production
+4. Implement Effective PtW & Isolation Systems
+5. Manage Threats & Opportunities
+6. Management of Change (MoC)
+7. Optimise Profitability
+8-10. Additional specialty competencies
+
+Note: ESP, PTW & Isolation Systems are mandatory for "OR Engineer Operations" Role
+
+**9. MRTA (Maintenance, Reliability, Turnaround) FOUNDATION**
+Key MRTA competencies for OR&CSU roles:
+
+Knowledge/Skill in at least 7 of 10:
+1. Process Safety
+2. Supply Chain Management
+3. Management of Change
+4. Asset Reliability Strategy and Improvement
+5. Manage Threats & Opportunities (MTO)
+6. Manage Equipment Care (MEC)
+7. Turnaround Strategy and Organisation
+8. Planning
+9. Execution
+10. CMMS Foundational Data
+
+Note: MEC and CMMS Foundational Data are mandatory for "OR Engineer/Lead MRTA" Role
+
+**10. HSSE QUALIFICATIONS**
+Required HSSE proficiency for TA nomination:
+- HSSE Lead proficiency
+- HSSE Prepare proficiency  
+- HSSE Apply proficiency
+
+=== ORCSU RESOURCING BY PROJECT TYPE ===
+
+**Type A - Incremental Brownfield Projects:**
+- OR&CSU roles embedded within existing asset teams
+- Suitable for small scope, low complexity projects
+
+**Type B - Greenfield Projects with Tie-ins:**
+- Requires dedicated OR&CSU team supported by central functions
+- Typical for platforms tied into existing assets
+
+**Type C - Fully Greenfield Projects:**
+- Demands new asset organisation and fully dedicated OR&CSU team
+- Required for major standalone facilities
+
+=== ORCSU RESOURCING BY PROJECT PHASE ===
+
+**ASSESS Phase:**
+- Typically one OR&CSU resource (part-time)
+- Focus: Initial Ops Assessment, O&M Philosophy, Production Promise
+
+**SELECT Phase:**
+- Part-time OR&CSU Lead with targeted SMEs
+- Focus: CSU philosophies, RAM/OPEX studies, logistics reports
+
+**DEFINE Phase:**
+- Full-time OR&CSU Manager with mobilized SMEs
+- Focus: WEFS, OMARs, RAM/OPEX studies, HAZOPs, CSU planning
+
+**EXECUTE Phase:**
+- Split teams: OR team (OTA), CSU team (CSU Lead), Operations team (Senior Ops Engineer)
+- CSU: systemization, completions, FATs, SATs, SITs, leak testing
+- OR: Asset Owner Readiness, competence development, P2A handover
+
+=== LEARNING FROM EXPERIENCE (LFE) PROCESS ===
+
+1. Capture learnings early and continuously (especially during phase transitions)
+2. Use structured methods: PW (Post-Work), ROCK, AAR (After Action Review), Causal Learning
+3. Store and share via LFE database and OR&CSU CoP
+4. Flag high-value learnings for global replication`;
 
 // Tool definitions for database queries
 const tools = [
