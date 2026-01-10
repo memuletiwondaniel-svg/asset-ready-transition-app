@@ -14,6 +14,9 @@ import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { ORPAttachmentsPanel } from './ORPAttachmentsPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
+import { cn } from '@/lib/utils';
 
 interface ORPDeliverableModalProps {
   open: boolean;
@@ -30,7 +33,7 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
   allDeliverables,
   planId
 }) => {
-  const { updateDeliverable, addCollaborator, removeCollaborator, addDependency, removeDependency } = useORPPlans();
+  const { updateDeliverable, addCollaborator, removeCollaborator, addDependency, removeDependency, deleteDeliverable } = useORPPlans();
   const { data: users } = useProfileUsers();
   const queryClient = useQueryClient();
   
@@ -152,15 +155,49 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
     ) || [];
   }, [allDeliverables, deliverable, successors]);
 
+  const handleDelete = () => {
+    deleteDeliverable(deliverable.id);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span>{deliverable?.deliverable?.name}</span>
-            <Badge variant="outline" className="ml-2">
-              {status.replace('_', ' ')}
-            </Badge>
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span>{deliverable?.deliverable?.name}</span>
+              <Badge variant="outline" className={cn("ml-2 text-xs", getStatusBadgeClasses(status))}>
+                {getStatusLabel(status)}
+              </Badge>
+            </div>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{deliverable?.deliverable?.name}"? 
+                    This will also remove all associated dependencies, collaborators, and attachments. 
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DialogTitle>
         </DialogHeader>
 

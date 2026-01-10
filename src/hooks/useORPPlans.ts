@@ -348,6 +348,50 @@ export const useORPPlans = () => {
     }
   });
 
+  const deleteDeliverable = useMutation({
+    mutationFn: async (deliverableId: string) => {
+      // First delete related dependencies (both as deliverable and predecessor)
+      await supabase
+        .from('orp_deliverable_dependencies')
+        .delete()
+        .or(`deliverable_id.eq.${deliverableId},predecessor_id.eq.${deliverableId}`);
+
+      // Delete collaborators
+      await supabase
+        .from('orp_collaborators')
+        .delete()
+        .eq('plan_deliverable_id', deliverableId);
+
+      // Delete attachments
+      await supabase
+        .from('orp_deliverable_attachments')
+        .delete()
+        .eq('plan_deliverable_id', deliverableId);
+
+      // Delete comments
+      await supabase
+        .from('orp_deliverable_comments')
+        .delete()
+        .eq('plan_deliverable_id', deliverableId);
+
+      // Finally delete the deliverable itself
+      const { error } = await supabase
+        .from('orp_plan_deliverables')
+        .delete()
+        .eq('id', deliverableId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orp-plan'] });
+      queryClient.invalidateQueries({ queryKey: ['orp-plans'] });
+      toast({ title: 'Success', description: 'Item deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  });
+
   return {
     plans,
     isLoading,
@@ -359,7 +403,8 @@ export const useORPPlans = () => {
     addCollaborator: addCollaborator.mutate,
     removeCollaborator: removeCollaborator.mutate,
     addDependency: addDependency.mutate,
-    removeDependency: removeDependency.mutate
+    removeDependency: removeDependency.mutate,
+    deleteDeliverable: deleteDeliverable.mutate
   };
 };
 
