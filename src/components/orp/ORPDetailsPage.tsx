@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { LayoutGrid, GanttChart, ArrowLeftRight, GraduationCap, Wrench, ChevronDown, History, Download, MoreVertical, CalendarCheck, CheckCircle, Search, Plus } from 'lucide-react';
 import { useORPPlanDetails, useORPPlans } from '@/hooks/useORPPlans';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ORPKanbanBoardDraggable } from './ORPKanbanBoardDraggable';
 import { ORPGanttChart } from './ORPGanttChart';
 import { ORAApprovalsPanel } from '@/components/ora/ORAApprovalsPanel';
 import { ORPExportPDF } from './ORPExportPDF';
+import { CreateORPModal } from './CreateORPModal';
 import { ORPComparisonView } from './ORPComparisonView';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
 import { ORATrainingPlanTab } from '@/components/ora/ORATrainingPlanTab';
@@ -31,6 +33,8 @@ export const ORPDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('activity-plan');
   const [activityView, setActivityView] = useState<'gantt' | 'kanban'>('gantt');
   const [showComparison, setShowComparison] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddItem, setShowAddItem] = useState(false);
 
   const { data: plan, isLoading } = useORPPlanDetails(id || '');
   const { plans: allPlans } = useORPPlans();
@@ -225,9 +229,23 @@ export const ORPDetailsPage: React.FC = () => {
           </div>
 
           <TabsContent value="activity-plan" className="flex-1 m-0 mt-0 flex flex-col overflow-hidden data-[state=inactive]:hidden">
-            {/* View Toggle Header */}
-            <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between flex-shrink-0">
-              <span className="text-sm font-medium text-muted-foreground">View:</span>
+            {/* Unified Toolbar: Search, View Toggle, Add ORA Item */}
+            <div className="px-6 py-3 border-b bg-muted/30 flex items-center gap-4 flex-shrink-0">
+              {/* Search - flexible width */}
+              <div className="relative flex-1 max-w-lg">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search deliverables..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              
+              {/* Spacer to push view toggle and button to the right */}
+              <div className="flex-1" />
+              
+              {/* View Toggle */}
               <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                 <Button
                   variant={activityView === 'gantt' ? 'secondary' : 'ghost'}
@@ -248,21 +266,38 @@ export const ORPDetailsPage: React.FC = () => {
                   Kanban
                 </Button>
               </div>
+              
+              {/* Add ORA Item - right-most */}
+              <Button onClick={() => setShowAddItem(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add ORA Item
+              </Button>
             </div>
             
             {/* Conditional Content */}
             <div className="flex-1 overflow-auto">
               {activityView === 'gantt' ? (
                 <div className="p-6">
-                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} />
+                  <ORPGanttChart planId={plan.id} deliverables={plan.deliverables || []} searchQuery={searchQuery} hideToolbar />
                 </div>
               ) : (
                 <ORPKanbanBoardDraggable 
                   planId={plan.id} 
-                  deliverables={plan.deliverables || []} 
+                  deliverables={plan.deliverables || []}
+                  searchQuery={searchQuery}
+                  hideToolbar
                 />
               )}
             </div>
+            
+            {/* Add ORA Item Modal */}
+            {showAddItem && (
+              <CreateORPModal
+                open={showAddItem}
+                onOpenChange={setShowAddItem}
+                onSuccess={() => setShowAddItem(false)}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="training" className="flex-1 m-0 mt-0 p-6 overflow-auto data-[state=inactive]:hidden">
