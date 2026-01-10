@@ -4,10 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Search, FileCheck, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
+import { Search, FileCheck, ChevronDown, ChevronRight, Edit2, Globe, Loader2 } from 'lucide-react';
 import { usePSSRChecklistItems, usePSSRChecklistCategories, ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ChecklistItemEditDialog, { ChecklistItemOverride } from './ChecklistItemEditDialog';
+import { useChecklistTranslation } from '@/hooks/useChecklistTranslation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Progress } from '@/components/ui/progress';
 
 export interface ChecklistItemOverrides {
   [itemId: string]: ChecklistItemOverride;
@@ -32,14 +35,33 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
   onItemOverrideChange,
   onItemOverrideReset,
 }) => {
-  const { data: checklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
-  const { data: categories = [], isLoading: categoriesLoading } = usePSSRChecklistCategories();
+  const { data: rawChecklistItems = [], isLoading: itemsLoading } = usePSSRChecklistItems();
+  const { data: rawCategories = [], isLoading: categoriesLoading } = usePSSRChecklistCategories();
+  const { language } = useLanguage();
+  
+  // Translate checklist items
+  const { 
+    items: checklistItems, 
+    isTranslating: isTranslatingItems, 
+    translationProgress: itemsProgress,
+    isEnglish 
+  } = useChecklistTranslation(rawChecklistItems, ['description', 'topic']);
+  
+  // Translate categories
+  const { 
+    items: categories, 
+    isTranslating: isTranslatingCategories,
+    translationProgress: categoriesProgress 
+  } = useChecklistTranslation(rawCategories, ['name', 'description']);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedItemForEdit, setSelectedItemForEdit] = useState<ChecklistItem | null>(null);
 
   const isLoading = itemsLoading || categoriesLoading;
+  const isTranslating = isTranslatingItems || isTranslatingCategories;
+  const avgProgress = Math.round((itemsProgress + categoriesProgress) / 2);
 
   // Group items by category
   const groupedItems = useMemo(() => {
@@ -125,11 +147,27 @@ const WizardStepChecklistItems: React.FC<WizardStepChecklistItemsProps> = ({
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <FileCheck className="h-5 w-5 text-primary" />
           Select Applicable Checklist Items
+          {!isEnglish && (
+            <Badge variant="outline" className="text-xs gap-1">
+              <Globe className="h-3 w-3" />
+              {language}
+            </Badge>
+          )}
         </h3>
         <p className="text-sm text-muted-foreground">
           Choose the checklist items that should be included when this PSSR reason is used. 
           Click the edit icon to customize item attributes for this reason only.
         </p>
+        
+        {/* Translation Progress */}
+        {isTranslating && !isEnglish && (
+          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Translating to {language}...</span>
+            <Progress value={avgProgress} className="flex-1 h-2" />
+            <span className="text-xs text-muted-foreground">{avgProgress}%</span>
+          </div>
+        )}
       </div>
 
       {/* Search and Selection Controls */}

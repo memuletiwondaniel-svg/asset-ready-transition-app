@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,12 @@ import {
   MessageSquare,
   AlertCircle,
   Shield,
-  ClipboardCheck
+  ClipboardCheck,
+  Globe,
+  Loader2
 } from 'lucide-react';
+import { useTranslateText } from '@/hooks/useChecklistTranslation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ChecklistItemResponse {
   id: string;
@@ -83,6 +87,36 @@ export const SOFChecklistItemDetail: React.FC<SOFChecklistItemDetailProps> = ({
   pssrId,
   onBack,
 }) => {
+  const { language } = useLanguage();
+  const { translate, isTranslating, isEnglish } = useTranslateText();
+  const [translatedDescription, setTranslatedDescription] = useState(item.description);
+  const [translatedCategory, setTranslatedCategory] = useState(item.category);
+  const [translatedTopic, setTranslatedTopic] = useState(item.topic);
+
+  // Translate on language change
+  useEffect(() => {
+    const translateContent = async () => {
+      if (isEnglish) {
+        setTranslatedDescription(item.description);
+        setTranslatedCategory(item.category);
+        setTranslatedTopic(item.topic);
+        return;
+      }
+
+      const [desc, cat, top] = await Promise.all([
+        translate(item.description),
+        translate(item.category),
+        item.topic ? translate(item.topic) : Promise.resolve(undefined),
+      ]);
+
+      setTranslatedDescription(desc);
+      setTranslatedCategory(cat);
+      setTranslatedTopic(top);
+    };
+
+    translateContent();
+  }, [item, language, translate, isEnglish]);
+
   const responseDisplay = getResponseDisplay(item.response?.response);
   const hasDeviation = item.response?.response?.toUpperCase() === 'NO' || 
                        item.response?.response?.toUpperCase() === 'DEVIATION';
@@ -109,17 +143,35 @@ export const SOFChecklistItemDetail: React.FC<SOFChecklistItemDetailProps> = ({
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="font-mono">
                     {item.unique_id}
                   </Badge>
-                  <Badge variant="secondary">{item.category}</Badge>
-                  {item.topic && (
-                    <Badge variant="outline">{item.topic}</Badge>
+                  <Badge variant="secondary">
+                    {isTranslating && !isEnglish ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : null}
+                    {translatedCategory}
+                  </Badge>
+                  {translatedTopic && (
+                    <Badge variant="outline">{translatedTopic}</Badge>
+                  )}
+                  {!isEnglish && (
+                    <Badge variant="outline" className="text-xs gap-1">
+                      <Globe className="h-3 w-3" />
+                      {language}
+                    </Badge>
                   )}
                 </div>
                 <CardTitle className="text-lg mt-2">
-                  {item.description}
+                  {isTranslating && !isEnglish ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {translatedDescription}
+                    </span>
+                  ) : (
+                    translatedDescription
+                  )}
                 </CardTitle>
               </div>
             </div>

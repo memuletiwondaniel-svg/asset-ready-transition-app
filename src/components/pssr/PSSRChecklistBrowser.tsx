@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { 
   Search, 
   ChevronDown, 
@@ -16,8 +17,12 @@ import {
   AlertTriangle,
   ExternalLink,
   User,
-  Filter
+  Filter,
+  Globe,
+  Loader2
 } from 'lucide-react';
+import { useChecklistTranslation } from '@/hooks/useChecklistTranslation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PSSRChecklistBrowserProps {
   pssrId: string;
@@ -48,6 +53,7 @@ export const PSSRChecklistBrowser: React.FC<PSSRChecklistBrowserProps> = ({ pssr
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [responseFilter, setResponseFilter] = useState<string>('all');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const { language } = useLanguage();
 
   // Fetch checklist items with responses and approvals
   const { data: items, isLoading } = useQuery({
@@ -129,17 +135,25 @@ export const PSSRChecklistBrowser: React.FC<PSSRChecklistBrowserProps> = ({ pssr
     enabled: !!pssrId,
   });
 
-  // Get unique categories
+  // Translate checklist items
+  const { 
+    items: translatedItems, 
+    isTranslating, 
+    translationProgress,
+    isEnglish 
+  } = useChecklistTranslation(items, ['question', 'category']);
+
+  // Get unique categories from translated items
   const categories = useMemo(() => {
-    if (!items) return [];
-    return [...new Set(items.map(i => i.category))].sort();
-  }, [items]);
+    if (!translatedItems) return [];
+    return [...new Set(translatedItems.map(i => i.category))].sort();
+  }, [translatedItems]);
 
   // Filter items
   const filteredItems = useMemo(() => {
-    if (!items) return [];
+    if (!translatedItems) return [];
     
-    return items.filter(item => {
+    return translatedItems.filter(item => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -163,7 +177,7 @@ export const PSSRChecklistBrowser: React.FC<PSSRChecklistBrowserProps> = ({ pssr
       
       return true;
     });
-  }, [items, searchQuery, categoryFilter, responseFilter]);
+  }, [translatedItems, searchQuery, categoryFilter, responseFilter]);
 
   // Group by category
   const groupedItems = useMemo(() => {
@@ -233,7 +247,23 @@ export const PSSRChecklistBrowser: React.FC<PSSRChecklistBrowserProps> = ({ pssr
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
           Checklist Items Browser
+          {!isEnglish && (
+            <Badge variant="outline" className="text-xs gap-1 ml-2">
+              <Globe className="h-3 w-3" />
+              {language}
+            </Badge>
+          )}
         </CardTitle>
+        
+        {/* Translation Progress */}
+        {isTranslating && !isEnglish && (
+          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md mt-2">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Translating to {language}...</span>
+            <Progress value={translationProgress} className="flex-1 h-2" />
+            <span className="text-xs text-muted-foreground">{translationProgress}%</span>
+          </div>
+        )}
         
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-3 mt-4">
