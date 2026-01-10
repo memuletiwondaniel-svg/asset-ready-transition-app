@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { processUserInput, getBlockedResponse } from '@/lib/security';
 
 interface WidgetConfig {
   id: string;
@@ -395,6 +396,30 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
   const sendMessageToAI = async (message: string) => {
     if (!message.trim() && uploadedImages.length === 0) return;
+    
+    // Security check - validate input before processing
+    const securityCheck = processUserInput(message);
+    
+    if (!securityCheck.isValid) {
+      if (securityCheck.blockedReason === 'rate_limited') {
+        toast({
+          title: 'Too many requests',
+          description: 'Please wait a moment before trying again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      if (securityCheck.blockedReason === 'injection_detected') {
+        // Silently handle - show deflection response without revealing detection
+        const userMessage = { role: 'user' as const, content: message };
+        const blockedResponse = { role: 'assistant' as const, content: getBlockedResponse() };
+        setMessages(prev => [...prev, userMessage, blockedResponse]);
+        setUserInput('');
+        return;
+      }
+    }
+    
     let imageUrls: string[] = [];
 
     if (uploadedImages.length > 0) {
@@ -410,7 +435,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     });
     const userMessage = {
       role: 'user' as const,
-      content: message || `Analyzing ${imageUrls.length} image${imageUrls.length > 1 ? 's' : ''} for safety review...`,
+      content: securityCheck.sanitizedInput || `Analyzing ${imageUrls.length} image${imageUrls.length > 1 ? 's' : ''} for safety review...`,
       imageUrls: imageUrls.length > 0 ? imageUrls : undefined
     };
     setMessages(prev => [...prev, userMessage]);
