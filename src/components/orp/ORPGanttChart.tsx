@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
-
+import { getStatusLabel, getStatusBadgeClasses } from './utils/statusStyles';
+import { cn } from '@/lib/utils';
 interface ORPGanttChartProps {
   planId: string;
   deliverables: any[];
@@ -295,8 +296,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             {deliverable.deliverable?.name}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {deliverable.status.replace('_', ' ')}
+                            <Badge variant="outline" className={cn("text-xs", getStatusBadgeClasses(deliverable.status))}>
+                              {getStatusLabel(deliverable.status)}
                             </Badge>
                             {deliverable.estimated_manhours && (
                               <span className="text-xs text-muted-foreground">
