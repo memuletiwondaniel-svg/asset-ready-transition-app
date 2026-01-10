@@ -16,8 +16,8 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-slate-500/10 text-slate-700 dark:text-slate-300';
-      case 'IN_PROGRESS': return 'bg-blue-500/10 text-blue-700 dark:text-blue-300';
-      case 'PENDING_APPROVAL': return 'bg-amber-500/10 text-amber-700 dark:text-amber-300';
+      case 'IN_PROGRESS': return 'bg-amber-500/10 text-amber-700 dark:text-amber-300';
+      case 'PENDING_APPROVAL': return 'bg-orange-500/10 text-orange-700 dark:text-orange-300';
       case 'APPROVED': return 'bg-green-500/10 text-green-700 dark:text-green-300';
       case 'COMPLETED': return 'bg-purple-500/10 text-purple-700 dark:text-purple-300';
       default: return 'bg-gray-500/10 text-gray-700 dark:text-gray-300';
