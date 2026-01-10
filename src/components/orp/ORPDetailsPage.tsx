@@ -254,7 +254,7 @@ export const ORPDetailsPage: React.FC = () => {
                   className="gap-2"
                 >
                   <GanttChart className="w-4 h-4" />
-                  Gantt Chart
+                  Gantt
                 </Button>
                 <Button
                   variant={activityView === 'kanban' ? 'secondary' : 'ghost'}
