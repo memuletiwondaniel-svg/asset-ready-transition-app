@@ -212,6 +212,11 @@ export const translations = {
     training: 'Training',
     maintenance: 'Maintenance',
     handover: 'Handover',
+    oraConfiguration: 'ORA Configuration',
+    manageORAPlans: 'Manage ORA Plans',
+    oraConfigSubtitle: 'Configure ORA activities, templates, and milestone types',
+    activityCatalog: 'Activity Catalog',
+    templates: 'Templates',
     
     // ORA Procedures
     procedures: 'Procedures',
@@ -541,6 +546,11 @@ export const translations = {
     training: 'التدريب',
     maintenance: 'الصيانة',
     handover: 'التسليم',
+    oraConfiguration: 'تكوين ORA',
+    manageORAPlans: 'إدارة خطط ORA',
+    oraConfigSubtitle: 'تكوين أنشطة ORA والقوالب وأنواع المعالم',
+    activityCatalog: 'كتالوج الأنشطة',
+    templates: 'القوالب',
     
     // ORA Procedures
     procedures: 'الإجراءات',
@@ -869,6 +879,11 @@ export const translations = {
     training: 'Formation',
     maintenance: 'Maintenance',
     handover: 'Transfert',
+    oraConfiguration: 'Configuration ORA',
+    manageORAPlans: 'Gérer les plans ORA',
+    oraConfigSubtitle: 'Configurer les activités ORA, les modèles et les types de jalons',
+    activityCatalog: 'Catalogue d\'activités',
+    templates: 'Modèles',
     
     // ORA Procedures
     procedures: 'Procédures',
@@ -1197,6 +1212,11 @@ export const translations = {
     training: 'Latihan',
     maintenance: 'Penyelenggaraan',
     handover: 'Serah Terima',
+    oraConfiguration: 'Konfigurasi ORA',
+    manageORAPlans: 'Urus Pelan ORA',
+    oraConfigSubtitle: 'Konfigurasikan aktiviti ORA, templat dan jenis pencapaian',
+    activityCatalog: 'Katalog Aktiviti',
+    templates: 'Templat',
     
     // ORA Procedures
     procedures: 'Prosedur',
@@ -1525,6 +1545,11 @@ export const translations = {
     training: 'Оқыту',
     maintenance: 'Техникалық қызмет көрсету',
     handover: 'Тапсыру',
+    oraConfiguration: 'ORA конфигурациясы',
+    manageORAPlans: 'ORA жоспарларын басқару',
+    oraConfigSubtitle: 'ORA әрекеттерін, үлгілерін және кезең түрлерін конфигурациялау',
+    activityCatalog: 'Әрекеттер каталогы',
+    templates: 'Үлгілер',
     
     // ORA Procedures
     procedures: 'Рәсімдер',

@@ -6,6 +6,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { ORAActivityCatalog } from './ORAActivityCatalog';
 import { ORATemplateManagement } from './ORATemplateManagement';
 import { ProjectMilestonesManagementTab } from '@/components/project/ProjectMilestonesManagementTab';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ORAConfigurationManagementProps {
   onBack: () => void;
@@ -13,12 +14,13 @@ interface ORAConfigurationManagementProps {
 
 export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('activity-catalog');
+  const { translations: t } = useLanguage();
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel="ORA Configuration" />
+        <BreadcrumbNavigation currentPageLabel={t.oraConfiguration || "ORA Configuration"} />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
@@ -29,10 +31,10 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                Manage ORA Plans
+                {t.manageORAPlans || "Manage ORA Plans"}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Configure ORA activities, templates, and milestone types
+                {t.oraConfigSubtitle || "Configure ORA activities, templates, and milestone types"}
               </p>
             </div>
           </div>
@@ -46,15 +48,15 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
             <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
               <TabsTrigger value="activity-catalog" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Activity Catalog
+                {t.activityCatalog || "Activity Catalog"}
               </TabsTrigger>
               <TabsTrigger value="templates" className="flex items-center gap-2">
                 <LayoutTemplate className="h-4 w-4" />
-                Templates
+                {t.templates || "Templates"}
               </TabsTrigger>
               <TabsTrigger value="milestones" className="flex items-center gap-2">
                 <Milestone className="h-4 w-4" />
-                Milestones
+                {t.milestones || "Milestones"}
               </TabsTrigger>
             </TabsList>
 
