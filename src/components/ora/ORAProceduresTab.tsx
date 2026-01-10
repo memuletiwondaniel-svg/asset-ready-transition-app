@@ -210,10 +210,10 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleRowClick(proc)}>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Download</DropdownMenuItem>
-                          <DropdownMenuItem>Update Status</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleRowClick(proc)}>{t.viewDetails || "View Details"}</DropdownMenuItem>
+                          <DropdownMenuItem>{t.edit || "Edit"}</DropdownMenuItem>
+                          <DropdownMenuItem>{t.download || "Download"}</DropdownMenuItem>
+                          <DropdownMenuItem>{t.updateStatus || "Update Status"}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -233,28 +233,28 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
       <div className="grid grid-cols-4 gap-4">
         <StatCard 
           count={stats.total} 
-          label="Total" 
+          label={t.total || "Total"} 
           filter="all"
           bgColor="bg-slate-100 dark:bg-slate-800"
           iconColor="text-slate-600 dark:text-slate-400"
         />
         <StatCard 
           count={stats.approved} 
-          label="Approved" 
+          label={t.approved || "Approved"} 
           filter="approved"
           bgColor="bg-green-100 dark:bg-green-900/30"
           iconColor="text-green-600 dark:text-green-400"
         />
         <StatCard 
           count={stats.inProgress} 
-          label="In Progress" 
+          label={t.inProgress || "In Progress"} 
           filter="in_progress"
           bgColor="bg-amber-100 dark:bg-amber-900/30"
           iconColor="text-amber-600 dark:text-amber-400"
         />
         <StatCard 
           count={stats.notStarted} 
-          label="Not Started" 
+          label={t.statusNotStarted || "Not Started"} 
           filter="not_started"
           bgColor="bg-slate-100 dark:bg-slate-800"
           iconColor="text-slate-500 dark:text-slate-500"
@@ -264,9 +264,15 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
       {/* Active Filter Indicator */}
       {statusFilter !== 'all' && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Filtering by:</span>
+          <span className="text-sm text-muted-foreground">{t.filteringBy || "Filtering by"}:</span>
           <Badge variant="secondary" className="gap-1">
-            {statusFilter === 'in_progress' ? 'In Progress' : statusFilter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {statusFilter === 'in_progress' ? (t.inProgress || 'In Progress') : 
+             statusFilter === 'approved' ? (t.approved || 'Approved') :
+             statusFilter === 'not_started' ? (t.statusNotStarted || 'Not Started') :
+             statusFilter === 'draft' ? (t.statusDraft || 'Draft') :
+             statusFilter === 'site_validation' ? (t.statusSiteValidation || 'Site Validation') :
+             statusFilter === 'final_review' ? (t.statusFinalReview || 'Final Review') :
+             (t.statusTranslated || 'Translated')}
             <button onClick={() => setStatusFilter('all')} className="ml-1 hover:text-destructive">×</button>
           </Badge>
         </div>
@@ -277,7 +283,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search procedures..."
+            placeholder={t.searchProcedures || "Search procedures..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -286,11 +292,11 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
         <div className="flex-1" />
         <Button variant="outline" className="gap-2">
           <Download className="w-4 h-4" />
-          Export
+          {t.export || "Export"}
         </Button>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
-          Add Procedure
+          {t.addProcedure || "Add Procedure"}
         </Button>
       </div>
 
@@ -298,7 +304,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
       <div className="space-y-4">
         <ProcedureTable 
           procedures={startupProcedures} 
-          title="Initial Start-up Procedures" 
+          title={t.initialStartupProcedures || "Initial Start-up Procedures"} 
           icon={Rocket}
           iconColor="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
           open={startupOpen}
@@ -306,7 +312,7 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
         />
         <ProcedureTable 
           procedures={normalProcedures} 
-          title="Normal Operating Procedures" 
+          title={t.normalOperatingProcedures || "Normal Operating Procedures"} 
           icon={Settings}
           iconColor="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
           open={normalOpen}
@@ -318,8 +324,8 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
         <Card>
           <CardContent className="p-12 text-center">
             <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-medium text-lg mb-2">No procedures found</h3>
-            <p className="text-muted-foreground">Try adjusting your search criteria or filter</p>
+            <h3 className="font-medium text-lg mb-2">{t.noProceduresFound || "No procedures found"}</h3>
+            <p className="text-muted-foreground">{t.adjustSearchCriteria || "Try adjusting your search criteria or filter"}</p>
           </CardContent>
         </Card>
       )}
