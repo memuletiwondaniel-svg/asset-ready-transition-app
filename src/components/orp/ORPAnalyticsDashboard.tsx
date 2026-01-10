@@ -41,10 +41,10 @@ export const ORPAnalyticsDashboard: React.FC = () => {
     { name: 'Not Started', value: plans?.reduce((acc, p) => 
       acc + (p.deliverables?.filter((d: any) => d.status === 'NOT_STARTED').length || 0), 0) || 0, color: '#64748b' },
     { name: 'In Progress', value: plans?.reduce((acc, p) => 
-      acc + (p.deliverables?.filter((d: any) => d.status === 'IN_PROGRESS').length || 0), 0) || 0, color: '#3b82f6' },
+      acc + (p.deliverables?.filter((d: any) => d.status === 'IN_PROGRESS').length || 0), 0) || 0, color: '#f59e0b' },
     { name: 'Completed', value: completedDeliverables, color: '#22c55e' },
     { name: 'On Hold', value: plans?.reduce((acc, p) => 
-      acc + (p.deliverables?.filter((d: any) => d.status === 'ON_HOLD').length || 0), 0) || 0, color: '#f59e0b' }
+      acc + (p.deliverables?.filter((d: any) => d.status === 'ON_HOLD').length || 0), 0) || 0, color: '#ef4444' }
   ];
 
   // Phase distribution

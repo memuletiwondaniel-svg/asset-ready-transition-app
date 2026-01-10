@@ -71,9 +71,9 @@ const MAINTENANCE_COMPONENTS = [
 
 const STATUSES = [
   { value: 'NOT_STARTED', label: 'Not Started', color: 'bg-muted text-muted-foreground' },
-  { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-slate-100 text-slate-600 border border-slate-300' },
+  { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-amber-100 text-amber-700 border border-amber-300' },
   { value: 'COMPLETED', label: 'Completed', color: 'bg-green-500 text-white' },
-  { value: 'ON_HOLD', label: 'On Hold', color: 'bg-amber-100 text-amber-700 border border-amber-300' }
+  { value: 'ON_HOLD', label: 'On Hold', color: 'bg-red-100 text-red-700 border border-red-300' }
 ];
 
 // Mock progress narratives entered by CMMS Lead

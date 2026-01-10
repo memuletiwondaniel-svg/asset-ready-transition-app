@@ -16,9 +16,9 @@ export const ORPKanbanBoard: React.FC<ORPKanbanBoardProps> = ({ planId, delivera
   
   const columns = [
     { id: 'NOT_STARTED', label: 'Not Started', color: 'slate' },
-    { id: 'IN_PROGRESS', label: 'In Progress', color: 'blue' },
+    { id: 'IN_PROGRESS', label: 'In Progress', color: 'amber' },
     { id: 'COMPLETED', label: 'Completed', color: 'green' },
-    { id: 'ON_HOLD', label: 'On Hold', color: 'amber' }
+    { id: 'ON_HOLD', label: 'On Hold', color: 'red' }
   ];
 
   const getColumnDeliverables = (status: string) => {
