@@ -288,10 +288,13 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <div style={{ minWidth: `${100 * zoomLevel}%` }}>
                 {/* Timeline header - wheel zoom only here */}
                 <div className={cn("sticky top-0 bg-background z-10 border-b pb-2", isResizing && "select-none")}>
-                  <div className="flex">
+                <div className="flex">
+                    <div className="flex-shrink-0 w-10 font-semibold px-2 text-center sticky left-0 bg-background z-20 border-r">
+                      S/N
+                    </div>
                     <div 
-                      className="flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20 flex items-center justify-between"
-                      style={{ width: activityColumnWidth }}
+                      className="flex-shrink-0 font-semibold px-4 sticky bg-background z-20 flex items-center justify-between"
+                      style={{ width: activityColumnWidth, left: '40px' }}
                     >
                       <span>Activity</span>
                       <div
@@ -328,17 +331,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <div className="space-y-2">
                 {filteredDeliverables
                   .filter(d => d.start_date && d.end_date)
-                  .map((deliverable) => {
+                  .map((deliverable, index) => {
                     const position = getBarPosition(deliverable.start_date, deliverable.end_date);
                     return (
                       <div 
                         key={deliverable.id} 
                         className={cn("flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer", isResizing && "select-none")}
                         onClick={() => setSelectedDeliverable(deliverable)}
-                  >
+                      >
+                        <div className="flex-shrink-0 w-10 px-2 text-center text-sm text-muted-foreground sticky left-0 bg-background z-10 border-r">
+                          {index + 1}
+                        </div>
                         <div 
-                          className="flex-shrink-0 px-4 sticky left-0 bg-background z-10"
-                          style={{ width: activityColumnWidth }}
+                          className="flex-shrink-0 px-4 sticky bg-background z-10"
+                          style={{ width: activityColumnWidth, left: '40px' }}
                         >
                           <div className="text-sm font-medium truncate" title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
