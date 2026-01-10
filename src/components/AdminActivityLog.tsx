@@ -104,17 +104,17 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
     <div className="min-h-screen bg-background animate-fade-in">
       <AdminHeader 
         icon={<Activity className="h-5 w-5" />}
-        title="Activity Log"
-        description="View and monitor all system activities"
+        title={t.activityLogPageTitle || "Activity Log"}
+        description={t.activityLogSubtitle || "View and monitor all system activities"}
         customBreadcrumbs={[
-          { label: 'Home', path: '/', onClick: onBack },
-          { label: 'Administration', path: '/admin-tools', onClick: onBack },
-          { label: 'Activity Log', path: '/admin-tools', onClick: () => {} }
+          { label: t.home || 'Home', path: '/', onClick: onBack },
+          { label: t.administration || 'Administration', path: '/admin-tools', onClick: onBack },
+          { label: t.activityLogTitle || 'Activity Log', path: '/admin-tools', onClick: () => {} }
         ]}
       >
         <Button variant="ghost" onClick={onBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
-          Back to Admin Tools
+          {t.backToAdminTools || 'Back to Admin Tools'}
         </Button>
       </AdminHeader>
 
@@ -126,20 +126,20 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <Activity className="h-8 w-8 text-primary" />
-              Activity Log
+              {t.activityLogPageTitle || 'Activity Log'}
             </h1>
             <p className="text-muted-foreground mt-2">
-              Monitor and audit all administrative actions across the platform
+              {t.monitorAuditActions || 'Monitor and audit all administrative actions across the platform'}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => refetch()} className="gap-2">
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              {t.refresh || 'Refresh'}
             </Button>
             <Button onClick={exportToCSV} className="gap-2">
               <Download className="h-4 w-4" />
-              Export CSV
+              {t.exportCSV || 'Export CSV'}
             </Button>
           </div>
         </div>
