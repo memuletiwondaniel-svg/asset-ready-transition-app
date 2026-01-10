@@ -2,29 +2,32 @@ import React from 'react';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CalendarWidgetProps {
   settings: Record<string, any>;
 }
 
 export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ settings }) => {
-  // Mock calendar events
+  const { translations: t } = useLanguage();
+
+  // Mock calendar events - labels are translated
   const events = [
     {
       id: 1,
-      title: 'PSSR Review Meeting',
+      title: t.eventPSSRReviewMeeting || 'PSSR Review Meeting',
       date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
       type: 'meeting'
     },
     {
       id: 2,
-      title: 'Safety Inspection Deadline',
+      title: t.eventSafetyInspectionDeadline || 'Safety Inspection Deadline',
       date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
       type: 'deadline'
     },
     {
       id: 3,
-      title: 'Team Workshop',
+      title: t.eventTeamWorkshop || 'Team Workshop',
       date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       type: 'workshop'
     }
@@ -35,9 +38,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ settings }) => {
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           <CalendarIcon className="w-5 h-5 text-primary" />
-          Upcoming Events
+          {t.widgetUpcomingEvents || 'Upcoming Events'}
         </CardTitle>
-        <CardDescription className="text-xs">Your schedule and deadlines</CardDescription>
+        <CardDescription className="text-xs">{t.widgetScheduleDeadlines || 'Your schedule and deadlines'}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {events.map((event, idx) => (
