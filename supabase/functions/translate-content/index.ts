@@ -36,7 +36,7 @@ serve(async (req) => {
       'ar': 'Arabic',
       'fr': 'French',
       'ms': 'Malay (Bahasa Melayu)',
-      'ru': 'Russian',
+      'kk': 'Kazakh',
       'en': 'English'
     };
 
