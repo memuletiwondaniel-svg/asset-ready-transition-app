@@ -267,10 +267,10 @@ export const ORPDetailsPage: React.FC = () => {
                 </Button>
               </div>
               
-              {/* Add ORA Item - right-most */}
+              {/* Add Item - right-most */}
               <Button onClick={() => setShowAddItem(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add ORA Item
+                Add Item
               </Button>
             </div>
             
