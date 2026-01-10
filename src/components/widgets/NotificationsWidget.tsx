@@ -2,34 +2,37 @@ import React from 'react';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Bell, Circle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NotificationsWidgetProps {
   settings: Record<string, any>;
 }
 
 export const NotificationsWidget: React.FC<NotificationsWidgetProps> = ({ settings }) => {
-  // Mock notifications
+  const { translations: t } = useLanguage();
+
+  // Mock notifications with translated labels
   const notifications = [
     {
       id: 1,
-      title: 'Task assigned to you',
-      message: 'Review checklist item #PS-12',
+      title: t.notificationTaskAssigned || 'Task assigned to you',
+      message: t.notificationReviewChecklist || 'Review checklist item #PS-12',
       time: new Date(Date.now() - 1000 * 60 * 30),
       type: 'info',
       read: false
     },
     {
       id: 2,
-      title: 'Approval required',
-      message: 'PSSR awaiting your approval',
+      title: t.notificationApprovalRequired || 'Approval required',
+      message: t.notificationPSSRAwaitingApproval || 'PSSR awaiting your approval',
       time: new Date(Date.now() - 1000 * 60 * 60 * 2),
       type: 'warning',
       read: false
     },
     {
       id: 3,
-      title: 'Task completed',
-      message: 'Safety inspection completed',
+      title: t.notificationTaskCompleted || 'Task completed',
+      message: t.notificationSafetyInspectionCompleted || 'Safety inspection completed',
       time: new Date(Date.now() - 1000 * 60 * 60 * 4),
       type: 'success',
       read: true
@@ -47,14 +50,14 @@ export const NotificationsWidget: React.FC<NotificationsWidgetProps> = ({ settin
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           <Bell className="w-5 h-5 text-primary" />
-          Notifications
+          {t.widgetNotifications || 'Notifications'}
           {notifications.filter(n => !n.read).length > 0 && (
             <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">
               {notifications.filter(n => !n.read).length}
             </span>
           )}
         </CardTitle>
-        <CardDescription className="text-xs">Recent alerts and updates</CardDescription>
+        <CardDescription className="text-xs">{t.widgetRecentAlerts || 'Recent alerts and updates'}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 space-y-2">
         {notifications.map((notification, idx) => (

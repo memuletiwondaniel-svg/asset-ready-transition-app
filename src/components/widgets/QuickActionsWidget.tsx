@@ -1,5 +1,6 @@
 import React from 'react';
 import { Zap, CheckCircle, FileText, ChevronRight } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QuickActionsWidgetProps {
   onActionClick?: (action: string) => void;
@@ -7,11 +8,13 @@ interface QuickActionsWidgetProps {
 }
 
 export const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ onActionClick, className }) => {
+  const { translations: t } = useLanguage();
+
   const quickActions = [
     {
       id: 'create-pssr',
-      label: 'Create PSSR',
-      description: 'Start a new safety review',
+      label: t.quickActionCreatePSSR || 'Create PSSR',
+      description: t.quickActionStartNewReview || 'Start a new safety review',
       icon: Zap,
       gradient: 'from-primary/10 to-accent/10',
       iconBg: 'bg-gradient-to-br from-primary to-accent',
@@ -19,8 +22,8 @@ export const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ onAction
     },
     {
       id: 'approve-pssr',
-      label: 'Approve PSSR',
-      description: 'Review pending requests',
+      label: t.quickActionApprovePSSR || 'Approve PSSR',
+      description: t.quickActionReviewPending || 'Review pending requests',
       icon: CheckCircle,
       gradient: 'from-green-500/10 to-emerald-500/10',
       iconBg: 'bg-gradient-to-br from-green-500 to-emerald-500',
@@ -28,8 +31,8 @@ export const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ onAction
     },
     {
       id: 'develop-p2a',
-      label: 'Develop P2A',
-      description: 'Create handover plan',
+      label: t.quickActionDevelopP2A || 'Develop P2A',
+      description: t.quickActionCreateHandover || 'Create handover plan',
       icon: FileText,
       gradient: 'from-blue-500/10 to-cyan-500/10',
       iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',

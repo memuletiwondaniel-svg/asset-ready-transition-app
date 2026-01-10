@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ListTodo, Clock } from 'lucide-react';
 import { useUserTasks } from '@/hooks/useUserTasks';
 import { formatDistanceToNow } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TasksWidgetProps {
   settings: Record<string, any>;
@@ -11,6 +12,7 @@ interface TasksWidgetProps {
 
 export const TasksWidget: React.FC<TasksWidgetProps> = ({ settings }) => {
   const { tasks, loading } = useUserTasks();
+  const { translations: t } = useLanguage();
   const displayTasks = tasks.slice(0, 3);
 
   return (
@@ -18,9 +20,9 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({ settings }) => {
       <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           <ListTodo className="w-5 h-5 text-accent" />
-          Recent Tasks
+          {t.widgetRecentTasks || 'Recent Tasks'}
         </CardTitle>
-        <CardDescription className="text-xs">Your latest action items</CardDescription>
+        <CardDescription className="text-xs">{t.widgetLatestActionItems || 'Your latest action items'}</CardDescription>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {loading ? (
@@ -32,7 +34,7 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({ settings }) => {
         ) : displayTasks.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <ListTodo className="w-12 h-12 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No tasks</p>
+            <p className="text-sm">{t.widgetNoTasks || 'No tasks'}</p>
           </div>
         ) : (
           displayTasks.map(task => (
@@ -52,7 +54,7 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({ settings }) => {
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 <span>
-                  {task.due_date ? formatDistanceToNow(new Date(task.due_date), { addSuffix: true }) : 'No deadline'}
+                  {task.due_date ? formatDistanceToNow(new Date(task.due_date), { addSuffix: true }) : (t.widgetNoDeadline || 'No deadline')}
                 </span>
               </div>
             </div>

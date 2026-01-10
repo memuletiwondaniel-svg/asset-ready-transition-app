@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList, CheckCircle, Clock, Link2, ChevronDown, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface LinkedPSSR {
   id: string;
@@ -21,11 +22,12 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   onPSSRClick
 }) => {
   const [linkedExpanded, setLinkedExpanded] = useState(false);
+  const { translations: t } = useLanguage();
 
   const stats = [
     {
       id: 'active',
-      label: 'Active PSSRs',
+      label: t.widgetActivePSSRs || 'Active PSSRs',
       value: 12,
       icon: ClipboardList,
       gradient: 'from-blue-500 to-blue-600',
@@ -34,7 +36,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
     },
     {
       id: 'completed',
-      label: 'Completed',
+      label: t.widgetCompleted || 'Completed',
       value: 28,
       icon: CheckCircle,
       gradient: 'from-green-500 to-green-600',
@@ -43,7 +45,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
     },
     {
       id: 'pending',
-      label: 'Pending',
+      label: t.widgetPending || 'Pending',
       value: 5,
       icon: Clock,
       gradient: 'from-orange-500 to-orange-600',
@@ -79,7 +81,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
   return (
     <Card className="glass-card glass-card-hover overflow-hidden min-h-[380px] md:min-h-[420px] lg:min-h-[450px]">
       <CardHeader className="border-b border-border/40 py-3">
-        <CardTitle className="text-lg font-bold">Overview</CardTitle>
+        <CardTitle className="text-lg font-bold">{t.widgetOverview || 'Overview'}</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <div className="space-y-3">
@@ -112,7 +114,7 @@ export const OverviewStatsWidget: React.FC<OverviewStatsWidgetProps> = ({
               onClick={() => setLinkedExpanded(!linkedExpanded)}
             >
               <Link2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium flex-1">Linked PSSRs</span>
+              <span className="text-sm font-medium flex-1">{t.widgetLinkedPSSRs || 'Linked PSSRs'}</span>
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                 {linkedPSSRs.length}
               </Badge>
