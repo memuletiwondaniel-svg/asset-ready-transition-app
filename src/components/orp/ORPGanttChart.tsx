@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format, differenceInDays, parseISO, addDays, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { CreateORPModal } from './CreateORPModal';
 import { ORPDeliverableModal } from './ORPDeliverableModal';
 
@@ -13,10 +13,23 @@ interface ORPGanttChartProps {
   deliverables: any[];
 }
 
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
+const ZOOM_LABELS: Record<number, string> = {
+  0.5: '50%',
+  0.75: '75%',
+  1: '100%',
+  1.5: '150%',
+  2: '200%',
+  3: '300%',
+  4: '400%',
+};
+
 export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const timelineRef = useRef<HTMLDivElement>(null);
   // Filter deliverables based on search query
   const filteredDeliverables = useMemo(() => {
     if (!searchQuery.trim()) return deliverables;
@@ -93,12 +106,97 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     currentDate.setMonth(currentDate.getMonth() + 1);
   }
 
+  // Zoom controls
+  const handleZoomIn = () => {
+    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
+    if (currentIndex < ZOOM_LEVELS.length - 1) {
+      setZoomLevel(ZOOM_LEVELS[currentIndex + 1]);
+    }
+  };
+
+  const handleZoomOut = () => {
+    const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel);
+    if (currentIndex > 0) {
+      setZoomLevel(ZOOM_LEVELS[currentIndex - 1]);
+    }
+  };
+
+  const handleFitToScreen = () => {
+    setZoomLevel(1);
+  };
+
+  // Generate time markers based on zoom level
+  const timeMarkers = useMemo(() => {
+    const markers: { date: Date; label: string }[] = [];
+    let currentDate = new Date(minDate);
+    
+    // Determine marker interval based on zoom level
+    const showWeeks = zoomLevel >= 2;
+    const showDays = zoomLevel >= 4;
+    
+    if (showDays) {
+      // Show every 7 days
+      while (currentDate <= maxDate) {
+        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
+        currentDate = addDays(currentDate, 7);
+      }
+    } else if (showWeeks) {
+      // Show bi-weekly
+      while (currentDate <= maxDate) {
+        markers.push({ date: new Date(currentDate), label: format(currentDate, 'd MMM') });
+        currentDate = addDays(currentDate, 14);
+      }
+    } else {
+      // Show months
+      while (currentDate <= maxDate) {
+        markers.push({ date: new Date(currentDate), label: format(currentDate, 'MMM yyyy') });
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+    }
+    
+    return markers;
+  }, [minDate, maxDate, zoomLevel]);
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* Zoom controls */}
+            <div className="flex items-center gap-1 border rounded-md p-1 mr-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleZoomOut}
+                disabled={zoomLevel === ZOOM_LEVELS[0]}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium w-12 text-center">
+                {ZOOM_LABELS[zoomLevel] || `${Math.round(zoomLevel * 100)}%`}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleZoomIn}
+                disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleFitToScreen}
+                title="Fit to screen"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </div>
+            
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -117,96 +215,104 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Timeline header */}
-          <div className="sticky top-0 bg-background z-10 border-b pb-2">
-        <div className="flex">
-          <div className="w-64 flex-shrink-0 font-semibold px-4">Activity</div>
-          <div className="flex-1 relative h-12">
-            {monthMarkers.map((date, idx) => {
-              const pos = (differenceInDays(date, minDate) / totalDays) * 100;
-              return (
-                <div
-                  key={idx}
-                  className="absolute top-0 bottom-0 border-l border-border"
-                  style={{ left: `${pos}%` }}
-                >
-                  <span className="absolute -top-1 left-2 text-xs font-medium whitespace-nowrap">
-                    {format(date, 'MMM yyyy')}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-          {/* Gantt rows */}
-          <div className="space-y-2">
-            {filteredDeliverables
-              .filter(d => d.start_date && d.end_date)
-              .map((deliverable) => {
-                const position = getBarPosition(deliverable.start_date, deliverable.end_date);
-                return (
-                  <div 
-                    key={deliverable.id} 
-                    className="flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer"
-                    onClick={() => setSelectedDeliverable(deliverable)}
-                  >
-                    <div className="w-64 flex-shrink-0 px-4">
-                      <div className="text-sm font-medium line-clamp-2">
-                        {deliverable.deliverable?.name}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {deliverable.status.replace('_', ' ')}
-                        </Badge>
-                        {deliverable.estimated_manhours && (
-                          <span className="text-xs text-muted-foreground">
-                            {deliverable.estimated_manhours}h
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex-1 relative h-10 px-2">
-                      {/* Progress bar */}
-                      <div
-                        className="absolute h-6 rounded bg-slate-300 dark:bg-slate-500 overflow-hidden hover:shadow-md transition-all cursor-pointer group-hover:scale-y-110"
-                        style={position}
-                      >
-                        {/* Green progress fill */}
+          {/* Timeline container with horizontal scroll */}
+          <div 
+            ref={timelineRef}
+            className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+          >
+            <div style={{ minWidth: `${100 * zoomLevel}%` }}>
+              {/* Timeline header */}
+              <div className="sticky top-0 bg-background z-10 border-b pb-2">
+                <div className="flex">
+                  <div className="w-64 flex-shrink-0 font-semibold px-4 sticky left-0 bg-background z-20">Activity</div>
+                  <div className="flex-1 relative h-12">
+                    {timeMarkers.map((marker, idx) => {
+                      const pos = (differenceInDays(marker.date, minDate) / totalDays) * 100;
+                      return (
                         <div
-                          className="absolute h-full bg-green-500 rounded-l transition-all"
-                          style={{ width: `${deliverable.completion_percentage || 0}%` }}
-                        />
-                        {/* Progress text */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-medium text-white drop-shadow-sm">
-                            {deliverable.completion_percentage || 0}%
+                          key={idx}
+                          className="absolute top-0 bottom-0 border-l border-border"
+                          style={{ left: `${pos}%` }}
+                        >
+                          <span className="absolute -top-1 left-2 text-xs font-medium whitespace-nowrap">
+                            {marker.label}
                           </span>
                         </div>
-                      </div>
-
-                      {/* Dependencies lines */}
-                      {deliverable.dependencies?.map((dep: any) => {
-                        const predecessor = deliverables.find(d => d.id === dep.predecessor_id);
-                        if (!predecessor?.end_date) return null;
-                        return (
-                          <div
-                            key={dep.id}
-                            className="absolute h-px bg-primary/50"
-                            style={{
-                              left: getBarPosition(predecessor.end_date, predecessor.end_date).left,
-                              width: '20px',
-                              top: '50%'
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              </div>
+
+              {/* Gantt rows */}
+              <div className="space-y-2">
+                {filteredDeliverables
+                  .filter(d => d.start_date && d.end_date)
+                  .map((deliverable) => {
+                    const position = getBarPosition(deliverable.start_date, deliverable.end_date);
+                    return (
+                      <div 
+                        key={deliverable.id} 
+                        className="flex items-center group hover:bg-muted/50 rounded py-2 cursor-pointer"
+                        onClick={() => setSelectedDeliverable(deliverable)}
+                  >
+                        <div className="w-64 flex-shrink-0 px-4 sticky left-0 bg-background z-10">
+                          <div className="text-sm font-medium line-clamp-2">
+                            {deliverable.deliverable?.name}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {deliverable.status.replace('_', ' ')}
+                            </Badge>
+                            {deliverable.estimated_manhours && (
+                              <span className="text-xs text-muted-foreground">
+                                {deliverable.estimated_manhours}h
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 relative h-10 px-2">
+                          {/* Progress bar */}
+                          <div
+                            className="absolute h-6 rounded bg-slate-300 dark:bg-slate-500 overflow-hidden hover:shadow-md transition-all cursor-pointer group-hover:scale-y-110"
+                            style={position}
+                          >
+                            {/* Green progress fill */}
+                            <div
+                              className="absolute h-full bg-green-500 rounded-l transition-all"
+                              style={{ width: `${deliverable.completion_percentage || 0}%` }}
+                            />
+                            {/* Progress text */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xs font-medium text-white drop-shadow-sm">
+                                {deliverable.completion_percentage || 0}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Dependencies lines */}
+                          {deliverable.dependencies?.map((dep: any) => {
+                            const predecessor = deliverables.find(d => d.id === dep.predecessor_id);
+                            if (!predecessor?.end_date) return null;
+                            return (
+                              <div
+                                key={dep.id}
+                                className="absolute h-px bg-primary/50"
+                                style={{
+                                  left: getBarPosition(predecessor.end_date, predecessor.end_date).left,
+                                  width: '20px',
+                                  top: '50%'
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
 
           {/* Legend */}
