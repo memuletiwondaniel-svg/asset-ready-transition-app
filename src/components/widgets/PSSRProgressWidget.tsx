@@ -3,6 +3,7 @@ import { WidgetCard } from './WidgetCard';
 import { Progress } from '@/components/ui/progress';
 import { Settings, Shield, FileText, Users, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useWidgetSize } from '@/contexts/WidgetSizeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CategoryProgress {
   name: string;
@@ -27,6 +28,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
   dragListeners,
 }) => {
   const { widgetSize } = useWidgetSize();
+  const { translations: t } = useLanguage();
   const widgetId = 'pssr-progress';
   const getCategoryIcon = (name: string) => {
     const iconMap: Record<string, any> = {
@@ -84,7 +86,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
 
   return (
     <WidgetCard 
-      title="Checklist Items" 
+      title={t.checklistItemsTitle || "Checklist Items"}
       className={`min-h-[280px] md:min-h-[300px] lg:min-h-[320px] ${
         widgetSize === 'compact' ? 'h-[280px] md:h-[300px] lg:h-[320px]' :
         widgetSize === 'standard' ? 'h-[350px] md:h-[380px] lg:h-[400px]' :
@@ -102,7 +104,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
               <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                 <BarChart3 className="h-5 w-5 text-primary" />
               </div>
-              <span className="text-base font-bold text-foreground">Overall Progress</span>
+              <span className="text-base font-bold text-foreground">{t.overallProgress || 'Overall Progress'}</span>
             </div>
             <span className="text-3xl font-bold text-primary">{overallProgress}%</span>
           </div>
@@ -114,7 +116,7 @@ export const PSSRProgressWidget: React.FC<PSSRProgressWidgetProps> = ({
           <div className="flex items-center gap-2 pt-1">
             <div className="h-1 w-1 rounded-full bg-muted-foreground/60" />
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Progress by Category
+              {t.progressByCategory || 'Progress by Category'}
             </label>
           </div>
           <div className="space-y-3">
