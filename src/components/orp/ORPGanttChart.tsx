@@ -287,13 +287,13 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             >
               <div style={{ minWidth: `${100 * zoomLevel}%` }}>
                 {/* Timeline header - wheel zoom only here */}
-                <div className={cn("sticky top-0 bg-background z-10 border-b pb-2", isResizing && "select-none")}>
-                <div className="flex">
-                    <div className="flex-shrink-0 w-10 font-semibold px-2 text-center sticky left-0 bg-background z-20 border-r">
+                <div className={cn("sticky top-0 bg-background z-10 border-b", isResizing && "select-none")}>
+                  <div className="flex items-center h-10">
+                    <div className="flex-shrink-0 w-10 font-semibold px-2 text-center sticky left-0 bg-background z-20 border-r h-full flex items-center justify-center">
                       S/N
                     </div>
                     <div 
-                      className="flex-shrink-0 font-semibold px-4 sticky bg-background z-20 flex items-center justify-between"
+                      className="flex-shrink-0 font-semibold px-4 sticky bg-background z-20 flex items-center justify-between h-full border-r"
                       style={{ width: activityColumnWidth, left: '40px' }}
                     >
                       <span>Activity</span>
@@ -306,7 +306,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                       </div>
                     </div>
                     <div 
-                      className={`flex-1 relative h-10 ${zoomCursor}`}
+                      className={`flex-1 relative h-full ${zoomCursor}`}
                       onWheel={handleHeaderWheel}
                     >
                       {timeMarkers.map((marker, idx) => {
@@ -314,7 +314,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         return (
                           <div
                             key={idx}
-                            className="absolute top-0 bottom-0 border-l border-border flex items-center"
+                            className="absolute top-0 bottom-0 border-l border-border flex items-center justify-center"
                             style={{ left: `${pos}%` }}
                           >
                             <span className="ml-2 text-xs font-medium whitespace-nowrap">
