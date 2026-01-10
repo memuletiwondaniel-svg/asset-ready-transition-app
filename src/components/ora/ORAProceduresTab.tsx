@@ -183,7 +183,6 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                   <TableHead className="w-[120px]">Document #</TableHead>
                   <TableHead className="w-[150px]">Status</TableHead>
                   <TableHead className="w-[80px]">Version</TableHead>
-                  <TableHead className="w-[140px]">Owner</TableHead>
                   <TableHead className="w-[110px]">Last Updated</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
@@ -200,7 +199,6 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
                     <TableCell className="font-mono text-sm">{proc.procedureNumber}</TableCell>
                     <TableCell>{getStatusBadge(proc.status)}</TableCell>
                     <TableCell className="text-muted-foreground">{proc.version}</TableCell>
-                    <TableCell className="text-muted-foreground">{proc.owner}</TableCell>
                     <TableCell className="text-muted-foreground">{proc.lastUpdated}</TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
