@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ProcedureDetailModal, ProcedureStatus, Procedure } from './ProcedureDetailModal';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const mockProcedures: Procedure[] = [
   // Initial Start-up Procedures
@@ -57,6 +58,7 @@ interface ORAProceduresTabProps {
 type StatusFilter = ProcedureStatus | 'all' | 'in_progress';
 
 export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId }) => {
+  const { translations: t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [startupOpen, setStartupOpen] = useState(true);
   const [normalOpen, setNormalOpen] = useState(true);
@@ -67,12 +69,12 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
 
   const getStatusBadge = (status: ProcedureStatus) => {
     const statusConfig: Record<ProcedureStatus, { label: string; className: string }> = {
-      'not_started': { label: 'Not Started', className: 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-600' },
-      'draft': { label: 'Draft', className: 'bg-amber-50 text-amber-600 border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700' },
-      'site_validation': { label: 'Site Validation', className: 'bg-purple-50 text-purple-600 border-purple-300 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-700' },
-      'final_review': { label: 'Final Review', className: 'bg-blue-50 text-blue-600 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700' },
-      'translated': { label: 'Translated', className: 'bg-cyan-50 text-cyan-600 border-cyan-300 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-700' },
-      'approved': { label: 'Approved for Use', className: 'bg-green-50 text-green-600 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' },
+      'not_started': { label: t.statusNotStarted || 'Not Started', className: 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-600' },
+      'draft': { label: t.statusDraft || 'Draft', className: 'bg-amber-50 text-amber-600 border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700' },
+      'site_validation': { label: t.statusSiteValidation || 'Site Validation', className: 'bg-purple-50 text-purple-600 border-purple-300 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-700' },
+      'final_review': { label: t.statusFinalReview || 'Final Review', className: 'bg-blue-50 text-blue-600 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700' },
+      'translated': { label: t.statusTranslated || 'Translated', className: 'bg-cyan-50 text-cyan-600 border-cyan-300 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-700' },
+      'approved': { label: t.statusApprovedForUse || 'Approved for Use', className: 'bg-green-50 text-green-600 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' },
     };
     const config = statusConfig[status];
     return <Badge variant="outline" className={`${config.className} whitespace-nowrap text-xs`}>{config.label}</Badge>;
@@ -178,12 +180,12 @@ export const ORAProceduresTab: React.FC<ORAProceduresTabProps> = ({ oraPlanId })
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="w-[60px]">S/N</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead className="w-[160px]">Document #</TableHead>
-                  <TableHead className="w-[150px]">Status</TableHead>
-                  <TableHead className="w-[80px]">Version</TableHead>
-                  <TableHead className="w-[120px] whitespace-nowrap">Last Updated</TableHead>
+                  <TableHead className="w-[60px]">{t.serialNumber || 'S/N'}</TableHead>
+                  <TableHead>{t.title || 'Title'}</TableHead>
+                  <TableHead className="w-[160px]">{t.documentNumber || 'Document #'}</TableHead>
+                  <TableHead className="w-[150px]">{t.status || 'Status'}</TableHead>
+                  <TableHead className="w-[80px]">{t.version || 'Version'}</TableHead>
+                  <TableHead className="w-[120px] whitespace-nowrap">{t.lastUpdated || 'Last Updated'}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
