@@ -13,7 +13,7 @@ const FACManagementTab: React.FC = () => {
         <TabsList className="h-10">
           <TabsTrigger value="certificate" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            FAC Certificate
+            FAC
           </TabsTrigger>
           <TabsTrigger value="prerequisites" className="flex items-center gap-2">
             <List className="h-4 w-4" />
