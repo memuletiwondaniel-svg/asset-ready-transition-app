@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, List } from 'lucide-react';
-import FACCertificateEditor from './FACCertificateEditor';
+import FACCertificate from './FACCertificate';
 import FACPrerequisitesList from './FACPrerequisitesList';
 
 const FACManagementTab: React.FC = () => {
@@ -22,7 +22,7 @@ const FACManagementTab: React.FC = () => {
         </TabsList>
 
         <TabsContent value="certificate" className="mt-6">
-          <FACCertificateEditor />
+          <FACCertificate />
         </TabsContent>
 
         <TabsContent value="prerequisites" className="mt-6">
