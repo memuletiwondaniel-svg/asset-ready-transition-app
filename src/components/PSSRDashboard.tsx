@@ -211,7 +211,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       {
         id: 'aa4e1de2-a2df-4e5f-9005-b9ea497f35e0',
         name: 'Andrew Banford',
-        role: 'TA2 TSE - Asset',
+        role: 'TA2 TSE',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/5a651906-a022-4084-af11-afe35a03cef1/1757605596327.jpg',
         pendingTasks: 0,
         isOnline: true
