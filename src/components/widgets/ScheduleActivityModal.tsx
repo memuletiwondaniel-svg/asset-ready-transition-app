@@ -132,7 +132,7 @@ export const ScheduleActivityModal: React.FC<ScheduleActivityModalProps> = ({
               name: 'PSSR Coordinator',
               email: 'coordinator@company.com'
             },
-            pssrId: 'PSSR-2024-001'
+            pssrId: 'PSSR-DP300-001'
           }
         });
 
@@ -202,7 +202,7 @@ export const ScheduleActivityModal: React.FC<ScheduleActivityModalProps> = ({
             name: 'PSSR Coordinator',
             email: 'coordinator@company.com'
           },
-          pssrId: 'PSSR-2024-001'
+          pssrId: 'PSSR-DP300-001'
         }
       });
 

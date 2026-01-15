@@ -49,7 +49,7 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
       {
         id: '1',
         type: 'approval',
-        pssrId: 'PSSR-2024-001',
+        pssrId: 'PSSR-DP300-001',
         projectName: 'HM Additional Compressors',
         user: {
           name: 'Sarah Johnson',
@@ -89,7 +89,7 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
       {
         id: '4',
         type: 'update',
-        pssrId: 'PSSR-2024-001',
+        pssrId: 'PSSR-DP300-001',
         projectName: 'HM Additional Compressors',
         user: {
           name: 'Mohammed Hassan',

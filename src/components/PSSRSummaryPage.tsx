@@ -245,7 +245,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
 
   // Mock PSSR data - starts empty but can be populated
   const pssrList: PSSR[] = [{
-    id: 'PSSR-2024-001',
+    id: 'PSSR-DP300-001',
     projectId: 'DP 300',
     projectName: 'HM Additional Compressors',
     asset: 'Compression Station',

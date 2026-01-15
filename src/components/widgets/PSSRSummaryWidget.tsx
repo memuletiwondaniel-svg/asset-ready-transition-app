@@ -18,7 +18,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({ projectId,
 
   // Mock data - replace with actual data fetching
   const pssrs = [
-    { id: '1', name: 'PSSR-2024-001', status: 'in-review', progress: 75 },
+    { id: '1', name: 'PSSR-DP300-001', status: 'in-review', progress: 75 },
     { id: '2', name: 'PSSR-2024-002', status: 'draft', progress: 30 }
   ];
 

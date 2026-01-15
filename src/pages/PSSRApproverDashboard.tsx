@@ -48,7 +48,7 @@ const MOCK_PSSR_REVIEWS = [
   {
     pssr: {
       id: 'pssr-001',
-      pssr_id: 'PSSR-2024-001',
+      pssr_id: 'PSSR-DP300-001',
       pssr_label: 'DP300 HM Additional Compressors',
       project_id: 'DP300',
       project_name: 'NRNGL Phase 3 Expansion',
