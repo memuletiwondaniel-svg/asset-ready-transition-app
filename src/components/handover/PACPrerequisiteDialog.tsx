@@ -176,14 +176,14 @@ const PACPrerequisiteDialog: React.FC<PACPrerequisiteDialogProps> = ({
             <div className="space-y-2">
               <Label htmlFor="delivering">Delivering Party</Label>
               <Select
-                value={formData.delivering_party_role_id}
-                onValueChange={value => setFormData(prev => ({ ...prev, delivering_party_role_id: value }))}
+                value={formData.delivering_party_role_id || 'none'}
+                onValueChange={value => setFormData(prev => ({ ...prev, delivering_party_role_id: value === 'none' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {roles?.map(role => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}
@@ -197,14 +197,14 @@ const PACPrerequisiteDialog: React.FC<PACPrerequisiteDialogProps> = ({
             <div className="space-y-2">
               <Label htmlFor="receiving">Receiving Party</Label>
               <Select
-                value={formData.receiving_party_role_id}
-                onValueChange={value => setFormData(prev => ({ ...prev, receiving_party_role_id: value }))}
+                value={formData.receiving_party_role_id || 'none'}
+                onValueChange={value => setFormData(prev => ({ ...prev, receiving_party_role_id: value === 'none' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {roles?.map(role => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}
