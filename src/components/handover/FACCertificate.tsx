@@ -198,16 +198,19 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
             )}
 
             {/* Prerequisites List - Read Only */}
-            <div className="mt-4">
+            <div className="mt-6 ml-6 p-5 bg-muted/30 rounded-lg border border-border/50">
               {isLoadingPrerequisites ? (
                 <p className="text-muted-foreground text-sm italic">Loading prerequisites...</p>
               ) : facPrerequisites.length > 0 ? (
-                <ol className="list-decimal list-inside space-y-2 text-foreground pl-2">
+                <ol className="space-y-4 text-foreground">
                   {[...facPrerequisites]
                     .sort((a, b) => a.display_order - b.display_order)
-                    .map((prereq) => (
-                      <li key={prereq.id} className="leading-relaxed">
-                        {prereq.summary}
+                    .map((prereq, index) => (
+                      <li key={prereq.id} className="flex gap-3 leading-relaxed">
+                        <span className="font-semibold text-primary min-w-[28px]">
+                          {String(index + 1).padStart(2, '0')}.
+                        </span>
+                        <span>{prereq.summary}</span>
                       </li>
                     ))}
                 </ol>
