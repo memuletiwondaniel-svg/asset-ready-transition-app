@@ -21,7 +21,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
     <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel="Manage Handover" />
+        <BreadcrumbNavigation currentPageLabel="P2A Handover" />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
             <Button
@@ -37,10 +37,10 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                {t.manageHandover || 'Manage Handover'}
+                {t.p2aHandover || 'P2A Handover'}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking'}
+                {t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking'}
               </p>
             </div>
           </div>
