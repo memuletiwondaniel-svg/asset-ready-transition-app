@@ -50,23 +50,23 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
       {/* Main Content with Tabs */}
       <div className="flex-1 overflow-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 h-12">
-            <TabsTrigger value="pac" className="flex items-center gap-2">
-              <ClipboardList className="h-4 w-4" />
-              <span className="hidden sm:inline">Provisional Handover (PAC)</span>
+          <TabsList className="inline-flex h-12 w-auto">
+            <TabsTrigger value="pac" className="flex items-center gap-2 px-4">
+              <ClipboardList className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Provisional Handover (PAC)</span>
               <span className="sm:hidden">PAC</span>
             </TabsTrigger>
-            <TabsTrigger value="fac" className="flex items-center gap-2">
-              <Award className="h-4 w-4" />
-              <span className="hidden sm:inline">Final Handover (FAC)</span>
+            <TabsTrigger value="fac" className="flex items-center gap-2 px-4">
+              <Award className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Final Handover (FAC)</span>
               <span className="sm:hidden">FAC</span>
             </TabsTrigger>
-            <TabsTrigger value="sof" className="flex items-center gap-2">
-              <FileCheck2 className="h-4 w-4" />
+            <TabsTrigger value="sof" className="flex items-center gap-2 px-4">
+              <FileCheck2 className="h-4 w-4 shrink-0" />
               <span>SoF</span>
             </TabsTrigger>
-            <TabsTrigger value="owl" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
+            <TabsTrigger value="owl" className="flex items-center gap-2 px-4">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
               <span>OWL</span>
             </TabsTrigger>
           </TabsList>
