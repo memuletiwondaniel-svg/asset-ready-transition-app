@@ -43,6 +43,10 @@ export interface ORPPlanDeliverable {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
   completion_percentage: number;
   comments?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  committed_cost?: number;
+  cost_category?: string;
   deliverable?: ORPDeliverable;
 }
 

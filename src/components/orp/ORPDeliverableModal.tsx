@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, User, GitBranch, ArrowRight, ArrowLeft, Clock, Calendar } from 'lucide-react';
+import { Plus, Trash2, User, GitBranch, ArrowRight, ArrowLeft, Clock, Calendar, DollarSign } from 'lucide-react';
+import { ORACostEditPanel } from '@/components/ora/ORACostEditPanel';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
@@ -44,6 +45,10 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
   const [startDate, setStartDate] = useState(deliverable?.start_date || '');
   const [endDate, setEndDate] = useState(deliverable?.end_date || '');
   const [estimatedManhours, setEstimatedManhours] = useState(deliverable?.estimated_manhours || '');
+  const [estimatedCost, setEstimatedCost] = useState(deliverable?.estimated_cost || 0);
+  const [actualCost, setActualCost] = useState(deliverable?.actual_cost || 0);
+  const [committedCost, setCommittedCost] = useState(deliverable?.committed_cost || 0);
+  const [costCategory, setCostCategory] = useState(deliverable?.cost_category || '');
 
   // Fetch successors (deliverables that depend on this one)
   const { data: successors } = useQuery({
@@ -69,6 +74,10 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
       setStartDate(deliverable.start_date || '');
       setEndDate(deliverable.end_date || '');
       setEstimatedManhours(deliverable.estimated_manhours || '');
+      setEstimatedCost(deliverable.estimated_cost || 0);
+      setActualCost(deliverable.actual_cost || 0);
+      setCommittedCost(deliverable.committed_cost || 0);
+      setCostCategory(deliverable.cost_category || '');
     }
   }, [deliverable]);
 
@@ -92,7 +101,11 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
       comments,
       start_date: startDate,
       end_date: endDate,
-      estimated_manhours: estimatedManhours ? Number(estimatedManhours) : undefined
+      estimated_manhours: estimatedManhours ? Number(estimatedManhours) : undefined,
+      estimated_cost: estimatedCost,
+      actual_cost: actualCost,
+      committed_cost: committedCost,
+      cost_category: costCategory || undefined
     });
     onOpenChange(false);
   };
@@ -208,9 +221,13 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="details" className="mt-4 flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-5 w-full">
+          <TabsList className="grid grid-cols-6 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="cost" className="gap-1">
+              <DollarSign className="w-3 h-3" />
+              Cost
+            </TabsTrigger>
             <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
             <TabsTrigger value="collaborators">Team</TabsTrigger>
             <TabsTrigger value="attachments">Files</TabsTrigger>
@@ -361,7 +378,19 @@ export const ORPDeliverableModal: React.FC<ORPDeliverableModalProps> = ({
               </div>
             )}
 
-            
+          </TabsContent>
+
+          <TabsContent value="cost" className="space-y-4 mt-4 flex-1 overflow-y-auto">
+            <ORACostEditPanel
+              estimatedCost={estimatedCost}
+              actualCost={actualCost}
+              committedCost={committedCost}
+              costCategory={costCategory}
+              onEstimatedCostChange={setEstimatedCost}
+              onActualCostChange={setActualCost}
+              onCommittedCostChange={setCommittedCost}
+              onCostCategoryChange={setCostCategory}
+            />
           </TabsContent>
 
           <TabsContent value="dependencies" className="space-y-6 mt-4 flex-1 overflow-y-auto">
