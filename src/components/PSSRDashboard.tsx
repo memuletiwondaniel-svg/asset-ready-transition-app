@@ -231,7 +231,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       {
         id: '7d5a90f1-2771-4754-93eb-4499592bf638',
         name: 'Lyle Koch',
-        role: 'P&M Director',
+        role: 'CS Deputy Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/4f911475-2022-4a0c-bfea-1a4263677c03/1757589686150.png',
         pendingTasks: 2,
         isOnline: true
@@ -251,7 +251,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       {
         id: '9701c5ba-9d9e-46e7-9431-0613cd9c7260',
         name: 'Marije Hoedemaker',
-        role: 'P&M Director',
+        role: 'P&E Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/bd8dd7af-6bd4-4ca5-99ca-20bd53e38b4e/1757797433321.png',
         pendingTasks: 1,
         isOnline: false
@@ -259,7 +259,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       {
         id: 'c89c4b90-d52c-44d5-adc6-a3e51ccb0fcb',
         name: 'Paul Van Den Hemel',
-        role: 'P&E Director',
+        role: 'P&M Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2/1757605571147.jpg',
         pendingTasks: 0,
         isOnline: true
