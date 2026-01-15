@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 import PACManagementTab from './PACManagementTab';
 import FACManagementTab from './FACManagementTab';
 import SOFCertificateManagement from './SOFCertificateManagement';
@@ -12,6 +13,23 @@ import OWLManagementTab from './OWLManagementTab';
 interface ManageHandoverProps {
   onBack: () => void;
 }
+
+const getParentTabIconColor = (tabValue: string, isActive: boolean) => {
+  if (!isActive) return 'text-muted-foreground/50';
+  
+  switch (tabValue) {
+    case 'pac':
+      return 'text-teal-500 dark:text-teal-400';
+    case 'fac':
+      return 'text-emerald-500 dark:text-emerald-400';
+    case 'sof':
+      return 'text-blue-500 dark:text-blue-400';
+    case 'owl':
+      return 'text-amber-500 dark:text-amber-400';
+    default:
+      return 'text-foreground';
+  }
+};
 
 export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
   const { translations: t } = useLanguage();
@@ -57,22 +75,46 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
       <div className="flex-1 overflow-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="inline-flex h-12 w-auto">
-            <TabsTrigger value="pac" className="flex items-center gap-2 px-4">
-              <ClipboardList className="h-4 w-4 shrink-0" />
+            <TabsTrigger 
+              value="pac" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'pac' && "text-muted-foreground/60"
+              )}
+            >
+              <ClipboardList className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pac', activeTab === 'pac'))} />
               <span className="hidden sm:inline whitespace-nowrap">Provisional Handover (PAC)</span>
               <span className="sm:hidden">PAC</span>
             </TabsTrigger>
-            <TabsTrigger value="fac" className="flex items-center gap-2 px-4">
-              <Award className="h-4 w-4 shrink-0" />
+            <TabsTrigger 
+              value="fac" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'fac' && "text-muted-foreground/60"
+              )}
+            >
+              <Award className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('fac', activeTab === 'fac'))} />
               <span className="hidden sm:inline whitespace-nowrap">Final Handover (FAC)</span>
               <span className="sm:hidden">FAC</span>
             </TabsTrigger>
-            <TabsTrigger value="sof" className="flex items-center gap-2 px-4">
-              <FileCheck2 className="h-4 w-4 shrink-0" />
+            <TabsTrigger 
+              value="sof" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'sof' && "text-muted-foreground/60"
+              )}
+            >
+              <FileCheck2 className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('sof', activeTab === 'sof'))} />
               <span>SoF</span>
             </TabsTrigger>
-            <TabsTrigger value="owl" className="flex items-center gap-2 px-4">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
+            <TabsTrigger 
+              value="owl" 
+              className={cn(
+                "flex items-center gap-2 px-4 transition-colors duration-200",
+                activeTab !== 'owl' && "text-muted-foreground/60"
+              )}
+            >
+              <AlertTriangle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('owl', activeTab === 'owl'))} />
               <span>OWL</span>
             </TabsTrigger>
           </TabsList>
