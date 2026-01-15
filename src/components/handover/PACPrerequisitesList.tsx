@@ -5,10 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, ChevronDown, ChevronRight, Edit2, Trash2, Search, GripVertical } from 'lucide-react';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus, ChevronDown, ChevronRight, Edit2, Trash2, Search, Settings2 } from 'lucide-react';
 import { usePACPrerequisites, usePACCategories, PACPrerequisite } from '@/hooks/useHandoverPrerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import PACPrerequisiteDialog from './PACPrerequisiteDialog';
+
+interface ColumnVisibility {
+  sampleEvidence: boolean;
+  deliveringParty: boolean;
+  receivingParty: boolean;
+}
 
 const PACPrerequisitesList: React.FC = () => {
   const { data: prerequisites, isLoading: isLoadingPrereqs, deletePrerequisite, isDeleting } = usePACPrerequisites();
@@ -17,6 +24,11 @@ const PACPrerequisitesList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrerequisite, setEditingPrerequisite] = useState<PACPrerequisite | null>(null);
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+    sampleEvidence: false,
+    deliveringParty: false,
+    receivingParty: false,
+  });
 
   // Group prerequisites by category
   const groupedPrerequisites = useMemo(() => {
@@ -87,14 +99,43 @@ const PACPrerequisitesList: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search prerequisites..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search prerequisites..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.sampleEvidence}
+                  onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, sampleEvidence: checked }))}
+                >
+                  Sample Evidence
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.deliveringParty}
+                  onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, deliveringParty: checked }))}
+                >
+                  Delivering Party
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.receivingParty}
+                  onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, receivingParty: checked }))}
+                >
+                  Receiving Party
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
@@ -144,9 +185,9 @@ const PACPrerequisitesList: React.FC = () => {
                           <TableRow>
                             <TableHead className="w-10">#</TableHead>
                             <TableHead>Summary</TableHead>
-                            <TableHead>Sample Evidence</TableHead>
-                            <TableHead>Delivering Party</TableHead>
-                            <TableHead>Receiving Party</TableHead>
+                            {columnVisibility.sampleEvidence && <TableHead className="min-w-48">Sample Evidence</TableHead>}
+                            {columnVisibility.deliveringParty && <TableHead>Delivering Party</TableHead>}
+                            {columnVisibility.receivingParty && <TableHead>Receiving Party</TableHead>}
                             <TableHead className="w-24">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -170,39 +211,45 @@ const PACPrerequisitesList: React.FC = () => {
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground max-w-48 truncate">
-                                {prereq.sample_evidence || '-'}
-                              </TableCell>
-                              <TableCell>
-                                {prereq.delivering_parties && prereq.delivering_parties.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {prereq.delivering_parties.map((role, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-xs">
-                                        {role.name}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                ) : prereq.delivering_role?.name ? (
-                                  <Badge variant="outline">{prereq.delivering_role.name}</Badge>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {prereq.receiving_parties && prereq.receiving_parties.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {prereq.receiving_parties.map((role, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-xs">
-                                        {role.name}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                ) : prereq.receiving_role?.name ? (
-                                  <Badge variant="outline">{prereq.receiving_role.name}</Badge>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
+                              {columnVisibility.sampleEvidence && (
+                                <TableCell className="text-sm text-muted-foreground min-w-48 max-w-72">
+                                  <p className="whitespace-normal break-words">{prereq.sample_evidence || '-'}</p>
+                                </TableCell>
+                              )}
+                              {columnVisibility.deliveringParty && (
+                                <TableCell>
+                                  {prereq.delivering_parties && prereq.delivering_parties.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {prereq.delivering_parties.map((role, idx) => (
+                                        <Badge key={idx} variant="outline" className="text-xs">
+                                          {role.name}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  ) : prereq.delivering_role?.name ? (
+                                    <Badge variant="outline">{prereq.delivering_role.name}</Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                              )}
+                              {columnVisibility.receivingParty && (
+                                <TableCell>
+                                  {prereq.receiving_parties && prereq.receiving_parties.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {prereq.receiving_parties.map((role, idx) => (
+                                        <Badge key={idx} variant="outline" className="text-xs">
+                                          {role.name}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  ) : prereq.receiving_role?.name ? (
+                                    <Badge variant="outline">{prereq.receiving_role.name}</Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                              )}
                               <TableCell>
                                 <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                   <Button
