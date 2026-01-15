@@ -13,6 +13,7 @@ import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ScheduleActivityModal } from '@/components/widgets/ScheduleActivityModal';
 import { CategoryItemsOverlay } from '@/components/pssr/CategoryItemsOverlay';
+import { FullChecklistOverlay } from '@/components/pssr/FullChecklistOverlay';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import BackgroundSlideshow from '@/components/BackgroundSlideshow';
@@ -675,6 +676,17 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         categoryName={categoryOverlay.categoryName}
         categoryStats={categoryOverlay.stats || undefined}
         onItemClick={handleCategoryItemClick}
+      />
+
+      {/* Full Checklist Overlay */}
+      <FullChecklistOverlay
+        open={checklistOverlay.isOpen}
+        onOpenChange={(open) => setChecklistOverlay(prev => ({ ...prev, isOpen: open }))}
+        pssrId={pssrId}
+        initialFilter={checklistOverlay.filterType && checklistOverlay.filterValue ? {
+          type: checklistOverlay.filterType,
+          value: checklistOverlay.filterValue
+        } : undefined}
       />
     </div>
   );
