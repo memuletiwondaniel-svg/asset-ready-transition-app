@@ -170,15 +170,15 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-semibold text-foreground">Facility:</span>
-                <span className="ml-2 text-muted-foreground">{facilityName || '[Enter Facility Name]'}</span>
+                <span className="ml-2 text-muted-foreground">{facilityName || '[Facility Name]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">Project:</span>
-                <span className="ml-2 text-muted-foreground">{projectName || '[Enter Project Name]'}</span>
+                <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">PAC Date:</span>
-                <span className="ml-2 text-muted-foreground">{pacDate || '[Enter Date]'}</span>
+                <span className="ml-2 text-muted-foreground">{pacDate || '[PAC Date]'}</span>
               </div>
             </div>
           </div>
