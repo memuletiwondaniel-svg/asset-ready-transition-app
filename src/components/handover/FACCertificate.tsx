@@ -173,39 +173,26 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
           {/* Certificate Body */}
           <div className="space-y-6 text-sm leading-relaxed">
             {/* Opening Statement */}
-            <div>
-              <h3 className="text-base font-extrabold text-gray-900 mb-3">Project Completion Confirmation</h3>
-              {isEditing ? (
-                <Textarea
-                  value={editContent.openingStatement}
-                  onChange={(e) => setEditContent({ ...editContent, openingStatement: e.target.value })}
-                  className="min-h-[100px]"
-                />
-              ) : (
-                <p className="text-foreground">{content.openingStatement}</p>
-              )}
-            </div>
-
-            {/* Effective Date Section */}
-            <div className="border-t border-b border-border py-4 my-4">
-              <p className="font-semibold text-foreground text-center">
-                Effective from the FAC sign-off date:
-              </p>
-            </div>
+            {isEditing ? (
+              <Textarea
+                value={editContent.openingStatement}
+                onChange={(e) => setEditContent({ ...editContent, openingStatement: e.target.value })}
+                className="min-h-[100px]"
+              />
+            ) : (
+              <p className="text-foreground">{content.openingStatement}</p>
+            )}
 
             {/* Ownership Statement */}
-            <div>
-              <h3 className="text-base font-extrabold text-gray-900 mb-3">Transfer of Ownership</h3>
-              {isEditing ? (
-                <Textarea
-                  value={editContent.ownershipStatement}
-                  onChange={(e) => setEditContent({ ...editContent, ownershipStatement: e.target.value })}
-                  className="min-h-[120px]"
-                />
-              ) : (
-                <p className="text-foreground">{content.ownershipStatement}</p>
-              )}
-            </div>
+            {isEditing ? (
+              <Textarea
+                value={editContent.ownershipStatement}
+                onChange={(e) => setEditContent({ ...editContent, ownershipStatement: e.target.value })}
+                className="min-h-[120px]"
+              />
+            ) : (
+              <p className="text-foreground">{content.ownershipStatement}</p>
+            )}
 
             {/* Approvals Section */}
             <div className="mt-8">
