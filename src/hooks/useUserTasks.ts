@@ -31,21 +31,25 @@ export const useUserTasks = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const { data: tasksData, error: tasksError } = await supabase
-          .from('user_tasks')
-          .select('*')
-          .eq('status', 'pending')
-          .order('display_order', { ascending: true })
-          .order('priority', { ascending: false })
-          .order('due_date', { ascending: true });
+        // Fetch tasks and dependencies in parallel for better performance
+        const [tasksResult, depsResult] = await Promise.all([
+          supabase
+            .from('user_tasks')
+            .select('*')
+            .eq('status', 'pending')
+            .order('display_order', { ascending: true })
+            .order('priority', { ascending: false })
+            .order('due_date', { ascending: true }),
+          supabase
+            .from('task_dependencies')
+            .select('*')
+        ]);
 
-        if (tasksError) throw tasksError;
+        if (tasksResult.error) throw tasksResult.error;
+        if (depsResult.error) throw depsResult.error;
 
-        const { data: depsData, error: depsError } = await supabase
-          .from('task_dependencies')
-          .select('*');
-
-        if (depsError) throw depsError;
+        const tasksData = tasksResult.data;
+        const depsData = depsResult.data;
 
         setDependencies(depsData || []);
 

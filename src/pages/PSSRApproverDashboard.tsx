@@ -152,40 +152,7 @@ const MOCK_OWL_ITEMS: UserOWLItem[] = [
   },
 ];
 
-const MOCK_CUSTOM_TASKS = [
-  {
-    id: 'task-003',
-    title: 'Update Maintenance Training Plan',
-    description: 'Update the ORA training plan with latest course schedule and participant list',
-    type: 'action' as const,
-    priority: 'Medium' as const,
-    status: 'pending' as const,
-    due_date: addDays(new Date(), 7).toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    display_order: 0,
-    user_id: 'mock-user',
-    metadata: {},
-    blocking_tasks: [] as string[],
-    blocked_by_tasks: [] as string[],
-  },
-  {
-    id: 'task-004',
-    title: 'Approve Handover Batch 3 Documentation',
-    description: 'Review and approve documentation for Handover Batch 3 items',
-    type: 'approval' as const,
-    priority: 'Medium' as const,
-    status: 'pending' as const,
-    due_date: addDays(new Date(), 5).toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    display_order: 1,
-    user_id: 'mock-user',
-    metadata: {},
-    blocking_tasks: [] as string[],
-    blocked_by_tasks: [] as string[],
-  },
-];
+const MOCK_CUSTOM_TASKS: any[] = [];
 
 const PSSRApproverDashboard: React.FC = () => {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Clock, ChevronRight } from 'lucide-react';
+import { Clock, ChevronRight } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 
 interface PSSRTaskCardProps {
@@ -47,9 +47,8 @@ export const PSSRTaskCard: React.FC<PSSRTaskCardProps> = ({
           {/* PSSR Badge */}
           <Badge 
             variant="outline" 
-            className="shrink-0 bg-amber-500/10 text-amber-600 border-amber-500/30 gap-1"
+            className="shrink-0 bg-amber-500/10 text-amber-600 border-amber-500/30"
           >
-            <Shield className="h-3 w-3" />
             PSSR
           </Badge>
           
