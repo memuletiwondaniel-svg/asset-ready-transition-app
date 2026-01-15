@@ -266,7 +266,7 @@ export const ORAActivityCatalog = () => {
                         {phaseActivities.map((activity) => (
                           <TableRow key={activity.id} className="group">
                             <TableCell className="font-mono text-xs text-muted-foreground">
-                              {activity.activity_id}
+                              {activity.display_order}
                             </TableCell>
                             <TableCell>
                               <p className="font-medium text-sm">{activity.name}</p>
