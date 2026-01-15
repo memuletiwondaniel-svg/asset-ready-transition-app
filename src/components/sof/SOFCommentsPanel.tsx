@@ -11,7 +11,10 @@ import {
   Zap, 
   Users,
   ChevronDown,
-  MessageSquare
+  MessageSquare,
+  HardHat,
+  Heart,
+  Cog
 } from 'lucide-react';
 
 interface SOFCommentsPanelProps {
@@ -67,6 +70,30 @@ const DEMO_COMMENTS = {
     summary: "Motor rotation checks completed. Electrical isolation procedures verified. Ground fault protection tested. UPS systems commissioned. Emergency lighting operational. Cable terminations torqued and verified. Arc flash labels installed.",
     reviewer: "Tom Davis - Electrical Engineer",
     date: "Dec 3, 2024"
+  },
+  civil: {
+    title: "Civil",
+    icon: HardHat,
+    status: "complete" as const,
+    summary: "Structural integrity assessments completed for all new installations. Foundation bolt torque verification documented. Drainage systems tested and operational. Fire escape routes verified clear and properly marked. Secondary containment areas inspected and certified. All civil punch list items closed out.",
+    reviewer: "Ahmed Hassan - Civil Engineer",
+    date: "Dec 5, 2024"
+  },
+  operations: {
+    title: "Operations",
+    icon: Cog,
+    status: "complete" as const,
+    summary: "Operating procedures reviewed and approved by shift supervisors. Control room displays configured and verified. Alarm rationalization completed. Operator training for DP300 completed with 100% attendance. Shift handover protocols established. Emergency response drills conducted successfully.",
+    reviewer: "Maria Garcia - Operations Superintendent",
+    date: "Dec 6, 2024"
+  },
+  hse: {
+    title: "HSE",
+    icon: Heart,
+    status: "complete" as const,
+    summary: "Job Safety Analysis (JSA) completed for all startup activities. PPE requirements verified and communicated. Environmental permits confirmed active. Spill response equipment staged at designated locations. First aid stations stocked and accessible. Toolbox talks scheduled for startup crew.",
+    reviewer: "James Miller - HSE Lead",
+    date: "Dec 5, 2024"
   }
 };
 
@@ -123,7 +150,10 @@ export const SOFCommentsPanel: React.FC<SOFCommentsPanelProps> = ({ pssrId }) =>
     DEMO_COMMENTS.process,
     DEMO_COMMENTS.paco,
     DEMO_COMMENTS.mechanical,
-    DEMO_COMMENTS.electrical
+    DEMO_COMMENTS.electrical,
+    DEMO_COMMENTS.civil,
+    DEMO_COMMENTS.operations,
+    DEMO_COMMENTS.hse
   ];
 
   return (
