@@ -32,7 +32,7 @@ export const ORAActivityCatalog = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [expandedPhases, setExpandedPhases] = useState<string[]>(ORA_PHASES.map(p => p.value));
+  const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
   const [showDescription, setShowDescription] = useState(false);
   
   const [formData, setFormData] = useState<ORAActivityInput>({
