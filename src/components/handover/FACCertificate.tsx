@@ -26,7 +26,7 @@ interface FACCertificateProps {
 
 const defaultContent = {
   openingStatement: `This Final Acceptance Certificate (FAC) confirms that the project has been completed in full accordance with the agreed project scope, and that all deliverables have been accepted by both the Asset and Project Teams.`,
-  ownershipStatement: `Upon signed approval of this FAC, the Asset takes over full ownership of the Operation and Maintenance, with accountability and responsibility of the facilities, systems, and sub-systems, as detailed in project PEP or other appropriate project documentation which details the agreed scopes that were to be completed as part of this Project.`
+  ownershipStatement: `Effective from the FAC sign-off date, the Asset takes over full ownership of the Operation and Maintenance, with accountability and responsibility of the facilities, systems, and sub-systems, as detailed in project scope document. The Project and Asset teams agree that:`
 };
 
 const FACCertificate: React.FC<FACCertificateProps> = ({
