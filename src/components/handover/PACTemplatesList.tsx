@@ -156,43 +156,59 @@ const PACTemplatesList: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTemplates.map(template => (
-                <Card key={template.id} className="group hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-base font-semibold line-clamp-1">
-                        {template.name}
-                      </CardTitle>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleOpenDialog(template)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(template.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+              {filteredTemplates.map((template, index) => {
+                const colorVariants = [
+                  'hover:border-blue-500/50 hover:bg-blue-500/5',
+                  'hover:border-emerald-500/50 hover:bg-emerald-500/5',
+                  'hover:border-violet-500/50 hover:bg-violet-500/5',
+                  'hover:border-amber-500/50 hover:bg-amber-500/5',
+                  'hover:border-rose-500/50 hover:bg-rose-500/5',
+                  'hover:border-cyan-500/50 hover:bg-cyan-500/5',
+                ];
+                const colorClass = colorVariants[index % colorVariants.length];
+                
+                return (
+                  <Card 
+                    key={template.id} 
+                    className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${colorClass}`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardHeader className="pb-3 relative">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-base font-semibold line-clamp-1 group-hover:text-primary transition-colors duration-200">
+                          {template.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-primary/10"
+                            onClick={() => handleOpenDialog(template)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(template.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <CardDescription className="line-clamp-2 min-h-[2.5rem]">
-                      {template.description || 'No description'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <Badge variant="secondary">
-                      {template.prerequisite_ids?.length || 0} prerequisites
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
+                      <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+                        {template.description || 'No description'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0 relative">
+                      <Badge variant="secondary" className="group-hover:bg-primary/10 transition-colors duration-200">
+                        {template.prerequisite_ids?.length || 0} prerequisites
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
