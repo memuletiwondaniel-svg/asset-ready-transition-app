@@ -24,9 +24,8 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
         <BreadcrumbNavigation 
           currentPageLabel="P2A Handover" 
           customBreadcrumbs={[
-            { label: 'Home', path: '/' },
-            { label: 'Administration', path: '/admin-tools' },
-            { label: 'P2A Handover', path: '/admin-tools' }
+            { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
+            { label: 'Administration', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
           ]}
         />
         <div className="flex items-center justify-between mt-3">
