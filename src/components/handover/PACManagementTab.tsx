@@ -18,7 +18,7 @@ const PACManagementTab: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="prerequisites" className="flex items-center gap-2">
             <List className="h-4 w-4" />
-            PAC Prerequisites (VCR)
+            Prerequisites
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <LayoutTemplate className="h-4 w-4" />
