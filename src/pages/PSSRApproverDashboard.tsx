@@ -9,25 +9,28 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Clock, 
   AlertTriangle, 
   CheckCircle2, 
   Search,
-  MapPin,
-  ArrowRight,
-  FileText,
   ListChecks,
   Plus,
   X,
   Loader2,
   Trash2,
-  MoreVertical,
-  ClipboardList
+  ClipboardList,
+  FileCheck,
+  Wrench,
+  Shield,
+  Users,
+  Calendar
 } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format, addDays } from 'date-fns';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -37,15 +40,176 @@ import { OWLTaskCard } from '@/components/tasks/OWLTaskCard';
 import OWLItemDialog from '@/components/handover/OWLItemDialog';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserOWLItem } from '@/hooks/useUserOWLItems';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+// Mock data for demonstration - OSRH relevant tasks
+const MOCK_PSSR_REVIEWS = [
+  {
+    pssr: {
+      id: 'pssr-001',
+      pssr_id: 'PSSR-2024-001',
+      project_name: 'NRNGL Phase 3 Expansion',
+      asset: 'Gas Processing Unit A',
+    },
+    approverRole: 'Process Engineering TA',
+    pendingSince: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    itemCount: 24,
+  },
+  {
+    pssr: {
+      id: 'pssr-002',
+      pssr_id: 'PSSR-2024-002',
+      project_name: 'Utilities Upgrade Project',
+      asset: 'Compressor Station B',
+    },
+    approverRole: 'Technical Safety TA',
+    pendingSince: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    itemCount: 18,
+  },
+];
+
+const MOCK_OWL_ITEMS: UserOWLItem[] = [
+  {
+    id: 'owl-001',
+    item_number: 'OWL-2024-0042',
+    project_id: 'proj-001',
+    source: 'PUNCHLIST',
+    source_id: null,
+    title: 'Replace damaged pressure relief valve on V-102',
+    description: 'Valve showing signs of corrosion, needs immediate replacement before startup',
+    priority: 1,
+    status: 'IN_PROGRESS',
+    action_party_role_id: null,
+    assigned_to: null,
+    due_date: addDays(new Date(), 3).toISOString(),
+    completed_date: null,
+    comments: null,
+    created_by: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    project: { id: 'proj-001', name: 'NRNGL Phase 3', code: 'DP300' },
+    action_role: { id: 'role-001', name: 'Mechanical Engineering' },
+  },
+  {
+    id: 'owl-002',
+    item_number: 'OWL-2024-0043',
+    project_id: 'proj-002',
+    source: 'PAC',
+    source_id: null,
+    title: 'Complete fire & gas system commissioning documentation',
+    description: 'Documentation package required for PAC review',
+    priority: 2,
+    status: 'OPEN',
+    action_party_role_id: null,
+    assigned_to: null,
+    due_date: addDays(new Date(), 7).toISOString(),
+    completed_date: null,
+    comments: null,
+    created_by: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    project: { id: 'proj-002', name: 'Utilities Upgrade', code: 'UT-2024' },
+    action_role: { id: 'role-002', name: 'HSE' },
+  },
+  {
+    id: 'owl-003',
+    item_number: 'OWL-2024-0044',
+    project_id: 'proj-001',
+    source: 'PSSR',
+    source_id: null,
+    title: 'Verify emergency shutdown system interlock logic',
+    description: 'ESD logic verification required per PSSR checklist item TI-23',
+    priority: 1,
+    status: 'OPEN',
+    action_party_role_id: null,
+    assigned_to: null,
+    due_date: addDays(new Date(), 2).toISOString(),
+    completed_date: null,
+    comments: null,
+    created_by: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    project: { id: 'proj-001', name: 'NRNGL Phase 3', code: 'DP300' },
+    action_role: { id: 'role-003', name: 'Instrumentation & Controls' },
+  },
+];
+
+const MOCK_CUSTOM_TASKS = [
+  {
+    id: 'task-001',
+    title: 'Review ORP Phase 2 Deliverables',
+    description: 'Review and approve the Operation Readiness Plan deliverables for Phase 2 handover',
+    type: 'review' as const,
+    priority: 'High' as const,
+    status: 'pending' as const,
+    due_date: addDays(new Date(), 1).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    display_order: 0,
+    user_id: 'mock-user',
+    metadata: {},
+    blocking_tasks: [] as string[],
+    blocked_by_tasks: [] as string[],
+  },
+  {
+    id: 'task-002',
+    title: 'Complete FAC Pre-requisites Verification',
+    description: 'Verify all FAC prerequisites are met before scheduling the Final Acceptance Certificate review',
+    type: 'action' as const,
+    priority: 'High' as const,
+    status: 'pending' as const,
+    due_date: addDays(new Date(), 4).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    display_order: 1,
+    user_id: 'mock-user',
+    metadata: {},
+    blocking_tasks: [] as string[],
+    blocked_by_tasks: [] as string[],
+  },
+  {
+    id: 'task-003',
+    title: 'Update Maintenance Training Plan',
+    description: 'Update the ORA training plan with latest course schedule and participant list',
+    type: 'action' as const,
+    priority: 'Medium' as const,
+    status: 'pending' as const,
+    due_date: addDays(new Date(), 7).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    display_order: 2,
+    user_id: 'mock-user',
+    metadata: {},
+    blocking_tasks: [] as string[],
+    blocked_by_tasks: [] as string[],
+  },
+  {
+    id: 'task-004',
+    title: 'Approve Handover Batch 3 Documentation',
+    description: 'Review and approve documentation for Handover Batch 3 items',
+    type: 'approval' as const,
+    priority: 'Medium' as const,
+    status: 'pending' as const,
+    due_date: addDays(new Date(), 5).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    display_order: 3,
+    user_id: 'mock-user',
+    metadata: {},
+    blocking_tasks: [] as string[],
+    blocked_by_tasks: [] as string[],
+  },
+];
 
 const PSSRApproverDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { data: pendingPSSRs, isLoading: isLoadingPSSRs } = usePSSRsAwaitingReview(user?.id);
   const { 
-    tasks, 
+    tasks: dbTasks, 
     loading: isLoadingTasks,
     updateTaskStatus,
     deleteTask,
@@ -54,7 +218,7 @@ const PSSRApproverDashboard: React.FC = () => {
     bulkDelete
   } = useUserTasks();
   const {
-    items: owlItems,
+    items: dbOwlItems,
     isLoading: isLoadingOWL,
     stats: owlStats,
     updateStatus: updateOWLStatus,
@@ -62,11 +226,25 @@ const PSSRApproverDashboard: React.FC = () => {
   } = useUserOWLItems();
   const { data: projects } = useProjectsForOWL();
   
+  // Combine real data with mock data for demonstration
+  const tasks = dbTasks.length > 0 ? dbTasks : MOCK_CUSTOM_TASKS;
+  const owlItems = dbOwlItems.length > 0 ? dbOwlItems : MOCK_OWL_ITEMS;
+  const pssrReviews = pendingPSSRs?.length ? pendingPSSRs : MOCK_PSSR_REVIEWS;
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [selectedOWLItem, setSelectedOWLItem] = useState<UserOWLItem | null>(null);
   const [owlDialogOpen, setOWLDialogOpen] = useState(false);
+  
+  // Create Task Dialog State
+  const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskType, setNewTaskType] = useState('action');
+  const [newTaskPriority, setNewTaskPriority] = useState('Medium');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
@@ -109,14 +287,14 @@ const PSSRApproverDashboard: React.FC = () => {
   const filteredPSSRs = useMemo(() => {
     if (filterType !== 'all' && filterType !== 'pssr') return [];
     
-    return pendingPSSRs?.filter(item => {
+    return pssrReviews?.filter(item => {
       const matchesSearch = !searchQuery || 
         item.pssr.pssr_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.pssr.project_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.pssr.asset?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     }) || [];
-  }, [pendingPSSRs, searchQuery, filterType]);
+  }, [pssrReviews, searchQuery, filterType]);
 
   // Filter OWL items
   const filteredOWLItems = useMemo(() => {
@@ -133,7 +311,7 @@ const PSSRApproverDashboard: React.FC = () => {
   }, [owlItems, searchQuery, filterType]);
 
   // Stats
-  const pssrCount = pendingPSSRs?.length || 0;
+  const pssrCount = filteredPSSRs?.length || 0;
   const owlCount = owlItems.length;
   const totalTasks = taskCounts.total + pssrCount + owlCount;
 
@@ -211,6 +389,63 @@ const PSSRApproverDashboard: React.FC = () => {
     }
   };
 
+  const handleCreateTask = async () => {
+    if (!newTaskTitle.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a task title',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsCreatingTask(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to create a task',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { error } = await supabase.from('user_tasks').insert({
+        title: newTaskTitle.trim(),
+        description: newTaskDescription.trim() || null,
+        type: newTaskType,
+        priority: newTaskPriority,
+        due_date: newTaskDueDate || null,
+        status: 'pending',
+        user_id: user.id,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Task created successfully',
+      });
+
+      // Reset form
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      setNewTaskType('action');
+      setNewTaskPriority('Medium');
+      setNewTaskDueDate('');
+      setShowCreateTaskDialog(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create task',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingTask(false);
+    }
+  };
+
   const isLoading = isLoadingPSSRs || isLoadingTasks || isLoadingOWL;
   const hasNoResults = filteredTasks.length === 0 && filteredPSSRs.length === 0 && filteredOWLItems.length === 0;
 
@@ -239,7 +474,13 @@ const PSSRApproverDashboard: React.FC = () => {
                 </div>
               </div>
               
-              <NotificationCenter />
+              <div className="flex items-center gap-3">
+                <Button onClick={() => setShowCreateTaskDialog(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Task
+                </Button>
+                <NotificationCenter />
+              </div>
             </div>
           </div>
 
@@ -348,9 +589,13 @@ const PSSRApproverDashboard: React.FC = () => {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <CheckCircle2 className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground mb-4">
                       {searchQuery ? 'No tasks match your search.' : 'No pending tasks.'}
                     </p>
+                    <Button onClick={() => setShowCreateTaskDialog(true)} variant="outline" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Create Your First Task
+                    </Button>
                   </CardContent>
                 </Card>
               ) : (
@@ -367,7 +612,10 @@ const PSSRApproverDashboard: React.FC = () => {
                       >
                         <CardContent className="py-3 px-4">
                           <div className="flex items-center gap-4">
-                            <Badge variant="outline" className="shrink-0">PSSR</Badge>
+                            <Badge variant="outline" className="shrink-0 bg-amber-500/10 text-amber-600 border-amber-500/30">
+                              <Shield className="h-3 w-3 mr-1" />
+                              PSSR
+                            </Badge>
                             
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
@@ -444,6 +692,138 @@ const PSSRApproverDashboard: React.FC = () => {
         item={selectedOWLItem as any}
         projects={projects || []}
       />
+
+      {/* Create Task Dialog */}
+      <Dialog open={showCreateTaskDialog} onOpenChange={setShowCreateTaskDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Create New Task
+            </DialogTitle>
+            <DialogDescription>
+              Add a personal task to track your work in OSRH
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="task-title">Title *</Label>
+              <Input 
+                id="task-title" 
+                placeholder="e.g., Review DP300 PSSR documentation" 
+                value={newTaskTitle} 
+                onChange={e => setNewTaskTitle(e.target.value)} 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="task-description">Description</Label>
+              <Textarea 
+                id="task-description" 
+                placeholder="Add details about what needs to be done..." 
+                value={newTaskDescription} 
+                onChange={e => setNewTaskDescription(e.target.value)} 
+                className="resize-none" 
+                rows={3} 
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="task-type">Type</Label>
+                <Select value={newTaskType} onValueChange={setNewTaskType}>
+                  <SelectTrigger id="task-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="approval">
+                      <div className="flex items-center gap-2">
+                        <FileCheck className="h-4 w-4" />
+                        Approval
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="review">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-4 w-4" />
+                        Review
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="action">
+                      <div className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4" />
+                        Action
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="task-priority">Priority</Label>
+                <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
+                  <SelectTrigger id="task-priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="High">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        High
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Medium">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-amber-500" />
+                        Medium
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Low">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        Low
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="task-due-date">Due Date</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="task-due-date" 
+                  type="date" 
+                  value={newTaskDueDate} 
+                  onChange={e => setNewTaskDueDate(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateTaskDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateTask} disabled={isCreatingTask || !newTaskTitle.trim()}>
+              {isCreatingTask ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Task
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 };
