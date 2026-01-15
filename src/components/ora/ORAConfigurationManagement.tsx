@@ -23,9 +23,8 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
         <BreadcrumbNavigation 
           currentPageLabel={t.oraPlans || "ORA Plans"} 
           customBreadcrumbs={[
-            { label: 'Home', path: '/' },
-            { label: 'Administration', path: '/admin-tools' },
-            { label: t.oraPlans || 'ORA Plans', path: '/admin-tools' }
+            { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
+            { label: 'Administration', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
           ]}
         />
         <div className="flex items-center justify-between mt-3">
