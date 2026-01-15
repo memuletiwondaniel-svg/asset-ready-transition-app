@@ -20,7 +20,14 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel={t.oraConfiguration || "ORA Configuration"} />
+        <BreadcrumbNavigation 
+          currentPageLabel={t.oraPlans || "ORA Plans"} 
+          customBreadcrumbs={[
+            { label: 'Home', path: '/' },
+            { label: 'Administration', path: '/admin-tools' },
+            { label: t.oraPlans || 'ORA Plans', path: '/admin-tools' }
+          ]}
+        />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
