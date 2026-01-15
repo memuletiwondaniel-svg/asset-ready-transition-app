@@ -108,96 +108,109 @@ export const useProjects = () => {
         return [];
       }
 
-      // Fetch related data separately to avoid join issues
-      const enrichedProjects = await Promise.all(
-        (data || []).map(async (project) => {
-          let plant_name, station_name, hub_name;
+      // Batch fetch all related data in parallel (optimized from N+1 queries)
+      const projectIds = data.map(p => p.id);
+      const plantIds = data.filter(p => p.plant_id).map(p => p.plant_id);
+      const stationIds = data.filter(p => p.station_id).map(p => p.station_id);
+      const hubIds = data.filter(p => p.hub_id).map(p => p.hub_id);
 
-          if (project.plant_id) {
-            const { data: plant } = await supabase
-              .from('plant')
-              .select('name')
-              .eq('id', project.plant_id)
-              .maybeSingle();
-            plant_name = plant?.name;
-          }
+      // Execute all queries in parallel
+      const [
+        plantsResult,
+        stationsResult,
+        hubsResult,
+        teamMembersResult,
+        milestonesResult,
+        documentsResult
+      ] = await Promise.all([
+        // Fetch all plants in one query
+        plantIds.length > 0 
+          ? supabase.from('plant').select('id, name').in('id', plantIds)
+          : { data: [] },
+        // Fetch all stations in one query
+        stationIds.length > 0
+          ? supabase.from('station').select('id, name').in('id', stationIds)
+          : { data: [] },
+        // Fetch all hubs in one query
+        hubIds.length > 0
+          ? supabase.from('hubs').select('id, name').in('id', hubIds)
+          : { data: [] },
+        // Fetch all team members in one query
+        supabase.from('project_team_members').select('id, project_id, is_lead, user_id').in('project_id', projectIds),
+        // Fetch all milestones in one query
+        supabase.from('project_milestones').select('id, project_id, milestone_name, milestone_date, is_scorecard_project').in('project_id', projectIds).order('milestone_date', { ascending: true }),
+        // Fetch all documents count in one query
+        supabase.from('project_documents').select('id, project_id').in('project_id', projectIds)
+      ]);
 
-          if (project.station_id) {
-            const { data: station } = await supabase
-              .from('station')
-              .select('name')
-              .eq('id', project.station_id)
-              .maybeSingle();
-            station_name = station?.name;
-          }
+      // Create lookup maps for O(1) access
+      const plantMap = new Map((plantsResult.data || []).map(p => [p.id, p.name]));
+      const stationMap = new Map((stationsResult.data || []).map(s => [s.id, s.name]));
+      const hubMap = new Map((hubsResult.data || []).map(h => [h.id, h.name]));
 
-          if (project.hub_id) {
-            const { data: hub } = await supabase
-              .from('hubs')
-              .select('name')
-              .eq('id', project.hub_id)
-              .maybeSingle();
-            hub_name = hub?.name;
-          }
+      // Group team members by project
+      const teamMembersByProject = new Map<string, typeof teamMembersResult.data>();
+      (teamMembersResult.data || []).forEach(tm => {
+        const existing = teamMembersByProject.get(tm.project_id) || [];
+        existing.push(tm);
+        teamMembersByProject.set(tm.project_id, existing);
+      });
 
-          // Fetch team members count and lead
-          const { data: teamMembers } = await supabase
-            .from('project_team_members')
-            .select('id, is_lead, user_id')
-            .eq('project_id', project.id);
-          
-          const team_count = teamMembers?.length || 0;
-          const teamLead = teamMembers?.find(m => m.is_lead);
-          let team_lead_name, team_lead_avatar;
-          
-          if (teamLead) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('full_name, avatar_url')
-              .eq('id', teamLead.user_id)
-              .maybeSingle();
-            team_lead_name = profile?.full_name;
-            team_lead_avatar = profile?.avatar_url;
-          }
+      // Group milestones by project
+      const milestonesByProject = new Map<string, typeof milestonesResult.data>();
+      (milestonesResult.data || []).forEach(m => {
+        const existing = milestonesByProject.get(m.project_id) || [];
+        existing.push(m);
+        milestonesByProject.set(m.project_id, existing);
+      });
 
-          // Fetch milestones count and progress
-          const { data: milestones } = await supabase
-            .from('project_milestones')
-            .select('id, milestone_name, milestone_date, is_scorecard_project')
-            .eq('project_id', project.id)
-            .order('milestone_date', { ascending: true });
-          
-          const milestone_count = milestones?.length || 0;
-          const now = new Date();
-          const completed_milestone_count = milestones?.filter(m => new Date(m.milestone_date) < now).length || 0;
-          const nextMilestone = milestones?.find(m => new Date(m.milestone_date) >= now);
-          const is_scorecard = milestones?.some(m => m.is_scorecard_project) || false;
+      // Group documents by project
+      const documentsByProject = new Map<string, number>();
+      (documentsResult.data || []).forEach(d => {
+        documentsByProject.set(d.project_id, (documentsByProject.get(d.project_id) || 0) + 1);
+      });
 
-          // Fetch documents count
-          const { data: documents } = await supabase
-            .from('project_documents')
-            .select('id')
-            .eq('project_id', project.id);
-          
-          const document_count = documents?.length || 0;
+      // Get all team lead user IDs for batch profile fetch
+      const teamLeadUserIds: string[] = [];
+      teamMembersByProject.forEach((members) => {
+        const lead = members.find(m => m.is_lead);
+        if (lead) teamLeadUserIds.push(lead.user_id);
+      });
 
-          return {
-            ...project,
-            plant_name,
-            station_name,
-            hub_name,
-            team_count,
-            team_lead_name,
-            team_lead_avatar,
-            milestone_count,
-            completed_milestone_count,
-            next_milestone_name: nextMilestone?.milestone_name,
-            next_milestone_date: nextMilestone?.milestone_date,
-            is_scorecard,
-            document_count,
-          };
-        })
-      );
+      // Batch fetch all team lead profiles in one query
+      const profilesResult = teamLeadUserIds.length > 0
+        ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', teamLeadUserIds)
+        : { data: [] };
+      
+      const profileMap = new Map((profilesResult.data || []).map(p => [p.id, p]));
+
+      // Enrich projects using lookup maps (no additional queries)
+      const now = new Date();
+      const enrichedProjects = data.map((project) => {
+        const teamMembers = teamMembersByProject.get(project.id) || [];
+        const milestones = milestonesByProject.get(project.id) || [];
+        const teamLead = teamMembers.find(m => m.is_lead);
+        const leadProfile = teamLead ? profileMap.get(teamLead.user_id) : null;
+        
+        const completed_milestone_count = milestones.filter(m => new Date(m.milestone_date) < now).length;
+        const nextMilestone = milestones.find(m => new Date(m.milestone_date) >= now);
+
+        return {
+          ...project,
+          plant_name: project.plant_id ? plantMap.get(project.plant_id) : undefined,
+          station_name: project.station_id ? stationMap.get(project.station_id) : undefined,
+          hub_name: project.hub_id ? hubMap.get(project.hub_id) : undefined,
+          team_count: teamMembers.length,
+          team_lead_name: leadProfile?.full_name,
+          team_lead_avatar: leadProfile?.avatar_url,
+          milestone_count: milestones.length,
+          completed_milestone_count,
+          next_milestone_name: nextMilestone?.milestone_name,
+          next_milestone_date: nextMilestone?.milestone_date,
+          is_scorecard: milestones.some(m => m.is_scorecard_project),
+          document_count: documentsByProject.get(project.id) || 0,
+        };
+      });
 
       console.log('✅ Enriched projects:', enrichedProjects);
       return enrichedProjects as Project[];

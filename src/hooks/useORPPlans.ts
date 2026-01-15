@@ -69,28 +69,35 @@ export const useORPPlans = () => {
 
       if (error) throw error;
 
-      // Fetch ora engineer details and calculate progress
-      const plansWithDetails = await Promise.all(
-        (data || []).map(async (plan) => {
-          const { data: engineer } = await supabase
+      // Batch fetch all engineer profiles in one query (optimized from N+1 queries)
+      const engineerIds = [...new Set((data || []).map(p => p.ora_engineer_id).filter(Boolean))];
+      
+      const { data: engineers } = engineerIds.length > 0
+        ? await supabase
             .from('profiles')
-            .select('full_name, position')
-            .eq('user_id', plan.ora_engineer_id)
-            .single();
+            .select('user_id, full_name, position')
+            .in('user_id', engineerIds)
+        : { data: [] };
+      
+      // Create lookup map for O(1) access
+      const engineerMap = new Map((engineers || []).map(e => [e.user_id, e]));
 
-          // Calculate overall progress from deliverables
-          const deliverables = plan.deliverables || [];
-          const overallProgress = deliverables.length > 0
-            ? Math.round(deliverables.reduce((sum: number, d: any) => sum + (d.completion_percentage || 0), 0) / deliverables.length)
-            : 0;
+      // Enrich plans using lookup map (no additional queries)
+      const plansWithDetails = (data || []).map((plan) => {
+        const engineer = engineerMap.get(plan.ora_engineer_id);
+        
+        // Calculate overall progress from deliverables
+        const deliverables = plan.deliverables || [];
+        const overallProgress = deliverables.length > 0
+          ? Math.round(deliverables.reduce((sum: number, d: any) => sum + (d.completion_percentage || 0), 0) / deliverables.length)
+          : 0;
 
-          return {
-            ...plan,
-            ora_engineer: engineer || undefined,
-            overall_progress: overallProgress
-          };
-        })
-      );
+        return {
+          ...plan,
+          ora_engineer: engineer ? { full_name: engineer.full_name, position: engineer.position } : undefined,
+          overall_progress: overallProgress
+        };
+      });
 
       return plansWithDetails as ORPPlan[];
     }

@@ -171,8 +171,26 @@ export const ORPLandingPage: React.FC = () => {
             {isLoading ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardContent className="h-36" />
+                  <Card key={i}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="h-5 w-3/4 bg-muted animate-pulse rounded" />
+                          <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 space-y-3">
+                      <div className="flex gap-2">
+                        <div className="h-5 w-20 bg-muted animate-pulse rounded-full" />
+                        <div className="h-5 w-16 bg-muted animate-pulse rounded-full" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                        <div className="h-2 w-full bg-muted animate-pulse rounded-full" />
+                      </div>
+                      <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
+                    </CardContent>
                   </Card>
                 ))}
               </div>
