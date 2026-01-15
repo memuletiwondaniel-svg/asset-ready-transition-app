@@ -11,7 +11,7 @@ interface PACApprover {
   id: string;
   name: string;
   role: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'approved' | 'rejected';
   approvedDate?: string;
   signature?: string;
 }
@@ -25,9 +25,9 @@ interface PACCertificateProps {
 }
 
 const defaultContent = {
-  openingStatement: `This Provisional Acceptance Certificate signifies the HANDOVER of Operational CONTROL and CARE of the HM LLP Pipeline from Project to the Asset. The PAC confirms that all systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for operational use.`,
+  openingStatement: `This Provisional Acceptance Certificate signifies the HANDOVER of Operational CONTROL and CARE of [Facility/Pipeline Name] from Project to the Asset. The PAC confirms that all systems necessary for the safe, stable, and compliant operation and maintenance of the facilities in scope have been handed over in a state deemed fit for operational use.`,
   assetResponsibilities: [
-    `Assume full responsibility for day-to-day operations of the Qurainat sweetening plant utilizing competent operators and approved procedures and management systems.`,
+    `Assume full responsibility for day-to-day operations of [Facility Name] utilizing competent operators and approved procedures and management systems.`,
     `Perform preventive and corrective maintenance (PMs & CMs) using Asset resources and the Asset Maintenance Management System (e.g., SAP).`,
     `Manage all changes through the Asset's Management of Change (MOC) system.`
   ],
@@ -39,15 +39,16 @@ const defaultContent = {
 };
 
 const PACCertificate: React.FC<PACCertificateProps> = ({
-  certificateNumber = "PAC-2024-001",
-  facilityName = "Qurainat Sweetening Plant",
-  projectName = "HM LLP Pipeline Project",
-  pacDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+  certificateNumber = "PAC-XXXX-XXX",
+  facilityName = "",
+  projectName = "",
+  pacDate = "",
   approvers = [
-    { id: '1', name: 'John Smith', role: 'Project Manager', status: 'approved', approvedDate: '2024-01-15' },
-    { id: '2', name: 'Sarah Johnson', role: 'Asset Manager', status: 'approved', approvedDate: '2024-01-16' },
-    { id: '3', name: 'Michael Brown', role: 'Operations Manager', status: 'pending' },
-    { id: '4', name: 'Emily Davis', role: 'HSE Manager', status: 'pending' }
+    { id: '1', name: '', role: 'Plant Director' },
+    { id: '2', name: '', role: 'Project Hub Lead' },
+    { id: '3', name: '', role: 'MTCE Team Lead' },
+    { id: '4', name: '', role: 'Central Engr. Lead' },
+    { id: '5', name: '', role: 'ORA Lead' }
   ]
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
@@ -110,16 +111,6 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
     setIsEditing(false);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Approved</span>;
-      case 'rejected':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Rejected</span>;
-      default:
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Pending</span>;
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -179,15 +170,15 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-semibold text-foreground">Facility:</span>
-                <span className="ml-2 text-muted-foreground">{facilityName}</span>
+                <span className="ml-2 text-muted-foreground">{facilityName || '[Enter Facility Name]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">Project:</span>
-                <span className="ml-2 text-muted-foreground">{projectName}</span>
+                <span className="ml-2 text-muted-foreground">{projectName || '[Enter Project Name]'}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">PAC Date:</span>
-                <span className="ml-2 text-muted-foreground">{pacDate}</span>
+                <span className="ml-2 text-muted-foreground">{pacDate || '[Enter Date]'}</span>
               </div>
             </div>
           </div>
@@ -284,37 +275,26 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               <h3 className="font-bold text-foreground mb-4 text-center border-b border-border pb-2">
                 APPROVALS
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {approvers.map((approver) => (
                   <div 
                     key={approver.id} 
                     className="border border-border rounded-lg p-4 bg-background"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-semibold text-foreground">{approver.name}</p>
-                        <p className="text-xs text-muted-foreground">{approver.role}</p>
-                      </div>
-                      {getStatusBadge(approver.status)}
-                    </div>
-                    <div className="border-t border-dashed border-border pt-3 mt-3">
-                      {approver.signature ? (
-                        <img 
-                          src={approver.signature} 
-                          alt="Signature" 
-                          className="h-10 object-contain"
-                        />
-                      ) : (
-                        <div className="h-10 flex items-center justify-center text-muted-foreground text-xs italic">
-                          {approver.status === 'approved' ? 'Digitally Signed' : 'Awaiting Signature'}
-                        </div>
+                    <div className="mb-3">
+                      <p className="font-semibold text-foreground">{approver.role}</p>
+                      {approver.name && (
+                        <p className="text-xs text-muted-foreground">{approver.name}</p>
                       )}
                     </div>
-                    {approver.approvedDate && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Date: {approver.approvedDate}
-                      </p>
-                    )}
+                    <div className="border-t border-dashed border-border pt-3 mt-3">
+                      <div className="h-12 flex items-center justify-center text-muted-foreground text-xs italic border-b border-dashed border-border">
+                        Signature
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-xs text-muted-foreground">Date: ____________</p>
+                    </div>
                   </div>
                 ))}
               </div>
