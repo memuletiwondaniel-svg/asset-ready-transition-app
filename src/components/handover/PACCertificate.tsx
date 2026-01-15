@@ -205,7 +205,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
             {/* Asset Responsibilities */}
             <div>
-              <h3 className="font-bold text-foreground mb-3">The Asset shall:</h3>
+              <h3 className="font-black text-foreground mb-3 text-base underline">The Asset shall:</h3>
               {isEditing ? (
                 <div className="space-y-2">
                   {editContent.assetResponsibilities.map((item, index) => (
@@ -232,7 +232,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
             {/* Project Responsibilities */}
             <div>
-              <h3 className="font-bold text-foreground mb-3">The Project shall:</h3>
+              <h3 className="font-black text-foreground mb-3 text-base underline">The Project shall:</h3>
               {isEditing ? (
                 <div className="space-y-2">
                   {editContent.projectResponsibilities.map((item, index) => (
