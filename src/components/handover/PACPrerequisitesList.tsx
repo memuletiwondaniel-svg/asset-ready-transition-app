@@ -174,14 +174,30 @@ const PACPrerequisitesList: React.FC = () => {
                                 {prereq.sample_evidence || '-'}
                               </TableCell>
                               <TableCell>
-                                {prereq.delivering_role?.name ? (
+                                {prereq.delivering_parties && prereq.delivering_parties.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {prereq.delivering_parties.map((role, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">
+                                        {role.name}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : prereq.delivering_role?.name ? (
                                   <Badge variant="outline">{prereq.delivering_role.name}</Badge>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
                                 )}
                               </TableCell>
                               <TableCell>
-                                {prereq.receiving_role?.name ? (
+                                {prereq.receiving_parties && prereq.receiving_parties.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {prereq.receiving_parties.map((role, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">
+                                        {role.name}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : prereq.receiving_role?.name ? (
                                   <Badge variant="outline">{prereq.receiving_role.name}</Badge>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
