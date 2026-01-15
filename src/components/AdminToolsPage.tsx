@@ -246,7 +246,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     onClick: () => setActiveView('activity-log')
   }, {
     id: 'ora-configuration',
-    title: t.manageORAPlans,
+    title: t.oraPlans || 'ORA Plans',
     description: t.manageORAPlansDesc,
     icon: LayoutTemplate,
     gradient: 'from-amber-500 to-amber-600',
