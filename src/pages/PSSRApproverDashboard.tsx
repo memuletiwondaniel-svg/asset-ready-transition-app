@@ -24,19 +24,18 @@ import {
   Loader2,
   Trash2,
   ClipboardList,
+  Calendar,
   FileCheck,
-  Wrench,
-  Shield,
-  Users,
-  Calendar
+  Wrench
 } from 'lucide-react';
-import { differenceInDays, format, addDays } from 'date-fns';
+import { addDays, differenceInDays } from 'date-fns';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { DraggableTask } from '@/components/DraggableTask';
 import { OWLTaskCard } from '@/components/tasks/OWLTaskCard';
+import { PSSRTaskCard } from '@/components/tasks/PSSRTaskCard';
 import OWLItemDialog from '@/components/handover/OWLItemDialog';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -50,6 +49,8 @@ const MOCK_PSSR_REVIEWS = [
     pssr: {
       id: 'pssr-001',
       pssr_id: 'PSSR-2024-001',
+      pssr_label: 'NRNGL Plant Start-up',
+      project_id: 'DP300',
       project_name: 'NRNGL Phase 3 Expansion',
       asset: 'Gas Processing Unit A',
     },
@@ -61,12 +62,27 @@ const MOCK_PSSR_REVIEWS = [
     pssr: {
       id: 'pssr-002',
       pssr_id: 'PSSR-2024-002',
+      pssr_label: 'Utilities System Review',
+      project_id: 'UT-2024',
       project_name: 'Utilities Upgrade Project',
       asset: 'Compressor Station B',
     },
     approverRole: 'Technical Safety TA',
     pendingSince: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     itemCount: 18,
+  },
+  {
+    pssr: {
+      id: 'pssr-003',
+      pssr_id: 'PSSR-2024-003',
+      pssr_label: 'Emergency Shutdown System',
+      project_id: 'ESD-2024',
+      project_name: 'ESD Enhancement Program',
+      asset: 'Central Control Room',
+    },
+    approverRole: 'I&C TA',
+    pendingSince: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    itemCount: 12,
   },
 ];
 
@@ -601,53 +617,18 @@ const PSSRApproverDashboard: React.FC = () => {
               ) : (
                 <>
                   {/* PSSR Reviews */}
-                  {filteredPSSRs.map((item) => {
-                    const daysPending = differenceInDays(new Date(), new Date(item.pendingSince));
-                    
-                    return (
-                      <Card 
-                        key={`pssr-${item.pssr.id}-${item.approverRole}`} 
-                        className="hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => handleStartReview(item.pssr.id, item.approverRole)}
-                      >
-                        <CardContent className="py-3 px-4">
-                          <div className="flex items-center gap-4">
-                            <Badge variant="outline" className="shrink-0 bg-amber-500/10 text-amber-600 border-amber-500/30">
-                              <Shield className="h-3 w-3 mr-1" />
-                              PSSR
-                            </Badge>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium truncate">{item.pssr.pssr_id}</span>
-                                <Badge variant="secondary" className="text-xs shrink-0">
-                                  {item.approverRole}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground truncate">
-                                {item.pssr.project_name || 'No Project'} 
-                                {item.pssr.asset && ` • ${item.pssr.asset}`}
-                              </p>
-                            </div>
-
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className="text-sm text-muted-foreground">{item.itemCount} items</span>
-                              <Badge variant="outline" className={getPendingBadgeColor(item.pendingSince)}>
-                                <Clock className="h-3 w-3 mr-1" />
-                                {daysPending === 0 ? 'Today' : `${daysPending}d`}
-                              </Badge>
-                              <Button size="sm" variant="outline" onClick={(e) => {
-                                e.stopPropagation();
-                                handleStartReview(item.pssr.id, item.approverRole);
-                              }}>
-                                Review
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  {filteredPSSRs.map((item) => (
+                    <PSSRTaskCard
+                      key={`pssr-${item.pssr.id}-${item.approverRole}`}
+                      pssrId={item.pssr.pssr_id}
+                      pssrLabel={item.pssr.pssr_label || item.pssr.asset || 'PSSR Review'}
+                      projectId={item.pssr.project_id || 'N/A'}
+                      projectName={item.pssr.project_name || ''}
+                      itemsAwaitingReview={item.itemCount}
+                      pendingSince={item.pendingSince}
+                      onClick={() => handleStartReview(item.pssr.id, item.approverRole)}
+                    />
+                  ))}
 
                   {/* OWL / Punchlist Items */}
                   {filteredOWLItems.map((item) => (
