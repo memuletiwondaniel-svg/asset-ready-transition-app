@@ -162,7 +162,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     asset: 'NRNGL Plant',
     reason: 'Start-up or Commissioning of a new Asset',
     projectId: 'DP300',
-    projectName: 'Phase 3 Expansion Project',
+    projectName: 'HM Additional Compressors',
     status: 'Under Review',
     progress: 75,
     created: '2024-01-15',
@@ -331,6 +331,10 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       filterValue: filter,
       isOpen: true
     });
+  };
+
+  const handleNavigateToProject = () => {
+    navigate('/project/76901c6c-927d-4266-aaea-bc036888f274');
   };
 
   const handleCategoryClick = (categoryName: string) => {
@@ -559,6 +563,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         images={pssrData.scopeImages}
                         linkedPSSRs={pssrData.linkedPSSRs}
                         onEdit={() => setEditModalOpen(true)}
+                        onNavigateToProject={handleNavigateToProject}
                         onPSSRClick={(id) => console.log('PSSR clicked:', id)}
                       />
                     ),
