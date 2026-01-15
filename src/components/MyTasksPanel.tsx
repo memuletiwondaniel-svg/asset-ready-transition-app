@@ -231,71 +231,52 @@ export const MyTasksPanel: React.FC<MyTasksPanelProps> = ({ className }) => {
 
   return (
     <>
-      <Card className={`glass-panel shadow-xl h-full flex flex-col ${className}`}>
-        <div className="border-b border-border/40 py-4 px-6">
+      <Card className={`bg-card border border-border/60 shadow-sm h-full flex flex-col ${className}`}>
+        {/* Clean Header */}
+        <div className="border-b border-border/40 py-4 px-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center shadow-lg flex-shrink-0 relative overflow-hidden">
-                <ListChecks className="w-6 h-6 text-white relative z-10" />
-              </div>
-              <div className="flex-1 min-w-0 flex items-center gap-2">
-                <CardTitle className="text-2xl font-bold whitespace-nowrap">My Tasks</CardTitle>
-                <div className="flex items-center gap-1.5">
-                  {taskCounts.overdue > 0 ? (
-                    <Badge variant="destructive" className="animate-pulse font-semibold px-2 py-0.5">
-                      {taskCounts.overdue} Overdue
-                    </Badge>
-                  ) : tasks.length > 0 && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 font-semibold px-2 py-0.5">
-                      {tasks.length}
-                    </Badge>
-                  )}
-                  {taskCounts.approval > 0 && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0">
-                      {taskCounts.approval} Approval
-                    </Badge>
-                  )}
-                  {taskCounts.review > 0 && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0">
-                      {taskCounts.review} Review
-                    </Badge>
-                  )}
-                  {taskCounts.action > 0 && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0">
-                      {taskCounts.action} Action
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                onClick={() => setShowQuickTaskDialog(true)} 
-                className="h-8 w-8 p-0 hover:bg-primary/10 flex-shrink-0" 
-                title="Quick add task"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-foreground">My Tasks</h2>
+              {tasks.length > 0 && (
+                <Badge variant="secondary" className="h-6 px-2.5 font-medium">
+                  {tasks.length}
+                </Badge>
+              )}
+              {taskCounts.overdue > 0 && (
+                <Badge variant="destructive" className="h-6 px-2.5 font-medium">
+                  {taskCounts.overdue} overdue
+                </Badge>
+              )}
             </div>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setShowQuickTaskDialog(true)} 
+              className="h-8 gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Task
+            </Button>
           </div>
         </div>
 
-        <div className="border-b border-border/40 p-4 space-y-3 bg-gradient-to-r from-muted/30 to-muted/10">
-          <div className="flex gap-3">
+        {/* Compact Toolbar */}
+        <div className="border-b border-border/40 px-5 py-3">
+          <div className="flex items-center gap-2">
             {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Search tasks..." 
+                placeholder="Search..." 
                 value={taskSearchQuery} 
                 onChange={e => setTaskSearchQuery(e.target.value)} 
-                className="pl-9 h-9 text-sm backdrop-blur-sm bg-background/80 hover:bg-background transition-colors" 
+                className="pl-8 h-8 text-sm bg-muted/40 border-0 focus-visible:ring-1" 
               />
               {taskSearchQuery && (
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" 
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 h-6 w-6" 
                   onClick={() => setTaskSearchQuery('')}
                 >
                   <X className="w-3 h-3" />
@@ -304,55 +285,19 @@ export const MyTasksPanel: React.FC<MyTasksPanelProps> = ({ className }) => {
             </div>
 
             <Select value={taskFilterType} onValueChange={setTaskFilterType}>
-              <SelectTrigger className="h-9 text-sm w-48 backdrop-blur-sm bg-background/80 hover:bg-background transition-colors">
+              <SelectTrigger className="h-8 text-xs w-32 bg-muted/40 border-0">
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
-              <SelectContent className="backdrop-blur-xl bg-background/98">
-                <SelectItem value="all">
-                  <div className="flex items-center justify-between w-full">
-                    <span>All</span>
-                    {taskCounts.all > 0 && (
-                      <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                        {taskCounts.all}
-                      </Badge>
-                    )}
-                  </div>
-                </SelectItem>
-                <SelectItem value="approval">
-                  <div className="flex items-center justify-between w-full">
-                    <span>Approval</span>
-                    {taskCounts.approval > 0 && (
-                      <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                        {taskCounts.approval}
-                      </Badge>
-                    )}
-                  </div>
-                </SelectItem>
-                <SelectItem value="review">
-                  <div className="flex items-center justify-between w-full">
-                    <span>Review</span>
-                    {taskCounts.review > 0 && (
-                      <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                        {taskCounts.review}
-                      </Badge>
-                    )}
-                  </div>
-                </SelectItem>
-                <SelectItem value="action">
-                  <div className="flex items-center justify-between w-full">
-                    <span>Action</span>
-                    {taskCounts.action > 0 && (
-                      <Badge variant="secondary" className="ml-3 text-[10px] h-5 px-2">
-                        {taskCounts.action}
-                      </Badge>
-                    )}
-                  </div>
-                </SelectItem>
+              <SelectContent>
+                <SelectItem value="all">All ({taskCounts.all})</SelectItem>
+                <SelectItem value="approval">Approval ({taskCounts.approval})</SelectItem>
+                <SelectItem value="review">Review ({taskCounts.review})</SelectItem>
+                <SelectItem value="action">Action ({taskCounts.action})</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={taskSortBy} onValueChange={value => setTaskSortBy(value as 'priority' | 'due_date' | 'type')}>
-              <SelectTrigger className="h-9 text-sm w-40">
+              <SelectTrigger className="h-8 text-xs w-28 bg-muted/40 border-0">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
@@ -393,15 +338,31 @@ export const MyTasksPanel: React.FC<MyTasksPanelProps> = ({ className }) => {
           </div>
         )}
 
-        <CardContent className="flex-1 p-6 overflow-y-auto">
+        <CardContent className="flex-1 p-5 overflow-y-auto">
           {tasksLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-xl border border-border/60 p-4 animate-pulse">
+                  <div className="h-1 bg-muted rounded-full w-full mb-4" />
+                  <div className="space-y-3">
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-full" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-border/40">
+                    <div className="h-8 bg-muted rounded flex-1" />
+                    <div className="h-8 bg-muted rounded flex-1" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredAndSortedTasks.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <ListChecks className="w-12 h-12 mx-auto mb-4 opacity-30" />
-              <p className="text-sm">No tasks found</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <ListChecks className="w-6 h-6 opacity-50" />
+              </div>
+              <p className="text-sm font-medium">No tasks found</p>
+              <p className="text-xs mt-1 opacity-70">Create a new task to get started</p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleTaskDragEnd}>
