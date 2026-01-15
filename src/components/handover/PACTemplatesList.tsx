@@ -4,18 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit2, Trash2, LayoutTemplate, Search } from 'lucide-react';
-import { usePACTemplates, usePACPrerequisites, PACTemplate } from '@/hooks/useHandoverPrerequisites';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit2, Trash2, LayoutTemplate, Search, PlusCircle } from 'lucide-react';
+import { usePACTemplates, usePACPrerequisites, usePACCategories, PACTemplate } from '@/hooks/useHandoverPrerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PACTemplatesList: React.FC = () => {
   const { data: templates, isLoading, createTemplate, updateTemplate, deleteTemplate, isCreating, isUpdating } = usePACTemplates();
-  const { data: prerequisites } = usePACPrerequisites();
+  const { data: prerequisites, createPrerequisite, isCreating: isCreatingPrereq } = usePACPrerequisites();
+  const { data: categories } = usePACCategories();
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<PACTemplate | null>(null);
@@ -24,6 +26,12 @@ const PACTemplatesList: React.FC = () => {
     description: '',
     prerequisite_ids: [] as string[],
     is_active: true,
+  });
+  const [customPrereqDialogOpen, setCustomPrereqDialogOpen] = useState(false);
+  const [newPrereqData, setNewPrereqData] = useState({
+    category_id: '',
+    summary: '',
+    description: '',
   });
 
   const filteredTemplates = templates?.filter(t =>
@@ -75,6 +83,30 @@ const PACTemplatesList: React.FC = () => {
         ? prev.prerequisite_ids.filter(id => id !== prereqId)
         : [...prev.prerequisite_ids, prereqId]
     }));
+  };
+
+  const handleCreateAndAddPrereq = () => {
+    if (!newPrereqData.category_id || !newPrereqData.summary.trim()) return;
+    
+    createPrerequisite({
+      category_id: newPrereqData.category_id,
+      summary: newPrereqData.summary.trim(),
+      description: newPrereqData.description.trim() || null,
+      sample_evidence: null,
+      delivering_party_role_id: null,
+      receiving_party_role_id: null,
+      display_order: (prerequisites?.length || 0) + 1,
+      is_active: true,
+    }, {
+      onSuccess: (data: any) => {
+        setFormData(prev => ({
+          ...prev,
+          prerequisite_ids: [...prev.prerequisite_ids, data.id]
+        }));
+        setNewPrereqData({ category_id: '', summary: '', description: '' });
+        setCustomPrereqDialogOpen(false);
+      }
+    });
   };
 
   if (isLoading) {
@@ -208,10 +240,24 @@ const PACTemplatesList: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Select Prerequisites</Label>
-              <p className="text-sm text-muted-foreground">
-                Choose which prerequisites should be included in this template
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Select Prerequisites</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which prerequisites should be included in this template
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => setCustomPrereqDialogOpen(true)}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Create New
+                </Button>
+              </div>
               <ScrollArea className="h-64 border rounded-md p-4">
                 <div className="space-y-3">
                   {prerequisites?.map(prereq => (
@@ -252,6 +298,72 @@ const PACTemplatesList: React.FC = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Add Prerequisite Dialog */}
+      <Dialog open={customPrereqDialogOpen} onOpenChange={setCustomPrereqDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Quick Add Prerequisite</DialogTitle>
+            <DialogDescription>
+              Create a new prerequisite and add it to this template
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="prereq-category">Category *</Label>
+              <Select
+                value={newPrereqData.category_id}
+                onValueChange={(value) => setNewPrereqData(prev => ({ ...prev, category_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="prereq-summary">Summary *</Label>
+              <Input
+                id="prereq-summary"
+                value={newPrereqData.summary}
+                onChange={(e) => setNewPrereqData(prev => ({ ...prev, summary: e.target.value }))}
+                placeholder="Brief description of the prerequisite"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="prereq-description">Description (Optional)</Label>
+              <Textarea
+                id="prereq-description"
+                value={newPrereqData.description}
+                onChange={(e) => setNewPrereqData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Additional details..."
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCustomPrereqDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateAndAddPrereq}
+              disabled={isCreatingPrereq || !newPrereqData.category_id || !newPrereqData.summary.trim()}
+            >
+              {isCreatingPrereq ? 'Creating...' : 'Create & Add'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
