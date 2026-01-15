@@ -251,6 +251,10 @@ export const useORPPlans = () => {
       start_date?: string;
       end_date?: string;
       estimated_manhours?: number;
+      estimated_cost?: number;
+      actual_cost?: number;
+      committed_cost?: number;
+      cost_category?: string;
       id?: string;
     }) => {
       const updateData: any = {};
@@ -260,6 +264,10 @@ export const useORPPlans = () => {
       if (data.start_date !== undefined) updateData.start_date = data.start_date || null;
       if (data.end_date !== undefined) updateData.end_date = data.end_date || null;
       if (data.estimated_manhours !== undefined) updateData.estimated_manhours = data.estimated_manhours || null;
+      if (data.estimated_cost !== undefined) updateData.estimated_cost = data.estimated_cost;
+      if (data.actual_cost !== undefined) updateData.actual_cost = data.actual_cost;
+      if (data.committed_cost !== undefined) updateData.committed_cost = data.committed_cost;
+      if (data.cost_category !== undefined) updateData.cost_category = data.cost_category || null;
 
       const { error } = await supabase
         .from('orp_plan_deliverables')
