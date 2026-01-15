@@ -16,6 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { usePSSRCategoryItems, CategoryItem } from '@/hooks/usePSSRCategoryProgress';
+import { PSSRItemDetailModal } from './PSSRItemDetailModal';
 
 interface CategoryItemsOverlayProps {
   open: boolean;
@@ -112,7 +113,42 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'deviation' | 'pending'>('all');
+  const [selectedItem, setSelectedItem] = useState<CategoryItem | null>(null);
+  const [itemDetailOpen, setItemDetailOpen] = useState(false);
   const { data: dbItems, isLoading } = usePSSRCategoryItems(pssrId, categoryName);
+
+  // Helper to create mock item with all required fields
+  const createMockItem = (
+    id: string,
+    unique_id: string,
+    question: string,
+    response: string | null,
+    status: string,
+    approval_status: string | null,
+    narrative: string | null,
+    category: string
+  ): CategoryItem => ({
+    id,
+    unique_id,
+    question,
+    response_id: id,
+    response,
+    status,
+    approval_status,
+    narrative,
+    category,
+    deviation_reason: response === 'DEVIATION' || response === 'NO' ? 'Equipment issue identified during inspection' : null,
+    potential_risk: response === 'DEVIATION' || response === 'NO' ? 'Potential safety hazard if not addressed' : null,
+    mitigations: response === 'DEVIATION' || response === 'NO' ? 'Temporary controls in place, permanent fix scheduled' : null,
+    follow_up_action: approval_status === 'approved_with_action' ? 'Complete corrective action before startup' : null,
+    action_owner: approval_status === 'approved_with_action' ? 'Operations Lead' : null,
+    justification: null,
+    submitted_at: response ? '2024-01-15T10:00:00Z' : null,
+    approved_at: approval_status === 'approved' || approval_status === 'approved_with_action' ? '2024-01-16T14:30:00Z' : null,
+    approver_name: approval_status ? 'Dr. Sarah Wilson' : null,
+    approval_comments: approval_status === 'approved_with_action' ? 'Approved contingent on completion of corrective action' : null,
+    attachments: response ? ['https://example.com/evidence-1.pdf'] : null,
+  });
 
   // Mock items for each category when real data is empty
   const getMockItems = (category: string | null): CategoryItem[] => {
@@ -120,41 +156,41 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
     
     const mockItemsMap: Record<string, CategoryItem[]> = {
       'Technical Integrity': [
-        { id: '1', unique_id: 'TI-001', question: 'Have all pressure relief devices been tested and certified?', response_id: '1', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
-        { id: '2', unique_id: 'TI-002', question: 'Are all critical instrumentation loops verified and calibrated?', response_id: '2', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
-        { id: '3', unique_id: 'TI-003', question: 'Have all rotating equipment been aligned and tested?', response_id: '3', response: 'DEVIATION', status: 'review', approval_status: 'approved_with_action', narrative: 'Pump P-101 requires realignment before startup', category: 'Technical Integrity' },
-        { id: '4', unique_id: 'TI-004', question: 'Are all vessel inspection reports current and approved?', response_id: '4', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
-        { id: '5', unique_id: 'TI-005', question: 'Have all piping systems been hydrostatically tested?', response_id: '5', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Technical Integrity' },
-        { id: '6', unique_id: 'TI-006', question: 'Are all electrical systems grounded and bonded properly?', response_id: '6', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
+        createMockItem('1', 'TI-001', 'Have all pressure relief devices been tested and certified?', 'YES', 'completed', 'approved', null, 'Technical Integrity'),
+        createMockItem('2', 'TI-002', 'Are all critical instrumentation loops verified and calibrated?', 'YES', 'completed', 'approved', null, 'Technical Integrity'),
+        createMockItem('3', 'TI-003', 'Have all rotating equipment been aligned and tested?', 'DEVIATION', 'review', 'approved_with_action', 'Pump P-101 requires realignment before startup', 'Technical Integrity'),
+        createMockItem('4', 'TI-004', 'Are all vessel inspection reports current and approved?', 'YES', 'completed', 'approved', null, 'Technical Integrity'),
+        createMockItem('5', 'TI-005', 'Have all piping systems been hydrostatically tested?', null, 'pending', null, null, 'Technical Integrity'),
+        createMockItem('6', 'TI-006', 'Are all electrical systems grounded and bonded properly?', 'YES', 'completed', 'approved', null, 'Technical Integrity'),
       ],
       'Process Safety': [
-        { id: '7', unique_id: 'PS-001', question: 'Has the Process Hazard Analysis (PHA) been completed and recommendations closed?', response_id: '7', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Process Safety' },
-        { id: '8', unique_id: 'PS-002', question: 'Are all Safety Instrumented Systems (SIS) tested and functional?', response_id: '8', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Process Safety' },
-        { id: '9', unique_id: 'PS-003', question: 'Have all Emergency Shutdown (ESD) systems been tested?', response_id: '9', response: 'DEVIATION', status: 'review', approval_status: 'approved_with_action', narrative: 'ESD valve XV-102 requires replacement', category: 'Process Safety' },
-        { id: '10', unique_id: 'PS-004', question: 'Are all interlock systems verified and documented?', response_id: '10', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Process Safety' },
-        { id: '11', unique_id: 'PS-005', question: 'Has the Management of Change (MOC) process been completed for all modifications?', response_id: '11', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Process Safety' },
+        createMockItem('7', 'PS-001', 'Has the Process Hazard Analysis (PHA) been completed and recommendations closed?', 'YES', 'completed', 'approved', null, 'Process Safety'),
+        createMockItem('8', 'PS-002', 'Are all Safety Instrumented Systems (SIS) tested and functional?', 'YES', 'completed', 'approved', null, 'Process Safety'),
+        createMockItem('9', 'PS-003', 'Have all Emergency Shutdown (ESD) systems been tested?', 'DEVIATION', 'review', 'approved_with_action', 'ESD valve XV-102 requires replacement', 'Process Safety'),
+        createMockItem('10', 'PS-004', 'Are all interlock systems verified and documented?', 'YES', 'completed', 'approved', null, 'Process Safety'),
+        createMockItem('11', 'PS-005', 'Has the Management of Change (MOC) process been completed for all modifications?', null, 'pending', null, null, 'Process Safety'),
       ],
       'Organization': [
-        { id: '12', unique_id: 'ORG-001', question: 'Are all personnel trained on operating procedures?', response_id: '12', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Organization' },
-        { id: '13', unique_id: 'ORG-002', question: 'Has the shift handover procedure been established?', response_id: '13', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Organization' },
-        { id: '14', unique_id: 'ORG-003', question: 'Are emergency response roles and responsibilities defined?', response_id: '14', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Organization' },
-        { id: '15', unique_id: 'ORG-004', question: 'Has the on-call roster been established?', response_id: '15', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Organization' },
+        createMockItem('12', 'ORG-001', 'Are all personnel trained on operating procedures?', 'YES', 'completed', 'approved', null, 'Organization'),
+        createMockItem('13', 'ORG-002', 'Has the shift handover procedure been established?', 'YES', 'completed', 'approved', null, 'Organization'),
+        createMockItem('14', 'ORG-003', 'Are emergency response roles and responsibilities defined?', 'YES', 'completed', 'approved', null, 'Organization'),
+        createMockItem('15', 'ORG-004', 'Has the on-call roster been established?', null, 'pending', null, null, 'Organization'),
       ],
       'Documentation': [
-        { id: '16', unique_id: 'DOC-001', question: 'Are all P&IDs updated to as-built condition?', response_id: '16', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Documentation' },
-        { id: '17', unique_id: 'DOC-002', question: 'Have all operating procedures been approved?', response_id: '17', response: 'DEVIATION', status: 'review', approval_status: 'approved_with_action', narrative: 'SOP-001 requires revision for new equipment', category: 'Documentation' },
-        { id: '18', unique_id: 'DOC-003', question: 'Are all equipment manuals available and organized?', response_id: '18', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Documentation' },
-        { id: '19', unique_id: 'DOC-004', question: 'Have all emergency response procedures been documented?', response_id: '19', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Documentation' },
+        createMockItem('16', 'DOC-001', 'Are all P&IDs updated to as-built condition?', 'YES', 'completed', 'approved', null, 'Documentation'),
+        createMockItem('17', 'DOC-002', 'Have all operating procedures been approved?', 'DEVIATION', 'review', 'approved_with_action', 'SOP-001 requires revision for new equipment', 'Documentation'),
+        createMockItem('18', 'DOC-003', 'Are all equipment manuals available and organized?', 'YES', 'completed', 'approved', null, 'Documentation'),
+        createMockItem('19', 'DOC-004', 'Have all emergency response procedures been documented?', null, 'pending', null, null, 'Documentation'),
       ],
       'HSE & Environment': [
-        { id: '20', unique_id: 'HSE-001', question: 'Are all environmental permits in place?', response_id: '20', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'HSE & Environment' },
-        { id: '21', unique_id: 'HSE-002', question: 'Have all fire detection and suppression systems been tested?', response_id: '21', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'HSE & Environment' },
-        { id: '22', unique_id: 'HSE-003', question: 'Are spill containment measures in place?', response_id: '22', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'HSE & Environment' },
+        createMockItem('20', 'HSE-001', 'Are all environmental permits in place?', 'YES', 'completed', 'approved', null, 'HSE & Environment'),
+        createMockItem('21', 'HSE-002', 'Have all fire detection and suppression systems been tested?', 'YES', 'completed', 'approved', null, 'HSE & Environment'),
+        createMockItem('22', 'HSE-003', 'Are spill containment measures in place?', 'YES', 'completed', 'approved', null, 'HSE & Environment'),
       ],
       'Maintenance Readiness': [
-        { id: '23', unique_id: 'MR-001', question: 'Are all critical spare parts available on site?', response_id: '23', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Maintenance Readiness' },
-        { id: '24', unique_id: 'MR-002', question: 'Has the preventive maintenance schedule been established?', response_id: '24', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Maintenance Readiness' },
-        { id: '25', unique_id: 'MR-003', question: 'Are all maintenance tools and equipment available?', response_id: '25', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Maintenance Readiness' },
+        createMockItem('23', 'MR-001', 'Are all critical spare parts available on site?', 'YES', 'completed', 'approved', null, 'Maintenance Readiness'),
+        createMockItem('24', 'MR-002', 'Has the preventive maintenance schedule been established?', 'YES', 'completed', 'approved', null, 'Maintenance Readiness'),
+        createMockItem('25', 'MR-003', 'Are all maintenance tools and equipment available?', null, 'pending', null, null, 'Maintenance Readiness'),
       ],
     };
     
@@ -304,7 +340,11 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
               {filteredItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => onItemClick?.(item)}
+                  onClick={() => {
+                    setSelectedItem(item);
+                    setItemDetailOpen(true);
+                    onItemClick?.(item);
+                  }}
                   className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left group"
                 >
                   {getStatusIcon(item)}
@@ -338,6 +378,14 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Item Detail Modal */}
+      <PSSRItemDetailModal
+        open={itemDetailOpen}
+        onOpenChange={setItemDetailOpen}
+        item={selectedItem}
+        pssrId={pssrId}
+      />
     </Dialog>
   );
 };
