@@ -2836,6 +2836,84 @@ export type Database = {
         }
         Relationships: []
       }
+      pac_prerequisite_delivering_parties: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          prerequisite_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          prerequisite_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          prerequisite_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pac_prerequisite_delivering_parties_prerequisite_id_fkey"
+            columns: ["prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "pac_prerequisites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pac_prerequisite_delivering_parties_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pac_prerequisite_receiving_parties: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          prerequisite_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          prerequisite_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          prerequisite_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pac_prerequisite_receiving_parties_prerequisite_id_fkey"
+            columns: ["prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "pac_prerequisites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pac_prerequisite_receiving_parties_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pac_prerequisites: {
         Row: {
           category_id: string | null

@@ -12,6 +12,11 @@ export interface PACCategory {
   is_active: boolean;
 }
 
+export interface RoleInfo {
+  id: string;
+  name: string;
+}
+
 export interface PACPrerequisite {
   id: string;
   category_id: string;
@@ -26,8 +31,11 @@ export interface PACPrerequisite {
   updated_at: string;
   // Joined data
   category?: PACCategory;
-  delivering_role?: { id: string; name: string };
-  receiving_role?: { id: string; name: string };
+  delivering_role?: RoleInfo;
+  receiving_role?: RoleInfo;
+  // Multiple parties from junction tables
+  delivering_parties?: RoleInfo[];
+  receiving_parties?: RoleInfo[];
 }
 
 export interface FACPrerequisite {
@@ -81,7 +89,8 @@ export function usePACPrerequisites() {
   const query = useQuery({
     queryKey: ['pac-prerequisites'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch prerequisites with basic joined data
+      const { data: prerequisites, error } = await supabase
         .from('pac_prerequisites')
         .select(`
           *,
@@ -93,7 +102,47 @@ export function usePACPrerequisites() {
         .order('display_order');
 
       if (error) throw error;
-      return (data || []) as unknown as PACPrerequisite[];
+
+      // Fetch multiple delivering parties
+      const { data: deliveringParties } = await supabase
+        .from('pac_prerequisite_delivering_parties')
+        .select(`
+          prerequisite_id,
+          display_order,
+          role:roles(id, name)
+        `)
+        .order('display_order');
+
+      // Fetch multiple receiving parties
+      const { data: receivingParties } = await supabase
+        .from('pac_prerequisite_receiving_parties')
+        .select(`
+          prerequisite_id,
+          display_order,
+          role:roles(id, name)
+        `)
+        .order('display_order');
+
+      // Map the parties to prerequisites
+      const result = (prerequisites || []).map(prereq => {
+        const delivering = (deliveringParties || [])
+          .filter(dp => dp.prerequisite_id === prereq.id)
+          .map(dp => dp.role as RoleInfo)
+          .filter(Boolean);
+        
+        const receiving = (receivingParties || [])
+          .filter(rp => rp.prerequisite_id === prereq.id)
+          .map(rp => rp.role as RoleInfo)
+          .filter(Boolean);
+
+        return {
+          ...prereq,
+          delivering_parties: delivering.length > 0 ? delivering : undefined,
+          receiving_parties: receiving.length > 0 ? receiving : undefined,
+        };
+      });
+
+      return result as unknown as PACPrerequisite[];
     },
   });
 
