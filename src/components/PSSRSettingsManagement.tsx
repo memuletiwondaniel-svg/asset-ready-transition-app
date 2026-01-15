@@ -569,8 +569,7 @@ const PSSRSettingsManagement: React.FC<PSSRSettingsManagementProps> = ({
             description={t.pssrConfigSubtitle || "Manage PSSR reasons and checklist items"}
             customBreadcrumbs={[
               { label: t.home || 'Home', path: '/', onClick: onBack },
-              { label: t.administration || 'Administration', path: '/admin-tools', onClick: onBack },
-              { label: t.pssrConfiguration || 'PSSR Configuration', path: '/admin-tools', onClick: () => {} }
+              { label: t.administration || 'Administration', path: '/admin-tools', onClick: onBack }
             ]}
           />
 
