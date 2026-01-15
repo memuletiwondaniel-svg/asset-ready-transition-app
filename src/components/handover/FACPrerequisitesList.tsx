@@ -67,7 +67,7 @@ const FACPrerequisitesList: React.FC = () => {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <List className="h-5 w-5" />
-                  FAC Prerequisites (VCR-02)
+                  FAC Prerequisites
                 </CardTitle>
                 <CardDescription>
                   Manage prerequisites for Final Handover acceptance

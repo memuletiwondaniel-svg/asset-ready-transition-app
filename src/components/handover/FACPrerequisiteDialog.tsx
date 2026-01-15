@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFACPrerequisites, FACPrerequisite } from '@/hooks/useHandoverPrerequisites';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { FileText, Info, Users } from 'lucide-react';
 
 interface FACPrerequisiteDialogProps {
   open: boolean;
@@ -98,111 +99,152 @@ const FACPrerequisiteDialog: React.FC<FACPrerequisiteDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="border-b pb-4">
           <DialogTitle>
             {prerequisite ? 'Edit FAC Prerequisite' : 'Add New FAC Prerequisite'}
           </DialogTitle>
           <DialogDescription>
             {prerequisite
               ? 'Update the details of this FAC prerequisite'
-              : 'Add a new prerequisite for Final Handover'}
+              : 'Add a new prerequisite for Final Acceptance Certificate'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          {/* Summary */}
-          <div className="space-y-2">
-            <Label htmlFor="summary">Summary *</Label>
-            <Input
-              id="summary"
-              value={formData.summary}
-              onChange={e => setFormData(prev => ({ ...prev, summary: e.target.value }))}
-              placeholder="High-level summary of the prerequisite"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Detailed Description (Optional)</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Optional detailed description of the prerequisite..."
-              rows={3}
-            />
-          </div>
-
-          {/* Sample Evidence */}
-          <div className="space-y-2">
-            <Label htmlFor="evidence">Sample Evidence Required</Label>
-            <Textarea
-              id="evidence"
-              value={formData.sample_evidence}
-              onChange={e => setFormData(prev => ({ ...prev, sample_evidence: e.target.value }))}
-              placeholder="Describe the type of evidence required as guidance..."
-              rows={3}
-            />
-          </div>
-
-          {/* Delivering Party */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="delivering">Delivering Party</Label>
-              <Select
-                value={formData.delivering_party_role_id || 'none'}
-                onValueChange={value => setFormData(prev => ({ ...prev, delivering_party_role_id: value === 'none' ? '' : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {roles?.map(role => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Basic Information Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              <FileText className="h-4 w-4" />
+              Basic Information
             </div>
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+              {/* Display Order */}
+              <div className="space-y-2">
+                <Label htmlFor="order" className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Display Order
+                </Label>
+                <Input
+                  id="order"
+                  type="number"
+                  value={formData.display_order}
+                  onChange={e => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
+                  min={0}
+                  className="w-24"
+                />
+              </div>
 
-            {/* Receiving Party */}
-            <div className="space-y-2">
-              <Label htmlFor="receiving">Receiving Party</Label>
-              <Select
-                value={formData.receiving_party_role_id || 'none'}
-                onValueChange={value => setFormData(prev => ({ ...prev, receiving_party_role_id: value === 'none' ? '' : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {roles?.map(role => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Summary */}
+              <div className="space-y-2">
+                <Label htmlFor="summary" className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Summary *
+                </Label>
+                <Textarea
+                  id="summary"
+                  value={formData.summary}
+                  onChange={e => setFormData(prev => ({ ...prev, summary: e.target.value }))}
+                  placeholder="High-level summary of the prerequisite"
+                  rows={3}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          {/* Display Order */}
-          <div className="space-y-2">
-            <Label htmlFor="order">Display Order</Label>
-            <Input
-              id="order"
-              type="number"
-              value={formData.display_order}
-              onChange={e => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-              min={0}
-            />
+          {/* Details Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              <Info className="h-4 w-4" />
+              Details
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Detailed Description (Optional)
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Optional detailed description of the prerequisite..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Sample Evidence */}
+              <div className="space-y-2">
+                <Label htmlFor="evidence" className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Sample Evidence Required
+                </Label>
+                <Textarea
+                  id="evidence"
+                  value={formData.sample_evidence}
+                  onChange={e => setFormData(prev => ({ ...prev, sample_evidence: e.target.value }))}
+                  placeholder="Describe the type of evidence required as guidance..."
+                  rows={3}
+                />
+              </div>
+            </div>
           </div>
 
-          <DialogFooter>
+          {/* Responsible Parties Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              <Users className="h-4 w-4" />
+              Responsible Parties
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Delivering Party */}
+                <div className="space-y-2">
+                  <Label htmlFor="delivering" className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Delivering Party
+                  </Label>
+                  <Select
+                    value={formData.delivering_party_role_id || 'none'}
+                    onValueChange={value => setFormData(prev => ({ ...prev, delivering_party_role_id: value === 'none' ? '' : value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {roles?.map(role => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Receiving Party */}
+                <div className="space-y-2">
+                  <Label htmlFor="receiving" className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Receiving Party
+                  </Label>
+                  <Select
+                    value={formData.receiving_party_role_id || 'none'}
+                    onValueChange={value => setFormData(prev => ({ ...prev, receiving_party_role_id: value === 'none' ? '' : value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {roles?.map(role => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
