@@ -256,8 +256,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     onClick: () => setActiveView('ora-configuration')
   }, {
     id: 'handover-management',
-    title: t.manageHandover || 'Manage Handover',
-    description: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
+    title: t.p2aHandover || 'P2A Handover',
+    description: t.p2aHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
     icon: FileCheck2,
     gradient: 'from-teal-500 to-teal-600',
     tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
@@ -339,7 +339,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           onClick: () => setActiveView('dashboard')
         });
         crumbs.push({
-          label: 'Manage Handover',
+          label: 'P2A Handover',
           icon: FileCheck2,
           onClick: undefined
         });
