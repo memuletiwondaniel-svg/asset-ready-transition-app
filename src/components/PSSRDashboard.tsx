@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -7,13 +7,12 @@ import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { AlertTriangle, GripVertical } from 'lucide-react';
 import { PSSRInfoScopeWidget } from '@/components/widgets/PSSRInfoScopeWidget';
-import { PSSRChecklistProgressWidget } from '@/components/widgets/PSSRChecklistProgressWidget';
-
+import { PSSRChecklistProgressWidget, CategoryProgress } from '@/components/widgets/PSSRChecklistProgressWidget';
 import { PSSRReviewersApprovalsWidget } from '@/components/widgets/PSSRReviewersApprovalsWidget';
-
 import { OverviewStatsWidget } from '@/components/widgets/OverviewStatsWidget';
 import { EditPSSRModal } from '@/components/widgets/EditPSSRModal';
 import { ScheduleActivityModal } from '@/components/widgets/ScheduleActivityModal';
+import { CategoryItemsOverlay } from '@/components/pssr/CategoryItemsOverlay';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
 import BackgroundSlideshow from '@/components/BackgroundSlideshow';
@@ -21,6 +20,7 @@ import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useS
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { usePSSRCategoryProgress, CategoryItem } from '@/hooks/usePSSRCategoryProgress';
 
 interface PSSRDashboardProps {
   pssrId: string;
@@ -45,6 +45,9 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   const { buildBreadcrumbsFromPath, updateMetadata } = useBreadcrumb();
   const { toast } = useToast();
 
+  // Fetch real category progress from database
+  const { data: categoryProgress, isLoading: isLoadingProgress } = usePSSRCategoryProgress(pssrId);
+
   // Widget settings state - persisted in localStorage
   const [widgetSettings, setWidgetSettings] = useState<WidgetSettings[]>(() => {
     const saved = localStorage.getItem(`pssr-widget-settings-${pssrId}`);
@@ -63,7 +66,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     existingAttendees?: number;
   }>({ isOpen: false, activityName: '', activityType: '' });
 
-  // Checklist overlay state
+  // Category items overlay state
+  const [categoryOverlay, setCategoryOverlay] = useState<{
+    isOpen: boolean;
+    categoryName: string | null;
+    stats: { completed: number; total: number; percentage: number } | null;
+  }>({ isOpen: false, categoryName: null, stats: null });
+
+  // Checklist overlay state (legacy)
   const [checklistOverlay, setChecklistOverlay] = useState<{
     type: 'filtered' | 'full';
     filterType?: 'status' | 'category';
@@ -164,22 +174,13 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       '/lovable-uploads/a389c47e-ef05-4852-85d3-e4be66d1eb1e.png'
     ],
     
-    // Statistics
+    // Statistics - calculated from category progress
     statistics: {
-      totalItems: 112,
+      totalItems: categoryProgress?.reduce((sum, c) => sum + c.total, 0) || 112,
       draftItems: 8,
       underReviewItems: 29,
-      approvedItems: 75
+      approvedItems: categoryProgress?.reduce((sum, c) => sum + c.completed, 0) || 75
     },
-
-    // Progress by category
-    categoryProgress: [
-      { name: 'Hardware Integrity', completed: 18, total: 25, percentage: 72 },
-      { name: 'Process Safety', completed: 22, total: 30, percentage: 73 },
-      { name: 'Documentation', completed: 15, total: 18, percentage: 83 },
-      { name: 'Organization', completed: 12, total: 15, percentage: 80 },
-      { name: 'Health & Safety', completed: 20, total: 24, percentage: 83 }
-    ],
 
     // Key activities
     keyActivities: [
@@ -243,7 +244,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       }
     ],
 
-    // SoF Approvers - Based on reason "Start-up of a new Plant" configuration
+    // SoF Approvers
     sofApprovers: [
       {
         id: '5',
@@ -298,14 +299,16 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     ]
   };
 
+  // Calculate overall progress from category data
+  const overallProgress = useMemo(() => {
+    if (!categoryProgress || categoryProgress.length === 0) return pssrData.progress;
+    const totalItems = categoryProgress.reduce((sum, c) => sum + c.total, 0);
+    const completedItems = categoryProgress.reduce((sum, c) => sum + c.completed, 0);
+    return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+  }, [categoryProgress, pssrData.progress]);
+
   // Overlay handlers
   const handleStatClick = (filter: string) => {
-    const statusMap: Record<string, string> = {
-      'draft': 'Draft',
-      'under_review': 'Under Review',
-      'approved': 'Approved',
-      'actions': 'Open Actions'
-    };
     setChecklistOverlay({
       type: 'filtered',
       filterType: 'status',
@@ -315,14 +318,29 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
   };
 
   const handleCategoryClick = (categoryName: string) => {
-    setChecklistOverlay({
-      type: 'filtered',
-      filterType: 'category',
-      filterValue: categoryName,
-      isOpen: true
+    // Find category stats
+    const category = categoryProgress?.find(c => c.name === categoryName);
+    setCategoryOverlay({
+      isOpen: true,
+      categoryName,
+      stats: category ? {
+        completed: category.completed,
+        total: category.total,
+        percentage: category.percentage,
+      } : null,
     });
     // Also call original navigation if provided
     onNavigateToCategory?.(categoryName);
+  };
+
+  const handleCategoryItemClick = (item: CategoryItem) => {
+    // Navigate to item detail or open item modal
+    console.log('Category item clicked:', item);
+    // TODO: Implement item detail modal
+    toast({
+      title: item.unique_id,
+      description: item.question.substring(0, 100) + '...',
+    });
   };
 
   const handleViewAllChecklist = () => {
@@ -408,6 +426,14 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         return <span className="inline-flex">⚠</span>;
     }
   };
+
+  // Transform category progress data for the widget
+  const widgetCategoryProgress: CategoryProgress[] = categoryProgress?.map(c => ({
+    name: c.name,
+    completed: c.completed,
+    total: c.total,
+    percentage: c.percentage,
+  })) || [];
 
   return (
     <div className="min-h-screen flex w-full relative overflow-hidden">
@@ -526,8 +552,8 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
                         draftItems={pssrData.statistics.draftItems}
                         underReviewItems={pssrData.statistics.underReviewItems}
                         approvedItems={pssrData.statistics.approvedItems}
-                        overallProgress={pssrData.progress}
-                        categoryProgress={pssrData.categoryProgress}
+                        overallProgress={overallProgress}
+                        categoryProgress={widgetCategoryProgress}
                         keyActivities={pssrData.keyActivities}
                         onCategoryClick={handleCategoryClick}
                         onStatClick={handleStatClick}
@@ -620,6 +646,16 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         activityType={activityModal.activityType}
         existingDate={activityModal.existingDate}
         existingAttendees={activityModal.existingAttendees}
+      />
+
+      {/* Category Items Overlay */}
+      <CategoryItemsOverlay
+        open={categoryOverlay.isOpen}
+        onOpenChange={(open) => setCategoryOverlay(prev => ({ ...prev, isOpen: open }))}
+        pssrId={pssrId}
+        categoryName={categoryOverlay.categoryName}
+        categoryStats={categoryOverlay.stats || undefined}
+        onItemClick={handleCategoryItemClick}
       />
     </div>
   );
