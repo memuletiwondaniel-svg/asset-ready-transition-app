@@ -209,7 +209,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     // Reviewers (TA2s who review checklist items)
     reviewers: [
       {
-        id: '5a651906-a022-4084-af11-afe35a03cef1',
+        id: 'aa4e1de2-a2df-4e5f-9005-b9ea497f35e0',
         name: 'Andrew Banford',
         role: 'TA2 TSE - Asset',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/5a651906-a022-4084-af11-afe35a03cef1/1757605596327.jpg',
@@ -223,57 +223,33 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         avatar: undefined,
         pendingTasks: 3,
         isOnline: true
-      },
-      {
-        id: '167b6708-9a29-4492-b0db-35f98a1a71ec',
-        name: 'Ewan McConnachie',
-        role: 'TA2 Static - Asset',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9358a12a-0c7c-44c7-a536-bb523c2e2829/1757775509190.jpg',
-        pendingTasks: 2,
-        isOnline: false
       }
     ],
 
     // PSSR Approvers (Project Leadership)
     approvers: [
       {
-        id: 'fbb630cc-de25-4f9e-9e8e-7c956928bb05',
-        name: 'Wolfgang Probst',
-        role: 'Project Manager',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/fbb630cc-de25-4f9e-9e8e-7c956928bb05/1767654993368.jpeg',
+        id: '7d5a90f1-2771-4754-93eb-4499592bf638',
+        name: 'Lyle Koch',
+        role: 'P&M Director',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/4f911475-2022-4a0c-bfea-1a4263677c03/1757589686150.png',
         pendingTasks: 2,
-        isOnline: false
+        isOnline: true
       },
       {
-        id: '73734adc-61dd-4557-b613-84fe0ed2f49f',
-        name: 'Victor Liew',
-        role: 'Project Hub Lead',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/73734adc-61dd-4557-b613-84fe0ed2f49f/1757605348385.png',
+        id: '80a438d0-c363-4efc-bb73-98c4dfa80bdb',
+        name: 'Wim Moelker',
+        role: 'Project Manager',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9ff2d8e8-f2a0-4c29-9b60-5ab225beb0f6/1767656008476.jpeg',
         pendingTasks: 1,
-        isOnline: true
+        isOnline: false
       }
     ],
 
     // SoF Approvers (Directors and Senior Leadership)
     sofApprovers: [
       {
-        id: '9ff2d8e8-f2a0-4c29-9b60-5ab225beb0f6',
-        name: 'Wim Moelker',
-        role: 'Plant Director',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9ff2d8e8-f2a0-4c29-9b60-5ab225beb0f6/1767656008476.jpeg',
-        pendingTasks: 1,
-        isOnline: true
-      },
-      {
-        id: '4f911475-2022-4a0c-bfea-1a4263677c03',
-        name: 'Lyle Koch',
-        role: 'HSE Director',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/4f911475-2022-4a0c-bfea-1a4263677c03/1757589686150.png',
-        pendingTasks: 0,
-        isOnline: true
-      },
-      {
-        id: 'bd8dd7af-6bd4-4ca5-99ca-20bd53e38b4e',
+        id: '9701c5ba-9d9e-46e7-9431-0613cd9c7260',
         name: 'Marije Hoedemaker',
         role: 'P&M Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/bd8dd7af-6bd4-4ca5-99ca-20bd53e38b4e/1757797433321.png',
@@ -281,7 +257,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         isOnline: false
       },
       {
-        id: '0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2',
+        id: 'c89c4b90-d52c-44d5-adc6-a3e51ccb0fcb',
         name: 'Paul Van Den Hemel',
         role: 'P&E Director',
         avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0dae95bb-6cdb-491d-ac4c-4c0cd7b2e8b2/1757605571147.jpg',
