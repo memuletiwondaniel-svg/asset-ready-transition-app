@@ -124,9 +124,8 @@ const PACTemplatesList: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <LayoutTemplate className="h-5 w-5" />
-                PAC Templates
+              <CardTitle>
+                Templates
               </CardTitle>
               <CardDescription>
                 Create and manage templates for different project scope types (e.g., Pipeline Handover, New Plant Handover)
