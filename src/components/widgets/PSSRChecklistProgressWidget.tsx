@@ -140,26 +140,25 @@ const CategoryProgressRow: React.FC<{
 }> = ({ name, completed, total, percentage, icon: Icon, colorClass, progressClass, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer group border border-transparent hover:border-border/50"
   >
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass}`}>
-      <Icon className="h-4 w-4" />
+    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>
+      <Icon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-3" />
     </div>
     <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-foreground truncate">{name}</span>
+        <span className="text-sm font-medium text-foreground truncate transition-colors group-hover:text-primary">{name}</span>
         <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
           {completed}/{total}
         </span>
       </div>
       <div className="relative h-1.5 bg-muted/50 rounded-full overflow-hidden">
         <div 
-          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${progressClass}`}
+          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${progressClass} group-hover:brightness-110`}
           style={{ width: `${percentage}%` }}
         />
       </div>
     </div>
-    
   </button>
 );
 
