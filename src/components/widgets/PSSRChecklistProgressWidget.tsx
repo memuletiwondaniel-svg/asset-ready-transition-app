@@ -140,7 +140,7 @@ const CategoryProgressRow: React.FC<{
 }> = ({ name, completed, total, percentage, icon: Icon, colorClass, progressClass, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer group border border-transparent hover:border-border/50"
+    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer group border border-transparent hover:border-border/50 group-has-[:hover]/list:opacity-40 group-has-[:hover]/list:grayscale hover:!opacity-100 hover:!grayscale-0"
   >
     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass} transition-transform duration-200 group-hover:scale-110`}>
       <Icon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-3" />
@@ -334,7 +334,7 @@ export const PSSRChecklistProgressWidget: React.FC<PSSRChecklistProgressWidgetPr
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
               Progress by Category
             </h4>
-            <div className="space-y-0">
+            <div className="space-y-0 group/list">
               {categoryProgress.map((category) => {
                 const colors = getCategoryColors(category.name);
                 return (
