@@ -9,6 +9,7 @@ import { Plus, Edit2, Trash2, Search, List, Settings2 } from 'lucide-react';
 import { useFACPrerequisites, FACPrerequisite } from '@/hooks/useHandoverPrerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import FACPrerequisiteDialog from './FACPrerequisiteDialog';
+import { cn } from '@/lib/utils';
 
 interface ColumnVisibility {
   sampleEvidence: boolean;
@@ -59,17 +60,26 @@ const FACPrerequisitesList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="border-l-4 border-l-rose-300 dark:border-l-rose-600 bg-rose-50/30 dark:bg-rose-950/20">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <List className="h-5 w-5" />
-                FAC Prerequisites (VCR-02)
-              </CardTitle>
-              <CardDescription>
-                Manage prerequisites for Final Handover acceptance
-              </CardDescription>
+            <div className="flex items-center gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <List className="h-5 w-5" />
+                  FAC Prerequisites (VCR-02)
+                </CardTitle>
+                <CardDescription>
+                  Manage prerequisites for Final Handover acceptance
+                </CardDescription>
+              </div>
+              <div className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium",
+                "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300"
+              )}>
+                <span className="font-semibold">{filteredPrerequisites.length}</span>
+                <span className="text-xs opacity-70">items</span>
+              </div>
             </div>
             <Button onClick={handleAdd} className="gap-2">
               <Plus className="h-4 w-4" />
