@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -155,32 +155,19 @@ const PACTemplatesList: React.FC = () => {
               <p className="text-sm">Create a template to get started</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Template Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Prerequisites</TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTemplates.map(template => (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">{template.name}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-xs truncate">
-                      {template.description || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {template.prerequisite_ids?.length || 0} items
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredTemplates.map(template => (
+                <Card key={template.id} className="group hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-base font-semibold line-clamp-1">
+                        {template.name}
+                      </CardTitle>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8"
                           onClick={() => handleOpenDialog(template)}
                         >
                           <Edit2 className="h-4 w-4" />
@@ -188,17 +175,25 @@ const PACTemplatesList: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => handleDelete(template.id)}
-                          className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                    <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+                      {template.description || 'No description'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Badge variant="secondary">
+                      {template.prerequisite_ids?.length || 0} prerequisites
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
