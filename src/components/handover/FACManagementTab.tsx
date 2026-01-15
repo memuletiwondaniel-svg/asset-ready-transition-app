@@ -12,7 +12,7 @@ const getTabIconColor = (tabValue: string, isActive: boolean) => {
     case 'certificate':
       return 'text-teal-500 dark:text-teal-400';
     case 'prerequisites':
-      return 'text-emerald-500 dark:text-emerald-400';
+      return 'text-amber-500 dark:text-amber-400';
     default:
       return 'text-foreground';
   }
