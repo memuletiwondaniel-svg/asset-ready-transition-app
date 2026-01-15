@@ -12,7 +12,7 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ clas
     {
       id: '1',
       type: 'approval',
-      action: 'Approved PSSR-2024-001',
+      action: 'Approved PSSR-DP300-001',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       icon: CheckCircle,
       color: 'text-green-500'
