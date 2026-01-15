@@ -254,6 +254,7 @@ const PACPrerequisiteDialog: React.FC<PACPrerequisiteDialogProps> = ({
                   placeholder="Select delivering parties..."
                   searchPlaceholder="Search roles..."
                   emptyText="No roles found."
+                  badgeVariant="delivering"
                 />
               </div>
 
@@ -269,6 +270,7 @@ const PACPrerequisiteDialog: React.FC<PACPrerequisiteDialogProps> = ({
                   placeholder="Select receiving parties..."
                   searchPlaceholder="Search roles..."
                   emptyText="No roles found."
+                  badgeVariant="receiving"
                 />
               </div>
             </div>
