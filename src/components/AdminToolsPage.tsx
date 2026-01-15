@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate } from 'lucide-react';
+import { Users, FolderOpen, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, FileCheck2 } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import EnhancedUserManagement from "@/components/user-management/EnhancedUserManagement";
 import PSSRSettingsManagement from "./PSSRSettingsManagement";
 import { ORAConfigurationManagement } from "./ora/ORAConfigurationManagement";
+import { ManageHandover } from "./handover/ManageHandover";
 import AdminHeader from "./admin/AdminHeader";
 import AdminActivityLog from "./AdminActivityLog";
 import { supabase } from '@/integrations/supabase/client';
@@ -70,7 +71,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     'user-management': () => setActiveView('users'),
     'users': () => setActiveView('users'),
   });
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'pssr-settings' | 'activity-log' | 'ora-configuration' | 'handover-management'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [userStatsAnimating, setUserStatsAnimating] = useState(false);
@@ -253,6 +254,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ora-configuration')
+  }, {
+    id: 'handover-management',
+    title: t.manageHandover || 'Manage Handover',
+    description: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
+    icon: FileCheck2,
+    gradient: 'from-teal-500 to-teal-600',
+    tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('handover-management')
   }];
 
   // Filter admin tools based on search query
@@ -321,6 +332,18 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           onClick: undefined
         });
         break;
+      case 'handover-management':
+        crumbs.push({
+          label: 'Admin Tools',
+          icon: Sliders,
+          onClick: () => setActiveView('dashboard')
+        });
+        crumbs.push({
+          label: 'Manage Handover',
+          icon: FileCheck2,
+          onClick: undefined
+        });
+        break;
     }
     return crumbs;
   };
@@ -354,6 +377,12 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
         <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
         <ORAConfigurationManagement onBack={() => setActiveView('dashboard')} />
+      </div>;
+  }
+  if (activeView === 'handover-management') {
+    return <div className="h-screen flex w-full overflow-hidden animate-fade-in">
+        <OrshSidebar userName="Daniel" userTitle="ORA Engr." language="en" currentPage="admin-tools" onNavigate={handleSidebarNavigate} />
+        <ManageHandover onBack={() => setActiveView('dashboard')} />
       </div>;
   }
   return <div className="h-screen flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
