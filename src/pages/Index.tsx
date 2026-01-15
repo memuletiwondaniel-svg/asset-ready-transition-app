@@ -10,6 +10,7 @@ import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 import UserManagement from "@/pages/UserManagement";
 import AdminToolsPage from "@/components/AdminToolsPage";
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
+import ProjectsHomePage from "@/components/project/ProjectsHomePage";
 import OrshLogo from "@/components/ui/OrshLogo";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -67,7 +68,7 @@ const Index = () => {
       case 'admin-tools':
         return <AdminToolsPage onBack={handleBackToLanding} />;
       case 'projects':
-        return <ProjectManagementPage onBack={handleBackToLanding} />;
+        return <ProjectsHomePage onBack={handleBackToLanding} />;
       case 'p2o':
         return (
           <div className="min-h-screen flex items-center justify-center bg-gray-100">
