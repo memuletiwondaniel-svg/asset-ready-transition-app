@@ -157,14 +157,14 @@ const OWLItemDialog: React.FC<OWLItemDialogProps> = ({
             <div className="space-y-2">
               <Label>Project</Label>
               <Select
-                value={formData.project_id}
-                onValueChange={value => setFormData(prev => ({ ...prev, project_id: value }))}
+                value={formData.project_id || 'none'}
+                onValueChange={value => setFormData(prev => ({ ...prev, project_id: value === 'none' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {projects.map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.code} - {p.name}
@@ -236,14 +236,14 @@ const OWLItemDialog: React.FC<OWLItemDialogProps> = ({
             <div className="space-y-2">
               <Label>Action Party</Label>
               <Select
-                value={formData.action_party_role_id}
-                onValueChange={value => setFormData(prev => ({ ...prev, action_party_role_id: value }))}
+                value={formData.action_party_role_id || 'none'}
+                onValueChange={value => setFormData(prev => ({ ...prev, action_party_role_id: value === 'none' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {roles?.map(role => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}

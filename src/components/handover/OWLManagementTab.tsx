@@ -189,14 +189,14 @@ const OWLManagementTab: React.FC = () => {
             </div>
             
             <Select
-              value={filters.projectId || ''}
-              onValueChange={value => setFilters(prev => ({ ...prev, projectId: value || undefined }))}
+              value={filters.projectId || 'all'}
+              onValueChange={value => setFilters(prev => ({ ...prev, projectId: value === 'all' ? undefined : value }))}
             >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="All Projects" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Projects</SelectItem>
+                <SelectItem value="all">All Projects</SelectItem>
                 {projects?.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
@@ -204,14 +204,14 @@ const OWLManagementTab: React.FC = () => {
             </Select>
 
             <Select
-              value={filters.source || ''}
-              onValueChange={value => setFilters(prev => ({ ...prev, source: value as OWLSource || undefined }))}
+              value={filters.source || 'all'}
+              onValueChange={value => setFilters(prev => ({ ...prev, source: value === 'all' ? undefined : value as OWLSource }))}
             >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="All Sources" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Sources</SelectItem>
+                <SelectItem value="all">All Sources</SelectItem>
                 <SelectItem value="PUNCHLIST">Punchlist</SelectItem>
                 <SelectItem value="PSSR">PSSR</SelectItem>
                 <SelectItem value="PAC">PAC</SelectItem>
@@ -220,14 +220,14 @@ const OWLManagementTab: React.FC = () => {
             </Select>
 
             <Select
-              value={filters.status || ''}
-              onValueChange={value => setFilters(prev => ({ ...prev, status: value as OWLStatus || undefined }))}
+              value={filters.status || 'all'}
+              onValueChange={value => setFilters(prev => ({ ...prev, status: value === 'all' ? undefined : value as OWLStatus }))}
             >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="OPEN">Open</SelectItem>
                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                 <SelectItem value="CLOSED">Closed</SelectItem>
@@ -236,14 +236,14 @@ const OWLManagementTab: React.FC = () => {
             </Select>
 
             <Select
-              value={filters.priority?.toString() || ''}
-              onValueChange={value => setFilters(prev => ({ ...prev, priority: value ? parseInt(value) : undefined }))}
+              value={filters.priority?.toString() || 'all'}
+              onValueChange={value => setFilters(prev => ({ ...prev, priority: value === 'all' ? undefined : parseInt(value) }))}
             >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priorities</SelectItem>
+                <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="1">Priority 1</SelectItem>
                 <SelectItem value="2">Priority 2</SelectItem>
                 <SelectItem value="3">Priority 3</SelectItem>
