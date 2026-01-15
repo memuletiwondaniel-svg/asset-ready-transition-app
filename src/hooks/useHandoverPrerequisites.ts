@@ -146,16 +146,69 @@ export function usePACPrerequisites() {
     },
   });
 
+  // Sync delivering parties to junction table
+  const syncDeliveringParties = async (prerequisiteId: string, roleIds: string[]) => {
+    // Delete existing
+    await supabase
+      .from('pac_prerequisite_delivering_parties')
+      .delete()
+      .eq('prerequisite_id', prerequisiteId);
+    
+    // Insert new
+    if (roleIds.length > 0) {
+      const { error } = await supabase
+        .from('pac_prerequisite_delivering_parties')
+        .insert(roleIds.map((id, index) => ({
+          prerequisite_id: prerequisiteId,
+          role_id: id,
+          display_order: index
+        })));
+      if (error) throw error;
+    }
+  };
+
+  // Sync receiving parties to junction table
+  const syncReceivingParties = async (prerequisiteId: string, roleIds: string[]) => {
+    // Delete existing
+    await supabase
+      .from('pac_prerequisite_receiving_parties')
+      .delete()
+      .eq('prerequisite_id', prerequisiteId);
+    
+    // Insert new
+    if (roleIds.length > 0) {
+      const { error } = await supabase
+        .from('pac_prerequisite_receiving_parties')
+        .insert(roleIds.map((id, index) => ({
+          prerequisite_id: prerequisiteId,
+          role_id: id,
+          display_order: index
+        })));
+      if (error) throw error;
+    }
+  };
+
   const createMutation = useMutation({
-    mutationFn: async (prerequisite: Omit<PACPrerequisite, 'id' | 'created_at' | 'updated_at' | 'category' | 'delivering_role' | 'receiving_role'>) => {
+    mutationFn: async (prerequisite: Omit<PACPrerequisite, 'id' | 'created_at' | 'updated_at' | 'category' | 'delivering_role' | 'receiving_role'> & { delivering_party_ids?: string[]; receiving_party_ids?: string[] }) => {
       const { data: { user } } = await supabase.auth.getUser();
+      const { delivering_party_ids, receiving_party_ids, ...prereqData } = prerequisite as any;
+      
       const { data, error } = await supabase
         .from('pac_prerequisites')
-        .insert({ ...prerequisite, created_by: user?.id })
+        .insert({ ...prereqData, created_by: user?.id })
         .select()
         .single();
 
       if (error) throw error;
+      
+      // Sync parties after creation
+      if (delivering_party_ids?.length) {
+        await syncDeliveringParties(data.id, delivering_party_ids);
+      }
+      if (receiving_party_ids?.length) {
+        await syncReceivingParties(data.id, receiving_party_ids);
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -211,6 +264,8 @@ export function usePACPrerequisites() {
     createPrerequisite: createMutation.mutate,
     updatePrerequisite: updateMutation.mutate,
     deletePrerequisite: deleteMutation.mutate,
+    syncDeliveringParties,
+    syncReceivingParties,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
