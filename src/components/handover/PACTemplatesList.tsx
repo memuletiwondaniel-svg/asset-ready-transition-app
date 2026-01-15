@@ -170,7 +170,8 @@ const PACTemplatesList: React.FC = () => {
                 return (
                   <Card 
                     key={template.id} 
-                    className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${colorClass}`}
+                    className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${colorClass}`}
+                    onDoubleClick={() => handleOpenDialog(template)}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <CardHeader className="pb-3 relative">
