@@ -409,25 +409,15 @@ const PSSRApproverDashboard: React.FC = () => {
         />
         <SidebarInset className="flex-1">
           {/* Header */}
-          <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
+          <div className="border-b border-border/40 bg-card/50 p-4 md:p-6">
             <BreadcrumbNavigation currentPageLabel="My Tasks" />
             
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-              <div className="min-w-0 flex items-center gap-3">
-                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
-                  <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    View and manage all tasks assigned to you
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3 mt-4">
+              <h1 className="text-xl font-semibold text-foreground">My Tasks</h1>
               
-              <div className="flex items-center gap-3">
-                <Button onClick={() => setShowCreateTaskDialog(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowCreateTaskDialog(true)} className="gap-1.5">
+                  <Plus className="h-3.5 w-3.5" />
                   Create Task
                 </Button>
                 <NotificationCenter />
