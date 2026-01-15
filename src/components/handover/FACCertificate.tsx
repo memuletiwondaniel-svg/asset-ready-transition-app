@@ -6,6 +6,7 @@ import { Printer, FileDown, Edit2, Save, X } from "lucide-react";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
+import { useFACPrerequisites } from '@/hooks/useHandoverPrerequisites';
 
 interface FACApprover {
   id: string;
@@ -43,6 +44,8 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(defaultContent);
   const [editContent, setEditContent] = useState(defaultContent);
+  
+  const { data: facPrerequisites = [], isLoading: isLoadingPrerequisites } = useFACPrerequisites();
 
   const handlePrint = () => {
     window.print();
@@ -193,6 +196,27 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
             ) : (
               <p className="text-foreground">{content.ownershipStatement}</p>
             )}
+
+            {/* Prerequisites List - Read Only */}
+            <div className="mt-4">
+              {isLoadingPrerequisites ? (
+                <p className="text-muted-foreground text-sm italic">Loading prerequisites...</p>
+              ) : facPrerequisites.length > 0 ? (
+                <ol className="list-decimal list-inside space-y-2 text-foreground pl-2">
+                  {[...facPrerequisites]
+                    .sort((a, b) => a.display_order - b.display_order)
+                    .map((prereq) => (
+                      <li key={prereq.id} className="leading-relaxed">
+                        {prereq.summary}
+                      </li>
+                    ))}
+                </ol>
+              ) : (
+                <p className="text-muted-foreground text-sm italic">
+                  No prerequisites defined. Add prerequisites from the Prerequisites tab.
+                </p>
+              )}
+            </div>
 
             {/* Approvals Section */}
             <div className="mt-8">
