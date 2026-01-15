@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { usePSSRsAwaitingReview } from '@/hooks/usePSSRItemApprovals';
 import { useUserTasks } from '@/hooks/useUserTasks';
+import { useUserOWLItems } from '@/hooks/useUserOWLItems';
+import { useProjectsForOWL } from '@/hooks/useOutstandingWorkList';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +24,8 @@ import {
   X,
   Loader2,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  ClipboardList
 } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { OrshSidebar } from '@/components/OrshSidebar';
@@ -30,9 +33,12 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { DraggableTask } from '@/components/DraggableTask';
+import { OWLTaskCard } from '@/components/tasks/OWLTaskCard';
+import OWLItemDialog from '@/components/handover/OWLItemDialog';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { UserOWLItem } from '@/hooks/useUserOWLItems';
 
 const PSSRApproverDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -47,10 +53,20 @@ const PSSRApproverDashboard: React.FC = () => {
     bulkUpdateStatus,
     bulkDelete
   } = useUserTasks();
+  const {
+    items: owlItems,
+    isLoading: isLoadingOWL,
+    stats: owlStats,
+    updateStatus: updateOWLStatus,
+    isUpdatingStatus: isUpdatingOWLStatus,
+  } = useUserOWLItems();
+  const { data: projects } = useProjectsForOWL();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [selectedOWLItem, setSelectedOWLItem] = useState<UserOWLItem | null>(null);
+  const [owlDialogOpen, setOWLDialogOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
@@ -78,6 +94,8 @@ const PSSRApproverDashboard: React.FC = () => {
 
     if (filterType === 'pssr') {
       return []; // PSSR handled separately
+    } else if (filterType === 'owl') {
+      return []; // OWL handled separately
     } else if (filterType === 'handover') {
       filtered = filtered.filter(t => t.type === 'review');
     } else if (filterType === 'others') {
@@ -100,9 +118,24 @@ const PSSRApproverDashboard: React.FC = () => {
     }) || [];
   }, [pendingPSSRs, searchQuery, filterType]);
 
+  // Filter OWL items
+  const filteredOWLItems = useMemo(() => {
+    if (filterType !== 'all' && filterType !== 'owl') return [];
+    
+    return owlItems.filter(item => {
+      const matchesSearch = !searchQuery || 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.item_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.project?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
+  }, [owlItems, searchQuery, filterType]);
+
   // Stats
   const pssrCount = pendingPSSRs?.length || 0;
-  const totalTasks = taskCounts.total + pssrCount;
+  const owlCount = owlItems.length;
+  const totalTasks = taskCounts.total + pssrCount + owlCount;
 
   const getPendingBadgeColor = (pendingSince: string) => {
     const days = differenceInDays(new Date(), new Date(pendingSince));
@@ -166,8 +199,20 @@ const PSSRApproverDashboard: React.FC = () => {
     }
   };
 
-  const isLoading = isLoadingPSSRs || isLoadingTasks;
-  const hasNoResults = filteredTasks.length === 0 && filteredPSSRs.length === 0;
+  const handleOWLItemClick = (item: UserOWLItem) => {
+    setSelectedOWLItem(item);
+    setOWLDialogOpen(true);
+  };
+
+  const handleOWLDialogClose = (open: boolean) => {
+    setOWLDialogOpen(open);
+    if (!open) {
+      setSelectedOWLItem(null);
+    }
+  };
+
+  const isLoading = isLoadingPSSRs || isLoadingTasks || isLoadingOWL;
+  const hasNoResults = filteredTasks.length === 0 && filteredPSSRs.length === 0 && filteredOWLItems.length === 0;
 
   return (
     <SidebarProvider>
@@ -200,7 +245,7 @@ const PSSRApproverDashboard: React.FC = () => {
 
           <div className="p-4 md:p-6 space-y-4">
             {/* Filter Labels */}
-            <div className="flex items-center gap-1 text-sm">
+            <div className="flex items-center gap-1 text-sm flex-wrap">
               <button
                 onClick={() => setFilterType('all')}
                 className={`px-3 py-1.5 rounded-md transition-colors ${
@@ -220,6 +265,17 @@ const PSSRApproverDashboard: React.FC = () => {
                 }`}
               >
                 PSSR Reviews ({pssrCount})
+              </button>
+              <button
+                onClick={() => setFilterType('owl')}
+                className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${
+                  filterType === 'owl' 
+                    ? 'bg-primary text-primary-foreground font-medium' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                <ClipboardList className="h-3.5 w-3.5" />
+                OWL / Punchlists ({owlCount})
               </button>
               <button
                 onClick={() => setFilterType('handover')}
@@ -345,6 +401,17 @@ const PSSRApproverDashboard: React.FC = () => {
                     );
                   })}
 
+                  {/* OWL / Punchlist Items */}
+                  {filteredOWLItems.map((item) => (
+                    <OWLTaskCard
+                      key={`owl-${item.id}`}
+                      item={item}
+                      onClick={() => handleOWLItemClick(item)}
+                      onUpdateStatus={(id, status) => updateOWLStatus({ id, status })}
+                      isUpdating={isUpdatingOWLStatus}
+                    />
+                  ))}
+
                   {/* Custom Tasks */}
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleTaskDragEnd}>
                     <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
@@ -369,6 +436,14 @@ const PSSRApproverDashboard: React.FC = () => {
           </div>
         </SidebarInset>
       </div>
+
+      {/* OWL Item Dialog */}
+      <OWLItemDialog
+        open={owlDialogOpen}
+        onOpenChange={handleOWLDialogClose}
+        item={selectedOWLItem as any}
+        projects={projects || []}
+      />
     </SidebarProvider>
   );
 };
