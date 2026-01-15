@@ -243,7 +243,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       }
     ],
 
-    // SoF Approvers
+    // SoF Approvers - Based on reason "Start-up of a new Plant" configuration
     sofApprovers: [
       {
         id: '5',
@@ -255,11 +255,27 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       },
       {
         id: '6',
-        name: 'James Chen',
-        role: 'Operations Manager',
+        name: 'James Miller',
+        role: 'HSE Director',
         avatar: '/lovable-uploads/6cb38356-79ac-4435-9d01-220ab79e63cc.png',
+        pendingTasks: 0,
+        isOnline: true
+      },
+      {
+        id: '7',
+        name: 'Dr. Sarah Thompson',
+        role: 'P&M Director',
+        avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
         pendingTasks: 1,
         isOnline: false
+      },
+      {
+        id: '8',
+        name: 'Robert Chen',
+        role: 'P&E Director',
+        avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png',
+        pendingTasks: 0,
+        isOnline: true
       }
     ],
 
