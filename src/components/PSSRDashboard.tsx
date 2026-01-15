@@ -217,18 +217,18 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
         isOnline: true
       },
       {
-        id: '0942bfe3-17b5-41a7-920e-c0802b9764b2',
-        name: 'Martyn Turner',
+        id: 'adf6a6f1-fdf2-4aaf-b8ec-ab8b1fd0503c',
+        name: 'Christian Johnsen',
         role: 'TA2 Process - Asset',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/0942bfe3-17b5-41a7-920e-c0802b9764b2/1757605550833.jpg',
+        avatar: undefined,
         pendingTasks: 3,
         isOnline: true
       },
       {
-        id: '83f6a3e5-82ea-4ae2-a38b-df3ca589bffa',
-        name: 'Yesr Tamoul',
+        id: '167b6708-9a29-4492-b0db-35f98a1a71ec',
+        name: 'Ewan McConnachie',
         role: 'TA2 Static - Asset',
-        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/83f6a3e5-82ea-4ae2-a38b-df3ca589bffa/1757605610830.jpg',
+        avatar: 'https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/9358a12a-0c7c-44c7-a536-bb523c2e2829/1757775509190.jpg',
         pendingTasks: 2,
         isOnline: false
       }
