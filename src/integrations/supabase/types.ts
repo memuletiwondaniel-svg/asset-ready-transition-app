@@ -127,6 +127,63 @@ export type Database = {
         }
         Relationships: []
       }
+      fac_prerequisites: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          delivering_party_role_id: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean | null
+          receiving_party_role_id: string | null
+          sample_evidence: string | null
+          summary: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          delivering_party_role_id?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          receiving_party_role_id?: string | null
+          sample_evidence?: string | null
+          summary: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          delivering_party_role_id?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          receiving_party_role_id?: string | null
+          sample_evidence?: string | null
+          summary?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fac_prerequisites_delivering_party_role_id_fkey"
+            columns: ["delivering_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fac_prerequisites_receiving_party_role_id_fkey"
+            columns: ["receiving_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field: {
         Row: {
           created_at: string
@@ -164,6 +221,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      handover_certificate_templates: {
+        Row: {
+          certificate_type: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          certificate_type: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          certificate_type?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       hubs: {
         Row: {
@@ -2277,6 +2370,81 @@ export type Database = {
         }
         Relationships: []
       }
+      outstanding_work_items: {
+        Row: {
+          action_party_role_id: string | null
+          assigned_to: string | null
+          comments: string | null
+          completed_date: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          item_number: string
+          priority: number | null
+          project_id: string | null
+          source: string
+          source_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_party_role_id?: string | null
+          assigned_to?: string | null
+          comments?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          item_number: string
+          priority?: number | null
+          project_id?: string | null
+          source: string
+          source_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_party_role_id?: string | null
+          assigned_to?: string | null
+          comments?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          item_number?: string
+          priority?: number | null
+          project_id?: string | null
+          source?: string
+          source_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outstanding_work_items_action_party_role_id_fkey"
+            columns: ["action_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outstanding_work_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_approval_workflow: {
         Row: {
           approved_at: string | null
@@ -2637,6 +2805,136 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pac_prerequisite_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          display_order: number
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          display_order: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      pac_prerequisites: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          delivering_party_role_id: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean | null
+          receiving_party_role_id: string | null
+          sample_evidence: string | null
+          summary: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delivering_party_role_id?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          receiving_party_role_id?: string | null
+          sample_evidence?: string | null
+          summary: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delivering_party_role_id?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          receiving_party_role_id?: string | null
+          sample_evidence?: string | null
+          summary?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pac_prerequisites_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "pac_prerequisite_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pac_prerequisites_delivering_party_role_id_fkey"
+            columns: ["delivering_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pac_prerequisites_receiving_party_role_id_fkey"
+            columns: ["receiving_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pac_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          prerequisite_ids: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          prerequisite_ids?: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          prerequisite_ids?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       password_reset_tokens: {
         Row: {
