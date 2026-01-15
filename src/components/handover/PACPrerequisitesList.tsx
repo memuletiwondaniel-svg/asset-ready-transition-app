@@ -10,6 +10,31 @@ import { Plus, ChevronDown, ChevronRight, Edit2, Trash2, Search, Settings2 } fro
 import { usePACPrerequisites, usePACCategories, PACPrerequisite } from '@/hooks/useHandoverPrerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import PACPrerequisiteDialog from './PACPrerequisiteDialog';
+import { cn } from '@/lib/utils';
+
+// Category color configuration for visual distinction
+const categoryColors = [
+  { 
+    border: 'border-l-4 border-l-sky-300 dark:border-l-sky-600',
+    bg: 'bg-sky-50/40 dark:bg-sky-950/20',
+    badge: 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300'
+  },
+  { 
+    border: 'border-l-4 border-l-emerald-300 dark:border-l-emerald-600',
+    bg: 'bg-emerald-50/40 dark:bg-emerald-950/20',
+    badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+  },
+  { 
+    border: 'border-l-4 border-l-violet-300 dark:border-l-violet-600',
+    bg: 'bg-violet-50/40 dark:bg-violet-950/20',
+    badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300'
+  },
+  { 
+    border: 'border-l-4 border-l-amber-300 dark:border-l-amber-600',
+    bg: 'bg-amber-50/40 dark:bg-amber-950/20',
+    badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+  },
+];
 
 interface ColumnVisibility {
   sampleEvidence: boolean;
@@ -142,9 +167,10 @@ const PACPrerequisitesList: React.FC = () => {
 
       {/* Categories with Prerequisites */}
       <div className="space-y-4">
-        {categories?.map(category => {
+        {categories?.map((category, index) => {
           const categoryPrereqs = groupedPrerequisites[category.id] || [];
-          const isOpen = openCategories[category.id] ?? true;
+          const isOpen = openCategories[category.id] ?? false;
+          const colorScheme = categoryColors[index % categoryColors.length];
 
           return (
             <Collapsible
@@ -152,9 +178,9 @@ const PACPrerequisitesList: React.FC = () => {
               open={isOpen}
               onOpenChange={() => toggleCategory(category.id)}
             >
-              <Card>
+              <Card className={cn(colorScheme.border, colorScheme.bg)}>
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {isOpen ? (
@@ -167,9 +193,13 @@ const PACPrerequisitesList: React.FC = () => {
                           <CardDescription>{category.description}</CardDescription>
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-sm">
-                        {categoryPrereqs.length} items
-                      </Badge>
+                      <div className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium",
+                        colorScheme.badge
+                      )}>
+                        <span className="font-semibold">{categoryPrereqs.length}</span>
+                        <span className="text-xs opacity-70">items</span>
+                      </div>
                     </div>
                   </CardHeader>
                 </CollapsibleTrigger>
