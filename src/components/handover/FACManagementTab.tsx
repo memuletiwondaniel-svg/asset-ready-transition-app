@@ -17,7 +17,7 @@ const FACManagementTab: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="prerequisites" className="flex items-center gap-2">
             <List className="h-4 w-4" />
-            Prerequisites (VCR-02)
+            Prerequisites
           </TabsTrigger>
         </TabsList>
 
