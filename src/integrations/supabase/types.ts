@@ -464,6 +464,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ora_cost_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       ora_handover_items: {
         Row: {
           category: string
@@ -2052,11 +2082,15 @@ export type Database = {
       }
       orp_plan_deliverables: {
         Row: {
+          actual_cost: number | null
           comments: string | null
+          committed_cost: number | null
           completion_percentage: number | null
+          cost_category: string | null
           created_at: string
           deliverable_id: string
           end_date: string | null
+          estimated_cost: number | null
           estimated_manhours: number | null
           id: string
           orp_plan_id: string
@@ -2065,11 +2099,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_cost?: number | null
           comments?: string | null
+          committed_cost?: number | null
           completion_percentage?: number | null
+          cost_category?: string | null
           created_at?: string
           deliverable_id: string
           end_date?: string | null
+          estimated_cost?: number | null
           estimated_manhours?: number | null
           id?: string
           orp_plan_id: string
@@ -2078,11 +2116,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_cost?: number | null
           comments?: string | null
+          committed_cost?: number | null
           completion_percentage?: number | null
+          cost_category?: string | null
           created_at?: string
           deliverable_id?: string
           end_date?: string | null
+          estimated_cost?: number | null
           estimated_manhours?: number | null
           id?: string
           orp_plan_id?: string
