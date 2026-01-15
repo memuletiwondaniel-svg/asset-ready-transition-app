@@ -111,22 +111,72 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
   onItemClick,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: items, isLoading } = usePSSRCategoryItems(pssrId, categoryName);
+  const { data: dbItems, isLoading } = usePSSRCategoryItems(pssrId, categoryName);
 
-  const filteredItems = items?.filter(item => {
+  // Mock items for each category when real data is empty
+  const getMockItems = (category: string | null): CategoryItem[] => {
+    if (!category) return [];
+    
+    const mockItemsMap: Record<string, CategoryItem[]> = {
+      'Technical Integrity': [
+        { id: '1', unique_id: 'TI-001', question: 'Have all pressure relief devices been tested and certified?', response_id: '1', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
+        { id: '2', unique_id: 'TI-002', question: 'Are all critical instrumentation loops verified and calibrated?', response_id: '2', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
+        { id: '3', unique_id: 'TI-003', question: 'Have all rotating equipment been aligned and tested?', response_id: '3', response: 'DEVIATION', status: 'review', approval_status: 'approved_with_action', narrative: 'Pump P-101 requires realignment before startup', category: 'Technical Integrity' },
+        { id: '4', unique_id: 'TI-004', question: 'Are all vessel inspection reports current and approved?', response_id: '4', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
+        { id: '5', unique_id: 'TI-005', question: 'Have all piping systems been hydrostatically tested?', response_id: '5', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Technical Integrity' },
+        { id: '6', unique_id: 'TI-006', question: 'Are all electrical systems grounded and bonded properly?', response_id: '6', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Technical Integrity' },
+      ],
+      'Process Safety': [
+        { id: '7', unique_id: 'PS-001', question: 'Has the Process Hazard Analysis (PHA) been completed and recommendations closed?', response_id: '7', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Process Safety' },
+        { id: '8', unique_id: 'PS-002', question: 'Are all Safety Instrumented Systems (SIS) tested and functional?', response_id: '8', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Process Safety' },
+        { id: '9', unique_id: 'PS-003', question: 'Have all Emergency Shutdown (ESD) systems been tested?', response_id: '9', response: 'DEVIATION', status: 'review', approval_status: 'approved_with_action', narrative: 'ESD valve XV-102 requires replacement', category: 'Process Safety' },
+        { id: '10', unique_id: 'PS-004', question: 'Are all interlock systems verified and documented?', response_id: '10', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Process Safety' },
+        { id: '11', unique_id: 'PS-005', question: 'Has the Management of Change (MOC) process been completed for all modifications?', response_id: '11', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Process Safety' },
+      ],
+      'Organization': [
+        { id: '12', unique_id: 'ORG-001', question: 'Are all personnel trained on operating procedures?', response_id: '12', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Organization' },
+        { id: '13', unique_id: 'ORG-002', question: 'Has the shift handover procedure been established?', response_id: '13', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Organization' },
+        { id: '14', unique_id: 'ORG-003', question: 'Are emergency response roles and responsibilities defined?', response_id: '14', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Organization' },
+        { id: '15', unique_id: 'ORG-004', question: 'Has the on-call roster been established?', response_id: '15', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Organization' },
+      ],
+      'Documentation': [
+        { id: '16', unique_id: 'DOC-001', question: 'Are all P&IDs updated to as-built condition?', response_id: '16', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Documentation' },
+        { id: '17', unique_id: 'DOC-002', question: 'Have all operating procedures been approved?', response_id: '17', response: 'DEVIATION', status: 'review', approval_status: 'approved_with_action', narrative: 'SOP-001 requires revision for new equipment', category: 'Documentation' },
+        { id: '18', unique_id: 'DOC-003', question: 'Are all equipment manuals available and organized?', response_id: '18', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Documentation' },
+        { id: '19', unique_id: 'DOC-004', question: 'Have all emergency response procedures been documented?', response_id: '19', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Documentation' },
+      ],
+      'HSE & Environment': [
+        { id: '20', unique_id: 'HSE-001', question: 'Are all environmental permits in place?', response_id: '20', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'HSE & Environment' },
+        { id: '21', unique_id: 'HSE-002', question: 'Have all fire detection and suppression systems been tested?', response_id: '21', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'HSE & Environment' },
+        { id: '22', unique_id: 'HSE-003', question: 'Are spill containment measures in place?', response_id: '22', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'HSE & Environment' },
+      ],
+      'Maintenance Readiness': [
+        { id: '23', unique_id: 'MR-001', question: 'Are all critical spare parts available on site?', response_id: '23', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Maintenance Readiness' },
+        { id: '24', unique_id: 'MR-002', question: 'Has the preventive maintenance schedule been established?', response_id: '24', response: 'YES', status: 'completed', approval_status: 'approved', narrative: null, category: 'Maintenance Readiness' },
+        { id: '25', unique_id: 'MR-003', question: 'Are all maintenance tools and equipment available?', response_id: '25', response: null, status: 'pending', approval_status: null, narrative: null, category: 'Maintenance Readiness' },
+      ],
+    };
+    
+    return mockItemsMap[category] || [];
+  };
+
+  // Use real data if available, otherwise use mock data
+  const items = (dbItems && dbItems.length > 0) ? dbItems : getMockItems(categoryName);
+
+  const filteredItems = items.filter(item => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
       item.unique_id.toLowerCase().includes(query) ||
       item.question.toLowerCase().includes(query)
     );
-  }) || [];
+  });
 
   // Group items by status for summary
   const statusCounts = {
-    completed: items?.filter(i => i.response === 'YES' || i.response === 'NA' || i.approval_status === 'approved').length || 0,
-    deviation: items?.filter(i => i.response === 'NO' || i.response === 'DEVIATION').length || 0,
-    pending: items?.filter(i => !i.response).length || 0,
+    completed: items.filter(i => i.response === 'YES' || i.response === 'NA' || i.approval_status === 'approved').length,
+    deviation: items.filter(i => i.response === 'NO' || i.response === 'DEVIATION').length,
+    pending: items.filter(i => !i.response).length,
   };
 
   return (

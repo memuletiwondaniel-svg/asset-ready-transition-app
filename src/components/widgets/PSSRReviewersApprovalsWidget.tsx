@@ -188,14 +188,17 @@ const StageSection: React.FC<{
   isCurrentStage: boolean;
   isLocked: boolean;
   lockReason?: string;
+  defaultCollapsed?: boolean;
   onSendReminder?: (personId: string) => void;
   onPersonClick?: (personId: string) => void;
-}> = ({ title, icon, people, isCurrentStage, isLocked, lockReason, onSendReminder, onPersonClick }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  
+}> = ({ title, icon, people, isCurrentStage, isLocked, lockReason, defaultCollapsed = false, onSendReminder, onPersonClick }) => {
   // Find the first person with pending tasks (action needed)
   const currentActionIndex = people.findIndex(p => p.pendingTasks > 0);
   const completedCount = people.filter(p => p.pendingTasks === 0 || p.status === 'completed').length;
+  const isAllComplete = completedCount === people.length;
+  
+  // Auto-collapse if all complete OR if defaultCollapsed is true
+  const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !isAllComplete);
   
   return (
     <TooltipProvider>
@@ -429,7 +432,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
           />
         )}
 
-        {/* PSSR Review Stage */}
+        {/* PSSR Review Stage - auto-collapse when complete */}
         {filteredReviewers.length > 0 && (
           <StageSection
             title="PSSR REVIEW"
@@ -437,6 +440,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             people={filteredReviewers}
             isCurrentStage={currentStage === 'review'}
             isLocked={false}
+            defaultCollapsed={reviewersComplete}
             onSendReminder={onSendReminder}
             onPersonClick={handleApproverClick}
           />
@@ -453,7 +457,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
           </div>
         )}
 
-        {/* PSSR Approval Stage */}
+        {/* PSSR Approval Stage - collapsed by default */}
         {filteredApprovers.length > 0 && (
           <StageSection
             title="PSSR Approval"
@@ -462,6 +466,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             isCurrentStage={currentStage === 'pssr-approval'}
             isLocked={pssrApprovalLocked}
             lockReason={pssrApprovalLockReason}
+            defaultCollapsed={true}
             onSendReminder={onSendReminder}
             onPersonClick={handleApproverClick}
           />
@@ -497,7 +502,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
           </div>
         )}
 
-        {/* SoF Approval Stage */}
+        {/* SoF Approval Stage - collapsed by default */}
         {filteredSofApprovers.length > 0 && (
           <StageSection
             title="SoF Approval"
@@ -506,6 +511,7 @@ export const PSSRReviewersApprovalsWidget: React.FC<PSSRReviewersApprovalsWidget
             isCurrentStage={currentStage === 'sof-approval'}
             isLocked={sofApprovalLocked}
             lockReason="Complete PSSR approval to unlock SoF approval"
+            defaultCollapsed={true}
             onSendReminder={onSendReminder}
             onPersonClick={handleApproverClick}
           />
