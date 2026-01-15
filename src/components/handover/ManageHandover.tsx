@@ -21,7 +21,14 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
     <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel="P2A Handover" />
+        <BreadcrumbNavigation 
+          currentPageLabel="P2A Handover" 
+          customBreadcrumbs={[
+            { label: 'Home', path: '/' },
+            { label: 'Administration', path: '/admin-tools' },
+            { label: 'P2A Handover', path: '/admin-tools' }
+          ]}
+        />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
             <Button

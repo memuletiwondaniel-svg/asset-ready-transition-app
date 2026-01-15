@@ -344,7 +344,14 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-border/40 bg-card/50 backdrop-blur-xl p-4 md:p-6">
-            <BreadcrumbNavigation currentPageLabel="Projects" />
+            <BreadcrumbNavigation 
+              currentPageLabel="Manage Projects" 
+              customBreadcrumbs={[
+                { label: 'Home', path: '/' },
+                { label: 'Administration', path: '/admin-tools' },
+                { label: 'Manage Projects', path: '/project-management' }
+              ]}
+            />
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
               <div className="min-w-0 flex items-center gap-3">
