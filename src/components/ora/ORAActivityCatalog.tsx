@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Edit3, Trash2, Search, ChevronDown, ChevronUp, X, Clock } from 'lucide-react';
+import { Plus, Edit3, Trash2, Search, ChevronDown, ChevronUp, X, Clock, Eye, EyeOff } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useORAActivityCatalog, ORA_PHASES, ORA_AREAS, ORA_ENTRY_TYPES, ORA_REQUIREMENT_LEVELS, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 
@@ -33,6 +33,7 @@ export const ORAActivityCatalog = () => {
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [expandedPhases, setExpandedPhases] = useState<string[]>(ORA_PHASES.map(p => p.value));
+  const [showDescription, setShowDescription] = useState(false);
   
   const [formData, setFormData] = useState<ORAActivityInput>({
     phase: '',
@@ -202,6 +203,15 @@ export const ORAActivityCatalog = () => {
         )}
 
         <div className="flex items-center gap-2 ml-auto">
+          <Button 
+            variant={showDescription ? "secondary" : "outline"} 
+            size="sm" 
+            onClick={() => setShowDescription(!showDescription)} 
+            className="h-9"
+          >
+            {showDescription ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+            Description
+          </Button>
           <Button variant="outline" size="sm" onClick={expandAll} className="h-9">
             <ChevronDown className="h-4 w-4 mr-1" />
             Expand All
@@ -255,8 +265,9 @@ export const ORAActivityCatalog = () => {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
-                          <TableHead className="w-24">S/N</TableHead>
+                          <TableHead className="w-16">S/N</TableHead>
                           <TableHead>Activity</TableHead>
+                          {showDescription && <TableHead className="min-w-[200px]">Description</TableHead>}
                           <TableHead className="w-28">Type</TableHead>
                           <TableHead className="w-24">Hours</TableHead>
                           <TableHead className="w-20 text-right">Actions</TableHead>
@@ -271,6 +282,11 @@ export const ORAActivityCatalog = () => {
                             <TableCell>
                               <p className="font-medium text-sm">{activity.name}</p>
                             </TableCell>
+                            {showDescription && (
+                              <TableCell className="text-sm text-muted-foreground max-w-[300px]">
+                                <p className="line-clamp-2">{activity.description || '—'}</p>
+                              </TableCell>
+                            )}
                             <TableCell>
                               <Badge variant="outline" className={`text-xs capitalize ${getTypeBadgeColor(activity.entry_type)}`}>
                                 {activity.entry_type.replace('_', ' ')}
