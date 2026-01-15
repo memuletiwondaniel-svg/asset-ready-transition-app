@@ -111,6 +111,7 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
   onItemClick,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'deviation' | 'pending'>('all');
   const { data: dbItems, isLoading } = usePSSRCategoryItems(pssrId, categoryName);
 
   // Mock items for each category when real data is empty
@@ -163,7 +164,23 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
   // Use real data if available, otherwise use mock data
   const items = (dbItems && dbItems.length > 0) ? dbItems : getMockItems(categoryName);
 
+  // Filter items based on search and status
   const filteredItems = items.filter(item => {
+    // Status filter
+    if (statusFilter === 'completed') {
+      const isCompleted = item.response === 'YES' || item.response === 'NA' || item.approval_status === 'approved';
+      if (!isCompleted) return false;
+    }
+    if (statusFilter === 'deviation') {
+      const isDeviation = item.response === 'NO' || item.response === 'DEVIATION';
+      if (!isDeviation) return false;
+    }
+    if (statusFilter === 'pending') {
+      const isPending = !item.response;
+      if (!isPending) return false;
+    }
+    
+    // Search filter
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -181,7 +198,7 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -204,20 +221,44 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
             <Progress value={categoryStats?.percentage || 0} className="h-2" />
           </div>
 
-          {/* Status Summary */}
-          <div className="flex gap-4 mt-4">
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground">{statusCounts.completed} Complete</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span className="text-muted-foreground">{statusCounts.deviation} Deviation</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
+          {/* Status Summary - Clickable Filters */}
+          <div className="flex gap-2 mt-4 flex-wrap">
+            <Button
+              variant={statusFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('all')}
+              className="gap-1.5"
+            >
+              <FileText className="h-4 w-4" />
+              All ({items.length})
+            </Button>
+            <Button
+              variant={statusFilter === 'completed' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('completed')}
+              className={`gap-1.5 ${statusFilter === 'completed' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+            >
+              <CheckCircle2 className={`h-4 w-4 ${statusFilter === 'completed' ? 'text-white' : 'text-green-500'}`} />
+              Completed ({statusCounts.completed})
+            </Button>
+            <Button
+              variant={statusFilter === 'deviation' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('deviation')}
+              className={`gap-1.5 ${statusFilter === 'deviation' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`}
+            >
+              <AlertTriangle className={`h-4 w-4 ${statusFilter === 'deviation' ? 'text-white' : 'text-amber-500'}`} />
+              Deviation ({statusCounts.deviation})
+            </Button>
+            <Button
+              variant={statusFilter === 'pending' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('pending')}
+              className="gap-1.5"
+            >
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{statusCounts.pending} Pending</span>
-            </div>
+              Pending ({statusCounts.pending})
+            </Button>
           </div>
 
           {/* Search */}
@@ -241,7 +282,22 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p>{searchQuery ? 'No items match your search.' : 'No items in this category.'}</p>
+              <p>
+                {searchQuery 
+                  ? 'No items match your search.' 
+                  : statusFilter !== 'all'
+                    ? `No ${statusFilter} items in this category.`
+                    : 'No items in this category.'}
+              </p>
+              {statusFilter !== 'all' && (
+                <Button 
+                  variant="link" 
+                  onClick={() => setStatusFilter('all')}
+                  className="mt-2"
+                >
+                  Show all items
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
