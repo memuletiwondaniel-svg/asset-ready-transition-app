@@ -274,7 +274,7 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
         </DialogHeader>
 
         {/* Items List */}
-        <ScrollArea className="flex-1 mt-4 -mx-6 px-6">
+        <ScrollArea className="h-[400px] mt-4 -mx-6 px-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
