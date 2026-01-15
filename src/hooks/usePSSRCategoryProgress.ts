@@ -21,6 +21,18 @@ export interface CategoryItem {
   approval_status: string | null;
   narrative: string | null;
   category: string;
+  // Extended fields for detail view
+  deviation_reason: string | null;
+  potential_risk: string | null;
+  mitigations: string | null;
+  follow_up_action: string | null;
+  action_owner: string | null;
+  justification: string | null;
+  submitted_at: string | null;
+  approved_at: string | null;
+  approver_name: string | null;
+  approval_comments: string | null;
+  attachments: string[] | null;
 }
 
 export function usePSSRCategoryProgress(pssrId: string) {
@@ -109,6 +121,14 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
           status,
           response,
           narrative,
+          attachments,
+          deviation_reason,
+          potential_risk,
+          mitigations,
+          follow_up_action,
+          action_owner,
+          justification,
+          created_at,
           checklist_item_id,
           pssr_checklist_items!inner(
             id,
@@ -121,28 +141,61 @@ export function usePSSRCategoryItems(pssrId: string, categoryName: string | null
 
       if (error) throw error;
 
-      // Fetch item approvals
+      // Fetch item approvals with more details
       const { data: approvals } = await supabase
         .from('pssr_item_approvals')
-        .select('checklist_response_id, status')
+        .select('checklist_response_id, status, comments, reviewed_at, approver_user_id')
         .eq('pssr_id', pssrId);
 
-      const approvalMap = new Map(approvals?.map(a => [a.checklist_response_id, a.status]) || []);
+      // Fetch approver profiles if we have approvals
+      const approverIds = approvals?.map(a => a.approver_user_id).filter(Boolean) || [];
+      let profileMap = new Map<string, string>();
+      
+      if (approverIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', approverIds);
+        
+        profileMap = new Map(profiles?.map(p => [p.id, p.full_name || 'Unknown']) || []);
+      }
+
+      const approvalMap = new Map(approvals?.map(a => [a.checklist_response_id, {
+        status: a.status,
+        comments: a.comments,
+        reviewed_at: a.reviewed_at,
+        approver_name: a.approver_user_id ? profileMap.get(a.approver_user_id) || null : null
+      }]) || []);
 
       // Filter by category and transform
       const items: CategoryItem[] = (responses || [])
         .filter((resp: any) => resp.pssr_checklist_items?.category === categoryName)
-        .map((resp: any) => ({
-          id: resp.pssr_checklist_items.id,
-          unique_id: resp.pssr_checklist_items.unique_id,
-          question: resp.pssr_checklist_items.question,
-          response_id: resp.id,
-          response: resp.response,
-          status: resp.status,
-          approval_status: approvalMap.get(resp.id) || null,
-          narrative: resp.narrative,
-          category: resp.pssr_checklist_items.category,
-        }))
+        .map((resp: any) => {
+          const approval = approvalMap.get(resp.id);
+          return {
+            id: resp.pssr_checklist_items.id,
+            unique_id: resp.pssr_checklist_items.unique_id,
+            question: resp.pssr_checklist_items.question,
+            response_id: resp.id,
+            response: resp.response,
+            status: resp.status,
+            approval_status: approval?.status || null,
+            narrative: resp.narrative,
+            category: resp.pssr_checklist_items.category,
+            // Extended fields
+            deviation_reason: resp.deviation_reason || null,
+            potential_risk: resp.potential_risk || null,
+            mitigations: resp.mitigations || null,
+            follow_up_action: resp.follow_up_action || null,
+            action_owner: resp.action_owner || null,
+            justification: resp.justification || null,
+            submitted_at: resp.created_at || null,
+            approved_at: approval?.reviewed_at || null,
+            approver_name: approval?.approver_name || null,
+            approval_comments: approval?.comments || null,
+            attachments: resp.attachments || null,
+          };
+        })
         .sort((a: CategoryItem, b: CategoryItem) => a.unique_id.localeCompare(b.unique_id));
 
       return items;
