@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Edit3, Trash2, Search, ChevronDown, ChevronUp, X, Clock, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit3, Trash2, Search, ChevronDown, ChevronUp, X, Clock, Columns3, Check } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useORAActivityCatalog, ORA_PHASES, ORA_AREAS, ORA_ENTRY_TYPES, ORA_REQUIREMENT_LEVELS, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 
 export const ORAActivityCatalog = () => {
@@ -33,7 +35,7 @@ export const ORAActivityCatalog = () => {
   const [editingActivity, setEditingActivity] = useState<ORAActivity | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
-  const [showDescription, setShowDescription] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['type']);
   
   const [formData, setFormData] = useState<ORAActivityInput>({
     phase: '',
@@ -203,15 +205,46 @@ export const ORAActivityCatalog = () => {
         )}
 
         <div className="flex items-center gap-2 ml-auto">
-          <Button 
-            variant={showDescription ? "secondary" : "outline"} 
-            size="sm" 
-            onClick={() => setShowDescription(!showDescription)} 
-            className="h-9"
-          >
-            {showDescription ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-            Description
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                <Columns3 className="h-4 w-4 mr-1" />
+                Columns
+                {visibleColumns.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    {visibleColumns.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="end">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground px-2 py-1">Toggle columns</p>
+                {[
+                  { id: 'description', label: 'Description' },
+                  { id: 'hours', label: 'Hours' },
+                  { id: 'type', label: 'Type' }
+                ].map((col) => (
+                  <label
+                    key={col.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={visibleColumns.includes(col.id)}
+                      onCheckedChange={(checked) => {
+                        setVisibleColumns(prev =>
+                          checked
+                            ? [...prev, col.id]
+                            : prev.filter(c => c !== col.id)
+                        );
+                      }}
+                    />
+                    <span className="text-sm">{col.label}</span>
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button variant="outline" size="sm" onClick={expandAll} className="h-9">
             <ChevronDown className="h-4 w-4 mr-1" />
             Expand All
@@ -267,9 +300,9 @@ export const ORAActivityCatalog = () => {
                         <TableRow className="bg-muted/30">
                           <TableHead className="w-16">S/N</TableHead>
                           <TableHead>Activity</TableHead>
-                          {showDescription && <TableHead className="min-w-[200px]">Description</TableHead>}
-                          <TableHead className="w-28">Type</TableHead>
-                          <TableHead className="w-24">Hours</TableHead>
+                          {visibleColumns.includes('description') && <TableHead className="min-w-[200px]">Description</TableHead>}
+                          {visibleColumns.includes('type') && <TableHead className="w-28">Type</TableHead>}
+                          {visibleColumns.includes('hours') && <TableHead className="w-24">Hours</TableHead>}
                           <TableHead className="w-20 text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -282,24 +315,28 @@ export const ORAActivityCatalog = () => {
                             <TableCell>
                               <p className="font-medium text-sm">{activity.name}</p>
                             </TableCell>
-                            {showDescription && (
+                            {visibleColumns.includes('description') && (
                               <TableCell className="text-sm text-muted-foreground max-w-[300px]">
                                 <p className="line-clamp-2">{activity.description || '—'}</p>
                               </TableCell>
                             )}
-                            <TableCell>
-                              <Badge variant="outline" className={`text-xs capitalize ${getTypeBadgeColor(activity.entry_type)}`}>
-                                {activity.entry_type.replace('_', ' ')}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {activity.estimated_manhours ? (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {activity.estimated_manhours}
-                                </span>
-                              ) : '—'}
-                            </TableCell>
+                            {visibleColumns.includes('type') && (
+                              <TableCell>
+                                <Badge variant="outline" className={`text-xs capitalize ${getTypeBadgeColor(activity.entry_type)}`}>
+                                  {activity.entry_type.replace('_', ' ')}
+                                </Badge>
+                              </TableCell>
+                            )}
+                            {visibleColumns.includes('hours') && (
+                              <TableCell className="text-sm text-muted-foreground">
+                                {activity.estimated_manhours ? (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {activity.estimated_manhours}
+                                  </span>
+                                ) : '—'}
+                              </TableCell>
+                            )}
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
