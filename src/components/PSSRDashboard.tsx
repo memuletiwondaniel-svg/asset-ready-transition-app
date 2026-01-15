@@ -219,7 +219,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
       {
         id: 'adf6a6f1-fdf2-4aaf-b8ec-ab8b1fd0503c',
         name: 'Christian Johnsen',
-        role: 'TA2 Process - Asset',
+        role: 'TA2 Process - P&E',
         avatar: undefined,
         pendingTasks: 3,
         isOnline: true
